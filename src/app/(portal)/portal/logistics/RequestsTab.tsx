@@ -17,6 +17,7 @@ import type { PlanApi } from './usePlans';
 import type { Catalog, LogisticsApi } from './useLogistics';
 import { GridHead, REQUEST_COLS, gridStyle } from './gridTable';
 import styles from './logistics.module.css';
+import { call } from '@/lib/ui/apiCall';
 
 interface Req {
   id: string; plan_id: string; kind: RequestKind; requester_id: string; division_id: string | null; team: string | null; contact: string | null; items: (DeviceItem | PrizeItem)[]; notes: string | null; status: RequestStatus;
@@ -26,14 +27,6 @@ interface Loaded { me: string; canManage: boolean; divisions: { id: string; name
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 const chip: Record<RequestStatus, string> = { submitted: styles.chipWarn, planned: styles.chipOk, done: styles.chipOk, declined: styles.chipBad };
 
-async function call<T>(url: string, method: string, body?: unknown): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
-  try {
-    const r = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.' };
-    return { ok: true, data: j as T };
-  } catch { return { ok: false, error: 'Couldn’t reach the server.' }; }
-}
 
 // Requests for one event: a lead asks for devices (bundles or device types, how many, which games) or prizes (how many, around what dollar value), for their team. Logistics sees them all, plans them
 // (for devices, one click puts them on the Allocation sheet), and the person who asked is told. Everyone else sees only their own; once it is sent only Event Logistics can change or remove it.

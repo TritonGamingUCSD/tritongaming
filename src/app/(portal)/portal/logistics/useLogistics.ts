@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { OptionKind } from '@/lib/logistics/constants';
 import type { Device, DevicePatch } from '@/lib/logistics/devices';
+import { call } from '@/lib/ui/apiCall';
 
 export interface BundleItem { type: string; qty: number }
 export interface OptionItem { id: string; value: string; counted?: boolean; loose?: boolean; main?: boolean; applies?: 'all' | 'club' | 'borrowed'; kit?: boolean; gives?: boolean; leftover?: boolean; items?: BundleItem[] }
@@ -24,14 +25,6 @@ const FRESH_MS = 60_000;
 let kept: { at: number; data: Catalog } | null = null;
 let gen = 0;   // counts the edits made on screen, so a refresh that was already on its way when someone edited (and so holds the old value) is dropped instead of putting the old value back
 
-async function call<T>(url: string, method: string, body?: unknown): Promise<{ ok: true; data: T } | { ok: false; error: string }> {
-  try {
-    const r = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.' };
-    return { ok: true, data: j as T };
-  } catch { return { ok: false, error: 'Couldn’t reach the server.' }; }
-}
 
 export function useLogistics() {
   const [data, setData] = useState<Catalog | null>(kept?.data ?? null);

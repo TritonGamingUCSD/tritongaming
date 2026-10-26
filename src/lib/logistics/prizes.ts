@@ -61,20 +61,6 @@ export function cleanPrize(b: Record<string, unknown>, partial: boolean): { valu
   return { value: out };
 }
 
-export interface PrizeLineInfo { id: string; pool_id: string; prize_id: string; quantity: number }
-// What to look at for the prizes of a plan: a prize promised more than there is, and a prize line with nothing set aside yet. `left` is per prize (see prizeLeft).
-export interface PrizeProblem { sev: 'bad' | 'warn'; pool_id: string | null; line_id?: string; text: string }
-export function prizeProblems(lines: (PrizeLineInfo & { name: string })[], left: Map<string, number>, pools: { id: string; name: string }[]): PrizeProblem[] {
-  const out: PrizeProblem[] = [];
-  const seen = new Set<string>();
-  for (const l of lines) {
-    const n = left.get(l.prize_id);
-    if (n !== undefined && n < 0 && !seen.has(l.prize_id)) { seen.add(l.prize_id); out.push({ sev: 'bad', pool_id: l.pool_id, line_id: l.id, text: `${l.name}: ${-n} more promised than there are` }); }
-  }
-  for (const p of pools) if (!lines.some((l) => l.pool_id === p.id)) out.push({ sev: 'warn', pool_id: p.id, text: `${p.name} has no prizes yet` });
-  return out;
-}
-
 // Suggest prizes for what a pool still needs: `need` is how many more it wants of each size; the key ANY_SIZE is a count that may be filled from any size (done last, from what the sizes left). For every size the picks are spread over the prizes of that size that are in stock, the one with the most
 // left first (sponsor prizes first when two have as many left, since they can't be returned), and a prize is never used more than is left. Returns how many of each prize to add and, per size, how
 // many could not be found.

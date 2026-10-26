@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { PrizePatch, StockLevel } from '@/lib/logistics/prizes';
 import { showToast } from '@/lib/ui/toast';
+import { call } from '@/lib/ui/apiCall';
 
 // A prize as the screens show it: the inventory row (quantity is how many are on hand) plus what open events have promised and what is left to promise.
 export interface PrizeRow {
@@ -16,14 +17,6 @@ const FRESH_MS = 60_000;
 let kept: { at: number; rows: PrizeRow[]; channel: string | null } | null = null;
 let gen = 0;   // counts the edits made on screen: a refresh already on its way when someone edited holds the old value and is dropped
 
-async function call<T>(url: string, method: string, body?: unknown): Promise<{ ok: true; data: T } | { ok: false; error: string; body?: { code?: string; current?: number } }> {
-  try {
-    const r = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.', body: j };
-    return { ok: true, data: j as T };
-  } catch { return { ok: false, error: 'Couldn’t reach the server.' }; }
-}
 
 export function usePrizes() {
   const [rows, setRows] = useState<PrizeRow[] | null>(kept?.rows ?? null);

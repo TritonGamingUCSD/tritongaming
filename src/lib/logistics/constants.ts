@@ -21,7 +21,6 @@ export const BORROWED_KINDS = [
 ] as const;
 export type BorrowedKind = (typeof BORROWED_KINDS)[number]['id'];
 export type ItemKind = 'club' | BorrowedKind;
-export const borrowedLabel = (o: string) => BORROWED_KINDS.find((x) => x.id === o)?.label ?? o;
 
 // The lists a person can edit like a spreadsheet's dropdown. 'game' only holds extras: the portal's own list is read live (see lib/site/games.ts).
 // The plain lists are edited as simple rows; 'step' (the event-day steps, in order) and 'bundle' (a named set of device types) have their own editors.

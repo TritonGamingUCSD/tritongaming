@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Check, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { call } from './api';
-import { useCountdown, useGame } from './useGame';
+import { useCountdown, useGame, useWakeLock } from './useGame';
 import { CARD_MS } from '@/lib/trivia/game';
 import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, Countdown, ShapeLoader, FitBox, ansClass, fmtScore, ordinal } from './shapes';
 import styles from './trivia.module.css';
@@ -12,6 +12,7 @@ import styles from './trivia.module.css';
 // A game on a phone: join the lobby, tap an answer while the clock runs, see how you did after each question, and your place at the end. The whole screen, in the navy show look.
 export default function PlayGame({ code, onLeave }: { code: string; onLeave: () => void }) {
   const { state, me, error, gone, serverNow } = useGame(code, 'player');
+  useWakeLock();   // a phone that dims in the middle of a question loses the tap
   const [picked, setPicked] = useState<{ q: number; pos: number } | null>(null);
   const [problem, setProblem] = useState('');
   const q = state?.question;

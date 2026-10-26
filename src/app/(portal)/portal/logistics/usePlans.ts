@@ -5,6 +5,7 @@ import type { Device } from '@/lib/logistics/devices';
 import type { Conflict, StepDef } from '@/lib/logistics/plans';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import { showToast } from '@/lib/ui/toast';
+import { call } from '@/lib/ui/apiCall';
 
 export interface PlanSummary { id: string; slug: string; name: string; event_id: string | null; starts_on: string; ends_on: string; status: 'draft' | 'closed'; notes: string | null; devices: number; empty: number; teams: number; requests: number; newRequests: number; prizes: number; prizeValue: number }
 export interface Station { id: string; name: string; sort: number; contact: string | null; room: string | null; prize_only?: boolean; prize_request_id?: string | null; prize_target_qty?: number | null; prize_target_sizes?: Record<string, number> | null }
@@ -25,14 +26,6 @@ export interface PlanDetail {
 export interface Slim { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot'; games_needed?: string[]; label?: string | null; tag: string | null; name: string | null; type: string; shelf: string | null; tier: string | null; place_note: string | null; owner: string | null; condition: string | null; kit: KitLine[] }
 export interface StepResult { item: Slim; inPlan: boolean; role: string | null; station: { id: string; name: string } | null; already: boolean; done_at: string; step_id: string; by?: string | null }
 
-async function call<T>(url: string, method: string, body?: unknown): Promise<{ ok: true; data: T } | { ok: false; error: string; status: number; body?: { code?: string; current?: number; by?: string } }> {
-  try {
-    const r = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
-    const j = await r.json().catch(() => ({}));
-    if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.', status: r.status, body: j };
-    return { ok: true, data: j as T };
-  } catch { return { ok: false, error: 'Couldn’t reach the server.', status: 0 }; }
-}
 
 // The list of plans.
 export function usePlanList() {
