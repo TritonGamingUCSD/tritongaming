@@ -48,7 +48,7 @@ const range = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-export default function PlanView({ id, data, catalog, page, day, group, embedded, accordion = false, onOpenPrizing, onOpenDevices, openOnly, onOpenOnly, onPage, onBack }: { group: DeviceGroup; embedded?: boolean; accordion?: boolean; onOpenDevices?: () => void; onOpenPrizing: () => void; openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
+export default function PlanView({ id, data, catalog, page, day, group, embedded, accordion = false, headMenu, onOpenPrizing, onOpenDevices, openOnly, onOpenOnly, onPage, onBack }: { group: DeviceGroup; embedded?: boolean; accordion?: boolean; headMenu?: React.ReactNode; onOpenDevices?: () => void; onOpenPrizing: () => void; openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
   const plan = usePlan(id, true);
   const prizeInv = usePrizes();
   const { detail, error, setError, act } = plan;
@@ -380,7 +380,7 @@ export default function PlanView({ id, data, catalog, page, day, group, embedded
     return (
       <EventOverview name={p.name} dates={range(p.starts_on, p.ends_on)} closed={closed} notes={p.notes ?? null} portalEvent={!!p.event_id} section={page} requests={requests} plan={plan} catalog={catalog} data={data}
         stats={{ teams: stations.length, requests: (requests.count('devices') ?? 0) + (requests.count('prizes') ?? 0), newRequests: 0, devices: rows.length, empty: rows.filter((r) => r.kind === 'slot').length, prizes: detail.prizes.lines.reduce((n, l) => n + l.quantity, 0), deviceRequests: requests.count('devices') ?? 0, prizeRequests: requests.count('prizes') ?? 0, sponsorLoaners: borrowed.filter((b) => b.owner_kind === 'sponsor').length, officerLoaners: borrowed.filter((b) => b.owner_kind === 'officer').length }}
-        onBack={onBack} onOpenDevices={() => onOpenDevices?.()} onOpenPrizing={onOpenPrizing} />
+        onBack={onBack} onOpenDevices={() => onOpenDevices?.()} onOpenPrizing={onOpenPrizing} menu={headMenu} />
     );
   }
   return (

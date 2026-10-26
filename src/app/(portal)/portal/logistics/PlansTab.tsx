@@ -32,6 +32,7 @@ export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; 
   const setParams = usePortalParams();
   const { tab: urlTab } = useUrlNav();
   const list = usePlanList();
+  const actions = usePlanActions(list, () => open(null));
   const ref = route.plan;
   const plan = ref && list.plans ? list.plans.find((p) => p.slug === ref || p.id === ref) ?? null : null;
   const open = (p: { slug: string } | null) => { go({ tab: 'events', plan: p?.slug ?? null, page: 'requests' }); if (!p) void list.reload(); };
@@ -39,7 +40,7 @@ export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; 
   if (ref) {
     if (!list.plans) return <div className={styles.tab}>{list.error ? <Notice tone="error">{list.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
     if (!plan) return <div className={styles.tab}><Notice tone="error">That event doesn’t exist any more.</Notice><div><Button variant="secondary" onClick={() => open(null)}>All Events</Button></div></div>;
-    return <PlanView key={plan.id} id={plan.id} data={data} catalog={api} page={route.page} day={false} group="station" onOpenPrizing={() => go({ tab: 'prizing', plan: plan.slug })} onOpenDevices={() => go({ tab: 'devices', plan: plan.slug })} openOnly={false} onOpenOnly={() => undefined} onPage={(page) => go({ tab: 'events', plan: plan.slug, page })} onBack={() => open(null)} />;
+    return <><PlanView key={plan.id} id={plan.id} data={data} catalog={api} page={route.page} day={false} group="station" headMenu={data.canManage ? <RowMenu label={`More for ${plan.name}`} items={actions.items(plan)} /> : undefined} onOpenPrizing={() => go({ tab: 'prizing', plan: plan.slug })} onOpenDevices={() => go({ tab: 'devices', plan: plan.slug })} openOnly={false} onOpenOnly={() => undefined} onPage={(page) => go({ tab: 'events', plan: plan.slug, page })} onBack={() => open(null)} />{actions.dialogs}</>;
   }
   return <PlanList data={data} list={list} onOpen={open} go={go} />;
 }
@@ -50,15 +51,25 @@ function nearestFirst(plans: PlanSummary[], today: string): PlanSummary[] {
   return [...plans].sort((a, b) => group(a) - group(b) || (group(a) === 2 ? b.ends_on.localeCompare(a.ends_on) || b.starts_on.localeCompare(a.starts_on) : a.starts_on.localeCompare(b.starts_on)));
 }
 
-function PlanList({ data, list, onOpen, go }: { data: Catalog; list: ReturnType<typeof usePlanList>; onOpen: (p: PlanSummary) => void; go: (r: Route) => void }) {
-  const { plans, today, error, setError, create, update, remove, events } = list;
+// What can be done to an event (edit its name and dates, close or reopen it, remove it): the same menu on the list's cards and on the event's own page.
+function usePlanActions(list: ReturnType<typeof usePlanList>, afterRemove?: () => void) {
+  const { update, remove } = list;
   const closer = useCloseEvent(list, () => void list.reload());
-  const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<PlanSummary | null>(null);
   const removePlan = async (p: PlanSummary) => {
     if (!(await confirmHold({ title: `Remove “${p.name}”?`, message: 'The plan, its teams, the devices in it (including any borrowed ones) and every step recorded for it are deleted. The inventory itself is not touched.', confirmLabel: 'Hold to remove' }))) return;
     await remove(p.id);
+    afterRemove?.();
   };
+  const items = (p: PlanSummary) => [{ label: 'Edit Name And Dates', onClick: () => setEditing(p) }, { label: p.status === 'closed' ? 'Reopen Plan' : 'Close Plan', onClick: () => void (p.status === 'closed' ? closer.reopen(p.id) : closer.close(p)) }, { label: 'Remove Plan', danger: true, onClick: () => void removePlan(p) }];
+  const dialogs = <>{closer.dialog}{editing && <EditPlanDialog plan={editing} onSave={async (b) => update(editing.id, b)} onClose={() => setEditing(null)} />}</>;
+  return { items, dialogs };
+}
+
+function PlanList({ data, list, onOpen, go }: { data: Catalog; list: ReturnType<typeof usePlanList>; onOpen: (p: PlanSummary) => void; go: (r: Route) => void }) {
+  const { plans, today, error, setError, create, events } = list;
+  const actions = usePlanActions(list);
+  const [creating, setCreating] = useState(false);
   const ordered = plans ? nearestFirst(plans, today) : [];
   const isPast = (p: PlanSummary) => p.ends_on < today || p.status === 'closed';
   const card = (p: PlanSummary) => {
@@ -94,7 +105,7 @@ function PlanList({ data, list, onOpen, go }: { data: Catalog; list: ReturnType<
             <Button variant="secondary" size="sm" onClick={() => go({ tab: 'prizing', plan: p.slug })}>Open Prizing</Button>
           </div>
         )}
-        {data.canManage && <RowMenu className={styles.evCardMenu} label={`More for ${p.name}`} items={[{ label: 'Edit Name And Dates', onClick: () => setEditing(p) }, { label: p.status === 'closed' ? 'Reopen Plan' : 'Close Plan', onClick: () => void (p.status === 'closed' ? closer.reopen(p.id) : closer.close(p)) }, { label: 'Remove Plan', danger: true, onClick: () => void removePlan(p) }]} />}
+        {data.canManage && <RowMenu className={styles.evCardMenu} label={`More for ${p.name}`} items={actions.items(p)} />}
       </li>
     );
   };
@@ -104,8 +115,7 @@ function PlanList({ data, list, onOpen, go }: { data: Catalog; list: ReturnType<
         <span className={styles.count}>{plans ? `${plans.length} ${plans.length === 1 ? 'event' : 'events'}` : ''}</span>
         {data.canManage && <Button className={styles.addBtn} onClick={() => setCreating(true)}><Plus size={15} aria-hidden="true" /> New Event</Button>}
       </div>
-      {closer.dialog}
-      {editing && <EditPlanDialog plan={editing} onSave={async (b) => update(editing.id, b)} onClose={() => setEditing(null)} />}
+      {actions.dialogs}
       {creating && <CreateDialog events={events} onCreate={async (b) => { const p = await create(b); if (p) { setCreating(false); onOpen(p); } return !!p; }} onClose={() => setCreating(false)} />}
       {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
       {!plans ? (error ? null : <Loading variant="inline" label="Loading…" />) : plans.length === 0 ? (
