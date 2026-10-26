@@ -406,7 +406,7 @@
 /* Nothing is cut short with "…": text wraps. On a screen too narrow for the columns the sheet scrolls sideways on its own (never the whole page); a phone uses cards instead. */
 @media (min-width: 900px) {
   .dayMain { overflow-x: auto; }
-  .dayTeam { min-width: 63rem; }
+  .dayTeam { min-width: 49rem; }   /* what the columns need at their smallest (see the min-width: 900px grid below) */
 }
 
 .dTools .iconBtn { order: 1; }
@@ -714,7 +714,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
    Every track is a fixed size or a fraction, never `auto`, so each row of a table puts its columns in exactly the same place. */
 @media (min-width: 900px) {
   .sheetHead, .sheetLine { grid-template-columns: minmax(7rem, 1fr) minmax(9rem, 1.3fr) minmax(8rem, 1.1fr) minmax(10rem, 1.5fr) minmax(11rem, 1.6fr) 8.5rem; }
-  .dayRow { grid-template-columns: minmax(15rem, 2.4fr) minmax(8rem, 1fr) minmax(calc(var(--n) * 3.9rem), calc(var(--n) * 5.5rem)) 7.5rem; }
+  .dayRow { grid-template-columns: minmax(9rem, 2.4fr) minmax(5.5rem, 1fr) minmax(calc(var(--n) * 3.2rem), calc(var(--n) * 5.5rem)) 6rem; }   /* the minimums add up to less than a tablet's content width, so the row menu is never pushed off the edge */
   .noSteps .dayRow { grid-template-columns: minmax(11rem, 1.3fr) minmax(10rem, 1.7fr) 4.5rem; }
   .reqRow { align-items: center; }
   .reqLine { grid-template-columns: minmax(9rem, 1.2fr) 6rem minmax(10rem, 2fr) 2.5rem; }

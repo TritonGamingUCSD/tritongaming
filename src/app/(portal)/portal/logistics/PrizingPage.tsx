@@ -88,7 +88,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   const sponsorName = useMemo(() => new Map(data.sponsors.map((s) => [s.id, s.name])), [data.sponsors]);
   const steps: PrizeStepDef[] = d?.prizes.steps ?? [];
   const [wide, setWide] = useState(true);   // a laptop: every counter is shown; on a phone or tablet the chips pick which
-  useEffect(() => { const mq = window.matchMedia('(min-width: 1000px)'); const read = () => setWide(mq.matches); read(); mq.addEventListener('change', read); return () => mq.removeEventListener('change', read); }, []);
+  useEffect(() => { const mq = window.matchMedia('(min-width: 1180px)'); const read = () => setWide(mq.matches); read(); mq.addEventListener('change', read); return () => mq.removeEventListener('change', read); }, []);
   const shownSteps = useMemo(() => { if (wide) return steps; const names = new Set(view.steps.map((s) => s.toLowerCase())); const shown = steps.filter((s) => names.has(s.name.toLowerCase())); return shown.length ? shown : steps.filter((s) => s.name.toLowerCase() === 'sorted').slice(0, 1); }, [steps, view.steps, wide]);
   const stations = useMemo(() => d?.stations ?? [], [d?.stations]);
   const lines = useMemo(() => d?.prizes.lines ?? [], [d?.prizes.lines]);

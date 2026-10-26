@@ -87,7 +87,7 @@
 .stepDone { color: var(--pp-ok); font-weight: 700; }
 .allBtn { padding: 0.05rem 0.5rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.72rem; font-weight: 700; cursor: pointer; }
 .allBtn:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
-.line { display: grid; grid-template-columns: minmax(14rem, 3fr) 7rem 6rem repeat(var(--steps, 1), 7rem) 3rem; align-items: center; column-gap: 0.8rem; padding: 0.45rem 0.8rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); font-size: 0.9rem; }
+.line { display: grid; grid-template-columns: minmax(11rem, 3fr) 6rem 5rem repeat(var(--steps, 1), minmax(4.2rem, 7rem)) 3rem; align-items: center; column-gap: 0.8rem; padding: 0.45rem 0.8rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); font-size: 0.9rem; }
 .lineHead { font-size: 0.72rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.6); padding-block: 0.3rem; border-top: 0; }
 .pad { padding: 0.4rem 0.8rem; }
 .blockAdd { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.8rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
