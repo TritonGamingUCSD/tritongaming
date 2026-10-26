@@ -44,7 +44,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <div className={`${styles.layout} ${styles.fontScope} ${portalSans.variable} ${jbMono.variable}`} data-portal-layout>
-      <main className={styles.main}>
+      <main className={styles.main} data-ptr-page>
         {viewAs && <div className={styles.bannerSlot}><ViewAsBanner active={viewAs} /></div>}
         {viewingName && <div className={styles.bannerSlot}><ViewingUserBanner name={viewingName} /></div>}
         <SessionGuard />

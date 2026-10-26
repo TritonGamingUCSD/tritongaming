@@ -18,8 +18,8 @@ const resist = (dy: number) => MAX * (1 - Math.exp(-dy / (MAX * 0.9)));
 
 // An app added to the home screen has no reload: this gives it the pull-down at the top of a page (only there; browsers have their own), and refreshes quietly when the app is opened again after a while
 // (never while a form has unsaved changes). Both use the portal's refresh (lib/ui/refreshPortal.ts), which keeps the same page open.
-// The bubble follows the finger (a ring fills as you pull, it turns yellow and gives a tick when letting go would refresh), then waits and spins until the page has the new data, and slides away.
-// The bubble is moved straight on the element (no re-render per touch move), so it keeps up with the finger.
+// The whole page follows the finger down (like a phone's own lists), and a bubble in the gap above it fills a ring as you pull, turns yellow and ticks when letting go would refresh; then the page waits
+// part-way down while the bubble spins until it has the new data, and slides back up. Both are moved straight on the elements (no re-render per touch move), so they keep up with the finger.
 export default function PullToRefresh() {
   const bubble = useRef<HTMLDivElement>(null);
   const live = useRef<HTMLSpanElement>(null);
@@ -32,21 +32,28 @@ export default function PullToRefresh() {
     let y0 = 0, x0 = 0, locked: 'v' | 'h' | null = null, pull = 0, armed = false, frame = 0, shownAt = 0, giveUp = 0, hideTimer = 0;
     let hiddenAt = 0;
 
-    // One place that draws the bubble: how far down (px) and how full the ring is (0 to 1), plus whether it is being dragged (no easing) or settling (eased).
+    // One place that draws it all: how far the whole page is pulled down (px; the bubble sits in the gap that opens above it), how full the ring is (0 to 1), and whether the finger is moving it (no easing) or it is settling (eased).
+    // The page is only offset while a pull or a refresh is on (html[data-ptr]).
+    const root = document.documentElement;
+    let clearTimer = 0;
     const draw = (px: number, progress: number, drag: boolean) => {
-      el.style.setProperty('--ptr-y', `${px}px`);
+      window.clearTimeout(clearTimer);
+      root.style.setProperty('--ptr-pull', `${px}px`);
+      root.dataset.ptr = drag ? 'drag' : 'settle';
+      el.style.setProperty('--ptr-y', `${Math.max(-48, px / 2 - 20)}px`);
       el.style.setProperty('--ptr-p', String(Math.min(1, progress)));
       el.dataset.drag = drag ? '1' : '0';
+      if (!drag && px === 0) clearTimer = window.setTimeout(() => { delete root.dataset.ptr; root.style.removeProperty('--ptr-pull'); }, 360);
     };
     const setState = (s: string) => { el.dataset.state = s; };
     const say = (t: string) => { if (live.current) live.current.textContent = t; };
-    const rest = () => { phase = 'idle'; armed = false; pull = 0; setState('idle'); draw(-MAX / 2, 0, false); };
+    const rest = () => { phase = 'idle'; armed = false; pull = 0; setState('idle'); draw(0, 0, false); };
 
     const finish = () => {
       if (phase !== 'refreshing') return;
       window.clearTimeout(giveUp);
       const wait = Math.max(0, MIN_SHOW_MS - (Date.now() - shownAt));
-      hideTimer = window.setTimeout(() => { setState('done'); draw(-MAX / 2, 1, false); say('Refreshed'); hideTimer = window.setTimeout(rest, 320); }, wait);
+      hideTimer = window.setTimeout(() => { setState('done'); draw(0, 1, false); say('Refreshed'); hideTimer = window.setTimeout(rest, 320); }, wait);
     };
     const beginRefresh = () => {
       phase = 'refreshing'; shownAt = Date.now(); setState('refreshing'); draw(HOLD, 1, false); say('Refreshing');
@@ -80,14 +87,14 @@ export default function PullToRefresh() {
       const dy = e.touches[0].clientY - y0, dx = e.touches[0].clientX - x0;
       if (!locked && (Math.abs(dy) > 8 || Math.abs(dx) > 8)) locked = Math.abs(dy) > Math.abs(dx) && dy > 0 ? 'v' : 'h';   // sideways swipes and upward scrolls are not a pull
       if (locked === 'h' || window.scrollY > 0) { rest(); return; }
-      if (dy <= 0) { if (pull > 0) { pull = 0; cancelAnimationFrame(frame); frame = requestAnimationFrame(() => draw(-MAX / 2, 0, true)); } return; }
+      if (dy <= 0) { if (pull > 0) { pull = 0; cancelAnimationFrame(frame); frame = requestAnimationFrame(() => draw(0, 0, true)); } return; }
       if (e.cancelable) e.preventDefault();   // the page itself must not rubber-band under the bubble
       pull = resist(dy);
       if (el.dataset.state === 'idle' || el.dataset.state === 'done') setState('pulling');
       const nowArmed = pull >= TRIGGER;
       if (nowArmed !== armed) { armed = nowArmed; setState(armed ? 'armed' : 'pulling'); if (armed) navigator.vibrate?.(8); }
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => draw(pull - MAX / 2 + 8, pull / TRIGGER, true));
+      frame = requestAnimationFrame(() => draw(pull, pull / TRIGGER, true));
     };
     const end = () => {
       if (phase !== 'pulling') return;
@@ -104,7 +111,7 @@ export default function PullToRefresh() {
     rest();
     if (reduced) el.dataset.reduced = '1';
     return () => {
-      window.clearTimeout(giveUp); window.clearTimeout(hideTimer); cancelAnimationFrame(frame);
+      window.clearTimeout(giveUp); window.clearTimeout(hideTimer); window.clearTimeout(clearTimer); cancelAnimationFrame(frame); delete root.dataset.ptr; root.style.removeProperty('--ptr-pull');
       window.removeEventListener(REFRESHED_EVENT, finish);
       document.removeEventListener('visibilitychange', onVis);
       document.removeEventListener('touchstart', start); document.removeEventListener('touchmove', move);
