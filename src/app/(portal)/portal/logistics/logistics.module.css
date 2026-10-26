@@ -784,10 +784,10 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 @media (max-width: 640px) { .stickyFoot { bottom: 0; margin: auto -1rem 0; padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom)); } }
 
 /* Search and refresh always share one row: the search takes the room, refresh sits at its right end (a grid, so neither can drop under the other). */
-.pageBarEnd { display: grid; grid-template-columns: minmax(12rem, 34rem) auto; align-items: center; justify-content: end; gap: 0.5rem; }
-.pageBarEnd > .finder { max-width: none; min-width: 0; }
+.pageBarEnd { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; }
+.pageBarEnd > .finder { flex: 1 1 12rem; max-width: none; min-width: 0; }
 .pageBarEnd .iconBtn { align-self: center; }
-@media (max-width: 899px) { .pageBarEnd { flex: 1 1 100%; margin-left: 0; width: 100%; grid-template-columns: minmax(0, 1fr) auto; } }
+@media (max-width: 899px) { .pageBarEnd { flex: 1 1 100%; margin-left: 0; width: 100%;  } }
 
 /* A pool's prizes grouped by type: a small heading with the count, then the lines. */
 .poolGroupItem { list-style: none; }
@@ -831,7 +831,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .pageBar > :not(.pageBarEnd), .pageBar [role="tablist"] { margin-bottom: 0 !important; }
 
 /* Search and refresh: when they don't fit beside the tab bars they take the next row in full, lined up with the bars; a request's contact and date share a line. */
-.pageBarEnd { flex: 1 1 24rem; grid-template-columns: minmax(12rem, 1fr) auto; justify-content: stretch; }
+.pageBarEnd { flex: 1 1 24rem; justify-content: flex-end; }
 .reqRow > .prizeName { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; }
 .reqRow > .prizeName .editCell { display: inline-block; width: auto; }
 

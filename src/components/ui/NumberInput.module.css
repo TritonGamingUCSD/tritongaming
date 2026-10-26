@@ -4,3 +4,10 @@
 .step { flex: 1; display: grid; place-items: center; padding: 0; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 3px; background: rgba(var(--pp-ink-rgb), 0.06); color: var(--pp-ink); cursor: pointer; }
 .step:hover:not(:disabled) { background: rgba(125, 180, 234, 0.4); border-color: var(--pp-ink); }
 .step:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* On touch the two buttons sit side by side, each a full-height thumb target, instead of two slivers stacked */
+@media (pointer: coarse) {
+  .input { padding-right: 5rem !important; }
+  .steppers { flex-direction: row; width: 4.4rem; gap: 3px; }
+  .step { min-width: 2.1rem; }
+}

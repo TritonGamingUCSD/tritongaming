@@ -392,15 +392,13 @@ export default function PlanView({ id, data, catalog, page, day, group, embedded
             { id: 'requests', label: 'Requests', count: requests.count('devices') },
             { id: 'alloc-sponsor-loaners', label: 'Sponsor Loaners', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
             { id: 'alloc-officer-loaners', label: 'Officer Loaners', count: borrowed.filter((b) => b.owner_kind === 'officer').length },
-            { id: 'alloc-device', label: 'Allocation', count: rows.length },
-            { id: 'day-device', label: 'Event Day' },
           ]} />
         </>}
           <span className={styles.pageBarEnd}>
             {embedded && page === 'device' && day && <span className={styles.dayTotal} title="Steps done"><span className={styles.bar}><i style={{ width: `${pct}%` }} /></span>{allDone}/{allTotal}</span>}
             {isPrizing && <Button size="sm" variant="secondary" onClick={onOpenPrizing}>Open Prizing</Button>}
             {!isPrizing && !embedded && onOpenDevices && <Button size="sm" variant="secondary" onClick={onOpenDevices}>Open Devices</Button>}
-            <DeviceFinder prizes={prizeInv.rows} planPrizes={detail.prizes} sponsorOf={(sid) => data.sponsors.find((s) => s.id === sid)?.name ?? null} onGoPrize={onOpenPrizing} rows={all} devices={data.devices} stations={stations} steps={steps} doneSet={doneSet} onGo={(r) => { if (page !== 'device') onPage('device', day); setTimeout(() => focusRow(r.id, grouped ? `${group}:${groupTitles(r, group as Exclude<DeviceGroup, 'station'>, { attention: () => false, complete: () => false, day })[0]}` : r.stationId ?? 'none'), page !== 'device' ? 400 : 0); }} />
+            <DeviceFinder prizes={prizeInv.rows} planPrizes={detail.prizes} sponsorOf={(sid) => data.sponsors.find((s) => s.id === sid)?.name ?? null} onGoPrize={onOpenPrizing} rows={all} devices={data.devices} stations={stations} steps={steps} doneSet={doneSet} onGo={(r) => { if (!embedded && page !== 'device') { onOpenDevices?.(); return; } if (page !== 'device') onPage('device', day); setTimeout(() => focusRow(r.id, grouped ? `${group}:${groupTitles(r, group as Exclude<DeviceGroup, 'station'>, { attention: () => false, complete: () => false, day })[0]}` : r.stationId ?? 'none'), page !== 'device' ? 400 : 0); }} />
             <button type="button" className={styles.iconBtn} onClick={() => void plan.reload()} aria-label="Refresh"><RefreshCw size={15} aria-hidden="true" /></button>
           </span>
         </div>

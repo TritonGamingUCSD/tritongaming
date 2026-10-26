@@ -40,8 +40,8 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
   const requestOnly = !!data?.requestOnly;   // a division account: only an event's Requests pages
   const tabs = [
     { id: 'events' as const, label: 'Events', icon: <CalendarDays size={15} /> },
-    { id: 'prizing' as const, label: 'Prizing', icon: <Gift size={15} /> },
     { id: 'devices' as const, label: 'Devices', icon: <Package size={15} /> },
+    { id: 'prizing' as const, label: 'Prizing', icon: <Gift size={15} /> },
   ];
   const pick = (t: Tab) => go(t === 'events' ? { tab: 'events', plan: null, page: 'requests' } : t === 'prizing' ? { tab: 'prizing', plan: null } : { tab: 'devices', plan: null });
   // With an event open under Events the sheet gets the whole page: the title and tabs step aside (All Events goes back).

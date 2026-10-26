@@ -130,3 +130,5 @@
 .personRow:last-child { border-bottom: 0; }
 .personRow .name { flex: 1; }
 .carriedTag { margin-left: 0.4rem; font-style: normal; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.05rem 0.45rem; border-radius: 999px; background: rgba(251, 191, 36, 0.2); color: var(--pp-warn); white-space: nowrap; }
+
+@media (pointer: coarse), (max-width: 1024px) { .pickBox, .pick input { width: 1.4rem; height: 1.4rem; } }

@@ -55,7 +55,9 @@ export default function DevicesPage({ api, data, route, go }: { api: LogisticsAp
           </Select>
         </div>
         {chosen && (
-          <SectionTabs<'plan' | 'day'> variant="segmented" label="Planning or event day" value={day ? 'day' : 'plan'} onChange={(v) => to({ day: v === 'day' })} tabs={[{ id: 'plan', label: 'Planning' }, { id: 'day', label: 'Event Day' }]} />
+          <div className={pz.modeSeg}>
+            <SectionTabs<'plan' | 'day'> variant="segmented" label="Planning or event day" value={day ? 'day' : 'plan'} onChange={(v) => to({ day: v === 'day' })} tabs={[{ id: 'plan', label: 'Planning' }, { id: 'day', label: 'Event Day' }]} />
+          </div>
         )}
         <div className={`${pz.pick} ${pz.pickSmall}`}>
           <Select value={group} onChange={(e) => to({ group: e.target.value as DeviceGroup })} aria-label="Group by">
