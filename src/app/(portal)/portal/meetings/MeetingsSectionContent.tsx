@@ -660,7 +660,7 @@ function PeoplePicker({ team, value, onChange, covered }: { team: TeamPerson[] |
 }
 
 
-export function AudiencePicker({ value, onChange, hideOpen }: { value: Aud; onChange: (v: Aud) => void; hideOpen?: boolean }) {
+export function AudiencePicker({ value, onChange, hideOpen, hideTeams }: { value: Aud; onChange: (v: Aud) => void; hideOpen?: boolean; hideTeams?: boolean }) {
   const team = useTeam();
   const [groups] = useGroups();
   const [showPeople, setShowPeople] = useState(value.invitees.length > 0);
@@ -684,7 +684,7 @@ export function AudiencePicker({ value, onChange, hideOpen }: { value: Aud; onCh
         </div>
       </div>
 
-      <div className={styles.audSection}>
+      {!hideTeams && <div className={styles.audSection}>
         <span className={styles.audTitle}>Teams <em>pick more than one; changes to a team carry over</em></span>
         {groups && groups.length > 0 ? (
           <div className={styles.presets}>
@@ -695,7 +695,7 @@ export function AudiencePicker({ value, onChange, hideOpen }: { value: Aud; onCh
             ))}
           </div>
         ) : groups ? <p className={styles.faint}>No teams yet. Make one under TG Members › Team.</p> : <Loading variant="inline" label="Loading teams…" />}
-      </div>
+      </div>}
 
       <div className={styles.audSection}>
         <button type="button" className={styles.audToggle} onClick={() => setShowPeople((v) => !v)} aria-expanded={showPeople}>

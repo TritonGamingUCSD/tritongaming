@@ -1,63 +1,51 @@
-// Who may enter a Staffle. The rules are set per Staffle: groups ticked in (a person must be in one of them), groups ticked out (a person in any is left out), and named people added (always in) or blocked
-// (always out). Pure logic (no database); the routes read a person's facts and ask here.
+import { AUDIENCE_LABELS, AUDIENCE_ROLES, type AudienceRole } from '@/lib/meetings/meetingAudience';
 
-export const GROUPS = [
-  { id: 'officer', label: 'Officers', hint: 'Officers, leads, exec and admins' },
-  { id: 'recruit', label: 'Recruits', hint: 'Recruits who have not become officers' },
-  { id: 'active', label: 'Active members', hint: 'On the team and not marked inactive this quarter' },
-  { id: 'inactive', label: 'Inactive members', hint: 'Marked inactive this quarter' },
-  { id: 'strike', label: 'People with strikes', hint: 'One or more strikes (not just the warning)' },
-  { id: 'warning', label: 'People with a warning', hint: 'Exactly the first mark, a warning' },
+// Who may enter a Staffle: the roles ticked and the people picked by name (the same way a meeting's audience is chosen, without the teams). Pure logic (no database); the routes read a person's roles and ask here.
+
+// Left out, whatever their role: people with strikes (one or more marks past the warning), people with a warning (exactly the first mark), and anyone named.
+export const SKIPS = [
+  { id: 'strike', label: 'People with strikes', hint: 'Two or more marks on their record (the warning is the first)' },
+  { id: 'warning', label: 'People with a warning', hint: 'Exactly one mark, the warning' },
 ] as const;
-export type Group = (typeof GROUPS)[number]['id'];
-export const isGroup = (v: unknown): v is Group => GROUPS.some((g) => g.id === v);
+export type Skip = (typeof SKIPS)[number]['id'];
 
-export interface Rules { in: Group[]; out: Group[]; add: string[]; block: string[] }
-export const NO_RULES: Rules = { in: [], out: [], add: [], block: [] };
+export interface Rules { roles: AudienceRole[]; people: string[]; skip: Skip[]; block: string[] }
+export const NO_RULES: Rules = { roles: [...AUDIENCE_ROLES], people: [], skip: [], block: [] };
 
 // A person as the rules see them: their roles and how many marks (a warning counts as the first) are on their record.
 export interface Person { id: string; roles: string[]; marks: number }
 
-export function groupsOf(p: Pick<Person, 'roles' | 'marks'>): Group[] {
-  const has = (r: string) => p.roles.includes(r);
-  const officer = ['officer', 'lead', 'exec', 'admin'].some(has);
-  const team = officer || has('recruit');
-  const out: Group[] = [];
-  if (officer) out.push('officer');
-  if (has('recruit') && !officer) out.push('recruit');
-  if (has('inactive')) out.push('inactive');
-  else if (team) out.push('active');
-  if (p.marks >= 2) out.push('strike');
-  if (p.marks === 1) out.push('warning');
-  return out;
-}
-
 const UUID = /^[0-9a-f-]{36}$/i;
-// Reads the rules a client sent: only known groups and well-formed ids.
+// Reads the rules a client sent: only known roles and well-formed ids.
 export function cleanRules(raw: unknown): Rules {
   const r = (raw ?? {}) as Record<string, unknown>;
   const list = <T,>(v: unknown, ok: (x: unknown) => x is T): T[] => [...new Set((Array.isArray(v) ? v : []).filter(ok))];
+  const role = (x: unknown): x is AudienceRole => AUDIENCE_ROLES.some((a) => a === x);
+  const skip = (x: unknown): x is Skip => SKIPS.some((a) => a.id === x);
   const id = (x: unknown): x is string => typeof x === 'string' && UUID.test(x);
-  return { in: list(r.in, isGroup), out: list(r.out, isGroup), add: list(r.add, id).slice(0, 500), block: list(r.block, id).slice(0, 500) };
+  return { roles: list(r.roles, role), people: list(r.people, id).slice(0, 500), skip: list(r.skip, skip), block: list(r.block, id).slice(0, 500) };
 }
 
-// Can this person enter, and if not, why (in words a person can act on).
+// A Staffle needs someone who can enter.
+export const rulesEmpty = (rules: Rules) => rules.roles.length === 0 && rules.people.length === 0;
+
+// Can this person enter, and if not, why (in words a person can act on). An inactive member is always out (even by name); then left out by name; then named people are in; then strikes and warnings are left out; then the roles. Like a meeting, a role does not pull in an alumnus; only a name does.
 export function canEnter(rules: Rules, p: Person): { ok: true } | { ok: false; why: string } {
+  if (p.roles.includes('inactive')) return { ok: false, why: 'Inactive members can’t enter a Staffle.' };
   if (rules.block.includes(p.id)) return { ok: false, why: 'You were left out of this Staffle by name.' };
-  if (rules.add.includes(p.id)) return { ok: true };
-  const mine = groupsOf(p);
-  const hit = rules.out.find((g) => mine.includes(g));
-  if (hit) return { ok: false, why: `This Staffle is not open to ${GROUPS.find((g) => g.id === hit)!.label.toLowerCase()}.` };
-  if (rules.in.length && !rules.in.some((g) => mine.includes(g))) return { ok: false, why: `This Staffle is only open to ${rules.in.map((g) => GROUPS.find((x) => x.id === g)!.label.toLowerCase()).join(' and ')}.` };
-  return { ok: true };
+  if (rules.people.includes(p.id)) return { ok: true };
+  if (rules.skip.includes('strike') && p.marks >= 2) return { ok: false, why: 'This Staffle is not open to people with strikes.' };
+  if (rules.skip.includes('warning') && p.marks === 1) return { ok: false, why: 'This Staffle is not open to people with a warning.' };
+  const idle = p.roles.includes('alumni');
+  if (!idle && rules.roles.some((r) => p.roles.includes(r))) return { ok: true };
+  const who = rules.roles.map((r) => AUDIENCE_LABELS[r].toLowerCase());
+  return { ok: false, why: idle && rules.roles.some((r) => p.roles.includes(r)) ? 'Alumni can only enter when they are picked by name.' : `This Staffle is only open to ${who.length ? who.join(' and ') : 'the people picked'}.` };
 }
 
 // A line for the Staffle's card: who it is open to.
 export function rulesText(rules: Rules, names: Map<string, string> = new Map()): string {
-  const label = (g: Group) => GROUPS.find((x) => x.id === g)!.label.toLowerCase();
-  const parts = [rules.in.length ? `Open to ${rules.in.map(label).join(' and ')}` : 'Open to all staff'];
-  if (rules.out.length) parts.push(`not ${rules.out.map(label).join(' or ')}`);
-  if (rules.add.length) parts.push(`plus ${rules.add.map((id) => names.get(id) ?? 'someone').join(', ')}`);
-  if (rules.block.length) parts.push(`except ${rules.block.map((id) => names.get(id) ?? 'someone').join(', ')}`);
-  return parts.join(', ');
+  const roles = rules.roles.length === AUDIENCE_ROLES.length ? 'everyone on the team' : rules.roles.map((r) => AUDIENCE_LABELS[r].toLowerCase()).join(' and ');
+  const people = rules.people.map((id) => names.get(id) ?? 'someone').join(', ');
+  const out = [...rules.skip.map((s) => SKIPS.find((x) => x.id === s)!.label.toLowerCase()), ...rules.block.map((id) => names.get(id) ?? 'someone')];
+  return `Open to ${[roles, people].filter(Boolean).join(' + ')}${out.length ? `, not ${out.join(' or ')}` : ''}`;
 }

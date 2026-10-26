@@ -12,36 +12,49 @@ try {
   const officer3 = await user('officer3', ['officer']);
   const recruit = await user('recruit', ['recruit']);
   const student = await user('student', ['ucsd']);
-  const hour = 3600e3, soon = new Date(Date.now() - hour).toISOString(), later = new Date(Date.now() + 24 * hour).toISOString();
-
+  
   const mk = async (name, quantity) => (await exec.call('POST', '/api/logistics/prizes', { name, quantity, size: 'Medium Prizing', price: 5 })).j.prize;
   const mouse = await mk('ZZ Staffle Mouse', 3), pad = await mk('ZZ Staffle Pad', 1);
 
   // ---- making one
   t.ok('a student cannot see Staffles', (await student.call('GET', '/api/staffle')).s === 403);
-  t.ok('an officer cannot make one', (await officer.call('POST', '/api/staffle', { name: 'ZZ Nope', opens_at: soon, closes_at: later, items: [{ prize_id: mouse.id, winners: 1 }] })).s === 403);
-  t.ok('it needs a name, a window and a prize', (await exec.call('POST', '/api/staffle', { name: '', opens_at: soon, closes_at: later, items: [{ prize_id: mouse.id, winners: 1 }] })).s === 400
-    && (await exec.call('POST', '/api/staffle', { name: 'ZZ X', opens_at: later, closes_at: soon, items: [{ prize_id: mouse.id, winners: 1 }] })).s === 400
-    && (await exec.call('POST', '/api/staffle', { name: 'ZZ X', opens_at: soon, closes_at: later, items: [] })).s === 400);
-  t.ok('it cannot raffle more than is left', (await exec.call('POST', '/api/staffle', { name: 'ZZ Too Many', opens_at: soon, closes_at: later, items: [{ prize_id: mouse.id, winners: 5 }] })).s === 409);
-  const made1 = await exec.call('POST', '/api/staffle', { name: 'ZZ Fall Staffle', opens_at: soon, closes_at: later, pickup_note: 'Ask for Sam.', rules: { in: ['officer'], out: [], add: [recruit.id], block: [officer3.id] }, items: [{ prize_id: mouse.id, winners: 2 }, { prize_id: pad.id, winners: 1 }] });
+  t.ok('an officer cannot make one', (await officer.call('POST', '/api/staffle', { name: 'ZZ Nope', items: [{ prize_id: mouse.id, winners: 1 }] })).s === 403);
+  t.ok('it needs a name and someone who can enter', (await exec.call('POST', '/api/staffle', { name: '', items: [{ prize_id: mouse.id, winners: 1 }] })).s === 400
+    && (await exec.call('POST', '/api/staffle', { name: 'ZZ X', rules: { roles: [], people: [], skip: [], block: [] }, items: [{ prize_id: mouse.id, winners: 1 }] })).s === 400
+    && true);
+  const bare = await exec.call('POST', '/api/staffle', { name: 'ZZ Bare Staffle' });
+  t.ok('it can be made with no prizes, but not opened or drawn until some are picked', bare.s === 201 && (await exec.call('PATCH', `/api/staffle/${bare.j.staffle.slug}`, { status: 'open' })).s === 409 && (await exec.call('POST', `/api/staffle/${bare.j.staffle.slug}/draw`)).s === 409);
+  t.ok('its prizes are picked afterwards', (await exec.call('PATCH', `/api/staffle/${bare.j.staffle.slug}`, { items: [{ prize_id: pad.id, winners: 1 }] })).j.staffle?.items.length === 1 && (await exec.call('PATCH', `/api/staffle/${bare.j.staffle.slug}`, { items: [] })).j.staffle?.items.length === 0);
+  await exec.call('DELETE', `/api/staffle/${bare.j.staffle.slug}`);
+  t.ok('it cannot raffle more than is left', (await exec.call('POST', '/api/staffle', { name: 'ZZ Too Many', items: [{ prize_id: mouse.id, winners: 5 }] })).s === 409);
+  const made1 = await exec.call('POST', '/api/staffle', { name: 'ZZ Fall Staffle', pickup_note: 'Ask for Sam.', rules: { roles: ['officer'], people: [recruit.id], skip: [], block: [] }, items: [{ prize_id: mouse.id, winners: 2 }, { prize_id: pad.id, winners: 1 }] });
   t.ok('exec makes a Staffle', made1.s === 201 && made1.j.staffle.slug === 'zz-fall-staffle', JSON.stringify(made1.j));
   const slug = made1.j.staffle.slug;
   const left = async (id) => (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((p) => p.id === id).left;
   t.ok('its prizes are held back from stock (mouse 3 → 1 left, pad 1 → 0)', (await left(mouse.id)) === 1 && (await left(pad.id)) === 0);
-  t.ok('another Staffle cannot raffle what is held', (await exec.call('POST', '/api/staffle', { name: 'ZZ Second', opens_at: soon, closes_at: later, items: [{ prize_id: pad.id, winners: 1 }] })).s === 409);
+  t.ok('another Staffle cannot raffle what is held', (await exec.call('POST', '/api/staffle', { name: 'ZZ Second', items: [{ prize_id: pad.id, winners: 1 }] })).s === 409);
 
   // ---- looking and entering
+  const view0 = (await officer.call('GET', `/api/staffle/${slug}`)).j.staffle;
+  t.ok('it starts not open: nobody can enter yet', view0.state === 'draft' && (await officer.call('POST', `/api/staffle/${slug}/entries`, { item_id: view0.items[0].id })).s === 409);
+  t.ok('an officer cannot open it, a manager can', (await officer.call('PATCH', `/api/staffle/${slug}`, { status: 'open' })).s === 403 && (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'open' })).j.staffle?.state === 'open');
+  t.ok('it cannot be opened twice, and drawing needs it open', (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'open' })).s === 409);
   const view = (await officer.call('GET', `/api/staffle/${slug}`)).j.staffle;
   t.ok('an officer sees it open, with its items and no entries yet', view.state === 'open' && view.items.length === 2 && view.me.can_enter === true && view.entrants === 0 && view.rules_text.length > 0, JSON.stringify(view.me));
   const [iMouse, iPad] = [view.items.find((i) => i.prize.name === 'ZZ Staffle Mouse'), view.items.find((i) => i.prize.name === 'ZZ Staffle Pad')];
-  t.ok('a recruit named in the rules may enter, an officer named out may not', (await recruit.call('POST', `/api/staffle/${slug}/entries`, { item_id: iMouse.id })).s === 200 && (await officer3.call('POST', `/api/staffle/${slug}/entries`, { item_id: iMouse.id })).s === 403);
+  t.ok('a recruit picked by name may enter, and so may an officer by role', (await recruit.call('POST', `/api/staffle/${slug}/entries`, { item_id: iMouse.id })).s === 200 && (await officer3.call('POST', `/api/staffle/${slug}/entries`, { item_id: iMouse.id })).s === 200);
+  await officer3.call('POST', `/api/staffle/${slug}/entries`, { item_id: iMouse.id, enter: false });
+  t.ok('rules need someone, and a role left out cannot enter', (await exec.call('PATCH', `/api/staffle/${slug}`, { rules: { roles: [], people: [], skip: [], block: [] } })).s === 400 && (await exec.call('PATCH', `/api/staffle/${slug}`, { rules: { roles: ['exec'], people: [], skip: [], block: [] } })).s === 200 && (await officer3.call('POST', `/api/staffle/${slug}/entries`, { item_id: iMouse.id })).s === 403);
+  await exec.call('PATCH', `/api/staffle/${slug}`, { rules: { roles: ['officer'], people: [recruit.id], skip: [], block: [] } });
   t.ok('one free entry per item (entering twice is still one)', (await officer.call('POST', `/api/staffle/${slug}/entries`, { item_id: iMouse.id })).s === 200 && (await officer.call('POST', `/api/staffle/${slug}/entries`, { item_id: iMouse.id })).s === 200 && (await officer.call('GET', `/api/staffle/${slug}`)).j.staffle.items.find((i) => i.id === iMouse.id).entries === 2);
   await officer.call('POST', `/api/staffle/${slug}/entries`, { item_id: iPad.id });
   await officer2.call('POST', `/api/staffle/${slug}/entries`, { item_id: iMouse.id });
   await officer2.call('POST', `/api/staffle/${slug}/entries`, { item_id: iPad.id });
   t.ok('an entry can be taken back', (await officer2.call('POST', `/api/staffle/${slug}/entries`, { item_id: iPad.id, enter: false })).j.staffle.items.find((i) => i.id === iPad.id).entries === 1);
   t.ok('a student cannot enter', (await student.call('POST', `/api/staffle/${slug}/entries`, { item_id: iMouse.id })).s === 403);
+
+  // ---- closing and opening by hand
+  t.ok('closing stops entries, opening again lets them in', (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'closed' })).j.staffle?.state === 'closed' && (await officer.call('POST', `/api/staffle/${slug}/entries`, { item_id: iPad.id, enter: false })).s === 409 && (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'open' })).j.staffle?.state === 'open');
 
   // ---- drawing
   t.ok('an officer cannot draw', (await officer.call('POST', `/api/staffle/${slug}/draw`)).s === 403);
@@ -82,7 +95,7 @@ try {
   t.ok('an ended Staffle cannot be ended again', (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'ended' })).s === 409);
 
   // ---- an unclaimed Staffle can be cancelled and its prizes are free again
-  const m2 = await exec.call('POST', '/api/staffle', { name: 'ZZ Spring Staffle', opens_at: soon, closes_at: later, items: [{ prize_id: mouse.id, winners: 1 }] });
+  const m2 = await exec.call('POST', '/api/staffle', { name: 'ZZ Spring Staffle', items: [{ prize_id: mouse.id, winners: 1 }] });
   const l1 = await left(mouse.id);
   await exec.call('PATCH', `/api/staffle/${m2.j.staffle.slug}`, { status: 'cancelled' });
   t.ok('cancelling gives the prizes back', (await left(mouse.id)) === l1 + 1);

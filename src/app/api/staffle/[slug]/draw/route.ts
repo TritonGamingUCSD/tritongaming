@@ -15,10 +15,13 @@ export async function POST(_req: Request, { params }: { params: Promise<{ slug: 
   if (auth.error) return auth.error;
   const row = await loadStaffle(auth.svc, (await params).slug);
   if (!row) return NextResponse.json({ error: 'That Staffle is gone.' }, { status: 404 });
-  if (row.status !== 'open') return NextResponse.json({ error: row.status === 'drawn' ? 'It has already been drawn.' : 'That Staffle is over.' }, { status: 409 });
+  if (row.status === 'draft') return NextResponse.json({ error: 'Open it first, so people can enter.' }, { status: 409 });
+  if (row.status !== 'open' && row.status !== 'closed') return NextResponse.json({ error: row.status === 'drawn' ? 'It has already been drawn.' : 'That Staffle is over.' }, { status: 409 });
   const id = row.id as string, seed = randomBytes(12).toString('hex');
+  const { count: itemCount } = await auth.svc.from('staffle_items').select('id', { count: 'exact', head: true }).eq('staffle_id', id);
+  if (!itemCount) return NextResponse.json({ error: 'Pick its prizes first.' }, { status: 409 });
   // Claim the draw first, so two people pressing Draw together cannot draw twice.
-  const { data: locked } = await auth.svc.from('staffles').update({ status: 'drawn', seed, drawn_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id).eq('status', 'open').select('id');
+  const { data: locked } = await auth.svc.from('staffles').update({ status: 'drawn', seed, drawn_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id).in('status', ['open', 'closed']).select('id');
   if (!locked?.length) return NextResponse.json({ error: 'It has already been drawn.' }, { status: 409 });
   const [{ data: items }, { data: entries }] = await Promise.all([
     auth.svc.from('staffle_items').select('id, winners, prize_id').eq('staffle_id', id).order('sort'),

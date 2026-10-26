@@ -6,16 +6,13 @@ import { slugify } from '@/lib/core/slug';
 import { createNotifications } from '@/lib/notifications/notify';
 import type { Person } from '@/lib/staffle/rules';
 
-// What the Staffle routes share: the state a Staffle is in right now, a person's facts for the rules, a slug for the address, and what a Staffle holds back from stock.
+// What the Staffle routes share: the states a Staffle goes through, a person's roles and marks for the rules, a slug for the address, and what a Staffle holds back from stock.
 
-export const STAFFLE_COLUMNS = 'id, slug, name, notes, pickup_note, opens_at, closes_at, rules, status, seed, drawn_at, created_by, created_at';
-export type StaffleState = 'scheduled' | 'open' | 'closed' | 'drawn' | 'ended' | 'cancelled';
-// `status` in the database is open, drawn, ended or cancelled; whether it has started or already closed (no more entries, not yet drawn) follows from the times.
-export function stateOf(s: { status: string; opens_at: string; closes_at: string }, now = Date.now()): StaffleState {
-  if (s.status !== 'open') return s.status as StaffleState;
-  if (now < new Date(s.opens_at).getTime()) return 'scheduled';
-  return now >= new Date(s.closes_at).getTime() ? 'closed' : 'open';
-}
+export const STAFFLE_COLUMNS = 'id, slug, name, notes, pickup_note, rules, status, seed, drawn_at, created_by, created_at';
+// A Staffle is opened and closed by hand: draft (not open yet), open (taking entries), closed (no more entries, can open again), drawn, ended or cancelled.
+export type StaffleState = 'draft' | 'open' | 'closed' | 'drawn' | 'ended' | 'cancelled';
+// Before it is drawn the prizes can still change and it can still be drawn.
+export const BEFORE_DRAW: string[] = ['draft', 'open', 'closed'];
 
 export async function personFacts(svc: SupabaseClient, userId: string): Promise<Person> {
   const [{ data: roles }, marks] = await Promise.all([svc.from('user_roles').select('role').eq('user_id', userId), activeCount(svc, userId)]);

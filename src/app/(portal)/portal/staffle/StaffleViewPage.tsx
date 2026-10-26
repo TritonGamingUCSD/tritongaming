@@ -1,15 +1,16 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Check, Gift, Presentation, Trophy } from 'lucide-react';
+import { ArrowLeft, Check, Gift, Lock, Play, Presentation, Trophy } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { RowMenu } from '../logistics/RowMenu';
 import { confirmHold } from '@/lib/ui/confirmHold';
-import { call, STATE_LABEL, when, type StaffleView } from './api';
+import { call, STATE_LABEL, type StaffleView } from './api';
 import StaffleForm from './StaffleForm';
+import StaffleItemsDialog from './StaffleItemsDialog';
 import styles from './staffle.module.css';
 
 // One Staffle: what it is, who it is open to, the prizes (tick the ones you want), and once drawn who won. People who run it also get the draw, claiming, drawing again and the edit menu.
@@ -17,6 +18,7 @@ export default function StaffleViewPage({ slug, canManage, onBack, onDraw, onGon
   const [s, setS] = useState<StaffleView | null>(null);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState('');
   const load = useCallback(async () => {
     const r = await call<{ staffle: StaffleView }>(`/api/staffle/${slug}`);
@@ -44,10 +46,13 @@ export default function StaffleViewPage({ slug, canManage, onBack, onDraw, onGon
         <button type="button" className={styles.back} onClick={onBack} aria-label="All Staffles"><ArrowLeft size={15} aria-hidden="true" /> <span>All Staffles</span></button>
         <div className={styles.title}>
           <h2>{s.name}<span className={`${styles.chip} ${open ? styles.chipOn : ''}`}>{STATE_LABEL[s.state]}</span></h2>
-          <p>{open ? `Closes ${when(s.closes_at)}` : s.state === 'scheduled' ? `Opens ${when(s.opens_at)}` : `Ran ${when(s.opens_at)} to ${when(s.closes_at)}`} · {s.entrants} {s.entrants === 1 ? 'person has' : 'people have'} entered</p>
+          <p>{s.entrants} {s.entrants === 1 ? 'person has' : 'people have'} entered</p>
         </div>
         {canManage && !over && (
           <div className={styles.go}>
+            {s.state === 'draft' && s.items.length > 0 && <Button loading={busy === 'open'} onClick={() => void act('open', `/api/staffle/${s.slug}`, 'PATCH', { status: 'open' })}><Play size={15} aria-hidden="true" /> Open Staffle</Button>}
+            {s.state === 'open' && <Button variant="secondary" loading={busy === 'close'} onClick={() => void act('close', `/api/staffle/${s.slug}`, 'PATCH', { status: 'closed' })}><Lock size={15} aria-hidden="true" /> Close Entries</Button>}
+            {s.state === 'closed' && <Button variant="secondary" loading={busy === 'open'} onClick={() => void act('open', `/api/staffle/${s.slug}`, 'PATCH', { status: 'open' })}><Play size={15} aria-hidden="true" /> Open Again</Button>}
             {(s.state === 'open' || s.state === 'closed') && <Button onClick={onDraw}><Presentation size={15} aria-hidden="true" /> Draw On The Big Screen</Button>}
             {s.state === 'drawn' && <Button variant="secondary" onClick={onDraw}><Presentation size={15} aria-hidden="true" /> Show The Draw Again</Button>}
             <IconButton kind="edit" label="Edit this Staffle" onClick={() => setEditing(true)} />
@@ -64,7 +69,11 @@ export default function StaffleViewPage({ slug, canManage, onBack, onDraw, onGon
         <div className={styles.winBanner}><Trophy size={20} aria-hidden="true" /><div><b>You won {s.me.won.map((w) => w.prize).join(', ')}!</b><span>{s.pickup_note}{s.me.won.every((w) => w.claimed) ? ' (Picked up.)' : ''}</span></div></div>
       )}
       <p className={styles.rules}>{s.rules_text}.{s.notes ? ` ${s.notes}` : ''}</p>
+      {s.state === 'draft' && <Notice tone="info">{canManage ? (s.items.length ? 'Not open yet. Press Open Staffle when you are ready for people to enter.' : 'Not open yet. Pick its prizes first, then open it.') : 'This Staffle is not open yet.'}</Notice>}
       {!s.me.can_enter && open && <Notice tone="info">{s.me.why}</Notice>}
+      {canManage && ['draft', 'open', 'closed'].includes(s.state) && (
+        <div className={styles.prizesBar}><span>{s.items.length === 0 ? 'No prizes yet.' : `${s.items.length} ${s.items.length === 1 ? 'prize' : 'prizes'} to raffle.`}</span><Button variant="secondary" onClick={() => setPicking(true)}><Gift size={15} aria-hidden="true" /> {s.items.length ? 'Change Prizes' : 'Pick Prizes'}</Button></div>
+      )}
       <ul className={styles.items}>
         {s.items.map((i) => {
           const live = i.won.filter((w) => !w.passed), passed = i.won.filter((w) => w.passed);
@@ -106,6 +115,7 @@ export default function StaffleViewPage({ slug, canManage, onBack, onDraw, onGon
           );
         })}
       </ul>
+      {picking && <StaffleItemsDialog staffle={s} onClose={() => setPicking(false)} onSaved={() => { setPicking(false); void load(); }} />}
       {editing && <StaffleForm staffle={s} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); void load(); }} />}
     </div>
   );

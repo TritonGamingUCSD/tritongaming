@@ -1,44 +1,58 @@
 import { describe, expect, it } from 'vitest';
-import { canEnter, cleanRules, groupsOf, NO_RULES, rulesText } from '@/lib/staffle/rules';
+import { canEnter, cleanRules, NO_RULES, rulesEmpty, rulesText } from '@/lib/staffle/rules';
 import { draw } from '@/lib/staffle/draw';
 
 const A = '00000000-0000-4000-8000-00000000000a', B = '00000000-0000-4000-8000-00000000000b';
 const officer = { id: 'o', roles: ['officer'], marks: 0 }, recruit = { id: 'r', roles: ['recruit'], marks: 0 };
 
-describe('groups', () => {
-  it('works out who is in which group', () => {
-    expect(groupsOf(officer)).toEqual(['officer', 'active']);
-    expect(groupsOf(recruit)).toEqual(['recruit', 'active']);
-    expect(groupsOf({ roles: ['officer', 'inactive'], marks: 0 })).toEqual(['officer', 'inactive']);
-    expect(groupsOf({ roles: ['officer'], marks: 1 })).toContain('warning');
-    expect(groupsOf({ roles: ['officer'], marks: 3 })).toContain('strike');
-    expect(groupsOf({ roles: ['exec'], marks: 0 })).toContain('officer');
-  });
-});
-
 describe('who may enter', () => {
-  it('everyone with no rules', () => { expect(canEnter(NO_RULES, officer).ok).toBe(true); });
-  it('groups in and out', () => {
-    expect(canEnter({ ...NO_RULES, in: ['officer'] }, recruit).ok).toBe(false);
-    expect(canEnter({ ...NO_RULES, in: ['officer'] }, officer).ok).toBe(true);
-    expect(canEnter({ ...NO_RULES, out: ['inactive'] }, { id: 'x', roles: ['officer', 'inactive'], marks: 0 }).ok).toBe(false);
-    expect(canEnter({ ...NO_RULES, out: ['strike'] }, { id: 'x', roles: ['officer'], marks: 2 }).ok).toBe(false);
+  it('the whole team by default', () => {
+    expect(canEnter(NO_RULES, officer).ok).toBe(true);
+    expect(canEnter(NO_RULES, recruit).ok).toBe(true);
+    expect(canEnter(NO_RULES, { id: 's', roles: ['ucsd'], marks: 0 }).ok).toBe(false);
   });
-  it('names added are in, names blocked are out (blocked wins)', () => {
-    expect(canEnter({ ...NO_RULES, in: ['officer'], add: ['r'] }, recruit).ok).toBe(true);
+  it('only the roles ticked', () => {
+    const rules = { ...NO_RULES, roles: ['officer' as const] };
+    expect(canEnter(rules, recruit).ok).toBe(false);
+    expect(canEnter(rules, officer).ok).toBe(true);
+  });
+  it('a person picked by name is in, even without the role', () => {
+    expect(canEnter({ ...NO_RULES, roles: ['officer'], people: ['r'] }, recruit).ok).toBe(true);
+    expect(canEnter({ ...NO_RULES, roles: [], people: ['o'] }, officer).ok).toBe(true);
+  });
+  it('inactive members never enter, not even by name; a role does not pull in alumni, a name does', () => {
+    const idle = { id: 'x', roles: ['officer', 'inactive'], marks: 0 };
+    expect(canEnter(NO_RULES, idle).ok).toBe(false);
+    expect(canEnter({ ...NO_RULES, roles: ['officer'], people: ['x'] }, idle).ok).toBe(false);
+    expect(canEnter({ ...NO_RULES, people: ['a'] }, { id: 'a', roles: ['alumni'], marks: 0 }).ok).toBe(true);
+    expect(canEnter(NO_RULES, { id: 'a', roles: ['alumni', 'officer'], marks: 0 }).ok).toBe(false);
+  });
+  it('strikes, warnings and named people can be left out', () => {
+    const strike = { id: 's', roles: ['officer'], marks: 2 }, warned = { id: 'w', roles: ['officer'], marks: 1 };
+    expect(canEnter({ ...NO_RULES, skip: ['strike'] }, strike).ok).toBe(false);
+    expect(canEnter({ ...NO_RULES, skip: ['strike'] }, warned).ok).toBe(true);
+    expect(canEnter({ ...NO_RULES, skip: ['warning'] }, warned).ok).toBe(false);
+    expect(canEnter({ ...NO_RULES, skip: ['strike', 'warning'] }, officer).ok).toBe(true);
     expect(canEnter({ ...NO_RULES, block: ['o'] }, officer).ok).toBe(false);
-    expect(canEnter({ ...NO_RULES, add: ['o'], block: ['o'] }, officer).ok).toBe(false);
+    expect(canEnter({ ...NO_RULES, people: ['o'], block: ['o'] }, officer).ok).toBe(false);
+    expect(canEnter({ ...NO_RULES, people: ['s'], skip: ['strike'] }, strike).ok).toBe(true);
   });
   it('says why in words', () => {
-    const r = canEnter({ ...NO_RULES, in: ['officer'] }, recruit);
+    const r = canEnter({ ...NO_RULES, roles: ['officer'] }, recruit);
     expect(r.ok === false && r.why).toMatch(/only open to officers/);
   });
+  it('needs someone who can enter', () => {
+    expect(rulesEmpty({ ...NO_RULES, roles: [] })).toBe(true);
+    expect(rulesEmpty({ ...NO_RULES, roles: [], people: [A] })).toBe(false);
+  });
   it('cleans what a client sent', () => {
-    expect(cleanRules({ in: ['officer', 'nonsense'], out: 'x', add: [A, 'bad', A], block: [B] })).toEqual({ in: ['officer'], out: [], add: [A], block: [B] });
+    expect(cleanRules({ roles: ['officer', 'nonsense', 'officer'], people: [A, 'bad', A, B] })).toEqual({ ...NO_RULES, roles: ['officer'], people: [A, B] });
+    expect(cleanRules(null)).toEqual({ roles: [], people: [], skip: [], block: [] });
   });
   it('describes the rules', () => {
-    expect(rulesText(NO_RULES)).toBe('Open to all staff');
-    expect(rulesText({ ...NO_RULES, in: ['officer'], out: ['strike'] })).toBe('Open to officers, not people with strikes');
+    expect(rulesText(NO_RULES)).toBe('Open to everyone on the team');
+    expect(rulesText({ ...NO_RULES, roles: ['officer', 'lead'], people: [A] }, new Map([[A, 'Sam']]))).toBe('Open to officers and leads + Sam');
+    expect(rulesText({ ...NO_RULES, skip: ['strike'], block: [B] }, new Map([[B, 'Jo']]))).toBe('Open to everyone on the team, not people with strikes or Jo');
   });
 });
 

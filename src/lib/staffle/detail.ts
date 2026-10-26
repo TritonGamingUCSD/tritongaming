@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { namesOf } from '@/lib/docs/docsServer';
 import { canEnter, cleanRules, rulesText, type Rules } from '@/lib/staffle/rules';
-import { personFacts, stateOf, STAFFLE_COLUMNS, type StaffleState } from '@/lib/staffle/server';
+import { personFacts, STAFFLE_COLUMNS, type StaffleState } from '@/lib/staffle/server';
 
 // One Staffle as the page shows it: its items with the prize, how many entered, whether you did, and (once drawn) who won and who has claimed.
 export interface StaffleItemView {
@@ -10,7 +10,7 @@ export interface StaffleItemView {
   won: { id: string; user_id: string; name: string; position: number; claimed: boolean; passed: boolean }[];
 }
 export interface StaffleView {
-  id: string; slug: string; name: string; notes: string | null; pickup_note: string; opens_at: string; closes_at: string; state: StaffleState; drawn_at: string | null;
+  id: string; slug: string; name: string; notes: string | null; pickup_note: string; state: StaffleState; drawn_at: string | null;
   rules: Rules; rules_text: string; rule_names: Record<string, string>; items: StaffleItemView[];
   me: { can_enter: boolean; why: string | null; entered: number; won: { item_id: string; prize: string; claimed: boolean }[] };
   entrants: number; canManage: boolean;
@@ -38,10 +38,10 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
   ]);
   const sponsor = new Map((sponsors ?? []).map((s) => [s.id as string, s.name as string]));
   const prize = new Map((prizes ?? []).map((p) => [p.id as string, p]));
-  const names = await namesOf(svc, [...(won ?? []).map((w) => w.user_id as string), ...rules.add, ...rules.block, ...(canManage ? (entries ?? []).map((e) => e.user_id as string) : [])]);
+  const names = await namesOf(svc, [...(won ?? []).map((w) => w.user_id as string), ...rules.people, ...rules.block, ...(canManage ? (entries ?? []).map((e) => e.user_id as string) : [])]);
   const perItem = new Map<string, number>(), mine = new Set<string>();
   for (const e of entries ?? []) { perItem.set(e.item_id as string, (perItem.get(e.item_id as string) ?? 0) + 1); if (e.user_id === userId) mine.add(e.item_id as string); }
-  const state = stateOf(row as { status: string; opens_at: string; closes_at: string });
+  const state = row.status as StaffleState;
   const itemViews: StaffleItemView[] = (items ?? []).map((i) => {
     const p = prize.get(i.prize_id as string) as { name: string; photo: string; sponsor_id: string | null; type: string | null; size: string | null } | undefined;
     return {
@@ -53,8 +53,8 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
   });
   const verdict = canEnter(rules, person);
   return {
-    id, slug: row.slug as string, name: row.name as string, notes: (row.notes as string | null) ?? null, pickup_note: row.pickup_note as string, opens_at: row.opens_at as string, closes_at: row.closes_at as string,
-    state, drawn_at: (row.drawn_at as string | null) ?? null, rules, rules_text: rulesText(rules, names), rule_names: Object.fromEntries([...rules.add, ...rules.block].map((u) => [u, names.get(u) ?? 'Someone'])),
+    id, slug: row.slug as string, name: row.name as string, notes: (row.notes as string | null) ?? null, pickup_note: row.pickup_note as string,
+    state, drawn_at: (row.drawn_at as string | null) ?? null, rules, rules_text: rulesText(rules, names), rule_names: Object.fromEntries([...rules.people, ...rules.block].map((u) => [u, names.get(u) ?? 'Someone'])),
     items: itemViews,
     me: {
       can_enter: verdict.ok, why: verdict.ok ? null : verdict.why, entered: mine.size,
