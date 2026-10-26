@@ -78,7 +78,7 @@
   align-items: center;
   justify-content: center;
   gap: 0.3rem;
-  font-size: 0.65rem;
+  font-size: 0.67rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   color: rgba(var(--pp-ink-rgb), 0.6);
@@ -110,7 +110,7 @@
   display: flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 0.65rem;
+  font-size: 0.67rem;
   font-weight: 700;
   letter-spacing: 0.15em;
   color: var(--pp-ink);
@@ -126,7 +126,7 @@
   color: var(--pp-bad);
   padding: 0.15rem 0.5rem;
   border-radius: var(--radius-pill);
-  font-size: 0.6rem;
+  font-size: 0.67rem;
   letter-spacing: 0.08em;
 }
 

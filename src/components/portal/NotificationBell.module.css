@@ -37,7 +37,7 @@
   border-radius: var(--radius-pill);
   background: #dc2626;
   color: #f2f1f0; /* theme-ok */
-  font-size: 0.62rem;
+  font-size: 0.67rem;
   font-family: var(--font-futura-heavy);
   display: flex;
   align-items: center;

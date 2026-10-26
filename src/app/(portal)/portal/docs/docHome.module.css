@@ -60,3 +60,5 @@
 .mini button:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
 .mini small { flex-shrink: 0; font-size: 0.75rem; color: rgba(var(--pp-ink-rgb), 0.8); }
 .empty { padding: 2rem 0; text-align: center; color: rgba(var(--pp-ink-rgb), 0.85); }
+
+@media (pointer: coarse), (max-width: 1024px) { .quickEdit { width: 34px; height: 34px; } .quickLink { min-height: 44px; } }

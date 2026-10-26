@@ -32,7 +32,7 @@
 .person:hover { border-color: rgba(125, 180, 234, 0.4); }
 .personOn { border-color: var(--p-accent); background: rgba(125, 180, 234, 0.08); }
 .personName { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.personName strong { font-size: 0.9rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.personName strong { font-size: 0.9rem; overflow-wrap: anywhere; line-height: 1.25; }
 .personName small { font-size: 0.7rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex: none; }
 .avatarFallback { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; flex: none; background: rgba(var(--pp-ink-rgb), 0.1); font-size: 0.9rem; }

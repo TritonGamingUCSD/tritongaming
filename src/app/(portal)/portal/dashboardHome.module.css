@@ -28,7 +28,7 @@
 .statGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
 .stat { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.6rem 0.7rem; border-radius: 8px; border: 1px solid var(--pp-line); color: var(--pp-ink); text-decoration: none; background: rgba(var(--pp-ink-rgb), 0.03); min-width: 0; }
 .stat:hover { border-color: var(--pp-ink); }
-.statLabel { font-family: var(--font-renegare); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
+.statLabel { font-family: var(--font-renegare); font-size: 0.67rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
 .statValue { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.35rem; line-height: 1.1; overflow-wrap: anywhere; }
 .statSub { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.8); }
 .statBar { height: 4px; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.12); overflow: hidden; }
@@ -82,7 +82,7 @@
 .countLead { align-self: center; margin-right: 0.2rem; font-family: var(--font-futura-heavy); font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
 .countBox { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 3.4rem; padding: 0.3rem 0.5rem; border: 2px solid var(--pp-ink); border-radius: 6px; background: var(--pp-card); box-shadow: 2px 2px 0 rgba(var(--pp-ink-rgb), 0.45); }
 .countBox b { font-family: var(--font-futura-heavy); font-size: 1.35rem; line-height: 1; color: var(--pp-ink); font-variant-numeric: tabular-nums; }
-.countBox small { margin-top: 0.15rem; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
+.countBox small { margin-top: 0.15rem; font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.8); }
 .countdownNow { margin: 0.2rem 0; font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ok); }
 
 
@@ -109,15 +109,15 @@
   .ticket { grid-template-columns: minmax(0, 1fr); box-shadow: none; border-radius: 10px; }
   .tape, .stub { display: none; }
   .ticketMain { padding: 0.6rem 0.75rem; gap: 0.2rem; }
-  .sticker { transform: none; padding: 0.1rem 0.45rem; font-size: 0.6rem; }
+  .sticker { transform: none; padding: 0.1rem 0.45rem; font-size: 0.67rem; }
   .eventTitle { font-size: 1rem; margin: 0; }
-  .when { font-size: 0.64rem; }
+  .when { font-size: 0.67rem; }
   .where { font-size: 0.72rem; }
   .countdown { min-height: 0; gap: 0.25rem; margin: 0; }
-  .countLead { font-size: 0.62rem; }
+  .countLead { font-size: 0.67rem; }
   .countBox { min-width: 0; flex-direction: row; gap: 0.25rem; padding: 0.1rem 0.4rem; box-shadow: none; border-width: 1px; }
   .countBox b { font-size: 0.9rem; }
-  .countBox small { margin: 0; font-size: 0.58rem; }
+  .countBox small { margin: 0; font-size: 0.67rem; }
   .actions { margin-top: 0.25rem; }
   .primary { padding: 0.3rem 0.8rem; font-size: 0.68rem; box-shadow: none; }
   .note { transform: none; flex-direction: row; align-items: center; gap: 0.5rem; padding: 0.4rem 0.7rem; border-radius: 8px; box-shadow: none; }
@@ -135,5 +135,7 @@
   .dayCardHead { font-size: 0.85rem; }
   .dayCardBar { height: 6px; }
   .dayCardMeta { font-size: 0.7rem; }
-  .dayCardActions > a { flex: 1 1 8rem; padding: 0.35rem 0.7rem; font-size: 0.66rem; box-shadow: none; }
+  .dayCardActions > a { flex: 1 1 8rem; padding: 0.35rem 0.7rem; font-size: 0.67rem; box-shadow: none; }
 }
+
+@media (pointer: coarse), (max-width: 1024px) { .quickLink { min-height: 40px; } .noteLink { display: inline-flex; align-items: center; min-height: 36px; } }

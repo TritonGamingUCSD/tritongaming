@@ -305,7 +305,7 @@
   color: rgba(var(--pp-ink-rgb), 0.89);
 }
 
-.optionalTag { font-size: 0.65rem; letter-spacing: 0.08em; opacity: 0.85; margin-left: 0.4rem; }
+.optionalTag { font-size: 0.67rem; letter-spacing: 0.08em; opacity: 0.85; margin-left: 0.4rem; }
 .subLabel { display: block; margin-top: 0.5rem; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 .portfolioLabel { display: block; margin-top: 1.25rem; }
 .portfolioList { display: flex; flex-direction: column; gap: 0.5rem; }

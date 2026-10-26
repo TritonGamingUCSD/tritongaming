@@ -41,7 +41,7 @@
 
 .group { --accent: #34d399; padding: 0.2rem 0 0.35rem; }
 .group + .group { border-top: 1px solid rgba(var(--pp-chrome-rgb), 0.07); padding-top: 0.5rem; }
-.groupLabel { padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in srgb, var(--accent) 50%, var(--pp-chrome-fg)); white-space: nowrap; }
+.groupLabel { padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.67rem; letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in srgb, var(--accent) 50%, var(--pp-chrome-fg)); white-space: nowrap; }
 
 .result { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0.6rem; border-radius: 0.65rem; text-decoration: none; transition: background 0.1s; }
 .result:hover, .resultActive { background: color-mix(in srgb, var(--accent) 12%, transparent); }

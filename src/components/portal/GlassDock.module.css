@@ -83,7 +83,7 @@
 .active .label { font-weight: 700; }
 
 .icon { position: relative; display: grid; place-items: center; width: 44px; height: 24px; }
-.label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 0.64rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; }
+.label { max-width: 100%; overflow: hidden; text-overflow: ellipsis; font-size: 0.67rem; letter-spacing: 0; line-height: 1.1; white-space: nowrap; }
 .badge {
   position: absolute;
   top: -5px;
@@ -97,7 +97,7 @@
   background: var(--yellow);
   color: #0b1426; /* theme-ok */
   font-family: var(--font-futura-heavy);
-  font-size: 0.62rem;
+  font-size: 0.67rem;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--pp-card) 80%, transparent);
 }
 

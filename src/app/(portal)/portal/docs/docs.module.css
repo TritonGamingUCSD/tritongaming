@@ -96,10 +96,10 @@
 .rowMain { display: flex; align-items: center; gap: 0.45rem; flex: 1; min-width: 0; min-height: 34px; padding: 0.15rem 0.3rem; border: 0; background: none; color: rgba(var(--pp-ink-rgb), 0.97); font-family: var(--font-futura-medium); font-size: 0.85rem; text-align: left; cursor: pointer; }
 .rowIcon { display: inline-grid; place-items: center; width: 18px; flex: none; font-size: 0.95rem; line-height: 1; color: rgba(var(--pp-ink-rgb), 0.86); }
 .rowTitle { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tagMini { flex: none; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0 0.4rem; border-radius: 999px; background: rgba(147, 197, 253, 0.2); color: var(--pp-info); white-space: nowrap; }
-.subBadge { flex: none; min-width: 1.15rem; text-align: center; font-size: 0.64rem; padding: 0 0.35rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); color: rgba(var(--pp-ink-rgb), 0.9); }
+.tagMini { flex: none; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0 0.4rem; border-radius: 999px; background: rgba(147, 197, 253, 0.2); color: var(--pp-info); white-space: nowrap; }
+.subBadge { flex: none; min-width: 1.15rem; text-align: center; font-size: 0.67rem; padding: 0 0.35rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); color: rgba(var(--pp-ink-rgb), 0.9); }
 .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #fbbf24; }
-.editingTag { flex: none; max-width: 7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.62rem; font-weight: 700; padding: 0.05rem 0.4rem; border-radius: 999px; background: rgba(248, 113, 113, 0.2); color: var(--pp-bad); }
+.editingTag { flex: none; max-width: 7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.67rem; font-weight: 700; padding: 0.05rem 0.4rem; border-radius: 999px; background: rgba(248, 113, 113, 0.2); color: var(--pp-bad); }
 .favMini { flex: none; color: var(--p-accent); fill: var(--p-accent); }
 .rowMenuWrap { position: relative; flex: none; width: 0; }
 .rowMenuWrap .rowMenuBtn { position: absolute; right: 0.1rem; top: 50%; transform: translateY(-50%); background: none; }
@@ -231,7 +231,7 @@
 .versionRow strong { font-size: 0.82rem; color: var(--pp-ink); }
 .versionRow span { font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .versionOn { background: rgba(125, 180, 234, 0.12); border-color: rgba(125, 180, 234, 0.4); }
-.liveTag { margin-left: 0.4rem; font-style: normal; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0 0.4rem; border-radius: 999px; background: #34d399; color: #0b1426; white-space: nowrap; }
+.liveTag { margin-left: 0.4rem; font-style: normal; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; padding: 0 0.4rem; border-radius: 999px; background: #34d399; color: #0b1426; white-space: nowrap; }
 
 /* The chosen version, shown in the main area with its changes marked */
 .compare { composes: card from '../../../../components/ui/Surface.module.css'; display: flex; flex-direction: column; gap: 0.8rem; padding: 1rem 1.3rem 1.6rem; min-width: 0; }

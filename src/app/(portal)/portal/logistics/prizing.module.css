@@ -2,7 +2,7 @@
 .page { gap: 0.7rem; }
 
 /* the top bar: event, grouping, search, and the buttons */
-.top { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.top { position: relative; z-index: 7; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }   /* above the strip that covers the gap over a stuck title bar (logistics.module.css .dayTop::before) */
 .pick { flex: 1 1 16rem; max-width: 26rem; min-width: 11rem; }
 .pickSmall { flex: 0 1 12rem; }
 .search { flex: 1 1 14rem; min-width: 12rem; position: relative; }

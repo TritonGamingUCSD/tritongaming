@@ -17,7 +17,7 @@
 .planTop { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 .planTop strong { font-family: var(--font-futura-heavy); font-size: 1rem; }
 .planMeta { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.87); margin: 0; }
-.chip { font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12rem 0.5rem; border-radius: 999px; border: 1px solid; white-space: nowrap; }
+.chip { font-size: 0.67rem; letter-spacing: 0.06em; text-transform: uppercase; padding: 0.12rem 0.5rem; border-radius: 999px; border: 1px solid; white-space: nowrap; }
 .chipOnce { color: var(--pp-info); border-color: rgba(147, 197, 253, 0.4); }
 .chipWeekly { color: var(--pp-violet); border-color: rgba(196, 181, 253, 0.4); }
 .chipOpen { color: var(--p-accent-text); border-color: rgba(125, 180, 234, 0.45); }
@@ -44,7 +44,7 @@
 .detailHead { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: flex-start; }
 .detailTitle { margin: 0 0 0.25rem; font-family: var(--font-futura-heavy); font-size: 1.25rem; color: var(--pp-ink); }
 .hostBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
-.todo { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; background: var(--yellow); color: #0b1426; border-radius: 999px; padding: 0.05rem 0.45rem; }
+.todo { font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.06em; background: var(--yellow); color: #0b1426; border-radius: 999px; padding: 0.05rem 0.45rem; }
 .count { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .saveLine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .hint { margin: 0.4rem 0 0; font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.88); }
@@ -82,7 +82,7 @@
 .gridTable { display: grid; min-width: min-content; user-select: none; -webkit-user-select: none; }
 .corner { position: sticky; left: 0; background: var(--pp-card); z-index: 1; }
 .colHead { display: flex; flex-direction: column; align-items: center; gap: 0.1rem; padding: 0.4rem 0.2rem; font-size: 0.78rem; font-weight: 600; color: var(--pp-ink); text-align: center; border-left: 1px solid rgba(var(--pp-ink-rgb), 0.18); }
-.colAll { background: none; border: 0; color: rgba(var(--pp-ink-rgb), 0.88); font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; padding: 0; }
+.colAll { background: none; border: 0; color: rgba(var(--pp-ink-rgb), 0.88); font-size: 0.67rem; text-transform: uppercase; letter-spacing: 0.06em; cursor: pointer; padding: 0; }
 .colAll:hover { color: var(--p-accent-text); }
 .timeLbl { position: sticky; left: 0; z-index: 1; background: var(--pp-card); height: 24px; font-size: 0.68rem; color: rgba(var(--pp-ink-rgb), 0.88); text-align: right; padding-right: 0.4rem; transform: translateY(-0.5em); }
 .timeHalf { color: transparent; }
@@ -95,7 +95,7 @@
 
 
 /* results */
-.heat { height: 24px; border: 0; border-left: 1px solid rgba(var(--pp-ink-rgb), 0.18); border-top: 1px solid rgba(var(--pp-ink-rgb), 0.18); background: transparent; color: #04140e; font-size: 0.66rem; font-weight: 700; cursor: pointer; padding: 0; }
+.heat { height: 24px; border: 0; border-left: 1px solid rgba(var(--pp-ink-rgb), 0.18); border-top: 1px solid rgba(var(--pp-ink-rgb), 0.18); background: transparent; color: #04140e; font-size: 0.67rem; font-weight: 700; cursor: pointer; padding: 0; }
 .heat:hover { outline: 1px solid rgba(var(--pp-ink-rgb), 0.60); outline-offset: -1px; }
 .heatNum { pointer-events: none; }
 .heatSel { box-shadow: inset 0 0 0 2px var(--p-accent); }
@@ -130,13 +130,13 @@
 .busyNote strong { color: var(--pp-ink); }
 .busyNote ul { margin: 0.2rem 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.15rem; }
 .busyNote i { font-style: normal; color: rgba(var(--pp-ink-rgb), 0.88); }
-.colAll { padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.30); background: none; color: rgba(var(--pp-ink-rgb), 0.87); font-size: 0.66rem; cursor: pointer; }
+.colAll { padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.30); background: none; color: rgba(var(--pp-ink-rgb), 0.87); font-size: 0.67rem; cursor: pointer; }
 
 /* Desktop: the grid on the left at a readable width, the controls and details in a column on the right. A phone stacks them. */
 .availLayout, .resultsLayout { display: flex; flex-direction: column; gap: 1rem; }
 .availSide, .resultsSide { display: flex; flex-direction: column; gap: 0.7rem; min-width: 0; }
 .availSide .modeBar { grid-template-columns: 1fr; position: static; padding: 0; background: none; }
-.busyLabel { display: block; padding: 0 0.3rem; font-size: 0.66rem; line-height: 24px; color: rgba(var(--pp-ink-rgb), 1.00); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 3px rgba(0, 0, 0, 0.6); }
+.busyLabel { display: block; padding: 0 0.3rem; font-size: 0.67rem; line-height: 24px; color: rgba(var(--pp-ink-rgb), 1.00); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: 0 0 3px rgba(0, 0, 0, 0.6); }
 .cellBusy { overflow: hidden; }
 @media (min-width: 1100px) {
   .availLayout, .resultsLayout { display: grid; grid-template-columns: minmax(0, max-content) minmax(300px, 380px); justify-content: center; gap: 1.25rem; align-items: start; }
@@ -225,9 +225,9 @@
 @media (max-width: 719px) {
   .gridTable { --timeW: 62px; --colW: 84px; --rowH: 34px; }
   .gridWrap { width: 100%; }
-  .timeLbl { font-size: 0.66rem; white-space: nowrap; padding-right: 0.3rem; transform: translateY(-0.55em); }
+  .timeLbl { font-size: 0.67rem; white-space: nowrap; padding-right: 0.3rem; transform: translateY(-0.55em); }
   .heat { font-size: 0.8rem; }
-  .colAll { font-size: 0.62rem; }
+  .colAll { font-size: 0.67rem; }
 }
 .phoneTop .modeBar { position: static; padding: 0; background: none; }
 /* Press-and-hold painting: the grid glows while a finger is painting, and the page stops scrolling under it. */

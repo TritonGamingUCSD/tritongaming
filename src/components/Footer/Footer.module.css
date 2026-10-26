@@ -67,3 +67,5 @@
   .joinBtn { width: 100%; justify-content: center; }
   .toTop { margin-left: auto; }
 }
+
+@media (pointer: coarse), (max-width: 1024px) { .portalLink { display: inline-block; padding: 0.5rem 0.2rem; } }

@@ -17,8 +17,8 @@
 .avatar { border-radius: 50%; flex: none; object-fit: cover; }
 .avatarFallback { display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 50%; background: rgba(var(--pp-ink-rgb), 0.12); color: var(--pp-ink); font-size: 0.85rem; font-weight: 700; }
 .name { display: flex; flex-direction: column; min-width: 0; }
-.name strong { font-size: 0.9rem; color: var(--pp-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.name small { font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.88); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.name strong { font-size: 0.9rem; color: var(--pp-ink); overflow-wrap: anywhere; line-height: 1.25; }
+.name small { font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.88); overflow-wrap: anywhere; line-height: 1.25; }
 .role { color: var(--pp-info); font-weight: 600; }
 .roleLead { color: var(--pp-ok); }
 .toggle { display: grid; place-items: center; width: 44px; height: 34px; border-radius: 0.6rem; border: 1px solid transparent; cursor: pointer; transition: background 0.15s, transform 0.1s; }
@@ -64,8 +64,8 @@
 .memberList { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.4rem 1rem; }
 .member { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.16); min-width: 0; }
 .memberName { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-.memberName strong { font-size: 0.9rem; color: var(--pp-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.memberName small { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.memberName strong { font-size: 0.9rem; color: var(--pp-ink); overflow-wrap: anywhere; line-height: 1.25; }
+.memberName small { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); overflow-wrap: anywhere; line-height: 1.25; }
 .memberActions { display: inline-flex; gap: 0.2rem; }
 .editForm { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; flex: 1; min-width: 0; }
 .editForm strong { flex: 1 1 100%; font-size: 0.85rem; color: var(--pp-ink); }
@@ -129,4 +129,4 @@
 .personRow { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.16); min-width: 0; }
 .personRow:last-child { border-bottom: 0; }
 .personRow .name { flex: 1; }
-.carriedTag { margin-left: 0.4rem; font-style: normal; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.05rem 0.45rem; border-radius: 999px; background: rgba(251, 191, 36, 0.2); color: var(--pp-warn); white-space: nowrap; }
+.carriedTag { margin-left: 0.4rem; font-style: normal; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.05rem 0.45rem; border-radius: 999px; background: rgba(251, 191, 36, 0.2); color: var(--pp-warn); white-space: nowrap; }

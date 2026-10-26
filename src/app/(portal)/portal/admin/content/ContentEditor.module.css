@@ -109,7 +109,7 @@
 }
 
 .optionalTag {
-  font-size: 0.62rem;
+  font-size: 0.67rem;
   padding: 0.05rem 0.35rem;
   background: rgba(var(--pp-ink-rgb), 0.06);
   border-radius: var(--radius-pill);

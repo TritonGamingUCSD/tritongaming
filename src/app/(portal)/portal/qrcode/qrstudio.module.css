@@ -230,7 +230,7 @@
 }
 
 .statLabel {
-  font-size: 0.65rem;
+  font-size: 0.67rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(var(--pp-ink-rgb), 0.87);
@@ -314,7 +314,7 @@
 .hexDot { width: 22px; height: 22px; border-radius: 0.45rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.48); flex-shrink: 0; }
 .hexInput { width: 110px; padding: 0.35rem 0.6rem; border-radius: 0.55rem; background: rgba(var(--pp-ink-rgb), 0.05); border: 1px solid rgba(var(--pp-ink-rgb), 0.26); color: var(--pp-ink); font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.82rem; text-transform: lowercase; }
 .hexInput:focus { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
-.darkTag { font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-violet); background: rgba(167, 139, 250, 0.14); border-radius: 999px; padding: 0.02rem 0.4rem; white-space: nowrap; }
+.darkTag { font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-violet); background: rgba(167, 139, 250, 0.14); border-radius: 999px; padding: 0.02rem 0.4rem; white-space: nowrap; }
 .presetGrid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
 
 @media (max-width: 480px) {

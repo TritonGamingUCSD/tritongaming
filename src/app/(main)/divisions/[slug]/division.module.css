@@ -37,7 +37,7 @@
 .tiltR { transform: rotate(0.8deg); }
 .rosterAvatar { display: grid; place-items: center; width: 3.5rem; height: 3.5rem; border-radius: 50%; border: 3px solid var(--ink); background: var(--yellow); font-family: var(--font-brick); font-size: 1.5rem; flex-shrink: 0; overflow: hidden; }
 .rosterName { display: block; font-family: var(--font-futura-heavy); font-size: 1rem; overflow-wrap: anywhere; }
-.rosterRole { display: block; font-family: var(--font-renegare); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; color: #3a4764; margin-top: 0.15rem; }
+.rosterRole { display: block; font-family: var(--font-renegare); font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; color: #3a4764; margin-top: 0.15rem; }
 .rosterTag { display: block; font-family: var(--font-renegare); font-size: 1rem; color: #5a6580; }
 
 @media (max-width: 640px) {

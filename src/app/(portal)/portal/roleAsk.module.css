@@ -7,7 +7,7 @@
 .roleQuick { margin: 0; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .roleQuick a { color: var(--p-accent-text); font-weight: 600; text-decoration: underline; text-underline-offset: 2px; }
 
-.kicker { font-family: var(--font-renegare); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.86); }
+.kicker { font-family: var(--font-renegare); font-size: 0.67rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.86); }
 .meta { margin: 0; font-size: 0.78rem; line-height: 1.4; color: rgba(var(--pp-ink-rgb), 0.88); }
 .cta { display: inline-flex; align-items: center; justify-content: center; min-height: 34px; padding: 0.35rem 1rem; font-family: var(--font-futura-heavy); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; border: 2px solid #011941; border-radius: 4px; background: var(--yellow); color: #011941; box-shadow: 3px 3px 0 #011941; } /* theme-ok */
 .cta:hover { transform: translate(-1px, -1px); box-shadow: 4px 4px 0 #011941; } /* theme-ok */

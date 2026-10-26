@@ -32,7 +32,7 @@
 
 /* The spreadsheet-style grid (computers) */
 .grid { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 60rem; }
-.grid th { position: sticky; top: 0; text-align: left; padding: 0.55rem 0.7rem; font-family: var(--font-renegare); font-weight: 400; font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.85); background: rgba(var(--pp-ink-rgb), 0.05); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.22); white-space: nowrap; }
+.grid th { position: sticky; top: 0; text-align: left; padding: 0.55rem 0.7rem; font-family: var(--font-renegare); font-weight: 400; font-size: 0.67rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.85); background: rgba(var(--pp-ink-rgb), 0.05); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.22); white-space: nowrap; }
 .grid td { padding: 0.25rem 0.5rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); vertical-align: middle; color: var(--pp-ink); }
 .grid tbody tr:hover { background: rgba(var(--pp-ink-rgb), 0.035); }
 .rowBad td:first-child { box-shadow: inset 3px 0 0 var(--pp-bad); }
@@ -538,7 +538,8 @@
 .dayLine { padding-block: 0.15rem; }
 .cell, .cellNa { min-height: 30px; }
 .cellBox { width: 18px; height: 18px; }
-.dHead { padding: 0.15rem 0.2rem; white-space: nowrap; }
+.dHead { padding: 0.15rem 0.2rem; white-space: normal; overflow-wrap: break-word; }
+@media (max-width: 1280px) { .dHead, .dHead small { font-size: 0.68rem; letter-spacing: -0.01em; } }
 .dTag { font-size: 0.92rem; }
 .dInfo { gap: 0 0.5rem; }
 .colHead { padding-block: 0.15rem; }
@@ -990,7 +991,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 @media (max-width: 640px) {
   .dCells { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.25rem; }
   .cell { flex-direction: column; justify-content: center; gap: 0; padding: 0.1rem 0.15rem; }
-  .cellLabel { font-size: 0.66rem; text-align: center; line-height: 1.1; }
+  .cellLabel { font-size: 0.67rem; text-align: center; line-height: 1.1; }
 }
 
 /* The count box inside an event-day step cell fits the cell, with its All button inside the box at the right (it used to be 10rem wide and covered the next cell) */

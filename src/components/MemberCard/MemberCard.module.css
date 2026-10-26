@@ -77,7 +77,7 @@
 .zine .name { color: var(--ink); font-size: 1.25rem; }
 .zine .tag { color: #5a6580; }
 .zine .sub { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.25rem; }
-.zine .orgTitle { color: #3a4764; font-family: var(--font-renegare); font-size: 0.66rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.zine .orgTitle { color: #3a4764; font-family: var(--font-renegare); font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; }
 .zine .pronouns { color: #5a6580; font-family: var(--font-renegare); font-size: 1rem; }
 .zine .dot { color: rgba(10, 22, 48, 0.4); }
 .zine .info { border-top: 2px dashed rgba(10, 22, 48, 0.3); }

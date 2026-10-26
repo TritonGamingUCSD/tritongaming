@@ -81,7 +81,7 @@
 .preview:focus-visible .overlay,
 .preview:disabled .overlay { opacity: 1; }
 /* touch screens have no hover: a thin "Replace" strip along the bottom edge shows the picture can be tapped */
-@media (hover: none) { .overlay { inset: auto 0 0 0; padding: 0.35rem; opacity: 1; font-size: 0.65rem; } }
+@media (hover: none) { .overlay { inset: auto 0 0 0; padding: 0.35rem; opacity: 1; font-size: 0.67rem; } }
 
 .removeChip {
   position: absolute;
@@ -105,5 +105,5 @@
 /* compact: a thumbnail in a list row */
 .compact { gap: 0.2rem; }
 .compact .dropzone { width: 84px; height: 56px; padding: 0; font-size: 0.75rem; }
-.compact .overlay { font-size: 0.6rem; gap: 0.2rem; }
+.compact .overlay { font-size: 0.67rem; gap: 0.2rem; }
 .compact .removeChip { top: -0.4rem; right: -0.4rem; }

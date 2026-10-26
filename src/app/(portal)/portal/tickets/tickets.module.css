@@ -299,7 +299,7 @@
 }
 
 .eventMon {
-  font-size: 0.62rem;
+  font-size: 0.67rem;
   text-transform: uppercase;
   color: rgba(var(--pp-ink-rgb), 0.9);
   letter-spacing: 0.08em;

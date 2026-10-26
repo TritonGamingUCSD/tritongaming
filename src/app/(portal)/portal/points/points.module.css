@@ -226,7 +226,7 @@
 .boardName { flex: 1; min-width: 0; font-family: var(--font-futura-medium); font-size: 0.88rem; color: var(--pp-ink); }
 
 .boardTier {
-  font-size: 0.65rem;
+  font-size: 0.67rem;
   font-family: var(--font-renegare);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -309,7 +309,7 @@
   display: inline-block;
   margin-left: 0.5rem;
   font-family: var(--font-renegare);
-  font-size: 0.6rem;
+  font-size: 0.67rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   padding: 0.1rem 0.4rem;
@@ -512,6 +512,6 @@
 .rungReached i { background: var(--rc); border-color: var(--pp-ink); }
 .rung b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.78rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.86); }
 .rungReached b, .rungNow b { color: var(--pp-ink); }
-.rungNow::after { content: 'You are here'; position: absolute; top: -1.15rem; left: 0; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--pp-ink); white-space: nowrap; }
+.rungNow::after { content: 'You are here'; position: absolute; top: -1.15rem; left: 0; font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; color: var(--pp-ink); white-space: nowrap; }
 .heroNote { margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .heroNote strong { color: var(--pp-ink); }

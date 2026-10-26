@@ -66,7 +66,7 @@
 .msgStaff { border-color: rgba(74, 144, 226, 0.4); background: rgba(74, 144, 226, 0.08); }
 .msgHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); margin-bottom: 0.3rem; }
 .msgHead strong { color: var(--pp-ink); font-size: 0.8rem; }
-.staffTag { font-size: 0.64rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--pp-info); }
+.staffTag { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--pp-info); }
 .msgBody { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.92rem; line-height: 1.5; color: rgba(var(--pp-ink-rgb), 1.00); }
 .shots { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
 .shots img { display: block; max-width: 220px; max-height: 160px; border-radius: 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.32); }
