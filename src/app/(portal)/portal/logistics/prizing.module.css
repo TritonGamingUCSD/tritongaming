@@ -44,7 +44,11 @@
 .rowMain { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
 .name { display: inline-flex; align-items: center; gap: 0.3rem; background: none; border: 0; padding: 0; color: var(--pp-ink); font: inherit; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
 .name:disabled { cursor: default; }
-.lineName { overflow-wrap: anywhere; }
+.lineName { overflow-wrap: anywhere; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-weight: 700; text-align: left; cursor: pointer; }
+.lineOpen { cursor: pointer; }
+.lineOpen:hover { background: rgba(var(--pp-ink-rgb), 0.05); }
+.lineOpen:hover .openHint { opacity: 1; }
+.openHint { opacity: 0.45; }
 .num { display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 0; }
 .sub { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.65); }
 .tools { display: flex; justify-content: flex-end; }

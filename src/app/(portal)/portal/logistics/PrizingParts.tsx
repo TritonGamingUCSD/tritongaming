@@ -98,8 +98,8 @@ const addLabel = (p: PrizeRow) => `${p.name}${p.size ? ` · ${p.size.replace(/ P
 export function LineRow({ l, station, canEdit, ctx, where }: { l: StationLine; station: { id: string; name: string }; canEdit: boolean; ctx: PrizingCtx; where?: boolean }) {
   const given = ctx.givenOf(l.id);
   return (
-              <div className={`${pz.line} ${ctx.flashing(`line:${l.id}`) ? pz.flash : ''}`} style={{ '--steps': ctx.shownSteps.length } as CSSProperties}>
-                <div className={pz.prizeCell}><Pic p={l.p} /><div className={pz.rowMain}><b className={pz.lineName}>{l.p.name}</b><Tags p={l.p} sponsor={l.sponsor} slug={ctx.eventSlug(l.p)} />{where && <span className={pz.at}>At <b>{station.name}</b></span>}</div></div>
+              <div className={`${pz.line} ${pz.lineOpen} ${ctx.flashing(`line:${l.id}`) ? pz.flash : ''}`} style={{ '--steps': ctx.shownSteps.length } as CSSProperties} onClick={(e) => { if (!interactive(e.target)) ctx.edit(l.p); }}>
+                <div className={pz.prizeCell}><Pic p={l.p} /><div className={pz.rowMain}><button type="button" className={pz.lineName} aria-label={`${ctx.canStock ? 'Edit' : 'Details of'} ${l.p.name}`} onClick={() => ctx.edit(l.p)}>{l.p.name}</button><Tags p={l.p} sponsor={l.sponsor} slug={ctx.eventSlug(l.p)} />{where && <span className={pz.at}>At <b>{station.name}</b></span>}</div></div>
                 <div className={pz.num} data-label="How many">{isLoose(l.p) ? <span className={pz.hasIt}>Has it</span> : <><NumberCell field value={l.quantity} canEdit={canEdit} label={`How many ${l.p.name} for ${station.name}`} onEdit={(on) => ctx.editing(on ? `line:${l.id}` : null)} onSave={(v) => { if (v !== null) ctx.setLine(station.id, l.p, v); }} />{ctx.heldBy(`line:${l.id}`) && <small className={pz.editor}>{ctx.heldBy(`line:${l.id}`)} is typing…</small>}{l.p.price !== null && <small className={pz.sub}>{money(l.quantity * l.p.price)}</small>}</>}</div>
                 <div className={pz.num} data-label="Left">{isLoose(l.p) ? <LevelChip level={l.p.stock_level} /> : <span className={`${pz.chip} ${leftClass(l.p.left)}`}>{l.p.left}</span>}</div>
                 {ctx.shownSteps.map((s) => (
@@ -107,7 +107,7 @@ export function LineRow({ l, station, canEdit, ctx, where }: { l: StationLine; s
                     <StepCell n={ctx.shown(l.id, s.id, stepCeiling(s, l, given))} real={Math.min(ctx.count(l.id, s.id), stepCeiling(s, l, given))} ceiling={stepCeiling(s, l, given)} label={`${l.p.name} · ${s.name}`} disabled={ctx.closed} onSet={(v) => ctx.setCount(l.id, s.id, v)} onAdd={(d) => ctx.addCount(l.id, s.id, d)} onEdit={(on) => ctx.editing(on ? `count:${l.id}:${s.id}` : null)} />
                   </div>
                 ))}
-                <div className={pz.tools}><IconButton kind="edit" label={`${ctx.canStock ? 'Edit' : 'Details of'} ${l.p.name}`} onClick={() => ctx.edit(l.p)} />{canEdit && <RowMenu label={`More for ${l.p.name}`} items={[{ label: 'Take It Off This Station', danger: true, onClick: () => ctx.setLine(station.id, l.p, 0) }]} />}</div>
+                <div className={pz.tools}>{canEdit && <RowMenu label={`More for ${l.p.name}`} items={[{ label: 'Take It Off This Station', danger: true, onClick: () => ctx.setLine(station.id, l.p, 0) }]} />}</div>
               </div>
   );
 }
@@ -200,12 +200,12 @@ export function StockBlock({ id, label, rows, ctx, open, onToggle }: { id: strin
 function StockLine({ row, ctx }: { row: Row; ctx: PrizingCtx }) {
   const { p } = row;
   return (
-    <div id={`prize-${p.id}`} className={`${pz.line} ${pz.lineStock} ${ctx.flashing(`prize:${p.id}`) ? pz.flash : ''} ${p.left < 0 ? pz.rowBad : ''}`}>
-      <div className={pz.prizeCell}><Pic p={p} /><div className={pz.rowMain}><b className={pz.lineName}>{p.name}</b><Tags p={p} sponsor={row.sponsor} slug={ctx.eventSlug(p)} /></div></div>
+    <div id={`prize-${p.id}`} className={`${pz.line} ${pz.lineStock} ${pz.lineOpen} ${ctx.flashing(`prize:${p.id}`) ? pz.flash : ''} ${p.left < 0 ? pz.rowBad : ''}`} onClick={(e) => { if (!interactive(e.target)) ctx.edit(p); }}>
+      <div className={pz.prizeCell}><Pic p={p} /><div className={pz.rowMain}><button type="button" className={pz.lineName} aria-label={`${ctx.canStock ? 'Edit' : 'Details of'} ${p.name}`} onClick={() => ctx.edit(p)}>{p.name}</button><Tags p={p} sponsor={row.sponsor} slug={ctx.eventSlug(p)} /></div></div>
       <div className={pz.num} data-label="In stock">{isLoose(p) ? <LevelPick p={p} canEdit={ctx.canStock} ctx={ctx} /> : <><NumberCell field value={p.quantity} canEdit={ctx.canStock} label={`How many ${p.name} are on hand`} onEdit={(on) => ctx.editing(on ? `prize:${p.id}` : null)} onSave={(v) => { if (v !== null && v !== p.quantity) ctx.setStock(p, v); }} />{ctx.heldBy(`prize:${p.id}`) && <small className={pz.typing}>{ctx.heldBy(`prize:${p.id}`)} is typing</small>}</>}</div>
       <div className={pz.num} data-label="Planned" title={p.used_at.length ? `Planned or used at ${p.used_at.join(', ')}` : 'Not planned for any event'}>{isLoose(p) ? <span>–</span> : <button type="button" className={pz.numLink} onClick={() => ctx.where(p)} aria-label={`${p.allocated} planned. Where did ${p.name} go?`}>{p.allocated}</button>}</div>
       <div className={pz.num} data-label="Left">{isLoose(p) ? <LevelChip level={p.stock_level} /> : <span className={`${pz.chip} ${leftClass(p.left)}`}>{p.left}</span>}</div>
-      <div className={pz.tools}><IconButton kind="edit" label={`${ctx.canStock ? 'Edit' : 'Details of'} ${p.name}`} onClick={() => ctx.edit(p)} /></div>
+      <div className={pz.tools} aria-hidden="true"><ChevronRight size={16} className={pz.openHint} /></div>
     </div>
   );
 }

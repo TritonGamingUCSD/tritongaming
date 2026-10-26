@@ -8,6 +8,7 @@ import { CONDITIONS, UNUSABLE, conditionLabel } from '@/lib/logistics/constants'
 import { quantityText, tagKey, type Device, type DevicePatch } from '@/lib/logistics/devices';
 import { Combo } from './Combo';
 import { RowMenu } from './RowMenu';
+import { interactive } from './interactive';
 import { PickCell, TextCell } from './Cells';
 import { EQUIPMENT_COLS, GridHead, gridStyle } from './gridTable';
 import { groupRows, type DeviceGroup } from '@/lib/logistics/deviceGroups';
@@ -101,7 +102,7 @@ export default function EquipmentTab({ api, data, group = 'type' }: { api: Logis
             <div key={g.title}>
               {mode !== 'none' && <div className={styles.devGroupHead}><b>{g.title}</b><span>{g.rows.length} {g.rows.length === 1 ? 'device' : 'devices'}</span></div>}
               {g.rows.map(({ d }) => (
-            <div key={d.id} className={`${styles.prizeRow} ${isProblem(d) ? styles.lineBad : ''}`} style={gridStyle(EQUIPMENT_COLS)}>
+            <div key={d.id} className={`${styles.prizeRow} ${styles.clickRow} ${isProblem(d) ? styles.lineBad : ''}`} style={gridStyle(EQUIPMENT_COLS)} onClick={(e) => { if (!interactive(e.target)) open(d); }}>
               <span className={styles.prizeName}><TextCell value={d.tag} canEdit={canEdit} strong placeholder="no ID" onSave={(v) => save(d, { tag: v || null })} /></span>
               <span data-label="Name"><TextCell value={d.name} canEdit={canEdit} onSave={(v) => save(d, { name: v || null })} /></span>
               <span data-label="Type"><PickCell value={d.type} options={data.lists.type.map((t) => t.value)} canEdit={canEdit} clearable={false} onSave={(v) => v && save(d, { type: v })} onCreate={(v) => api.addOption('type', v)} /></span>
