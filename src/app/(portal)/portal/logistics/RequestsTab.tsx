@@ -123,7 +123,7 @@ export default function RequestsTab({ kind, plan, api, data, store }: { kind: Re
             return (
               <div key={r.id} className={`${styles.prizeRow} ${styles.reqRow} ${styles[`req_${r.status}`]}`} style={gridStyle(REQUEST_COLS)}>
                 <span className={styles.prizeName}>{manage && !closed ? <PickCell value={r.requester} options={people.map((p) => p.name)} clearable={false} canEdit onSave={(v) => { const id = people.find((p) => p.name === v)?.id; if (id && id !== r.requester_id) void patch(r, { requester_id: id }); }} /> : <b>{r.requester}</b>}<small className={styles.dim}>{r.division ? ` · ${r.division}` : ''} · {day(r.created_at)}</small></span>
-                <span data-label="Team"><TextCell value={r.team} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { team: v })} /></span>
+                <span data-label="For"><TextCell value={r.team} canEdit={mine} placeholder="Add" onSave={(v) => void patch(r, { team: v })} /></span>
                 <span data-label={r.kind === 'devices' ? 'Devices' : 'Prizes'}>
                   {r.kind === 'devices'
                     ? <>{(r.items as DeviceItem[]).map((i, n) => <span key={n} className={styles.reqItem}><b>{i.qty} × {i.what}</b>{i.games.length ? <span className={styles.dim}> · {i.games.join(', ')}</span> : null}</span>)}{r.status !== 'declined' && <span className={`${styles.reqItem} ${r.filled === r.rowsTotal && r.rowsTotal > 0 ? styles.okText : styles.warnText}`}>{r.filled}/{r.rowsTotal} filled</span>}</>
@@ -176,7 +176,7 @@ function RequestDialog({ kind: askKind, plan, api, data, planId, loaded, request
         {problem && <Notice tone="error">{problem}</Notice>}
         {/* A request that is already sent is changed in its table row (team, contact, notes); this form then only holds what the row has no box for. */}
         <div className={request ? undefined : loaded.canManage ? styles.row3 : styles.row2}>
-          {!request && <Field label="Team or booth" hint="Who it is for, like Triton Valorant."><Suggest value={team} onChange={setTeam} options={teams.map((t) => ({ value: t }))} maxLength={120} className={styles.comboInput} /></Field>}
+          {!request && <Field label="For" hint="Who it is for, like Triton Valorant or Tech Booth."><Suggest value={team} onChange={setTeam} options={teams.map((t) => ({ value: t }))} maxLength={120} className={styles.comboInput} /></Field>}
           <Field label="Division"><Select value={division} onChange={(e) => setDivision(e.target.value)}><option value="">None</option>{loaded.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select></Field>
           {loaded.canManage && !request && (
             <Field label="Contact" hint="A division lead or an officer or above. Defaults to you.">

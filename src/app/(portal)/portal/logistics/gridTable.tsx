@@ -25,4 +25,4 @@ export const SPONSOR_PRIZE_COLS: Col[] = [col('Sponsor', 'minmax(9rem, 1fr)'), c
 export const borrowedCols = (sponsor: boolean): Col[] => [col('ID', '8.5rem'), col('Type', 'minmax(10rem, 1.2fr)'), col(sponsor ? 'Sponsor' : 'Officer', 'minmax(10rem, 1.3fr)'), col('Station', 'minmax(8rem, 1fr)'),
   col('Installed games', 'minmax(12rem, 1.8fr)'), col('Status', 'minmax(8rem, 1fr)'), col('', '9rem')];
 export const SPONSOR_COLS: Col[] = [col('Sponsor', 'minmax(11rem, 1.2fr)'), col('Contact', 'minmax(11rem, 1.4fr)'), col('Notes', 'minmax(13rem, 2.5fr)'), TOOLS];
-export const REQUEST_COLS: Col[] = [col('Contact', 'minmax(12rem, 1.4fr)'), col('Team', 'minmax(9rem, 1fr)'), col('What', 'minmax(13rem, 2fr)'), col('Notes', 'minmax(10rem, 1.4fr)'), col('Status', '8rem'), col('', 'minmax(5rem, 1fr)')];
+export const REQUEST_COLS: Col[] = [col('Contact', 'minmax(12rem, 1.4fr)'), col('For', 'minmax(9rem, 1fr)'), col('What', 'minmax(13rem, 2fr)'), col('Notes', 'minmax(10rem, 1.4fr)'), col('Status', '8rem'), col('', 'minmax(5rem, 1fr)')];

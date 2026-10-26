@@ -44,7 +44,7 @@ export default function BorrowedTab({ plan, catalog, data, kind }: { plan: PlanA
       </div>
       {dialog && <BorrowedDialog extrasOnly plan={plan} catalog={catalog} data={data} borrowed={dialog === 'new' ? null : dialog} defaultKind={kind} onClose={() => setDialog(null)} />}
       {rows.length === 0 ? (
-        <div className={styles.empty}><p>{sponsor ? 'No sponsor loaners for this event. Add a device a sponsor is lending, then give it a team on the Allocation tab.' : 'No officer loaners for this event. Add a device an officer is bringing, then give it a team on the Allocation tab.'}</p></div>
+        <div className={styles.empty}><p>{sponsor ? 'No sponsor loaners for this event. Add a device a sponsor is lending, then give it a team on the Devices tab.' : 'No officer loaners for this event. Add a device an officer is bringing, then give it a team on the Devices tab.'}</p></div>
       ) : (
         <div className={styles.prizeGrid}>
           <GridHead cols={borrowedCols(sponsor)} />

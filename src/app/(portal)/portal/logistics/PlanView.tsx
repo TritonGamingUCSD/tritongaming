@@ -20,6 +20,7 @@ import { FillDialog, StationDialog } from './PlanDialogs';
 import BorrowedTab from './BorrowedTab';
 import DeviceFinder from './DeviceFinder';
 import RequestsTab, { useRequests } from './RequestsTab';
+import EventOverview from './EventOverview';
 import SectionTabs from '@/components/ui/SectionTabs';
 import type { EventPage } from './logisticsRoute';
 import { SheetRows, type SheetCtx } from './PlanSheet';
@@ -365,6 +366,14 @@ export default function PlanView({ id, data, catalog, page, day, group, embedded
         <SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={page === 'requests-prizing' ? 'prizing' : 'devices'} onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices', count: requests.count('devices') }, { id: 'prizing', label: 'Prizing', count: requests.count('prizes') }]} />
         <RequestsTab store={requests} key={page === 'requests-prizing' ? 'p' : 'd'} kind={page === 'requests-prizing' ? 'prizes' : 'devices'} plan={plan} api={catalog} data={data} />
       </div>
+    );
+  }
+  if (!embedded) {
+    // An event's own page: an overview and what was asked for and lent. Devices and prizing are on their own tabs.
+    return (
+      <EventOverview name={p.name} dates={range(p.starts_on, p.ends_on)} closed={closed} notes={p.notes ?? null} portalEvent={!!p.event_id} section={page} requests={requests} plan={plan} catalog={catalog} data={data}
+        stats={{ teams: stations.length, requests: (requests.count('devices') ?? 0) + (requests.count('prizes') ?? 0), newRequests: 0, devices: rows.length, empty: rows.filter((r) => r.kind === 'slot').length, prizes: detail.prizes.lines.reduce((n, l) => n + l.quantity, 0) }}
+        onBack={onBack} onOpenDevices={() => onOpenDevices?.()} onOpenPrizing={onOpenPrizing} />
     );
   }
   return (

@@ -41,7 +41,7 @@ export default function PlansTab({ api, data, route, go }: { api: LogisticsApi; 
     if (!plan) return <div className={styles.tab}><Notice tone="error">That event doesn’t exist any more.</Notice><div><Button variant="secondary" onClick={() => open(null)}>All Events</Button></div></div>;
     return <PlanView key={plan.id} id={plan.id} data={data} catalog={api} page={route.page} day={false} group="station" onOpenPrizing={() => go({ tab: 'prizing', plan: plan.slug })} onOpenDevices={() => go({ tab: 'devices', plan: plan.slug })} openOnly={false} onOpenOnly={() => undefined} onPage={(page) => go({ tab: 'events', plan: plan.slug, page })} onBack={() => open(null)} />;
   }
-  return <PlanList data={data} list={list} onOpen={open} />;
+  return <PlanList data={data} list={list} onOpen={open} go={go} />;
 }
 
 // The closest event comes first: the ones on today, then the upcoming ones soonest first, then the past ones most recent first.
@@ -50,7 +50,7 @@ function nearestFirst(plans: PlanSummary[], today: string): PlanSummary[] {
   return [...plans].sort((a, b) => group(a) - group(b) || (group(a) === 2 ? b.ends_on.localeCompare(a.ends_on) || b.starts_on.localeCompare(a.starts_on) : a.starts_on.localeCompare(b.starts_on)));
 }
 
-function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<typeof usePlanList>; onOpen: (p: PlanSummary) => void }) {
+function PlanList({ data, list, onOpen, go }: { data: Catalog; list: ReturnType<typeof usePlanList>; onOpen: (p: PlanSummary) => void; go: (r: Route) => void }) {
   const { plans, today, error, setError, create, update, remove, events } = list;
   const closer = useCloseEvent(list, () => void list.reload());
   const [creating, setCreating] = useState(false);
@@ -58,6 +58,45 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
   const removePlan = async (p: PlanSummary) => {
     if (!(await confirmHold({ title: `Remove “${p.name}”?`, message: 'The plan, its teams, the devices in it (including any borrowed ones) and every step recorded for it are deleted. The inventory itself is not touched.', confirmLabel: 'Hold to remove' }))) return;
     await remove(p.id);
+  };
+  const ordered = plans ? nearestFirst(plans, today) : [];
+  const isPast = (p: PlanSummary) => p.ends_on < today || p.status === 'closed';
+  const card = (p: PlanSummary) => {
+    const isToday = p.status === 'draft' && p.starts_on <= today && today <= p.ends_on;
+    const filled = Math.max(0, p.devices - p.empty);
+    return (
+      <li key={p.id} className={`${styles.evCard} ${isToday ? styles.evCardToday : ''}`}>
+        <button type="button" className={styles.evCardMain} onClick={() => onOpen(p)}>
+          <b className={styles.evCardName}>{p.name}</b>
+          <span className={styles.evCardTags}>
+            {isToday && <span className={`${styles.badge} ${styles.good}`}>Today</span>}
+            {p.status === 'closed' && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}
+            {!p.event_id && <span className={`${styles.badge} ${styles.neutral}`}>Logistics only</span>}
+          </span>
+          <span className={styles.evCardDates}>{range(p.starts_on, p.ends_on)}</span>
+          {!data.requestOnly && (
+            <span className={styles.evCardNums}>
+              <span><b>{p.teams}</b> {p.teams === 1 ? 'team' : 'teams'}</span>
+              <span><b>{p.requests}</b> {p.requests === 1 ? 'request' : 'requests'}{p.newRequests > 0 && <em className={styles.warnText}> · {p.newRequests} new</em>}</span>
+              <span><b>{p.prizes}</b> {p.prizes === 1 ? 'prize' : 'prizes'}{p.prizes > 0 && ` · $${Math.round(p.prizeValue).toLocaleString('en-US')}`}</span>
+            </span>
+          )}
+          {!data.requestOnly && p.devices > 0 && (
+            <span className={styles.evCardBar} title={`${filled} of ${p.devices} device rows filled`}>
+              <span className={styles.bar}><i style={{ width: `${Math.round((filled / p.devices) * 100)}%` }} /></span>
+              <span>{filled}/{p.devices} devices{p.empty > 0 && <em className={styles.warnText}> · {p.empty} to fill</em>}</span>
+            </span>
+          )}
+        </button>
+        {!data.requestOnly && (
+          <div className={styles.evCardGo}>
+            <Button variant="secondary" size="sm" onClick={() => go({ tab: 'devices', plan: p.slug })}>Open Devices</Button>
+            <Button variant="secondary" size="sm" onClick={() => go({ tab: 'prizing', plan: p.slug })}>Open Prizing</Button>
+          </div>
+        )}
+        {data.canManage && <RowMenu className={styles.evCardMenu} label={`More for ${p.name}`} items={[{ label: 'Edit Name And Dates', onClick: () => setEditing(p) }, { label: p.status === 'closed' ? 'Reopen Plan' : 'Close Plan', onClick: () => void (p.status === 'closed' ? closer.reopen(p.id) : closer.close(p)) }, { label: 'Remove Plan', danger: true, onClick: () => void removePlan(p) }]} />}
+      </li>
+    );
   };
   return (
     <div className={styles.tab}>
@@ -72,33 +111,15 @@ function PlanList({ data, list, onOpen }: { data: Catalog; list: ReturnType<type
       {!plans ? (error ? null : <Loading variant="inline" label="Loading…" />) : plans.length === 0 ? (
         <div className={styles.empty}><p>{data.canManage ? 'No events yet. Make one for an upcoming event, then add the devices that go to it.' : 'No events have been set up yet.'}</p></div>
       ) : (
-        <ul className={styles.eventList}>
-          {nearestFirst(plans, today).map((p: PlanSummary) => {
-            const isToday = p.status === 'draft' && p.starts_on <= today && today <= p.ends_on;
-            return (
-              <li key={p.id} className={isToday ? styles.eventToday : undefined}>
-                <button type="button" className={styles.eventRow} onClick={() => onOpen(p)}>
-                  <b className={styles.eventName}>{p.name}</b>
-                  <span className={styles.eventTags}>
-                    {isToday && <span className={`${styles.badge} ${styles.good}`}>Today</span>}
-                    {p.status === 'closed' && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}
-                    {!p.event_id && <span className={`${styles.badge} ${styles.neutral}`}>Logistics only</span>}
-                  </span>
-                  <span className={styles.eventMeta}>{range(p.starts_on, p.ends_on)}</span>
-                  {!data.requestOnly && (
-                  <span className={styles.eventStats}>
-                    <span>{p.teams} {p.teams === 1 ? 'team' : 'teams'}</span>
-                    <span>{p.requests} {p.requests === 1 ? 'request' : 'requests'}{p.newRequests > 0 && <b className={styles.warnText}> · {p.newRequests} new</b>}</span>
-                    <span>{p.devices} {p.devices === 1 ? 'device' : 'devices'}{p.empty > 0 && <b className={styles.warnText} title={`${p.empty} to fill`}> · {p.empty}<span className={styles.wide}>to fill</span></b>}</span>
-                    <span>{p.prizes} {p.prizes === 1 ? 'prize' : 'prizes'}{p.prizes > 0 && ` · $${Math.round(p.prizeValue).toLocaleString('en-US')}`}</span>
-                  </span>
-                  )}
-                </button>
-                {data.canManage && <RowMenu className={styles.eventMenu} label={`More for ${p.name}`} items={[{ label: 'Edit Name And Dates', onClick: () => setEditing(p) }, { label: p.status === 'closed' ? 'Reopen Plan' : 'Close Plan', onClick: () => void (p.status === 'closed' ? closer.reopen(p.id) : closer.close(p)) }, { label: 'Remove Plan', danger: true, onClick: () => void removePlan(p) }]} />}
-              </li>
-            );
-          })}
-        </ul>
+        <>
+          <ul className={styles.evCards}>{ordered.filter((p) => !isPast(p)).map(card)}</ul>
+          {ordered.some(isPast) && (
+            <details className={styles.evPast}>
+              <summary>Past Events <span>{ordered.filter(isPast).length}</span></summary>
+              <ul className={styles.evCards}>{ordered.filter(isPast).map(card)}</ul>
+            </details>
+          )}
+        </>
       )}
     </div>
   );

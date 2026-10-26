@@ -823,7 +823,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .dayTitle { font-size: 1.15rem; }
   .pageBar { gap: 0.4rem; }
   .tab { gap: 0.5rem; }
-  .reqRow > span[data-label="Team"] { order: 1; } .reqRow > span[data-label="Status"] { order: 2; }
+  .reqRow > span[data-label="For"] { order: 1; } .reqRow > span[data-label="Status"] { order: 2; }
   .reqRow > span[data-label="Devices"], .reqRow > span[data-label="Prizes"] { order: 3; } .reqRow > span[data-label="Notes"] { order: 4; } .reqRow > .prizeTools { order: 5; }
 }
 
@@ -1021,3 +1021,44 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 /* A number inside a small box (a counter): the text and the box that opens over it are exactly the same size, so opening it moves nothing. */
 .numCompact { width: 3.4rem; min-height: 28px; padding: 0.2rem 0.25rem; text-align: center; }
 .numField { width: 4.6rem; text-align: left; }   /* a number in a shrink-wrapped cell: text and box the same width */
+
+/* ═══ An event's own page: overview, requests, loaners ═══ */
+.evPage { display: flex; flex-direction: column; gap: 1.25rem; }
+.evHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
+.evTitle { flex: 1 1 14rem; min-width: 0; }
+.evTitle h2 { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.5rem; line-height: 1.15; color: var(--pp-ink); overflow-wrap: anywhere; }
+.evTitle p { margin: 0.15rem 0 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.75); }
+.evGo { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.evStats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; margin: 0; }
+.evStats > div, .evStats > button { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; padding: 0.7rem 0.9rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 8px; background: var(--pp-card); color: var(--pp-ink); font: inherit; text-align: left; }
+.evStats > button { cursor: pointer; }
+.evStats > button:hover { border-color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.05); }
+.evStats dt { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.75); }
+.evStats dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.5rem; font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.evStats dd small { font-size: 0.78rem; font-weight: 600; }
+.evSection { display: flex; flex-direction: column; gap: 0.5rem; }
+.evSection > h3 { margin: 0; padding-bottom: 0.35rem; border-bottom: 2px solid rgba(var(--pp-ink-rgb), 0.2); font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; color: var(--pp-ink); }
+.evSection > .tab { padding: 0; }
+@media (max-width: 700px) { .evStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* ═══ The list of events, as cards ═══ */
+.evCards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 19rem), 1fr)); gap: 0.8rem; }
+.evCard { position: relative; display: flex; flex-direction: column; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 10px; background: var(--pp-card); overflow: hidden; }
+.evCardToday { border-color: var(--pp-ok); box-shadow: inset 4px 0 0 var(--pp-ok); }
+.evCardMain { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; flex: 1; padding: 0.9rem 3rem 0.7rem 1rem; border: 0; background: none; color: var(--pp-ink); font: inherit; text-align: left; cursor: pointer; }
+.evCardMain:hover { background: rgba(var(--pp-ink-rgb), 0.04); }
+.evCardName { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.evCardTags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.evCardTags:empty { display: none; }
+.evCardDates { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.75); }
+.evCardNums { display: flex; flex-wrap: wrap; gap: 0.15rem 0.9rem; font-size: 0.86rem; }
+.evCardNums b { font-variant-numeric: tabular-nums; }
+.evCardNums em, .evCardBar em { font-style: normal; font-weight: 600; }
+.evCardBar { display: flex; flex-direction: column; gap: 0.25rem; width: 100%; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+.evCardBar .bar { width: 100%; }
+.evCardGo { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.6rem 1rem 0.85rem; }
+.evCardMenu { position: absolute; top: 0.55rem; right: 0.55rem; }
+.evPast { margin-top: 0.4rem; }
+.evPast > summary { display: flex; align-items: center; gap: 0.5rem; min-height: 40px; cursor: pointer; font-family: var(--font-futura-heavy); font-size: 0.95rem; color: var(--pp-ink); }
+.evPast > summary span { font-size: 0.78rem; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); }
+.evPast[open] > summary { margin-bottom: 0.6rem; }
