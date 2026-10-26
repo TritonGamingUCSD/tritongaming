@@ -1,12 +1,15 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { LOCKED_MESSAGE, lockedRequestIds, UUID, touchPlan } from '@/lib/logistics/planServer';
+import { LOCKED_MESSAGE, lockedRequestIds, stationLocked, UUID, touchPlan } from '@/lib/logistics/planServer';
+import { logPrize } from '@/lib/logistics/prizeServer';
 
 export const dynamic = 'force-dynamic';
 const name = (v: unknown) => String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, 80);
+const COLUMNS = 'id, name, sort, contact, room, prize_only, prize_request_id, prize_target_qty, prize_target_sizes';
 const text = (v: unknown, n: number) => { const s = String(v ?? '').trim().slice(0, n); return s || null; };
 
-// Stations: the named places in an event (Smash Table 1, Main Stage) that devices are assigned to. Made per plan.
+// Stations: the named places in an event (Smash Table 1, Main Stage) that devices and prizes are assigned to; one station is a team's whole setup. `prize_only` marks one made only for prizes (a raffle,
+// a scavenger hunt): the Devices page leaves it out until it has devices. Made per plan.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
@@ -17,8 +20,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!names.length) return NextResponse.json({ error: 'Type a name for the station.' }, { status: 400 });
   const { data: last } = await auth.svc.from('logistics_stations').select('sort').eq('plan_id', id).order('sort', { ascending: false }).limit(1).maybeSingle();
   let sort = (last?.sort as number | undefined) ?? 0;
-  const extra = { contact: text(b.contact, 200), room: text(b.room, 120) };
-  const { data, error } = await auth.svc.from('logistics_stations').insert(names.map((n) => ({ plan_id: id, name: n, sort: ++sort, ...extra }))).select('id, name, sort, contact, room');
+  const extra = { contact: text(b.contact, 200), room: text(b.room, 120), prize_only: b.prize_only === true };
+  const { data, error } = await auth.svc.from('logistics_stations').insert(names.map((n) => ({ plan_id: id, name: n, sort: ++sort, ...extra }))).select(COLUMNS);
   if (error) return NextResponse.json({ error: 'Couldn’t add that.' }, { status: 500 });
   await touchPlan(auth.svc, id);
   return NextResponse.json({ stations: data }, { status: 201 });
@@ -35,7 +38,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if ('contact' in b) patch.contact = text(b.contact, 200);
   if ('room' in b) patch.room = text(b.room, 120);
   if (!Object.keys(patch).length) return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
-  const { data, error } = await auth.svc.from('logistics_stations').update(patch).eq('id', b.station_id).eq('plan_id', id).select('id, name, sort, contact, room').single();
+  if ('name' in patch && (await stationLocked(auth.svc, id, b.station_id))) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });   // the name of a station whose prize request is locked stays
+  const { data, error } = await auth.svc.from('logistics_stations').update(patch).eq('id', b.station_id).eq('plan_id', id).select(COLUMNS).single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
   await touchPlan(auth.svc, id);
   return NextResponse.json({ station: data });
@@ -53,7 +57,15 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     const held = await Promise.all(['logistics_plan_devices', 'logistics_plan_borrowed', 'logistics_plan_slots'].map((t) => auth.svc.from(t).select('plan_id').eq('plan_id', id).eq('station_id', b.station_id).in('request_id', locked).limit(1)));
     if (held.some((h) => (h.data?.length ?? 0) > 0)) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   }
+  if (await stationLocked(auth.svc, id, b.station_id)) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
+  // Its prize lines go with it: they are no longer promised, which the prizes' histories say.
+  const [{ data: gone }, { data: pl }, { data: st }] = await Promise.all([
+    auth.svc.from('logistics_plan_prizes').select('prize_id, quantity').eq('station_id', b.station_id),
+    auth.svc.from('logistics_plans').select('name').eq('id', id).maybeSingle(),
+    auth.svc.from('logistics_stations').select('name').eq('id', b.station_id).eq('plan_id', id).maybeSingle(),
+  ]);
   await auth.svc.from('logistics_stations').delete().eq('id', b.station_id).eq('plan_id', id);
+  await logPrize(auth.svc, (gone ?? []).map((g) => ({ prize_id: g.prize_id as string, kind: 'assign' as const, qty: -(g.quantity as number), plan_id: id, plan_name: (pl?.name as string | undefined) ?? null, station: (st?.name as string | undefined) ?? null, note: 'Station removed', actor: auth.user.id })));
   await touchPlan(auth.svc, id);
   return NextResponse.json({ ok: true });
 }

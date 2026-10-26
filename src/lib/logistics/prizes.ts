@@ -1,23 +1,15 @@
 import { LIMITS } from '@/lib/logistics/constants';
 
-// Prizes: the inventory (club stock and sponsor gifts), what each pool of an event gets, and how far each prize line is through the event-day steps. Pure logic (no database).
+// Prizes: the inventory (club stock and sponsor gifts), what each station of an event gets, and how far each prize line is through the event-day steps. Pure logic (no database).
 
 export interface Prize {
   id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean;
-  shelf: string | null; tier: string | null; place_note: string | null; plan_id: string | null; expires_on: string | null; notes: string | null;
+  bin: string | null; source: string | null; expires_on: string | null; notes: string | null;
 }
-// What the lists add up to for one prize: `allocated` is what open plans still hold for their pools, `given` what has been given out at any event. Left can go below zero: that is an over-allocation.
-export interface PrizeTotals { allocated: number; given: number }
-export const prizeLeft = (p: Pick<Prize, 'quantity'>, t: PrizeTotals) => p.quantity - t.given - t.allocated;
-
-// What one event's lines of a prize count for in the stock totals. While the event is open its lines are promised (`allocated`). Once it is closed, an event made since manual returns began (`manual`)
-// uses up everything that was not moved back to inventory by hand, so closing never returns prizes by itself; an older closed event only counts what was given out. `quantity` and `given` are the
-// totals over the event's lines of this prize, `moved` what was moved to inventory from its Keep list.
-export function planPrizeUse(o: { quantity: number; given: number; moved: number; closed: boolean; manual: boolean }): PrizeTotals {
-  if (!o.closed) return { allocated: o.quantity - o.given, given: o.given };
-  if (!o.manual) return { allocated: 0, given: o.given };
-  return { allocated: 0, given: o.quantity - Math.min(Math.max(0, o.moved), Math.max(0, o.quantity - o.given)) };
-}
+// `quantity` is how many are on hand. `allocated` is what open events still hold for their stations (promised and not yet given out); a closed event holds nothing, so what it did not use is free
+// again. Left is what is free to promise and can go below zero: that is an over-allocation.
+export interface PrizeTotals { allocated: number }
+export const prizeLeft = (p: Pick<Prize, 'quantity'>, t: PrizeTotals) => p.quantity - t.allocated;
 
 // A prize step is a count per line. `gives` marks the step that hands a prize out (it uses stock up); `leftover` marks a step that is only about what was NOT handed out ("back to storage").
 export interface PrizeStepDef { id: string; name: string; sort: number; gives: boolean; leftover: boolean }
@@ -27,7 +19,7 @@ export const stepCeiling = (step: Pick<PrizeStepDef, 'leftover'>, line: { quanti
 
 export interface PrizePatch {
   name?: string; sponsor_id?: string | null; size?: string | null; type?: string | null; in_hand?: boolean; price?: number | null; quantity?: number; quantity_is_estimate?: boolean;
-  shelf?: string | null; tier?: string | null; place_note?: string | null; plan_id?: string | null; expires_on?: string | null; notes?: string | null;
+  bin?: string | null; source?: string | null; expires_on?: string | null; notes?: string | null;
 }
 const text = (v: unknown, max: number) => { const s = String(v ?? '').trim().replace(/\s+/g, ' ').slice(0, max); return s || null; };
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -41,17 +33,15 @@ export function cleanPrize(b: Record<string, unknown>, partial: boolean): { valu
   if (has('sponsor_id')) out.sponsor_id = typeof b.sponsor_id === 'string' && UUID.test(b.sponsor_id) ? b.sponsor_id : null;
   if (has('size')) out.size = text(b.size, LIMITS.option);
   if (has('type')) out.type = text(b.type, LIMITS.option);
-  if (has('in_hand')) out.in_hand = b.in_hand === true;
+  if (has('in_hand')) out.in_hand = partial ? b.in_hand === true : b.in_hand !== false;   // a new prize is here unless it says it is not
   if (has('price')) {
     if (b.price === null || b.price === '' || b.price === undefined) out.price = null;
     else { const n = Number(b.price); if (!Number.isFinite(n) || n < 0 || n > 1_000_000) return { error: 'The price has to be a number, like 25 or 24.99.' }; out.price = Math.round(n * 100) / 100; }
   }
   if (has('quantity')) { const n = Math.round(Number(b.quantity ?? 0)); if (!Number.isFinite(n) || n < 0 || n > LIMITS.qtyMax) return { error: 'How many there are has to be a whole number.' }; out.quantity = n; }
   if (has('quantity_is_estimate')) out.quantity_is_estimate = b.quantity_is_estimate === true;
-  if (has('shelf')) out.shelf = text(b.shelf, LIMITS.option);
-  if (has('tier')) out.tier = text(b.tier, LIMITS.option);
-  if (has('place_note')) out.place_note = text(b.place_note, LIMITS.note);
-  if (has('plan_id')) out.plan_id = typeof b.plan_id === 'string' && UUID.test(b.plan_id) ? b.plan_id : null;
+  if (has('bin')) out.bin = text(b.bin, 120);
+  if (has('source')) out.source = text(b.source, 200);
   if (has('expires_on')) { if (b.expires_on && !DATE.test(String(b.expires_on))) return { error: 'Pick the expiry date again.' }; out.expires_on = b.expires_on ? String(b.expires_on) : null; }
   if (has('notes')) out.notes = text(b.notes, LIMITS.notes);
   return { value: out };

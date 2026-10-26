@@ -2,38 +2,35 @@ import { describe, expect, it } from 'vitest';
 import { parseRoute, routeParams } from '../../app/(portal)/portal/logistics/logisticsRoute';
 
 describe('Logistics addresses', () => {
-  it('keeps prizing grouped by sponsor in the address, only on the allocation page', () => {
-    expect(parseRoute('ds-2026', 'allocation-prizing', undefined, false, 'sponsor')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing', bySponsor: true });
-    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing', bySponsor: true }).view).toBe('sponsor');
-    expect(parseRoute('ds-2026', 'event-day-prizing', undefined, false, 'sponsor')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing', day: true });
-    expect(parseRoute('ds-2026', 'allocation-prizing', undefined, false, 'grid')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing', grid: true });
-    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing', bySponsor: true, grid: true }).view).toBe('sponsor,grid');
+  it('opens the Prizing page for every old prize address', () => {
+    expect(parseRoute('ds-2026', 'allocation-prizing', undefined, false)).toEqual({ tab: 'prizing', plan: 'ds-2026' });
+    expect(parseRoute('ds-2026', 'event-day-prizing', undefined, false)).toEqual({ tab: 'prizing', plan: 'ds-2026' });
+    expect(parseRoute('ds-2026', 'allocation-sponsor-prizing', undefined, false, 'sponsor')).toEqual({ tab: 'prizing', plan: 'ds-2026' });
+    expect(parseRoute('prizes', undefined, undefined, false)).toEqual({ tab: 'prizing', plan: 'stock' });
+    expect(parseRoute('inventory', 'prizes', undefined, false)).toEqual({ tab: 'prizing', plan: 'stock' });
+    expect(parseRoute('sponsors', undefined, undefined, true)).toEqual({ tab: 'prizing', plan: null });
+    expect(parseRoute('prizing', undefined, undefined, false)).toEqual({ tab: 'prizing', plan: null });
+    expect(parseRoute('prizing', 'ds-2026', undefined, false)).toEqual({ tab: 'prizing', plan: 'ds-2026' });
+    expect(routeParams({ tab: 'prizing', plan: 'ds-2026' })).toEqual({ tab: 'prizing', subtab: 'ds-2026', detail: null, view: null });
   });
   it('reads the new addresses', () => {
     expect(parseRoute('events', undefined, undefined, false)).toEqual({ tab: 'events', plan: null, page: 'device' });
-    expect(parseRoute('events', 'ds-2026', 'prizing', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing' });
+    expect(parseRoute('events', 'ds-2026', 'prizing', false)).toEqual({ tab: 'prizing', plan: 'ds-2026' });
     expect(parseRoute('events', 'ds-2026', 'nope', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device' });
-    expect(parseRoute('events', 'ds-2026', 'sponsor-prizing', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-prizing' });
-    expect(parseRoute('events', 'ds-2026', 'prizing', false, 'day')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'prizing', day: true });
     expect(parseRoute('events', 'ds-2026', 'device', false, 'day')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device', day: true });
     expect(parseRoute('events', 'ds-2026', 'allocation', false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device' });
     expect(parseRoute('events', 'ds-2026', 'sponsor-items', false, 'day')).toEqual({ tab: 'events', plan: 'ds-2026', page: 'sponsor-loaners' });
-    expect(parseRoute('inventory', 'prizes', undefined, false)).toEqual({ tab: 'inventory', sub: 'prizes' });
     expect(parseRoute('inventory', undefined, undefined, false)).toEqual({ tab: 'inventory', sub: 'devices' });
     expect(parseRoute('tools', 'bundles', undefined, true)).toEqual({ tab: 'tools', sub: 'bundles' });
   });
   it('still opens the old addresses', () => {
     expect(parseRoute('equipment', undefined, undefined, false)).toEqual({ tab: 'inventory', sub: 'devices' });
-    expect(parseRoute('prizes', undefined, undefined, false)).toEqual({ tab: 'inventory', sub: 'prizes' });
     expect(parseRoute('plans', 'ds-2026', undefined, false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'device' });
-    expect(parseRoute('sponsors', undefined, undefined, true)).toEqual({ tab: 'tools', sub: 'sponsors' });
   });
   it('keeps Tools for the people who can manage', () => {
     expect(parseRoute('tools', 'lists', undefined, false)).toEqual({ tab: 'events', plan: null, page: 'device' });
   });
   it('writes an address back', () => {
-    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing' })).toEqual({ tab: 'ds-2026', subtab: 'allocation-prizing', detail: null, view: null });
-    expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'prizing', day: true }).subtab).toBe('event-day-prizing');
     expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'requests' }).subtab).toBe('requests-devices');
     expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'requests-prizing' }).subtab).toBe('requests-prizing');
     expect(parseRoute('ds-2026', 'requests', undefined, true)).toMatchObject({ page: 'requests' });

@@ -9,6 +9,7 @@ export interface OptionItem { id: string; value: string; counted?: boolean; main
 export interface Sponsor { id: string; name: string; contact: string | null; notes: string | null }
 export interface Catalog {
   canManage: boolean;
+  me?: { id: string; name: string };   // who is looking
   requestOnly?: boolean;   // a division account: only the Requests pages
   lists: Record<OptionKind, OptionItem[]>;
   portalGames: string[];

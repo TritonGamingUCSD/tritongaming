@@ -4,9 +4,10 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Device } from '@/lib/logistics/devices';
 import type { Conflict, StepDef } from '@/lib/logistics/plans';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
+import { showToast } from '@/lib/ui/toast';
 
-export interface PlanSummary { id: string; slug: string; name: string; event_id: string | null; starts_on: string; ends_on: string; status: 'draft' | 'closed'; manual_return?: boolean; notes: string | null; devices: number; empty: number; teams: number; requests: number; newRequests: number; prizes: number; prizeValue: number }
-export interface Station { id: string; name: string; sort: number; contact: string | null; room: string | null }
+export interface PlanSummary { id: string; slug: string; name: string; event_id: string | null; starts_on: string; ends_on: string; status: 'draft' | 'closed'; notes: string | null; devices: number; empty: number; teams: number; requests: number; newRequests: number; prizes: number; prizeValue: number }
+export interface Station { id: string; name: string; sort: number; contact: string | null; room: string | null; prize_only?: boolean; prize_request_id?: string | null; prize_target_qty?: number | null; prize_target_sizes?: Record<string, number> | null }
 // A row allocated by type that has no device yet (or never will: a mousepad). `label` is a note shown with it.
 export interface Slot { id: string; plan_id: string; station_id: string | null; type: string; games: string[]; label: string | null; sort: number; set_id?: string | null; request_id?: string | null; request_item?: string | null }
 export interface PlanItem { device_id: string; station_id: string | null; role: 'planned' | 'backup'; swap_reason: string | null; swapped_for_label: string | null; games_needed: string[]; games?: string[]; sort: number; set_id?: string | null; request_id?: string | null; request_item?: string | null; device: Device }
@@ -24,11 +25,11 @@ export interface PlanDetail {
 export interface Slim { id: string; kind: 'club' | 'sponsor' | 'officer' | 'slot'; games_needed?: string[]; label?: string | null; tag: string | null; name: string | null; type: string; shelf: string | null; tier: string | null; place_note: string | null; owner: string | null; condition: string | null; kit: KitLine[] }
 export interface StepResult { item: Slim; inPlan: boolean; role: string | null; station: { id: string; name: string } | null; already: boolean; done_at: string; step_id: string; by?: string | null }
 
-async function call<T>(url: string, method: string, body?: unknown): Promise<{ ok: true; data: T } | { ok: false; error: string; status: number }> {
+async function call<T>(url: string, method: string, body?: unknown): Promise<{ ok: true; data: T } | { ok: false; error: string; status: number; body?: { code?: string; current?: number; by?: string } }> {
   try {
     const r = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined, cache: 'no-store' });
     const j = await r.json().catch(() => ({}));
-    if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.', status: r.status };
+    if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.', status: r.status, body: j };
     return { ok: true, data: j as T };
   } catch { return { ok: false, error: 'Couldn’t reach the server.', status: 0 }; }
 }
@@ -59,13 +60,23 @@ export function usePlanList() {
     await load();
     return true;
   }, [load]);
+  // Closing an event takes out of stock what went out and was not counted back. When some lines were never counted back, the server says which, and the person chooses (see `uncounted`).
+  const close = useCallback(async (id: string, uncounted?: 'returned' | 'given'): Promise<{ ok: true } | { ok: false; error: string; uncounted?: { station: string; prize: string; quantity: number }[] }> => {
+    try {
+      const r = await fetch(`/api/logistics/plans/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'closed', ...(uncounted ? { uncounted } : {}) }), cache: 'no-store' });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.', uncounted: j.code === 'uncounted' ? j.uncounted : undefined };
+      await load();
+      return { ok: true };
+    } catch { return { ok: false, error: 'Couldn’t reach the server.' }; }
+  }, [load]);
   const remove = useCallback(async (id: string) => {
     const r = await call<{ ok: true }>(`/api/logistics/plans/${id}`, 'DELETE');
     if (!r.ok) { setError(r.error); return false; }
     setPlans((p) => (p ?? []).filter((x) => x.id !== id));
     return true;
   }, []);
-  return { plans, today, error, setError, reload: load, create, update, remove, events };
+  return { plans, today, error, setError, reload: load, create, update, close, remove, events };
 }
 
 // One plan. Structural changes (devices, stations, status) are made and then the plan is read again; steps are applied on screen straight away. While the event-day screen is
@@ -82,6 +93,7 @@ export function usePlan(id: string, live: boolean) {
   const quiet = useRef({ ticks: 0, idle: 0 });   // how long nothing changed: the check slows down while it stays quiet and is fast again as soon as anything moves
 
   const load = useCallback(async (): Promise<boolean> => {
+    if (!id) return true;   // no event picked (the Prizing page showing only the stock)
     for (let attempt = 0; attempt < 2; attempt++) {
       const g = gen.current;
       const r = await call<PlanDetail>(`/api/logistics/plans/${id}`, 'GET');
@@ -130,7 +142,7 @@ export function usePlan(id: string, live: boolean) {
       });
     }
   }, [id, load]);
-  useVisiblePoll(check, 20_000, live);
+  useVisiblePoll(check, 20_000, live && !!id);
 
   const act = useCallback(async (url: string, method: string, body?: unknown): Promise<boolean> => {
     touched();
@@ -216,59 +228,74 @@ export function usePlan(id: string, live: boolean) {
     return { ok: true as const, preview: r.data.preview, applied: r.data.applied ?? 0 };
   }, [id, load]);
 
-  // A prize count ("sorted 6 of 10") is set as a number and shown at once; the server may lower it (it can't pass what the line has).
-  const setPrizeCount = useCallback(async (line_id: string, step_id: string, done: number): Promise<boolean> => {
-    let before: number | undefined;
+  // A prize count ("sorted 6 of 10") shown at once. A tap adds on the server (two phones tapping both count); a typed number is set, and if someone else changed it first the server says so and what it is now.
+  const putCount = useCallback((line_id: string, step_id: string, n: number) => setDetail((cur) => {
+    if (!cur) return cur;
+    const rest = cur.prizes.done.filter((d) => !(d.line_id === line_id && d.step_id === step_id));
+    return { ...cur, prizes: { ...cur.prizes, done: [...rest, { line_id, step_id, done: n }] } };
+  }), []);
+  const countOf = (line_id: string, step_id: string) => detailRef.current?.prizes.done.find((d) => d.line_id === line_id && d.step_id === step_id)?.done ?? 0;
+  const sendCount = useCallback(async (line_id: string, step_id: string, shown: number, body: { add: number } | { done: number }): Promise<boolean> => {
+    const before = countOf(line_id, step_id);
     touched();
-    setDetail((cur) => {
-      if (!cur) return cur;
-      before = cur.prizes.done.find((d) => d.line_id === line_id && d.step_id === step_id)?.done;
-      const rest = cur.prizes.done.filter((d) => !(d.line_id === line_id && d.step_id === step_id));
-      return { ...cur, prizes: { ...cur.prizes, done: [...rest, { line_id, step_id, done }] } };
-    });
-    const r = await call<{ done: number }>(`/api/logistics/plans/${id}/prize-steps`, 'POST', { line_id, step_id, done });
-    const apply = (n: number) => setDetail((cur) => {
-      if (!cur) return cur;
-      const rest = cur.prizes.done.filter((d) => !(d.line_id === line_id && d.step_id === step_id));
-      return { ...cur, prizes: { ...cur.prizes, done: [...rest, { line_id, step_id, done: n }] } };
-    });
-    if (!r.ok) { setError(r.error); apply(before ?? 0); return false; }
-    if (r.data.done !== done) apply(r.data.done);
+    putCount(line_id, step_id, shown);
+    const r = await call<{ done: number }>(`/api/logistics/plans/${id}/prize-steps`, 'POST', { line_id, step_id, ...body, ...('done' in body ? { expected: before } : {}) });
+    if (!r.ok) {
+      if (r.body?.code === 'changed') { putCount(line_id, step_id, r.body.current ?? 0); showToast(`${r.error} It shows ${r.body.current ?? 0} now.`); return false; }
+      if (r.body?.code === 'gone') { void load(); showToast(r.error); return false; }
+      setError(r.error); putCount(line_id, step_id, before); return false;
+    }
+    putCount(line_id, step_id, r.data.done);
     return true;
-  }, [id]);
+  }, [id, load, putCount]);   // eslint-disable-line react-hooks/exhaustive-deps
+  const setPrizeCount = useCallback((line_id: string, step_id: string, done: number) => sendCount(line_id, step_id, done, { done }), [sendCount]);
+  const addPrizeCount = useCallback((line_id: string, step_id: string, delta: number) => sendCount(line_id, step_id, Math.max(0, countOf(line_id, step_id) + delta), { add: delta }), [sendCount]);   // eslint-disable-line react-hooks/exhaustive-deps
 
-  // The allocation grid sets how many of a prize a pool gets (0 takes it out). It shows at once; `delta` is how much more is now promised, so the stock's "left" can be moved by the same amount.
-  const setPrizeLine = useCallback(async (pool_id: string, prize: PlanPrizesData['lines'][number]['prize'], quantity: number): Promise<{ ok: boolean; delta: number }> => {
+  // What other people did, applied as they do it (from the live messages).
+  const applyCount = useCallback((line_id: string, step_id: string, done: number) => putCount(line_id, step_id, done), [putCount]);
+  const applyLine = useCallback((m: { line: string; station: string; prize: string; qty: number }, prize: PlanPrizesData['lines'][number]['prize'] | null): boolean => {
+    const cur = detailRef.current;
+    if (!cur) return false;
+    const have = cur.prizes.lines.find((l) => l.id === m.line);
+    if (m.qty === 0) { setDetail((c) => (c ? { ...c, prizes: { ...c.prizes, lines: c.prizes.lines.filter((l) => l.id !== m.line) } } : c)); return true; }
+    if (have) { setDetail((c) => (c ? { ...c, prizes: { ...c.prizes, lines: c.prizes.lines.map((l) => (l.id === m.line ? { ...l, quantity: m.qty } : l)) } } : c)); return true; }
+    if (!prize) return false;   // a line this screen has not seen and no prize to show it with: read the event again
+    setDetail((c) => (c ? { ...c, prizes: { ...c.prizes, lines: [...c.prizes.lines, { id: m.line, station_id: m.station, prize_id: m.prize, quantity: m.qty, sort: 999, prize }] } } : c));
+    return true;
+  }, []);
+
+  // The Prizing page sets how many of a prize a station gets (0 takes it out). It shows at once; `delta` is how much more is now promised, so the stock's "left" can be moved by the same amount.
+  const setPrizeLine = useCallback(async (station_id: string, prize: PlanPrizesData['lines'][number]['prize'], quantity: number): Promise<{ ok: boolean; delta: number }> => {
     const cur = detailRef.current;
     if (!cur) return { ok: false, delta: 0 };
     const lines = cur.prizes.lines;
-    const existing = lines.find((l) => l.pool_id === pool_id && l.prize_id === prize.id);
+    const existing = lines.find((l) => l.station_id === station_id && l.prize_id === prize.id);
     const next = Math.max(0, Math.round(quantity));
     const before = existing?.quantity ?? 0;
     if (next === before) return { ok: true, delta: 0 };
     const delta = next - before;
     touched();
-    if (delta > Math.max(0, prize.left)) { setError(`Only ${Math.max(0, prize.left)} left of ${prize.name}. A pool can't be promised more than there is.`); return { ok: false, delta: 0 }; }
+    if (delta > Math.max(0, prize.left)) { setError(`Only ${Math.max(0, prize.left)} left of ${prize.name}. A station can't be promised more than there is.`); return { ok: false, delta: 0 }; }
     const withLines = (fn: (l: PlanPrizesData['lines']) => PlanPrizesData['lines']) => setDetail((c) => (c ? { ...c, prizes: { ...c.prizes, lines: fn(c.prizes.lines).map((l) => (l.prize_id === prize.id ? { ...l, prize: { ...l.prize, left: l.prize.left - delta } } : l)) } } : c));
     const undo = () => { void load(); };
     if (next === 0 && existing) {
       withLines((ls) => ls.filter((l) => l.id !== existing.id));
-      const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/prizes`, 'DELETE', { line_id: existing.id });
-      if (!r.ok) { setError(r.error); undo(); return { ok: false, delta: 0 }; }
+      const r = await call<{ ok: true }>(`/api/logistics/plans/${id}/prizes`, 'DELETE', { line_id: existing.id, expected: before });
+      if (!r.ok) { if (r.body?.code === 'changed') { showToast(`${r.error} It shows ${r.body.current ?? 0} now.`); void load(); } else { setError(r.error); undo(); } return { ok: false, delta: 0 }; }
     } else if (existing) {
       withLines((ls) => ls.map((l) => (l.id === existing.id ? { ...l, quantity: next } : l)));
-      const r = await call<{ line: { quantity: number } }>(`/api/logistics/plans/${id}/prizes`, 'PATCH', { line_id: existing.id, quantity: next });
-      if (!r.ok) { setError(r.error); undo(); return { ok: false, delta: 0 }; }
+      const r = await call<{ line: { quantity: number } }>(`/api/logistics/plans/${id}/prizes`, 'PATCH', { line_id: existing.id, quantity: next, expected: before });
+      if (!r.ok) { if (r.body?.code === 'changed') { showToast(`${r.error} It shows ${r.body.current ?? 0} now.`); void load(); } else { setError(r.error); undo(); } return { ok: false, delta: 0 }; }
     } else {
-      const r = await call<{ lines: { id: string; pool_id: string; prize_id: string; quantity: number; sort: number }[] }>(`/api/logistics/plans/${id}/prizes`, 'POST', { pool_id, prize_id: prize.id, quantity: next });
-      if (!r.ok) { setError(r.error); undo(); return { ok: false, delta: 0 }; }
+      const r = await call<{ lines: { id: string; station_id: string; prize_id: string; quantity: number; sort: number }[] }>(`/api/logistics/plans/${id}/prizes`, 'POST', { station_id, prize_id: prize.id, quantity: next });
+      if (!r.ok) { if (r.body?.code === 'exists') { showToast(`${r.error}`); void load(); } else { setError(r.error); undo(); } return { ok: false, delta: 0 }; }
       withLines((ls) => [...ls, { ...r.data.lines[0], prize }]);
     }
     setError('');
     return { ok: true, delta };
   }, [id, load]);
 
-  return { detail, error, setError, reload: load, act, doStep, doSteps, undoStep, swap, unswap, pick, fill, assign, setPrizeCount, setPrizeLine };
+  return { detail, error, setError, reload: load, act, doStep, doSteps, undoStep, swap, unswap, pick, fill, assign, setPrizeCount, addPrizeCount, setPrizeLine, applyLine, applyCount };
 }
 export interface PickCell { type: string; games: string[]; counted: boolean; device: { id: string; tag: string | null; shelf: string | null; tier: string | null; condition: string } | null }
 export interface PickPreview { stations: PickCell[][]; short: number | { type: string; missing: number }[]; notTested: number; missingGames: number; empty: number }

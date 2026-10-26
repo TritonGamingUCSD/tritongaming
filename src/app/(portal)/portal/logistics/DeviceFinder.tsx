@@ -34,8 +34,8 @@ export default function DeviceFinder({ rows, devices, stations, steps, doneSet, 
   }, [q, needle, rows, devices]);
   const prizeHits = useMemo(() => {
     if (!needle) return [];
-    const pools = new Map(planPrizes.pools.map((p) => [p.id, p.name]));
-    const mine = planPrizes.lines.filter((l) => words(l.prize.name, l.prize.type, l.prize.sponsor, l.prize.size)).map((l) => ({ key: l.id, name: l.prize.name, detail: [l.prize.type, l.prize.sponsor, l.prize.size].filter(Boolean).join(' · '), where: `In this event: ${pools.get(l.pool_id) ?? 'a pool'} (${l.quantity})` }));
+    const pools = new Map(stations.map((p) => [p.id, p.name]));
+    const mine = planPrizes.lines.filter((l) => words(l.prize.name, l.prize.type, l.prize.sponsor, l.prize.size)).map((l) => ({ key: l.id, name: l.prize.name, detail: [l.prize.type, l.prize.sponsor, l.prize.size].filter(Boolean).join(' · '), where: `In this event: ${pools.get(l.station_id) ?? 'a station'} (${l.quantity})` }));
     const inPlanIds = new Set(planPrizes.lines.map((l) => l.prize_id));
     const rest = (prizes ?? []).filter((p) => !inPlanIds.has(p.id) && words(p.name, p.type, sponsorOf(p.sponsor_id), p.size)).slice(0, 5).map((p) => ({ key: p.id, name: p.name, detail: [p.type, sponsorOf(p.sponsor_id), p.size].filter(Boolean).join(' · '), where: `Not in this event. ${p.left} left in stock` }));
     return [...mine.slice(0, 6), ...rest].slice(0, 8);

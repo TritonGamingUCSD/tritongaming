@@ -18,8 +18,6 @@ import { interactive } from './interactive';
 import { FillDialog, StationDialog } from './PlanDialogs';
 import BorrowedTab from './BorrowedTab';
 import DeviceFinder from './DeviceFinder';
-import PrizingTab from './PrizingTab';
-import SponsorPrizingTab from './SponsorPrizingTab';
 import RequestsTab, { useRequests } from './RequestsTab';
 import SectionTabs from '@/components/ui/SectionTabs';
 import type { EventPage } from './logisticsRoute';
@@ -47,7 +45,7 @@ const range = (a: string, b: string) => {
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 
-export default function PlanView({ id, data, catalog, page, day, byType, bySponsor, grid, onPrizeView, openOnly, onOpenOnly, onGroup, onPage, onBack }: { bySponsor: boolean; grid: boolean; onPrizeView: (v: { bySponsor?: boolean; grid?: boolean }) => void; openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; byType: boolean; onGroup: (byType: boolean) => void; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
+export default function PlanView({ id, data, catalog, page, day, byType, onOpenPrizing, openOnly, onOpenOnly, onGroup, onPage, onBack }: { onOpenPrizing: () => void; openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; byType: boolean; onGroup: (byType: boolean) => void; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
   const plan = usePlan(id, true);
   const prizeInv = usePrizes();
   const { detail, error, setError, act } = plan;
@@ -125,7 +123,7 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
   const bad = problems.filter((p) => p.sev === 'bad').length, warn = problems.length - bad;
 
   const requests = useRequests(detail?.plan.id ?? '', page === 'requests' || page === 'requests-prizing');
-  const isPrizing = page === 'requests-prizing' || page === 'prizing' || page === 'sponsor-prizing';
+  const isPrizing = page === 'requests-prizing';
   const groupByType = byType && page === 'device';   // the same rows, grouped by the kind of device instead of by team
   const teams = useMemo(() => {
     const out: { key: string; station: Station | null; title: string; rows: Row[] }[] = [];
@@ -383,12 +381,9 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
         <div className={styles.pageBar}>
         <span className={`${styles.wide} ${styles.groupSeg}`}><SectionTabs<'devices' | 'prizing'> variant="segmented" label="Devices or prizing" value={isPrizing ? 'prizing' : 'devices'}
           onChange={(g) => onPage(g === 'prizing' ? 'requests-prizing' : 'requests')} tabs={[{ id: 'devices', label: 'Devices', count: rows.length }, { id: 'prizing', label: 'Prizing', count: detail.prizes.lines.length }]} /></span>
-        <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' || page === 'requests-prizing' ? page : `${day && (page === 'device' || page === 'prizing') ? 'day' : 'alloc'}-${page}`}
+        <SectionTabs<string> variant="segmented" label="Event pages" value={page === 'requests' || page === 'requests-prizing' ? page : `${day && page === 'device' ? 'day' : 'alloc'}-${page}`}
           onChange={(v) => v === 'requests' || v === 'requests-prizing' ? onPage(v) : onPage(v.replace(/^(day|alloc)-/, '') as EventPage, v.startsWith('day-'))} tabs={isPrizing ? [
             { id: 'requests-prizing', label: 'Requests', count: requests.count('prizes') },
-            { id: 'alloc-sponsor-prizing', label: 'Sponsor Prizing' },
-            { id: 'alloc-prizing', label: 'Allocation', count: detail.prizes.lines.length },
-            { id: 'day-prizing', label: 'Event Day' },
           ] : [
             { id: 'requests', label: 'Requests', count: requests.count('devices') },
             { id: 'alloc-sponsor-loaners', label: 'Sponsor Loaners', count: borrowed.filter((b) => b.owner_kind === 'sponsor').length },
@@ -397,7 +392,8 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
             { id: 'day-device', label: 'Event Day' },
           ]} />
           <span className={styles.pageBarEnd}>
-            <DeviceFinder prizes={prizeInv.rows} planPrizes={detail.prizes} sponsorOf={(sid) => data.sponsors.find((s) => s.id === sid)?.name ?? null} onGoPrize={() => onPage('prizing', day)} rows={all} devices={data.devices} stations={stations} steps={steps} doneSet={doneSet} onGo={(r) => { if (page !== 'device') onPage('device', day); setTimeout(() => focusRow(r.id, groupByType ? `type:${r.type}` : r.stationId ?? 'none'), page !== 'device' ? 400 : 0); }} />
+            {isPrizing && <Button size="sm" variant="secondary" onClick={onOpenPrizing}>Open Prizing</Button>}
+            <DeviceFinder prizes={prizeInv.rows} planPrizes={detail.prizes} sponsorOf={(sid) => data.sponsors.find((s) => s.id === sid)?.name ?? null} onGoPrize={onOpenPrizing} rows={all} devices={data.devices} stations={stations} steps={steps} doneSet={doneSet} onGo={(r) => { if (page !== 'device') onPage('device', day); setTimeout(() => focusRow(r.id, groupByType ? `type:${r.type}` : r.stationId ?? 'none'), page !== 'device' ? 400 : 0); }} />
             <button type="button" className={styles.iconBtn} onClick={() => void plan.reload()} aria-label="Refresh"><RefreshCw size={15} aria-hidden="true" /></button>
           </span>
         </div>
@@ -438,8 +434,6 @@ export default function PlanView({ id, data, catalog, page, day, byType, bySpons
       {stationDialog && !stationDialog.station && <StationDialog plan={plan} station={null} onClose={() => setStationDialog(null)} />}
       {filling && !filling.station && <FillDialog plan={plan} station={null} onClose={() => setFilling(null)} />}
 
-      {page === 'prizing' && <PrizingTab plan={plan} api={catalog} data={data} day={day} bySponsor={bySponsor} grid={grid} onPrizeView={onPrizeView} />}
-      {page === 'sponsor-prizing' && <SponsorPrizingTab plan={plan} api={catalog} data={data} />}
       {page === 'sponsor-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="sponsor" />}
       {page === 'officer-loaners' && <BorrowedTab plan={plan} catalog={catalog} data={data} kind="officer" />}
       {(page === 'requests' || page === 'requests-prizing') && <RequestsTab store={requests} key={page} kind={page === 'requests' ? 'devices' : 'prizes'} plan={plan} api={catalog} data={data} />}

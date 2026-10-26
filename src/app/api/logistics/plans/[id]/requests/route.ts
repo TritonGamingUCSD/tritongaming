@@ -3,7 +3,7 @@ import { authorizeLogistics } from '@/lib/logistics/auth';
 import { UUID, touchPlan } from '@/lib/logistics/planServer';
 import { REQUEST_COLUMNS, logisticsTeamIds } from '@/lib/logistics/requestServer';
 import { canEditRequest, cleanRequestItems, REQUEST_STATUSES, requestSummary, type DeviceItem, type PrizeItem, type RequestKind, type RequestStatus } from '@/lib/logistics/requests';
-import { syncPrizePool, syncRequestRows } from '@/lib/logistics/requestRows';
+import { syncPrizeStation, syncRequestRows } from '@/lib/logistics/requestRows';
 import { createNotifications } from '@/lib/notifications/notify';
 import { logAudit } from '@/lib/notifications/audit';
 import type { SupabaseClient } from '@supabase/supabase-js';
@@ -45,14 +45,14 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const div = new Map((divisions ?? []).map((d) => [d.id as string, d.name as string]));
   const ids = rows.filter((r) => r.kind === 'devices').map((r) => r.id);
   const [{ data: sl }, { data: pd }, { data: pb }] = ids.length ? await Promise.all([auth.svc.from('logistics_plan_slots').select('request_id, type').in('request_id', ids), auth.svc.from('logistics_plan_devices').select('request_id').in('request_id', ids), auth.svc.from('logistics_plan_borrowed').select('request_id').in('request_id', ids)]) : [{ data: [] }, { data: [] }, { data: [] }];   // a loaner fills a row too
-  // Prize requests: how many prizes the pool for each one holds so far.
+  // Prize requests: how many prizes the station for each one holds so far.
   const pids = rows.filter((r) => r.kind === 'prizes').map((r) => r.id);
   const gotPrizes = new Map<string, { qty: number }>();
   if (pids.length) {
-    const { data: pools } = await auth.svc.from('logistics_plan_pools').select('id, request_id').in('request_id', pids);
-    const poolIds = (pools ?? []).map((p) => p.id as string);
-    const { data: lines } = poolIds.length ? await auth.svc.from('logistics_plan_prizes').select('pool_id, quantity').in('pool_id', poolIds) : { data: [] };
-    for (const p of pools ?? []) gotPrizes.set(p.request_id as string, { qty: (lines ?? []).filter((l) => l.pool_id === p.id).reduce((n, l) => n + (l.quantity as number), 0) });
+    const { data: sts } = await auth.svc.from('logistics_stations').select('id, prize_request_id').in('prize_request_id', pids);
+    const stIds = (sts ?? []).map((p) => p.id as string);
+    const { data: lines } = stIds.length ? await auth.svc.from('logistics_plan_prizes').select('station_id, quantity').in('station_id', stIds) : { data: [] };
+    for (const p of sts ?? []) gotPrizes.set(p.prize_request_id as string, { qty: (lines ?? []).filter((l) => l.station_id === p.id).reduce((n, l) => n + (l.quantity as number), 0) });
   }
   // A counted type (a mousepad, a cable) never gets a device of its own, so its rows count as filled.
   const { data: countedTypes } = await auth.svc.from('logistics_options').select('value').eq('kind', 'type').eq('meta->>counted', 'true');
@@ -92,7 +92,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `New ${kind === 'devices' ? 'device' : 'prize'} request for ${plan.name}`, body: text1.slice(0, 240), href: href(plan.slug as string, kind) })));
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'logistics request', entityId: data.id as string, summary: `Asked for ${kind} for “${plan.name}”` });
   if (kind === 'devices') await syncRequestRows(auth.svc, data as never);
-  else await syncPrizePool(auth.svc, data as never);
+  else await syncPrizeStation(auth.svc, data as never);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ request: data }, { status: 201 });
 }
@@ -149,7 +149,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     await createNotifications(auth.svc, team.map((user_id) => ({ user_id, type: 'logistics_request', title: `A request for ${plan.name} was changed`, body: `${who}: ${requestSummary(r.kind, data.items as (DeviceItem | PrizeItem)[])}`.slice(0, 240), href: href(plan.slug as string, r.kind) })));
   }
   const sync = !frozen && r.kind === 'devices' && ('items' in b || 'team' in b || 'requester_id' in b || 'division_id' in b || statusChanged) ? await syncRequestRows(auth.svc, data as never) : { kept: 0 };
-  if (!frozen && r.kind === 'prizes' && ('items' in b || 'team' in b || statusChanged)) await syncPrizePool(auth.svc, data as never);
+  if (!frozen && r.kind === 'prizes' && ('items' in b || 'team' in b || statusChanged)) await syncPrizeStation(auth.svc, data as never);
   await touchPlan(auth.svc, id);
   return NextResponse.json({ request: data, kept: sync.kept });
 }
@@ -168,7 +168,13 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     await auth.svc.from('logistics_plan_slots').delete().eq('request_id', r.id as string);
     await auth.svc.from('logistics_plan_devices').update({ request_id: null }).eq('request_id', r.id as string);
   }
-  if (r.kind === 'prizes') await auth.svc.from('logistics_plan_pools').delete().eq('request_id', r.id as string);
+  if (r.kind === 'prizes') {
+    const { data: sts } = await auth.svc.from('logistics_stations').select('id, prize_only').eq('prize_request_id', r.id as string);
+    for (const st of sts ?? []) {
+      if (st.prize_only) await auth.svc.from('logistics_stations').delete().eq('id', st.id as string);
+      else { await auth.svc.from('logistics_plan_prizes').delete().eq('station_id', st.id as string); await auth.svc.from('logistics_stations').update({ prize_request_id: null, prize_target_qty: null, prize_target_sizes: null }).eq('id', st.id as string); }
+    }
+  }
   await auth.svc.from('logistics_requests').delete().eq('id', r.id as string);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'remove', entityType: 'logistics request', entityId: r.id as string, summary: `Removed a ${r.kind} request` });
   await touchPlan(auth.svc, id);

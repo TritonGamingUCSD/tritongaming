@@ -1,8 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { announce, planTopic } from '@/lib/logistics/live';
 import { plansOverlap, type Applies, type StepDef } from '@/lib/logistics/plans';
 
 export const UUID = /^[0-9a-f-]{36}$/i;
-export const PLAN_COLUMNS = 'id, slug, name, event_id, starts_on, ends_on, status, manual_return, notes, created_at, updated_at';
+export const PLAN_COLUMNS = 'id, slug, name, event_id, starts_on, ends_on, status, notes, created_at, updated_at';
 export const DEVICE_COLUMNS = 'id, tag, name, type, shelf, tier, place_note, condition, ports, login, games, kit, quantity, quantity_is_estimate, notes, created_at, updated_at';
 export const SLOT_COLUMNS = 'id, plan_id, station_id, type, games, label, sort, set_id, request_id, request_item';
 export const BORROWED_COLUMNS = 'id, plan_id, tag, name, type, owner_kind, sponsor_id, owner_user_id, owner_note, station_id, role, swap_reason, swapped_for_label, kit, notes, games_needed, games, sort, set_id, request_id, request_item';
@@ -16,7 +17,7 @@ export async function loadSteps(svc: SupabaseClient): Promise<StepDef[]> {
   return (data ?? []).map((o) => ({ id: o.id as string, name: o.value as string, sort: o.sort as number, applies: (((o.meta as { applies?: Applies } | null)?.applies) ?? 'all') as Applies, kit: !!(o.meta as { kit?: boolean } | null)?.kit }));
 }
 
-// A request's allocation can be locked (logistics_requests.allocation_locked): its device rows, its prize pool and what it asks for then can't be changed until it is unlocked.
+// A request's allocation can be locked (logistics_requests.allocation_locked): its device rows, its station's prizes and what it asks for then can't be changed until it is unlocked.
 export const LOCKED_MESSAGE = 'That belongs to a request whose allocation is locked. Unlock the request first.';
 export async function lockedRequestIds(svc: SupabaseClient, planId: string): Promise<Set<string>> {
   const { data } = await svc.from('logistics_requests').select('id').eq('plan_id', planId).eq('allocation_locked', true);
@@ -33,16 +34,21 @@ export async function rowsLocked(svc: SupabaseClient, planId: string, f: { slotI
   ]);
   return found.some((r) => (r?.data?.length ?? 0) > 0);
 }
-// True when the pool was made by a locked request.
-export async function poolLocked(svc: SupabaseClient, planId: string, poolId: string): Promise<boolean> {
-  const { data } = await svc.from('logistics_plan_pools').select('request_id').eq('id', poolId).eq('plan_id', planId).maybeSingle();
-  const rid = data?.request_id as string | null | undefined;
+// True when the station's prize request is locked.
+export async function stationLocked(svc: SupabaseClient, planId: string, stationId: string): Promise<boolean> {
+  const { data } = await svc.from('logistics_stations').select('prize_request_id').eq('id', stationId).eq('plan_id', planId).maybeSingle();
+  const rid = data?.prize_request_id as string | null | undefined;
   return !!rid && (await lockedRequestIds(svc, planId)).has(rid);
 }
 
 // Any change to a plan's makeup bumps this, which is what other phones compare to know they should reload (see the version route).
-export async function touchPlan(svc: SupabaseClient, planId: string) {
+// (`stampPlan` moves the stamp without a message: for changes that announce themselves, like a station's number for a prize.)
+export async function stampPlan(svc: SupabaseClient, planId: string) {
   await svc.from('logistics_plans').update({ updated_at: new Date().toISOString() }).eq('id', planId);
+}
+export async function touchPlan(svc: SupabaseClient, planId: string) {
+  await stampPlan(svc, planId);
+  await announce(planTopic(planId), { k: 'plan', plan: planId });   // everyone with this event open reads it again
 }
 
 // Devices in this plan that are also going (as planned, not spare) to another event whose dates overlap, by device id -> the other events' names.

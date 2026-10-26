@@ -4,7 +4,8 @@ import { authorizeLogistics } from '@/lib/logistics/auth';
 import { BORROWED_COLUMNS, DEVICE_COLUMNS, PLAN_COLUMNS, lockedRequestIds, SLOT_COLUMNS, UUID, bookedElsewhere, loadSteps, ownerLabelOf, ownerNames, type BorrowedRow } from '@/lib/logistics/planServer';
 import { planConflicts } from '@/lib/logistics/plans';
 import type { Device } from '@/lib/logistics/devices';
-import { loadPlanPrizes } from '@/lib/logistics/prizeServer';
+import { bumpStock, loadPlanPrizes, logPrize, planCloseLines } from '@/lib/logistics/prizeServer';
+import { announce, planTopic, whoIs } from '@/lib/logistics/live';
 import { logAudit } from '@/lib/notifications/audit';
 
 export const dynamic = 'force-dynamic';
@@ -20,11 +21,11 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { data: plan } = await auth.svc.from('logistics_plans').select(PLAN_COLUMNS).eq('id', id).maybeSingle();
   if (!plan) return NextResponse.json({ error: 'That plan is gone.' }, { status: 404 });
   // A division account gets only the plan itself (for the Requests page), none of its devices, teams or prizes.
-  if (!auth.canView) return NextResponse.json({ plan, canManage: false, requestOnly: true, stations: [], steps: [], prizes: { pools: [], lines: [], done: [], steps: [], keeps: [] }, lockedRequests: [], items: [], slots: [], borrowed: [], extras: [], done: [], conflicts: [] });
+  if (!auth.canView) return NextResponse.json({ plan, canManage: false, requestOnly: true, stations: [], steps: [], prizes: { lines: [], done: [], steps: [] }, lockedRequests: [], items: [], slots: [], borrowed: [], extras: [], done: [], conflicts: [] });
   const prizeData = loadPlanPrizes(auth.svc, id);
   const lockedP = lockedRequestIds(auth.svc, id);   // read alongside the rest
   const [stations, rows, steps, done, borrowedRows, slotRows] = await Promise.all([
-    auth.svc.from('logistics_stations').select('id, name, sort, contact, room').eq('plan_id', id).order('sort').order('name').limit(500),
+    auth.svc.from('logistics_stations').select('id, name, sort, contact, room, prize_only, prize_request_id, prize_target_qty, prize_target_sizes').eq('plan_id', id).order('sort').order('name').limit(500),
     auth.svc.from('logistics_plan_devices').select('device_id, station_id, role, swap_reason, swapped_for_label, games_needed, sort, set_id, request_id, request_item').eq('plan_id', id).limit(5000),
     loadSteps(auth.svc),
     auth.svc.from('logistics_plan_steps').select('device_id, borrowed_id, slot_id, step_id, done_at, done_by').eq('plan_id', id).limit(30000),
@@ -66,11 +67,40 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if ('ends_on' in b) { if (!DATE.test(b.ends_on)) return NextResponse.json({ error: 'Pick the last day.' }, { status: 400 }); patch.ends_on = b.ends_on; }
   if ('status' in b) { if (b.status !== 'draft' && b.status !== 'closed') return NextResponse.json({ error: 'Unknown status.' }, { status: 400 }); patch.status = b.status; }
   if ('notes' in b) patch.notes = String(b.notes ?? '').trim().slice(0, 2000) || null;
-  const { data: before } = await auth.svc.from('logistics_plans').select('starts_on, ends_on, name').eq('id', id).maybeSingle();
+  const { data: before } = await auth.svc.from('logistics_plans').select('starts_on, ends_on, name, status').eq('id', id).maybeSingle();
   if (!before) return NextResponse.json({ error: 'That plan is gone.' }, { status: 404 });
   if (((patch.ends_on ?? before.ends_on) as string) < ((patch.starts_on ?? before.starts_on) as string)) return NextResponse.json({ error: 'The last day can’t be before the first.' }, { status: 400 });
+  // Closing takes the prizes that went out and did not come back out of stock; reopening puts that back. Lines with nothing counted back are asked about first (see planCloseLines).
+  const closing = patch.status === 'closed' && before.status !== 'closed', reopening = patch.status === 'draft' && before.status === 'closed';
+  const takeOut = new Map<string, number>();
+  if (closing) {
+    const lines = await planCloseLines(auth.svc, id);
+    const uncounted = lines.filter((l) => !l.counted && l.remaining > 0);
+    const choice = b.uncounted === 'given' || b.uncounted === 'returned' ? (b.uncounted as 'given' | 'returned') : null;
+    if (uncounted.length && !choice) {
+      return NextResponse.json({ code: 'uncounted', error: 'Some prizes were not counted back to storage.', uncounted: uncounted.map((l) => ({ station: l.station, prize: l.prize, quantity: l.remaining })) }, { status: 409 });
+    }
+    for (const l of lines) {
+      const out = l.counted ? l.remaining - l.back : choice === 'given' ? l.remaining : 0;
+      if (out > 0) takeOut.set(l.prize_id, (takeOut.get(l.prize_id) ?? 0) + out);
+    }
+  }
   const { data, error } = await auth.svc.from('logistics_plans').update(patch).eq('id', id).select(PLAN_COLUMNS).single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
+  if (closing && takeOut.size) {
+    const who = await whoIs(auth.svc, auth.user.id);
+    for (const [prize, n] of takeOut) await bumpStock(auth.svc, prize, -n, who);
+    await logPrize(auth.svc, [...takeOut].map(([prize, n]) => ({ prize_id: prize, kind: 'give' as const, qty: -n, plan_id: id, plan_name: data.name as string, ref: 'close', note: 'Went out and was not counted back when the event closed', actor: auth.user.id })));
+  }
+  if (reopening) {
+    const { data: entries } = await auth.svc.from('logistics_prize_log').select('id, prize_id, qty').eq('plan_id', id).eq('ref', 'close');
+    const back = new Map<string, number>();
+    for (const e of entries ?? []) back.set(e.prize_id as string, (back.get(e.prize_id as string) ?? 0) - (e.qty as number));
+    const who = await whoIs(auth.svc, auth.user.id);
+    for (const [prize, n] of back) await bumpStock(auth.svc, prize, n, who);
+    if (entries?.length) await auth.svc.from('logistics_prize_log').delete().in('id', entries.map((e) => e.id as string));
+  }
+  if (patch.status) await announce(planTopic(id), { k: 'plan', plan: id }, await whoIs(auth.svc, auth.user.id));
   if (patch.status) await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'logistics plan', entityId: id, summary: `${patch.status === 'closed' ? 'Closed' : 'Reopened'} the equipment plan “${data.name}”` });
   return NextResponse.json({ plan: data });
 }

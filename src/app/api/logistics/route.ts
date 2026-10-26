@@ -3,6 +3,7 @@ import { authorizeLogistics } from '@/lib/logistics/auth';
 import { GAME_OPTIONS } from '@/lib/site/games';
 import { OPTION_KINDS, type OptionKind } from '@/lib/logistics/constants';
 import { pacificToday } from '@/lib/logistics/planServer';
+import { whoIs } from '@/lib/logistics/live';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,6 +37,7 @@ export async function GET() {
   }
   return NextResponse.json({
     canManage: auth.canManage,
+    me: await whoIs(auth.svc, auth.user.id),   // who is looking, for "who is here" and to skip the page's own messages
     lists,
     portalGames: GAME_OPTIONS,
     devices: devices.data ?? [],

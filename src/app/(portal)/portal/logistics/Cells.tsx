@@ -40,16 +40,17 @@ export function PickCell({ value, options, canEdit, onSave, onCreate, shown, cle
 
 
 // A number that is plain text until you click it (like the other cells), then a box; saved when you leave it. Empty clears it when `nullable`.
-export function NumberCell({ value, canEdit, onSave, label, step = 1, money, nullable }: { value: number | null; canEdit: boolean; onSave: (v: number | null) => void; label: string; step?: number; money?: boolean; nullable?: boolean }) {
+export function NumberCell({ value, canEdit, onSave, label, step = 1, money, nullable, onEdit }: { value: number | null; canEdit: boolean; onSave: (v: number | null) => void; label: string; step?: number; money?: boolean; nullable?: boolean; onEdit?: (on: boolean) => void }) {
   const [on, setOn] = useState(false);
   const [text, setText] = useState('');
   const [num, hold] = useHeld(value);
-  const open = () => { setText(num === null ? '' : String(num)); setOn(true); };
+  const open = () => { setText(num === null ? '' : String(num)); setOn(true); onEdit?.(true); };
   const shown = num === null ? null : `${money ? '$' : ''}${money && !Number.isInteger(num) ? num.toFixed(2) : num}`;
   if (!canEdit) return <span>{shown ?? <span className={styles.dim}>–</span>}</span>;
   if (!on) return <button type="button" data-cell className={styles.editCell} aria-label={`${label}. Change`} onClick={(e) => tapTwice(e, open)}>{shown ?? <span className={styles.editHint}>Add</span>}</button>;
   const done = (save: boolean) => {
     setOn(false);
+    onEdit?.(false);
     if (!save) return;
     const n = text.trim() === '' ? null : Number(text);
     if (n === null ? nullable && num !== null : Number.isFinite(n) && n !== num) { const was = num; recordEdit(() => onSave(was), () => onSave(n)); hold(n); onSave(n); }

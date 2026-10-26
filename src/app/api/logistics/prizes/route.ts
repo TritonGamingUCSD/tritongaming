@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { PRIZE_COLUMNS, loadPrizeTotals } from '@/lib/logistics/prizeServer';
+import { PRIZE_COLUMNS, loadPrizeTotals, logPrize } from '@/lib/logistics/prizeServer';
 import { cleanPrize, prizeLeft, type PrizePatch } from '@/lib/logistics/prizes';
 import { UUID } from '@/lib/logistics/planServer';
+import { announce, stockTopic, whoIs } from '@/lib/logistics/live';
 import { logAudit } from '@/lib/notifications/audit';
 
 export const dynamic = 'force-dynamic';
 
-// The prize inventory (every officer can look): each prize with how many are promised to open plans, how many have been given out, and how many are left, and the name of the event
-// it was sent for. Read when the Prizes tab (or a plan's prize picker) opens, not with the rest of Logistics.
+// The prize inventory (every officer can look): each prize with how many are on hand, how many open events have promised (not yet given out), and how many are left to promise. Read when the
+// Prizing page opens, not with the rest of Logistics.
 export async function GET() {
   const auth = await authorizeLogistics('view');
   if (auth.error) return auth.error;
@@ -17,13 +18,11 @@ export async function GET() {
     loadPrizeTotals(auth.svc),
   ]);
   if (error) return NextResponse.json({ error: 'Couldn’t load the prizes.' }, { status: 500 });
-  const planIds = [...new Set((prizes ?? []).map((p) => p.plan_id as string | null).filter((x): x is string => !!x))];
-  const { data: plans } = planIds.length ? await auth.svc.from('logistics_plans').select('id, name').in('id', planIds) : { data: [] };
-  const names = new Map((plans ?? []).map((p) => [p.id as string, p.name as string]));
   return NextResponse.json({
+    channel: stockTopic(),   // where changes to the stock are announced (the page listens)
     prizes: (prizes ?? []).map((p) => {
-      const t = totals.get(p.id as string) ?? { allocated: 0, given: 0 };
-      return { ...p, price: p.price === null ? null : Number(p.price), allocated: t.allocated, given: t.given, left: prizeLeft(p as { quantity: number }, t), event: p.plan_id ? names.get(p.plan_id as string) ?? null : null };
+      const t = totals.get(p.id as string) ?? { allocated: 0 };
+      return { ...p, price: p.price === null ? null : Number(p.price), allocated: t.allocated, left: prizeLeft(p as { quantity: number }, t) };
     }),
   });
 }
@@ -31,14 +30,18 @@ export async function GET() {
 export async function POST(request: Request) {
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
-  const r = cleanPrize(await request.json().catch(() => ({})), false);
+  const body = await request.json().catch(() => ({}));
+  const r = cleanPrize(body, false);
   if ('error' in r) return NextResponse.json({ error: r.error }, { status: 400 });
   const { data, error } = await auth.svc.from('logistics_prizes').insert({ ...r.value, created_by: auth.user.id }).select(PRIZE_COLUMNS).single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t add the prize.' }, { status: 500 });
+  await logPrize(auth.svc, [{ prize_id: data.id as string, kind: 'add', qty: data.quantity as number, sponsor_id: (data.sponsor_id as string | null) ?? null, note: String(body.note ?? '').trim().slice(0, 300) || (data.source as string | null) || 'New prize', actor: auth.user.id }]);
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'logistics prize', entityId: data.id as string, summary: `Added the prize “${data.name}”` });
-  return NextResponse.json({ prize: { ...data, price: data.price === null ? null : Number(data.price), allocated: 0, given: 0, left: data.quantity, event: null } }, { status: 201 });
+  await announce(stockTopic(), { k: 'prizes' }, await whoIs(auth.svc, auth.user.id));
+  return NextResponse.json({ prize: { ...data, price: data.price === null ? null : Number(data.price), allocated: 0, left: data.quantity } }, { status: 201 });
 }
 
+// Changing the number on hand is how a recount is done: it is saved as a correction (with the reason if one was typed) in the prize's history.
 export async function PATCH(request: Request) {
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
@@ -46,12 +49,33 @@ export async function PATCH(request: Request) {
   if (typeof b.id !== 'string' || !UUID.test(b.id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const r = cleanPrize(b, true);
   if ('error' in r) return NextResponse.json({ error: r.error }, { status: 400 });
-  const patch: PrizePatch & { updated_at: string } = { ...r.value, updated_at: new Date().toISOString() };
-  const { data, error } = await auth.svc.from('logistics_prizes').update(patch).eq('id', b.id).select(PRIZE_COLUMNS).maybeSingle();
+  const patch: PrizePatch & { updated_at: string; updated_by: string } = { ...r.value, updated_at: new Date().toISOString(), updated_by: auth.user.id };
+  const { data: before } = await auth.svc.from('logistics_prizes').select('quantity, updated_by').eq('id', b.id).maybeSingle();
+  if (!before) return NextResponse.json({ error: 'That prize is gone.' }, { status: 404 });
+  const countChanges = patch.quantity !== undefined && patch.quantity !== (before.quantity as number);
+  // `expected_quantity` is the count the person was looking at: if someone else changed it meanwhile, nothing is changed and the answer says what it is now.
+  if (countChanges && b.expected_quantity !== undefined && Math.round(Number(b.expected_quantity)) !== (before.quantity as number)) {
+    const by = before.updated_by ? (await whoIs(auth.svc, before.updated_by as string)).name : 'Someone';
+    return NextResponse.json({ code: 'changed', current: before.quantity, by, error: `${by} just changed the number on hand from ${Math.round(Number(b.expected_quantity))} to ${before.quantity}.` }, { status: 409 });
+  }
+  let q = auth.svc.from('logistics_prizes').update(patch).eq('id', b.id);
+  if (countChanges) q = q.eq('quantity', before.quantity as number);   // only if it is still the number just read
+  const { data, error } = await q.select(PRIZE_COLUMNS).maybeSingle();
   if (error) return NextResponse.json({ error: 'Couldn’t save the prize.' }, { status: 500 });
-  if (!data) return NextResponse.json({ error: 'That prize is gone.' }, { status: 404 });
-  const t = (await loadPrizeTotals(auth.svc, [b.id])).get(b.id) ?? { allocated: 0, given: 0 };
-  return NextResponse.json({ prize: { ...data, price: data.price === null ? null : Number(data.price), allocated: t.allocated, given: t.given, left: prizeLeft(data as { quantity: number }, t) } });
+  if (!data) {
+    const { data: now } = await auth.svc.from('logistics_prizes').select('quantity, updated_by').eq('id', b.id).maybeSingle();
+    if (!now) return NextResponse.json({ error: 'That prize is gone.' }, { status: 404 });
+    const by = now.updated_by ? (await whoIs(auth.svc, now.updated_by as string)).name : 'Someone';
+    return NextResponse.json({ code: 'changed', current: now.quantity, by, error: `${by} just changed the number on hand to ${now.quantity}.` }, { status: 409 });
+  }
+  const who = await whoIs(auth.svc, auth.user.id);
+  if (countChanges) {
+    await logPrize(auth.svc, [{ prize_id: b.id, kind: 'correct', qty: (patch.quantity as number) - (before.quantity as number), note: String(b.note ?? '').trim().slice(0, 300) || null, actor: auth.user.id }]);
+    await announce(stockTopic(), { k: 'stock', prize: b.id, qty: patch.quantity as number, was: before.quantity as number }, who);
+  }
+  if (Object.keys(r.value).some((k) => k !== 'quantity')) await announce(stockTopic(), { k: 'prizes' }, who);   // details changed: the list is read again
+  const t = (await loadPrizeTotals(auth.svc, [b.id])).get(b.id) ?? { allocated: 0 };
+  return NextResponse.json({ prize: { ...data, price: data.price === null ? null : Number(data.price), allocated: t.allocated, left: prizeLeft(data as { quantity: number }, t) } });
 }
 
 export async function DELETE(request: Request) {
@@ -64,5 +88,6 @@ export async function DELETE(request: Request) {
   const { data: p } = await auth.svc.from('logistics_prizes').select('name').eq('id', b.id).maybeSingle();
   await auth.svc.from('logistics_prizes').delete().eq('id', b.id);
   if (p) await logAudit(auth.svc, { actorId: auth.user.id, action: 'remove', entityType: 'logistics prize', entityId: b.id, summary: `Removed the prize “${p.name}”` });
+  await announce(stockTopic(), { k: 'prizes' }, await whoIs(auth.svc, auth.user.id));
   return NextResponse.json({ ok: true });
 }

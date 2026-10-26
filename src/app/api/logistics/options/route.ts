@@ -37,7 +37,7 @@ async function devicesUsing(svc: SupabaseClient, kind: OptionKind, value: string
   return (data ?? []) as { id: string }[];
 }
 
-// A prize size is kept as text on the prizes, on the lines of prize requests and in the pools made from them, so a rename is followed in all three.
+// A prize size is kept as text on the prizes, on the lines of prize requests and on the stations made from them, so a rename is followed in all three.
 async function followPrizeSize(svc: SupabaseClient, old: string, now: string) {
   await svc.from('logistics_prizes').update({ size: now }).eq('size', old);
   const { data: asked } = await svc.from('logistics_requests').select('id, items').eq('kind', 'prizes').limit(3000);
@@ -45,10 +45,10 @@ async function followPrizeSize(svc: SupabaseClient, old: string, now: string) {
     const items = (q.items as { qty: number; size: string }[]) ?? [];
     if (items.some((i) => i.size === old)) await svc.from('logistics_requests').update({ items: items.map((i) => (i.size === old ? { ...i, size: now } : i)) }).eq('id', q.id as string);
   }
-  const { data: pools } = await svc.from('logistics_plan_pools').select('id, target_sizes').not('target_sizes', 'is', null).limit(3000);
+  const { data: pools } = await svc.from('logistics_stations').select('id, prize_target_sizes').not('prize_target_sizes', 'is', null).limit(3000);
   for (const p of pools ?? []) {
-    const t = p.target_sizes as Record<string, number>;
-    if (old in t) { const { [old]: n, ...rest } = t; await svc.from('logistics_plan_pools').update({ target_sizes: { ...rest, [now]: (rest[now] ?? 0) + n } }).eq('id', p.id as string); }
+    const t = p.prize_target_sizes as Record<string, number>;
+    if (old in t) { const { [old]: n, ...rest } = t; await svc.from('logistics_stations').update({ prize_target_sizes: { ...rest, [now]: (rest[now] ?? 0) + n } }).eq('id', p.id as string); }
   }
 }
 

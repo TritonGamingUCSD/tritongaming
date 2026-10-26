@@ -12,6 +12,9 @@ import { NumberCell, PickCell, TextCell } from './Cells';
 import { RowMenu } from './RowMenu';
 import { usePrizes } from './usePrizes';
 import type { ToolsSection } from './logisticsRoute';
+
+// The lists of the Tools tab, and two more that the Prizing page opens from its gear (sponsors, and prize sizes with the prize steps).
+export type ToolsPart = ToolsSection | 'sponsors' | 'prizes';
 import type { Catalog, LogisticsApi, OptionItem } from './useLogistics';
 import styles from './logistics.module.css';
 
@@ -27,7 +30,7 @@ function useUsage(data: Catalog, prizeSizes: (string | null)[] | null): Record<s
 }
 
 // Tools: the dropdown lists used everywhere in Logistics. Rename a value and everything that uses it follows; a value that is in use can't be deleted until those devices are changed.
-export default function ToolsTab({ api, data, section }: { api: LogisticsApi; data: Catalog; section: ToolsSection }) {
+export default function ToolsTab({ api, data, section }: { api: LogisticsApi; data: Catalog; section: ToolsPart }) {
   const prizes = usePrizes();
   const usage = useUsage(data, prizes.rows ? prizes.rows.map((p) => p.size) : null);
   if (section === 'sponsors') return <SponsorsTab api={api} data={data} />;

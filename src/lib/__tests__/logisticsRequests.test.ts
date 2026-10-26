@@ -68,7 +68,7 @@ describe('allocation matches the requests', () => {
   });
 });
 
-import { ANY_SIZE, planPrizeUse, suggestPrizes } from '@/lib/logistics/prizes';
+import { ANY_SIZE, suggestPrizes } from '@/lib/logistics/prizes';
 describe('prize suggestions', () => {
   const stock = [{ id: 'a', size: 'Small Prizing', left: 10, sponsor: false }, { id: 'b', size: 'Small Prizing', left: 2, sponsor: false }, { id: 's', size: 'Medium Prizing', left: 1, sponsor: true }, { id: 'm', size: 'Medium Prizing', left: 1, sponsor: false }, { id: 'z', size: 'Large Prizing', left: 0, sponsor: false }];
   it('fills each size from prizes of that size, never more than is left', () => {
@@ -96,21 +96,5 @@ describe('prize suggestions', () => {
     const { picks, short } = suggestPrizes(stock, { 'Large Prizing': 2, 'Medium Prizing': 3 });
     expect(picks.has('z')).toBe(false);
     expect(short).toEqual({ 'Large Prizing': 2, 'Medium Prizing': 1 });
-  });
-});
-
-describe('closing an event and the stock', () => {
-  it('holds the prizes while the event is open', () => {
-    expect(planPrizeUse({ quantity: 10, given: 3, moved: 0, closed: false, manual: true })).toEqual({ allocated: 7, given: 3 });
-  });
-  it('an older closed event counts only what was given out', () => {
-    expect(planPrizeUse({ quantity: 10, given: 3, moved: 0, closed: true, manual: false })).toEqual({ allocated: 0, given: 3 });
-  });
-  it('a newer closed event uses up everything not moved back by hand', () => {
-    expect(planPrizeUse({ quantity: 10, given: 3, moved: 0, closed: true, manual: true })).toEqual({ allocated: 0, given: 10 });
-    expect(planPrizeUse({ quantity: 10, given: 3, moved: 4, closed: true, manual: true })).toEqual({ allocated: 0, given: 6 });
-  });
-  it('never moves back more than was not given out', () => {
-    expect(planPrizeUse({ quantity: 10, given: 8, moved: 5, closed: true, manual: true })).toEqual({ allocated: 0, given: 8 });
   });
 });

@@ -127,23 +127,23 @@ try {
   const releaseLoan = await exec.call('POST', SL, { action: 'empty', borrowed_id: afterLoan.id });
   const freed = (await plan1()).borrowed.find((x) => x.tag === 'ZZ-LOAN');
   t.ok('emptying the row gives the loaner back', releaseLoan.s === 200 && !freed.request_id && !freed.station_id);
-  // A prize request is a pool with a target (how many of each size), and follows the request.
-  const poolOf = async (rid) => (await plan1()).prizes.pools.find((x) => x.request_id === rid);
+  // A prize request is a station with a target (how many of each size), and follows the request.
+  const poolOf = async (rid) => { const s = (await plan1()).stations.find((x) => x.prize_request_id === rid); return s && { ...s, target_qty: s.prize_target_qty, target_sizes: s.prize_target_sizes }; };
   const pE = await poolOf(E);
-  t.ok('a prize request makes a pool with its target', pE && pE.target_qty === 2 && pE.target_sizes?.Free === 2, JSON.stringify(pE));
+  t.ok('a prize request makes a station with its target', pE && pE.target_qty === 2 && pE.target_sizes?.Free === 2, JSON.stringify(pE));
   await exec.call('PATCH', URL_, { request_id: E, items: [{ qty: 4, size: 'Small Prizing' }] });
   const pE2 = await poolOf(E);
-  t.ok('changing the request changes the pool target', pE2.target_qty === 4 && pE2.target_sizes?.['Small Prizing'] === 4, JSON.stringify(pE2));
+  t.ok('changing the request changes the station target', pE2.target_qty === 4 && pE2.target_sizes?.['Small Prizing'] === 4, JSON.stringify(pE2));
   const zPrize = (await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Prize', price: 15, quantity: 9 })).j.prize;
-  await exec.call('POST', `/api/logistics/plans/${P.id}/prizes`, { pool_id: pE2.id, prize_id: zPrize.id, quantity: 4 });
+  await exec.call('POST', `/api/logistics/plans/${P.id}/prizes`, { station_id: pE2.id, prize_id: zPrize.id, quantity: 4 });
   await exec.call('PATCH', URL_, { request_id: E, items: [{ qty: 3, size: 'Small Prizing' }] });
-  const lineAfter = (await plan1()).prizes.lines.find((x) => x.pool_id === pE2.id);
+  const lineAfter = (await plan1()).prizes.lines.find((x) => x.station_id === pE2.id);
   t.ok('a smaller request trims the pool\u2019s prizes to fit', lineAfter?.quantity === 3, JSON.stringify(lineAfter));
-  // A prize request can be just a team, with no amount: it makes a pool with no target.
+  // A prize request can be just a team, with no amount: it makes a station with no target.
   const noTeam = await exec.call('POST', URL_, { kind: 'prizes', items: [] });
   const bare = await exec.call('POST', URL_, { kind: 'prizes', team: 'ZZ Bare Team', items: [] });
   const bareP = bare.s === 201 ? await poolOf(bare.j.request.id) : null;
-  t.ok('a prize request with no amount needs a team and makes a pool with no target', noTeam.s === 400 && bare.s === 201 && bareP && bareP.target_qty === null && bareP.target_sizes === null, JSON.stringify([noTeam.s, bare.s, bareP]));
+  t.ok('a prize request with no amount needs a team and makes a station with no target', noTeam.s === 400 && bare.s === 201 && bareP && bareP.target_qty === null && bareP.target_sizes === null, JSON.stringify([noTeam.s, bare.s, bareP]));
   if (bare.s === 201) await exec.call('DELETE', URL_, { request_id: bare.j.request.id });
   // A line may leave the size blank (any size): it counts toward the pool's total but not toward a size.
   const anyReq = await exec.call('POST', URL_, { kind: 'prizes', team: 'ZZ Any Team', items: [{ qty: 2, size: '' }, { qty: 1, size: 'Free' }] });
@@ -157,7 +157,7 @@ try {
   await exec.call('PATCH', '/api/logistics/options', { id: zSize.id, value: 'ZZ Tier Two' });
   const zReqAfter = (await exec.call('GET', URL_)).j.requests.find((x) => x.id === zReq.j.request.id);
   const zPool = await poolOf(zReq.j.request.id);
-  t.ok('renaming a size renames it on the request and its pool', zReqAfter.items[0].size === 'ZZ Tier Two' && zPool.target_sizes?.['ZZ Tier Two'] === 2 && !('ZZ Tier' in (zPool.target_sizes ?? {})), JSON.stringify([zReqAfter.items, zPool.target_sizes]));
+  t.ok('renaming a size renames it on the request and its station', zReqAfter.items[0].size === 'ZZ Tier Two' && zPool.target_sizes?.['ZZ Tier Two'] === 2 && !('ZZ Tier' in (zPool.target_sizes ?? {})), JSON.stringify([zReqAfter.items, zPool.target_sizes]));
   await exec.call('DELETE', URL_, { request_id: zReq.j.request.id });
   await svc.from('logistics_options').delete().eq('kind', 'prize_size').like('value', 'ZZ Tier%');
   // Locking a request freezes its allocation: its rows, its pool and what it asks for. Only Event Logistics can lock or unlock.
@@ -178,16 +178,16 @@ try {
   t.ok('a locked request\u2019s rows, amounts and the request itself cannot be changed', blocked.every((r) => r.s === 409), JSON.stringify(blocked.map((r) => r.s)));
   t.ok('a locked request can still get notes and a status of planned', (await exec.call('PATCH', URL_, { request_id: LK, notes: 'ZZ note', status: 'planned' })).s === 200 && (await lkSlots()).length === 2);
   const lockedPool = await exec.call('PATCH', URL_, { request_id: E, allocation_locked: true });
-  const lockedLine = (await plan1()).prizes.lines.find((x) => x.pool_id === pE2.id);
+  const lockedLine = (await plan1()).prizes.lines.find((x) => x.station_id === pE2.id);
   const prizeBlocked = [
     await exec.call('PATCH', `/api/logistics/plans/${P.id}/prizes`, { line_id: lockedLine.id, quantity: 1 }),
     await exec.call('DELETE', `/api/logistics/plans/${P.id}/prizes`, { line_id: lockedLine.id }),
-    await exec.call('PATCH', `/api/logistics/plans/${P.id}/pools`, { pool_id: pE2.id, name: 'ZZ Renamed' }),
-    await exec.call('DELETE', `/api/logistics/plans/${P.id}/pools`, { pool_id: pE2.id }),
+    await exec.call('PATCH', `/api/logistics/plans/${P.id}/stations`, { station_id: pE2.id, name: 'ZZ Renamed' }),
+    await exec.call('DELETE', `/api/logistics/plans/${P.id}/stations`, { station_id: pE2.id }),
   ];
-  t.ok('a locked request\u2019s pool and prizes cannot be changed', lockedPool.s === 200 && prizeBlocked.every((r) => r.s === 409), JSON.stringify(prizeBlocked.map((r) => r.s)));
+  t.ok('a locked request\u2019s station and prizes cannot be changed', lockedPool.s === 200 && prizeBlocked.every((r) => r.s === 409), JSON.stringify(prizeBlocked.map((r) => r.s)));
   await exec.call('PATCH', URL_, { request_id: E, allocation_locked: false });
-  t.ok('unlocking lets the pool change again', (await exec.call('PATCH', `/api/logistics/plans/${P.id}/prizes`, { line_id: lockedLine.id, quantity: 2 })).s === 200);
+  t.ok('unlocking lets the station change again', (await exec.call('PATCH', `/api/logistics/plans/${P.id}/prizes`, { line_id: lockedLine.id, quantity: 2 })).s === 200);
   await exec.call('PATCH', URL_, { request_id: LK, allocation_locked: false });
   t.ok('unlocking lets the request go', (await exec.call('DELETE', URL_, { request_id: LK })).s === 200);
   // Mark all: one request ticks a step for many rows.

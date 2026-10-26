@@ -193,34 +193,42 @@ export async function requestsUsingBundle(svc: SupabaseClient, name: string): Pr
   return (data ?? []).filter((q) => ((q.items as DeviceItem[]) ?? []).some((i) => i.what.toLowerCase() === name.toLowerCase())).length;
 }
 
-// A prize request is a pool of its own for its team: it says how many prizes of each size, which the prizing allocation shows as progress and fills on Suggest. When the request
-// shrinks, the pool's lines are trimmed to fit, newest first, but never below what has already been counted in a step. A declined request takes its pool away unless prizes were already counted.
-export async function syncPrizePool(svc: SupabaseClient, r: Req & { requester_id?: string }): Promise<void> {
+// A prize request is a station for its team: it says how many prizes of each size, which the prizing page shows as progress and fills on Suggest. It uses the team's own station when the
+// plan has one with that name, otherwise it makes a station for prizes only. When the request shrinks, the station's lines are trimmed to fit, newest first, but never below what has already
+// been counted in a step. A declined request takes its prizes away (and a station made only for it) unless prizes were already counted.
+export async function syncPrizeStation(svc: SupabaseClient, r: Req & { requester_id?: string }): Promise<void> {
   if (r.kind !== 'prizes') return;
   const items = ((r.items as PrizeItem[]) ?? []);
   const qty = items.reduce((n, i) => n + i.qty, 0);
-  const { data: pool } = await svc.from('logistics_plan_pools').select('id').eq('request_id', r.id).maybeSingle();
-  const { data: lines } = pool ? await svc.from('logistics_plan_prizes').select('id, quantity, sort').eq('pool_id', pool.id as string).order('sort', { ascending: false }) : { data: [] };
+  let { data: station } = await svc.from('logistics_stations').select('id, prize_only').eq('prize_request_id', r.id).maybeSingle();
+  const own = !!station;   // the station this request made (or took) earlier
+  const { data: lines } = station ? await svc.from('logistics_plan_prizes').select('id, quantity, sort').eq('station_id', station.id as string).order('sort', { ascending: false }) : { data: [] };
   const lineIds = (lines ?? []).map((l) => l.id as string);
   const { data: counted } = lineIds.length ? await svc.from('logistics_plan_prize_steps').select('line_id, done').in('line_id', lineIds) : { data: [] };
   const floor = new Map<string, number>();
   for (const c of counted ?? []) floor.set(c.line_id as string, Math.max(floor.get(c.line_id as string) ?? 0, c.done as number));
   if (r.status === 'declined') {
-    if (pool && ![...floor.values()].some((n) => n > 0)) await svc.from('logistics_plan_pools').delete().eq('id', pool.id as string);
+    if (station && ![...floor.values()].some((n) => n > 0)) {
+      if (station.prize_only) await svc.from('logistics_stations').delete().eq('id', station.id as string);
+      else { await svc.from('logistics_plan_prizes').delete().eq('station_id', station.id as string); await svc.from('logistics_stations').update({ prize_request_id: null, prize_target_qty: null, prize_target_sizes: null }).eq('id', station.id as string); }
+    }
     return;
   }
   let name = r.team?.trim() || null;
   if (!name && r.requester_id) name = ((await svc.from('profiles').select('display_name').eq('id', r.requester_id).maybeSingle()).data?.display_name as string | undefined) ?? null;
-  const { data: sts } = await svc.from('logistics_stations').select('id, name').eq('plan_id', r.plan_id);
-  const station = r.team ? (sts ?? []).find((x) => (x.name as string).toLowerCase() === r.team!.trim().toLowerCase())?.id as string | undefined ?? null : null;
-  const fields = { name: (name ?? 'Prizes').slice(0, 80), station_id: station, target_qty: qty > 0 ? qty : null, target_sizes: qty > 0 ? prizeSizes(items) : null };
-  if (!pool) {
-    const { data: last } = await svc.from('logistics_plan_pools').select('sort').eq('plan_id', r.plan_id).order('sort', { ascending: false }).limit(1).maybeSingle();
-    await svc.from('logistics_plan_pools').insert({ ...fields, plan_id: r.plan_id, request_id: r.id, sort: ((last?.sort as number | undefined) ?? 0) + 1 });
+  const { data: sts } = await svc.from('logistics_stations').select('id, name, prize_only, prize_request_id, sort').eq('plan_id', r.plan_id);
+  if (!station && r.team) {
+    const team = (sts ?? []).find((x) => (x.name as string).toLowerCase() === r.team!.trim().toLowerCase() && !x.prize_request_id);
+    if (team) station = { id: team.id as string, prize_only: !!team.prize_only };
+  }
+  const fields = { prize_request_id: r.id, prize_target_qty: qty > 0 ? qty : null, prize_target_sizes: qty > 0 ? prizeSizes(items) : null };
+  if (!station) {
+    const last = Math.max(0, ...(sts ?? []).map((x) => x.sort as number));
+    await svc.from('logistics_stations').insert({ ...fields, plan_id: r.plan_id, name: (name ?? 'Prizes').slice(0, 80), sort: last + 1, prize_only: true });
     return;
   }
-  await svc.from('logistics_plan_pools').update(fields).eq('id', pool.id as string);
-  if (qty === 0) return;   // no amount asked for: whatever the logistics team puts in the pool stays
+  await svc.from('logistics_stations').update(own && station.prize_only ? { ...fields, name: (name ?? 'Prizes').slice(0, 80) } : fields).eq('id', station.id as string);
+  if (qty === 0) return;   // no amount asked for: whatever the logistics team puts on the station stays
   let extra = (lines ?? []).reduce((n, l) => n + (l.quantity as number), 0) - qty;
   for (const l of lines ?? []) {
     if (extra <= 0) break;
