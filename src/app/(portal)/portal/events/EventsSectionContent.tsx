@@ -82,7 +82,9 @@ interface Props {
 // already fully fetched (all events + their ticket counts come in as
 // props), so filtering is instant with no round trip.
 export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false, canEmail = false }: Props) {
-  const { tab: initialTab, subtab } = useUrlNav();
+  const { tab: initialTab, subtab: initialSub } = useUrlNav();
+  // The check-ins page of one event (/portal/events/check-ins/<event>). Held here, like the tab, because changing the address bar alone does not redraw the page.
+  const [checkinsKey, setCheckinsKey] = useState<string | null>(initialTab === 'check-ins' && initialSub ? initialSub : null);
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'list');
   const syncUrl = usePortalTabSync('events');
   function selectTab(t: Tab) {
@@ -118,7 +120,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
       });
   })();
 
-  if (initialTab === 'check-ins' && subtab) return <div className={styles.page}><EventCheckinsPage eventKey={subtab} canManagePoints={canManagePoints} onBack={() => syncUrl('list')} /></div>;
+  if (checkinsKey) return <div className={styles.page}><EventCheckinsPage eventKey={checkinsKey} canManagePoints={canManagePoints} onBack={() => { setCheckinsKey(null); setTab('list'); syncUrl('list'); }} /></div>;
 
   return (
     <div className={styles.page}>
@@ -272,7 +274,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                     </div>
                     <div className={styles.ticketInfo}>
                       {event.requires_ticket ? (
-                        <button type="button" className={styles.checkinLink} onClick={() => syncUrl('check-ins', event.slug ?? event.id)}>
+                        <button type="button" className={styles.checkinLink} onClick={() => { const key = event.slug ?? event.id; setCheckinsKey(key); syncUrl('check-ins', key); }}>
                           <Ticket size={12} strokeWidth={1.75} aria-hidden="true" /> {event.ticketsIssued}
                           {event.ticketsIssued > 0 && <span className={styles.checkinSub}> · {event.ticketsCheckedIn} in</span>}
                         </button>
