@@ -16,7 +16,6 @@
 
 .stats { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; align-items: center; font-size: 0.84rem; color: rgba(var(--pp-ink-rgb), 0.78); }
 .closedTag { color: var(--pp-warn); font-weight: 700; }
-.onlyHere { display: inline-flex; align-items: center; gap: 0.35rem; cursor: pointer; }
 .muted { margin: 0.2rem 0; font-size: 0.84rem; color: rgba(var(--pp-ink-rgb), 0.75); }
 
 .steps { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
@@ -42,8 +41,6 @@
 .row:last-child { border-bottom: 0; }
 .head { font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.6); background: rgba(var(--pp-ink-rgb), 0.05); padding-block: 0.35rem; }
 .rowBad { background: color-mix(in srgb, var(--pp-bad) 8%, transparent); box-shadow: inset 3px 0 0 var(--pp-bad); }
-.groupHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.3rem 0.8rem; padding: 0.5rem 0.8rem; background: rgba(var(--pp-ink-rgb), 0.09); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15); font-size: 0.9rem; }
-.groupHead span { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.72); }
 .rowMain { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
 .name { display: inline-flex; align-items: center; gap: 0.3rem; background: none; border: 0; padding: 0; color: var(--pp-ink); font: inherit; text-align: left; cursor: pointer; overflow-wrap: anywhere; }
 .name:disabled { cursor: default; }
@@ -67,9 +64,6 @@
 .leftZero { background: color-mix(in srgb, var(--pp-warn) 26%, var(--pp-card)); }
 .leftBad { background: color-mix(in srgb, var(--pp-bad) 28%, var(--pp-card)); color: var(--pp-bad); }
 .expand { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 0.3rem; padding: 0.4rem 0 0.2rem 1.2rem; }
-.expandLine { display: flex; align-items: center; gap: 0.8rem; }
-.expandName { min-width: 10rem; font-size: 0.86rem; }
-.expandAdd { max-width: 20rem; }
 .flash { animation: flash 2.4s ease-out; }
 @keyframes flash { 0%, 55% { background: color-mix(in srgb, var(--yellow) 55%, transparent); } 100% { background: transparent; } }
 
@@ -125,8 +119,6 @@
   .num::before { content: attr(data-label); display: block; font-size: 0.7rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.6); }
   .tools { margin-left: auto; }
   .expand { padding-left: 0.4rem; }
-  .expandLine { flex-wrap: wrap; }
-  .expandName { min-width: 0; flex: 1 1 8rem; }
   .history li { grid-template-columns: 1fr auto; }
   .hWhen { grid-column: 1 / -1; }
 }
@@ -154,10 +146,6 @@
 @media (max-width: 560px) { .pastList label { grid-template-columns: auto minmax(0, 1fr); } .pastTo { grid-column: 2; } }
 
 /* The level of a loose (free) prize */
-.levels { display: flex; flex-wrap: wrap; gap: 0.3rem; }
-.levelBtn { min-height: 36px; padding: 0 0.8rem; border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
-.levelBtn:disabled { cursor: default; }
-.levelOn { background: var(--pp-ink); color: var(--pp-paper); border-color: var(--pp-ink); font-weight: 700; }
 .levelChip { display: inline-flex; align-items: center; min-height: 26px; padding: 0 0.7rem; border-radius: 999px; font-size: 0.8rem; font-weight: 700; background: color-mix(in srgb, var(--pp-ok) 22%, var(--pp-card)); }
 .levelLow { background: color-mix(in srgb, var(--pp-warn) 32%, var(--pp-card)); }
 .levelOut { background: color-mix(in srgb, var(--pp-bad) 22%, var(--pp-card)); }
@@ -168,10 +156,7 @@
 .cellImplied { opacity: 0.6; border-style: dashed; }
 
 .blockHead { cursor: pointer; }
-.groupHead { cursor: pointer; align-items: center; user-select: none; }
-.groupHead:hover, .blockHead:hover { background: rgba(var(--pp-ink-rgb), 0.13); }
-.groupHead:focus-visible { outline: 3px solid var(--pp-info); outline-offset: -3px; }
-.rowClick { cursor: pointer; }
+.blockHead:hover { background: rgba(var(--pp-ink-rgb), 0.13); }
 
 
 .at { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.8); }
@@ -221,10 +206,6 @@
 @media (max-width: 640px) { .bdSet { grid-template-columns: minmax(0, 1fr); } }
 .numLink { appearance: none; border: 0; background: none; padding: 0.2rem 0.4rem; font: inherit; color: var(--pp-ink); text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
 .numLink:hover { text-decoration: underline; }
-
-.photoRow { display: flex; align-items: center; gap: 0.8rem; }
-.photoThumb { width: 5rem; height: 5rem; object-fit: cover; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); }
-.photoNone { display: grid; place-items: center; width: 5rem; height: 5rem; border-radius: 8px; border: 1px dashed rgba(var(--pp-ink-rgb), 0.4); font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.7); }
 
 .prizeCell { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
 .rowPic { flex: none; width: 3rem; height: 3rem; object-fit: cover; border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); }

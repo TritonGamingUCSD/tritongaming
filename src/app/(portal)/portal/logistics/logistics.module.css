@@ -38,7 +38,7 @@
 .rowBad td:first-child { box-shadow: inset 3px 0 0 var(--pp-bad); }
 .editCell { display: block; box-sizing: border-box; width: 100%; min-height: 32px; padding: 0.3rem 0.45rem; border: 1px solid transparent; border-radius: 5px; background: none; color: inherit; font: inherit; line-height: 1.3; text-align: left; cursor: text; }
 .editCell:hover { border-color: rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); }
-.qtyBtn[data-armed], .assignBtn[data-armed], .cell[data-armed] { outline: 2px solid var(--pp-ink); outline-offset: -2px; }
+.assignBtn[data-armed], .cell[data-armed] { outline: 2px solid var(--pp-ink); outline-offset: -2px; }
 .editCell[data-armed] { border-color: var(--pp-ink); background: var(--pp-card); }
 .editCell:focus-visible { outline: 2px solid var(--pp-ink); outline-offset: -2px; }
 .cellInput { box-sizing: border-box; width: 100%; min-height: 32px; padding: 0.3rem 0.45rem; border-radius: 5px; border: 1px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); font: inherit; line-height: 1.3; }
@@ -100,11 +100,7 @@
 .stickyFoot { position: sticky; bottom: -1.5rem; z-index: 2; display: flex; flex-direction: column; gap: 0.5rem; margin: 0.25rem -1.5rem -1.5rem; padding: 0.75rem 1.5rem 1.5rem; background: #fff; border-top: 1px solid rgba(1, 25, 65, 0.12); } /* theme-ok: the dialog sheet is always light */
 
 /* Sponsors */
-.sponsorList { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 0.6rem; }
 .sponsor { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); }
-.sponsorText { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; font-size: 0.86rem; overflow-wrap: anywhere; }
-.sponsorText b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1rem; }
-.sponsorText small { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.8); }
 
 /* Tools: the editable lists */
 .listGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: 0.8rem; align-items: start; }
@@ -118,32 +114,18 @@
 /* ---- Plans ---- */
 .back { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.35rem; min-height: 40px; padding: 0 0.6rem 0 0.3rem; border: none; background: none; color: var(--pp-ink); font: inherit; font-size: 0.86rem; font-weight: 600; cursor: pointer; border-radius: 6px; }
 .back:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
-.planHead { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 0.8rem; }
-.planTitle { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.5rem; color: var(--pp-ink); display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; overflow-wrap: anywhere; }
-.planActions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .panel { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 1rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); min-width: 0; }
-.panelWarn { border-color: color-mix(in srgb, var(--pp-warn) 55%, transparent); background: color-mix(in srgb, var(--pp-warn) 7%, var(--pp-card)); }
-.panelHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.panelTools { display: inline-flex; gap: 0.15rem; }
 .panelTitle { margin: 0; display: flex; align-items: center; gap: 0.45rem; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1rem; color: var(--pp-ink); }
-.progressList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.45rem; }
-.progressList li { display: grid; grid-template-columns: minmax(7rem, 11rem) 1fr 3.4rem; align-items: center; gap: 0.6rem; font-size: 0.86rem; color: var(--pp-ink); }
 .bar { height: 8px; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.12); overflow: hidden; }
 .bar i { display: block; height: 100%; border-radius: 999px; background: var(--pp-ok); }
-.progressNum { text-align: right; font-variant-numeric: tabular-nums; color: rgba(var(--pp-ink-rgb), 0.85); }
-@media (max-width: 480px) { .progressList li { grid-template-columns: minmax(5.5rem, 8rem) 1fr 3rem; gap: 0.4rem; } }
 .conflicts { list-style: disc; margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.2rem; font-size: 0.86rem; color: var(--pp-ink); }
-.conflictBad { color: var(--pp-bad); font-weight: 600; }
 .warn { color: var(--pp-warn); font-weight: 600; }
 .planList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
 .planRow { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.5rem 0.6rem; border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.14); background: rgba(var(--pp-ink-rgb), 0.025); }
-.planRowBad { border-color: color-mix(in srgb, var(--pp-bad) 50%, transparent); background: color-mix(in srgb, var(--pp-bad) 7%, transparent); }
 .planRowMain { min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.6rem; }
 .planTag { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.98rem; color: var(--pp-ink); }
 .planSub { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.9); overflow-wrap: anywhere; }
-.planPlace { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.75); overflow-wrap: anywhere; }
 .planRowSide { display: flex; align-items: center; gap: 0.3rem; flex: none; flex-wrap: wrap; justify-content: flex-end; }
-.stepCount { font-size: 0.74rem; font-variant-numeric: tabular-nums; color: rgba(var(--pp-ink-rgb), 0.78); min-width: 2.2rem; text-align: right; }
 @media (max-width: 640px) { .planRow { flex-direction: column; align-items: stretch; } .planRowSide { justify-content: flex-start; } }
 .eventPick { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; max-height: 16rem; overflow-y: auto; }
 .eventOpt { width: 100%; display: flex; justify-content: space-between; gap: 0.6rem; padding: 0.55rem 0.7rem; border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.86rem; text-align: left; cursor: pointer; }
@@ -152,9 +134,7 @@
 .preview { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.7rem 0.8rem; border-radius: 6px; background: rgba(var(--pp-ink-rgb), 0.05); }
 .previewHead { margin: 0; font-size: 0.92rem; }
 .pickList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; max-height: 14rem; overflow-y: auto; font-size: 0.86rem; }
-.pickList b { margin-right: 0.4rem; }
-.todayBanner { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.8rem; padding: 0.6rem 0.8rem; border-radius: 8px; border: 1px solid var(--pp-ok); background: color-mix(in srgb, var(--pp-ok) 10%, var(--pp-card)); color: var(--pp-ink); font-size: 0.92rem; }
-.todayBtn { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 40px; padding: 0 0.9rem; border-radius: 999px; border: 1px solid var(--pp-ink); background: var(--yellow); color: #011941; font: inherit; font-size: 0.86rem; font-weight: 700; cursor: pointer; } /* theme-ok: yellow buttons keep their navy text in both themes */
+.pickList b { margin-right: 0.4rem; } /* theme-ok: yellow buttons keep their navy text in both themes */
 
 /* ---- Where to get it (shown after a swap and on event day) ---- */
 .getIt { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.8rem 0.9rem; border-radius: 8px; background: rgba(var(--pp-ink-rgb), 0.07); color: var(--pp-ink); }
@@ -167,34 +147,15 @@
 .dayTop { position: sticky; top: 0; z-index: 6; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.5rem 0 0.7rem; background: var(--pp-paper); }
 .dayBar { display: flex; align-items: center; gap: 0.5rem; }
 .dayTitle { flex: 1; min-width: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.1rem; color: var(--pp-ink); overflow-wrap: anywhere; }
-.stepChips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .stepChip { position: relative; overflow: hidden; display: inline-flex; align-items: baseline; gap: 0.45rem; min-height: 44px; padding: 0.4rem 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
 .stepChip small { font-variant-numeric: tabular-nums; color: rgba(var(--pp-ink-rgb), 0.75); }
 .stepChip i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--pp-ok); }
-.stepChipOn { border-color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.12); font-weight: 700; box-shadow: 0 0 0 2px rgba(var(--pp-ink-rgb), 0.25); }
 .dayForm { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .dayInput { flex: 1; min-width: 0; min-height: 40px; padding: 0.4rem 0.8rem; border-radius: 8px; border: 2px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); font-family: var(--font-futura-heavy); font-size: 1.05rem; letter-spacing: 0.03em; }
 .dayInput:focus { outline: none; box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.6); }
 .dayInput::placeholder { font-family: var(--font-futura-medium); font-size: 0.92rem; letter-spacing: 0; color: rgba(var(--pp-ink-rgb), 0.5); }
 .dayForm button { min-height: 40px; }
 .result { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 2px solid; color: var(--pp-ink); background: var(--pp-card); }
-.resultOk { border-color: var(--pp-ok); background: color-mix(in srgb, var(--pp-ok) 9%, var(--pp-card)); }
-.resultWarn { border-color: var(--pp-warn); background: color-mix(in srgb, var(--pp-warn) 9%, var(--pp-card)); }
-.resultBad { border-color: var(--pp-bad); background: color-mix(in srgb, var(--pp-bad) 9%, var(--pp-card)); }
-.resultHead { display: flex; align-items: center; gap: 0.5rem; font-size: 1rem; overflow-wrap: anywhere; }
-.resultOk .resultHead svg { color: var(--pp-ok); }
-.resultActions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.kitPanel { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 2px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); }
-.todoList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
-.todoRow { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.1rem 0.7rem; align-items: center; min-height: 52px; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); background: var(--pp-card); color: var(--pp-ink); font: inherit; text-align: left; cursor: pointer; }
-.todoRow:active:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.08); }
-.todoRow:disabled { opacity: 0.6; cursor: not-allowed; }
-.todoMain { display: flex; flex-direction: column; min-width: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.85); overflow-wrap: anywhere; }
-.todoMain b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; color: var(--pp-ink); }
-.todoWhere { grid-column: 1 / -1; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.78); overflow-wrap: anywhere; }
-.todoStation { grid-row: 1; grid-column: 2; font-size: 0.74rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 999px; background: rgba(125, 180, 234, 0.2); border: 1px solid rgba(125, 180, 234, 0.5); white-space: nowrap; }
-.recentList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.86rem; color: var(--pp-ink); }
-.recentList li { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.35rem 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
 .linkBtn { min-height: 32px; }
 
 /* ---- Tools: steps and bundles ---- */
@@ -209,7 +170,6 @@
 .help summary::-webkit-details-marker { display: none; }
 .helpBody { padding: 0 0.9rem 0.8rem; font-size: 0.86rem; line-height: 1.5; }
 .helpSteps { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 0.35rem; }
-.readiness { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 2px solid; color: var(--pp-ink); background: var(--pp-card); }
 .readyOk { border-color: var(--pp-ok); background: color-mix(in srgb, var(--pp-ok) 9%, var(--pp-card)); }
 .readyWarn { border-color: var(--pp-warn); background: color-mix(in srgb, var(--pp-warn) 9%, var(--pp-card)); }
 .readyBad { border-color: var(--pp-bad); background: color-mix(in srgb, var(--pp-bad) 8%, var(--pp-card)); }
@@ -217,7 +177,6 @@
 .readyOk .readyHead svg { color: var(--pp-ok); }
 .readyWarn .readyHead svg { color: var(--pp-warn); }
 .readyBad .readyHead svg { color: var(--pp-bad); }
-.readyCounts { display: inline-flex; gap: 0.35rem; }
 .warnBadge { color: var(--pp-warn); background: color-mix(in srgb, var(--pp-warn) 12%, transparent); border-color: color-mix(in srgb, var(--pp-warn) 40%, transparent); }
 .problemList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.86rem; }
 .problemList li { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; padding-left: 0.6rem; border-left: 3px solid; }
@@ -227,37 +186,20 @@
 
 /* A team: the card for one team or booth, with a colour edge for its status only */
 .team { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 1rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-left-width: 5px; background: var(--pp-card); min-width: 0; scroll-margin-top: 5rem; }
-.team_ok { border-left-color: var(--pp-ok); }
-.team_warn { border-left-color: var(--pp-warn); }
-.team_bad { border-left-color: var(--pp-bad); }
 .teamHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.8rem; }
-.teamTitle { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.teamMeta { margin: 0; flex: 1 1 12rem; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.85); }
-.teamTools { display: flex; align-items: center; gap: 0.3rem; margin-left: auto; }
-.teamFoot { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .statusChip { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 700; border: 1px solid; }
 .chipOk { color: var(--pp-ok); border-color: color-mix(in srgb, var(--pp-ok) 45%, transparent); background: color-mix(in srgb, var(--pp-ok) 10%, transparent); font-weight: 600; }
 .chipWarn { color: var(--pp-warn); border-color: color-mix(in srgb, var(--pp-warn) 45%, transparent); background: color-mix(in srgb, var(--pp-warn) 10%, transparent); }
 .chipBad { color: var(--pp-bad); border-color: color-mix(in srgb, var(--pp-bad) 45%, transparent); background: color-mix(in srgb, var(--pp-bad) 10%, transparent); }
-.planRowCounted { background: transparent; border-style: dashed; }
 .gameChip { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.05rem 0.5rem; border-radius: 999px; font-size: 0.74rem; border: 1px solid; }
 .gameOk { color: var(--pp-ok); border-color: color-mix(in srgb, var(--pp-ok) 40%, transparent); }
 .gameMissing { color: var(--pp-warn); border-color: color-mix(in srgb, var(--pp-warn) 50%, transparent); background: color-mix(in srgb, var(--pp-warn) 10%, transparent); font-weight: 600; }
-.assignRow { display: inline-flex; align-items: center; gap: 0.4rem; }
 .assignInput, .assignBtn { box-sizing: border-box; width: 11rem; min-height: 32px; padding: 0.3rem 0.45rem; border-radius: 5px; font: inherit; font-size: 0.86rem; line-height: 1.3; text-align: left; }
 .assignInput { border: 1px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); }
 .assignBtn { border: 1px solid transparent; background: none; color: var(--pp-ink); cursor: text; }
 .assignBtn:hover { border-color: rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); }
 .assignBtn.assignEmpty { color: var(--pp-bad); font-weight: 600; }
 @media (max-width: 640px) { .assignInput, .assignBtn { font-size: 16px; width: 9rem; } }
-.stepChipDone { border-color: var(--pp-ok); }
-.stepChipDone small { color: var(--pp-ok); font-weight: 700; }
-.todoGroup { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.6rem; margin-top: 0.3rem; padding: 0.3rem 0; border-bottom: 2px solid rgba(var(--pp-ink-rgb), 0.2); color: var(--pp-ink); }
-.todoGroup b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1rem; }
-.todoGroup span { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.8); }
-.todoGroup small { margin-left: auto; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.75); }
-.todoBad { border-color: var(--pp-bad); }
-.todoGames { grid-column: 1 / -1; font-size: 0.74rem; font-weight: 600; color: var(--pp-warn); }
 
 
 /* ---- The plan sheet (laptop first; a phone gets a card per line) ---- */
@@ -272,27 +214,14 @@
 .helpCompact summary:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .helpCompact .helpBody { position: absolute; right: 0; top: 100%; z-index: 8; width: min(22rem, 80vw); padding: 0.7rem 0.9rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); }
 .sheet { display: flex; flex-direction: column; gap: 1.1rem; }
-.sheetHead, .sheetLine { display: grid; grid-template-columns: minmax(6rem, 0.9fr) minmax(8rem, 1.3fr) minmax(7rem, 1.1fr) minmax(9rem, 1.5fr) minmax(10rem, 1.6fr) auto; align-items: center; column-gap: 1rem; }
-.sheetHead { padding: 0.25rem 0.8rem; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.65); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.2); }
-.sheetRows { display: flex; flex-direction: column; }
-.sheetLine { padding: 0.55rem 0.8rem; font-size: 0.86rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
-.sheetLine:last-child { border-bottom: none; }
-.sheetLine > span { min-width: 0; overflow-wrap: anywhere; }
 .lineBad { background: color-mix(in srgb, var(--pp-bad) 8%, transparent); box-shadow: inset 3px 0 0 var(--pp-bad); }
 .lineWarn { background: color-mix(in srgb, var(--pp-warn) 8%, transparent); box-shadow: inset 3px 0 0 var(--pp-warn); }
-.cTag { display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.5rem; }
-.cFlags { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.6rem; }
-.cTools { display: flex; align-items: center; justify-content: flex-end; gap: 0.25rem; }
 .emptyMark { font-weight: 700; color: var(--pp-bad); }
 .flagBad { color: var(--pp-bad); font-weight: 600; }
 .flagWarn { color: var(--pp-warn); font-weight: 600; }
 .warnText { color: var(--pp-warn); font-weight: 600; }
-.statusBar .linkBtn, .sheetLine .linkBtn { min-height: 32px; }
+.statusBar .linkBtn { min-height: 32px; }
 @media (max-width: 899px) {
-  .sheetHead { display: none; }
-  .sheetLine { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'tag tools' 'type type' 'games games' 'where where' 'flags flags'; row-gap: 0.25rem; padding: 0.7rem 0.8rem; }
-  .cTag { grid-area: tag; } .cType { grid-area: type; } .cGames { grid-area: games; } .cWhere { grid-area: where; color: rgba(var(--pp-ink-rgb), 0.75); } .cFlags { grid-area: flags; } .cTools { grid-area: tools; }
-  .cGames:has(.dim:only-child), .cWhere:empty { display: none; }
   .assignInput { font-size: 16px; }
 }
 
@@ -302,12 +231,9 @@
 .dayStepPick { flex: 0 1 15rem; min-width: 10rem; }
 @media (max-width: 640px) { .dayStepPick { flex: 1 1 100%; } .dayInput { font-size: 16px; } }
 .dayLayout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; align-items: start; }
-.dayAside, .dayMain { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
-.dayAside:empty { display: none; }
+.dayMain { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; }
 .dayMain { gap: 1rem; }
 @media (min-width: 1400px) {
-  .dayLayout:has(> .dayAside) { grid-template-columns: minmax(0, 1fr) 18rem; }
-  .dayAside { grid-column: 2; grid-row: 1; position: sticky; top: 7.5rem; }
   .dayMain { grid-column: 1; grid-row: 1; }
 }
 .dayTeam { border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); }
@@ -316,8 +242,6 @@
 .dayRowHead { padding-block: 0.6rem; background: rgba(var(--pp-ink-rgb), 0.05); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15); align-items: start; }
 .dayLine { border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
 .dayLine:last-child { border-bottom: none; }
-.dayLineDone { background: color-mix(in srgb, var(--pp-ok) 7%, transparent); }
-.dayLineBad { box-shadow: inset 3px 0 0 var(--pp-bad); }
 .dInfo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.6rem; min-width: 0; font-size: 0.86rem; }
 .dTag { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.92rem; color: var(--pp-ink); }
 .dType { color: rgba(var(--pp-ink-rgb), 0.9); overflow-wrap: anywhere; }
@@ -331,8 +255,6 @@
 .dCells { display: grid; grid-template-columns: repeat(var(--n), minmax(0, 1fr)); gap: 0.35rem; }
 .dHead { display: flex; flex-direction: column; align-items: center; gap: 0.05rem; padding: 0.3rem 0.2rem; border-radius: 6px; border: 1px solid transparent; background: none; color: var(--pp-ink); font: inherit; font-size: 0.74rem; line-height: 1.2; text-align: center; cursor: pointer; min-width: 0; overflow-wrap: break-word; }
 .dHead:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
-.dAll { margin-top: 0.15rem; padding: 0.05rem 0.45rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.7rem; font-weight: 700; line-height: 1.3; cursor: pointer; }
-.dAll:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
 .dHead small { font-size: 0.74rem; font-variant-numeric: tabular-nums; color: rgba(var(--pp-ink-rgb), 0.7); }
 .dHeadOn { border-color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.1); font-weight: 700; }
 .dHeadDone small { color: var(--pp-ok); font-weight: 700; }
@@ -363,8 +285,6 @@
   .cellLabel { display: inline; font-size: 0.74rem; text-align: left; }
   .cellNa { display: none; }
 }
-
-.overviewBar { display: flex; flex-wrap: wrap; gap: 0.4rem 1.2rem; }
 .overviewWrap { overflow-x: auto; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); }
 .overview { width: 100%; border-collapse: collapse; font-size: 0.86rem; font-variant-numeric: tabular-nums; color: var(--pp-ink); }
 .overview th, .overview td { padding: 0.4rem 0.7rem; text-align: center; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); white-space: nowrap; }
@@ -400,7 +320,6 @@
 @media (max-width: 640px) { .dayHeading { flex: 1 1 100%; order: 5; } .dayTotal .bar { display: none; } }
 
 .setParts { display: block; overflow-wrap: anywhere; }
-.teamMenu { position: relative; }
 .dTeamSub { flex: 0 1 auto; }
 
 /* Nothing is cut short with "…": text wraps. On a screen too narrow for the columns the sheet scrolls sideways on its own (never the whole page); a phone uses cards instead. */
@@ -412,14 +331,7 @@
 .dTools .iconBtn { order: 1; }
 
 /* ---- Prizes ---- */
-.prizeSection { display: flex; flex-direction: column; gap: 0.8rem; margin-top: 0.6rem; }
 .prizeHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.qtyInput { box-sizing: border-box; min-width: 10rem; min-height: 32px; padding: 0.3rem 0.45rem; border-radius: 5px; border: 1px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.86rem; line-height: 1.3; font-variant-numeric: tabular-nums; }
-@media (max-width: 640px) { .qtyInput { font-size: 16px; } }
-.pickPrizes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; max-height: 55vh; overflow-y: auto; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); border-radius: 8px; }
-.pickPrize { display: grid; grid-template-columns: minmax(0, 1fr) auto 5rem; align-items: center; gap: 0.8rem; padding: 0.45rem 0.7rem; font-size: 0.86rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
-.pickPrize:last-child { border-bottom: none; }
-.pickPrize > span { overflow-wrap: anywhere; }
 
 .prizeGrid { display: flex; flex-direction: column; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); overflow: hidden; }
 .prizeRow { display: grid; grid-template-columns: var(--cols); align-items: center; column-gap: 0.8rem; padding: 0.5rem 0.8rem; font-size: 0.86rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
@@ -441,40 +353,19 @@
 .statusBar .readyHead.clickRow:hover { background: none; }
 .foldBtn { text-align: left; }
 .overviewHelp { margin: 0; padding: 0.6rem 0.8rem; font-size: 0.86rem; line-height: 1.5; color: rgba(var(--pp-ink-rgb), 0.85); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
-.qtyBtn { box-sizing: border-box; min-width: 10rem; min-height: 32px; padding: 0.3rem 0.45rem; border: 1px solid transparent; border-radius: 5px; background: none; color: var(--pp-ink); font: inherit; font-size: 0.86rem; line-height: 1.3; font-weight: 600; text-align: left; cursor: text; }
-.qtyBtn:hover { border-color: rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); }
 
 /* Borrowed items and an event's sponsor prizes reuse the prize list's grid with their own columns */
 .prizeTools { display: flex; flex-wrap: wrap; gap: 0.3rem; justify-content: flex-end; }
 @media (max-width: 899px) {
-  .borrowRow, .sentRow { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); }
+  .borrowRow { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); }
   .prizeTools { justify-content: flex-start; }
 }
 
 /* ---- The prize allocation grid (a sheet: prize details pinned on the left, a column per pool) ---- */
-.matrixWrap { overflow: auto; max-height: 75vh; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); }
-.matrix { border-collapse: separate; border-spacing: 0; font-size: 0.86rem; font-variant-numeric: tabular-nums; color: var(--pp-ink); min-width: 100%; }
-.matrix th, .matrix td { padding: 0.3rem 0.5rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); border-right: 1px solid rgba(var(--pp-ink-rgb), 0.08); background: var(--pp-card); text-align: left; vertical-align: middle; overflow-wrap: anywhere; }
-.matrix thead th { position: sticky; top: 0; z-index: 3; background: color-mix(in srgb, var(--pp-ink) 7%, var(--pp-card)); font-size: 0.74rem; letter-spacing: 0.02em; vertical-align: bottom; }
-.mPin { position: sticky; left: 0; z-index: 2; min-width: 15rem; max-width: 18rem; font-weight: 600; }
-.matrix thead .mPin { z-index: 4; }
-.mPin2 { min-width: 6.5rem; }
 .mNum { text-align: right !important; white-space: nowrap; }
-.mLeft { font-weight: 700; min-width: 3.5rem; }
 .leftOk { background: color-mix(in srgb, var(--pp-ok) 22%, var(--pp-card)) !important; }
 .leftZero { background: color-mix(in srgb, var(--pp-warn) 26%, var(--pp-card)) !important; }
 .leftBad { background: color-mix(in srgb, var(--pp-bad) 28%, var(--pp-card)) !important; color: var(--pp-bad); }
-.mPool { min-width: 7.5rem; max-width: 9rem; }
-.mPool small { display: block; font-weight: 400; color: rgba(var(--pp-ink-rgb), 0.65); }
-.poolHead { padding: 0; border: none; background: none; color: var(--pp-ink); font: inherit; font-weight: 700; text-align: left; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
-.mCell { padding: 0 !important; text-align: right; }
-.mUsed { background: color-mix(in srgb, var(--pp-info) 16%, var(--pp-card)) !important; }
-.gridCards { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
-.gridCard { display: flex; flex-direction: column; gap: 0.4rem; padding: 0.7rem 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); font-size: 0.86rem; }
-.gridCardHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
-.gridCardHead b { overflow-wrap: anywhere; }
-.leftChip { flex: none; padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 700; }
-.gridCardPool { display: grid; grid-template-columns: minmax(0, 1fr) 5.5rem; align-items: center; gap: 0.6rem; }
 
 /* On a phone the title bar and tabs scroll away (they take a third of the screen); only the box for typing an ID stays at the top. */
 @media (max-width: 899px) {
@@ -483,16 +374,6 @@
 }
 
 /* ---- Requests ---- */
-.reqList { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 26rem), 1fr)); gap: 0.7rem; }
-.reqCard { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); font-size: 0.86rem; min-width: 0; }
-.req_submitted { border-left: 4px solid var(--pp-warn); }
-.req_planned, .req_done { border-left: 4px solid var(--pp-ok); }
-.req_declined { border-left: 4px solid var(--pp-bad); opacity: 0.75; }
-.reqHead { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.6rem; }
-.reqHead b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1rem; overflow-wrap: anywhere; }
-.reqItems { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
-.reqNote { margin: 0; padding-left: 0.6rem; border-left: 3px solid rgba(var(--pp-ink-rgb), 0.2); overflow-wrap: anywhere; white-space: pre-wrap; }
-.reqActions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: auto; }
 .reqLines { display: flex; flex-direction: column; gap: 0.6rem; }
 .reqLine { display: grid; grid-template-columns: minmax(9rem, 1.2fr) 6rem minmax(10rem, 2fr) auto; align-items: end; gap: 0.6rem; }
 .reqLinePrize { grid-template-columns: 8rem 13rem auto; }
@@ -545,11 +426,8 @@
 .colHead { padding-block: 0.15rem; }
 .prizeRow { padding: 0.28rem 0.8rem; }
 .prizeHeadRow { padding-block: 0.2rem; }
-.matrix th, .matrix td { padding: 0.12rem 0.45rem; }
 .lastBar { padding: 0.25rem 0.6rem; }
-.reqCard { padding: 0.5rem 0.7rem; gap: 0.3rem; }
 .overview th, .overview td { padding: 0.25rem 0.6rem; }
-.todayBanner { padding: 0.4rem 0.7rem; }
 @media (min-width: 900px) {
   /* on a wide screen a line's place sits next to its name, not under it */
   .dayLine .dWhere { flex: 1 1 auto; }
@@ -591,62 +469,25 @@
 @media (max-width: 899px) { .noSteps .dayRow { grid-template-columns: minmax(0, 1fr); } .noSteps .dNotes { flex-wrap: wrap; } .noSteps .dayLine .dInfo { padding-left: 0.7rem; } .noSteps .dayLine.nested .dInfo { padding-left: 1.4rem; } }
 
 /* ---- Prizing allocation: a card per pool ---- */
-.poolCards { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: 0.8rem; align-items: start; }
-.poolCard { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.28); background: var(--pp-card); min-width: 0; }
-.poolCardHead { display: flex; align-items: baseline; justify-content: space-between; gap: 0.5rem; }
-.poolTitle { display: flex; flex-direction: column; min-width: 0; font-size: 1rem; overflow-wrap: anywhere; }
-.poolTitle b { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; }
-.poolGoal { display: flex; flex-direction: column; gap: 0.25rem; }
-.goalLine { display: flex; justify-content: space-between; font-size: 0.86rem; }
-.barOk i { background: var(--pp-ok); }
-.barWarn i { background: var(--pp-warn); }
-.barBad i { background: var(--pp-bad); }
-.poolLines { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
-.poolLine { display: grid; grid-template-columns: minmax(0, 1fr) 4.5rem auto; gap: 0.5rem; align-items: center; padding: 0.35rem 0; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
-.poolLineName { display: flex; flex-direction: column; min-width: 0; font-size: 0.92rem; overflow-wrap: anywhere; }
-.poolFoot { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.poolAdd { flex: 1 1 12rem; min-width: 0; }
 
 /* table text: a little smaller, with room at the edges so nothing touches the border */
 .grid { font-size: 0.86rem; }
 .grid th { padding: 0.5rem 0.9rem; }
 .grid td { padding: 0.3rem 0.9rem; }
-.matrix { font-size: 0.86rem; }
-.matrix th, .matrix td { padding: 0.15rem 0.7rem; }
 .prizeRow { font-size: 0.86rem; padding: 0.32rem 1rem; column-gap: 1rem; }
 .prizeHeadRow { padding-block: 0.25rem; }
 .dayRow { padding-inline: 1rem; column-gap: 1.1rem; }
-.sheetLine { padding-inline: 1rem; }
 .colHead { padding-inline: 1rem; }
-.poolLine { padding-inline: 0.1rem; }
-.poolTitle b { text-decoration: none; }
 
 /* the pool cards flow into columns, so cards of different lengths don't leave empty gaps */
-.poolCards { display: block; column-width: 21rem; column-gap: 0.8rem; }
-.poolCard { break-inside: avoid; margin-bottom: 0.8rem; }
 
 /* every line of the allocation (a bundle's header and each part) is the same height */
 .noSteps .dayLine { min-height: 46px; padding-block: 0.15rem; align-items: center; }
 .noSteps .dayLine .dInfo { align-self: center; }
 
 /* the By Team / By Type switch, the same height and look as the buttons beside it */
-.miniSeg { display: inline-flex; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; overflow: hidden; }
-.miniSeg button { min-height: 32px; padding: 0 0.65rem; border: none; background: none; color: var(--pp-ink); font: inherit; font-size: 0.86rem; font-weight: 600; cursor: pointer; }
-.miniSeg button[aria-pressed="true"] { background: var(--pp-ink); color: var(--pp-card); font-weight: 700; }
-.miniSeg button:not([aria-pressed="true"]):hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 
 /* The list of events: one row each, like the other lists in the portal */
-.eventList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); overflow: hidden; }
-.eventList > li + li { border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
-.eventToday { box-shadow: inset 4px 0 0 var(--pp-ok); }
-.eventRow { display: grid; grid-template-columns: minmax(0, 1fr) auto 11rem minmax(0, 36rem); align-items: center; column-gap: 1rem; width: 100%; padding: 0.7rem 1rem; background: none; border: none; text-align: left; color: var(--pp-ink); font: inherit; cursor: pointer; }
-.eventRow:hover { background: rgba(var(--pp-ink-rgb), 0.05); }
-.eventName { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.02rem; overflow-wrap: break-word; min-width: 0; }
-.eventTags { display: inline-flex; gap: 0.3rem; flex-wrap: wrap; }
-.eventStats { display: grid; grid-template-columns: 4.5rem 8.5rem 9.5rem max-content; align-items: center; column-gap: 0.75rem; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.8); }
-.eventStats > span { white-space: nowrap; }
-.eventMeta { align-self: center; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.8); }
-@media (max-width: 640px) { .eventRow { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.15rem; padding: 0.65rem 0.9rem; } .eventTags { grid-column: 2; grid-row: 1; justify-self: end; } .eventMeta { grid-column: 1 / -1; } .eventMeta + .eventMeta { margin-top: -0.1rem; } .eventStats { grid-column: 1 / -1; grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: 0.1rem; } }
 
 /* phones: the event pages are one scrolling row of tabs instead of four wrapped lines */
 @media (max-width: 640px) {
@@ -666,12 +507,7 @@
 .row3:has(> :nth-child(2):last-child) { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 /* cells edited in place */
-.numWrap { display: inline-flex; align-items: center; gap: 0.1rem; }
-.numWrap i { font-style: normal; color: rgba(var(--pp-ink-rgb), 0.7); }
 .cellNum { width: 100%; text-align: left; }   /* the box fills the cell exactly like the text did, so opening it moves nothing */
-.cellCombo { min-width: 0; }
-
-.whereCells { display: grid; grid-template-columns: 1fr 1fr; gap: 0.3rem; min-width: 0; }
 .prizeRow .cellInput { min-width: 0; }
 
 /* the device finder in the event header */
@@ -702,18 +538,17 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .kitQty { width: 3.4rem; padding: 0.3rem 0.4rem; border-radius: 5px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.86rem; text-align: center; }
 
 /* Every table and table-like row: text sits on the left edge and is centered vertically (the step boxes keep their own centering). */
-.grid th, .grid td, .overview th, .overview td, .matrix th, .matrix td { text-align: left; vertical-align: middle; }
-.mNum, .mCell { text-align: left !important; }
-.sheetHead, .sheetLine, .dayRow, .dayRowHead, .prizeRow, .prizeHeadRow, .reqRow, .borrowRow, .sentRow, .sponsorRow, .pickPrize, .eventRow, .poolLine, .freeGroup, .gridCardPool { align-items: center; text-align: left; }
-.prizeTools, .progressNum, .stepCount, .cellNum { text-align: left; }
-.dTools, .cTools, .prizeTools { justify-content: flex-start; }
+.grid th, .grid td, .overview th, .overview td { text-align: left; vertical-align: middle; }
+.mNum { text-align: left !important; }
+.dayRow, .dayRowHead, .prizeRow, .prizeHeadRow, .reqRow, .borrowRow, .sponsorRow, .freeGroup { align-items: center; text-align: left; }
+.prizeTools, .cellNum { text-align: left; }
+.dTools, .prizeTools { justify-content: flex-start; }
 .finderBox input, .finderBox input:hover, .finderBox input:focus, .finderBox input:focus-visible { padding: 0; height: auto; min-height: 0; border: none; border-radius: 0; background: none; box-shadow: none; outline: none; }
 .finderBox:hover { border-color: rgba(var(--pp-ink-rgb), 0.55); }
 
 /* Wide screens: every column keeps a comfortable minimum (text is never squeezed) and the spare room is shared out evenly between them, so a table fills its width without crowding.
    Every track is a fixed size or a fraction, never `auto`, so each row of a table puts its columns in exactly the same place. */
 @media (min-width: 900px) {
-  .sheetHead, .sheetLine { grid-template-columns: minmax(7rem, 1fr) minmax(9rem, 1.3fr) minmax(8rem, 1.1fr) minmax(10rem, 1.5fr) minmax(11rem, 1.6fr) 8.5rem; }
   .dayRow { grid-template-columns: minmax(9rem, 2.4fr) minmax(5.5rem, 1fr) minmax(calc(var(--n) * 3.2rem), calc(var(--n) * 5.5rem)) 6rem; }   /* the minimums add up to less than a tablet's content width, so the row menu is never pushed off the edge */
   .noSteps .dayRow { grid-template-columns: minmax(11rem, 1.3fr) minmax(10rem, 1.7fr) 4.5rem; }
   .reqRow { align-items: center; }
@@ -723,14 +558,13 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 /* Phones and small tablets: a row becomes a card. The name takes the top, the other values sit in two even columns under small labels, and the tools run along the bottom
    with touch-sized buttons. */
 @media (max-width: 899px) {
-  .prizeRow, .borrowRow, .sentRow, .sponsorRow, .reqRow { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 0.9rem; row-gap: 0.7rem; align-items: start; justify-items: stretch; padding: 0.85rem 1rem; }
+  .prizeRow, .borrowRow, .sponsorRow, .reqRow { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 0.9rem; row-gap: 0.7rem; align-items: start; justify-items: stretch; padding: 0.85rem 1rem; }
   .prizeRow > :first-child, .prizeRow > .prizeTools, .borrowRow > :first-child, .reqRow > :first-child, .sponsorRow > :first-child { grid-column: 1 / -1; }
   .prizeRow > :first-child, .reqRow > :first-child { font-size: 0.98rem; }
-  .prizeRow > span[data-label]::before, .borrowRow > span[data-label]::before, .sentRow > span[data-label]::before, .sponsorRow > span[data-label]::before, .reqRow > span[data-label]::before { content: attr(data-label); display: block; margin-bottom: 0.15rem; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.6); }
+  .prizeRow > span[data-label]::before, .borrowRow > span[data-label]::before, .sponsorRow > span[data-label]::before, .reqRow > span[data-label]::before { content: attr(data-label); display: block; margin-bottom: 0.15rem; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.6); }
   .prizeRow > .prizeTools, .reqRow > .prizeTools, .sponsorRow > .prizeTools { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-start; padding-top: 0.6rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
   .iconBtn { width: 40px; height: 40px; }
   .reqRow > span[data-label="Notes"], .reqRow > span[data-label="Devices"], .reqRow > span[data-label="Prizes"], .borrowRow > span[data-label="Installed games"] { grid-column: 1 / -1; }
-  .eventRow { padding-block: 0.85rem; }
   .cell { min-height: 44px; }
   .linkBtn, .missBtn, .pill { min-height: 44px; }
 }
@@ -769,9 +603,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 }
 
 /* An event in the list: the row opens it, the menu at the right edits, closes or removes it. */
-.eventList > li { display: flex; align-items: center; gap: 0.4rem; padding-right: 0.8rem; }
-.eventList > li > .eventRow { flex: 1 1 auto; width: auto; min-width: 0; }
-.eventMenu { flex: none; }
 
 /* The search grows to fill the space beside the tabs; refresh is the last thing on the right. */
 .pageBarEnd { flex: 1 1 18rem; min-width: 0; justify-content: flex-end; }
@@ -790,16 +621,8 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 @media (max-width: 899px) { .pageBarEnd { flex: 1 1 100%; margin-left: 0; width: 100%;  } }
 
 /* A pool's prizes grouped by type: a small heading with the count, then the lines. */
-.poolGroupItem { list-style: none; }
-.poolGroupHead { display: flex; justify-content: space-between; align-items: baseline; padding: 0.3rem 0 0.15rem; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.7); border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
-.poolLinesInner { list-style: none; margin: 0; padding: 0; }
-.poolLineEnd { display: inline-flex; align-items: center; gap: 0.3rem; justify-content: flex-end; }
-.poolLine { grid-template-columns: minmax(0, 1fr) 4.5rem auto; }
 
 /* Per-sponsor totals above the sponsor prize list, and the wrap-up of a closed event. */
-.wrapUp { margin-bottom: 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); }
-.wrapUp > summary { padding: 0.6rem 0.8rem; font-weight: 700; cursor: pointer; }
-.wrapUp .grid { margin: 0; }
 
 /* Phone, event day: the ID bar floats above the bottom dock (and rides on the keyboard when it opens), the page leaves room under the list, and teams can be jumped to from a row of chips. */
 .teamChips { display: flex; gap: 0.4rem; overflow-x: auto; padding: 0.1rem 0 0.4rem; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
@@ -851,16 +674,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 
 /* The events list lays itself out by its own width (the sidebar changes how much room a laptop window really gives it), not by the window: a name is never squeezed into a sliver.
    Narrow: name and tags on the first row, dates and the counts under it. Wide: everything on one row. */
-.eventList { container-type: inline-size; container-name: events; }
-.eventRow { grid-template-columns: minmax(0, 1fr) auto; row-gap: 0.15rem; }
-.eventRow .eventTags { grid-column: 2; grid-row: 1; justify-self: end; }
-.eventRow .eventMeta, .eventRow .eventStats { grid-column: 1 / -1; }
-.eventRow .eventStats { grid-template-columns: repeat(auto-fit, minmax(7.5rem, max-content)); column-gap: 1.2rem; row-gap: 0.1rem; }
 @container events (min-width: 62rem) {
-  .eventRow { grid-template-columns: minmax(14rem, 1fr) auto 9rem minmax(0, 36rem); row-gap: 0; align-items: center; }
-  .eventRow .eventTags { grid-column: auto; grid-row: auto; justify-self: start; }
-  .eventRow .eventMeta, .eventRow .eventStats { grid-column: auto; }
-  .eventRow .eventStats { grid-template-columns: 4.5rem 8.5rem 9.5rem max-content; }
 }
 
 /* Phone: the line above a list (filter pill, count, Add) is compact so the three share a row where they can. */
@@ -872,8 +686,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 @media (max-width: 640px) { .page { gap: 0.6rem; } }
 
 /* Phone: a step is two tidy lines (arrows, name and delete; then who it is for and its tick) instead of one control per line. */
-@media (max-width: 640px) {
-}
 
 /* Phone: a prize in the inventory or the sponsor list is a compact card, three small facts across (sponsor, size, type; price, stock, promised; given, left) with Where on its own line. */
 @media (max-width: 899px) {
@@ -921,12 +733,10 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 @media (max-width: 640px) {
   .wide { display: none; }
   .narrow { display: inline; }
-  .eventRow .eventStats { display: flex; flex-wrap: nowrap; gap: 0.9rem; overflow-x: auto; scrollbar-width: none; white-space: nowrap; font-size: 0.74rem; }
-  .eventRow .eventStats::-webkit-scrollbar { display: none; }
   .statusBar .readyHead { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; gap: 0.4rem; }
   .statusBar .readyHead::-webkit-scrollbar { display: none; }
   .statusBar .readyHead > * { flex: none; white-space: nowrap; }
-  .statusBar .linkBtn, .miniSeg button { font-size: 0.74rem; padding-inline: 0.6rem; }
+  .statusBar .linkBtn { font-size: 0.74rem; padding-inline: 0.6rem; }
   .statusBar .statusSpacer { display: block; flex: 1 1 0; min-width: 0; }
   .statusBar summary { min-height: 32px; min-width: 36px; }
   .teamHeadMain { flex-wrap: nowrap; gap: 0.25rem 0.5rem; overflow: hidden; }
@@ -998,18 +808,12 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 }
 
 /* The count box inside an event-day step cell fits the cell, with its All button inside the box at the right (it used to be 10rem wide and covered the next cell) */
-.cellWrap .qtyInput { min-width: 0; width: 100%; padding-right: 2.4rem; text-align: left; }
 .cellWrap .cellMinus { width: auto; min-width: 20px; padding: 0 0.3rem; font-size: 0.7rem; top: 50%; transform: translateY(-50%); right: 4px; }
-
-.goalNeed { margin: 0; font-size: 0.86rem; }
 @media (max-width: 640px) { .reqLinePrize { grid-template-columns: 5.5rem minmax(0, 1fr) auto; } }
 
 .lockTag { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; padding: 0 0.5rem; min-height: 22px; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.85); white-space: nowrap; }
 
 /* The prize grid, full screen: it covers the page (below dialogs) and scrolls inside */
-.gridFull { position: fixed; inset: 0; z-index: 2000; overflow: auto; padding: 0.8rem 1rem 1.2rem; background: var(--pp-paper); display: flex; flex-direction: column; gap: 0.5rem; }
-.gridFullBar { display: flex; justify-content: flex-end; }
-.gridFull .matrixWrap { max-height: none; }
 
 /* Event day: a device's parts as chips in its row. Tap one that is missing; Check done then goes with those flags in one tap. */
 .parts { display: flex; flex-wrap: wrap; gap: 0.25rem; }
