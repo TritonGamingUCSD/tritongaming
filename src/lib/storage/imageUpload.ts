@@ -11,8 +11,8 @@ export interface UploadImageOptions {
    * 'square' center-crops to a 1:1 ratio, discarding whatever falls
    * outside it — only ever safe for content that's meant to fill a circle/
    * square with no meaningful margin (this codebase doesn't currently use
-   * it for anything; avatars go through the manual interactiveCrop path
-   * instead, which skips processImage entirely). 'pad' also produces a 1:1
+   * it for anything; avatars and the other picture fields use it after the
+   * picture popup, where a person may already have cropped by hand). 'pad' also produces a 1:1
    * ratio but by extending onto a transparent square canvas instead —
    * nothing from the original image is lost, which is what division logos
    * need (a logo exported without its own internal padding was getting
@@ -94,13 +94,6 @@ async function uploadBlob(bucket: string, blob: Blob, ext: string, pathPrefix?: 
 export async function uploadImageToStorage(bucket: string, file: File, options: UploadImageOptions = {}): Promise<string> {
   const { blob, ext } = await processImage(file, options);
   return uploadBlob(bucket, blob, ext, options.pathPrefix);
-}
-
-// For an image already cropped/encoded client-side (see AvatarCropModal) —
-// skips the auto center-crop + resize in processImage since the caller
-// already produced the exact pixels it wants uploaded.
-export async function uploadCroppedImage(bucket: string, blob: Blob, pathPrefix?: string): Promise<string> {
-  return uploadBlob(bucket, blob, 'webp', pathPrefix);
 }
 
 const STORAGE_URL_MARKER = '/storage/v1/object/public/';

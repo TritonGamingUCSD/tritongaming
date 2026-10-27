@@ -4,9 +4,8 @@ import IconButton from '@/components/ui/IconButton';
 import { useState } from 'react';
 import Image from 'next/image';
 import { Camera } from 'lucide-react';
-import { uploadCroppedImage, uploadImageToStorage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
+import { uploadImageToStorage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
 import PictureDialog from '@/components/ui/PictureDialog';
-import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
 import styles from './avatarEditor.module.css';
 
 // Profile-picture editor: a big round preview you can click or drop a photo
@@ -23,26 +22,16 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [picking, setPicking] = useState(false);
 
   async function handleFile(file: File) {
     setError('');
     if (!ALLOWED_IMAGE_TYPES.includes(file.type)) { setError('Use a PNG, JPEG, WEBP, or GIF image.'); return; }
     if (file.size > MAX_IMAGE_BYTES) { setError('Image must be under 8MB.'); return; }
-    if (file.type !== 'image/gif') { setPendingFile(file); return; }
     setUploading(true);
     try {
       onChange(await uploadImageToStorage(bucket, file, { maxDimension: 512, crop: 'square', pathPrefix }));
     } catch { setError('Upload failed. Please try again.'); } finally { setUploading(false); }
-  }
-
-  async function handleCrop(blob: Blob) {
-    setPendingFile(null);
-    setUploading(true);
-    try { onChange(await uploadCroppedImage(bucket, blob, pathPrefix)); }
-    catch { setError('Upload failed. Please try again.'); }
-    finally { setUploading(false); }
   }
 
   const src = value || fallback;
@@ -76,11 +65,10 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
       {error && <p className={styles.error}>{error}</p>}
 
       {picking && (
-        <PictureDialog title="Profile picture" current={src || undefined} accept={ALLOWED_IMAGE_TYPES.join(',')} hint="PNG, JPG, WebP or GIF, under 8 MB"
+        <PictureDialog title="Profile picture" aspect={1} round current={src || undefined} accept={ALLOWED_IMAGE_TYPES.join(',')} hint="PNG, JPG, WebP or GIF, under 8 MB"
           onUse={(f) => { void handleFile(f[0]); }} onRemove={value ? () => onChange('') : undefined} onClose={() => setPicking(false)} />
       )}
 
-      {pendingFile && <ImageCropModal file={pendingFile} outputSize={512} onCancel={() => setPendingFile(null)} onConfirm={handleCrop} />}
     </div>
   );
 }

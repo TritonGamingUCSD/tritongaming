@@ -1,0 +1,28 @@
+.stage { display: flex; justify-content: center; padding: 0.5rem; border-radius: 0.9rem; background: rgba(var(--pp-ink-rgb), 0.05); }
+.frame { display: inline-block; max-width: 100%; padding: 14px; overflow: hidden; line-height: 0; touch-action: none; user-select: none; -webkit-user-select: none; }   /* the padding leaves room for the handles at the picture's edge; overflow keeps the dimming inside */
+.inner { position: relative; }
+.img { display: block; max-width: 100%; max-height: min(52vh, 24rem); width: auto; height: auto; border-radius: 2px; pointer-events: none; }
+.box { position: absolute; border: 2px solid #fff; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55); cursor: move; touch-action: none; outline-offset: 2px; clip-path: none; }   /* theme-ok: a crop box has to read on any picture, whichever theme */
+.box:focus-visible { outline: 3px solid var(--pp-info); }
+.round { border-radius: 50%; }
+.grid { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)) 33.33% 0 / 1px 100% no-repeat, linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)) 66.66% 0 / 1px 100% no-repeat, linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)) 0 33.33% / 100% 1px no-repeat, linear-gradient(rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0.45)) 0 66.66% / 100% 1px no-repeat; }   /* theme-ok */
+.round .grid { border-radius: 50%; }
+
+/* Handles: a small visible square with a big invisible touch area around it. */
+.handle { position: absolute; width: 28px; height: 28px; touch-action: none; }
+.handle::after { content: ''; position: absolute; left: 50%; top: 50%; width: 12px; height: 12px; margin: -6px 0 0 -6px; background: #fff; border: 2px solid #1f2b45; border-radius: 3px; }   /* theme-ok */
+.h_nw { left: -14px; top: -14px; cursor: nwse-resize; }
+.h_ne { right: -14px; top: -14px; cursor: nesw-resize; }
+.h_sw { left: -14px; bottom: -14px; cursor: nesw-resize; }
+.h_se { right: -14px; bottom: -14px; cursor: nwse-resize; }
+.h_n { left: 50%; top: -14px; margin-left: -14px; cursor: ns-resize; }
+.h_s { left: 50%; bottom: -14px; margin-left: -14px; cursor: ns-resize; }
+.h_w { left: -14px; top: 50%; margin-top: -14px; cursor: ew-resize; }
+.h_e { right: -14px; top: 50%; margin-top: -14px; cursor: ew-resize; }
+
+.ratios { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+.ratio, .reset { min-height: 36px; padding: 0 0.85rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.84rem; cursor: pointer; }
+.on { background: var(--pp-ink); color: var(--pp-paper); border-color: var(--pp-ink); font-weight: 700; }
+.reset { margin-left: auto; border-style: dashed; }
+.fixed { font-size: 0.84rem; font-weight: 700; }
+.help { margin: 0; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.7); }

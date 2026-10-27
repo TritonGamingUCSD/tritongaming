@@ -2,8 +2,7 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
-import { uploadImageToStorage, uploadCroppedImage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
-import ImageCropModal from '@/components/ImageCropModal/ImageCropModal';
+import { uploadImageToStorage, ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES } from '@/lib/storage/imageUpload';
 import styles from './ImageUploadField.module.css';
 import PictureDialog from '@/components/ui/PictureDialog';
 import { Camera, X } from 'lucide-react';
@@ -32,7 +31,6 @@ export default function ImageUploadField({
   maxDimension = 1600,
   hint,
   fallbackPreview,
-  interactiveCrop = false,
   compact = false,
 }: {
   label: string;
@@ -45,14 +43,11 @@ export default function ImageUploadField({
   hint?: string;
   /** Shown in place of an empty value (e.g. a synced Google avatar) — Remove is hidden while it's the only thing displayed, since there's nothing to clear back to. */
   fallbackPreview?: string;
-  /** Opens a zoomable/pannable round-crop step before uploading, instead of an automatic center-crop. Ignored for GIFs (cropping would flatten the animation). */
-  interactiveCrop?: boolean;
   /** A small thumbnail row (for lists of pictures): no label or hint on screen, a short "Upload" button. The label still names the controls for screen readers. */
   compact?: boolean;
 }) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState('');
-  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [picking, setPicking] = useState(false);
 
   async function handleFile(file: File) {
@@ -67,11 +62,6 @@ export default function ImageUploadField({
       return;
     }
 
-    if (interactiveCrop && file.type !== 'image/gif') {
-      setPendingFile(file);
-      return;
-    }
-
     setUploading(true);
     try {
       const url = await uploadImageToStorage(bucket, file, {
@@ -79,19 +69,6 @@ export default function ImageUploadField({
         crop: shape === 'wide' ? 'none' : shape === 'logo' ? 'pad' : 'square',
         pathPrefix,
       });
-      onChange(url);
-    } catch {
-      setError('Upload failed. Please try again.');
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function handleCropConfirm(blob: Blob) {
-    setPendingFile(null);
-    setUploading(true);
-    try {
-      const url = await uploadCroppedImage(bucket, blob, pathPrefix);
       onChange(url);
     } catch {
       setError('Upload failed. Please try again.');
@@ -127,21 +104,12 @@ export default function ImageUploadField({
         </button>
       )}
       {picking && (
-        <PictureDialog title={`Choose ${label.toLowerCase()}`} current={displaySrc || undefined} accept={ALLOWED_IMAGE_TYPES.join(',')} hint="PNG, JPG, WebP or GIF, under 8 MB"
+        <PictureDialog title={`Choose ${label.toLowerCase()}`} current={displaySrc || undefined} aspect={shape === 'circle' || shape === 'square' ? 1 : undefined} round={shape === 'circle'} accept={ALLOWED_IMAGE_TYPES.join(',')} hint="PNG, JPG, WebP or GIF, under 8 MB"
           onUse={(f) => { void handleFile(f[0]); }} onRemove={value ? () => onChange('') : undefined} onClose={() => setPicking(false)} />
       )}
 
       {error && <span className={styles.hint} style={{ color: '#fca5a5' }}>{error}</span>}
       {hint && !compact && <span className={styles.hint}>{hint}</span>}
-
-      {pendingFile && (
-        <ImageCropModal
-          file={pendingFile}
-          outputSize={maxDimension}
-          onCancel={() => setPendingFile(null)}
-          onConfirm={handleCropConfirm}
-        />
-      )}
     </div>
   );
 }
