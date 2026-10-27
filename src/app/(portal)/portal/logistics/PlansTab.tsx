@@ -62,7 +62,7 @@ function usePlanActions(list: ReturnType<typeof usePlanList>, afterRemove?: () =
     afterRemove?.();
   };
   const items = (p: PlanSummary) => [{ label: 'Edit Name And Dates', onClick: () => setEditing(p) }, { label: p.status === 'closed' ? 'Reopen Plan' : 'Close Plan', onClick: () => void (p.status === 'closed' ? closer.reopen(p.id) : closer.close(p)) }, { label: 'Remove Plan', danger: true, onClick: () => void removePlan(p) }];
-  const dialogs = <>{closer.dialog}{editing && <EditPlanDialog plan={editing} onSave={async (b) => update(editing.id, b)} onClose={() => setEditing(null)} />}</>;
+  const dialogs = <>{editing && <EditPlanDialog plan={editing} onSave={async (b) => update(editing.id, b)} onClose={() => setEditing(null)} />}</>;
   return { items, dialogs };
 }
 

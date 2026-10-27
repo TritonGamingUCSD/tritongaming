@@ -318,8 +318,9 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   // the page stay as they are.
   const [refreshPending, startRefresh] = useTransition();
   const wasPending = useRef(false);
+  const keepScroll = useRef(0);   // where the page was scrolled to when a refresh began: the rebuilt section is put back there
   useEffect(() => {
-    const on = () => startRefresh(() => router.refresh());
+    const on = () => { keepScroll.current = window.scrollY; startRefresh(() => router.refresh()); };
     window.addEventListener(REFRESH_EVENT, on);
     return () => window.removeEventListener(REFRESH_EVENT, on);
   }, [router]);
@@ -328,6 +329,9 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     if (!wasPending.current) return;
     wasPending.current = false;   // the server's answer has been applied: rebuild the open section with it
     setNavNonce((n) => n + 1);
+    // The rebuilt section is shorter for a moment while it loads, which would drop the page back to the top: keep putting it where it was until it has grown tall enough.
+    const y = keepScroll.current;
+    if (y > 0) { let tries = 0; const id = window.setInterval(() => { window.scrollTo(0, y); if (Math.abs(window.scrollY - y) < 2 || ++tries > 25) window.clearInterval(id); }, 80); }
     window.dispatchEvent(new Event(REFRESHED_EVENT));
   }, [refreshPending]);
   // Five slots: Home, two pages, the scanner in the middle... so the bar keeps two pages, then More.

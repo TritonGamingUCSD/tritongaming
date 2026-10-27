@@ -2,7 +2,6 @@
 
 import { useState, type CSSProperties } from 'react';
 import { ChevronDown, ChevronRight, CircleAlert, Lock, Minus, Plus, TriangleAlert } from 'lucide-react';
-import IconButton from '@/components/ui/IconButton';
 import { RowMenu } from './RowMenu';
 import { interactive } from './interactive';
 import { Combo } from './Combo';

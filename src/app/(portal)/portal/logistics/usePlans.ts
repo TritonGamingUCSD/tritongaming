@@ -53,12 +53,12 @@ export function usePlanList() {
     await load();
     return true;
   }, [load]);
-  // Closing an event takes out of stock what went out and was not counted back. When some lines were never counted back, the server says which, and the person chooses (see `uncounted`).
-  const close = useCallback(async (id: string, uncounted?: 'returned' | 'given'): Promise<{ ok: true } | { ok: false; error: string; uncounted?: { station: string; prize: string; quantity: number }[] }> => {
+  // Closing an event changes no stock (see CloseEvent.tsx); it only stops the event holding prizes back.
+  const close = useCallback(async (id: string): Promise<{ ok: true } | { ok: false; error: string }> => {
     try {
-      const r = await fetch(`/api/logistics/events/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'closed', ...(uncounted ? { uncounted } : {}) }), cache: 'no-store' });
+      const r = await fetch(`/api/logistics/events/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: 'closed' }), cache: 'no-store' });
       const j = await r.json().catch(() => ({}));
-      if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.', uncounted: j.code === 'uncounted' ? j.uncounted : undefined };
+      if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.' };
       await load();
       return { ok: true };
     } catch { return { ok: false, error: 'Couldn’t reach the server.' }; }

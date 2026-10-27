@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { eventHolds, groupBy, needText, prizingFixes, statusOf, stationNeed, valueOf } from '@/lib/logistics/prizing';
-import { ANY_SIZE, prizeLeft } from '@/lib/logistics/prizes';
+import { ANY_SIZE, lineNumbers, prizeLeft, stepCeiling } from '@/lib/logistics/prizes';
 
 describe('stock', () => {
   it('left is what is on hand minus what open events hold', () => {
@@ -9,11 +9,32 @@ describe('stock', () => {
   });
 });
 
+describe('one prize line: planned, given out, back, held', () => {
+  it('holds what is neither given out nor back in storage', () => {
+    expect(lineNumbers(10, 0, 0)).toEqual({ planned: 10, given: 0, back: 0, held: 10 });
+    expect(lineNumbers(10, 4, 0)).toEqual({ planned: 10, given: 4, back: 0, held: 6 });
+    expect(lineNumbers(10, 4, 6)).toEqual({ planned: 10, given: 4, back: 6, held: 0 });
+  });
+  it('marking prizes back in storage frees them at once', () => {
+    expect(lineNumbers(10, 4, 3).held).toBe(3);
+    expect(prizeLeft({ quantity: 20 }, { allocated: lineNumbers(10, 4, 3).held })).toBe(17);
+  });
+  it('never goes negative or counts more than was promised', () => {
+    expect(lineNumbers(5, 9, 9)).toEqual({ planned: 5, given: 5, back: 0, held: 0 });
+    expect(lineNumbers(5, 2, 9)).toEqual({ planned: 5, given: 2, back: 3, held: 0 });
+    expect(lineNumbers(5, -3, -1)).toEqual({ planned: 5, given: 0, back: 0, held: 5 });
+  });
+  it('back in storage can only reach what was not given out', () => {
+    expect(stepCeiling({ leftover: true }, { quantity: 10 }, 4)).toBe(6);
+    expect(stepCeiling({ leftover: false }, { quantity: 10 }, 4)).toBe(10);
+  });
+});
+
 describe('what an event holds of a prize', () => {
-  it('adds the lines of a prize and takes off what was given out', () => {
+  it('adds the lines of a prize and takes off what was given out or came back', () => {
     const lines = [{ id: 'l1', station_id: 's1', prize_id: 'p', quantity: 5 }, { id: 'l2', station_id: 's2', prize_id: 'p', quantity: 3 }, { id: 'l3', station_id: 's1', prize_id: 'q', quantity: 2 }];
-    const h = eventHolds(lines, (l) => (l.id === 'l1' ? 2 : 0));
-    expect(h.get('p')).toMatchObject({ total: 8, remaining: 6 });
+    const h = eventHolds(lines, (l) => (l.id === 'l1' ? 2 : l.id === 'l2' ? 3 : 0));   // l1: 2 released, l2: all 3 released (given or back)
+    expect(h.get('p')).toMatchObject({ total: 8, remaining: 3 });
     expect(h.get('q')).toMatchObject({ total: 2, remaining: 2 });
   });
 });

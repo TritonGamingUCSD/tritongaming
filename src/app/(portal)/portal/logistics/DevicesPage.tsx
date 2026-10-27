@@ -82,7 +82,6 @@ export default function DevicesPage({ api, data, route, go }: { api: LogisticsAp
         <PlanView key={chosen.id} id={chosen.id} data={data} catalog={api} page="device" day={day} group={group} embedded accordion={accordion} openOnly={!!route.openOnly} onOpenOnly={(v) => to({ openOnly: v || undefined })}
           onOpenPrizing={() => go({ tab: 'prizing', plan: chosen.slug })} onPage={(page) => go({ tab: 'events', plan: chosen.slug, page })} onBack={() => go({ tab: 'devices', plan: 'stock' })} />
       ) : <EquipmentTab api={api} data={data} group={group} />}
-      {closer.dialog}
       {gear && <DevicesSettings api={api} data={data} onClose={() => setGear(false)} />}
     </div>
   );

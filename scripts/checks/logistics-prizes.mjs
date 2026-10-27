@@ -143,27 +143,32 @@ try {
   t.ok('removing a station takes its prizes off it (no longer promised)', (await exec.call('DELETE', `/api/logistics/events/${P}/stations/${s2.id}`)).s === 200 && (await officer.call('GET', `/api/logistics/events/${P}`)).j.prizes.lines.length === 2 && (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === A).allocated === stockA.allocated - 3);
   t.ok('and the history says the station was removed', (await log(A)).some((e) => e.kind === 'assign' && e.qty === -3 && e.note === 'Station removed'));
 
-  // ---- closing an event: what went out and was not counted back leaves stock; the rest is free again
+  // ---- planned, given out, back in storage; closing an event changes no stock
   const C = (await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Pen', quantity: 10, size: 'Medium Prizing' })).j.prize.id;
   const D = (await exec.call('POST', '/api/logistics/prizes', { name: 'ZZ Cup', quantity: 10, size: 'Medium Prizing' })).j.prize.id;
   const P2 = (await exec.call('POST', '/api/logistics/events', { name: 'ZZ Close Night', starts_on: day(2), ends_on: day(2) })).j.plan.id;
   const s3 = (await exec.call('POST', `/api/logistics/events/${P2}/stations`, { names: ['ZZ Booth'], prize_only: true })).j.stations[0];
   const l3 = await exec.call('POST', `/api/logistics/events/${P2}/stations/${s3.id}/prizes`, { items: [{ prize_id: C, quantity: 4 }, { prize_id: D, quantity: 6 }] });
-  const LC = l3.j.lines.find((x) => x.prize_id === C).id;
-  await officer.call('POST', `/api/logistics/events/${P2}/counts`, { line_id: LC, step_id: sid('Back To Storage'), done: 1 });
+  const LC = l3.j.lines.find((x) => x.prize_id === C).id, LD = l3.j.lines.find((x) => x.prize_id === D).id;
   const stockOf = async (id) => (await officer.call('GET', '/api/logistics/prizes')).j.prizes.find((x) => x.id === id);
+  t.ok('planned holds the whole promise at first (pens 4 planned, cups 6)', (await stockOf(C)).allocated === 4 && (await stockOf(D)).allocated === 6 && (await stockOf(C)).left === 6 && (await stockOf(D)).left === 4);
+  await officer.call('POST', `/api/logistics/events/${P2}/counts`, { line_id: LC, step_id: sid('Back To Storage'), done: 1 });
+  t.ok('marking one pen back in storage frees it at once: planned 3, left 7, stock still 10', (await stockOf(C)).allocated === 3 && (await stockOf(C)).left === 7 && (await stockOf(C)).quantity === 10, JSON.stringify(await stockOf(C)));
+  await officer.call('POST', `/api/logistics/events/${P2}/counts`, { line_id: LD, step_id: sid('Given Out'), done: 2 });
+  t.ok('giving out 2 cups takes them out of stock (8) and out of planned (4); left stays 4', (await stockOf(D)).quantity === 8 && (await stockOf(D)).allocated === 4 && (await stockOf(D)).left === 4);
+  const capped = await officer.call('POST', `/api/logistics/events/${P2}/counts`, { line_id: LD, step_id: sid('Back To Storage'), done: 9 });
+  t.ok('back in storage cannot pass what was not given out (6 − 2 = 4), and then nothing is planned', capped.s === 200 && capped.j.done === 4 && (await stockOf(D)).allocated === 0 && (await stockOf(D)).left === 8, JSON.stringify([capped.j, await stockOf(D)]));
+  await officer.call('POST', `/api/logistics/events/${P2}/counts`, { line_id: LD, step_id: sid('Back To Storage'), done: 1 });
+  const bd = (await officer.call('GET', `/api/logistics/prizes/${D}/breakdown`)).j;
+  t.ok('Where did they go agrees: promised 6, given 2, back 1, still planned 3', bd.events?.[0]?.stations?.[0]?.promised === 6 && bd.events[0].stations[0].given === 2 && bd.events[0].stations[0].back === 1 && bd.events[0].stations[0].planned === 3 && bd.planned === 3, JSON.stringify(bd.events));
   t.ok('an officer cannot close an event', (await officer.call('PATCH', `/api/logistics/events/${P2}`, { status: 'closed' })).s === 403);
-  const noWay = await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'closed' });
-  t.ok('closing with a line nobody counted back is refused and the lines are listed', noWay.s === 409 && noWay.j.code === 'uncounted' && noWay.j.uncounted.length === 1 && noWay.j.uncounted[0].prize === 'ZZ Cup' && noWay.j.uncounted[0].quantity === 6, JSON.stringify(noWay.j));
-  t.ok('nothing changed by that refusal', (await stockOf(D)).quantity === 10 && (await stockOf(C)).quantity === 10);
-  const shut = await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'closed', uncounted: 'given' });
-  t.ok('closing says: the pens counted back (1 of 4) mean 3 went out; the cups taken as given out mean 6 went out', shut.s === 200 && (await stockOf(C)).quantity === 7 && (await stockOf(D)).quantity === 4, JSON.stringify([await stockOf(C), await stockOf(D)]));
-  t.ok('a closed event holds nothing, so what is left is what is on hand', (await stockOf(C)).allocated === 0 && (await stockOf(C)).left === 7 && (await stockOf(D)).left === 4);
+  const shut = await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'closed' });
+  t.ok('closing asks nothing and changes no stock (pens 10, cups 8)', shut.s === 200 && (await stockOf(C)).quantity === 10 && (await stockOf(D)).quantity === 8, JSON.stringify(shut.j).slice(0, 200));
+  t.ok('a closed event holds nothing, so left is what is on hand', (await stockOf(C)).allocated === 0 && (await stockOf(C)).left === 10 && (await stockOf(D)).left === 8);
   t.ok('a closed plan takes no more counts', (await officer.call('POST', `/api/logistics/events/${P2}/counts`, { line_id: LC, step_id: sid('Sorted'), add: 1 })).s === 409);
-  t.ok('the history shows what closing took out', (await log(D)).some((e) => e.kind === 'give' && e.qty === -6 && e.plan_name === 'ZZ Close Night'));
-  t.ok('reopening puts it all back (pens 10, cups 10) and removes those history lines', (await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'draft' })).s === 200 && (await stockOf(C)).quantity === 10 && (await stockOf(D)).quantity === 10 && !(await log(D)).some((e) => e.qty === -6));
-  const shut2 = await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'closed', uncounted: 'returned' });
-  t.ok('closing and taking the uncounted as returned: only the pens that were not counted back leave (3)', shut2.s === 200 && (await stockOf(C)).quantity === 7 && (await stockOf(D)).quantity === 10);
+  t.ok('closing writes nothing to the history', !(await log(D)).some((e) => e.plan_name === 'ZZ Close Night' && e.ref === 'close') && !(await log(C)).some((e) => e.ref === 'close'));
+  t.ok('reopening changes no stock either, and the event holds its leftovers again (pens 3, cups 3)', (await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'draft' })).s === 200 && (await stockOf(C)).quantity === 10 && (await stockOf(D)).quantity === 8 && (await stockOf(C)).allocated === 3 && (await stockOf(D)).allocated === 3);
+  await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'closed' });
 
   // ---- free merch is counted loosely: a level instead of a number, never over-promised, never taken out of stock when an event closes
   const zl = await exec.call('POST', '/api/logistics/options', { kind: 'prize_size', value: 'ZZ Loose' });

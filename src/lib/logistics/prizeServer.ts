@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { isLoose, setLooseSizes, type PrizeStepDef, type PrizeTotals } from '@/lib/logistics/prizes';
+import { isLoose, lineNumbers, setLooseSizes, type PrizeStepDef, type PrizeTotals } from '@/lib/logistics/prizes';
 import { announce, stockTopic } from '@/lib/logistics/live';
 import { loadStaffleHolds } from '@/lib/staffle/holds';
 
@@ -22,8 +22,13 @@ export async function loadPrizeSteps(svc: SupabaseClient): Promise<PrizeStepDef[
   return (data ?? []).map((o) => ({ id: o.id as string, name: o.value as string, sort: o.sort as number, gives: !!(o.meta as { gives?: boolean } | null)?.gives, leftover: !!(o.meta as { leftover?: boolean } | null)?.leftover }));
 }
 
-// For each prize: how many the open events still hold for their stations (promised and not yet given out). A closed event holds nothing. One read of the open events, one of their lines and one of
-// the counts of the "gives" steps. With `only` it is limited to those prizes.
+// What was counted at the steps of one kind ("given out" or "back to storage") for a line.
+export const countAt = (done: { line_id: unknown; step_id: unknown; done: unknown }[] | null, lineId: string, stepIds: Set<string>) =>
+  (done ?? []).filter((d) => d.line_id === lineId && stepIds.has(d.step_id as string)).reduce((n, d) => n + (d.done as number), 0);
+export const stepKinds = (steps: PrizeStepDef[]) => ({ gives: new Set(steps.filter((s) => s.gives).map((s) => s.id)), back: new Set(steps.filter((s) => s.leftover).map((s) => s.id)) });
+
+// For each prize: how many the open events still hold for their stations (each line's `held`: promised, minus given out, minus back in storage). A closed event holds nothing. One read of the open events,
+// one of their lines and one of the counts of the "given out" and "back to storage" steps. With `only` it is limited to those prizes.
 export async function loadPrizeTotals(svc: SupabaseClient, only?: string[]): Promise<Map<string, PrizeTotals>> {
   const totals = new Map<string, PrizeTotals>();
   // A Staffle holds back the prizes it is raffling (until they are claimed or it ends).
@@ -35,16 +40,13 @@ export async function loadPrizeTotals(svc: SupabaseClient, only?: string[]): Pro
   if (only) q = q.in('prize_id', only);
   const [{ data: lines }, steps] = await Promise.all([q, loadPrizeSteps(svc)]);
   if (!lines?.length) return totals;
-  const giveIds = steps.filter((s) => s.gives).map((s) => s.id);
-  const given = new Map<string, number>();
-  if (giveIds.length) {
-    const { data: done } = await svc.from('logistics_plan_prize_steps').select('line_id, done').in('step_id', giveIds).in('plan_id', planIds).limit(30000);
-    for (const d of done ?? []) given.set(d.line_id as string, (given.get(d.line_id as string) ?? 0) + (d.done as number));
-  }
+  const { gives, back } = stepKinds(steps);
+  const countedIds = [...gives, ...back];
+  const { data: done } = countedIds.length ? await svc.from('logistics_plan_prize_steps').select('line_id, step_id, done').in('step_id', countedIds).in('plan_id', planIds).limit(30000) : { data: [] as { line_id: string; step_id: string; done: number }[] };
   for (const l of lines) {
-    const q = l.quantity as number;
+    const id = l.id as string;
     const t = totals.get(l.prize_id as string) ?? { allocated: 0 };
-    t.allocated += q - Math.min(given.get(l.id as string) ?? 0, q);
+    t.allocated += lineNumbers(l.quantity as number, countAt(done, id, gives), countAt(done, id, back)).held;
     totals.set(l.prize_id as string, t);
   }
   return totals;
@@ -69,30 +71,6 @@ export async function bumpStock(svc: SupabaseClient, prizeId: string, delta: num
   await svc.from('logistics_prizes').update({ quantity: next, updated_at: new Date().toISOString(), ...(who?.id ? { updated_by: who.id } : {}) }).eq('id', prizeId);
   await announce(stockTopic(), { k: 'stock', prize: prizeId, qty: next, was: data.quantity as number }, who);
   return next;
-}
-
-// What closing an event does to stock. Each prize line of the event was taken out: what was counted back "to storage" (a leftover step) is back, and the rest was given out and leaves stock (what a
-// "gives" step already took out as it was counted is not taken twice). A line with nothing counted back and something still unaccounted for is `uncounted`: the caller says whether to take it as
-// returned or as given. Everything that was promised and is not taken out simply counts as free again, because a closed event holds nothing. The same lines are used to undo it on reopening.
-export interface Uncounted { line_id: string; station: string; prize: string; quantity: number }
-export async function planCloseLines(svc: SupabaseClient, planId: string) {
-  await ensureLoose(svc);
-  const [{ data: lines }, { data: done }, steps, { data: stations }] = await Promise.all([
-    svc.from('logistics_plan_prizes').select('id, station_id, prize_id, quantity').eq('plan_id', planId).limit(5000),
-    svc.from('logistics_plan_prize_steps').select('line_id, step_id, done').eq('plan_id', planId).limit(30000),
-    loadPrizeSteps(svc),
-    svc.from('logistics_stations').select('id, name').eq('plan_id', planId),
-  ]);
-  const gives = new Set(steps.filter((s) => s.gives).map((s) => s.id)), back = new Set(steps.filter((s) => s.leftover).map((s) => s.id));
-  const sum = (lineId: string, set: Set<string>) => (done ?? []).filter((d) => d.line_id === lineId && set.has(d.step_id as string)).reduce((n, d) => n + (d.done as number), 0);
-  const poolName = new Map((stations ?? []).map((p) => [p.id as string, p.name as string]));
-  const { data: prizes } = (lines ?? []).length ? await svc.from('logistics_prizes').select('id, name, size').in('id', [...new Set((lines ?? []).map((l) => l.prize_id as string))]) : { data: [] as { id: string; name: string; size: string | null }[] };
-  const prizeName = new Map((prizes ?? []).map((p) => [p.id as string, p.name as string]));
-  const loose = new Set((prizes ?? []).filter((p) => isLoose(p as { size: string | null })).map((p) => p.id as string));   // loose prizes are never counted out of stock
-  return (lines ?? []).filter((l) => !loose.has(l.prize_id as string)).map((l) => {
-    const quantity = l.quantity as number, g = Math.min(sum(l.id as string, gives), quantity), remaining = quantity - g, back_ = Math.min(sum(l.id as string, back), remaining);
-    return { line_id: l.id as string, prize_id: l.prize_id as string, station: poolName.get(l.station_id as string) ?? 'a station', prize: prizeName.get(l.prize_id as string) ?? 'a prize', quantity, remaining, back: back_, counted: back_ > 0 };
-  });
 }
 
 export interface PlanPrizes {

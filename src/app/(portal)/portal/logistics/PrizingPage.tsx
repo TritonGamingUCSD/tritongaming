@@ -9,7 +9,7 @@ import { Input, Select } from '@/components/ui/Field';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { RowMenu } from './RowMenu';
-import { ANY_SIZE, isLoose, setLooseSizes, suggestPrizes, stepCeiling, type PrizeStepDef, type StockLevel } from '@/lib/logistics/prizes';
+import { ANY_SIZE, isLoose, lineNumbers, setLooseSizes, suggestPrizes, stepCeiling, type PrizeStepDef, type StockLevel } from '@/lib/logistics/prizes';
 import { GROUPS, impliedCount, eventSlugOf, fromOf, STATUS_LABEL, STOCK_STATUS_LABEL, STATUS_ORDER, eventHolds, groupBy, isGroupBy, money, prizingFixes, stationNeed, statusOf, valueOf, type Fix, type GroupBy } from '@/lib/logistics/prizing';
 import { AddStationDialog, PastEventsDialog, PrizeEditor, PrizingSettings, type PrizeTab } from './PrizingDialogs';
 import { FixStrip, GroupBlock, StationBlock, StockBlock, type GroupLine, type PrizingCtx, type Row } from './PrizingParts';
@@ -97,12 +97,14 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   const count = useCallback((lineId: string, stepId: string) => countMap.get(`${lineId}:${stepId}`) ?? 0, [countMap]);
   const shown = useCallback((lineId: string, stepId: string, ceiling: number) => Math.min(ceiling, impliedCount(steps, (sid) => countMap.get(`${lineId}:${sid}`) ?? 0, stepId)), [steps, countMap]);
   const givenOf = useCallback((lineId: string) => giveIds.reduce((n, id) => n + (countMap.get(`${lineId}:${id}`) ?? 0), 0), [giveIds, countMap]);
+  const backIds = useMemo(() => steps.filter((s) => s.leftover).map((s) => s.id), [steps]);
+  const backOf = useCallback((lineId: string) => backIds.reduce((n, id) => n + (countMap.get(`${lineId}:${id}`) ?? 0), 0), [backIds, countMap]);
   const lockedIds = useMemo(() => new Set(d?.lockedRequests ?? []), [d?.lockedRequests]);
   const isLocked = useCallback((s: Station) => !!s.prize_request_id && lockedIds.has(s.prize_request_id), [lockedIds]);
 
   // ---- rows ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
   const prizeById = useMemo(() => new Map((prizes.rows ?? []).map((p) => [p.id, p])), [prizes.rows]);
-  const holds = useMemo(() => eventHolds(lines, (l) => Math.min(givenOf(l.id), l.quantity)), [lines, givenOf]);
+  const holds = useMemo(() => eventHolds(lines, (l) => { const n = lineNumbers(l.quantity, givenOf(l.id), backOf(l.id)); return n.given + n.back; }), [lines, givenOf, backOf]);   // what is given out or back in storage is no longer held
   const rows: Row[] = useMemo(() => (prizes.rows ?? []).map((p) => {
     const h = holds.get(p.id);
     return { p, sponsor: p.sponsor_id ? sponsorName.get(p.sponsor_id) ?? null : null, here: h?.total ?? 0, remaining: h?.remaining ?? 0, elsewhere: Math.max(0, p.allocated - (eventClosed ? 0 : h?.remaining ?? 0)), lines: (h?.lines ?? []).map((l) => ({ id: l.id, station_id: l.station_id, quantity: l.quantity })) };
@@ -256,7 +258,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
       <div className={pz.top}>
         {list.plans.length > 0 && (
           <div className={pz.modeSeg}>
-            <SectionTabs<'event' | 'stock'> variant="segmented" label="This event or the stock" value={hasEvent ? 'event' : 'stock'} onChange={(v) => go({ tab: 'prizing', plan: v === 'stock' ? 'stock' : lastEvent() })} tabs={[{ id: 'event', label: 'This Event' }, { id: 'stock', label: 'In Stock' }]} />
+            <SectionTabs<'event' | 'stock'> variant="segmented" label="This event or the stock" value={chosen ? 'event' : 'stock'} onChange={(v) => go({ tab: 'prizing', plan: v === 'stock' ? 'stock' : lastEvent() })} tabs={[{ id: 'event', label: 'This Event' }, { id: 'stock', label: 'In Stock' }]} />
           </div>
         )}
         {hasEvent && (
@@ -284,7 +286,7 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
         {hasEvent && <span>This event: {lines.filter((l) => !isLoose(l.prize)).reduce((n, l) => n + l.quantity, 0)} assigned · {money(hereValue) || '$0'}</span>}
         {!hasEvent && <label className={pz.oneAtATime} title="Prizes with none left on hand, or a free prize that is out"><input type="checkbox" checked={view.hideGone} onChange={(e) => change({ hideGone: e.target.checked })} /> Hide given out{view.hideGone && goneCount > 0 ? ` (${goneCount})` : ''}</label>}
         {data.canManage && !hasEvent && guesses.length > 0 && <button type="button" className={pz.feedBtn} onClick={() => setPastOpen(true)}>Fill in {guesses.length} missing {guesses.length === 1 ? 'event' : 'events'} from past records</button>}
-        {eventClosed && <span className={pz.closedTag}>Closed: what went out and was not counted back is out of stock</span>}
+        {eventClosed && <span className={pz.closedTag}>Closed: it holds nothing back, and stock was not changed by closing</span>}
         <span className={pz.foldTools}>
           <label className={pz.oneAtATime} title="Opening one folds the others"><input type="checkbox" checked={view.oneAtATime} onChange={(e) => { change({ oneAtATime: e.target.checked }); setOpenStations({}); setOpenGroups({}); setOpenAll(false); }} /> One at a time</label>
           {!view.oneAtATime && (group === 'station' && hasEvent
@@ -342,7 +344,6 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
       {dialog?.kind === 'settings' && <PrizingSettings api={api} data={data} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'station' && <StationDialog plan={plan} station={dialog.station} onClose={() => setDialog(null)} />}
       {dialog?.kind === 'addStation' && <AddStationDialog plan={plan} existing={addableStations} onClose={() => setDialog(null)} />}
-      {closer.dialog}
       <LivePill people={team.here} live={team.live} feed={feed} describe={describeKey} />
     </div>
   );

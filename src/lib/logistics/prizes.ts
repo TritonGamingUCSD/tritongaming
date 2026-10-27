@@ -17,12 +17,24 @@ export interface Prize {
   id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; quantity_is_estimate: boolean; stock_level: StockLevel;
   bin: string | null; source: string | null; from_event: string | null; from_plan_id: string | null; expires_on: string | null; notes: string | null;
 }
-// `quantity` is how many are on hand. `allocated` is what open events still hold for their stations (promised and not yet given out); a closed event holds nothing, so what it did not use is free
+// `quantity` is how many are on hand. `allocated` is what open events still hold for their stations (their lines' `held`: promised, minus given out, minus back in storage); a closed event holds nothing, so what it did not use is free
 // again. Left is what is free to promise and can go below zero: that is an over-allocation.
 export interface PrizeTotals { allocated: number }
 export const prizeLeft = (p: Pick<Prize, 'quantity'> & { size?: string | null; stock_level?: string | null }, t: PrizeTotals) => (isLoose(p) ? (p.stock_level === 'out' ? 0 : LOOSE_LEFT) : p.quantity - t.allocated);
 
+// One prize line (a prize promised to a station) in four numbers, worked out here and nowhere else:
+//   planned  how many were promised
+//   given    how many were handed out (counted at the "Given Out" step): they have left stock, so they no longer count against it
+//   back     how many came back to storage (counted at the "Back To Storage" step): they are free to promise again at once
+//   held     what the line still holds back from other events: planned − given − back
+// A closed event holds nothing; closing it changes no stock (what was given out already left stock as it was counted, and whatever was neither given out nor counted back simply stays in stock).
+export function lineNumbers(planned: number, given: number, back: number) {
+  const g = Math.min(Math.max(0, given), planned), b = Math.min(Math.max(0, back), planned - g);
+  return { planned, given: g, back: b, held: planned - g - b };
+}
+
 // A prize step is a count per line. `gives` marks the step that hands a prize out (it uses stock up); `leftover` marks a step that is only about what was NOT handed out ("back to storage").
+// Any other step (sorted, picked up…) is only a count to follow along: it never changes stock or what is planned.
 export interface PrizeStepDef { id: string; name: string; sort: number; gives: boolean; leftover: boolean }
 
 // The most a step can reach for a line: all of them, or only the ones not given out for a leftover step.

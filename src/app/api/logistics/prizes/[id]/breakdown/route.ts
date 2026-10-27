@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { ensureLoose, loadPrizeSteps, loadPrizeTotals } from '@/lib/logistics/prizeServer';
-import { isLoose, prizeLeft } from '@/lib/logistics/prizes';
+import { countAt, ensureLoose, loadPrizeSteps, loadPrizeTotals, stepKinds } from '@/lib/logistics/prizeServer';
+import { isLoose, lineNumbers, prizeLeft } from '@/lib/logistics/prizes';
 
 export const dynamic = 'force-dynamic';
 const UUID = /^[0-9a-f-]{36}$/i;
@@ -32,14 +32,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     planIds.length ? auth.svc.from('logistics_plans').select('id, name, slug, status, starts_on').in('id', planIds) : Promise.resolve({ data: [] as { id: string; name: string; slug: string; status: string; starts_on: string }[] }),
     stationIds.length ? auth.svc.from('logistics_stations').select('id, name').in('id', stationIds) : Promise.resolve({ data: [] as { id: string; name: string }[] }),
   ]);
-  const gives = new Set(steps.filter((s) => s.gives).map((s) => s.id)), back = new Set(steps.filter((s) => s.leftover).map((s) => s.id));
-  const at = (lineId: string, set: Set<string>) => (done ?? []).filter((d) => d.line_id === lineId && set.has(d.step_id as string)).reduce((n, d) => n + (d.done as number), 0);
+  const { gives, back } = stepKinds(steps);
   const stationName = new Map((stations ?? []).map((s) => [s.id as string, s.name as string]));
   const events = (plans ?? []).sort((a, b) => String(b.starts_on).localeCompare(String(a.starts_on))).map((p) => ({
     name: p.name as string, slug: p.slug as string, status: p.status as string,
     stations: (lines ?? []).filter((l) => l.plan_id === p.id).map((l) => {
-      const q = l.quantity as number, g = Math.min(at(l.id as string, gives), q), b = Math.min(at(l.id as string, back), q - g);
-      return { station: stationName.get(l.station_id as string) ?? 'a station', promised: q, given: g, back: b, planned: p.status === 'draft' ? q - g : 0 };
+      const n = lineNumbers(l.quantity as number, countAt(done, l.id as string, gives), countAt(done, l.id as string, back));
+      return { station: stationName.get(l.station_id as string) ?? 'a station', promised: n.planned, given: n.given, back: n.back, planned: p.status === 'draft' ? n.held : 0 };
     }),
   }));
   const t = totals.get(id) ?? { allocated: 0 };

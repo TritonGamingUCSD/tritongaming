@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
+import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
@@ -294,25 +294,6 @@ function HistoryBody({ prize, from }: { prize: PrizeRow; from: string }) {
         </ul>
       )}
     </>
-  );
-}
-
-// ---- closing an event ------------------------------------------------------------------------------------------------------------------------------------------------------------------
-// Closing takes out of stock what went out to the stations and was not counted back to storage. Lines that were never counted back are listed, and the person says what they mean.
-export function CloseEventDialog({ name, lines, busy, onChoose, onClose }: { name: string; lines: { station: string; prize: string; quantity: number }[]; busy: boolean; onChoose: (how: 'returned' | 'given') => void; onClose: () => void }) {
-  return (
-    <Dialog title={`Close ${name}?`} wide sheet busy={busy} onClose={onClose}>
-      <DialogText>These prizes were taken out to a station and never counted back to storage. What happened to them?</DialogText>
-      <ul className={pz.history}>
-        {lines.slice(0, 40).map((l, i) => <li key={i}><b className={pz.hQty}>{l.quantity}</b><span className={pz.hWhat}>{l.prize} · {l.station}</span></li>)}
-        {lines.length > 40 && <li><span className={pz.hWhat}>…and {lines.length - 40} more</span></li>}
-      </ul>
-      <DialogActions>
-        <DialogCancel onClick={onClose} disabled={busy} />
-        <Button variant="secondary" onClick={() => onChoose('returned')} loading={busy}>They Came Back</Button>
-        <Button onClick={() => onChoose('given')} loading={busy}>They Were Given Out</Button>
-      </DialogActions>
-    </Dialog>
   );
 }
 

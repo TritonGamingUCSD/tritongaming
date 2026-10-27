@@ -121,7 +121,7 @@ function OptionRow({ kind, o, api, used, unit, canEdit }: { kind: OptionKind; o:
 function StepsEditor({ api, items, kind, canEdit }: { api: LogisticsApi; items: OptionItem[]; kind: 'step' | 'prize_step'; canEdit: boolean }) {
   const help = kind === 'step'
     ? '“For” picks which devices a step applies to. “Review Parts” lets the person tick each part present or missing at that step. “Back to Storage” is for club devices; “Returned to owner” is for sponsor and loaner devices.'
-    : '“Gives Out” uses the prize’s stock up at that step. “Leftovers” counts only what wasn’t given out, which goes back to storage.';
+    : '“Takes From Stock” is the step where a prize is handed out: counting it takes it out of stock. “Frees Planned” is the step where one comes back to storage: counting it frees it to promise again at once. Other steps are only counts to follow along.';
   return (
     <ToolCard title={KIND_LABELS[kind]} count={items.length} wide hint={<>{KIND_HINTS[kind]}</>}>
       <PhoneFold label="What the options mean"><p className={styles.listHint}>{help}</p></PhoneFold>
@@ -140,8 +140,8 @@ function StepRow({ o, n, kind, first, last, api, canEdit }: { o: OptionItem; n: 
       <span className={styles.optName}><TextCell value={o.value} canEdit={canEdit} strong onSave={(v) => { if (v) void api.changeOption(o.id, { value: v }); }} /></span>
       <span className={styles.toolPills}>
         {kind === 'prize_step' ? <>
-          <Pill on={!!o.gives} disabled={!canEdit} label="Gives Out" title="Gives the prize out: uses its stock up" onClick={() => void api.changeOption(o.id, { gives: !o.gives })} />
-          <Pill on={!!o.leftover} disabled={!canEdit} label="Leftovers" title="Only what wasn’t given out: counts what goes back to storage" onClick={() => void api.changeOption(o.id, { leftover: !o.leftover })} />
+          <Pill on={!!o.gives} disabled={!canEdit} label="Takes From Stock" title="The step where a prize is handed out: counting it takes it out of stock (and counting it back down puts it back)" onClick={() => void api.changeOption(o.id, { gives: !o.gives })} />
+          <Pill on={!!o.leftover} disabled={!canEdit} label="Frees Planned" title="The step where a prize comes back to storage: counting it frees it to promise again at once (it can’t pass what was not given out)" onClick={() => void api.changeOption(o.id, { leftover: !o.leftover })} />
         </> : <>
           <PickCell value={APPLIES_LABELS[(o.applies ?? 'all') as Applies]} options={(Object.keys(APPLIES_LABELS) as Applies[]).map((a) => APPLIES_LABELS[a])} clearable={false} canEdit={canEdit} onSave={(v) => { const a = (Object.keys(APPLIES_LABELS) as Applies[]).find((k) => APPLIES_LABELS[k] === v); if (a) void api.changeOption(o.id, { applies: a }); }} />
           <Pill on={!!o.kit} disabled={!canEdit} label="Review Parts" title="Show the device’s parts to tick present or missing at this step" onClick={() => void api.changeOption(o.id, { kit: !o.kit })} />

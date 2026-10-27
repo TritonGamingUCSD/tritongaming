@@ -16,12 +16,12 @@ export interface PrizeIn {
 export interface LineIn { id: string; station_id: string; prize_id: string; quantity: number }
 export interface StationIn { id: string; name: string; prize_only?: boolean; prize_request_id?: string | null; prize_target_qty?: number | null; prize_target_sizes?: Record<string, number> | null }
 
-// How many of each prize this event holds (promised, minus what was already given out) and where.
-export function eventHolds(lines: LineIn[], given: (line: LineIn) => number) {
+// How many of each prize this event holds (promised, minus what was given out, minus what came back to storage: `held` in lineNumbers) and where. `released` is a line's given out plus back in storage.
+export function eventHolds(lines: LineIn[], released: (line: LineIn) => number) {
   const out = new Map<string, { total: number; remaining: number; lines: LineIn[] }>();
   for (const l of lines) {
     const e = out.get(l.prize_id) ?? { total: 0, remaining: 0, lines: [] };
-    e.total += l.quantity; e.remaining += l.quantity - Math.min(given(l), l.quantity); e.lines.push(l);
+    e.total += l.quantity; e.remaining += l.quantity - Math.min(released(l), l.quantity); e.lines.push(l);
     out.set(l.prize_id, e);
   }
   return out;
