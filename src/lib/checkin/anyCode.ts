@@ -19,16 +19,24 @@ export type Outcome =
 
 export const TGCODE = /^tg:([mtr])([0-9a-f]{8}|[0-9a-f]{12})$/;   // the key is 8 hex digits in a code of the current format, 12 in the first one
 
-// A request that never answers (a very bad connection) must not leave the screen waiting for ever: after 20 s it gives up and the person is told, with a way to try again.
-const TIMEOUT_MS = 20_000;
+// A request that never answers (a very bad connection) must not leave the screen waiting for ever: after 8 s it gives up (and, for a check-in, tries once more) and the person is told, with a way to try again.
+const TIMEOUT_MS = 8_000;
 async function withTimeout(run: (signal: AbortSignal) => Promise<Response>): Promise<Response> {
   const ctl = new AbortController();
   const id = setTimeout(() => ctl.abort(), TIMEOUT_MS);
   try { return await run(ctl.signal); } finally { clearTimeout(id); }
 }
 
+// No signal at all: say so at once instead of waiting for a timeout.
+const OFFLINE = new Error('offline');
+const assertOnline = () => { if (typeof navigator !== 'undefined' && navigator.onLine === false) throw OFFLINE; };
+
+// A check-in is safe to send again (the server only ever checks a ticket in once, and a second answer is "already checked in"), so a request lost to a weak signal is tried once more before giving up.
 async function post(path: string, body: object) {
-  const res = await withTimeout((signal) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal }));
+  assertOnline();
+  let res: Response;
+  try { res = await withTimeout((signal) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal })); }
+  catch { assertOnline(); res = await withTimeout((signal) => fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal })); }
   const json = await res.json().catch(() => ({}));
   if (!res.ok && !json.error) json.error = whyNot(res.status);
   return { ok: res.ok, status: res.status, json };
@@ -64,7 +72,7 @@ export async function checkInWithCode(code: string): Promise<Outcome> {
     if (game.status === 403 || game.status === 409) return { kind: 'error', message: game.json.error };
     if (t.status === 404 || t.status === 403) return { kind: 'error', message: 'That code isn’t a meeting, ticket or Trivia game code right now. Check the screen for the current one.' };
     return { kind: 'error', message: t.json.error || m.json.error || 'Check-in failed.' };
-  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
+  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check the signal and scan again (if it did go through, it will say already checked in).' }; }
 }
 
 /** Does the check-in for the kind of code the person (or the lookup) settled on. */
@@ -77,7 +85,7 @@ export async function resolveChoice(code: string, which: 'meeting' | 'ticket'): 
     const t = await post('/api/tickets/checkin', { code });
     if (t.status === 409 && t.json.code === 'confirm_event') return wrongEvent(t.json, { code });
     return t.ok ? ticketOutcome(t.json) : { kind: 'error', message: t.json.error || 'Check-in failed.' };
-  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
+  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check the signal and scan again (if it did go through, it will say already checked in).' }; }
 }
 
 /** What a scan means, for the QRs that are made by the portal. null = not one of these. */
@@ -104,7 +112,7 @@ export async function checkInWithQr(text: string, can: { tickets: boolean; rewar
       const d = j.redemption;
       return { kind: 'reward', id: d.id, status: d.status, title: one<{ title: string }>(d.reward)?.title ?? 'Reward', member: one<{ display_name: string | null }>(d.member)?.display_name ?? 'Member', cost: d.point_cost };
     }
-  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
+  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check the signal and scan again (if it did go through, it will say already checked in).' }; }
   return null;
 }
 
@@ -112,7 +120,7 @@ export async function confirmReward(id: string, title: string, member: string): 
   try {
     const r = await post(`/api/rewards/redemptions/${id}/confirm`, {});
     return r.ok ? { kind: 'rewardDone', title, member } : { kind: 'error', message: r.json.error || 'Failed to confirm.' };
-  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
+  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check the signal and scan again (if it did go through, it will say already checked in).' }; }
 }
 
 /** Staff saw the wrong-event warning and chose to check the person in anyway. */
@@ -120,5 +128,5 @@ export async function confirmEventCheckIn(redo: { code?: string; qr_token?: stri
   try {
     const t = await post('/api/tickets/checkin', { ...redo, confirm_event: true });
     return t.ok ? ticketOutcome(t.json) : { kind: 'error', message: t.json.error || 'Check-in failed.' };
-  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check your connection and try again.' }; }
+  } catch { return { kind: 'error', message: 'No connection, or it is taking too long. Check the signal and scan again (if it did go through, it will say already checked in).' }; }
 }

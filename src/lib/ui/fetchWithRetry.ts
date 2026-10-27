@@ -5,12 +5,13 @@
 // network failure (fetch throws) or a 5xx (server-side hiccup) is exactly
 // the kind of thing a flaky connection produces, so those get a couple of
 // quick retries with a short backoff before giving up.
-export async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit, attempts = 3): Promise<Response> {
+// `timeoutMs`: one try that has not answered by then is given up (and counts as a failed try), so a connection that stalls never leaves the screen waiting for ever.
+export async function fetchWithRetry(input: RequestInfo | URL, init?: RequestInit, attempts = 3, timeoutMs?: number): Promise<Response> {
   let lastError: unknown;
   let lastResponse: Response | undefined;
   for (let i = 0; i < attempts; i++) {
     try {
-      const res = await fetch(input, init);
+      const res = await fetch(input, timeoutMs ? { ...init, signal: AbortSignal.timeout(timeoutMs) } : init);
       if (res.ok || (res.status >= 400 && res.status < 500)) return res;
       lastResponse = res;
       lastError = new Error(`Request failed with status ${res.status}`);

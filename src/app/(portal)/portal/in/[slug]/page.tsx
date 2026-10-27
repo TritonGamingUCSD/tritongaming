@@ -16,17 +16,19 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 // to this address afterwards. All the checking happens in the API, when the page asks to check them in.
 export default async function SelfCheckinPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const profile = await getProfile();
-  if (!profile) redirect(`/login?next=${encodeURIComponent(`/portal/in/${slug}`)}`);
-
   const supabase = await createClient();
   const columns = 'id, title, slug, start_date, end_date, location, audience, self_checkin_mode, checkin_windows, day_hours, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override';
-  const { data: event } = await (UUID.test(slug)
-    ? supabase.from('events').select(columns).eq('id', slug).eq('is_published', true).maybeSingle()
-    : supabase.from('events').select(columns).eq('slug', slug).eq('is_published', true).maybeSingle());
+  // Everything this page needs is asked together (who is signed in, the event, their roles and details), not one after another: the person is standing at the door waiting.
+  const [profile, eventResult, roles, gender, authUser] = await Promise.all([
+    getProfile(),
+    UUID.test(slug)
+      ? supabase.from('events').select(columns).eq('id', slug).eq('is_published', true).maybeSingle()
+      : supabase.from('events').select(columns).eq('slug', slug).eq('is_published', true).maybeSingle(),
+    getUserRoles(), getMyGender(), getUser(),
+  ]);
+  if (!profile) redirect(`/login?next=${encodeURIComponent(`/portal/in/${slug}`)}`);
+  const event = eventResult.data;
   if (!event) notFound();
-
-  const [roles, gender, authUser] = await Promise.all([getUserRoles(), getMyGender(), getUser()]);
   const isUcsd = isVerifiedMember(roles);
   const missing = getMissingProfileFields({ ...profile, gender }, isUcsd);
   const closed = selfCheckinClosedReason(cleanSelfCheckinMode(event.self_checkin_mode), { start_date: event.start_date, end_date: event.end_date, checkin_windows: event.checkin_windows, day_hours: event.day_hours });

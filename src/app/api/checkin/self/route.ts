@@ -16,28 +16,31 @@ import { performCheckin } from '@/lib/events/performCheckin';
 // ticket flow with Stripe: this route does not take payment.
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
-
-  const { event_id } = await request.json().catch(() => ({}));
-  if (!event_id || typeof event_id !== 'string') return NextResponse.json({ error: 'Missing event_id' }, { status: 400 });
-
+  // The person is waiting on this answer: who they are, and the event they sent, are asked together (nothing here needs the first to ask the second).
   const svc = createServiceClient();
-  const { data: event } = await svc
-    .from('events')
-    .select('id, title, points_value, start_date, end_date, requires_checkin_form, checkin_windows, day_hours, self_checkin_mode, is_published, audience, ticket_price')
-    .eq('id', event_id)
-    .maybeSingle();
+  const body = await request.json().catch(() => ({}));
+  const event_id = body?.event_id;
+  const [{ data: { user } }, { data: event }] = await Promise.all([
+    supabase.auth.getUser(),
+    typeof event_id === 'string' && event_id
+      ? svc.from('events').select('id, title, points_value, start_date, end_date, requires_checkin_form, checkin_windows, day_hours, self_checkin_mode, is_published, audience, ticket_price').eq('id', event_id).maybeSingle()
+      : Promise.resolve({ data: null }),
+  ]);
+  if (!user) return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
+  if (!event_id || typeof event_id !== 'string') return NextResponse.json({ error: 'Missing event_id' }, { status: 400 });
+  // The ticket does not depend on the event's answers either (it is looked for by the same two ids), so it is fetched with the person's details.
+  const ticketQuery = svc.from('tickets').select('id, user_id, event_id, status, checked_in_at').eq('event_id', event_id).eq('user_id', user.id).maybeSingle();
   if (!event || !event.is_published) return NextResponse.json({ error: 'Event not found.' }, { status: 404 });
   const mode = cleanSelfCheckinMode(event.self_checkin_mode);
   const closed = selfCheckinClosedReason(mode, event);
   if (closed) return NextResponse.json({ error: closed.message, code: closed.code }, { status: closed.code === 'closed' ? 403 : 409 });
 
   // The same profile rule as claiming a ticket, so the reports stay complete.
-  const [{ data: profile }, { data: roles }, { data: priv }] = await Promise.all([
+  const [{ data: profile }, { data: roles }, { data: priv }, { data: firstTicket }] = await Promise.all([
     svc.from('profiles').select('display_name, major, year, college, pronouns').eq('id', user.id).single(),
     svc.from('user_roles').select('role, division_id').eq('user_id', user.id),
     svc.from('profile_private').select('gender').eq('user_id', user.id).maybeSingle(),
+    ticketQuery,
   ]);
   const isUcsd = isVerifiedMember(roles ?? []);
   if (!profile || !hasBasicProfileInfo({ ...profile, gender: priv?.gender ?? null }, isUcsd)) {
@@ -47,7 +50,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'This event is open to UCSD-affiliated members only.', code: 'ucsd_only' }, { status: 403 });
   }
 
-  let { data: ticket } = await svc.from('tickets').select('id, user_id, event_id, status, checked_in_at').eq('event_id', event.id).eq('user_id', user.id).maybeSingle();
+  let ticket = firstTicket;
 
   if (!ticket) {
     const price = isUcsd ? 0 : (event.ticket_price ?? 0);

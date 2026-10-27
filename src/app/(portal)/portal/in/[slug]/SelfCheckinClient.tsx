@@ -37,12 +37,18 @@ export default function SelfCheckinClient({ event, gate, person, asFormUrl, slug
   const [state, setState] = useState<State>(gate?.kind === 'closed' ? { kind: 'problem', code: gate.code, message: gate.message } : { kind: 'working' });
   const [formOpened, setFormOpened] = useState(false);
   const started = useRef(false);
+  const [slow, setSlow] = useState(false);   // checking for a while: say so, so a weak signal never looks like a frozen screen
+  useEffect(() => {
+    if (state.kind !== 'working') { setSlow(false); return; }
+    const id = window.setTimeout(() => setSlow(true), 3000);
+    return () => window.clearTimeout(id);
+  }, [state.kind]);
   const here = `/portal/in/${slug}`;
 
   const run = useCallback(async () => {
     setState({ kind: 'working' });
     try {
-      const res = await fetchWithRetry('/api/checkin/self', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ event_id: event.id }) });
+      const res = await fetchWithRetry('/api/checkin/self', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ event_id: event.id }) }, 3, 10_000);   // a try that has not answered in 10 s is given up, so a stalled connection ends in "try again" instead of waiting for ever
       const j = await res.json().catch(() => ({}));
       if (res.ok && (j.status === 'checked_in' || j.status === 'already')) {
         setState({ kind: 'in', ticketId: j.ticket_id ?? null, already: j.status === 'already', day: j.day ?? null });
@@ -74,6 +80,7 @@ export default function SelfCheckinClient({ event, gate, person, asFormUrl, slug
         <div className={styles.card} role="status">
           <Loader2 className={styles.spin} size={34} aria-hidden="true" />
           <p className={styles.big}>Checking you in to {event.title}…</p>
+          {slow && <p className={styles.note}>The connection is slow. Still trying…</p>}
         </div>
       )}
 

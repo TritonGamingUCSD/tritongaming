@@ -48,7 +48,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   useEffect(() => {
     setSlow(false);
     if (state.kind !== 'working' && state.kind !== 'opening' && !(state.kind === 'result' && state.outcome.kind === 'meeting')) return;
-    const id = window.setTimeout(() => setSlow(true), 5000);
+    const id = window.setTimeout(() => setSlow(true), 3000);
     return () => window.clearTimeout(id);
   }, [state]);
 
@@ -76,7 +76,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     if (outcome.kind === 'trivia') {   // a Trivia game's code was typed: the person is in it, so open it
       window.clearTimeout(goTimer.current);
       setState({ kind: 'opening', href: `/portal/trivia/play/${outcome.code}`, title: 'Joining The Game', heading: 'Trivia', text: 'Taking you into the game.' });
-      goTimer.current = window.setTimeout(() => go(`/portal/trivia/play/${outcome.code}`), 600);
+      goTimer.current = window.setTimeout(() => go(`/portal/trivia/play/${outcome.code}`), 250);
       return;
     }
     setState({ kind: 'result', outcome });
@@ -86,7 +86,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       window.dispatchEvent(new Event('tg:meetings-changed'));
       // The meeting's question and doc are on My Meetings, under "You're checked in": no prompt, the ring goes green and the page opens by itself.
       window.clearTimeout(goTimer.current);
-      goTimer.current = window.setTimeout(() => go(MY_MEETING), 1000);   // long enough to see the green ring and check
+      goTimer.current = window.setTimeout(() => go(MY_MEETING), 450);   // just long enough to see the green ring and check
     }
   }
 
@@ -101,7 +101,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       return true;
     }
     const target = linkTarget(t);
-    if (target) { setProblem(''); setState({ kind: 'opening', ...target }); goTimer.current = window.setTimeout(() => go(target.href), 1000); return true; }
+    if (target) { setProblem(''); setState({ kind: 'opening', ...target }); goTimer.current = window.setTimeout(() => go(target.href), 150); return true; }   // no pause to read: the sheet stays up while the page loads
     setProblem('That isn’t a TGcode or a portal QR. Try another.');
     return false;
   }
