@@ -87,7 +87,7 @@
 .lineTable th { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.75); }
 .held { font-weight: 700; }
 .addLine { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--pp-ink); }
-.addLine > div { flex: 0 1 15rem; min-width: 9rem; }
+.addLine > :not(span):not(input):not(button) { flex: 0 1 16rem; min-width: 9rem; max-width: 16rem; }
 .addBtn { min-height: 32px; padding: 0 0.9rem; border: 2px solid var(--pp-ink); border-radius: 6px; background: var(--yellow); color: #111c33; font: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; }   /* theme-ok */
 .addBtn:disabled { opacity: 0.45; cursor: default; }
 

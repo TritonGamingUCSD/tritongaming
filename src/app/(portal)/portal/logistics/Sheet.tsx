@@ -35,15 +35,25 @@ export default function Sheet<T>({ id, rows, rowKey, cols, canEdit, add, onDelet
   id: string; rows: T[]; rowKey: (r: T) => string; cols: SheetCol<T>[]; canEdit: boolean; add?: SheetAdd; onDelete?: (r: T) => Promise<boolean | void>; deleteLabel?: (r: T) => string;
   expand?: (r: T) => ReactNode; noun: string; rowTone?: (r: T) => 'bad' | 'warn' | undefined;
 }) {
-  const [sort, setSort] = useState<{ col: string; dir: 1 | -1 } | null>(null);
-  const [filters, setFilters] = useState<Record<string, string>>({});
+  // The view (sort, filters, full screen) is in the address, so a link or a refresh brings back the same view; the rows opened and where it was scrolled to are kept for this tab (session storage).
+  const live = useLiveParams(), setAddr = usePortalParams();
+  const [sort, setSortState] = useState<{ col: string; dir: 1 | -1 } | null>(() => { const m = /^(.+):(asc|desc)$/.exec(live.get('ss') ?? ''); return m && cols.some((c) => c.id === m[1]) ? { col: m[1], dir: m[2] === 'asc' ? 1 : -1 } : null; });
+  const [filters, setFiltersState] = useState<Record<string, string>>(() => {
+    const out: Record<string, string> = {};
+    for (const part of (live.get('sf') ?? '').split('|').filter(Boolean)) { const i = part.indexOf('~'); const id = part.slice(0, i), q = part.slice(i + 1); if (i > 0 && cols.some((c) => c.id === id) && q) out[id] = q; }
+    return out;
+  });
+  const setSort = (v: typeof sort | ((s: typeof sort) => typeof sort)) => setSortState((cur) => { const next = typeof v === 'function' ? v(cur) : v; setAddr({ ss: next ? `${next.col}:${next.dir === 1 ? 'asc' : 'desc'}` : null }); return next; });
+  const setFilters = (v: Record<string, string> | ((f: Record<string, string>) => Record<string, string>)) => setFiltersState((cur) => { const next = typeof v === 'function' ? v(cur) : v; setAddr({ sf: Object.entries(next).filter(([, q]) => q.trim()).map(([id, q]) => `${id}~${q}`).join('|') || null }); return next; });
   const [hidden, setHidden] = useState<Set<string>>(() => new Set(cols.filter((c) => c.defaultHidden).map((c) => c.id)));
   const [active, setActive] = useState<Active>(null);
   type Edit = { draft: string; all?: boolean };   // `all`: it was opened on what the cell already holds, so the text starts selected (typing over it replaces it)
   const [editing, setEditingState] = useState<Edit | null>(null);
   const editRef = useRef<Edit | null>(null);   // the same, readable at once: a blur that follows Enter must not save a second time
   const setEditing = (v: Edit | null) => { editRef.current = v; setEditingState(v); };
-  const [open, setOpen] = useState<Set<string>>(new Set());
+  const openKey = `tg-sheet-open-${id}`, scrollKey = `tg-sheet-scroll-${id}`;
+  const [open, setOpenState] = useState<Set<string>>(() => { try { return new Set(JSON.parse(sessionStorage.getItem(openKey) ?? '[]') as string[]); } catch { return new Set(); } });
+  const setOpen = (fn: (o: Set<string>) => Set<string>) => setOpenState((o) => { const n = fn(o); try { sessionStorage.setItem(openKey, JSON.stringify([...n])); } catch { /* not remembered */ } return n; });
   const [flash, setFlash] = useState<string>('');   // "rowKey:colId" of a cell the server refused
   const [confirming, setConfirming] = useState('');   // the row whose delete is waiting for a second click
   const [draftRow, setDraftRow] = useState<Record<string, CellValue>>({});
@@ -80,6 +90,15 @@ export default function Sheet<T>({ id, rows, rowKey, cols, canEdit, add, onDelet
   }, [rows, shown, filters, sort, cols]);
   const filtering = Object.values(filters).some((v) => v.trim());
   const addRow = !!add && canEdit;
+  const restored = useRef(false);
+  useEffect(() => { restored.current = false; }, [full]);   // full screen draws the table again: it is put back where it was
+  useEffect(() => {   // back to where it was scrolled to (once the rows are there)
+    if (restored.current || view.length === 0 || !scroll.current) return;
+    restored.current = true;
+    try { const j = JSON.parse(sessionStorage.getItem(scrollKey) ?? 'null'); if (j) window.requestAnimationFrame(() => { scroll.current?.scrollTo(j.x ?? 0, j.y ?? 0); }); } catch { /* none */ }
+  }, [view.length, scrollKey, full]);
+  const savedAt = useRef(0);
+  const onScrollSave = () => { const now = Date.now(); if (now - savedAt.current < 200) return; savedAt.current = now; try { sessionStorage.setItem(scrollKey, JSON.stringify({ x: scroll.current?.scrollLeft ?? 0, y: scroll.current?.scrollTop ?? 0 })); } catch { /* not remembered */ } };
   const total = view.length + (addRow ? 1 : 0);
   const gutter = 44;
   const tableW = gutter + shown.reduce((n, c) => n + c.width, 0) + (onDelete && canEdit ? 52 : 0);
@@ -245,7 +264,7 @@ export default function Sheet<T>({ id, rows, rowKey, cols, canEdit, add, onDelet
         <button type="button" className={styles.fullBtn} onClick={() => setFull(!full)} aria-pressed={full}>{full ? <Minimize2 size={15} aria-hidden="true" /> : <Maximize2 size={15} aria-hidden="true" />} {full ? 'Exit Full Screen' : 'Full Screen'}</button>
         <span className={styles.hintLine}>Click a cell, then type or press Enter to edit. Arrows and Tab move. Ctrl+Z undoes.</span>
       </div>
-      <div ref={scroll} className={styles.scroll} tabIndex={0} onKeyDown={(e) => void onKeyDown(e)} role="grid" aria-label={`${noun} sheet`} aria-rowcount={total} style={{ '--vw': `${vw}px` } as React.CSSProperties}>
+      <div ref={scroll} className={styles.scroll} tabIndex={0} onScroll={onScrollSave} onKeyDown={(e) => void onKeyDown(e)} role="grid" aria-label={`${noun} sheet`} aria-rowcount={total} style={{ '--vw': `${vw}px` } as React.CSSProperties}>
         <table className={styles.grid} style={{ width: tableW }}>
           <colgroup><col style={{ width: gutter }} />{shown.map((c) => <col key={c.id} style={{ width: c.width }} />)}{onDelete && canEdit && <col style={{ width: 52 }} />}</colgroup>
           <thead>
@@ -313,7 +332,8 @@ function Chooser({ options, draft, onDraft, onPick, onCancel, nullable, canCreat
   const input = useRef<HTMLInputElement>(null);
   const [pos, setPos] = useState<{ left: number; top: number; width: number; up: boolean } | null>(null);
   const [hi, setHi] = useState(0);
-  const q = draft.trim().toLowerCase();
+  const [typed, setTyped] = useState(!selectAll);   // the list shows everything until something is typed (opened on the current value, it must not hide the other choices)
+  const q = typed ? draft.trim().toLowerCase() : '';
   const list = useMemo(() => options.filter((o) => !q || o.toLowerCase().includes(q)), [options, q]);
   const typedNew = canCreate && q && !options.some((o) => o.toLowerCase() === q);
   const items = [...(nullable ? [''] : []), ...list, ...(typedNew ? [draft.trim()] : [])];
@@ -323,7 +343,7 @@ function Chooser({ options, draft, onDraft, onPick, onCancel, nullable, canCreat
   useEffect(() => { const close = () => onCancel(); window.addEventListener('resize', close); return () => window.removeEventListener('resize', close); }, [onCancel]);
   return (
     <>
-      <input ref={input} className={styles.editor} autoFocus value={draft} onChange={(e) => onDraft(e.target.value)} onFocus={(e) => { if (selectAll) e.currentTarget.select(); }} aria-label="Choose" role="combobox" aria-expanded="true"
+      <input ref={input} className={styles.editor} autoFocus value={draft} onChange={(e) => { setTyped(true); onDraft(e.target.value); }} onFocus={(e) => { if (selectAll) e.currentTarget.select(); }} aria-label="Choose" role="combobox" aria-expanded="true"
         onKeyDown={(e) => {
           e.stopPropagation();
           if (e.key === 'ArrowDown') { e.preventDefault(); setHi((h) => Math.min(items.length - 1, h + 1)); }
