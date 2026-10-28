@@ -2,9 +2,10 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, ChevronRight, Columns3, Plus, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Columns3, Maximize2, Minimize2, Plus, Trash2, X } from 'lucide-react';
 import { compareCells, matchesFilter, parseCell, type CellKind, type CellValue } from '@/lib/logistics/sheetMath';
 import { showToast } from '@/lib/ui/toast';
+import { useLiveParams, usePortalParams } from '@/lib/portal/usePortalParams';
 import { recordEdit } from './undo';
 import styles from './sheet.module.css';
 
@@ -48,6 +49,18 @@ export default function Sheet<T>({ id, rows, rowKey, cols, canEdit, add, onDelet
   const [draftRow, setDraftRow] = useState<Record<string, CellValue>>({});
   const scroll = useRef<HTMLDivElement>(null);
   const [vw, setVw] = useState(900);
+  // Full screen: the sheet fills the whole window (the portal's menus step aside), in the address as &full so a link opens it that way; Esc leaves.
+  const params = useLiveParams(), setParams = usePortalParams();
+  const [full, setFullState] = useState(() => params.get('full') === '1');
+  const setFull = (v: boolean) => { setFullState(v); setParams({ full: v ? '1' : null }); };
+  useEffect(() => {
+    if (!full) return;
+    const prev = document.body.style.overflow; document.body.style.overflow = 'hidden';
+    const esc = (e: KeyboardEvent) => { if (e.key === 'Escape' && !editRef.current && !document.querySelector('[role="alertdialog"], [role="listbox"]')) setFull(false); };
+    window.addEventListener('keydown', esc);
+    return () => { document.body.style.overflow = prev; window.removeEventListener('keydown', esc); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [full]);
   const rowsRef = useRef(rows);
   rowsRef.current = rows;   // undo and redo save against the row as it is by then, not as it was when the edit was made
 
@@ -216,8 +229,9 @@ export default function Sheet<T>({ id, rows, rowKey, cols, canEdit, add, onDelet
 
   const colsOf = (r: T | null, ri: number) => shown.map((c, ci) => cell(r, ri, c, ci));
 
-  return (
-    <div className={styles.wrap}>
+  // Full screen is drawn on the page itself (not inside the portal's own box, which would hold it back), like a dialog.
+  const sheetBody = (
+    <div className={`${styles.wrap} ${full ? styles.full : ''}`}>
       <div className={styles.bar}>
         <span className={styles.count}>{filtering ? `${view.length} of ${rows.length}` : rows.length} {rows.length === 1 ? noun : `${noun}s`}</span>
         {(filtering || sort) && <button type="button" className={styles.link} onClick={() => { setFilters({}); setSort(null); }}><X size={13} aria-hidden="true" /> Clear Filters And Sort</button>}
@@ -228,6 +242,7 @@ export default function Sheet<T>({ id, rows, rowKey, cols, canEdit, add, onDelet
             <button type="button" className={styles.link} onClick={() => setHiddenSaved(new Set())}>Show All</button>
           </div>
         </details>
+        <button type="button" className={styles.fullBtn} onClick={() => setFull(!full)} aria-pressed={full}>{full ? <Minimize2 size={15} aria-hidden="true" /> : <Maximize2 size={15} aria-hidden="true" />} {full ? 'Exit Full Screen' : 'Full Screen'}</button>
         <span className={styles.hintLine}>Click a cell, then type or press Enter to edit. Arrows and Tab move. Ctrl+Z undoes.</span>
       </div>
       <div ref={scroll} className={styles.scroll} tabIndex={0} onKeyDown={(e) => void onKeyDown(e)} role="grid" aria-label={`${noun} sheet`} aria-rowcount={total} style={{ '--vw': `${vw}px` } as React.CSSProperties}>
@@ -290,6 +305,7 @@ export default function Sheet<T>({ id, rows, rowKey, cols, canEdit, add, onDelet
       </div>
     </div>
   );
+  return full ? createPortal(sheetBody, document.body) : sheetBody;
 }
 
 // The list a choice cell shows while it is being edited: type to narrow it, arrows and Enter to pick, a new word may be added where the column allows it. It floats above the sheet (fixed) so the scrolling table cannot clip it.
