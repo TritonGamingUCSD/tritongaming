@@ -170,6 +170,17 @@ try {
   t.ok('reopening changes no stock either, and the event holds its leftovers again (pens 3, cups 3)', (await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'draft' })).s === 200 && (await stockOf(C)).quantity === 10 && (await stockOf(D)).quantity === 8 && (await stockOf(C)).allocated === 3 && (await stockOf(D)).allocated === 3);
   await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'closed' });
 
+  // ---- the overview and the sheets read the same numbers
+  await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'draft' });   // open again, so its lines are on the sheet
+  const ov = await officer.call('GET', '/api/logistics/overview');
+  t.ok('the overview names the event to look at and its counts', ov.s === 200 && ov.j.focus && typeof ov.j.focus.stats.planned === 'number' && Array.isArray(ov.j.fixes) && Array.isArray(ov.j.recent), JSON.stringify(ov.j).slice(0, 200));
+  const sheetData = await officer.call('GET', '/api/logistics/prizes/sheet');
+  const sheetLine = (sheetData.j.lines ?? []).find((l) => l.prize_id === D);
+  t.ok('the prize sheet lists the lines with planned, given, back and held (cups 6 planned, 2 given, 1 back, 3 held)', sheetData.s === 200 && sheetLine?.quantity === 6 && sheetLine.given === 2 && sheetLine.back === 1 && sheetLine.held === 3, JSON.stringify(sheetLine));
+  t.ok('the device sheet lists the open events and their stations', (await officer.call('GET', '/api/logistics/devices/sheet')).s === 200);
+  t.ok('a student cannot read them', (await student.call('GET', '/api/logistics/overview')).s === 403 && (await student.call('GET', '/api/logistics/prizes/sheet')).s === 403 && (await student.call('GET', '/api/logistics/devices/sheet')).s === 403);
+  await exec.call('PATCH', `/api/logistics/events/${P2}`, { status: 'closed' });
+
   // ---- free merch is counted loosely: a level instead of a number, never over-promised, never taken out of stock when an event closes
   const zl = await exec.call('POST', '/api/logistics/options', { kind: 'prize_size', value: 'ZZ Loose' });
   t.ok('a size can be marked counted loosely', (await exec.call('PATCH', `/api/logistics/options/${zl.j.option.id}`, { loose: true })).s === 200 && (await officer.call('GET', '/api/logistics')).j.lists.prize_size.find((o) => o.value === 'ZZ Loose')?.loose === true);

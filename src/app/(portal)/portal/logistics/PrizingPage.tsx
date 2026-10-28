@@ -18,6 +18,8 @@ import { usePlan, usePlanList, type PlanSummary, type Station } from './usePlans
 import { useLiveTeam } from './useLiveTeam';
 import LivePill from './LivePill';
 import { useCloseEvent } from './CloseEvent';
+import PrizingSheet from './PrizingSheet';
+import ViewSwitch from './ViewSwitch';
 import { autoPlan, eventLabel } from './eventPick';
 import type { LiveEnvelope } from '@/lib/logistics/live';
 import { usePrizes, type PrizeRow } from './usePrizes';
@@ -41,7 +43,7 @@ const readView = (): View => {
 // Prizing: every prize and the event it is going to on one page. The table is the stock (change the number on hand right in it) and, with an event picked, what each station of that event gets (change those
 // numbers too: moving 5 from one station to another is lowering one number and raising the other). The "Fix these" strip says what is wrong, "Group by" shows it by station, sponsor, size, type or status, and the
 // event-day counters (Sorted by default) are under each station. Each prize has a history of what happened to its stock.
-export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi; data: Catalog; slug: string | null; go: (r: Route) => void }) {
+export default function PrizingPage({ api, data, slug, sheet, go }: { api: LogisticsApi; data: Catalog; slug: string | null; sheet?: boolean; go: (r: Route) => void }) {
   const list = usePlanList();
   useMemo(() => setLooseSizes(data.lists.prize_size.filter((o) => o.loose).map((o) => o.value)), [data.lists.prize_size]);   // which sizes are counted loosely, before anything asks
   const prizes = usePrizes();
@@ -253,9 +255,11 @@ export default function PrizingPage({ api, data, slug, go }: { api: LogisticsApi
   const hereValue = valueOf(lines.filter((l) => !isLoose(l.prize)).map((l) => ({ quantity: l.quantity, price: l.prize.price })));
 
   if (!list.plans || !prizes.rows) return <div className={styles.tab}>{list.error || prizes.error ? <Notice tone="error">{list.error || prizes.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
+  if (sheet) return <div className={`${styles.tab} ${pz.page}`}><div className={pz.top}><ViewSwitch sheet go={(s) => go({ tab: 'prizing', plan: slug, ...(s ? { sheet: true } : {}) })} /></div><div className={styles.sheetOnly}><PrizingSheet api={api} data={data} prizes={prizes} /></div><p className={styles.sheetPhone}>The sheet is for a laptop or a tablet. <button type="button" onClick={() => go({ tab: 'prizing', plan: slug })}>Use the cards</button> on a phone.</p></div>;
   return (
     <div className={`${styles.tab} ${pz.page}`}>
       <div className={pz.top}>
+        <ViewSwitch sheet={false} go={(s) => go({ tab: 'prizing', plan: slug, ...(s ? { sheet: true } : {}) })} />
         {list.plans.length > 0 && (
           <div className={pz.modeSeg}>
             <SectionTabs<'event' | 'stock'> variant="segmented" label="This event or the stock" value={chosen ? 'event' : 'stock'} onChange={(v) => go({ tab: 'prizing', plan: v === 'stock' ? 'stock' : lastEvent() })} tabs={[{ id: 'event', label: 'This Event' }, { id: 'stock', label: 'In Stock' }]} />

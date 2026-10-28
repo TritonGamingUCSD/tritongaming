@@ -60,7 +60,7 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
       {!data ? (error ? null : <Loading variant="inline" label="Loading…" />)
         : route.tab === 'events' || requestOnly ? <PlansTab api={api} data={data} route={route.tab === 'events' ? route : { tab: 'events', plan: null, page: 'requests' }} go={go} />
         : route.tab === 'home' ? <LogisticsHome data={data} go={go} />
-        : route.tab === 'prizing' ? <PrizingPage api={api} data={data} slug={route.plan} go={go} />
+        : route.tab === 'prizing' ? <PrizingPage api={api} data={data} slug={route.plan} sheet={!!route.sheet} go={go} />
         : <DevicesPage api={api} data={data} route={route} go={go} />}
     </div>
   );

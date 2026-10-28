@@ -874,3 +874,9 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .evPast > summary { display: flex; align-items: center; gap: 0.5rem; min-height: 40px; cursor: pointer; font-family: var(--font-futura-heavy); font-size: 0.95rem; color: var(--pp-ink); }
 .evPast > summary span { font-size: 0.78rem; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); }
 .evPast[open] > summary { margin-bottom: 0.6rem; }
+
+/* A sheet shows only on a laptop or a tablet; a phone is pointed back to the cards. */
+.sheetOnly { display: none; }
+.sheetPhone { margin: 0.6rem 0; font-size: 0.9rem; color: var(--pp-ink); }
+.sheetPhone button { padding: 0; border: 0; background: none; color: var(--pp-ink); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; }
+@media (min-width: 720px) { .sheetOnly { display: block; } .sheetPhone { display: none; } }

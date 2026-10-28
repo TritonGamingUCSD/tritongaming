@@ -1,0 +1,92 @@
+/* The spreadsheet view (Sheet.tsx). A table that scrolls both ways inside its own box; the header rows stay at the top and the number column and the first data column stay at the left. Laptop and tablet only. */
+.wrap { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+.bar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1rem; font-size: 0.84rem; color: var(--pp-ink); }
+.count { font-weight: 700; }
+.hintLine { margin-left: auto; font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.75); }
+.link { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.5rem; border: 0; border-radius: 6px; background: none; color: var(--pp-ink); font: inherit; font-size: 0.8rem; text-decoration: underline; cursor: pointer; }
+.cols { position: relative; }
+.cols summary { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; padding: 0 0.7rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 999px; background: var(--pp-card); cursor: pointer; list-style: none; font-weight: 700; }
+.cols summary::-webkit-details-marker { display: none; }
+.colList { position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; display: grid; grid-template-columns: repeat(2, minmax(9rem, 1fr)); gap: 0.25rem 0.9rem; max-height: 22rem; overflow: auto; padding: 0.7rem 0.8rem; min-width: 20rem; border: 2px solid var(--pp-ink); border-radius: 0.7rem; background: var(--pp-card); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }   /* theme-ok */
+.colList label { display: flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; white-space: nowrap; }
+.colList .link { grid-column: 1 / -1; justify-self: start; }
+
+.scroll { position: relative; overflow: auto; max-height: calc(100vh - 15rem); min-height: 20rem; border: 2px solid var(--pp-ink); border-radius: 0.7rem; background: var(--pp-card); outline: none; overscroll-behavior: contain; }
+.scroll:focus-visible { box-shadow: 0 0 0 3px var(--pp-info); }
+.grid { border-collapse: separate; border-spacing: 0; table-layout: fixed; font-size: 0.86rem; color: var(--pp-ink); }
+.grid th, .grid td { padding: 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.16); border-right: 1px solid rgba(var(--pp-ink-rgb), 0.12); height: 34px; text-align: left; vertical-align: middle; overflow: hidden; }
+
+/* The header rows: stuck to the top, one under another. */
+.grid thead th { position: sticky; z-index: 5; background: color-mix(in srgb, var(--pp-ink) 9%, var(--pp-card)); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.35); }
+.groupRow th { top: 0; height: 26px; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 0.5rem; }
+.groupHead { background: color-mix(in srgb, var(--yellow) 30%, var(--pp-card)) !important; }
+.headRow th { top: 0; height: 36px; }
+.headRow.afterGroup th { top: 26px; }
+.filterRow th { top: 36px; height: 32px; background: var(--pp-card); }
+.filterRow.afterGroup th { top: 62px; }
+.headRow button { width: 100%; height: 100%; padding: 0 0.6rem; border: 0; background: none; color: inherit; font: inherit; font-size: 0.76rem; font-weight: 800; letter-spacing: 0.04em; text-transform: uppercase; text-align: inherit; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.filterRow input { width: 100%; height: 100%; padding: 0 0.6rem; border: 0; background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.78rem; outline: none; }
+.filterRow input:focus { background: color-mix(in srgb, var(--pp-info) 12%, var(--pp-card)); }
+.filterRow input::placeholder { color: rgba(var(--pp-ink-rgb), 0.45); }
+
+/* The left edge: the number / chevron column and the first data column stay while scrolling sideways. */
+.corner, .gutter { position: sticky; left: 0; z-index: 6; width: 44px; text-align: center; }
+.gutter { z-index: 3; background: color-mix(in srgb, var(--pp-ink) 6%, var(--pp-card)); }
+.grid thead .corner { z-index: 8; }
+.grid .first { position: sticky; z-index: 2; background: var(--pp-card); box-shadow: 2px 0 0 rgba(var(--pp-ink-rgb), 0.25); }
+.grid thead .first { z-index: 7; background: color-mix(in srgb, var(--pp-ink) 9%, var(--pp-card)); }
+.filterRow .first { background: var(--pp-card); }
+.num { font-size: 0.7rem; color: rgba(var(--pp-ink-rgb), 0.55); }
+.chev { display: grid; place-items: center; width: 100%; height: 34px; border: 0; background: none; color: var(--pp-ink); cursor: pointer; }
+
+.row:hover .cell { background: color-mix(in srgb, var(--pp-ink) 4%, var(--pp-card)); }
+.row:hover .first { background: color-mix(in srgb, var(--pp-ink) 4%, var(--pp-card)); }
+.activeRow .gutter { background: color-mix(in srgb, var(--pp-info) 22%, var(--pp-card)); }
+.bad .cell { background: color-mix(in srgb, var(--pp-bad) 12%, var(--pp-card)); }
+.warn .cell { background: color-mix(in srgb, var(--pp-warn) 12%, var(--pp-card)); }
+.cell { padding: 0 0.6rem !important; white-space: nowrap; text-overflow: ellipsis; cursor: cell; }
+.cell.ro { color: rgba(var(--pp-ink-rgb), 0.88); cursor: default; }
+.cell.right { text-align: right; font-variant-numeric: tabular-nums; }
+.cell.active { outline: 2px solid var(--pp-info); outline-offset: -2px; background: var(--pp-card); }
+.grid .cell.active.first { z-index: 4; }
+.cell.refused { outline: 2px solid var(--pp-bad); outline-offset: -2px; }
+.value { display: block; overflow: hidden; text-overflow: ellipsis; }
+.placeholder { color: rgba(var(--pp-ink-rgb), 0.5); font-style: italic; }
+.editor { width: 100%; height: 100%; padding: 0 0.6rem; margin: 0 -0.6rem; width: calc(100% + 1.2rem); border: 0; background: var(--pp-card); color: var(--pp-ink); font: inherit; outline: none; }
+.tick { width: 16px; height: 16px; accent-color: var(--pp-ink); cursor: pointer; }
+.photoBtn { display: grid; place-items: center; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: pointer; }
+.photoBtn:disabled { cursor: default; }
+
+.del { text-align: center; }
+.trash, .sure { min-width: 28px; height: 26px; padding: 0 0.4rem; border: 1px solid transparent; border-radius: 6px; background: none; color: rgba(var(--pp-ink-rgb), 0.7); font: inherit; font-size: 0.72rem; cursor: pointer; }
+.trash:hover { color: var(--pp-bad); border-color: var(--pp-bad); }
+.sure { background: var(--pp-bad); color: #fff; font-weight: 800; }   /* theme-ok: white on the red reads in both themes */
+.addRow .cell { background: color-mix(in srgb, var(--yellow) 10%, var(--pp-card)); }
+.none { padding: 1.2rem !important; text-align: center !important; color: rgba(var(--pp-ink-rgb), 0.75); }
+
+/* What belongs to a row, opened under it (the chevron). It stays in view while the table is scrolled sideways. */
+.grid .detailRow td { overflow: visible; height: auto; padding: 0; background: color-mix(in srgb, var(--pp-ink) 4%, var(--pp-card)); border-right: 0; }
+.detail { position: sticky; left: 0; padding: 0.6rem 0.8rem 0.8rem 3.4rem; box-sizing: content-box; max-width: calc(var(--vw) - 5rem); overflow-x: auto; }
+
+/* A choice cell's list. */
+.chooser { z-index: 4000; margin: 0; padding: 0.2rem; list-style: none; max-height: 14rem; overflow: auto; border: 2px solid var(--pp-ink); border-radius: 0.6rem; background: var(--pp-card); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); }   /* theme-ok */
+.chooser li { padding: 0.35rem 0.6rem; border-radius: 0.4rem; font-size: 0.84rem; cursor: pointer; color: var(--pp-ink); }
+.chooser li.hi, .chooser li:hover { background: color-mix(in srgb, var(--pp-info) 22%, var(--pp-card)); }
+.chooser .noMatch { color: rgba(var(--pp-ink-rgb), 0.6); cursor: default; }
+@media (pointer: coarse) { .grid th, .grid td { height: 40px; } .chev { height: 40px; } }
+
+/* The page around a sheet, and what opens under a row. */
+.sheetPage { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
+.pic { width: 28px; height: 28px; object-fit: cover; border-radius: 4px; display: block; }
+.mini { width: 4.6rem; height: 30px; padding: 0 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 6px; background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.84rem; text-align: right; }
+.mini:focus { outline: 2px solid var(--pp-info); outline-offset: 0; }
+.lines { display: flex; flex-direction: column; gap: 0.6rem; }
+.note { margin: 0; font-size: 0.84rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+.lineTable { border-collapse: collapse; font-size: 0.82rem; }
+.lineTable th, .lineTable td { height: auto; padding: 0.2rem 0.7rem 0.2rem 0; border: 0; text-align: left; white-space: nowrap; color: var(--pp-ink); }
+.lineTable th { font-size: 0.7rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.75); }
+.held { font-weight: 700; }
+.addLine { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--pp-ink); }
+.addLine > div { flex: 0 1 15rem; min-width: 9rem; }
+.addBtn { min-height: 32px; padding: 0 0.9rem; border: 2px solid var(--pp-ink); border-radius: 6px; background: var(--yellow); color: #111c33; font: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; }   /* theme-ok */
+.addBtn:disabled { opacity: 0.45; cursor: default; }

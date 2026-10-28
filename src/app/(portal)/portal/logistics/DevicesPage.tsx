@@ -10,6 +10,8 @@ import { Select } from '@/components/ui/Field';
 import { DEVICE_GROUPS, type DeviceGroup } from '@/lib/logistics/deviceGroups';
 import { RowMenu } from './RowMenu';
 import EquipmentTab from './EquipmentTab';
+import DevicesSheet from './DevicesSheet';
+import ViewSwitch from './ViewSwitch';
 import PlanView from './PlanView';
 import ToolsTab, { type ToolsPart } from './ToolsTab';
 import { useCloseEvent } from './CloseEvent';
@@ -45,9 +47,12 @@ export default function DevicesPage({ api, data, route, go }: { api: LogisticsAp
   const to = (patch: Partial<Omit<DevicesRoute, 'tab'>>) => go({ tab: 'devices', plan: route.plan, ...(route.day !== undefined ? { day: route.day } : {}), ...(route.group ? { group: route.group } : {}), ...(route.openOnly ? { openOnly: true } : {}), ...patch });
 
   if (!list.plans) return <div className={styles.tab}>{list.error ? <Notice tone="error">{list.error}</Notice> : <Loading variant="inline" label="Loading…" />}</div>;
+  const toggleSheet = (sheet: boolean) => go({ tab: 'devices', plan: route.plan, ...(route.day !== undefined ? { day: route.day } : {}), ...(route.group ? { group: route.group } : {}), ...(route.openOnly ? { openOnly: true } : {}), ...(sheet ? { sheet: true } : {}) });
+  if (route.sheet) return <div className={`${styles.tab} ${pz.page}`}><div className={pz.top}><ViewSwitch sheet go={toggleSheet} /></div><div className={styles.sheetOnly}><DevicesSheet api={api} data={data} /></div><p className={styles.sheetPhone}>The sheet is for a laptop or a tablet. <button type="button" onClick={() => toggleSheet(false)}>Use the cards</button> on a phone.</p></div>;
   return (
     <div className={`${styles.tab} ${pz.page}`}>
       <div className={pz.top}>
+        <ViewSwitch sheet={false} go={toggleSheet} />
         <div className={pz.pick}>
           <Select value={chosen?.slug ?? 'stock'} onChange={(e) => go({ tab: 'devices', plan: e.target.value })} aria-label="Event">
             {list.plans.map((p) => <option key={p.id} value={p.slug}>{eventLabel(p)}</option>)}
