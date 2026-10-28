@@ -7,12 +7,13 @@ const roundTrip = (r: Route) => { const p = routeParams(r); return parseRoute(p.
 describe('Logistics addresses (the event first)', () => {
   it('writes and reads every place', () => {
     const places: Route[] = [
-      { tab: 'events', plan: null, page: 'requests' },
+      { tab: 'home' }, { tab: 'events', plan: null, page: 'requests' },
       { tab: 'events', plan: 'ds-2026', page: 'requests' },
       { tab: 'events', plan: 'ds-2026', page: 'requests-prizing' },
       { tab: 'events', plan: 'ds-2026', page: 'sponsor-loaners' },
       { tab: 'events', plan: 'ds-2026', page: 'officer-loaners' },
-      { tab: 'prizing', plan: null }, { tab: 'prizing', plan: 'ds-2026' }, { tab: 'prizing', plan: 'stock' },
+      { tab: 'prizing', plan: null }, { tab: 'prizing', plan: 'ds-2026' }, { tab: 'prizing', plan: 'stock' }, { tab: 'prizing', plan: null, sheet: true }, { tab: 'prizing', plan: 'ds-2026', sheet: true },
+      { tab: 'devices', plan: null, sheet: true }, { tab: 'devices', plan: 'stock', group: 'shelf', sheet: true },
       { tab: 'devices', plan: null }, { tab: 'devices', plan: 'stock' }, { tab: 'devices', plan: 'stock', group: 'shelf' },
       { tab: 'devices', plan: 'ds-2026' }, { tab: 'devices', plan: 'ds-2026', day: true }, { tab: 'devices', plan: 'ds-2026', day: false, group: 'type', openOnly: true },
     ];
@@ -27,7 +28,14 @@ describe('Logistics addresses (the event first)', () => {
     expect(routeParams({ tab: 'devices', plan: 'ds-2026', group: 'station' })).toEqual({ tab: 'ds-2026', subtab: 'devices', detail: null, view: null });
     expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'requests-prizing' })).toEqual({ tab: 'ds-2026', subtab: 'requests', detail: 'prizes', view: null });
     expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'officer-loaners' })).toEqual({ tab: 'ds-2026', subtab: 'loaners', detail: 'officer', view: null });
-    expect(routeParams({ tab: 'events', plan: null, page: 'requests' })).toEqual({ tab: null, subtab: null, detail: null, view: null });
+    expect(routeParams({ tab: 'home' })).toEqual({ tab: null, subtab: null, detail: null, view: null });
+    expect(routeParams({ tab: 'events', plan: null, page: 'requests' })).toEqual({ tab: 'events', subtab: null, detail: null, view: null });
+    expect(routeParams({ tab: 'prizing', plan: null, sheet: true })).toEqual({ tab: 'prizing', subtab: null, detail: null, view: 'sheet' });
+    expect(routeParams({ tab: 'devices', plan: 'stock', group: 'shelf', sheet: true })).toEqual({ tab: 'stock', subtab: 'devices', detail: null, view: 'shelf,sheet' });
+  });
+  it('the bare address is the overview and /events is the list', () => {
+    expect(parseRoute(undefined, undefined, undefined, false)).toEqual({ tab: 'home' });
+    expect(parseRoute('events', undefined, undefined, false)).toEqual({ tab: 'events', plan: null, page: 'requests' });
   });
   it('a bare event opens its requests', () => {
     expect(parseRoute('ds-2026', undefined, undefined, false)).toEqual({ tab: 'events', plan: 'ds-2026', page: 'requests' });

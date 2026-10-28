@@ -133,9 +133,12 @@ Two views, switched at the top and kept in the address (`/portal/logistics/<even
 - **Inputs never move the page.** Opening a number or text box over a row must not change the row's size or push anything (checked at 390, 820, 1180 and 1440 px by the layout-shift script).
 - **The gear** holds this page's lists (sponsors, prize sizes and steps).
 
+## Logistics: the overview (home)
+`/portal/logistics` is the overview, and Events moved to `/portal/logistics/events` (tabs: **Overview | Devices | Prizing | Events**; an event is still `/portal/logistics/<event>/…`). The overview (`LogisticsHome.tsx`, data from `GET /api/logistics/overview` plus the lists the page already holds) shows the **event to look at first** (today's, else the next, else the latest open) with teams, devices without an ID, prizes planned / given out / back in storage, new requests and a progress bar, with **Devices / Prizing / Requests** buttons; **Needs Attention** (over-promised prizes, planned-but-not-here, devices without an ID, new requests, stations with no prizes; each a link to the place that fixes it); **Stock At A Glance** (prizes, units, value, how many are out; devices usable / not tested / dead, by condition; links to the Sheets); the **other open events**; **Staffles** that are running; and the **latest changes** (from the audit log). A division account (requests only) still lands on Events.
+
 ## Logistics: the tabs and an event's page
 
-- Tabs: **Devices | Prizing | Events** (Events is last; Event Logistics opens on the Events list). **Events** is a list of cards (upcoming first, past ones folded) with numbers, a progress bar of devices filled, and **Open Devices / Open Prizing**. An event's page is an overview (teams, requests, devices, prizes; the last two open their tab) with folded parts: Device Requests, Prize Requests, Sponsor Loaners, Officer Loaners. Requests say who they are **For**. Allocation and the event day live only under Devices; prize stations under Prizing.
+- Tabs: **Overview | Devices | Prizing | Events** (Event Logistics opens on the Overview; the Events list is `/portal/logistics/events`). **Events** is a list of cards (upcoming first, past ones folded) with numbers, a progress bar of devices filled, and **Open Devices / Open Prizing**. An event's page is an overview (teams, requests, devices, prizes; the last two open their tab) with folded parts: Device Requests, Prize Requests, Sponsor Loaners, Officer Loaners. Requests say who they are **For**. Allocation and the event day live only under Devices; prize stations under Prizing.
 
 
 ## Staffle

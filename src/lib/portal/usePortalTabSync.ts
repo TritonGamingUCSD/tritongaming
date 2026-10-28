@@ -10,7 +10,7 @@ import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 // A section's first tab is the section itself: /portal/<section> with no tab, so the main page keeps the short address.
 // Sections whose first tab depends on the person pass a function that says which one it is.
 const MAIN_TAB: Record<string, string> = {
-  tickets: 'tickets', admin: 'overview', profile: 'info', events: 'list', checkin: 'tickets', points: 'mine', meetings: 'mine', members: 'members', logistics: 'events',
+  tickets: 'tickets', admin: 'overview', profile: 'info', events: 'list', checkin: 'tickets', points: 'mine', meetings: 'mine', members: 'members', logistics: 'home',
 };
 
 export function usePortalTabSync(sectionId: string, firstTab?: () => string | undefined) {
