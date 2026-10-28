@@ -319,8 +319,9 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   const [refreshPending, startRefresh] = useTransition();
   const wasPending = useRef(false);
   const keepScroll = useRef(0);   // where the page was scrolled to when a refresh began: the rebuilt section is put back there
+  const keepUrl = useRef('');   // the address when a refresh began: Next's refresh brings back the address the page was first loaded with (it does not know the portal moved the address itself), so it is put back
   useEffect(() => {
-    const on = () => { keepScroll.current = window.scrollY; startRefresh(() => router.refresh()); };
+    const on = () => { keepScroll.current = window.scrollY; keepUrl.current = `${window.location.pathname}${window.location.search}${window.location.hash}`; startRefresh(() => router.refresh()); };
     window.addEventListener(REFRESH_EVENT, on);
     return () => window.removeEventListener(REFRESH_EVENT, on);
   }, [router]);
@@ -328,6 +329,9 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     if (refreshPending) { wasPending.current = true; return; }
     if (!wasPending.current) return;
     wasPending.current = false;   // the server's answer has been applied: rebuild the open section with it
+    // First the address goes back to where the person was (the rebuilt section reads it to know which page, tab and view to show).
+    const url = keepUrl.current;
+    if (url && `${window.location.pathname}${window.location.search}${window.location.hash}` !== url) window.history.replaceState(window.history.state, '', url);
     setNavNonce((n) => n + 1);
     // The rebuilt section is shorter for a moment while it loads, which would drop the page back to the top: keep putting it where it was until it has grown tall enough.
     const y = keepScroll.current;
