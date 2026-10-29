@@ -28,12 +28,16 @@ export async function GET(request: Request, { params }: Params) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: ticket } = await supabase
     .from('tickets')
-    .select('user_id, status, checked_in_at, checkin_form_completed_at, event:events(title, start_date, end_date, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)')
+    .select(
+      'user_id, status, checked_in_at, checkin_form_completed_at, event:events(title, start_date, end_date, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)',
+    )
     .eq('id', id)
     .single();
 
@@ -42,7 +46,8 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   // Multi-day events: a ticket that's 'used' from an earlier day still needs scanning today.
-  const multiDay = !!(ticket.event as unknown as { start_date: string; end_date: string | null } | null) &&
+  const multiDay =
+    !!(ticket.event as unknown as { start_date: string; end_date: string | null } | null) &&
     isMultiDayEvent((ticket.event as unknown as { start_date: string }).start_date, (ticket.event as unknown as { end_date: string | null }).end_date);
   const todayAt = ticket.status === 'used' && multiDay ? await todaysCheckinAt(supabase, id) : null;
   const checkedInToday = multiDay ? todayAt !== null : ticket.status === 'used';
@@ -83,12 +88,7 @@ export async function GET(request: Request, { params }: Params) {
   // zero-point event (no ledger row), which the UI simply doesn't show.
   let pointsAwarded = 0;
   if (ticket.status === 'used' && !laterDay) {
-    const { data: pointRows } = await supabase
-      .from('point_transactions')
-      .select('amount')
-      .eq('ticket_id', id)
-      .eq('type', 'event_checkin')
-      .is('reversed_at', null);
+    const { data: pointRows } = await supabase.from('point_transactions').select('amount').eq('ticket_id', id).eq('type', 'event_checkin').is('reversed_at', null);
     pointsAwarded = (pointRows ?? []).reduce((sum, r) => sum + r.amount, 0);
   }
 
@@ -103,10 +103,7 @@ export async function GET(request: Request, { params }: Params) {
     next_tier: { name: string; color: string; points_needed: number; progress: number } | null;
   } | null = null;
   if (pointsAwarded > 0) {
-    const [{ data: allAmounts }, tiers] = await Promise.all([
-      supabase.from('point_transactions').select('amount, reversed_at').eq('user_id', user.id),
-      fetchTiers(supabase),
-    ]);
+    const [{ data: allAmounts }, tiers] = await Promise.all([supabase.from('point_transactions').select('amount, reversed_at').eq('user_id', user.id), fetchTiers(supabase)]);
     if (tiers.length > 0) {
       const lifetime = (allAmounts ?? []).filter((t) => t.amount > 0 && !t.reversed_at).reduce((sum, t) => sum + t.amount, 0);
       const current = getTier(lifetime, tiers);

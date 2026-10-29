@@ -41,7 +41,10 @@ type DbSponsor = { name?: string; logo_url?: string; website_url?: string; tier?
 
 function dbSponsorsToLogoItems(items: DbSponsor[]): LogoItem[] {
   const tierSize: Record<string, 'small' | 'medium' | 'large'> = {
-    gold: 'large', silver: 'medium', bronze: 'small', platinum: 'large',
+    gold: 'large',
+    silver: 'medium',
+    bronze: 'small',
+    platinum: 'large',
   };
   return items
     .filter((s) => s.name && s.logo_url)
@@ -86,10 +89,23 @@ export default async function SponsorsPage() {
         {logos.length > 0 ? (
           <ul className={styles.logoWall}>
             {logos.map((l, i) => {
-              const plate = <LogoPlate src={l.logo.startsWith('/') || l.logo.startsWith('http') ? l.logo : `/${l.logo}`} alt={l.name} className={`${styles.plate} ${styles[`size_${l.size}`]}`} imgClassName={styles.logoImg} />;
+              const plate = (
+                <LogoPlate
+                  src={l.logo.startsWith('/') || l.logo.startsWith('http') ? l.logo : `/${l.logo}`}
+                  alt={l.name}
+                  className={`${styles.plate} ${styles[`size_${l.size}`]}`}
+                  imgClassName={styles.logoImg}
+                />
+              );
               return (
                 <li key={`${l.name}-${i}`}>
-                  {l.link ? <a href={l.link} target="_blank" rel="noopener noreferrer nofollow" aria-label={l.name} className={styles.logoLink}>{plate}</a> : plate}
+                  {l.link ? (
+                    <a href={l.link} target="_blank" rel="noopener noreferrer nofollow" aria-label={l.name} className={styles.logoLink}>
+                      {plate}
+                    </a>
+                  ) : (
+                    plate
+                  )}
                 </li>
               );
             })}
@@ -118,7 +134,9 @@ export default async function SponsorsPage() {
         <div className={styles.cta}>
           <h2 className={styles.ctaHeading}>{content.cta_heading as string}</h2>
           <p className={styles.ctaSub}>{content.cta_sub as string}</p>
-          <a href={`mailto:${email}`} className={styles.ctaEmail}>{email}</a>
+          <a href={`mailto:${email}`} className={styles.ctaEmail}>
+            {email}
+          </a>
         </div>
       </ZineBand>
     ),
@@ -128,7 +146,9 @@ export default async function SponsorsPage() {
   return (
     <div className={styles.page}>
       <PageHero label={content.hero_label as string} title={content.hero_title as string} sub={content.hero_subtitle as string} />
-      {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
+      {order.map((id) => (
+        <Fragment key={id}>{sections[id]}</Fragment>
+      ))}
       <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'This is what your brand sits next to.'} photos={pickPhotos(sitePhotos, 3, 3)} />
     </div>
   );

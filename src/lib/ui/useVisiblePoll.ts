@@ -11,12 +11,29 @@ export function useVisiblePoll(fn: () => void | Promise<unknown>, ms: number, en
   useEffect(() => {
     if (!enabled) return;
     let timer: ReturnType<typeof setInterval> | null = null;
-    const run = () => { void ref.current(); };
-    const start = () => { if (!timer) timer = setInterval(run, ms); };
-    const stop = () => { if (timer) { clearInterval(timer); timer = null; } };
-    const onVis = () => { if (document.visibilityState === 'visible') { run(); start(); } else stop(); };
+    const run = () => {
+      void ref.current();
+    };
+    const start = () => {
+      if (!timer) timer = setInterval(run, ms);
+    };
+    const stop = () => {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    };
+    const onVis = () => {
+      if (document.visibilityState === 'visible') {
+        run();
+        start();
+      } else stop();
+    };
     if (document.visibilityState === 'visible') start();
     document.addEventListener('visibilitychange', onVis);
-    return () => { stop(); document.removeEventListener('visibilitychange', onVis); };
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVis);
+    };
   }, [ms, enabled]);
 }

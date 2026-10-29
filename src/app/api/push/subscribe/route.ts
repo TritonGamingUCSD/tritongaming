@@ -8,7 +8,9 @@ const MAX_DEVICES = 10;
 
 async function me() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user;
 }
 
@@ -20,7 +22,9 @@ export async function POST(request: Request) {
   if (!pushConfigured()) return NextResponse.json({ error: 'Push notifications aren’t set up on this site yet.' }, { status: 503 });
   const b = await request.json().catch(() => ({}));
   const sub = b.subscription;
-  const endpoint = sub?.endpoint, p256dh = sub?.keys?.p256dh, auth = sub?.keys?.auth;
+  const endpoint = sub?.endpoint,
+    p256dh = sub?.keys?.p256dh,
+    auth = sub?.keys?.auth;
   if (!validPushEndpoint(endpoint) || typeof p256dh !== 'string' || typeof auth !== 'string' || p256dh.length > 200 || auth.length > 100) {
     return NextResponse.json({ error: 'That browser’s notification address isn’t supported.' }, { status: 400 });
   }
@@ -29,7 +33,9 @@ export async function POST(request: Request) {
   if (!(mine ?? []).some((m) => m.endpoint === endpoint) && (mine ?? []).length >= MAX_DEVICES) {
     return NextResponse.json({ error: `You’ve turned notifications on for ${MAX_DEVICES} devices already. Turn one off first.` }, { status: 409 });
   }
-  const { error } = await svc.from('push_subscriptions').upsert({ user_id: user.id, endpoint, p256dh, auth, user_agent: String(request.headers.get('user-agent') ?? '').slice(0, 200) }, { onConflict: 'endpoint' });
+  const { error } = await svc
+    .from('push_subscriptions')
+    .upsert({ user_id: user.id, endpoint, p256dh, auth, user_agent: String(request.headers.get('user-agent') ?? '').slice(0, 200) }, { onConflict: 'endpoint' });
   if (error) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
   // They turned it on, so a past "not now" no longer applies.
   await svc.from('push_preferences').update({ declined_at: null }).eq('user_id', user.id).not('declined_at', 'is', null);

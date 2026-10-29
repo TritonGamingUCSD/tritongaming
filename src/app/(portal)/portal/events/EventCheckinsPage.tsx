@@ -48,7 +48,10 @@ interface EventInfo {
 }
 
 const STATUS_LABEL: Record<string, string> = {
-  active: 'Registered', used: 'Checked In', cancelled: 'Cancelled', expired: 'Expired',
+  active: 'Registered',
+  used: 'Checked In',
+  cancelled: 'Cancelled',
+  expired: 'Expired',
 };
 
 const STATUS_ORDER = ['active', 'used', 'cancelled', 'expired'];
@@ -57,14 +60,19 @@ type GroupKey = 'none' | 'status' | 'form';
 const sortWords = wordCodec<SortKey>(['registered', 'name', 'checkin', 'status'], 'registered');
 const groupWords = wordCodec<GroupKey>(['none', 'status', 'form'], 'none');
 const descCodec: Codec<boolean> = { parse: (r) => r === 'desc', format: (v) => (v ? 'desc' : null) };
-const SORTS: { key: SortKey; label: string }[] = [{ key: 'registered', label: 'Registered' }, { key: 'name', label: 'Name' }, { key: 'checkin', label: 'Checked-in time' }, { key: 'status', label: 'Status' }];
+const SORTS: { key: SortKey; label: string }[] = [
+  { key: 'registered', label: 'Registered' },
+  { key: 'name', label: 'Name' },
+  { key: 'checkin', label: 'Checked-in time' },
+  { key: 'status', label: 'Status' },
+];
 const GROUP_STATUS: Record<string, string> = { active: 'Not Checked In Yet', used: 'Checked In', cancelled: 'Cancelled', expired: 'Expired' };
 const userOf = (t: TicketRow) => (Array.isArray(t.user) ? t.user[0] : t.user);
 
 // One event's tickets, as its own page in Events (/portal/events/check-ins/<event>): search, sort, group, and the manual check-in and undo for whoever can manage points.
 // `eventKey` is the event's slug (or its id when it has none). Search, sort and group are in the address, so a copied link reopens the same view.
 export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }: { eventKey: string; onBack: () => void; canManagePoints: boolean }) {
-    // The search, sort and group are in the address (lib/portal/usePageState), so a refresh or a shared link brings them back.
+  // The search, sort and group are in the address (lib/portal/usePageState), so a refresh or a shared link brings them back.
   const [query, setQuery] = useAddressState('q', textCodec);
   const [sort, setSort] = useAddressState('sort', sortWords);
   const [desc, setDesc] = useAddressState('dir', descCodec);
@@ -87,8 +95,18 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
         body: JSON.stringify({ ticket_id: ticketId }),
       });
       const json = await res.json();
-      if (!res.ok) { setError(json.error || 'Failed to check in.'); return; }
-      setTickets((prev) => prev?.map((t) => (t.id === ticketId ? { ...t, status: 'used', checked_in_at: t.checked_in_at ?? new Date().toISOString(), checked_in_today: true, days_attended: (t.days_attended ?? 0) + 1 } : t)) ?? null);
+      if (!res.ok) {
+        setError(json.error || 'Failed to check in.');
+        return;
+      }
+      setTickets(
+        (prev) =>
+          prev?.map((t) =>
+            t.id === ticketId
+              ? { ...t, status: 'used', checked_in_at: t.checked_in_at ?? new Date().toISOString(), checked_in_today: true, days_attended: (t.days_attended ?? 0) + 1 }
+              : t,
+          ) ?? null,
+      );
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -105,7 +123,10 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
         body: JSON.stringify({ ticket_id: ticketId }),
       });
       const json = await res.json();
-      if (!res.ok) { setError(json.error || 'Failed to undo check-in.'); return; }
+      if (!res.ok) {
+        setError(json.error || 'Failed to undo check-in.');
+        return;
+      }
       setTickets((prev) => prev?.map((t) => (t.id === ticketId ? { ...t, status: 'active', checked_in_at: null, checkin_form_completed_at: null } : t)) ?? null);
       setUndoTargetId(null);
     } catch {
@@ -132,17 +153,23 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
         if (!cancelled) setError('Network error loading check-ins.');
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [eventKey]);
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
     const name = (t: TicketRow) => (userOf(t)?.display_name ?? '').toLowerCase();
-    const rows = (tickets ?? []).filter((t) => { const u = userOf(t); return !q || (u?.display_name ?? '').toLowerCase().includes(q) || (u?.gamer_tag ?? '').toLowerCase().includes(q); });
+    const rows = (tickets ?? []).filter((t) => {
+      const u = userOf(t);
+      return !q || (u?.display_name ?? '').toLowerCase().includes(q) || (u?.gamer_tag ?? '').toLowerCase().includes(q);
+    });
     const cmp = (a: TicketRow, b: TicketRow) => {
       if (sort === 'name') return name(a).localeCompare(name(b));
       if (sort === 'status') return STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status);
-      if (sort === 'checkin') {   // people who have not checked in go last whichever way it runs
+      if (sort === 'checkin') {
+        // people who have not checked in go last whichever way it runs
         if (!a.checked_in_at || !b.checked_in_at) return a.checked_in_at ? -1 : b.checked_in_at ? 1 : 0;
         return a.checked_in_at.localeCompare(b.checked_in_at) * (desc ? -1 : 1);
       }
@@ -150,8 +177,20 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
     };
     rows.sort((a, b) => (sort === 'checkin' ? cmp(a, b) : cmp(a, b) * (desc ? -1 : 1)) || name(a).localeCompare(name(b)));
     if (group === 'none') return [{ title: '', rows }];
-    const label = (t: TicketRow) => (group === 'status' ? GROUP_STATUS[t.status] : t.status === 'cancelled' || t.status === 'expired' ? GROUP_STATUS[t.status] : t.status !== 'used' ? 'Not Checked In Yet' : t.checkin_form_completed_at ? 'Opened The Form' : 'Has Not Opened The Form');
-    const order = group === 'status' ? ['Not Checked In Yet', 'Checked In', 'Cancelled', 'Expired'] : ['Has Not Opened The Form', 'Opened The Form', 'Not Checked In Yet', 'Cancelled', 'Expired'];
+    const label = (t: TicketRow) =>
+      group === 'status'
+        ? GROUP_STATUS[t.status]
+        : t.status === 'cancelled' || t.status === 'expired'
+          ? GROUP_STATUS[t.status]
+          : t.status !== 'used'
+            ? 'Not Checked In Yet'
+            : t.checkin_form_completed_at
+              ? 'Opened The Form'
+              : 'Has Not Opened The Form';
+    const order =
+      group === 'status'
+        ? ['Not Checked In Yet', 'Checked In', 'Cancelled', 'Expired']
+        : ['Has Not Opened The Form', 'Opened The Form', 'Not Checked In Yet', 'Cancelled', 'Expired'];
     const by = new Map<string, TicketRow[]>();
     for (const t of rows) by.set(label(t), [...(by.get(label(t)) ?? []), t]);
     return order.filter((o) => by.has(o)).map((title) => ({ title, rows: by.get(title)! }));
@@ -166,16 +205,20 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
   // for whoever can manage points/undo a check-in.
   const dayTotal = event ? eventDayCount(event.start_date, event.end_date ?? null) : 1;
   const gridTemplateColumns = [
-    'minmax(0, 2fr)', 'minmax(70px, 1fr)', 'minmax(120px, 1fr)', 'minmax(112px, 1fr)',
+    'minmax(0, 2fr)',
+    'minmax(70px, 1fr)',
+    'minmax(120px, 1fr)',
+    'minmax(112px, 1fr)',
     ...(event?.requires_checkin_form ? ['90px'] : []),
     ...(canManagePoints ? ['90px'] : []),
   ].join(' ');
 
   return (
     <div className={styles.page}>
-      <button type="button" className={styles.back} onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> All Events</button>
+      <button type="button" className={styles.back} onClick={onBack}>
+        <ArrowLeft size={15} aria-hidden="true" /> All Events
+      </button>
       <div>
-
         {error ? (
           <Notice tone="error">{error}</Notice>
         ) : !event || !tickets ? (
@@ -212,102 +255,117 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
               <div className={checkinStyles.empty}>No one has registered for this event yet.</div>
             ) : (
               <>
-              <div className={styles.toolbar}>
-                <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or gamer tag…" aria-label="Search attendees" />
-                <Select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort by">
-                  {SORTS.map((x) => <option key={x.key} value={x.key}>Sort: {x.label}</option>)}
-                </Select>
-                <button type="button" className={styles.dir} aria-label={desc ? 'Descending, switch to ascending' : 'Ascending, switch to descending'} onClick={() => setDesc(!desc)}>
-                  {desc ? <ArrowDown size={15} aria-hidden="true" /> : <ArrowUp size={15} aria-hidden="true" />}
-                </button>
-                <Select value={group} onChange={(e) => setGroup(e.target.value as GroupKey)} aria-label="Group by">
-                  <option value="none">Group: None</option>
-                  <option value="status">Group: Status</option>
-                  {event.requires_checkin_form && <option value="form">Group: AS form</option>}
-                </Select>
-              </div>
-              {shown.every((g) => g.rows.length === 0) && <div className={checkinStyles.empty}>No one matches.</div>}
-              {shown.map((g) => g.rows.length === 0 ? null : (
-              <div key={g.title} className={styles.group}>
-              {g.title && <h3 className={styles.groupHead}>{g.title} <span>{g.rows.length}</span></h3>}
-              <div className={checkinStyles.table}>
-                <div className={checkinStyles.tableHeader} style={{ gridTemplateColumns }}>
-                  <span>Attendee</span>
-                  <span>Registered</span>
-                  <span>Status</span>
-                  <span>Checked In</span>
-                  {event.requires_checkin_form && <span>AS Form</span>}
-                  {canManagePoints && <span></span>}
+                <div className={styles.toolbar}>
+                  <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search name or gamer tag…" aria-label="Search attendees" />
+                  <Select value={sort} onChange={(e) => setSort(e.target.value as SortKey)} aria-label="Sort by">
+                    {SORTS.map((x) => (
+                      <option key={x.key} value={x.key}>
+                        Sort: {x.label}
+                      </option>
+                    ))}
+                  </Select>
+                  <button
+                    type="button"
+                    className={styles.dir}
+                    aria-label={desc ? 'Descending, switch to ascending' : 'Ascending, switch to descending'}
+                    onClick={() => setDesc(!desc)}
+                  >
+                    {desc ? <ArrowDown size={15} aria-hidden="true" /> : <ArrowUp size={15} aria-hidden="true" />}
+                  </button>
+                  <Select value={group} onChange={(e) => setGroup(e.target.value as GroupKey)} aria-label="Group by">
+                    <option value="none">Group: None</option>
+                    <option value="status">Group: Status</option>
+                    {event.requires_checkin_form && <option value="form">Group: AS form</option>}
+                  </Select>
                 </div>
-                {g.rows.map((t) => {
-                  const user = Array.isArray(t.user) ? t.user[0] : t.user;
-                  const avatarUrl = user ? resolveAvatarUrl(user) : null;
-                  return (
-                    <div key={t.id} className={checkinStyles.tableRow} style={{ gridTemplateColumns }}>
-                      <div className={checkinStyles.attendee}>
-                        {avatarUrl ? (
-                          <Image src={avatarUrl} alt="" width={32} height={32} className={checkinStyles.avatar} unoptimized referrerPolicy="no-referrer" />
-                        ) : (
-                          <div className={checkinStyles.avatarFallback}>{(user?.display_name || '?')[0].toUpperCase()}</div>
-                        )}
-                        <div>
-                          <div className={checkinStyles.name}>{user?.display_name || 'Anonymous'}</div>
-                          {user?.gamer_tag && <div className={checkinStyles.gamerTag}><Gamepad2 size={12} strokeWidth={1.5} aria-hidden="true" /> {user.gamer_tag}</div>}
+                {shown.every((g) => g.rows.length === 0) && <div className={checkinStyles.empty}>No one matches.</div>}
+                {shown.map((g) =>
+                  g.rows.length === 0 ? null : (
+                    <div key={g.title} className={styles.group}>
+                      {g.title && (
+                        <h3 className={styles.groupHead}>
+                          {g.title} <span>{g.rows.length}</span>
+                        </h3>
+                      )}
+                      <div className={checkinStyles.table}>
+                        <div className={checkinStyles.tableHeader} style={{ gridTemplateColumns }}>
+                          <span>Attendee</span>
+                          <span>Registered</span>
+                          <span>Status</span>
+                          <span>Checked In</span>
+                          {event.requires_checkin_form && <span>AS Form</span>}
+                          {canManagePoints && <span></span>}
                         </div>
+                        {g.rows.map((t) => {
+                          const user = Array.isArray(t.user) ? t.user[0] : t.user;
+                          const avatarUrl = user ? resolveAvatarUrl(user) : null;
+                          return (
+                            <div key={t.id} className={checkinStyles.tableRow} style={{ gridTemplateColumns }}>
+                              <div className={checkinStyles.attendee}>
+                                {avatarUrl ? (
+                                  <Image src={avatarUrl} alt="" width={32} height={32} className={checkinStyles.avatar} unoptimized referrerPolicy="no-referrer" />
+                                ) : (
+                                  <div className={checkinStyles.avatarFallback}>{(user?.display_name || '?')[0].toUpperCase()}</div>
+                                )}
+                                <div>
+                                  <div className={checkinStyles.name}>{user?.display_name || 'Anonymous'}</div>
+                                  {user?.gamer_tag && (
+                                    <div className={checkinStyles.gamerTag}>
+                                      <Gamepad2 size={12} strokeWidth={1.5} aria-hidden="true" /> {user.gamer_tag}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              <span className={checkinStyles.date}>{formatPacificDate(t.created_at)}</span>
+                              <span className={`${checkinStyles.badge} ${checkinStyles[`status_${t.status}`]}`}>{STATUS_LABEL[t.status]}</span>
+                              <span className={checkinStyles.date}>
+                                {t.checked_in_at ? formatPacificTime(t.checked_in_at) : '—'}
+                                {dayTotal > 1 && !!t.days_attended && (
+                                  <span className={checkinStyles.checkinSub}>
+                                    {' '}
+                                    · {t.days_attended}/{dayTotal} days
+                                  </span>
+                                )}
+                              </span>
+                              {event.requires_checkin_form && (
+                                <span>
+                                  {t.status !== 'used' ? (
+                                    <span className={styles.formDash}>—</span>
+                                  ) : t.checkin_form_completed_at ? (
+                                    <span className={styles.formDone}>
+                                      <Check size={12} strokeWidth={2} aria-hidden="true" /> Opened
+                                    </span>
+                                  ) : (
+                                    <span className={styles.formPending}>Not opened</span>
+                                  )}
+                                </span>
+                              )}
+                              {canManagePoints && (
+                                <span>
+                                  {t.status === 'used' && !(dayTotal > 1 && !t.checked_in_today) ? (
+                                    <button type="button" className={styles.uncheckBtn} onClick={() => setUndoTargetId(t.id)} disabled={uncheckingId === t.id}>
+                                      <Undo2 size={12} strokeWidth={1.75} aria-hidden="true" /> {uncheckingId === t.id ? '…' : 'Undo'}
+                                    </button>
+                                  ) : t.status === 'active' || t.status === 'used' ? (
+                                    <button
+                                      type="button"
+                                      className={styles.checkInBtn}
+                                      onClick={() => handleManualCheckIn(t.id)}
+                                      disabled={checkingInId === t.id}
+                                      title="Check in without scanning a QR code or online code"
+                                    >
+                                      <Check size={12} strokeWidth={2} aria-hidden="true" /> {checkingInId === t.id ? '…' : 'Check In'}
+                                    </button>
+                                  ) : null}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
-                      <span className={checkinStyles.date}>
-                        {formatPacificDate(t.created_at)}
-                      </span>
-                      <span className={`${checkinStyles.badge} ${checkinStyles[`status_${t.status}`]}`}>
-                        {STATUS_LABEL[t.status]}
-                      </span>
-                      <span className={checkinStyles.date}>
-                        {t.checked_in_at
-                          ? formatPacificTime(t.checked_in_at)
-                          : '—'}
-                        {dayTotal > 1 && !!t.days_attended && <span className={checkinStyles.checkinSub}> · {t.days_attended}/{dayTotal} days</span>}
-                      </span>
-                      {event.requires_checkin_form && (
-                        <span>
-                          {t.status !== 'used' ? (
-                            <span className={styles.formDash}>—</span>
-                          ) : t.checkin_form_completed_at ? (
-                            <span className={styles.formDone}><Check size={12} strokeWidth={2} aria-hidden="true" /> Opened</span>
-                          ) : (
-                            <span className={styles.formPending}>Not opened</span>
-                          )}
-                        </span>
-                      )}
-                      {canManagePoints && (
-                        <span>
-                          {t.status === 'used' && !(dayTotal > 1 && !t.checked_in_today) ? (
-                            <button
-                              type="button"
-                              className={styles.uncheckBtn}
-                              onClick={() => setUndoTargetId(t.id)}
-                              disabled={uncheckingId === t.id}
-                            >
-                              <Undo2 size={12} strokeWidth={1.75} aria-hidden="true" /> {uncheckingId === t.id ? '…' : 'Undo'}
-                            </button>
-                          ) : t.status === 'active' || t.status === 'used' ? (
-                            <button
-                              type="button"
-                              className={styles.checkInBtn}
-                              onClick={() => handleManualCheckIn(t.id)}
-                              disabled={checkingInId === t.id}
-                              title="Check in without scanning a QR code or online code"
-                            >
-                              <Check size={12} strokeWidth={2} aria-hidden="true" /> {checkingInId === t.id ? '…' : 'Check In'}
-                            </button>
-                          ) : null}
-                        </span>
-                      )}
                     </div>
-                  );
-                })}
-              </div>
-              </div>
-              ))}
+                  ),
+                )}
               </>
             )}
           </>
@@ -315,7 +373,10 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
       </div>
       {undoTargetId && (
         <UndoCheckinModal
-          name={(() => { const u = tickets?.find((t) => t.id === undoTargetId)?.user; return (Array.isArray(u) ? u[0] : u)?.display_name ?? undefined; })()}
+          name={(() => {
+            const u = tickets?.find((t) => t.id === undoTargetId)?.user;
+            return (Array.isArray(u) ? u[0] : u)?.display_name ?? undefined;
+          })()}
           busy={uncheckingId === undoTargetId}
           onConfirm={() => handleUncheckIn(undoTargetId)}
           onCancel={() => setUndoTargetId(null)}

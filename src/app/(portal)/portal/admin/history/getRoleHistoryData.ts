@@ -28,11 +28,13 @@ export async function getRoleHistoryData() {
 
   const { data, error } = await supabase
     .from('role_change_log')
-    .select(`
+    .select(
+      `
       id, created_at, before, after,
       user:profiles!role_change_log_user_id_fkey(display_name),
       changed_by_profile:profiles!role_change_log_changed_by_fkey(display_name)
-    `)
+    `,
+    )
     .order('created_at', { ascending: false })
     .limit(100);
 
@@ -43,8 +45,8 @@ export async function getRoleHistoryData() {
     created_at: row.created_at,
     before: row.before,
     after: row.after,
-    user: Array.isArray(row.user) ? row.user[0] ?? null : row.user,
-    changed_by: Array.isArray(row.changed_by_profile) ? row.changed_by_profile[0] ?? null : row.changed_by_profile,
+    user: Array.isArray(row.user) ? (row.user[0] ?? null) : row.user,
+    changed_by: Array.isArray(row.changed_by_profile) ? (row.changed_by_profile[0] ?? null) : row.changed_by_profile,
   }));
 
   return { entries };

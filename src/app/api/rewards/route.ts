@@ -11,7 +11,9 @@ import { getTier, fetchTiers } from '@/lib/members/tiers';
 // with each one's own claimed/unlocked state already resolved server-side.
 export async function GET() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const [{ data: allActive }, { data: transactions }, { data: pending }, { data: myRedemptions }, tiers] = await Promise.all([
@@ -39,13 +41,14 @@ export async function GET() {
   // reachable), then by cost within that tier — a flat cost-only order put
   // a cheap Platinum-gated item ahead of an expensive one anyone can
   // afford right now, which read as arbitrary.
-  const items = (allActive ?? [])
-    .filter((r) => r.point_cost > 0)
-    .sort((a, b) => tierRankOf(a.min_tier) - tierRankOf(b.min_tier) || a.point_cost - b.point_cost);
+  const items = (allActive ?? []).filter((r) => r.point_cost > 0).sort((a, b) => tierRankOf(a.min_tier) - tierRankOf(b.min_tier) || a.point_cost - b.point_cost);
   const unlocks = (allActive ?? [])
     .filter((r) => r.point_cost === 0)
     .map((r) => ({
-      id: r.id, title: r.title, description: r.description, min_tier: r.min_tier,
+      id: r.id,
+      title: r.title,
+      description: r.description,
+      min_tier: r.min_tier,
       unlocked: tierRankOf(r.min_tier) <= tierIdx,
       claimed: claimedIds.has(r.id),
     }))

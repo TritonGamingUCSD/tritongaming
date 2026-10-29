@@ -9,7 +9,11 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizePlans();
   if ('error' in auth) return auth.error;
-  const { data } = await auth.svc.from('meeting_plans').select('*').eq('id', (await params).id).maybeSingle();
+  const { data } = await auth.svc
+    .from('meeting_plans')
+    .select('*')
+    .eq('id', (await params).id)
+    .maybeSingle();
   if (!data) return NextResponse.json({ error: 'Plan not found.' }, { status: 404 });
   const plan = data as PlanRow;
   if (!auth.canHost || (plan.created_by !== auth.user.id && !auth.manageAll)) return NextResponse.json({ error: 'Only the host, exec and admins can do that.' }, { status: 403 });
@@ -31,9 +35,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ ok: true, reminded: sent, waiting: waiting.length });
   }
   if (b.action === 'decide') {
-    const result = await decidePlan(auth.svc, plan, { day: b.day ? String(b.day) : undefined, weekday: b.weekday !== undefined ? Number(b.weekday) : undefined, start: String(b.start ?? '') }, auth.user.id);
+    const result = await decidePlan(
+      auth.svc,
+      plan,
+      { day: b.day ? String(b.day) : undefined, weekday: b.weekday !== undefined ? Number(b.weekday) : undefined, start: String(b.start ?? '') },
+      auth.user.id,
+    );
     if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
-    await logAudit(auth.svc, { actorId: auth.user.id, action: 'schedule', entityType: 'meeting plan', entityId: plan.id, summary: `Picked a time for "${plan.title}"`, details: { absent: result.absent.length } });
+    await logAudit(auth.svc, {
+      actorId: auth.user.id,
+      action: 'schedule',
+      entityType: 'meeting plan',
+      entityId: plan.id,
+      summary: `Picked a time for "${plan.title}"`,
+      details: { absent: result.absent.length },
+    });
     return NextResponse.json(result);
   }
   if (b.action === 'reopen') {

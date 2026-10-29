@@ -12,7 +12,9 @@ import { strictUser } from '@/lib/supabase/localAuth';
 // transaction to undo is already known (browsed via /api/admin/points/history).
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -32,6 +34,15 @@ export async function POST(request: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
   await logAudit(serviceClient, { actorId: user.id, action: 'reverse', entityType: 'points', entityId: transaction_id, summary: 'A points entry was reversed' });
-  if (txn?.user_id && txn.user_id !== user.id) await createNotifications(serviceClient, [{ user_id: txn.user_id as string, type: 'points_reversed', title: `${pointsText(-Number(txn.amount))} (a points entry was reversed)`, body: 'An earlier points entry on your account was undone.', href: '/portal/points' }]);
+  if (txn?.user_id && txn.user_id !== user.id)
+    await createNotifications(serviceClient, [
+      {
+        user_id: txn.user_id as string,
+        type: 'points_reversed',
+        title: `${pointsText(-Number(txn.amount))} (a points entry was reversed)`,
+        body: 'An earlier points entry on your account was undone.',
+        href: '/portal/points',
+      },
+    ]);
   return NextResponse.json({ ok: true });
 }

@@ -53,7 +53,10 @@ async function processImage(file: File, { maxDimension = 1600, crop = 'none', qu
   } else {
     // 'square': crop rect is centered on the SHORTER edge (discards the
     // excess). 'none': crop rect is the whole image (no crop at all).
-    let sx = 0, sy = 0, sw = bitmap.width, sh = bitmap.height;
+    let sx = 0,
+      sy = 0,
+      sw = bitmap.width,
+      sh = bitmap.height;
     if (crop === 'square') {
       sw = sh = Math.min(bitmap.width, bitmap.height);
       sx = (bitmap.width - sw) / 2;

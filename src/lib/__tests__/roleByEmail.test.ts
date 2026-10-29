@@ -6,7 +6,9 @@ describe('parseEmails', () => {
     const text = 'Alex Kim <Alex@UCSD.edu>, jamie@ucsd.edu;\nsam.o+club@gmail.com  alex@ucsd.edu. thanks! not-an-email';
     expect(parseEmails(text)).toEqual(['alex@ucsd.edu', 'jamie@ucsd.edu', 'sam.o+club@gmail.com']);
   });
-  it('returns nothing for text with no address', () => { expect(parseEmails('hello world')).toEqual([]); });
+  it('returns nothing for text with no address', () => {
+    expect(parseEmails('hello world')).toEqual([]);
+  });
 });
 
 // A tiny stand-in for the database client: tables as arrays, just the calls applyPendingGrants makes.
@@ -19,11 +21,19 @@ function fakeSvc(pending: Record<string, unknown>[], roles: Record<string, unkno
           in: () => ({ gt: async () => ({ data: pending }) }),
           eq: async () => ({ data: roles }),
         }),
-        delete: () => ({ eq: async (_c: string, id: string) => { calls.deleted.push(id); return {}; } }),
+        delete: () => ({
+          eq: async (_c: string, id: string) => {
+            calls.deleted.push(id);
+            return {};
+          },
+        }),
       } as never;
       void table;
     },
-    rpc: async (_name: string, args: unknown) => { calls.rpc.push(args); return { error: null }; },
+    rpc: async (_name: string, args: unknown) => {
+      calls.rpc.push(args);
+      return { error: null };
+    },
   };
   return { svc: svc as never, calls };
 }
@@ -52,7 +62,16 @@ describe('applyPendingGrants', () => {
 describe('cleanupExpiredGrants', () => {
   it('deletes waiting grants whose 90 days are over', async () => {
     const seen: unknown[] = [];
-    const svc = { from: (t: string) => ({ delete: () => ({ lt: async (c: string, v: string) => { seen.push([t, c, v]); return { count: 3 }; } }) }) } as never;
+    const svc = {
+      from: (t: string) => ({
+        delete: () => ({
+          lt: async (c: string, v: string) => {
+            seen.push([t, c, v]);
+            return { count: 3 };
+          },
+        }),
+      }),
+    } as never;
     expect(await cleanupExpiredGrants(svc, new Date('2026-10-17T00:00:00Z'))).toEqual({ removed: 3 });
     expect(seen).toEqual([['pending_role_grants', 'expires_at', '2026-10-17T00:00:00.000Z']]);
   });

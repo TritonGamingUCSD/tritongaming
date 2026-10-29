@@ -28,14 +28,12 @@ export default function MyDivisionsEditor({ divisions }: { divisions: MyDivision
         const src = logoSrc(d.logo_url);
         return (
           <div key={d.id} className={styles.listRow}>
-            {src ? (
-              <Image src={src} alt="" width={40} height={40} className={styles.logo} unoptimized />
-            ) : (
-              <div className={styles.logoFallback}>{d.name[0]}</div>
-            )}
+            {src ? <Image src={src} alt="" width={40} height={40} className={styles.logo} unoptimized /> : <div className={styles.logoFallback}>{d.name[0]}</div>}
             <div className={styles.listRowText}>
               <div className={styles.name}>{d.name}</div>
-              <Link href={`/divisions/${d.slug}`} target="_blank" className={styles.slug}>/divisions/{d.slug} ↗</Link>
+              <Link href={`/divisions/${d.slug}`} target="_blank" className={styles.slug}>
+                /divisions/{d.slug} ↗
+              </Link>
             </div>
             <div className={styles.actions}>
               <IconButton kind="edit" href={`/portal/divisions/${d.id}`} label={`Edit ${d.name}`} />

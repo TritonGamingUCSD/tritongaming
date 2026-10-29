@@ -21,7 +21,13 @@ export async function PATCH(_request: Request, { params }: { params: Promise<{ i
   const { error } = await auth.svc.from('custom_emojis').update({ status: 'approved', reviewed_by: auth.user.id }).eq('id', id);
   if (error) return NextResponse.json({ error: 'Failed.' }, { status: 500 });
   const { data: e } = await auth.svc.from('custom_emojis').select('name').eq('id', id).maybeSingle();
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'approve', entityType: 'meeting emoji', entityId: id, summary: `Approved the meeting emoji "${(e?.name as string | undefined) ?? 'unnamed'}"` });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'approve',
+    entityType: 'meeting emoji',
+    entityId: id,
+    summary: `Approved the meeting emoji "${(e?.name as string | undefined) ?? 'unnamed'}"`,
+  });
   return NextResponse.json({ ok: true });
 }
 
@@ -37,6 +43,12 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   if (!allowed) return NextResponse.json({ error: 'Only exec and admins can remove an approved emoji.' }, { status: 403 });
   await auth.svc.from('custom_emojis').delete().eq('id', id);
   await auth.svc.storage.from(BUCKET).remove([e.path as string]);
-  await logAudit(auth.svc, { actorId: auth.user.id, action: e.status === 'pending' && e.created_by !== auth.user.id ? 'reject' : 'delete', entityType: 'meeting emoji', entityId: id, summary: `${e.status === 'pending' ? (e.created_by === auth.user.id ? 'Withdrew' : 'Rejected') : 'Removed'} the meeting emoji "${(e.name as string | null) ?? 'unnamed'}"` });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: e.status === 'pending' && e.created_by !== auth.user.id ? 'reject' : 'delete',
+    entityType: 'meeting emoji',
+    entityId: id,
+    summary: `${e.status === 'pending' ? (e.created_by === auth.user.id ? 'Withdrew' : 'Rejected') : 'Removed'} the meeting emoji "${(e.name as string | null) ?? 'unnamed'}"`,
+  });
   return NextResponse.json({ ok: true });
 }

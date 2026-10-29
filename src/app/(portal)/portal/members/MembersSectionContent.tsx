@@ -49,7 +49,21 @@ type MemberEntry = Omit<MemberProfileRow, 'user_roles'> & { divisionName?: strin
 // since this list can run into the hundreds of members and animating a
 // shared-element transition across that many grid cells is exactly the
 // kind of cost that caused the lag BoardSection had to be fixed for.
-export default function MembersSectionContent({ rows, keysByUser = {}, teams, canViewAsPerson = false, selfId = '', canOrder = false }: { canOrder?: boolean; canViewAsPerson?: boolean; selfId?: string; rows: MemberProfileRow[]; keysByUser?: Record<string, { id: string; name: string; color: string }[]>; teams?: { userId: string; canManageAll: boolean; canEdit: boolean } }) {
+export default function MembersSectionContent({
+  rows,
+  keysByUser = {},
+  teams,
+  canViewAsPerson = false,
+  selfId = '',
+  canOrder = false,
+}: {
+  canOrder?: boolean;
+  canViewAsPerson?: boolean;
+  selfId?: string;
+  rows: MemberProfileRow[];
+  keysByUser?: Record<string, { id: string; name: string; color: string }[]>;
+  teams?: { userId: string; canManageAll: boolean; canEdit: boolean };
+}) {
   const searchParams = useLiveParams();
   const setParams = usePortalParams();
   const [view, setView] = useState<'grid' | 'list'>(() => (searchParams.get('view') === 'list' ? 'list' : 'grid'));
@@ -58,15 +72,23 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
   const tabFrom = (t: string | null): MembersTab => (t === 'team' && teams ? 'team' : t === 'display-order' && canOrder ? 'display-order' : 'members');
   const [tab, setTab] = useState<MembersTab>(() => tabFrom(searchParams.get('tab')));
   useEffect(() => {
-    const read = () => { const t = mergedPortalParams(window.location.pathname, window.location.search).get('tab'); setTab(tabFrom(t)); };
-    window.addEventListener('popstate', read); window.addEventListener('tg:portal-nav', read);
-    return () => { window.removeEventListener('popstate', read); window.removeEventListener('tg:portal-nav', read); };
+    const read = () => {
+      const t = mergedPortalParams(window.location.pathname, window.location.search).get('tab');
+      setTab(tabFrom(t));
+    };
+    window.addEventListener('popstate', read);
+    window.addEventListener('tg:portal-nav', read);
+    return () => {
+      window.removeEventListener('popstate', read);
+      window.removeEventListener('tg:portal-nav', read);
+    };
   }, [teams, canOrder]); // eslint-disable-line react-hooks/exhaustive-deps
   const [selected, setSelectedRaw] = useState<MemberEntry | null>(null);
   // The id of a card the person just closed, so a lagging URL (?id=…) can't pop it open again.
   const dismissedId = useRef<string | null>(null);
   const setSelected = (m: MemberEntry | null) => {
-    if (m) dismissedId.current = null; else dismissedId.current = selectedRef.current?.id ?? null;
+    if (m) dismissedId.current = null;
+    else dismissedId.current = selectedRef.current?.id ?? null;
     setSelectedRaw(m);
   };
   const selectedRef = useRef<MemberEntry | null>(null);
@@ -118,25 +140,33 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
   const requestedId = searchParams.get('id');
   const syncedOnce = useRef(false);
   useEffect(() => {
-    if (!syncedOnce.current) { syncedOnce.current = true; return; }
+    if (!syncedOnce.current) {
+      syncedOnce.current = true;
+      return;
+    }
     setParams({ id: selected?.id ?? null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
   useEffect(() => {
     if (!requestedId) return;
-    const match = Object.values(grouped).flat().find((m) => m.id === requestedId);
+    const match = Object.values(grouped)
+      .flat()
+      .find((m) => m.id === requestedId);
     if (match && match.id !== dismissedId.current) setSelectedRaw(match);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [requestedId]);
 
-  useEffect(() => { selectedRef.current = selected; }, [selected]);
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
   // Escape closes the card.
   useEffect(() => {
     if (!selected) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setSelected(null); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setSelected(null);
+    };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-     
   }, [selected]);
 
   return (
@@ -148,87 +178,128 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
           <SectionTabs<MembersTab>
             label="TG Members"
             value={tab}
-            onChange={(t) => { setSelected(null); setTab(t); setParams(t === 'members' ? { tab: null, subtab: null } : { tab: t, view: null, id: null }); }}
-            tabs={[{ id: 'members', label: 'Members', icon: <Users size={15} /> }, ...(teams ? [{ id: 'team' as const, label: 'Team', icon: <UsersRound size={15} /> }] : []), ...(canOrder ? [{ id: 'display-order' as const, label: 'Display Order', icon: <ListOrdered size={15} /> }] : [])]}
+            onChange={(t) => {
+              setSelected(null);
+              setTab(t);
+              setParams(t === 'members' ? { tab: null, subtab: null } : { tab: t, view: null, id: null });
+            }}
+            tabs={[
+              { id: 'members', label: 'Members', icon: <Users size={15} /> },
+              ...(teams ? [{ id: 'team' as const, label: 'Team', icon: <UsersRound size={15} /> }] : []),
+              ...(canOrder ? [{ id: 'display-order' as const, label: 'Display Order', icon: <ListOrdered size={15} /> }] : []),
+            ]}
           />
-        ) : <span />}
+        ) : (
+          <span />
+        )}
         {tab === 'members' && (
           <SectionTabs
             variant="segmented"
             label="View mode"
             value={view}
-            onChange={(v) => { setView(v); setParams({ view: v === 'grid' ? null : v }); }}
-            tabs={[{ id: 'grid', label: 'Grid', icon: <LayoutGrid /> }, { id: 'list', label: 'List', icon: <List /> }]}
+            onChange={(v) => {
+              setView(v);
+              setParams({ view: v === 'grid' ? null : v });
+            }}
+            tabs={[
+              { id: 'grid', label: 'Grid', icon: <LayoutGrid /> },
+              { id: 'list', label: 'List', icon: <List /> },
+            ]}
           />
         )}
       </div>
 
-      {tab === 'display-order' && canOrder && <BoardOrderManager users={rows.map((r) => ({ id: r.id, display_name: r.display_name, avatar_url: r.avatar_url, custom_avatar_url: r.custom_avatar_url, board_order: r.board_order, user_roles: r.user_roles.map((x) => ({ role: x.role, division_id: null })) }))} />}
+      {tab === 'display-order' && canOrder && (
+        <BoardOrderManager
+          users={rows.map((r) => ({
+            id: r.id,
+            display_name: r.display_name,
+            avatar_url: r.avatar_url,
+            custom_avatar_url: r.custom_avatar_url,
+            board_order: r.board_order,
+            user_roles: r.user_roles.map((x) => ({ role: x.role, division_id: null })),
+          }))}
+        />
+      )}
       {tab === 'team' && teams && <TeamsPanel userId={teams.userId} canManageAll={teams.canManageAll} canEdit={teams.canEdit} />}
 
-      {tab === 'members' && ORDER.map((role) => {
-        const group = grouped[role];
-        if (!group?.length) return null;
-        return (
-          <section key={role} className={styles.group}>
-            <div className={styles.groupHeader}>
-              <span
-                className={styles.groupLabel}
-                style={{ color: roleInk(ROLE_COLORS[role]), borderColor: ROLE_COLORS[role] + '44' }}
-              >
-                {ROLE_LABELS[role]}
-              </span>
-              <span className={styles.groupCount}>{group.length}</span>
-            </div>
-            <div className={view === 'grid' ? styles.grid : styles.list}>
-              {group.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  className={`${view === 'grid' ? styles.card : styles.listRow} ${m.inactive ? styles.idle : ''}`}
-                  style={{ ['--role' as string]: ROLE_COLORS[role] }}
-                  onClick={() => setSelected(m)}
-                >
-                  {resolveAvatarUrl(m) ? (
-                    <Image src={resolveAvatarUrl(m)!} alt="" width={64} height={64} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
-                  ) : (
-                    <div className={styles.avatarFallback} style={{ background: ROLE_COLORS[role] }}>
-                      {(m.display_name || '?')[0].toUpperCase()}
-                    </div>
-                  )}
-                  <div className={styles.info}>
-                    <div className={styles.name}>
-                      <span className={styles.nameText}>{m.display_name || 'Anonymous'}</span>
-                      {/* Name "Gamer Tag": the tag follows the name, left off when the name already says it. */}
-                      {view === 'list' && m.gamer_tag?.trim() && !(m.display_name ?? '').toLowerCase().includes(m.gamer_tag.trim().toLowerCase()) && <span className={styles.gamerTag}>&ldquo;{m.gamer_tag.trim()}&rdquo;</span>}
-                      {m.inactive && <span className={styles.idleTag} title="Inactive this quarter: view-only, not expected at meetings"><Moon size={11} aria-hidden="true" /> Inactive now</span>}
-                      {/* One small key for each storage key this person holds. Only the team that tracks keys is sent this. */}
-                      {(keysByUser[m.id]?.length ?? 0) > 0 && (
-                        <span className={styles.keyIcons} role="img" aria-label={`Has ${keysByUser[m.id].length === 1 ? 'a storage key' : `${keysByUser[m.id].length} storage keys`}: ${keysByUser[m.id].map((k) => k.name).join(', ')}`}>
-                          {keysByUser[m.id].map((k) => <span key={k.id} className={styles.keyBadge} style={{ background: k.color }} title={`Has the key “${k.name}”`}><KeyRound size={12} strokeWidth={2.75} aria-hidden="true" /></span>)}
-                        </span>
+      {tab === 'members' &&
+        ORDER.map((role) => {
+          const group = grouped[role];
+          if (!group?.length) return null;
+          return (
+            <section key={role} className={styles.group}>
+              <div className={styles.groupHeader}>
+                <span className={styles.groupLabel} style={{ color: roleInk(ROLE_COLORS[role]), borderColor: ROLE_COLORS[role] + '44' }}>
+                  {ROLE_LABELS[role]}
+                </span>
+                <span className={styles.groupCount}>{group.length}</span>
+              </div>
+              <div className={view === 'grid' ? styles.grid : styles.list}>
+                {group.map((m) => (
+                  <button
+                    key={m.id}
+                    type="button"
+                    className={`${view === 'grid' ? styles.card : styles.listRow} ${m.inactive ? styles.idle : ''}`}
+                    style={{ ['--role' as string]: ROLE_COLORS[role] }}
+                    onClick={() => setSelected(m)}
+                  >
+                    {resolveAvatarUrl(m) ? (
+                      <Image src={resolveAvatarUrl(m)!} alt="" width={64} height={64} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
+                    ) : (
+                      <div className={styles.avatarFallback} style={{ background: ROLE_COLORS[role] }}>
+                        {(m.display_name || '?')[0].toUpperCase()}
+                      </div>
+                    )}
+                    <div className={styles.info}>
+                      <div className={styles.name}>
+                        <span className={styles.nameText}>{m.display_name || 'Anonymous'}</span>
+                        {/* Name "Gamer Tag": the tag follows the name, left off when the name already says it. */}
+                        {view === 'list' && m.gamer_tag?.trim() && !(m.display_name ?? '').toLowerCase().includes(m.gamer_tag.trim().toLowerCase()) && (
+                          <span className={styles.gamerTag}>&ldquo;{m.gamer_tag.trim()}&rdquo;</span>
+                        )}
+                        {m.inactive && (
+                          <span className={styles.idleTag} title="Inactive this quarter: view-only, not expected at meetings">
+                            <Moon size={11} aria-hidden="true" /> Inactive now
+                          </span>
+                        )}
+                        {/* One small key for each storage key this person holds. Only the team that tracks keys is sent this. */}
+                        {(keysByUser[m.id]?.length ?? 0) > 0 && (
+                          <span
+                            className={styles.keyIcons}
+                            role="img"
+                            aria-label={`Has ${keysByUser[m.id].length === 1 ? 'a storage key' : `${keysByUser[m.id].length} storage keys`}: ${keysByUser[m.id].map((k) => k.name).join(', ')}`}
+                          >
+                            {keysByUser[m.id].map((k) => (
+                              <span key={k.id} className={styles.keyBadge} style={{ background: k.color }} title={`Has the key “${k.name}”`}>
+                                <KeyRound size={12} strokeWidth={2.75} aria-hidden="true" />
+                              </span>
+                            ))}
+                          </span>
+                        )}
+                      </div>
+                      {view === 'grid' && m.gamer_tag?.trim() && !(m.display_name ?? '').toLowerCase().includes(m.gamer_tag.trim().toLowerCase()) && (
+                        <div className={styles.handle}>&ldquo;{m.gamer_tag.trim()}&rdquo;</div>
                       )}
-                    </div>
-                    {view === 'grid' && m.gamer_tag?.trim() && !(m.display_name ?? '').toLowerCase().includes(m.gamer_tag.trim().toLowerCase()) && <div className={styles.handle}>&ldquo;{m.gamer_tag.trim()}&rdquo;</div>}
-                    {/* Always rendered in list view, even when empty, so the columns line up row to row. */}
-                    {(m.org_title || view === 'list') && <div className={styles.orgTitle}>{m.org_title}</div>}
-                    {/* Grid is the compact "who's who" view — name, title,
+                      {/* Always rendered in list view, even when empty, so the columns line up row to row. */}
+                      {(m.org_title || view === 'list') && <div className={styles.orgTitle}>{m.org_title}</div>}
+                      {/* Grid is the compact "who's who" view — name, title,
                         photo, nothing else. List view is the one place that
                         still shows division/year/major, since a single-line
                         row has room for it without turning into a wall of
                         text like the old grid cards did. */}
-                    {view === 'list' && (
-                      <div className={styles.detail}>
-                        <DotList items={[m.divisionName, m.teams?.join(', '), m.major, m.year]} />
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </section>
-        );
-      })}
+                      {view === 'list' && (
+                        <div className={styles.detail}>
+                          <DotList items={[m.divisionName, m.teams?.join(', '), m.major, m.year]} />
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          );
+        })}
 
       {selected && (
         <div className={styles.overlay} onClick={() => setSelected(null)}>
@@ -264,7 +335,9 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
             />
             {canViewAsPerson && selected.id !== selfId && (
               <div className={styles.detailKeys}>
-                <Button size="sm" variant="secondary" onClick={() => void viewAsPerson(selected.id)}><Eye size={14} aria-hidden="true" /> View portal as {selected.display_name?.split(' ')[0] || 'them'}</Button>
+                <Button size="sm" variant="secondary" onClick={() => void viewAsPerson(selected.id)}>
+                  <Eye size={14} aria-hidden="true" /> View portal as {selected.display_name?.split(' ')[0] || 'them'}
+                </Button>
               </div>
             )}
             {/* The profile popup also says which keys this person holds (never on the public Team page: this list is only sent to the key team). */}
@@ -272,7 +345,11 @@ export default function MembersSectionContent({ rows, keysByUser = {}, teams, ca
               <div className={styles.detailKeys}>
                 <span className={styles.detailKeysLabel}>Storage {keysByUser[selected.id].length === 1 ? 'key' : 'keys'}</span>
                 <span className={styles.detailKeysList}>
-                  {keysByUser[selected.id].map((k) => <span key={k.id} className={styles.keyPill} style={{ background: k.color }}><KeyRound size={14} strokeWidth={2.5} aria-hidden="true" /> {k.name}</span>)}
+                  {keysByUser[selected.id].map((k) => (
+                    <span key={k.id} className={styles.keyPill} style={{ background: k.color }}>
+                      <KeyRound size={14} strokeWidth={2.5} aria-hidden="true" /> {k.name}
+                    </span>
+                  ))}
                 </span>
               </div>
             )}

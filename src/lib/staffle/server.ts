@@ -38,7 +38,10 @@ export async function notEnough(svc: SupabaseClient, items: { prize_id: string; 
   const ids = items.map((i) => i.prize_id);
   const [{ data: prizes }, totals] = await Promise.all([svc.from('logistics_prizes').select('id, name, quantity, size, stock_level').in('id', ids), loadPrizeTotals(svc, ids)]);
   let own = new Map<string, number>();
-  if (exceptStaffle) { const { data } = await svc.from('staffle_items').select('prize_id, winners').eq('staffle_id', exceptStaffle); own = new Map((data ?? []).map((i) => [i.prize_id as string, i.winners as number])); }
+  if (exceptStaffle) {
+    const { data } = await svc.from('staffle_items').select('prize_id, winners').eq('staffle_id', exceptStaffle);
+    own = new Map((data ?? []).map((i) => [i.prize_id as string, i.winners as number]));
+  }
   if (prizes?.length !== new Set(ids).size) return 'One of those prizes is gone.';
   for (const p of prizes) {
     const t = totals.get(p.id as string) ?? { allocated: 0 };
@@ -52,10 +55,20 @@ export async function notEnough(svc: SupabaseClient, items: { prize_id: string; 
 // "You won <item> in <Staffle>!", with the Staffle's pickup note.
 export async function tellWinners(svc: SupabaseClient, row: Record<string, unknown>, winners: { user_id: string; item_id: string }[], items: { id: string; prize_id: string }[]) {
   if (!winners.length) return;
-  const { data: prizes } = await svc.from('logistics_prizes').select('id, name').in('id', [...new Set(items.map((i) => i.prize_id))]);
+  const { data: prizes } = await svc
+    .from('logistics_prizes')
+    .select('id, name')
+    .in('id', [...new Set(items.map((i) => i.prize_id))]);
   const name = new Map((prizes ?? []).map((p) => [p.id as string, p.name as string]));
   const prizeOf = new Map(items.map((i) => [i.id, name.get(i.prize_id) ?? 'a prize']));
-  await createNotifications(svc, winners.map((w) => ({
-    user_id: w.user_id, type: 'logistics_staffle', title: `You won ${prizeOf.get(w.item_id)} in ${row.name}!`, body: row.pickup_note as string, href: `/portal/staffle/${row.slug}`,
-  })));
+  await createNotifications(
+    svc,
+    winners.map((w) => ({
+      user_id: w.user_id,
+      type: 'logistics_staffle',
+      title: `You won ${prizeOf.get(w.item_id)} in ${row.name}!`,
+      body: row.pickup_note as string,
+      href: `/portal/staffle/${row.slug}`,
+    })),
+  );
 }

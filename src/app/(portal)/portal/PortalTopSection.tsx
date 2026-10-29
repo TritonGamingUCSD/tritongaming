@@ -24,7 +24,17 @@ type UpcomingEvent = Parameters<typeof UpcomingEventsPreview>[0]['events'][numbe
 // banner / next-ticket / upcoming cards move into the content column (beside
 // the sidebar) on the home view only.
 export default function PortalTopSection({
-  top, desktop, banner, identity, railFooter, ticket, upcomingEvents, sections, welcome, body, plain = false,
+  top,
+  desktop,
+  banner,
+  identity,
+  railFooter,
+  ticket,
+  upcomingEvents,
+  sections,
+  welcome,
+  body,
+  plain = false,
 }: {
   /** Guests and UCSD-only accounts get a plain top-bar layout on a desktop instead of the sidebar. */
   plain?: boolean;
@@ -47,13 +57,19 @@ export default function PortalTopSection({
   const hasRewards = sections.some((x) => x.id === 'points');
   const cards = (
     <>
-      {isDesktop && (welcome ?? (
-        <div className={styles.homeSearch}>
-          <PortalSearch large placeholder="Search anything: people, events, meetings, docs, pages…" />
-        </div>
-      ))}
+      {isDesktop &&
+        (welcome ?? (
+          <div className={styles.homeSearch}>
+            <PortalSearch large placeholder="Search anything: people, events, meetings, docs, pages…" />
+          </div>
+        ))}
       {banner}
-      {body ?? <>{ticket && <DashboardClient ticket={ticket} />}<UpcomingEventsPreview events={upcomingEvents} /></>}
+      {body ?? (
+        <>
+          {ticket && <DashboardClient ticket={ticket} />}
+          <UpcomingEventsPreview events={upcomingEvents} />
+        </>
+      )}
       {/* Nothing booked and nothing coming up: say so, and offer a next step (phones only —
           desktop's home already has the full section list). */}
       {!body && !ticket && upcomingEvents.length === 0 && (
@@ -62,9 +78,17 @@ export default function PortalTopSection({
           <h2 className={styles.emptyHomeTitle}>Nothing coming up</h2>
           <p className={styles.emptyHomeText}>No tickets yet, and no new events are open right now. Here&apos;s what you can do in the meantime.</p>
           <div className={styles.emptyHomeActions}>
-            <Link href="/events" className={styles.emptyHomeBtn}><CalendarDays size={16} aria-hidden="true" /> See past events &amp; photos</Link>
-            {hasRewards && <Link href="/portal/points" className={styles.emptyHomeBtn}><Gift size={16} aria-hidden="true" /> Check your rewards</Link>}
-            <Link href="/get-involved" className={styles.emptyHomeBtn}><UserPlus size={16} aria-hidden="true" /> Get involved</Link>
+            <Link href="/events" className={styles.emptyHomeBtn}>
+              <CalendarDays size={16} aria-hidden="true" /> See past events &amp; photos
+            </Link>
+            {hasRewards && (
+              <Link href="/portal/points" className={styles.emptyHomeBtn}>
+                <Gift size={16} aria-hidden="true" /> Check your rewards
+              </Link>
+            )}
+            <Link href="/get-involved" className={styles.emptyHomeBtn}>
+              <UserPlus size={16} aria-hidden="true" /> Get involved
+            </Link>
           </div>
         </section>
       )}
@@ -82,7 +106,15 @@ export default function PortalTopSection({
         </>
       )}
       <Suspense>
-        <PortalHub sections={sections} identity={identity} railFooter={railFooter} homeExtras={isDesktop ? cards : undefined} onOpenChange={setPanelOpen} frame={isDesktop ? desktop : undefined} plain={isDesktop && plain} />
+        <PortalHub
+          sections={sections}
+          identity={identity}
+          railFooter={railFooter}
+          homeExtras={isDesktop ? cards : undefined}
+          onOpenChange={setPanelOpen}
+          frame={isDesktop ? desktop : undefined}
+          plain={isDesktop && plain}
+        />
       </Suspense>
     </>
   );

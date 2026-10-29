@@ -11,20 +11,19 @@ import { getTier, fetchTiers } from '@/lib/members/tiers';
 export async function POST(request: Request) {
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   // The person at the door is waiting on this answer, so what does not depend on something else is asked together: who may scan and what was scanned.
-  const [{ data: roles }, body] = await Promise.all([
-    supabase.from('user_roles').select('role, division_id').eq('user_id', user.id),
-    request.json(),
-  ]);
+  const [{ data: roles }, body] = await Promise.all([supabase.from('user_roles').select('role, division_id').eq('user_id', user.id), request.json()]);
 
   if (!hasCapability(roles ?? [], 'checkin')) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
 
-  const { code, qr_token: tgToken, event_id: pickedEvent, preview, confirm_event: confirmEvent } = body;   // preview: only say whose ticket it is; confirm_event: staff saw the wrong-event warning and checked in anyway
+  const { code, qr_token: tgToken, event_id: pickedEvent, preview, confirm_event: confirmEvent } = body; // preview: only say whose ticket it is; confirm_event: staff saw the wrong-event warning and checked in anyway
   if (!code && !tgToken) {
     return NextResponse.json({ error: 'Missing code' }, { status: 400 });
   }
@@ -54,7 +53,15 @@ export async function POST(request: Request) {
   // the events on right now (a handful of rows, which also settle the wrong-event question) and their tickets are asked together, with just the columns needed, through the service client
   // (who may scan was checked above; the per-row access rules of the user's own client were most of the wait).
   const serviceClient = createServiceClient();
-  let openEvents: { id: string; title: string | null; points_value: number; start_date: string; end_date: string | null; requires_checkin_form: boolean | null; checkin_windows: unknown }[] = [];
+  let openEvents: {
+    id: string;
+    title: string | null;
+    points_value: number;
+    start_date: string;
+    end_date: string | null;
+    requires_checkin_form: boolean | null;
+    checkin_windows: unknown;
+  }[] = [];
   type Candidate = Record<string, unknown> & { id: string; ticket_code: string; event_id: string; user_id: string; status: string; user?: unknown; event?: unknown };
   let eventTickets = null as Candidate[] | null;
   let candidatesError: unknown = null;
@@ -62,14 +69,20 @@ export async function POST(request: Request) {
     // Both at once: the events on right now, and their tickets with the holder's name and the event alongside (one round trip, not three).
     const [ev, tk] = await Promise.all([
       serviceClient.from('events').select('id, title, points_value, start_date, end_date, requires_checkin_form, checkin_windows').or(openEventsFilter()),
-      serviceClient.from('tickets').select(`id, ticket_code, status, checked_in_at, checked_in_by, checkin_form_completed_at, event_id, user_id, user:profiles!tickets_user_id_fkey(display_name), event:events!inner${eventColumns}`).or(openEventsFilter(), { referencedTable: 'events' }),
+      serviceClient
+        .from('tickets')
+        .select(
+          `id, ticket_code, status, checked_in_at, checked_in_by, checkin_form_completed_at, event_id, user_id, user:profiles!tickets_user_id_fkey(display_name), event:events!inner${eventColumns}`,
+        )
+        .or(openEventsFilter(), { referencedTable: 'events' }),
     ]);
     candidatesError = ev.error ?? tk.error;
     openEvents = (ev.data ?? []) as typeof openEvents;
     eventTickets = (tk.data ?? []) as unknown as Candidate[];
   } else {
     const q = await supabase.from('tickets').select(`${columns}${eventColumns}`).eq('event_id', pickedEvent);
-    eventTickets = q.data as Candidate[] | null; candidatesError = q.error;
+    eventTickets = q.data as Candidate[] | null;
+    candidatesError = q.error;
   }
 
   if (candidatesError) {
@@ -87,7 +100,7 @@ export async function POST(request: Request) {
   if (tgToken) {
     const tok = String(tgToken).trim().toLowerCase();
     if (!/^([0-9a-f]{8}|[0-9a-f]{12})$/.test(tok)) return NextResponse.json({ error: 'That isn’t a ticket.' }, { status: 400 });
-    const wins = scanWindows();   // about 30 s, not 60 (see rotatingCode)
+    const wins = scanWindows(); // about 30 s, not 60 (see rotatingCode)
     matches = (t) => wins.some((w) => qrToken(t.ticket_code, w).slice(0, tok.length) === tok);
   } else {
     const raw = String(code).trim().replace(/^#\s*/, '');
@@ -111,7 +124,7 @@ export async function POST(request: Request) {
       const wrongEventData = Array.isArray(wrongEventTicket.event) ? wrongEventTicket.event[0] : wrongEventTicket.event;
       return NextResponse.json(
         { error: `This ticket is for a different event — ${wrongEventData?.title || 'another event'}. Switch events above to check them in.` },
-        { status: 409 }
+        { status: 409 },
       );
     }
     return NextResponse.json({ error: 'Code not recognized — ask them to reopen their ticket and try again' }, { status: 404 });
@@ -127,7 +140,16 @@ export async function POST(request: Request) {
   if (anyEvent && confirmEvent !== true) {
     const live = openEvents.filter((e) => isHappeningNow(e));
     if (live.length > 0 && !live.some((e) => e.id === ticket.event_id)) {
-      return NextResponse.json({ code: 'confirm_event', error: 'Wrong event?', user_name: userData?.display_name || 'Unknown', event_title: eventData?.title || '', now_event: live.map((e) => e.title).join(' and ') }, { status: 409 });
+      return NextResponse.json(
+        {
+          code: 'confirm_event',
+          error: 'Wrong event?',
+          user_name: userData?.display_name || 'Unknown',
+          event_title: eventData?.title || '',
+          now_event: live.map((e) => e.title).join(' and '),
+        },
+        { status: 409 },
+      );
     }
   }
 
@@ -151,7 +173,11 @@ export async function POST(request: Request) {
   // 20260920022210_allow_self_insert_notifications.sql) and
   // award_checkin_points is a security-definer RPC — both genuinely need
   // the service-role client, not the officer's own.
-  const { error: checkinError, firstCheckin, day } = await performCheckin(
+  const {
+    error: checkinError,
+    firstCheckin,
+    day,
+  } = await performCheckin(
     serviceClient,
     ticket,
     {
@@ -162,13 +188,13 @@ export async function POST(request: Request) {
       end_date: eventData?.end_date ?? null,
       checkin_windows: (eventData as { checkin_windows?: { day: string; start: string; end: string }[] } | null)?.checkin_windows ?? [],
     },
-    user.id
+    user.id,
   );
   if (checkinError) {
     // "Event ended" is a deterministic rejection, not a transient server
     // failure — 409 (not 500) so fetchWithRetry's retry-on-5xx logic
     // doesn't waste 3 attempts retrying something that'll never succeed.
-    const status = (checkinError.includes('already ended') || checkinError.startsWith('Check-in for today') || checkinError.startsWith('Already')) ? 409 : 500;
+    const status = checkinError.includes('already ended') || checkinError.startsWith('Check-in for today') || checkinError.startsWith('Already') ? 409 : 500;
     return NextResponse.json({ error: checkinError }, { status });
   }
 
@@ -176,7 +202,10 @@ export async function POST(request: Request) {
   // failure to read back the new total shouldn't turn into a 500 for
   // something that already worked. The scanner UI just won't show the
   // points animation for this scan if these come back empty.
-  const [{ data: allAmounts }, tiers] = await Promise.all([serviceClient.from('point_transactions').select('amount, reversed_at').eq('user_id', ticket.user_id), tiersPromise ?? fetchTiers(supabase)]);
+  const [{ data: allAmounts }, tiers] = await Promise.all([
+    serviceClient.from('point_transactions').select('amount, reversed_at').eq('user_id', ticket.user_id),
+    tiersPromise ?? fetchTiers(supabase),
+  ]);
   const lifetimeEarned = (allAmounts ?? []).filter((t) => t.amount > 0 && !t.reversed_at).reduce((sum, t) => sum + t.amount, 0);
 
   return NextResponse.json({

@@ -11,32 +11,56 @@ try {
   const granted = await user('granted', ['officer']);
   const plain = await user('plain', ['officer']);
   const exec = await user('exec', ['exec']);
-  const a = await user('a', []), b = await user('b', []), c = await user('c', []), d = await user('d', []);
-  const { data: ev, error: evErr } = await svc.from('events').insert({ title: 'ZZ Email Night', start_date: new Date(Date.now() + 3 * 86400e3).toISOString(), is_published: true, location: 'ZZ Room' }).select('id').single();
+  const a = await user('a', []),
+    b = await user('b', []),
+    c = await user('c', []),
+    d = await user('d', []);
+  const { data: ev, error: evErr } = await svc
+    .from('events')
+    .insert({ title: 'ZZ Email Night', start_date: new Date(Date.now() + 3 * 86400e3).toISOString(), is_published: true, location: 'ZZ Room' })
+    .select('id')
+    .single();
   if (evErr) throw new Error(`event: ${evErr.message}`);
   eventId = ev.id;
-  for (const u of [a, b, c, d]) { const { error } = await svc.from('tickets').insert({ event_id: eventId, user_id: u.id, status: 'active' }); if (error) throw new Error(`ticket: ${error.message}`); }
+  for (const u of [a, b, c, d]) {
+    const { error } = await svc.from('tickets').insert({ event_id: eventId, user_id: u.id, status: 'active' });
+    if (error) throw new Error(`ticket: ${error.message}`);
+  }
   // b opted out of reminders, c switched off all club emails, d opted out of updates only
   await svc.from('profiles').update({ email_reminders: false }).eq('id', b.id);
   await svc.from('profiles').update({ email_all: false }).eq('id', c.id);
   await svc.from('profiles').update({ email_notifications: false }).eq('id', d.id);
 
   t.ok('an officer cannot open event emails', (await plain.call('GET', '/api/event-emails')).s === 403);
-  t.ok('an admin can, and sees the events', (await admin.call('GET', '/api/event-emails')).j.events?.some((e) => e.id === eventId));
+  t.ok(
+    'an admin can, and sees the events',
+    (await admin.call('GET', '/api/event-emails')).j.events?.some((e) => e.id === eventId),
+  );
   await svc.from('capability_grants').insert({ capability: 'send_event_emails', user_id: granted.id });
   t.ok('an executive can open event emails', (await exec.call('GET', '/api/event-emails')).s === 200);
   t.ok('a person granted the permission can too', (await granted.call('GET', '/api/event-emails')).s === 200);
 
   const rem = (await admin.call('GET', `/api/event-emails?event_id=${eventId}&kind=reminders`)).j;
-  t.ok('reminders skip the one who opted out and the one who turned everything off', rem.recipients === 2 && rem.skippedOptOut === 2 && rem.ticketHolders === 4, JSON.stringify([rem.recipients, rem.skippedOptOut, rem.ticketHolders]));
+  t.ok(
+    'reminders skip the one who opted out and the one who turned everything off',
+    rem.recipients === 2 && rem.skippedOptOut === 2 && rem.ticketHolders === 4,
+    JSON.stringify([rem.recipients, rem.skippedOptOut, rem.ticketHolders]),
+  );
   const upd = (await admin.call('GET', `/api/event-emails?event_id=${eventId}&kind=updates`)).j;
   t.ok('updates are a separate switch', upd.recipients === 2 && upd.skippedOptOut === 2, JSON.stringify([upd.recipients, upd.skippedOptOut]));
-  t.ok('the preview is the event email with an opt-out link and a ticket button', rem.preview.includes('ZZ Email Night') && rem.preview.includes('/api/email/unsubscribe?t=') && rem.preview.includes('Show my ticket'));
+  t.ok(
+    'the preview is the event email with an opt-out link and a ticket button',
+    rem.preview.includes('ZZ Email Night') && rem.preview.includes('/api/email/unsubscribe?t=') && rem.preview.includes('Show my ticket'),
+  );
 
   const used0 = (await admin.call('GET', `/api/event-emails?event_id=${eventId}&kind=reminders`)).j.usedToday;
   t.ok('a test goes to the person signed in', (await admin.call('POST', '/api/event-emails', { action: 'test', event_id: eventId, kind: 'reminders', subject: 'Hi' })).s === 200);
   const after = (await admin.call('GET', `/api/event-emails?event_id=${eventId}&kind=reminders`)).j;
-  t.ok('a test counts toward today\u2019s emails but is not in the history', after.usedToday === used0 + 1 && !after.history.some((h) => /TEST/.test(h.subject)), JSON.stringify([used0, after.usedToday]));
+  t.ok(
+    'a test counts toward today\u2019s emails but is not in the history',
+    after.usedToday === used0 + 1 && !after.history.some((h) => /TEST/.test(h.subject)),
+    JSON.stringify([used0, after.usedToday]),
+  );
   t.ok('a subject is needed', (await admin.call('POST', '/api/event-emails', { action: 'start', event_id: eventId, kind: 'reminders', subject: ' ' })).s === 400);
 
   // the daily limit: pretend 1,999 were sent today, then 2 more cannot go
@@ -53,26 +77,49 @@ try {
   const row = (await svc.from('event_emails').select('sent, failed, recipients, skipped_optout').eq('id', start.j.id).single()).data;
   t.ok('the record shows what happened', row.sent === 2 && row.failed === 0 && row.recipients === 2 && row.skipped_optout === 2, JSON.stringify(row));
   t.ok('an officer cannot send a batch', (await plain.call('POST', `/api/event-emails/${start.j.id}`, { from: 2 })).s === 403);
-  t.ok('the history lists it with the sender’s name', (await admin.call('GET', `/api/event-emails?event_id=${eventId}&kind=reminders`)).j.history.some((h) => h.subject === 'ZZ Hello' && h.sent === 2));
+  t.ok(
+    'the history lists it with the sender’s name',
+    (await admin.call('GET', `/api/event-emails?event_id=${eventId}&kind=reminders`)).j.history.some((h) => h.subject === 'ZZ Hello' && h.sent === 2),
+  );
 
   // members choose their own switches, and the link in an email turns one off without signing in
   const prefs = (await a.call('GET', '/api/email/preferences')).j;
   t.ok('a member sees the switches, all on', prefs.all === true && prefs.kinds.length === 3 && prefs.kinds.every((k) => k.on));
-  t.ok('a member can switch a kind off', (await a.call('PATCH', '/api/email/preferences', { kind: 'newsletter', on: false })).s === 200 && (await a.call('GET', '/api/email/preferences')).j.kinds.find((k) => k.id === 'newsletter').on === false);
+  t.ok(
+    'a member can switch a kind off',
+    (await a.call('PATCH', '/api/email/preferences', { kind: 'newsletter', on: false })).s === 200 &&
+      (await a.call('GET', '/api/email/preferences')).j.kinds.find((k) => k.id === 'newsletter').on === false,
+  );
   t.ok('and the master switch', (await a.call('PATCH', '/api/email/preferences', { all: false })).s === 200 && (await a.call('GET', '/api/email/preferences')).j.all === false);
   const secret = env.EMAIL_LINK_SECRET || env.SUPABASE_SERVICE_ROLE_KEY;
-  const token = (uid, kind) => { const body = Buffer.from(`${uid}.${kind}`).toString('base64url'); return `${body}.${createHmac('sha256', secret).update(body).digest('base64url')}`; };
+  const token = (uid, kind) => {
+    const body = Buffer.from(`${uid}.${kind}`).toString('base64url');
+    return `${body}.${createHmac('sha256', secret).update(body).digest('base64url')}`;
+  };
   t.ok('a made-up opt-out link does nothing', (await a.call('POST', `/api/email/unsubscribe?t=${encodeURIComponent('abc.def')}`)).s === 400);
   const opt = await fetch(`${process.env.BASE_URL}/api/email/unsubscribe?t=${encodeURIComponent(token(a.id, 'reminders'))}`, { method: 'POST' });
-  t.ok('the opt-out link works without signing in', opt.status === 200 && (await svc.from('profiles').select('email_reminders').eq('id', a.id).single()).data.email_reminders === false);
+  t.ok(
+    'the opt-out link works without signing in',
+    opt.status === 200 && (await svc.from('profiles').select('email_reminders').eq('id', a.id).single()).data.email_reminders === false,
+  );
   const actions = async (ids) => ((await svc.from('audit_log').select('action').in('actor_id', ids)).data ?? []).map((r) => r.action);
   const logged = await actions([admin.id, a.id]);
-  t.ok('every email action is in the audit log', ['event_email.test', 'event_email.send', 'event_email.finish', 'email.preference', 'email.unsubscribe'].every((x) => logged.includes(x)), JSON.stringify(logged));
+  t.ok(
+    'every email action is in the audit log',
+    ['event_email.test', 'event_email.send', 'event_email.finish', 'email.preference', 'email.unsubscribe'].every((x) => logged.includes(x)),
+    JSON.stringify(logged),
+  );
 } catch (e) {
-  console.log('FAIL (setup)', e.message); t.fail();
+  console.log('FAIL (setup)', e.message);
+  t.fail();
 } finally {
   if (eventId) await svc.from('events').delete().eq('id', eventId);
-  await svc.from('capability_grants').delete().eq('capability', 'send_event_emails').is('group_id', null).in('user_id', (await svc.from('profiles').select('id').like('display_name', 'ZZ Mtg%')).data?.map((p) => p.id) ?? []);
+  await svc
+    .from('capability_grants')
+    .delete()
+    .eq('capability', 'send_event_emails')
+    .is('group_id', null)
+    .in('user_id', (await svc.from('profiles').select('id').like('display_name', 'ZZ Mtg%')).data?.map((p) => p.id) ?? []);
   // the log lines this run wrote (by the ZZ people, or about the ZZ event) do not stay in the real audit log
   const ids = (await svc.from('profiles').select('id').like('display_name', 'ZZ Mtg%')).data?.map((p) => p.id) ?? [];
   if (ids.length) await svc.from('audit_log').delete().in('actor_id', ids);

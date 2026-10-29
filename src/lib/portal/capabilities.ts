@@ -170,10 +170,28 @@ export function requiresOrgTitle(roles: RoleGrant[]): boolean {
 // that are otherwise exec/admin-only (so far: meeting attendance reports); everything the team's roles already
 // cover is not grantable. Roles, points, stats and site content stay role-only.
 export const GRANTABLE_CAPABILITIES: { id: Capability; label: string; description: string }[] = [
-  { id: 'manage_strikes', label: 'Strikes (HR team)', description: 'See every officer’s, lead’s and exec’s strikes and vouchers, add strikes directly, review missed meetings, take strikes away, and give or remove vouchers, always with a reason the person can read. Exec already have this. Very private, and nobody can change their own record.' },
-  { id: 'manage_logistics', label: 'Event Logistics', description: 'Add and edit equipment, prizes and sponsors, plan events and manage the Event Logistics lists. Every officer can already look at Logistics; this is what lets someone change it.' },
-  { id: 'send_event_emails', label: 'Send event emails', description: 'Write and send a reminder or update email to everyone with a ticket to an event, with a test email to yourself first. Members can opt out of each kind of email.' },
-  { id: 'view_attendance_reports', label: 'Meeting attendance reports', description: 'See every meeting’s attendance results, absences and reasons, check-in times, and download the HR CSV export. View only.' },
+  {
+    id: 'manage_strikes',
+    label: 'Strikes (HR team)',
+    description:
+      'See every officer’s, lead’s and exec’s strikes and vouchers, add strikes directly, review missed meetings, take strikes away, and give or remove vouchers, always with a reason the person can read. Exec already have this. Very private, and nobody can change their own record.',
+  },
+  {
+    id: 'manage_logistics',
+    label: 'Event Logistics',
+    description:
+      'Add and edit equipment, prizes and sponsors, plan events and manage the Event Logistics lists. Every officer can already look at Logistics; this is what lets someone change it.',
+  },
+  {
+    id: 'send_event_emails',
+    label: 'Send event emails',
+    description: 'Write and send a reminder or update email to everyone with a ticket to an event, with a test email to yourself first. Members can opt out of each kind of email.',
+  },
+  {
+    id: 'view_attendance_reports',
+    label: 'Meeting attendance reports',
+    description: 'See every meeting’s attendance results, absences and reasons, check-in times, and download the HR CSV export. View only.',
+  },
 ];
 
 // Adds the permissions someone was granted directly to their role list, so every existing

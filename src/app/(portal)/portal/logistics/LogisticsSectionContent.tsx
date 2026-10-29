@@ -30,38 +30,86 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
   const urlView = useLiveParams().get('view') ?? undefined;
   const setParams = usePortalParams();
   const [route, setRoute] = useState<Route>(() => parseRoute(urlTab, urlSub, urlDetail, canManage, urlView));
-  const go = useCallback((r: Route) => { setRoute(r); setParams({ section: 'logistics', ...routeParams(r) }); }, [setParams]);
+  const go = useCallback(
+    (r: Route) => {
+      setRoute(r);
+      setParams({ section: 'logistics', ...routeParams(r) });
+    },
+    [setParams],
+  );
   // An old address (equipment, plans, a long ID, a prize page…) is tidied to the new one.
   useEffect(() => {
     const parsed = parseRoute(urlTab, urlSub, urlDetail, canManage, urlView);
     const want = routeParams(parsed);
-    if (parsed.tab === 'events' && parsed.plan) return;   // an event is tidied by PlansTab, which knows its name
-    if (urlTab && (urlTab !== want.tab || (urlSub ?? null) !== want.subtab || (urlDetail ?? null) !== want.detail || (urlView ?? null) !== want.view)) { setRoute(parsed); setParams({ section: 'logistics', ...want }); }
+    if (parsed.tab === 'events' && parsed.plan) return; // an event is tidied by PlansTab, which knows its name
+    if (urlTab && (urlTab !== want.tab || (urlSub ?? null) !== want.subtab || (urlDetail ?? null) !== want.detail || (urlView ?? null) !== want.view)) {
+      setRoute(parsed);
+      setParams({ section: 'logistics', ...want });
+    }
   }, [urlTab, urlSub, urlDetail, urlView, canManage, setParams]);
 
-  const requestOnly = !!data?.requestOnly;   // a division account: only an event's Requests pages
+  const requestOnly = !!data?.requestOnly; // a division account: only an event's Requests pages
   const tabs = [
     { id: 'home' as const, label: 'Overview', icon: <LayoutDashboard size={15} /> },
     { id: 'devices' as const, label: 'Devices', icon: <Package size={15} /> },
     { id: 'prizing' as const, label: 'Prizing', icon: <Gift size={15} /> },
     { id: 'events' as const, label: 'Events', icon: <CalendarDays size={15} /> },
   ];
-  const pick = (t: Tab) => go(t === 'home' ? { tab: 'home' } : t === 'events' ? { tab: 'events', plan: null, page: 'requests' } : t === 'prizing' ? { tab: 'prizing', plan: null } : { tab: 'devices', plan: null });
+  const pick = (t: Tab) =>
+    go(
+      t === 'home'
+        ? { tab: 'home' }
+        : t === 'events'
+          ? { tab: 'events', plan: null, page: 'requests' }
+          : t === 'prizing'
+            ? { tab: 'prizing', plan: null }
+            : { tab: 'devices', plan: null },
+    );
   // With an event open under Events the sheet gets the whole page: the title and tabs step aside (All Events goes back).
   const inPlan = route.tab === 'events' && !!route.plan;
-  useEffect(() => { document.addEventListener('keydown', onUndoKey); return () => { document.removeEventListener('keydown', onUndoKey); clearEdits(); }; }, []);   // Ctrl+Z for cell edits
-  useEffect(() => { if (requestOnly && route.tab !== 'events') go({ tab: 'events', plan: null, page: 'requests' }); }, [requestOnly, route.tab, go]);
+  useEffect(() => {
+    document.addEventListener('keydown', onUndoKey);
+    return () => {
+      document.removeEventListener('keydown', onUndoKey);
+      clearEdits();
+    };
+  }, []); // Ctrl+Z for cell edits
+  useEffect(() => {
+    if (requestOnly && route.tab !== 'events') go({ tab: 'events', plan: null, page: 'requests' });
+  }, [requestOnly, route.tab, go]);
 
   return (
     <div className={styles.page}>
-      {!inPlan && <SectionHeader title="Event Logistics" flush sub={canManage ? 'Where every device and prize goes for each event, and what is in storage.' : 'Find where a device goes, what is in storage, and where to get it. Only the logistics team can make changes.'} />}
+      {!inPlan && (
+        <SectionHeader
+          title="Event Logistics"
+          flush
+          sub={
+            canManage
+              ? 'Where every device and prize goes for each event, and what is in storage.'
+              : 'Find where a device goes, what is in storage, and where to get it. Only the logistics team can make changes.'
+          }
+        />
+      )}
       {!inPlan && !requestOnly && <SectionTabs<Tab> label="Event Logistics" value={route.tab} onChange={pick} tabs={tabs} />}
-      {error && <div role="alert" onClick={() => setError('')}><Notice tone="error">{error}</Notice></div>}
-      {!data ? (error ? null : <Loading variant="inline" label="Loading…" />)
-        : route.tab === 'events' || requestOnly ? <PlansTab api={api} data={data} route={route.tab === 'events' ? route : { tab: 'events', plan: null, page: 'requests' }} go={go} />
-        : route.tab === 'home' ? <LogisticsHome data={data} go={go} />
-        : route.tab === 'prizing' ? <PrizingPage api={api} data={data} slug={route.plan} sheet={!!route.sheet} go={go} />
-        : <DevicesPage api={api} data={data} route={route} go={go} />}
+      {error && (
+        <div role="alert" onClick={() => setError('')}>
+          <Notice tone="error">{error}</Notice>
+        </div>
+      )}
+      {!data ? (
+        error ? null : (
+          <Loading variant="inline" label="Loading…" />
+        )
+      ) : route.tab === 'events' || requestOnly ? (
+        <PlansTab api={api} data={data} route={route.tab === 'events' ? route : { tab: 'events', plan: null, page: 'requests' }} go={go} />
+      ) : route.tab === 'home' ? (
+        <LogisticsHome data={data} go={go} />
+      ) : route.tab === 'prizing' ? (
+        <PrizingPage api={api} data={data} slug={route.plan} sheet={!!route.sheet} go={go} />
+      ) : (
+        <DevicesPage api={api} data={data} route={route} go={go} />
+      )}
     </div>
   );
 }

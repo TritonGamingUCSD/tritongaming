@@ -12,7 +12,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
   if (auth.error) return auth.error;
   const code = cleanCode((await params).code);
   const b = await request.json().catch(() => ({}));
-  const pos = Math.round(Number(b.pos)), q = Math.round(Number(b.q));
+  const pos = Math.round(Number(b.pos)),
+    q = Math.round(Number(b.q));
   const g = code ? await loadGame(auth.svc, code, 'id') : null;
   if (!g) return NextResponse.json({ error: 'There is no game with that code.' }, { status: 404 });
   if (!Number.isInteger(pos) || !Number.isInteger(q) || pos < 0 || pos > 3 || q < 0) return NextResponse.json({ error: 'Pick one of the answers.' }, { status: 400 });

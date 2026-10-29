@@ -13,7 +13,12 @@ vi.mock('@/lib/supabase/admin', () => ({
   createServiceClient: () => ({
     from: (table: string) => ({
       select: () => ({ in: async () => ({ data: table === 'push_subscriptions' ? subs : prefs }) }),
-      delete: () => ({ eq: async (_c: string, id: string) => { deleted.push(id); return {}; } }),
+      delete: () => ({
+        eq: async (_c: string, id: string) => {
+          deleted.push(id);
+          return {};
+        },
+      }),
     }),
   }),
 }));
@@ -21,7 +26,13 @@ vi.mock('@/lib/supabase/admin', () => ({
 const { categoryOf, validPushEndpoint, pushNotifications, vapidSubject } = await import('@/lib/notifications/webPush');
 const sub = (id: string, user: string) => ({ id, user_id: user, endpoint: `https://fcm.googleapis.com/fcm/send/${id}`, p256dh: 'k', auth: 'a' });
 
-beforeEach(() => { send.mockReset(); send.mockResolvedValue({}); deleted.length = 0; subs = []; prefs = []; });
+beforeEach(() => {
+  send.mockReset();
+  send.mockResolvedValue({});
+  deleted.length = 0;
+  subs = [];
+  prefs = [];
+});
 
 describe('what a notification is', () => {
   it('sorts types into the kinds a member can mute', () => {
@@ -61,7 +72,8 @@ describe('pushing notifications', () => {
   });
 
   it('skips a kind the member muted, but always sends one that cannot be muted', async () => {
-    subs = [sub('s1', 'u1')]; prefs = [{ user_id: 'u1', muted: ['meetings'] }];
+    subs = [sub('s1', 'u1')];
+    prefs = [{ user_id: 'u1', muted: ['meetings'] }];
     expect(await pushNotifications([row('u1', 'meeting_invite')])).toBe(0);
     expect(await pushNotifications([row('u1', 'event_reminder')])).toBe(1);
     expect(await pushNotifications([row('u1', 'security_notice')])).toBe(1);
@@ -79,7 +91,8 @@ describe('pushing notifications', () => {
   });
 
   it('does nothing when push is not set up', async () => {
-    const key = process.env.VAPID_PRIVATE_KEY; delete process.env.VAPID_PRIVATE_KEY;
+    const key = process.env.VAPID_PRIVATE_KEY;
+    delete process.env.VAPID_PRIVATE_KEY;
     subs = [sub('s1', 'u1')];
     expect(await pushNotifications([row('u1')])).toBe(0);
     expect(send).not.toHaveBeenCalled();

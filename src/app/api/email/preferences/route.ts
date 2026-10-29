@@ -8,7 +8,9 @@ export const dynamic = 'force-dynamic';
 
 async function me() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user;
 }
 
@@ -31,12 +33,22 @@ export async function PATCH(request: Request) {
   const b = await request.json().catch(() => ({}));
   let patch: Record<string, boolean> | null = null;
   if (typeof b.all === 'boolean') patch = { [MASTER_COLUMN]: b.all };
-  else { const k = EMAIL_KINDS.find((x) => x.id === b.kind); if (k && typeof b.on === 'boolean') patch = { [k.column]: b.on }; }
+  else {
+    const k = EMAIL_KINDS.find((x) => x.id === b.kind);
+    if (k && typeof b.on === 'boolean') patch = { [k.column]: b.on };
+  }
   if (!patch) return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
   const svc = createServiceClient();
   const { error } = await svc.from('profiles').update(patch).eq('id', user.id);
   if (error) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
-  const what = typeof b.all === 'boolean' ? 'all club emails' : `${b.kind} emails`, on = typeof b.all === 'boolean' ? b.all : b.on;
-  await logAudit(svc, { actorId: user.id, action: 'email.preference', entityType: 'email', entityId: user.id, summary: `Turned ${on ? 'on' : 'off'} ${what} for their account` }).catch(() => undefined);
+  const what = typeof b.all === 'boolean' ? 'all club emails' : `${b.kind} emails`,
+    on = typeof b.all === 'boolean' ? b.all : b.on;
+  await logAudit(svc, {
+    actorId: user.id,
+    action: 'email.preference',
+    entityType: 'email',
+    entityId: user.id,
+    summary: `Turned ${on ? 'on' : 'off'} ${what} for their account`,
+  }).catch(() => undefined);
   return NextResponse.json({ ok: true });
 }

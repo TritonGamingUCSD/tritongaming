@@ -27,8 +27,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (b.action === 'edit') {
     if (s.status === 'removed') return bad('A removed strike can’t be edited. Reinstate it first.');
     const patch: Record<string, unknown> = {};
-    if ('reason' in b) { const r = cleanReason(b.reason, 300); if (!r) return bad('Write the reason for the strike.'); patch.reason = r; }
-    if ('incident_date' in b) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.incident_date))) return bad('Pick the date it happened.'); patch.incident_date = b.incident_date; }
+    if ('reason' in b) {
+      const r = cleanReason(b.reason, 300);
+      if (!r) return bad('Write the reason for the strike.');
+      patch.reason = r;
+    }
+    if ('incident_date' in b) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(b.incident_date))) return bad('Pick the date it happened.');
+      patch.incident_date = b.incident_date;
+    }
     if ('category' in b) patch.category = cleanCategory(b.category);
     if (!Object.keys(patch).length) return bad('Nothing to change.');
     await auth.svc.from('strikes').update(patch).eq('id', id);
@@ -47,7 +54,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (b.action === 'apply_voucher') {
     if (s.status !== 'published') return bad('A voucher can only be used on a strike that’s on their record.');
     if (!reason) return bad('Say why the voucher is being used. They’ll see this.');
-    const { data: v } = await auth.svc.from('strike_vouchers').select('*').eq('id', String(b.voucher_id ?? '')).maybeSingle();
+    const { data: v } = await auth.svc
+      .from('strike_vouchers')
+      .select('*')
+      .eq('id', String(b.voucher_id ?? ''))
+      .maybeSingle();
     if (!v || v.user_id !== s.user_id) return bad('That voucher isn’t this person’s.');
     if (v.used_at || v.removed_at) return bad('That voucher can’t be used.');
     if (!(await spendVoucher(auth.svc, v.id as string, id, auth.user.id, reason))) return bad('That voucher can’t be used.');
@@ -60,8 +71,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!reason) return bad('Say why it’s being put back. They’ll see this.');
     // A strike that a voucher removed gets its voucher back (the original was deleted when it was used, so they get a fresh one).
     if (s.removed_how === 'voucher') {
-      const { data: back } = await auth.svc.from('strike_vouchers').insert({ user_id: s.user_id, reason: 'Returned when the strike was put back', created_by: auth.user.id }).select('id').single();
-      if (back) await recordEvent(auth.svc, { userId: s.user_id, kind: 'voucher_given', reason: 'Returned when the strike was put back', actorId: auth.user.id, voucherId: back.id as string });
+      const { data: back } = await auth.svc
+        .from('strike_vouchers')
+        .insert({ user_id: s.user_id, reason: 'Returned when the strike was put back', created_by: auth.user.id })
+        .select('id')
+        .single();
+      if (back)
+        await recordEvent(auth.svc, {
+          userId: s.user_id,
+          kind: 'voucher_given',
+          reason: 'Returned when the strike was put back',
+          actorId: auth.user.id,
+          voucherId: back.id as string,
+        });
     }
     await auth.svc.from('strikes').update({ status: 'published', removed_by: null, removed_at: null, removed_how: null, removed_note: null, voucher_id: null }).eq('id', id);
     await recordEvent(auth.svc, { userId: s.user_id, kind: 'strike_reinstated', reason, actorId: auth.user.id, strikeId: id });

@@ -11,9 +11,9 @@ export async function POST(request: Request) {
   if (auth.error) return auth.error;
   const body = await request.json().catch(() => ({}));
   const code = String(body.code ?? '').replace(/\s/g, '');
-  const qrToken = typeof body.qr_token === 'string' ? body.qr_token.trim().toLowerCase() : '';   // from the TGcode: `m` + this
+  const qrToken = typeof body.qr_token === 'string' ? body.qr_token.trim().toLowerCase() : ''; // from the TGcode: `m` + this
   if (qrToken && !/^([0-9a-f]{8}|[0-9a-f]{12})$/.test(qrToken)) return NextResponse.json({ error: 'That isn’t a meeting code.' }, { status: 400 });
-  const preview = body.preview === true;   // only say which meeting it is, so the person can confirm
+  const preview = body.preview === true; // only say which meeting it is, so the person can confirm
   if (!qrToken && !/^\d{6}$/.test(code)) return NextResponse.json({ error: 'Enter the 6-digit code from the screen.' }, { status: 400 });
 
   const mine = (await getTodaysMeetings(auth.svc)).filter((m) => isMeetingOpen(m) && canAttendMeeting(m, auth.user.id, auth.roles));
@@ -43,9 +43,11 @@ export async function POST(request: Request) {
 
   // They came after all: take back any "can't make it" recorded ahead of time.
   await auth.svc.from('meeting_absences').delete().eq('meeting_id', match.id).eq('user_id', auth.user.id);
-  const { data, error } = await auth.svc.from('meeting_attendance')
+  const { data, error } = await auth.svc
+    .from('meeting_attendance')
     .upsert({ meeting_id: match.id, user_id: auth.user.id, method: 'code' }, { onConflict: 'meeting_id,user_id', ignoreDuplicates: true })
-    .select('checked_in_at').maybeSingle();
+    .select('checked_in_at')
+    .maybeSingle();
   if (error) return NextResponse.json({ error: 'Couldn’t check you in. Try again.' }, { status: 500 });
   await notifyMeetingLive(match.id);
   return NextResponse.json({ ok: true, title: match.title, doc_url: match.doc_url, checked_in_at: data?.checked_in_at ?? new Date().toISOString() });

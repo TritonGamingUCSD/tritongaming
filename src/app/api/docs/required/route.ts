@@ -16,9 +16,15 @@ export async function GET(request: Request) {
   if (!id) {
     const auth = await authorizeDocs('view_docs');
     // The dashboard asks everyone; people who can't read the docs simply have nothing required (a 403 would be console noise on every load).
-    if ('error' in auth) { const e = auth.error as NextResponse; return e.status === 403 ? NextResponse.json({ unread: [] }) : e; }
+    if ('error' in auth) {
+      const e = auth.error as NextResponse;
+      return e.status === 403 ? NextResponse.json({ unread: [] }) : e;
+    }
     const mine = [...new Set((auth.roles as { role: string }[]).map((r) => r.role))];
-    const { data: req } = await auth.svc.from('doc_required_roles').select('doc_id').in('role', mine.length ? mine : ['none']);
+    const { data: req } = await auth.svc
+      .from('doc_required_roles')
+      .select('doc_id')
+      .in('role', mine.length ? mine : ['none']);
     const ids = [...new Set((req ?? []).map((r) => r.doc_id as string))];
     if (!ids.length) return NextResponse.json({ unread: [] });
     const [{ data: docs }, { data: reads }] = await Promise.all([
@@ -41,9 +47,14 @@ async function expectedReaders(svc: SupabaseClient, docId: string) {
   if (!roles.length) return { roles, people: [] as { id: string; name: string; read_at: string | null }[] };
   const { data: holders } = await svc.from('user_roles').select('user_id').in('role', roles);
   const ids: string[] = [...new Set((holders ?? []).map((h) => h.user_id as string))];
-  const [names, { data: reads }] = await Promise.all([namesOf(svc, ids), ids.length ? svc.from('doc_reads').select('user_id, read_at').eq('doc_id', docId).in('user_id', ids) : Promise.resolve({ data: [] })]);
+  const [names, { data: reads }] = await Promise.all([
+    namesOf(svc, ids),
+    ids.length ? svc.from('doc_reads').select('user_id, read_at').eq('doc_id', docId).in('user_id', ids) : Promise.resolve({ data: [] }),
+  ]);
   const readAt = new Map((reads ?? []).map((r) => [r.user_id as string, r.read_at as string]));
-  const people = ids.map((uid) => ({ id: uid, name: names.get(uid) ?? 'Someone', read_at: readAt.get(uid) ?? null })).sort((a, b) => Number(!!a.read_at) - Number(!!b.read_at) || a.name.localeCompare(b.name));
+  const people = ids
+    .map((uid) => ({ id: uid, name: names.get(uid) ?? 'Someone', read_at: readAt.get(uid) ?? null }))
+    .sort((a, b) => Number(!!a.read_at) - Number(!!b.read_at) || a.name.localeCompare(b.name));
   return { roles, people };
 }
 
@@ -59,8 +70,17 @@ export async function PUT(request: Request) {
   const { data: doc } = await auth.svc.from('docs').select('title').eq('id', id).maybeSingle();
   if (!doc) return bad('This doc was deleted by someone else.', 404);
   await auth.svc.from('doc_required_roles').delete().eq('doc_id', id);
-  if (roles.length) { const { error } = await auth.svc.from('doc_required_roles').insert(roles.map((role) => ({ doc_id: id, role }))); if (error) return bad('Couldn’t save that.', 500); }
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'doc', entityId: id, summary: roles.length ? `Made "${doc.title}" required reading for ${roles.join(', ')}` : `Made "${doc.title}" optional reading` });
+  if (roles.length) {
+    const { error } = await auth.svc.from('doc_required_roles').insert(roles.map((role) => ({ doc_id: id, role })));
+    if (error) return bad('Couldn’t save that.', 500);
+  }
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'update',
+    entityType: 'doc',
+    entityId: id,
+    summary: roles.length ? `Made "${doc.title}" required reading for ${roles.join(', ')}` : `Made "${doc.title}" optional reading`,
+  });
   return NextResponse.json({ ok: true, ...(await expectedReaders(auth.svc, id)) });
 }
 
@@ -83,8 +103,23 @@ export async function POST(request: Request) {
   const unread = people.filter((p) => !p.read_at && p.id !== auth.user.id).map((p) => p.id);
   if (!unread.length) return NextResponse.json({ ok: true, sent: 0 });
   // Once a day per person per doc, so pressing the button twice doesn't nag.
-  const { data: fresh } = await auth.svc.from('reminders_sent').upsert(unread.map((user_id) => ({ item_key: `docread:${id}|${pacificDayKey()}`, user_id })), { onConflict: 'item_key,user_id', ignoreDuplicates: true }).select('user_id');
+  const { data: fresh } = await auth.svc
+    .from('reminders_sent')
+    .upsert(
+      unread.map((user_id) => ({ item_key: `docread:${id}|${pacificDayKey()}`, user_id })),
+      { onConflict: 'item_key,user_id', ignoreDuplicates: true },
+    )
+    .select('user_id');
   const ids = (fresh ?? []).map((f) => f.user_id as string);
-  const sent = await createNotifications(auth.svc, ids.map((user_id) => ({ user_id, type: 'doc_required', title: b.action === 'reread' ? `Please read again: ${doc.title}` : `Please read: ${doc.title}`, body: b.action === 'reread' ? 'It changed in a way that matters. Please read it again.' : 'The exec team marked this as required reading.', href: `/portal/docs?id=${id}` })));
+  const sent = await createNotifications(
+    auth.svc,
+    ids.map((user_id) => ({
+      user_id,
+      type: 'doc_required',
+      title: b.action === 'reread' ? `Please read again: ${doc.title}` : `Please read: ${doc.title}`,
+      body: b.action === 'reread' ? 'It changed in a way that matters. Please read it again.' : 'The exec team marked this as required reading.',
+      href: `/portal/docs?id=${id}`,
+    })),
+  );
   return NextResponse.json({ ok: true, sent, already: unread.length - ids.length });
 }

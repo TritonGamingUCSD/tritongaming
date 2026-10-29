@@ -17,9 +17,14 @@ const cornerDotStyles: QRCornersDotType[] = ['dot', 'square'];
 
 // The icons worth one tap; the full list and custom upload live under "Center icon".
 const QUICK_ICONS: { value: QRCodeOptions['icon']; label: string }[] = [
-  { value: 'tg-color', label: 'TG logo' }, { value: 'none', label: 'None' }, { value: 'link', label: 'Link' },
-  { value: 'website', label: 'Website' }, { value: 'email', label: 'Email' }, { value: 'phone', label: 'Phone' },
-  { value: 'wifi', label: 'Wi-Fi' }, { value: 'location', label: 'Place' },
+  { value: 'tg-color', label: 'TG logo' },
+  { value: 'none', label: 'None' },
+  { value: 'link', label: 'Link' },
+  { value: 'website', label: 'Website' },
+  { value: 'email', label: 'Email' },
+  { value: 'phone', label: 'Phone' },
+  { value: 'wifi', label: 'Wi-Fi' },
+  { value: 'location', label: 'Place' },
 ];
 
 function updateCustomIcon(file: File | undefined, options: QRCodeOptions, setOptions: (o: QRCodeOptions) => void) {
@@ -46,7 +51,13 @@ function PresetThumb({ style }: { style: (typeof QR_PRESETS)[number]['style'] })
           style={{
             borderRadius: radius,
             background: on
-              ? (i === 0 || i === 2 ? style.cornersSquareColor : i === 6 ? style.cornersDotColor : style.dotsGradientEnabled ? `linear-gradient(135deg, ${style.dotsGradientStartColor}, ${style.dotsGradientEndColor})` : style.dotsColor)
+              ? i === 0 || i === 2
+                ? style.cornersSquareColor
+                : i === 6
+                  ? style.cornersDotColor
+                  : style.dotsGradientEnabled
+                    ? `linear-gradient(135deg, ${style.dotsGradientStartColor}, ${style.dotsGradientEndColor})`
+                    : style.dotsColor
               : 'transparent',
           }}
         />
@@ -62,7 +73,10 @@ const SWATCHES = ['#0b1020', '#002951', '#1e3a8a', '#0ea5e9', '#22d3ee', '#10b98
 function ColorField({ label, value, onChange, disabled }: { label: string; value: string; onChange: (v: string) => void; disabled?: boolean }) {
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
-  const commit = (v: string) => { setDraft(v); if (/^#[0-9a-f]{6}$/i.test(v)) onChange(v.toLowerCase()); };
+  const commit = (v: string) => {
+    setDraft(v);
+    if (/^#[0-9a-f]{6}$/i.test(v)) onChange(v.toLowerCase());
+  };
   const isCustom = !SWATCHES.includes(value.toLowerCase());
   return (
     <div className={`${styles.colorField} ${disabled ? styles.colorDisabled : ''}`}>
@@ -87,7 +101,15 @@ function ColorField({ label, value, onChange, disabled }: { label: string; value
       </div>
       <div className={styles.hexRow}>
         <span className={styles.hexDot} style={{ background: value }} aria-hidden="true" />
-        <input className={styles.hexInput} value={draft} onChange={(e) => commit(e.target.value.startsWith('#') ? e.target.value : `#${e.target.value}`)} maxLength={7} spellCheck={false} disabled={disabled} aria-label={`${label} hex code`} />
+        <input
+          className={styles.hexInput}
+          value={draft}
+          onChange={(e) => commit(e.target.value.startsWith('#') ? e.target.value : `#${e.target.value}`)}
+          maxLength={7}
+          spellCheck={false}
+          disabled={disabled}
+          aria-label={`${label} hex code`}
+        />
       </div>
     </div>
   );
@@ -104,8 +126,14 @@ function IconDropzone({ options, setOptions }: { options: QRCodeOptions; setOpti
   function take(file: File | undefined) {
     setError('');
     if (!file) return;
-    if (!/^image\/(png|jpeg|svg\+xml|webp)$/.test(file.type)) { setError('Use a PNG, JPG, SVG or WebP image.'); return; }
-    if (file.size > 2 * 1024 * 1024) { setError('Keep it under 2 MB.'); return; }
+    if (!/^image\/(png|jpeg|svg\+xml|webp)$/.test(file.type)) {
+      setError('Use a PNG, JPG, SVG or WebP image.');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError('Keep it under 2 MB.');
+      return;
+    }
     updateCustomIcon(file, options, setOptions);
   }
 
@@ -123,7 +151,9 @@ function IconDropzone({ options, setOptions }: { options: QRCodeOptions; setOpti
           </>
         ) : (
           <>
-            <span className={styles.dropIcon} aria-hidden="true"><Upload size={22} strokeWidth={1.75} /></span>
+            <span className={styles.dropIcon} aria-hidden="true">
+              <Upload size={22} strokeWidth={1.75} />
+            </span>
             <span className={styles.dropText}>
               <span className={styles.dropTitle}>Add your own icon</span>
               <span className={styles.dropSub}>Click to upload, drop or paste · PNG, JPG, SVG, WebP · up to 2 MB</span>
@@ -131,7 +161,16 @@ function IconDropzone({ options, setOptions }: { options: QRCodeOptions; setOpti
           </>
         )}
       </button>
-      {picking && <PictureDialog title="Your own icon" current={has ? options.customIcon ?? undefined : undefined} accept="image/png,image/jpeg,image/svg+xml,image/webp" hint="PNG, JPG, SVG or WebP, up to 2 MB" onUse={(f) => take(f[0])} onClose={() => setPicking(false)} />}
+      {picking && (
+        <PictureDialog
+          title="Your own icon"
+          current={has ? (options.customIcon ?? undefined) : undefined}
+          accept="image/png,image/jpeg,image/svg+xml,image/webp"
+          hint="PNG, JPG, SVG or WebP, up to 2 MB"
+          onUse={(f) => take(f[0])}
+          onClose={() => setPicking(false)}
+        />
+      )}
       {has && (
         <button type="button" className={styles.dropRemove} onClick={() => updateCustomIcon(undefined, options, setOptions)}>
           <X size={13} aria-hidden="true" /> Remove
@@ -208,7 +247,8 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
       <div className={styles.field}>
         <span className={styles.label}>2 · Pick a style</span>
         <div className={styles.presetGrid} role="radiogroup" aria-label="QR style">
-          {QR_PRESETS.filter((p) => !p.division).map((p) => (            <button
+          {QR_PRESETS.filter((p) => !p.division).map((p) => (
+            <button
               key={p.id}
               type="button"
               role="radio"
@@ -251,7 +291,10 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
               role="radio"
               aria-checked={options.icon === i.value}
               className={`${styles.iconChip} ${options.icon === i.value ? styles.iconChipActive : ''}`}
-              onClick={() => { setChosenDivision(null); set({ icon: i.value }); }}
+              onClick={() => {
+                setChosenDivision(null);
+                set({ icon: i.value });
+              }}
             >
               {i.label}
             </button>
@@ -266,8 +309,15 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
             {divisions.map((d) => {
               const active = options.icon === 'custom' && chosenDivision === d.id;
               return (
-                <button key={d.id} type="button" role="radio" aria-checked={active} disabled={loadingDivision !== null}
-                  className={`${styles.divChip} ${active ? styles.divChipActive : ''}`} onClick={() => applyDivisionLogo(d)}>
+                <button
+                  key={d.id}
+                  type="button"
+                  role="radio"
+                  aria-checked={active}
+                  disabled={loadingDivision !== null}
+                  className={`${styles.divChip} ${active ? styles.divChipActive : ''}`}
+                  onClick={() => applyDivisionLogo(d)}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={d.logo} alt="" className={styles.divLogo} />
                   <span>{loadingDivision === d.id ? 'Loading…' : d.name}</span>
@@ -304,19 +354,37 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
 
         <Fold title="Shapes" hint="Modules and corners">
           <div className={styles.fieldRow}>
-            <label className={styles.field}><span className={styles.label}>Module shape</span>
+            <label className={styles.field}>
+              <span className={styles.label}>Module shape</span>
               <Select className={styles.input} value={options.dotsType} onChange={(e) => set({ dotsType: e.target.value as QRDotsType })}>
-                {dotStyles.map((s) => <option key={s} value={s}>{s}</option>)}
-              </Select></label>
-            <label className={styles.field}><span className={styles.label}>Corner frame</span>
+                {dotStyles.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </Select>
+            </label>
+            <label className={styles.field}>
+              <span className={styles.label}>Corner frame</span>
               <Select className={styles.input} value={options.cornersSquareType} onChange={(e) => set({ cornersSquareType: e.target.value as QRCornersSquareType })}>
-                {cornerSquareStyles.map((s) => <option key={s} value={s}>{s}</option>)}
-              </Select></label>
+                {cornerSquareStyles.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </Select>
+            </label>
           </div>
-          <label className={styles.field}><span className={styles.label}>Corner dot</span>
+          <label className={styles.field}>
+            <span className={styles.label}>Corner dot</span>
             <Select className={styles.input} value={options.cornersDotType} onChange={(e) => set({ cornersDotType: e.target.value as QRCornersDotType })}>
-              {cornerDotStyles.map((s) => <option key={s} value={s}>{s}</option>)}
-            </Select></label>
+              {cornerDotStyles.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </Select>
+          </label>
         </Fold>
 
         <Fold title="Your own icon" hint="Upload a logo">
@@ -328,7 +396,16 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
           <label className={styles.field}>
             <span className={styles.label}>Space around the icon</span>
             <div className={styles.rangeRow}>
-              <input className={styles.range} type="range" min={0} max={24} step={1} value={options.iconPadding} onChange={(e) => set({ iconPadding: Number.parseInt(e.target.value, 10) })} disabled={options.icon === 'none'} />
+              <input
+                className={styles.range}
+                type="range"
+                min={0}
+                max={24}
+                step={1}
+                value={options.iconPadding}
+                onChange={(e) => set({ iconPadding: Number.parseInt(e.target.value, 10) })}
+                disabled={options.icon === 'none'}
+              />
               <span className={styles.rangeValue}>{options.iconPadding}px</span>
             </div>
           </label>
@@ -336,17 +413,28 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
 
         <Fold title="Size & download" hint={`${options.size}px · ${options.downloadFormat.toUpperCase()}`}>
           <div className={styles.fieldRow}>
-            <label className={styles.field}><span className={styles.label}>Size (px)</span>
-              <NumberInput className={styles.input} min={160} max={1200} step={20} value={options.size} onChange={(e) => set({ size: Number.parseInt(e.target.value, 10) || 0 })} /></label>
-            <label className={styles.field}><span className={styles.label}>Outer margin</span>
-              <NumberInput className={styles.input} min={0} max={64} step={2} value={options.margin} onChange={(e) => set({ margin: Number.parseInt(e.target.value, 10) || 0 })} /></label>
+            <label className={styles.field}>
+              <span className={styles.label}>Size (px)</span>
+              <NumberInput className={styles.input} min={160} max={1200} step={20} value={options.size} onChange={(e) => set({ size: Number.parseInt(e.target.value, 10) || 0 })} />
+            </label>
+            <label className={styles.field}>
+              <span className={styles.label}>Outer margin</span>
+              <NumberInput className={styles.input} min={0} max={64} step={2} value={options.margin} onChange={(e) => set({ margin: Number.parseInt(e.target.value, 10) || 0 })} />
+            </label>
           </div>
           <div className={styles.field}>
             <span className={styles.label}>Format</span>
             <div className={styles.radioGroup}>
               {(['png', 'jpeg'] as const).map((fmt) => (
                 <label key={fmt} className={`${styles.radioOption} ${options.downloadFormat === fmt ? styles.radioOptionActive : ''}`}>
-                  <input type="radio" name="downloadFormat" value={fmt} checked={options.downloadFormat === fmt} onChange={() => set({ downloadFormat: fmt })} className={styles.srOnly} />
+                  <input
+                    type="radio"
+                    name="downloadFormat"
+                    value={fmt}
+                    checked={options.downloadFormat === fmt}
+                    onChange={() => set({ downloadFormat: fmt })}
+                    className={styles.srOnly}
+                  />
                   {fmt.toUpperCase()}
                   {fmt === 'jpeg' && options.transparentBg && <span className={styles.radioNote}>(no alpha)</span>}
                 </label>

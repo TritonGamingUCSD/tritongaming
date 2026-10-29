@@ -3,7 +3,14 @@ import { validWallSpot, wallSpotFromBoard } from './meetingWall';
 
 describe('meeting wall spots', () => {
   it('maps every corner of the board onto a valid strip spot', () => {
-    for (const [u, v] of [[0, 0], [0.49, 1], [0.5, 0], [1, 1], [0.25, 0.5], [0.75, 0.5]]) {
+    for (const [u, v] of [
+      [0, 0],
+      [0.49, 1],
+      [0.5, 0],
+      [1, 1],
+      [0.25, 0.5],
+      [0.75, 0.5],
+    ]) {
       const s = wallSpotFromBoard(u, v);
       expect(validWallSpot(s.x, s.y)).toBe(true);
     }

@@ -20,11 +20,21 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (from !== (row.sent as number) + (row.failed as number)) return NextResponse.json({ error: 'That send has moved on. Reload the page.' }, { status: 409 });
   if (from >= (row.recipients as number)) return NextResponse.json({ done: true, next: from, total: row.recipients, sent: 0, failed: 0 });
   if (!isEmailKind(row.kind)) return NextResponse.json({ error: 'Bad kind.' }, { status: 400 });
-  const r = await sendBatch(a.svc, { id, event_id: row.event_id as string, kind: row.kind as EmailKind, subject: row.subject as string, note: row.note as string | null, cover: row.cover !== false }, from);
+  const r = await sendBatch(
+    a.svc,
+    { id, event_id: row.event_id as string, kind: row.kind as EmailKind, subject: row.subject as string, note: row.note as string | null, cover: row.cover !== false },
+    from,
+  );
   if ('error' in r) return NextResponse.json({ error: r.error }, { status: 404 });
   if (r.done) {
     const { data: end } = await a.svc.from('event_emails').select('sent, failed, recipients').eq('id', id).maybeSingle();
-    await logAudit(a.svc, { actorId: a.user.id, action: 'event_email.finish', entityType: 'event', entityId: row.event_id as string, summary: `Finished sending “${String(row.subject).slice(0, 80)}”: ${end?.sent ?? '?'} sent, ${end?.failed ?? 0} failed of ${end?.recipients ?? row.recipients}` }).catch(() => undefined);
+    await logAudit(a.svc, {
+      actorId: a.user.id,
+      action: 'event_email.finish',
+      entityType: 'event',
+      entityId: row.event_id as string,
+      summary: `Finished sending “${String(row.subject).slice(0, 80)}”: ${end?.sent ?? '?'} sent, ${end?.failed ?? 0} failed of ${end?.recipients ?? row.recipients}`,
+    }).catch(() => undefined);
   }
   return NextResponse.json(r);
 }

@@ -14,7 +14,9 @@ export default function HomeScreenLaunch() {
       if (!standalone || sessionStorage.getItem('tg-launched')) return;
       sessionStorage.setItem('tg-launched', '1');
       if (!SKIP.test(window.location.pathname)) window.location.replace('/portal');
-    } catch { /* storage unavailable: the page just stays where it is */ }
+    } catch {
+      /* storage unavailable: the page just stays where it is */
+    }
   }, []);
   return null;
 }

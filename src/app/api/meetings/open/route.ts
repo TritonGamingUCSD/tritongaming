@@ -2,7 +2,17 @@ import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { pacificDayKey } from '@/lib/events/checkinDays';
 import { isExpected } from '@/lib/meetings/meetingAudience';
-import { attachExtras, authorizeMeetings, checkInOpensAt, ensureOccurrence, weekdayOfKey, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting } from '@/lib/meetings/meetings';
+import {
+  attachExtras,
+  authorizeMeetings,
+  checkInOpensAt,
+  ensureOccurrence,
+  weekdayOfKey,
+  type MeetingRow,
+  type SeriesRow,
+  canManageMeeting,
+  notYourMeeting,
+} from '@/lib/meetings/meetings';
 
 // Exec starts (or re-opens) check-in for one specific meeting: either an existing meeting
 // ({meeting_id}) or the occurrence of a repeating series on a date ({series_id, date}).
@@ -31,18 +41,27 @@ export async function POST(request: Request) {
   if (meeting.meeting_date !== today) return NextResponse.json({ error: 'You can start check-in on the day of the meeting.' }, { status: 409 });
 
   const newEnd = new Date(Math.max(new Date(meeting.ends_at).getTime(), Date.now() + 30 * 60_000));
-  const { error } = await auth.svc.from('meetings')
+  const { error } = await auth.svc
+    .from('meetings')
     .update({ opened_at: meeting.opened_at ?? new Date().toISOString(), closed_at: null, ends_at: newEnd.toISOString(), opened_by: auth.user.id, expected_locked_at: null })
     .eq('id', meeting.id);
   if (error) return NextResponse.json({ error: 'Failed to open check-in.' }, { status: 500 });
-  await auth.svc.from('meeting_expected').delete().eq('meeting_id', meeting.id);   // open again: the list is live until it closes
+  await auth.svc.from('meeting_expected').delete().eq('meeting_id', meeting.id); // open again: the list is live until it closes
   // Whoever opens check-in is in the room: if the meeting is for them AND we're inside the same window
   // members can check in (10 minutes before the start until the end), check them in too. Opening it
   // early from a desk doesn't count. Never overwrites an existing check-in.
   const [withExtra] = await attachExtras(auth.svc, [meeting]);
   if (Date.now() >= checkInOpensAt(meeting) && isExpected(withExtra, auth.user.id, auth.roles)) {
-    await auth.svc.from('meeting_attendance').upsert({ meeting_id: meeting.id, user_id: auth.user.id, method: 'host' }, { onConflict: 'meeting_id,user_id', ignoreDuplicates: true });
+    await auth.svc
+      .from('meeting_attendance')
+      .upsert({ meeting_id: meeting.id, user_id: auth.user.id, method: 'host' }, { onConflict: 'meeting_id,user_id', ignoreDuplicates: true });
   }
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'open', entityType: 'meeting', entityId: meeting.id, summary: `Opened check-in for "${meeting.title}" (${meeting.meeting_date})` });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'open',
+    entityType: 'meeting',
+    entityId: meeting.id,
+    summary: `Opened check-in for "${meeting.title}" (${meeting.meeting_date})`,
+  });
   return NextResponse.json({ id: meeting.id });
 }

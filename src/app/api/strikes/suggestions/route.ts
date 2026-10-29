@@ -33,7 +33,13 @@ export async function POST(request: Request) {
     for (const x of back as NonNullable<(typeof back)[number]>[]) {
       await auth.svc.from('strike_dismissals').delete().eq('user_id', x.user_id).eq('meeting_id', x.meeting_id);
     }
-    await logAudit(auth.svc, { actorId: auth.user.id, action: 'undo', entityType: 'strike', entityId: items[0].meeting_id as string, summary: `Put ${items.length} missed meeting${items.length === 1 ? '' : 's'} back on the list` });
+    await logAudit(auth.svc, {
+      actorId: auth.user.id,
+      action: 'undo',
+      entityType: 'strike',
+      entityId: items[0].meeting_id as string,
+      summary: `Put ${items.length} missed meeting${items.length === 1 ? '' : 's'} back on the list`,
+    });
     return NextResponse.json({ ok: true, count: items.length });
   }
   const current = await suggestions(auth.svc);
@@ -42,18 +48,40 @@ export async function POST(request: Request) {
   const chosen = picked as NonNullable<(typeof picked)[number]>[];
   if (b.action === 'excuse') {
     // The same "excused absence" the meeting page records, so it also stops counting against their attendance.
-    const { error } = await auth.svc.from('meeting_absences').upsert(chosen.map((x) => ({ meeting_id: x.meeting_id, user_id: x.user_id, reason, excused: true, marked_by: auth.user.id })), { onConflict: 'meeting_id,user_id' });
+    const { error } = await auth.svc.from('meeting_absences').upsert(
+      chosen.map((x) => ({ meeting_id: x.meeting_id, user_id: x.user_id, reason, excused: true, marked_by: auth.user.id })),
+      { onConflict: 'meeting_id,user_id' },
+    );
     if (error) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
-    await logAudit(auth.svc, { actorId: auth.user.id, action: 'mark absent', entityType: 'meeting attendance', entityId: chosen[0].meeting_id, summary: `Marked ${chosen.length} missed-meeting suggestion${chosen.length === 1 ? '' : 's'} excused: ${reason}` });
+    await logAudit(auth.svc, {
+      actorId: auth.user.id,
+      action: 'mark absent',
+      entityType: 'meeting attendance',
+      entityId: chosen[0].meeting_id,
+      summary: `Marked ${chosen.length} missed-meeting suggestion${chosen.length === 1 ? '' : 's'} excused: ${reason}`,
+    });
     return NextResponse.json({ ok: true, count: chosen.length });
   }
   if (b.action === 'dismiss') {
-    await auth.svc.from('strike_dismissals').upsert(chosen.map((x) => ({ user_id: x.user_id, meeting_id: x.meeting_id, dismissed_by: auth.user.id, reason: reason || null })), { onConflict: 'user_id,meeting_id' });
-    await logAudit(auth.svc, { actorId: auth.user.id, action: 'dismiss', entityType: 'strike', entityId: chosen[0].meeting_id, summary: `Dismissed ${chosen.length} missed-meeting suggestion${chosen.length === 1 ? '' : 's'}` });
+    await auth.svc.from('strike_dismissals').upsert(
+      chosen.map((x) => ({ user_id: x.user_id, meeting_id: x.meeting_id, dismissed_by: auth.user.id, reason: reason || null })),
+      { onConflict: 'user_id,meeting_id' },
+    );
+    await logAudit(auth.svc, {
+      actorId: auth.user.id,
+      action: 'dismiss',
+      entityType: 'strike',
+      entityId: chosen[0].meeting_id,
+      summary: `Dismissed ${chosen.length} missed-meeting suggestion${chosen.length === 1 ? '' : 's'}`,
+    });
     return NextResponse.json({ ok: true, count: chosen.length });
   }
   const rows = chosen.map((x) => ({
-    user_id: x.user_id, incident_date: x.date, meeting_id: x.meeting_id, category: 'meeting', created_by: auth.user.id,
+    user_id: x.user_id,
+    incident_date: x.date,
+    meeting_id: x.meeting_id,
+    category: 'meeting',
+    created_by: auth.user.id,
     reason: `Missed ${x.title} on ${formatPacificDate(x.date)} without an excuse`,
   }));
   const { data, error } = await auth.svc.from('strikes').insert(rows).select('id, user_id');

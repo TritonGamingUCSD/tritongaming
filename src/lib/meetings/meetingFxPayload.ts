@@ -2,15 +2,19 @@
 // `cleanFx` before using it, since anything on the channel could have come from anywhere: it is only ever drawn, and counted if the emoji is one of the club's own.
 import { validWallSpot } from './meetingWall';
 
-export interface FxSticker { e: string; x: number; y: number }
+export interface FxSticker {
+  e: string;
+  x: number;
+  y: number;
+}
 export interface Fx {
-  b: string;                       // this message's own id: the same message is never counted twice, however many screens heard it
-  r?: Record<string, number>;      // emoji reactions: how many of each
-  s?: FxSticker[];                 // wall stickers
+  b: string; // this message's own id: the same message is never counted twice, however many screens heard it
+  r?: Record<string, number>; // emoji reactions: how many of each
+  s?: FxSticker[]; // wall stickers
 }
 
-export const FX_EVERY = 450;       // a phone sends what it has at most this often (ms)
-export const FX_MAX = 25;          // most of one emoji in one message
+export const FX_EVERY = 450; // a phone sends what it has at most this often (ms)
+export const FX_MAX = 25; // most of one emoji in one message
 export const FX_MAX_STICKERS = 8;
 
 const int = (n: unknown) => (typeof n === 'number' && Number.isFinite(n) ? Math.floor(n) : 0);

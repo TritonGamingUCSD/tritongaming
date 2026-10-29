@@ -37,7 +37,12 @@ export function categoryOf(type: string): PushCategory | null {
 const PUSH_HOSTS = [/(^|\.)fcm\.googleapis\.com$/, /(^|\.)push\.services\.mozilla\.com$/, /(^|\.)push\.apple\.com$/, /(^|\.)notify\.windows\.com$/];
 export function validPushEndpoint(endpoint: unknown): endpoint is string {
   if (typeof endpoint !== 'string' || endpoint.length > 1000) return false;
-  try { const u = new URL(endpoint); return u.protocol === 'https:' && PUSH_HOSTS.some((re) => re.test(u.hostname)); } catch { return false; }
+  try {
+    const u = new URL(endpoint);
+    return u.protocol === 'https:' && PUSH_HOSTS.some((re) => re.test(u.hostname));
+  } catch {
+    return false;
+  }
 }
 
 // The "subject" every push is signed with. Apple's push service is strict about it and answers 403 BadJwtToken to a local or placeholder address (localhost, .invalid),
@@ -50,9 +55,19 @@ export function vapidSubject(env: Record<string, string | undefined> = process.e
   if (own) {
     const email = own.replace(/^mailto:/i, '');
     if (/^[^\s@/]+@[^\s@/]+\.[^\s@/]+$/.test(email) && usable(email.split('@')[1])) return `mailto:${email}`;
-    try { const u = new URL(own); if (u.protocol === 'https:' && usable(u.hostname)) return u.origin; } catch { /* fall through */ }
+    try {
+      const u = new URL(own);
+      if (u.protocol === 'https:' && usable(u.hostname)) return u.origin;
+    } catch {
+      /* fall through */
+    }
   }
-  try { const u = new URL(env.NEXT_PUBLIC_SITE_URL ?? ''); if (u.protocol === 'https:' && usable(u.hostname)) return u.origin; } catch { /* fall through */ }
+  try {
+    const u = new URL(env.NEXT_PUBLIC_SITE_URL ?? '');
+    if (u.protocol === 'https:' && usable(u.hostname)) return u.origin;
+  } catch {
+    /* fall through */
+  }
   return PUBLIC_SITE;
 }
 
@@ -63,18 +78,41 @@ function setup() {
   configured = true;
 }
 
-export interface PushPayload { title: string; body?: string | null; url?: string | null; tag?: string }
-interface Sub { id: string; user_id: string; endpoint: string; p256dh: string; auth: string }
+export interface PushPayload {
+  title: string;
+  body?: string | null;
+  url?: string | null;
+  tag?: string;
+}
+interface Sub {
+  id: string;
+  user_id: string;
+  endpoint: string;
+  p256dh: string;
+  auth: string;
+}
 
-const clip = (s: string | null | undefined, n: number) => (s ?? '').length > n ? `${(s ?? '').slice(0, n - 1)}…` : s ?? '';
+const clip = (s: string | null | undefined, n: number) => ((s ?? '').length > n ? `${(s ?? '').slice(0, n - 1)}…` : (s ?? ''));
 
 // One send. A subscription the push service says is gone (404/410) is deleted so it is never tried again.
-export interface SendResult { ok: boolean; status?: number; reason?: string }
+export interface SendResult {
+  ok: boolean;
+  status?: number;
+  reason?: string;
+}
 async function sendOne(svc: SupabaseClient, sub: Sub, payload: PushPayload): Promise<SendResult> {
   try {
-    await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, JSON.stringify({ title: clip(payload.title, 80), body: clip(payload.body, 180), url: payload.url || '/portal', tag: payload.tag }), { TTL: 86_400, timeout: 8000 });
+    await webpush.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+      JSON.stringify({ title: clip(payload.title, 80), body: clip(payload.body, 180), url: payload.url || '/portal', tag: payload.tag }),
+      { TTL: 86_400, timeout: 8000 },
+    );
     // When it last worked, so a member can see which of their devices still get notifications. Never allowed to turn a delivered push into a failure.
-    try { await svc.from('push_subscriptions').update({ last_sent_at: new Date().toISOString() }).eq('id', sub.id); } catch { /* not important */ }
+    try {
+      await svc.from('push_subscriptions').update({ last_sent_at: new Date().toISOString() }).eq('id', sub.id);
+    } catch {
+      /* not important */
+    }
     return { ok: true };
   } catch (e) {
     const err = e as { statusCode?: number; body?: string; message?: string };
@@ -109,13 +147,21 @@ export async function pushNotifications(rows: { user_id: string; type: string; t
       for (const s of (subs as Sub[]).filter((x) => x.user_id === r.user_id)) jobs.push({ sub: s, payload: { title: r.title, body: r.body, url: r.href, tag: r.type } });
     }
     let sent = 0;
-    await inBatches(jobs, 20, async (j) => { if ((await sendOne(svc, j.sub, j.payload)).ok) sent++; });
+    await inBatches(jobs, 20, async (j) => {
+      if ((await sendOne(svc, j.sub, j.payload)).ok) sent++;
+    });
     return sent;
-  } catch { return 0; }
+  } catch {
+    return 0;
+  }
 }
 
 // The test says what happened to each device (which push service, and why it was refused), so a silent failure can be found.
-export interface TestResult { sent: number; devices: number; failed: { service: string; status?: number; reason?: string }[] }
+export interface TestResult {
+  sent: number;
+  devices: number;
+  failed: { service: string; status?: number; reason?: string }[];
+}
 export async function sendTestPush(userId: string): Promise<TestResult> {
   if (!pushConfigured()) return { sent: 0, devices: 0, failed: [] };
   setup();
@@ -123,7 +169,12 @@ export async function sendTestPush(userId: string): Promise<TestResult> {
   const { data: subs } = await svc.from('push_subscriptions').select('id, user_id, endpoint, p256dh, auth').eq('user_id', userId);
   const out: TestResult = { sent: 0, devices: (subs ?? []).length, failed: [] };
   await inBatches((subs ?? []) as Sub[], 10, async (s) => {
-    const r = await sendOne(svc, s, { title: 'Notifications are on', body: 'This is a test from Triton Gaming. You’ll get your reminders and invites like this.', url: '/portal', tag: 'test' });
+    const r = await sendOne(svc, s, {
+      title: 'Notifications are on',
+      body: 'This is a test from Triton Gaming. You’ll get your reminders and invites like this.',
+      url: '/portal',
+      tag: 'test',
+    });
     if (r.ok) out.sent++;
     else out.failed.push({ service: new URL(s.endpoint).hostname.replace(/^(web|updates)\./, ''), status: r.status, reason: r.reason });
   });

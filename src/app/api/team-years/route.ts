@@ -12,11 +12,13 @@ export async function GET() {
   if (auth.error) return auth.error;
   const quarters = await loadQuarters(auth.svc);
   const today = pacificDayKey();
-  await captureRoster(auth.svc, today);   // so the running quarter's year is never empty just because the daily job has not run yet
+  await captureRoster(auth.svc, today); // so the running quarter's year is never empty just because the daily job has not run yet
   const { data: stored } = await auth.svc.from('team_years').select('start_year, archived_at, auto');
   const { data: members } = await auth.svc.from('team_year_members').select('id, start_year, user_id, name, title, tier, avatar_url, manual').order('name');
   // Years still to come are not shown: only a year with a quarter that has started, or one that was recorded.
-  const years = [...new Set([...quarters.filter((q) => q.starts_on <= today).map((q) => q.start_year), ...(stored ?? []).map((s) => s.start_year as number)])].sort((a, b) => b - a);
+  const years = [...new Set([...quarters.filter((q) => q.starts_on <= today).map((q) => q.start_year), ...(stored ?? []).map((s) => s.start_year as number)])].sort(
+    (a, b) => b - a,
+  );
   const out = [];
   for (const y of years) {
     const row = (stored ?? []).find((s) => s.start_year === y);
@@ -24,5 +26,11 @@ export async function GET() {
     out.push({ start_year: y, label: academicYearLabel(y), archived: !!row, archived_at: row?.archived_at ?? null, auto: row?.auto ?? null, members: list });
   }
   const cur = currentQuarter(quarters, today);
-  return NextResponse.json({ canEdit: auth.canSetup, currentYear: cur?.start_year ?? null, years: out, candidates: await alumniCandidates(auth.svc, today), autoAlumni: await autoAlumniOn(auth.svc) });
+  return NextResponse.json({
+    canEdit: auth.canSetup,
+    currentYear: cur?.start_year ?? null,
+    years: out,
+    candidates: await alumniCandidates(auth.svc, today),
+    autoAlumni: await autoAlumniOn(auth.svc),
+  });
 }

@@ -34,13 +34,21 @@ export function BulkAdd({ slug, onClose, onAdded }: { slug: string; onClose: () 
   const [choosing, setChoosing] = useState(false);
   const parsed = useMemo(() => parseBulk(text), [text]);
   // A CSV file (from Excel or Sheets: File, Save As, CSV) is turned into the same text, so it can be looked over and fixed before adding.
-  const pick = async (f: File) => { setText(csvToBulk(await f.text())); };
+  const pick = async (f: File) => {
+    setText(csvToBulk(await f.text()));
+  };
   const add = async () => {
-    setBusy(true); setError('');
+    setBusy(true);
+    setError('');
     const added: QuestionRow[] = [];
     for (let i = 0; i < parsed.questions.length; i += 200) {
       const r = await call<{ questions: QuestionRow[] }>('POST', `/api/trivia/quizzes/${slug}/questions`, { rows: parsed.questions.slice(i, i + 200) });
-      if (!r.ok) { setBusy(false); setError(added.length ? `${r.error} The first ${added.length} were added.` : r.error); if (added.length) onAdded(added); return; }
+      if (!r.ok) {
+        setBusy(false);
+        setError(added.length ? `${r.error} The first ${added.length} were added.` : r.error);
+        if (added.length) onAdded(added);
+        return;
+      }
       added.push(...r.data.questions);
     }
     setBusy(false);
@@ -49,20 +57,41 @@ export function BulkAdd({ slug, onClose, onAdded }: { slug: string; onClose: () 
   return (
     <Dialog title="Paste Questions" wide busy={busy} onClose={onClose}>
       {choosing && <FileDialog title="Choose A CSV File" accept=".csv,text/csv" hint="A CSV saved from Excel or Sheets" onUse={pick} onClose={() => setChoosing(false)} />}
-      <p className={styles.muted}>One question after another: the question, then its four answers starting with A. B. C. D. Put a * by the right one, or add an “Answer: B” line after the answers. A line like “Category: Gaming” before each question gives it its category (required).</p>
-      <div><Button variant="secondary" size="sm" onClick={() => setChoosing(true)}>Or Choose A CSV File</Button> <span className={styles.muted}>Columns: category, question, A, B, C, D, answer (a letter or the answer’s text)</span></div>
+      <p className={styles.muted}>
+        One question after another: the question, then its four answers starting with A. B. C. D. Put a * by the right one, or add an “Answer: B” line after the answers. A line
+        like “Category: Gaming” before each question gives it its category (required).
+      </p>
+      <div>
+        <Button variant="secondary" size="sm" onClick={() => setChoosing(true)}>
+          Or Choose A CSV File
+        </Button>{' '}
+        <span className={styles.muted}>Columns: category, question, A, B, C, D, answer (a letter or the answer’s text)</span>
+      </div>
       <Textarea rows={12} value={text} placeholder={EXAMPLE} aria-label="Questions to add" onChange={(e) => setText(e.target.value)} />
       {text.trim() && (
         <div className={styles.bulkResult} aria-live="polite">
-          <span className={`${styles.badge} ${parsed.questions.length ? styles.good : styles.neutral}`}>{parsed.questions.length} {parsed.questions.length === 1 ? 'question' : 'questions'} ready to add</span>
+          <span className={`${styles.badge} ${parsed.questions.length ? styles.good : styles.neutral}`}>
+            {parsed.questions.length} {parsed.questions.length === 1 ? 'question' : 'questions'} ready to add
+          </span>
           {parsed.problems.length > 0 && <span className={`${styles.badge} ${styles.bad}`}>{parsed.problems.length} can’t be read</span>}
         </div>
       )}
-      {parsed.problems.length > 0 && <Notice tone="error"><ul className={styles.problems}>{parsed.problems.slice(0, 8).map((p) => <li key={p}>{p}</li>)}{parsed.problems.length > 8 && <li>…and {parsed.problems.length - 8} more.</li>}</ul></Notice>}
+      {parsed.problems.length > 0 && (
+        <Notice tone="error">
+          <ul className={styles.problems}>
+            {parsed.problems.slice(0, 8).map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+            {parsed.problems.length > 8 && <li>…and {parsed.problems.length - 8} more.</li>}
+          </ul>
+        </Notice>
+      )}
       {error && <Notice tone="error">{error}</Notice>}
       <DialogActions>
         <DialogCancel onClick={onClose} disabled={busy} />
-        <Button loading={busy} disabled={!parsed.questions.length} onClick={() => void add()}>Add {parsed.questions.length || ''} {parsed.questions.length === 1 ? 'Question' : 'Questions'}</Button>
+        <Button loading={busy} disabled={!parsed.questions.length} onClick={() => void add()}>
+          Add {parsed.questions.length || ''} {parsed.questions.length === 1 ? 'Question' : 'Questions'}
+        </Button>
       </DialogActions>
     </Dialog>
   );

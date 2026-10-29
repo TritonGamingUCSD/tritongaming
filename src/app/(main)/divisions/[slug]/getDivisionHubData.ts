@@ -2,7 +2,6 @@ import { unstable_cache } from 'next/cache';
 import { createPublicClient } from '@/lib/supabase/public';
 import { isVisible, type BoardVisibility } from '@/lib/members/profile';
 
-
 export interface DivisionLead {
   id: string;
   display_name: string | null;
@@ -16,17 +15,30 @@ export interface DivisionLead {
 
 interface LeadRow {
   user_id: string;
-  profile: {
-    id: string;
-    display_name: string | null;
-    avatar_url: string | null;
-    custom_avatar_url: string | null;
-    org_title: string | null;
-    gamer_tag: string | null;
-    pronouns: string | null;
-    show_on_board: boolean;
-    board_visibility: BoardVisibility | null;
-  } | { id: string; display_name: string | null; avatar_url: string | null; custom_avatar_url: string | null; org_title: string | null; gamer_tag: string | null; pronouns: string | null; show_on_board: boolean; board_visibility: BoardVisibility | null }[] | null;
+  profile:
+    | {
+        id: string;
+        display_name: string | null;
+        avatar_url: string | null;
+        custom_avatar_url: string | null;
+        org_title: string | null;
+        gamer_tag: string | null;
+        pronouns: string | null;
+        show_on_board: boolean;
+        board_visibility: BoardVisibility | null;
+      }
+    | {
+        id: string;
+        display_name: string | null;
+        avatar_url: string | null;
+        custom_avatar_url: string | null;
+        org_title: string | null;
+        gamer_tag: string | null;
+        pronouns: string | null;
+        show_on_board: boolean;
+        board_visibility: BoardVisibility | null;
+      }[]
+    | null;
 }
 
 // Turns the static division marketing page into a real hub: its own
@@ -37,8 +49,9 @@ interface LeadRow {
 // from that page ("they have their own division pages") — this is that page.
 export function getDivisionHubData(divisionId: string) {
   // Cached briefly and shared between visitors; failures throw so they aren't cached.
-  return unstable_cache(() => fetchDivisionHubData(divisionId), ['division-hub', divisionId], { revalidate: 900, tags: ['divisions', 'board'] })()
-    .catch(() => ({ leads: [] as DivisionLead[] }));
+  return unstable_cache(() => fetchDivisionHubData(divisionId), ['division-hub', divisionId], { revalidate: 900, tags: ['divisions', 'board'] })().catch(() => ({
+    leads: [] as DivisionLead[],
+  }));
 }
 
 async function fetchDivisionHubData(divisionId: string) {

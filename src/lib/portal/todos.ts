@@ -33,17 +33,27 @@ export async function loadTodos(
       if (p.status !== 'open') continue;
       const asked = p.people.some((x) => x.id === user.id);
       if (asked && !p.expired && !p.responses[user.id]) {
-        out.push({ id: `plan-fill-${p.id}`, text: `Add your availability to “${p.title}”`, detail: p.answer_by ? `Answer by ${formatPacificDate(p.answer_by)}` : `${p.people.filter((x) => p.responses[x.id]).length} of ${p.people.length} have answered`, href: PLAN_HREF(p.id), tone: p.answer_by && p.answer_by <= today ? 'urgent' : 'normal' });
+        out.push({
+          id: `plan-fill-${p.id}`,
+          text: `Add your availability to “${p.title}”`,
+          detail: p.answer_by ? `Answer by ${formatPacificDate(p.answer_by)}` : `${p.people.filter((x) => p.responses[x.id]).length} of ${p.people.length} have answered`,
+          href: PLAN_HREF(p.id),
+          tone: p.answer_by && p.answer_by <= today ? 'urgent' : 'normal',
+        });
       }
       if (p.isHost) {
-        if (p.expired) out.push({ id: `plan-expired-${p.id}`, text: `Pick new dates for “${p.title}”`, detail: 'Every day of the plan has passed', href: PLAN_HREF(p.id), tone: 'normal' });
+        if (p.expired)
+          out.push({ id: `plan-expired-${p.id}`, text: `Pick new dates for “${p.title}”`, detail: 'Every day of the plan has passed', href: PLAN_HREF(p.id), tone: 'normal' });
         else {
           const waiting = p.people.filter((x) => x.id !== p.host_id && !p.responses[x.id]).length;
-          if (waiting === 0 && Object.keys(p.responses).length > 0) out.push({ id: `plan-ready-${p.id}`, text: `Everyone answered “${p.title}”. Pick a time`, href: PLAN_HREF(p.id), tone: 'normal' });
+          if (waiting === 0 && Object.keys(p.responses).length > 0)
+            out.push({ id: `plan-ready-${p.id}`, text: `Everyone answered “${p.title}”. Pick a time`, href: PLAN_HREF(p.id), tone: 'normal' });
         }
       }
     }
-  } catch { /* the rest of the list still shows */ }
+  } catch {
+    /* the rest of the list still shows */
+  }
 
   return out;
 }

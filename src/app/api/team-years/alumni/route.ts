@@ -15,7 +15,13 @@ export async function POST(request: Request) {
   if (b.action === 'auto') {
     if (typeof b.on !== 'boolean') return NextResponse.json({ error: 'Say on or off.' }, { status: 400 });
     await auth.svc.from('team_settings').upsert({ key: 'auto_alumni', value: b.on ? 'on' : 'off' }, { onConflict: 'key' });
-    await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'team year', entityId: null, summary: `Turned moving graduates to Alumni ${b.on ? 'on' : 'off'}` });
+    await logAudit(auth.svc, {
+      actorId: auth.user.id,
+      action: 'update',
+      entityType: 'team year',
+      entityId: null,
+      summary: `Turned moving graduates to Alumni ${b.on ? 'on' : 'off'}`,
+    });
     return NextResponse.json({ ok: true });
   }
   if (b.action !== 'move') return NextResponse.json({ error: 'Say what to do.' }, { status: 400 });
@@ -23,6 +29,12 @@ export async function POST(request: Request) {
   const want: string[] | null = Array.isArray(b.user_ids) ? b.user_ids.map(String) : null;
   const ids = ready.filter((r) => !want || want.includes(r.id)).map((r) => r.id);
   const n = await moveToAlumni(auth.svc, ids, auth.user.id);
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'team year', entityId: null, summary: `Moved ${n} ${n === 1 ? 'graduate' : 'graduates'} to Alumni` });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'update',
+    entityType: 'team year',
+    entityId: null,
+    summary: `Moved ${n} ${n === 1 ? 'graduate' : 'graduates'} to Alumni`,
+  });
   return NextResponse.json({ ok: true, moved: n });
 }

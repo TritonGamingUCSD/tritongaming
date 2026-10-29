@@ -8,7 +8,7 @@ import { emailConfigured, sendOne } from '@/lib/email/mailer';
 import { audienceFor, authorizeEventEmail, loadEvent, quotaLeft, renderFor, sentLastDay } from '@/lib/email/eventEmailServer';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';   // nodemailer needs Node's network sockets
+export const runtime = 'nodejs'; // nodemailer needs Node's network sockets
 const UUID = /^[0-9a-f-]{36}$/i;
 const text = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
@@ -35,19 +35,33 @@ export async function GET(request: Request) {
   const note = text(params.get('note'), 2000);
   const cover = params.get('cover') !== '0';
   const [aud, used, { data: history }] = await Promise.all([
-    audienceFor(svc, eventId, kind), sentLastDay(svc),
-    svc.from('event_emails').select('id, kind, subject, sent_by, sent_at, recipients, sent, failed, skipped_optout, skipped_no_email').eq('event_id', eventId).eq('test', false).order('sent_at', { ascending: false }).limit(30),
+    audienceFor(svc, eventId, kind),
+    sentLastDay(svc),
+    svc
+      .from('event_emails')
+      .select('id, kind, subject, sent_by, sent_at, recipients, sent, failed, skipped_optout, skipped_no_email')
+      .eq('event_id', eventId)
+      .eq('test', false)
+      .order('sent_at', { ascending: false })
+      .limit(30),
   ]);
   const names = new Map<string, string>();
   const ids = [...new Set((history ?? []).map((h) => h.sent_by as string | null).filter((x): x is string => !!x))];
-  if (ids.length) for (const p of (await svc.from('profiles').select('id, display_name').in('id', ids)).data ?? []) names.set(p.id as string, (p.display_name as string | null) ?? 'Someone');
+  if (ids.length)
+    for (const p of (await svc.from('profiles').select('id, display_name').in('id', ids)).data ?? []) names.set(p.id as string, (p.display_name as string | null) ?? 'Someone');
   const sample = renderFor({ event, kind, subject, note, person: { id: a.user.id, ticketId: null }, logoSrc: APPLE_ICON_DATA_URI, showCover: cover });
   return NextResponse.json({
     event: { id: event.id, title: event.title, start_date: event.start_date, is_published: event.is_published },
-    subject, preview: sample.html,
-    recipients: aud.people.length, ticketHolders: aud.ticketHolders, skippedOptOut: aud.skippedOptOut, skippedNoEmail: aud.skippedNoEmail,
-    usedToday: used, left: quotaLeft(used), limit: EMAIL_DAILY_LIMIT,
-    history: (history ?? []).map((h) => ({ ...h, sent_by: h.sent_by ? names.get(h.sent_by as string) ?? 'Someone' : 'Someone' })),
+    subject,
+    preview: sample.html,
+    recipients: aud.people.length,
+    ticketHolders: aud.ticketHolders,
+    skippedOptOut: aud.skippedOptOut,
+    skippedNoEmail: aud.skippedNoEmail,
+    usedToday: used,
+    left: quotaLeft(used),
+    limit: EMAIL_DAILY_LIMIT,
+    history: (history ?? []).map((h) => ({ ...h, sent_by: h.sent_by ? (names.get(h.sent_by as string) ?? 'Someone') : 'Someone' })),
   });
 }
 
@@ -73,8 +87,16 @@ export async function POST(request: Request) {
     const r = renderFor({ event, kind, subject: `[TEST] ${subject}`, note, person: { id: user.id, ticketId: null }, test: true, showCover: cover });
     const res = await sendOne({ to, subject: `[TEST] ${subject}`, text: r.text, html: r.html, sender: senderForKind(kind), unsubscribeUrl: r.unsubscribeUrl });
     // A test is a real email through the same mailbox, so it counts toward the day's limit (it is kept out of the history).
-    await svc.from('event_emails').insert({ event_id: eventId, kind, subject: `[TEST] ${subject}`, cover, sent_by: user.id, test: true, recipients: 1, sent: res.ok ? 1 : 0, failed: res.ok ? 0 : 1 });
-    await logAudit(svc, { actorId: user.id, action: 'event_email.test', entityType: 'event', entityId: eventId, summary: `Sent a test ${kind === 'reminders' ? 'reminder' : 'update'} email for ${event.title} to themselves${res.ok ? '' : ' (it failed)'}` }).catch(() => undefined);
+    await svc
+      .from('event_emails')
+      .insert({ event_id: eventId, kind, subject: `[TEST] ${subject}`, cover, sent_by: user.id, test: true, recipients: 1, sent: res.ok ? 1 : 0, failed: res.ok ? 0 : 1 });
+    await logAudit(svc, {
+      actorId: user.id,
+      action: 'event_email.test',
+      entityType: 'event',
+      entityId: eventId,
+      summary: `Sent a test ${kind === 'reminders' ? 'reminder' : 'update'} email for ${event.title} to themselves${res.ok ? '' : ' (it failed)'}`,
+    }).catch(() => undefined);
     return res.ok ? NextResponse.json({ ok: true, to }) : NextResponse.json({ error: res.error ?? 'It couldn’t be sent.' }, { status: 502 });
   }
 
@@ -82,10 +104,34 @@ export async function POST(request: Request) {
     if (!event.is_published) return NextResponse.json({ error: 'That event is not published, so there is nothing to remind people about.' }, { status: 409 });
     const [aud, used] = await Promise.all([audienceFor(svc, eventId, kind), sentLastDay(svc)]);
     if (aud.people.length === 0) return NextResponse.json({ error: 'Nobody would get this: no one has a ticket, or everyone opted out.' }, { status: 409 });
-    if (aud.people.length > quotaLeft(used)) return NextResponse.json({ error: `That is ${aud.people.length} emails and only ${quotaLeft(used)} are left of today’s ${EMAIL_DAILY_LIMIT}. Try again later.` }, { status: 409 });
-    const { data, error } = await svc.from('event_emails').insert({ event_id: eventId, kind, subject, note: note || null, cover, sent_by: user.id, recipients: aud.people.length, skipped_optout: aud.skippedOptOut, skipped_no_email: aud.skippedNoEmail }).select('id').single();
+    if (aud.people.length > quotaLeft(used))
+      return NextResponse.json(
+        { error: `That is ${aud.people.length} emails and only ${quotaLeft(used)} are left of today’s ${EMAIL_DAILY_LIMIT}. Try again later.` },
+        { status: 409 },
+      );
+    const { data, error } = await svc
+      .from('event_emails')
+      .insert({
+        event_id: eventId,
+        kind,
+        subject,
+        note: note || null,
+        cover,
+        sent_by: user.id,
+        recipients: aud.people.length,
+        skipped_optout: aud.skippedOptOut,
+        skipped_no_email: aud.skippedNoEmail,
+      })
+      .select('id')
+      .single();
     if (error || !data) return NextResponse.json({ error: 'Couldn’t start the send.' }, { status: 500 });
-    await logAudit(svc, { actorId: user.id, action: 'event_email.send', entityType: 'event', entityId: eventId, summary: `Sent a ${kind === 'reminders' ? 'reminder' : 'update'} email for ${event.title} to ${aud.people.length} people` }).catch(() => undefined);
+    await logAudit(svc, {
+      actorId: user.id,
+      action: 'event_email.send',
+      entityType: 'event',
+      entityId: eventId,
+      summary: `Sent a ${kind === 'reminders' ? 'reminder' : 'update'} email for ${event.title} to ${aud.people.length} people`,
+    }).catch(() => undefined);
     return NextResponse.json({ id: data.id, recipients: aud.people.length });
   }
   return NextResponse.json({ error: 'Unknown action.' }, { status: 400 });

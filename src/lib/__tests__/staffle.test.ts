@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { canEnter, cleanRules, NO_RULES, rulesEmpty, rulesText } from '@/lib/staffle/rules';
 import { draw } from '@/lib/staffle/draw';
 
-const A = '00000000-0000-4000-8000-00000000000a', B = '00000000-0000-4000-8000-00000000000b';
-const officer = { id: 'o', roles: ['officer'], marks: 0 }, recruit = { id: 'r', roles: ['recruit'], marks: 0 };
+const A = '00000000-0000-4000-8000-00000000000a',
+  B = '00000000-0000-4000-8000-00000000000b';
+const officer = { id: 'o', roles: ['officer'], marks: 0 },
+  recruit = { id: 'r', roles: ['recruit'], marks: 0 };
 
 describe('who may enter', () => {
   it('the whole team by default', () => {
@@ -28,7 +30,8 @@ describe('who may enter', () => {
     expect(canEnter(NO_RULES, { id: 'a', roles: ['alumni', 'officer'], marks: 0 }).ok).toBe(false);
   });
   it('strikes, warnings and named people can be left out', () => {
-    const strike = { id: 's', roles: ['officer'], marks: 2 }, warned = { id: 'w', roles: ['officer'], marks: 1 };
+    const strike = { id: 's', roles: ['officer'], marks: 2 },
+      warned = { id: 'w', roles: ['officer'], marks: 1 };
     expect(canEnter({ ...NO_RULES, skip: ['strike'] }, strike).ok).toBe(false);
     expect(canEnter({ ...NO_RULES, skip: ['strike'] }, warned).ok).toBe(true);
     expect(canEnter({ ...NO_RULES, skip: ['warning'] }, warned).ok).toBe(false);
@@ -57,7 +60,11 @@ describe('who may enter', () => {
 });
 
 describe('the draw', () => {
-  const items = [{ id: 'i1', winners: 1, entrants: ['a', 'b', 'c'] }, { id: 'i2', winners: 2, entrants: ['a', 'b', 'c', 'd'] }, { id: 'i3', winners: 1, entrants: ['a'] }];
+  const items = [
+    { id: 'i1', winners: 1, entrants: ['a', 'b', 'c'] },
+    { id: 'i2', winners: 2, entrants: ['a', 'b', 'c', 'd'] },
+    { id: 'i3', winners: 1, entrants: ['a'] },
+  ];
   it('is the same for the same seed and different for another', () => {
     expect(draw(items, 'seed-1')).toEqual(draw(items, 'seed-1'));
     const seeds = new Set(Array.from({ length: 30 }, (_, i) => draw(items, `s${i}`).order.join()));

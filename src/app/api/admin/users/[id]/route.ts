@@ -5,7 +5,9 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { strictUser } from '@/lib/supabase/localAuth';
 
-interface Params { params: Promise<{ id: string }>; }
+interface Params {
+  params: Promise<{ id: string }>;
+}
 
 // Everything an admin may want to know about one account, in one read: identity and sign-in, every role and who granted it, activity
 // (tickets, check-ins, meetings), points and rewards, strikes, quarter status, notifications, help tickets and recent audit entries.
@@ -13,13 +15,36 @@ interface Params { params: Promise<{ id: string }>; }
 export async function GET(_request: Request, { params }: Params) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   if (!hasCapability(roles ?? [], 'manage_roles')) return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
 
   const svc = createServiceClient();
-  const [profile, priv, auth, grants, history, tickets, points, redemptions, strikes, attendance, absences, quarters, notifications, help, audit, auditAbout, auditCount, docsMade, pushes, divisions] = await Promise.all([
+  const [
+    profile,
+    priv,
+    auth,
+    grants,
+    history,
+    tickets,
+    points,
+    redemptions,
+    strikes,
+    attendance,
+    absences,
+    quarters,
+    notifications,
+    help,
+    audit,
+    auditAbout,
+    auditCount,
+    docsMade,
+    pushes,
+    divisions,
+  ] = await Promise.all([
     svc.from('profiles').select('*').eq('id', id).maybeSingle(),
     svc.from('profile_private').select('gender, division_interests, platforms, favorite_games').eq('user_id', id).maybeSingle(),
     svc.auth.admin.getUserById(id),
@@ -35,7 +60,13 @@ export async function GET(_request: Request, { params }: Params) {
     svc.from('notifications').select('id, read_at').eq('user_id', id),
     svc.from('help_tickets').select('status, subject, created_at').eq('user_id', id).order('created_at', { ascending: false }).limit(5),
     svc.from('audit_log').select('action, entity_type, summary, created_at').eq('actor_id', id).order('created_at', { ascending: false }).limit(20),
-    svc.from('audit_log').select('action, entity_type, summary, actor_name, created_at').eq('entity_id', id).or(`actor_id.is.null,actor_id.neq.${id}`).order('created_at', { ascending: false }).limit(20),
+    svc
+      .from('audit_log')
+      .select('action, entity_type, summary, actor_name, created_at')
+      .eq('entity_id', id)
+      .or(`actor_id.is.null,actor_id.neq.${id}`)
+      .order('created_at', { ascending: false })
+      .limit(20),
     svc.from('audit_log').select('id', { count: 'exact', head: true }).eq('actor_id', id),
     svc.from('docs').select('id', { count: 'exact', head: true }).eq('created_by', id),
     svc.from('push_subscriptions').select('id', { count: 'exact', head: true }).eq('user_id', id),
@@ -47,7 +78,12 @@ export async function GET(_request: Request, { params }: Params) {
   const whoIds = new Set<string>();
   (grants.data ?? []).forEach((g) => g.granted_by && whoIds.add(g.granted_by));
   (history.data ?? []).forEach((h) => h.changed_by && whoIds.add(h.changed_by));
-  const { data: names } = whoIds.size ? await svc.from('profiles').select('id, display_name').in('id', [...whoIds]) : { data: [] as { id: string; display_name: string | null }[] };
+  const { data: names } = whoIds.size
+    ? await svc
+        .from('profiles')
+        .select('id, display_name')
+        .in('id', [...whoIds])
+    : { data: [] as { id: string; display_name: string | null }[] };
   const nameOf = new Map((names ?? []).map((n) => [n.id, n.display_name ?? 'Someone']));
   const divName = new Map((divisions.data ?? []).map((d) => [d.id as string, d.name as string]));
 
@@ -58,17 +94,24 @@ export async function GET(_request: Request, { params }: Params) {
   return NextResponse.json({
     profile: profile.data,
     private: priv.data ?? null,
-    account: au ? {
-      email: au.email ?? null,
-      created_at: au.created_at,
-      last_sign_in_at: au.last_sign_in_at ?? null,
-      providers: [...new Set((au.identities ?? []).map((i) => i.provider))],
-      identities: (au.identities ?? []).map((i) => ({ provider: i.provider, email: (i.identity_data as { email?: string } | null)?.email ?? null })),
-      confirmed: !!au.email_confirmed_at,
-      banned_until: (au as unknown as { banned_until?: string | null }).banned_until ?? null,
-    } : null,
-    roles: (grants.data ?? []).map((g) => ({ role: g.role, division: g.division_id ? divName.get(g.division_id) ?? null : null, granted_by: g.granted_by ? nameOf.get(g.granted_by) ?? null : null, at: g.created_at })),
-    role_history: (history.data ?? []).map((h) => ({ by: h.changed_by ? nameOf.get(h.changed_by) ?? null : null, at: h.created_at, before: h.before, after: h.after })),
+    account: au
+      ? {
+          email: au.email ?? null,
+          created_at: au.created_at,
+          last_sign_in_at: au.last_sign_in_at ?? null,
+          providers: [...new Set((au.identities ?? []).map((i) => i.provider))],
+          identities: (au.identities ?? []).map((i) => ({ provider: i.provider, email: (i.identity_data as { email?: string } | null)?.email ?? null })),
+          confirmed: !!au.email_confirmed_at,
+          banned_until: (au as unknown as { banned_until?: string | null }).banned_until ?? null,
+        }
+      : null,
+    roles: (grants.data ?? []).map((g) => ({
+      role: g.role,
+      division: g.division_id ? (divName.get(g.division_id) ?? null) : null,
+      granted_by: g.granted_by ? (nameOf.get(g.granted_by) ?? null) : null,
+      at: g.created_at,
+    })),
+    role_history: (history.data ?? []).map((h) => ({ by: h.changed_by ? (nameOf.get(h.changed_by) ?? null) : null, at: h.created_at, before: h.before, after: h.after })),
     tickets: { total: tk.length, checked_in: tk.filter((t) => t.checked_in_at).length, recent: tk.slice(0, 6) },
     points: { balance: live.reduce((a, t) => a + t.amount, 0), lifetime: live.filter((t) => t.amount > 0).reduce((a, t) => a + t.amount, 0), recent: txns.slice(0, 6) },
     rewards: { redeemed: (redemptions.data ?? []).filter((r) => r.status === 'fulfilled').length, pending: (redemptions.data ?? []).filter((r) => r.status === 'pending').length },
@@ -84,7 +127,6 @@ export async function GET(_request: Request, { params }: Params) {
   });
 }
 
-
 // Deletes an account outright, or — if `reassign_to` is given — merges it
 // into another account first (e.g. someone who accidentally signed up
 // twice: once with a personal Gmail, once with their @ucsd.edu Google
@@ -95,7 +137,9 @@ export async function GET(_request: Request, { params }: Params) {
 export async function DELETE(request: Request, { params }: Params) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);

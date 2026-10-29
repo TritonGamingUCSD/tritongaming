@@ -29,13 +29,19 @@ export default function LivePreview({ draftKey, value, path, label }: { draftKey
     try {
       while (sent.current !== latest.current) {
         const body = latest.current;
-        const res = await fetch('/api/admin/content/draft', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: `{"drafts":{${JSON.stringify(draftKey)}:${body}}}` });
+        const res = await fetch('/api/admin/content/draft', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: `{"drafts":{${JSON.stringify(draftKey)}:${body}}}`,
+        });
         if (!res.ok) break;
         sent.current = body;
         setReady(true);
         frameRef.current?.contentWindow?.postMessage({ type: 'tg-preview-refresh' }, window.location.origin);
       }
-    } catch { /* the preview just stays as it was */ }
+    } catch {
+      /* the preview just stays as it was */
+    }
     busy.current = false;
   };
   useEffect(() => {
@@ -54,7 +60,9 @@ export default function LivePreview({ draftKey, value, path, label }: { draftKey
   }, [full]);
   useEffect(() => {
     if (!full) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFull(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFull(false);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [full]);
@@ -70,16 +78,48 @@ export default function LivePreview({ draftKey, value, path, label }: { draftKey
   const pane = (
     <aside className={`${styles.pane} ${full ? styles.full : ''}`} aria-label="Live preview">
       <div className={styles.bar}>
-        <span className={styles.title}>Live preview <em>{label}</em></span>
+        <span className={styles.title}>
+          Live preview <em>{label}</em>
+        </span>
         <div className={styles.tools}>
-          <button type="button" className={`${styles.tool} ${device === 'desktop' ? styles.toolOn : ''}`} onClick={() => setDevice('desktop')} aria-label="Desktop width" title="Desktop"><Monitor size={14} /></button>
-          <button type="button" className={`${styles.tool} ${device === 'phone' ? styles.toolOn : ''}`} onClick={() => setDevice('phone')} aria-label="Phone width" title="Phone"><Smartphone size={14} /></button>
-          <button type="button" className={styles.tool} onClick={() => setFull((f) => !f)} aria-label={full ? 'Exit full screen' : 'Full screen'} title={full ? 'Exit full screen (Esc)' : 'Full screen'}>{full ? <Minimize2 size={14} /> : <Maximize2 size={14} />}</button>
+          <button
+            type="button"
+            className={`${styles.tool} ${device === 'desktop' ? styles.toolOn : ''}`}
+            onClick={() => setDevice('desktop')}
+            aria-label="Desktop width"
+            title="Desktop"
+          >
+            <Monitor size={14} />
+          </button>
+          <button type="button" className={`${styles.tool} ${device === 'phone' ? styles.toolOn : ''}`} onClick={() => setDevice('phone')} aria-label="Phone width" title="Phone">
+            <Smartphone size={14} />
+          </button>
+          <button
+            type="button"
+            className={styles.tool}
+            onClick={() => setFull((f) => !f)}
+            aria-label={full ? 'Exit full screen' : 'Full screen'}
+            title={full ? 'Exit full screen (Esc)' : 'Full screen'}
+          >
+            {full ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+          </button>
         </div>
       </div>
-      <div ref={boxRef} className={`${styles.box} ${device === 'phone' && !full ? styles.boxPhone : ''}`} style={full ? undefined : { height: device === 'phone' ? areaH : frameH * scale }}>
+      <div
+        ref={boxRef}
+        className={`${styles.box} ${device === 'phone' && !full ? styles.boxPhone : ''}`}
+        style={full ? undefined : { height: device === 'phone' ? areaH : frameH * scale }}
+      >
         <div className={styles.scaler} style={{ width: frameW * scale, height: frameH * scale }}>
-          {ready && <iframe ref={frameRef} title="Live preview of the public page" src={path} className={styles.frame} style={{ width: frameW, height: frameH, transform: `scale(${scale})` }} />}
+          {ready && (
+            <iframe
+              ref={frameRef}
+              title="Live preview of the public page"
+              src={path}
+              className={styles.frame}
+              style={{ width: frameW, height: frameH, transform: `scale(${scale})` }}
+            />
+          )}
         </div>
       </div>
       <p className={styles.note}>Shows your unsaved changes on the real page. Nothing is public until you save.</p>

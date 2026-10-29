@@ -6,7 +6,12 @@ import { cleanList, tagKey, type Device } from '@/lib/logistics/devices';
 
 export const dynamic = 'force-dynamic';
 const uuid = (v: unknown) => (typeof v === 'string' && UUID.test(v) ? v : null);
-const text = (v: unknown, n: number) => { const s = String(v ?? '').trim().slice(0, n); return s || null; };
+const text = (v: unknown, n: number) => {
+  const s = String(v ?? '')
+    .trim()
+    .slice(0, n);
+  return s || null;
+};
 
 async function stationOk(svc: import('@supabase/supabase-js').SupabaseClient, planId: string, v: unknown): Promise<string | null | false> {
   if (v === null || v === undefined || v === '') return null;
@@ -36,13 +41,47 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const oldBorrowed = uuid(b.borrowed_id);
     if (!slotId && !oldId && !oldBorrowed) return NextResponse.json({ error: 'Pick the row.' }, { status: 400 });
     let slot: SlotRow | null = null;
-    if (slotId) slot = ((await svc.from('logistics_plan_slots').select(SLOT_COLUMNS).eq('id', slotId).eq('plan_id', id).maybeSingle()).data as SlotRow | null);
+    if (slotId) slot = (await svc.from('logistics_plan_slots').select(SLOT_COLUMNS).eq('id', slotId).eq('plan_id', id).maybeSingle()).data as SlotRow | null;
     else if (oldId) {
-      const { data: pd } = await svc.from('logistics_plan_devices').select('station_id, games_needed, sort, set_id, request_id, request_item, role').eq('plan_id', id).eq('device_id', oldId).maybeSingle();
-      if (pd && pd.role === 'planned') slot = { id: '', plan_id: id, station_id: pd.station_id as string | null, type: '', games: (pd.games_needed as string[]) ?? [], label: null, sort: pd.sort as number, set_id: pd.set_id as string | null, request_id: pd.request_id as string | null, request_item: pd.request_item as string | null };
+      const { data: pd } = await svc
+        .from('logistics_plan_devices')
+        .select('station_id, games_needed, sort, set_id, request_id, request_item, role')
+        .eq('plan_id', id)
+        .eq('device_id', oldId)
+        .maybeSingle();
+      if (pd && pd.role === 'planned')
+        slot = {
+          id: '',
+          plan_id: id,
+          station_id: pd.station_id as string | null,
+          type: '',
+          games: (pd.games_needed as string[]) ?? [],
+          label: null,
+          sort: pd.sort as number,
+          set_id: pd.set_id as string | null,
+          request_id: pd.request_id as string | null,
+          request_item: pd.request_item as string | null,
+        };
     } else {
-      const { data: bo } = await svc.from('logistics_plan_borrowed').select('station_id, games_needed, sort, set_id, request_id, request_item, role').eq('plan_id', id).eq('id', oldBorrowed!).maybeSingle();
-      if (bo && bo.role === 'planned') slot = { id: '', plan_id: id, station_id: bo.station_id as string | null, type: '', games: (bo.games_needed as string[]) ?? [], label: null, sort: bo.sort as number, set_id: bo.set_id as string | null, request_id: bo.request_id as string | null, request_item: bo.request_item as string | null };
+      const { data: bo } = await svc
+        .from('logistics_plan_borrowed')
+        .select('station_id, games_needed, sort, set_id, request_id, request_item, role')
+        .eq('plan_id', id)
+        .eq('id', oldBorrowed!)
+        .maybeSingle();
+      if (bo && bo.role === 'planned')
+        slot = {
+          id: '',
+          plan_id: id,
+          station_id: bo.station_id as string | null,
+          type: '',
+          games: (bo.games_needed as string[]) ?? [],
+          label: null,
+          sort: bo.sort as number,
+          set_id: bo.set_id as string | null,
+          request_id: bo.request_id as string | null,
+          request_item: bo.request_item as string | null,
+        };
     }
     if (!slot) return NextResponse.json({ error: 'That row is gone.' }, { status: 404 });
     if (slot.request_id && (await lockedRequestIds(svc, id)).has(slot.request_id)) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
@@ -58,10 +97,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       if (hit.request_id && hit.id !== oldBorrowed) return NextResponse.json({ error: `${hit.tag} is already given to a row.` }, { status: 409 });
       newBorrowed = hit.id as string;
     }
-    const link = { station_id: slot.station_id, games_needed: slot.games, sort: slot.sort, set_id: slot.set_id ?? null, request_id: slot.request_id ?? null, request_item: slot.request_item ?? null };
+    const link = {
+      station_id: slot.station_id,
+      games_needed: slot.games,
+      sort: slot.sort,
+      set_id: slot.set_id ?? null,
+      request_id: slot.request_id ?? null,
+      request_item: slot.request_item ?? null,
+    };
     if (newBorrowed) {
       if (newBorrowed === oldBorrowed) return NextResponse.json({ ok: true });
-      const { error } = await svc.from('logistics_plan_borrowed').update({ ...link, role: 'planned' }).eq('id', newBorrowed);
+      const { error } = await svc
+        .from('logistics_plan_borrowed')
+        .update({ ...link, role: 'planned' })
+        .eq('id', newBorrowed);
       if (error) return NextResponse.json({ error: 'Couldn’t give it the device.' }, { status: 500 });
     } else {
       const d = dev as unknown as Device;
@@ -75,7 +124,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     if (slotId) await svc.from('logistics_plan_slots').delete().eq('id', slotId);
     else if (oldId) await svc.from('logistics_plan_devices').delete().eq('plan_id', id).eq('device_id', oldId);
-    else if (oldBorrowed) await svc.from('logistics_plan_borrowed').update({ station_id: null, set_id: null, request_id: null, request_item: null, games_needed: [] }).eq('id', oldBorrowed);
+    else if (oldBorrowed)
+      await svc.from('logistics_plan_borrowed').update({ station_id: null, set_id: null, request_id: null, request_item: null, games_needed: [] }).eq('id', oldBorrowed);
     await touchPlan(svc, id);
     return NextResponse.json({ ok: true });
   }
@@ -85,22 +135,51 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const deviceId = uuid(b.device_id);
     const borrowedId = uuid(b.borrowed_id);
     if (!deviceId && !borrowedId) return NextResponse.json({ error: 'Pick the device.' }, { status: 400 });
-    if (await rowsLocked(svc, id, { deviceIds: deviceId ? [deviceId] : [], borrowedIds: borrowedId ? [borrowedId] : [] })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
+    if (await rowsLocked(svc, id, { deviceIds: deviceId ? [deviceId] : [], borrowedIds: borrowedId ? [borrowedId] : [] }))
+      return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
     if (borrowedId) {
-      const { data: bo } = await svc.from('logistics_plan_borrowed').select('station_id, games_needed, sort, set_id, request_id, request_item, type, role').eq('plan_id', id).eq('id', borrowedId).maybeSingle();
+      const { data: bo } = await svc
+        .from('logistics_plan_borrowed')
+        .select('station_id, games_needed, sort, set_id, request_id, request_item, type, role')
+        .eq('plan_id', id)
+        .eq('id', borrowedId)
+        .maybeSingle();
       if (!bo || bo.role !== 'planned') return NextResponse.json({ error: 'That device isn’t in the plan.' }, { status: 404 });
       if (!bo.request_id) return NextResponse.json({ error: 'That row didn’t come from a request.' }, { status: 400 });
       await svc.from('logistics_plan_borrowed').update({ station_id: null, set_id: null, request_id: null, request_item: null, games_needed: [] }).eq('id', borrowedId);
-      await svc.from('logistics_plan_slots').insert({ plan_id: id, station_id: bo.station_id, type: bo.type, games: bo.games_needed ?? [], sort: bo.sort, set_id: bo.set_id, request_id: bo.request_id, request_item: bo.request_item });
+      await svc.from('logistics_plan_slots').insert({
+        plan_id: id,
+        station_id: bo.station_id,
+        type: bo.type,
+        games: bo.games_needed ?? [],
+        sort: bo.sort,
+        set_id: bo.set_id,
+        request_id: bo.request_id,
+        request_item: bo.request_item,
+      });
       await touchPlan(svc, id);
       return NextResponse.json({ ok: true });
     }
-    const { data: pd } = await svc.from('logistics_plan_devices').select('station_id, games_needed, sort, set_id, request_id, request_item, role').eq('plan_id', id).eq('device_id', deviceId!).maybeSingle();
+    const { data: pd } = await svc
+      .from('logistics_plan_devices')
+      .select('station_id, games_needed, sort, set_id, request_id, request_item, role')
+      .eq('plan_id', id)
+      .eq('device_id', deviceId!)
+      .maybeSingle();
     if (!pd || pd.role !== 'planned') return NextResponse.json({ error: 'That device isn’t in the plan.' }, { status: 404 });
     if (!pd.request_id) return NextResponse.json({ error: 'That row didn’t come from a request.' }, { status: 400 });
     const { data: dev } = await svc.from('logistics_devices').select('type').eq('id', deviceId!).maybeSingle();
     await svc.from('logistics_plan_devices').delete().eq('plan_id', id).eq('device_id', deviceId!);
-    await svc.from('logistics_plan_slots').insert({ plan_id: id, station_id: pd.station_id, type: (dev?.type as string | undefined) ?? 'Device', games: pd.games_needed ?? [], sort: pd.sort, set_id: pd.set_id, request_id: pd.request_id, request_item: pd.request_item });
+    await svc.from('logistics_plan_slots').insert({
+      plan_id: id,
+      station_id: pd.station_id,
+      type: (dev?.type as string | undefined) ?? 'Device',
+      games: pd.games_needed ?? [],
+      sort: pd.sort,
+      set_id: pd.set_id,
+      request_id: pd.request_id,
+      request_item: pd.request_item,
+    });
     await touchPlan(svc, id);
     return NextResponse.json({ ok: true });
   }
@@ -111,7 +190,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     let q = svc.from('logistics_plan_slots').select(SLOT_COLUMNS).eq('plan_id', id).order('sort');
     if (station) q = q.eq('station_id', station);
     const [{ data: slots }, { data: all }, { data: inPlan }, others, { data: typeOpts }] = await Promise.all([
-      q, svc.from('logistics_devices').select(DEVICE_COLUMNS).limit(5000),
+      q,
+      svc.from('logistics_devices').select(DEVICE_COLUMNS).limit(5000),
       svc.from('logistics_plan_devices').select('device_id').eq('plan_id', id),
       takenByOthers(svc, plan as { id: string; starts_on: string; ends_on: string }),
       svc.from('logistics_options').select('value, meta').eq('kind', 'type'),
@@ -120,7 +200,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     const used = new Set([...others, ...(inPlan ?? []).map((r) => r.device_id as string)]);
     const devices = (all ?? []) as unknown as Device[];
     const picks: { slot: { id: string; station_id: string | null; type: string; games: string[] }; device: Device | null }[] = [];
-    const lockedIds = await lockedRequestIds(svc, id);   // rows of a locked request are left alone
+    const lockedIds = await lockedRequestIds(svc, id); // rows of a locked request are left alone
     for (const s of (slots ?? []) as unknown as { id: string; station_id: string | null; type: string; games: string[]; request_id: string | null }[]) {
       if (counted.has(s.type.toLowerCase()) || (s.request_id && lockedIds.has(s.request_id))) continue;
       const r = pickDevices(devices, { type: s.type, count: 1, games: s.games, taken: used });
@@ -128,12 +208,34 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       if (d) used.add(d.id);
       picks.push({ slot: s, device: d });
     }
-    const preview = picks.map((p) => ({ slot_id: p.slot.id, type: p.slot.type, games: p.slot.games, device: p.device ? { id: p.device.id, tag: p.device.tag, condition: p.device.condition, games: p.device.games } : null }));
+    const preview = picks.map((p) => ({
+      slot_id: p.slot.id,
+      type: p.slot.type,
+      games: p.slot.games,
+      device: p.device ? { id: p.device.id, tag: p.device.tag, condition: p.device.condition, games: p.device.games } : null,
+    }));
     if (b.apply !== true) return NextResponse.json({ preview });
     const chosen = picks.filter((p) => p.device);
     if (chosen.length) {
-      await svc.from('logistics_plan_devices').insert(chosen.map((p) => ({ plan_id: id, device_id: p.device!.id, station_id: p.slot.station_id, role: 'planned', games_needed: p.slot.games, sort: (slots ?? []).find((x) => x.id === p.slot.id)?.sort ?? 1000, set_id: (slots ?? []).find((x) => x.id === p.slot.id)?.set_id ?? null, added_by: auth.user.id })));
-      await svc.from('logistics_plan_slots').delete().in('id', chosen.map((p) => p.slot.id));
+      await svc.from('logistics_plan_devices').insert(
+        chosen.map((p) => ({
+          plan_id: id,
+          device_id: p.device!.id,
+          station_id: p.slot.station_id,
+          role: 'planned',
+          games_needed: p.slot.games,
+          sort: (slots ?? []).find((x) => x.id === p.slot.id)?.sort ?? 1000,
+          set_id: (slots ?? []).find((x) => x.id === p.slot.id)?.set_id ?? null,
+          added_by: auth.user.id,
+        })),
+      );
+      await svc
+        .from('logistics_plan_slots')
+        .delete()
+        .in(
+          'id',
+          chosen.map((p) => p.slot.id),
+        );
     }
     await touchPlan(svc, id);
     return NextResponse.json({ preview, applied: chosen.length });
@@ -146,7 +248,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const count = Math.min(50, Math.max(1, Math.round(Number(b.count)) || 1));
   const { data: last } = await svc.from('logistics_plan_slots').select('sort').eq('plan_id', id).order('sort', { ascending: false }).limit(1).maybeSingle();
   let sort = (last?.sort as number | undefined) ?? 0;
-  const { data, error } = await svc.from('logistics_plan_slots').insert(Array.from({ length: count }, () => ({ plan_id: id, station_id: station, type, games: cleanList(b.games, 10), label: text(b.label, 120), sort: ++sort }))).select(SLOT_COLUMNS);
+  const { data, error } = await svc
+    .from('logistics_plan_slots')
+    .insert(Array.from({ length: count }, () => ({ plan_id: id, station_id: station, type, games: cleanList(b.games, 10), label: text(b.label, 120), sort: ++sort })))
+    .select(SLOT_COLUMNS);
   if (error) return NextResponse.json({ error: 'Couldn’t add that.' }, { status: 500 });
   await touchPlan(svc, id);
   return NextResponse.json({ slots: data }, { status: 201 });
@@ -160,10 +265,18 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const ids = (Array.isArray(b.slot_ids) ? b.slot_ids : [b.slot_id]).map((x: unknown) => uuid(x)).filter((x: string | null): x is string => !!x);
   if (!UUID.test(id) || !ids.length) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const patch: Record<string, unknown> = {};
-  if ('type' in b) { const t = text(b.type, 80); if (!t) return NextResponse.json({ error: 'Say what kind of device the row is for.' }, { status: 400 }); patch.type = t; }
+  if ('type' in b) {
+    const t = text(b.type, 80);
+    if (!t) return NextResponse.json({ error: 'Say what kind of device the row is for.' }, { status: 400 });
+    patch.type = t;
+  }
   if ('games' in b) patch.games = cleanList(b.games, 10);
   if ('label' in b) patch.label = text(b.label, 120);
-  if ('station_id' in b) { const s = await stationOk(auth.svc, id, b.station_id); if (s === false) return NextResponse.json({ error: 'That station is gone.' }, { status: 400 }); patch.station_id = s; }
+  if ('station_id' in b) {
+    const s = await stationOk(auth.svc, id, b.station_id);
+    if (s === false) return NextResponse.json({ error: 'That station is gone.' }, { status: 400 });
+    patch.station_id = s;
+  }
   if (!Object.keys(patch).length) return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
   if (await rowsLocked(auth.svc, id, { slotIds: ids })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });
   const { error } = await auth.svc.from('logistics_plan_slots').update(patch).eq('plan_id', id).in('id', ids);

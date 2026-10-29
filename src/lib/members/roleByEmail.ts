@@ -10,12 +10,17 @@ export function parseEmails(text: string): string[] {
   return [...new Set((text.match(EMAIL) ?? []).map((e) => e.toLowerCase().replace(/[.']+$/, '')))];
 }
 
-export interface Matched { userId: string; email: string; name: string; hasRole: boolean }
+export interface Matched {
+  userId: string;
+  email: string;
+  name: string;
+  hasRole: boolean;
+}
 export interface EmailPlan {
   matched: Matched[];
-  notFound: string[];          // no account: these wait for their first sign-in
-  alreadyQueued: string[];     // no account, and already waiting for this role
-  ambiguous: { email: string; names: string[] }[];   // the address belongs to more than one account: skipped
+  notFound: string[]; // no account: these wait for their first sign-in
+  alreadyQueued: string[]; // no account, and already waiting for this role
+  ambiguous: { email: string; names: string[] }[]; // the address belongs to more than one account: skipped
 }
 
 /** Works out what a list of emails would do for one role, without changing anything. */
@@ -24,7 +29,8 @@ export async function planByEmail(svc: SupabaseClient, emails: string[], role: A
   const owners = new Map<string, Set<string>>();
   for (const r of (found ?? []) as { user_id: string; email: string }[]) {
     const set = owners.get(r.email) ?? new Set<string>();
-    set.add(r.user_id); owners.set(r.email, set);
+    set.add(r.user_id);
+    owners.set(r.email, set);
   }
   const ids = [...new Set([...owners.values()].flatMap((s) => [...s]))];
   const [{ data: profiles }, { data: grants }] = ids.length
@@ -32,7 +38,8 @@ export async function planByEmail(svc: SupabaseClient, emails: string[], role: A
     : [{ data: [] }, { data: [] }];
   const nameOf = new Map((profiles ?? []).map((p) => [p.id as string, (p.display_name as string | null) || 'Unnamed']));
   const rolesOf = new Map<string, RoleRow[]>();
-  for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), { role: g.role as string, division_id: g.division_id as string | null }]);
+  for (const g of grants ?? [])
+    rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), { role: g.role as string, division_id: g.division_id as string | null }]);
 
   const plan: EmailPlan = { matched: [], notFound: [], alreadyQueued: [], ambiguous: [] };
   const missing: string[] = [];
@@ -73,7 +80,7 @@ export async function applyPendingGrants(svc: SupabaseClient, userId: string, em
       const next = withRole((current ?? []) as RoleRow[], p.role as string, (p.division_id as string | null) ?? null);
       if (next) {
         const { error } = await svc.rpc('admin_set_user_roles', { _user_id: userId, _roles: next, _granted_by: p.created_by ?? null });
-        if (error) continue;   // keep it waiting; try again next sign-in
+        if (error) continue; // keep it waiting; try again next sign-in
         given++;
       }
       await svc.from('pending_role_grants').delete().eq('id', p.id);

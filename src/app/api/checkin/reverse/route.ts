@@ -9,7 +9,9 @@ import { hasCapability } from '@/lib/portal/capabilities';
 // redefined in 20261015130000_remove_referrals.sql).
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);

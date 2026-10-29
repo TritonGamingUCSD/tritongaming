@@ -41,7 +41,9 @@ export default function ActivitySectionContent({ tickets }: { tickets: ActivityT
   if (items.length === 0) {
     return (
       <div className={styles.empty}>
-        <span className={styles.emptyIcon}><Calendar size={40} strokeWidth={1.25} aria-hidden="true" /></span>
+        <span className={styles.emptyIcon}>
+          <Calendar size={40} strokeWidth={1.25} aria-hidden="true" />
+        </span>
         <h2 className={styles.emptyTitle}>No activity yet</h2>
         <p className={styles.emptySub}>Grab a ticket to an event and it'll show up here.</p>
       </div>
@@ -58,10 +60,10 @@ export default function ActivitySectionContent({ tickets }: { tickets: ActivityT
               {item.icon === 'checked_in' ? <CircleCheck size={16} strokeWidth={1.75} /> : <Ticket size={16} strokeWidth={1.75} />}
             </span>
             <div>
-              <div className={styles.itemTitle}>{item.title} — {item.eventTitle}</div>
-              <div className={styles.itemTime}>
-                {formatPacificDateTime(item.at)}
+              <div className={styles.itemTitle}>
+                {item.title} — {item.eventTitle}
               </div>
+              <div className={styles.itemTime}>{formatPacificDateTime(item.at)}</div>
             </div>
           </li>
         ))}

@@ -23,27 +23,47 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     loadPrizeTotals(auth.svc, [id]),
   ]);
   const sum = (kind: string) => (log ?? []).filter((e) => e.kind === kind).reduce((n, e) => n + (e.qty as number), 0);
-  const added = sum('add'), corrected = sum('correct'), given = sum('give');
+  const added = sum('add'),
+    corrected = sum('correct'),
+    given = sum('give');
   const lineIds = (lines ?? []).map((l) => l.id as string);
   const planIds = [...new Set((lines ?? []).map((l) => l.plan_id as string))];
   const stationIds = [...new Set((lines ?? []).map((l) => l.station_id as string))];
   const [{ data: done }, { data: plans }, { data: stations }] = await Promise.all([
-    lineIds.length ? auth.svc.from('logistics_plan_prize_steps').select('line_id, step_id, done').in('line_id', lineIds).limit(10000) : Promise.resolve({ data: [] as { line_id: string; step_id: string; done: number }[] }),
-    planIds.length ? auth.svc.from('logistics_plans').select('id, name, slug, status, starts_on').in('id', planIds) : Promise.resolve({ data: [] as { id: string; name: string; slug: string; status: string; starts_on: string }[] }),
+    lineIds.length
+      ? auth.svc.from('logistics_plan_prize_steps').select('line_id, step_id, done').in('line_id', lineIds).limit(10000)
+      : Promise.resolve({ data: [] as { line_id: string; step_id: string; done: number }[] }),
+    planIds.length
+      ? auth.svc.from('logistics_plans').select('id, name, slug, status, starts_on').in('id', planIds)
+      : Promise.resolve({ data: [] as { id: string; name: string; slug: string; status: string; starts_on: string }[] }),
     stationIds.length ? auth.svc.from('logistics_stations').select('id, name').in('id', stationIds) : Promise.resolve({ data: [] as { id: string; name: string }[] }),
   ]);
   const { gives, back } = stepKinds(steps);
   const stationName = new Map((stations ?? []).map((s) => [s.id as string, s.name as string]));
-  const events = (plans ?? []).sort((a, b) => String(b.starts_on).localeCompare(String(a.starts_on))).map((p) => ({
-    name: p.name as string, slug: p.slug as string, status: p.status as string,
-    stations: (lines ?? []).filter((l) => l.plan_id === p.id).map((l) => {
-      const n = lineNumbers(l.quantity as number, countAt(done, l.id as string, gives), countAt(done, l.id as string, back));
-      return { station: stationName.get(l.station_id as string) ?? 'a station', promised: n.planned, given: n.given, back: n.back, planned: p.status === 'draft' ? n.held : 0 };
-    }),
-  }));
+  const events = (plans ?? [])
+    .sort((a, b) => String(b.starts_on).localeCompare(String(a.starts_on)))
+    .map((p) => ({
+      name: p.name as string,
+      slug: p.slug as string,
+      status: p.status as string,
+      stations: (lines ?? [])
+        .filter((l) => l.plan_id === p.id)
+        .map((l) => {
+          const n = lineNumbers(l.quantity as number, countAt(done, l.id as string, gives), countAt(done, l.id as string, back));
+          return { station: stationName.get(l.station_id as string) ?? 'a station', promised: n.planned, given: n.given, back: n.back, planned: p.status === 'draft' ? n.held : 0 };
+        }),
+    }));
   const t = totals.get(id) ?? { allocated: 0 };
   return NextResponse.json({
-    name: prize.name, loose: isLoose(prize as { size: string | null }), quantity: prize.quantity as number, planned: t.allocated, left: prizeLeft(prize as { quantity: number; size: string | null; stock_level: string }, t),
-    added, corrected, given, unexplained: (prize.quantity as number) - (added + corrected + given), events,
+    name: prize.name,
+    loose: isLoose(prize as { size: string | null }),
+    quantity: prize.quantity as number,
+    planned: t.allocated,
+    left: prizeLeft(prize as { quantity: number; size: string | null; stock_level: string }, t),
+    added,
+    corrected,
+    given,
+    unexplained: (prize.quantity as number) - (added + corrected + given),
+    events,
   });
 }

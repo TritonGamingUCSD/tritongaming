@@ -14,7 +14,10 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
-  { const denied = await guardSeries(auth, id); if (denied) return denied; }
+  {
+    const denied = await guardSeries(auth, id);
+    if (denied) return denied;
+  }
   const { data: series } = await auth.svc.from('meeting_series').select('audience, invitees, group_ids').eq('id', id).maybeSingle();
   if (!series) return NextResponse.json({ error: 'Meeting not found.' }, { status: 404 });
   const expected = await getExpectedPeople(auth.svc, { audience: series.audience, invitees: series.invitees, group_ids: series.group_ids });
@@ -35,13 +38,26 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
-  { const denied = await guardSeries(auth, id); if (denied) return denied; }
+  {
+    const denied = await guardSeries(auth, id);
+    if (denied) return denied;
+  }
   const b = await request.json().catch(() => ({}));
   if (!b.user_id || !UUID.test(String(b.user_id))) return NextResponse.json({ error: 'Pick who to excuse.' }, { status: 400 });
-  const reason = String(b.reason ?? '').trim().slice(0, 140) || null;
+  const reason =
+    String(b.reason ?? '')
+      .trim()
+      .slice(0, 140) || null;
   const excused = b.excused !== false;
   await markEveryWeek(auth.svc, id, String(b.user_id), reason, excused, auth.user.id);
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'mark absent', entityType: 'meeting series', entityId: id, summary: `Excused someone every week${reason ? `: ${reason}` : ''}`, details: { user_id: b.user_id } });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'mark absent',
+    entityType: 'meeting series',
+    entityId: id,
+    summary: `Excused someone every week${reason ? `: ${reason}` : ''}`,
+    details: { user_id: b.user_id },
+  });
   return NextResponse.json({ ok: true });
 }
 
@@ -49,7 +65,10 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
-  { const denied = await guardSeries(auth, id); if (denied) return denied; }
+  {
+    const denied = await guardSeries(auth, id);
+    if (denied) return denied;
+  }
   const b = await request.json().catch(() => ({}));
   if (!b.user_id || !UUID.test(String(b.user_id))) return NextResponse.json({ error: 'Missing user_id' }, { status: 400 });
   await stopEveryWeek(auth.svc, id, String(b.user_id));

@@ -4,8 +4,8 @@
 
 export const WALL_VISIBLE = 80;
 export const WALL_LIFE_MS = 90_000;
-export const WALL_STRIP = { left: [3, 20], right: [80, 97] } as const;   // percent across the screen
-export const WALL_Y = [6, 94] as const;             // percent down the screen
+export const WALL_STRIP = { left: [3, 20], right: [80, 97] } as const; // percent across the screen
+export const WALL_Y = [6, 94] as const; // percent down the screen
 
 /** Is this a spot on one of the strips? */
 export function validWallSpot(x: unknown, y: unknown): x is number {
@@ -16,9 +16,11 @@ export function validWallSpot(x: unknown, y: unknown): x is number {
 
 /** The phone's board shows the two strips side by side as one rectangle. A tap at (u, v), each 0..1, is this spot on the screen. */
 export function wallSpotFromBoard(u: number, v: number): { x: number; y: number } {
-  const [l0, l1] = WALL_STRIP.left, [r0, r1] = WALL_STRIP.right;
+  const [l0, l1] = WALL_STRIP.left,
+    [r0, r1] = WALL_STRIP.right;
   const clamp = (n: number) => Math.min(1, Math.max(0, n));
-  u = clamp(u); v = clamp(v);
+  u = clamp(u);
+  v = clamp(v);
   const x = u < 0.5 ? l0 + (u / 0.5) * (l1 - l0) : r0 + ((u - 0.5) / 0.5) * (r1 - r0);
   return { x, y: WALL_Y[0] + v * (WALL_Y[1] - WALL_Y[0]) };
 }

@@ -30,6 +30,12 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
 }
 
 // Date / time pickers with the standard field look (see DateTime.tsx).
-export function DateInput({ className = '', ...rest }: React.ComponentProps<typeof RawDate>) { return <RawDate className={`${styles.control} ${className}`} {...rest} />; }
-export function TimeInput({ className = '', ...rest }: React.ComponentProps<typeof RawTime>) { return <RawTime className={`${styles.control} ${className}`} {...rest} />; }
-export function DateTimeInput({ className = '', ...rest }: React.ComponentProps<typeof RawDateTime>) { return <RawDateTime className={`${styles.control} ${className}`} {...rest} />; }
+export function DateInput({ className = '', ...rest }: React.ComponentProps<typeof RawDate>) {
+  return <RawDate className={`${styles.control} ${className}`} {...rest} />;
+}
+export function TimeInput({ className = '', ...rest }: React.ComponentProps<typeof RawTime>) {
+  return <RawTime className={`${styles.control} ${className}`} {...rest} />;
+}
+export function DateTimeInput({ className = '', ...rest }: React.ComponentProps<typeof RawDateTime>) {
+  return <RawDateTime className={`${styles.control} ${className}`} {...rest} />;
+}

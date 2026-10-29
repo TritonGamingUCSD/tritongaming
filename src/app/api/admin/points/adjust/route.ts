@@ -12,7 +12,9 @@ import { strictUser } from '@/lib/supabase/localAuth';
 // later.
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -35,7 +37,14 @@ export async function POST(request: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  await logAudit(serviceClient, { actorId: user.id, action: 'adjust', entityType: 'points', entityId: user_id, summary: `Points adjusted by ${parsedAmount >= 0 ? '+' : ''}${parsedAmount}: ${String(note).trim()}`, details: { amount: parsedAmount } });
+  await logAudit(serviceClient, {
+    actorId: user.id,
+    action: 'adjust',
+    entityType: 'points',
+    entityId: user_id,
+    summary: `Points adjusted by ${parsedAmount >= 0 ? '+' : ''}${parsedAmount}: ${String(note).trim()}`,
+    details: { amount: parsedAmount },
+  });
   await notifyPoints(serviceClient, [user_id], user.id, parsedAmount, String(note).trim());
   return NextResponse.json({ ok: true });
 }

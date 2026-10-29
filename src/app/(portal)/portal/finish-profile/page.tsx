@@ -45,8 +45,17 @@ export default async function FinishProfilePage({ searchParams }: { searchParams
       task={event && mode ? { mode, eventId: event.id, title: event.title } : null}
       divisions={divisions.map((d) => ({ id: d.id, name: d.name }))}
       initial={{
-        name: profile.display_name ?? '', pronouns: profile.pronouns ?? '', gender: priv.gender ?? '', year: yearChoiceOf(profile), college: profile.college ?? '', major: profile.major ?? '',
-        gamerTag: profile.gamer_tag ?? '', minor: profile.minor ?? '', platforms: priv.platforms, favoriteGames: priv.favorite_games, divisionInterests: priv.division_interests,
+        name: profile.display_name ?? '',
+        pronouns: profile.pronouns ?? '',
+        gender: priv.gender ?? '',
+        year: yearChoiceOf(profile),
+        college: profile.college ?? '',
+        major: profile.major ?? '',
+        gamerTag: profile.gamer_tag ?? '',
+        minor: profile.minor ?? '',
+        platforms: priv.platforms,
+        favoriteGames: priv.favorite_games,
+        divisionInterests: priv.division_interests,
       }}
     />
   );

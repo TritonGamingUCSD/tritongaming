@@ -1,9 +1,6 @@
 'use client';
 
-import {
-  ResponsiveContainer, LineChart, Line, BarChart, Bar, Legend,
-  XAxis, YAxis, CartesianGrid, Tooltip,
-} from 'recharts';
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, Legend, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
 import { Users, UserPlus, Calendar, Ticket, CircleCheck, Percent, Coins, Gift } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
 import type { StatsData } from './getStatsData';
@@ -109,17 +106,30 @@ export default function StatsClient({ data }: { data: StatsData }) {
 
       <div className={styles.chartRow}>
         <section className={styles.chartCard}>
-          <h2 className={styles.chartTitle}><Coins size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards economy</h2>
+          <h2 className={styles.chartTitle}>
+            <Coins size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards economy
+          </h2>
           <div className={styles.economyStats}>
-            <div><span className={styles.economyValue}>{pointsEconomy.inCirculation.toLocaleString()}</span><span className={styles.economyLabel}>Points in circulation</span></div>
-            <div><span className={styles.economyValue}>{pointsEconomy.totalRedeemed.toLocaleString()}</span><span className={styles.economyLabel}>Points redeemed</span></div>
-            <div><span className={styles.economyValue}>{pointsEconomy.pendingRedemptions.toLocaleString()}</span><span className={styles.economyLabel}>Awaiting fulfillment</span></div>
+            <div>
+              <span className={styles.economyValue}>{pointsEconomy.inCirculation.toLocaleString()}</span>
+              <span className={styles.economyLabel}>Points in circulation</span>
+            </div>
+            <div>
+              <span className={styles.economyValue}>{pointsEconomy.totalRedeemed.toLocaleString()}</span>
+              <span className={styles.economyLabel}>Points redeemed</span>
+            </div>
+            <div>
+              <span className={styles.economyValue}>{pointsEconomy.pendingRedemptions.toLocaleString()}</span>
+              <span className={styles.economyLabel}>Awaiting fulfillment</span>
+            </div>
           </div>
         </section>
 
         {topRewards.length > 0 && (
           <section className={styles.chartCard}>
-            <h2 className={styles.chartTitle}><Gift size={15} strokeWidth={1.75} aria-hidden="true" /> Most redeemed rewards</h2>
+            <h2 className={styles.chartTitle}>
+              <Gift size={15} strokeWidth={1.75} aria-hidden="true" /> Most redeemed rewards
+            </h2>
             <ResponsiveContainer width="100%" height={Math.max(180, topRewards.length * 42)}>
               <BarChart data={topRewards} layout="vertical" margin={{ left: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
@@ -133,9 +143,7 @@ export default function StatsClient({ data }: { data: StatsData }) {
         )}
       </div>
 
-      {memberGrowth.length <= 1 && divisionSizes.length === 0 && activity.length <= 1 && (
-        <p className={styles.empty}>Not enough data yet to chart trends.</p>
-      )}
+      {memberGrowth.length <= 1 && divisionSizes.length === 0 && activity.length <= 1 && <p className={styles.empty}>Not enough data yet to chart trends.</p>}
     </div>
   );
 }

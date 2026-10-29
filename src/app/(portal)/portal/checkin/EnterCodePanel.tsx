@@ -19,12 +19,31 @@ export default function EnterCodePanel() {
   return (
     <section className={styles.codePanel} aria-label="Enter a code">
       <h2>Enter A Code</h2>
-      {outcome
-        ? <CheckInOutcome outcome={outcome} doneLabel="Next" busy={busy} onDone={() => setOutcome(null)} onChoose={async (which) => { if (outcome.kind !== 'choose') return; setBusy(true); setOutcome(await resolveChoice(outcome.code, which)); setBusy(false); }} onConfirmEvent={async () => { if (outcome.kind !== 'confirmEvent') return; setBusy(true); setOutcome(await confirmEventCheckIn(outcome.redo)); setBusy(false); }} />
-        : <>
-            <p>The 6-digit code from a ticket or from a meeting screen. It checks in whichever one it belongs to.</p>
-            <CodeEntry onSubmit={(c) => void submit(c)} busy={busy} autoFocus />
-          </>}
+      {outcome ? (
+        <CheckInOutcome
+          outcome={outcome}
+          doneLabel="Next"
+          busy={busy}
+          onDone={() => setOutcome(null)}
+          onChoose={async (which) => {
+            if (outcome.kind !== 'choose') return;
+            setBusy(true);
+            setOutcome(await resolveChoice(outcome.code, which));
+            setBusy(false);
+          }}
+          onConfirmEvent={async () => {
+            if (outcome.kind !== 'confirmEvent') return;
+            setBusy(true);
+            setOutcome(await confirmEventCheckIn(outcome.redo));
+            setBusy(false);
+          }}
+        />
+      ) : (
+        <>
+          <p>The 6-digit code from a ticket or from a meeting screen. It checks in whichever one it belongs to.</p>
+          <CodeEntry onSubmit={(c) => void submit(c)} busy={busy} autoFocus />
+        </>
+      )}
     </section>
   );
 }

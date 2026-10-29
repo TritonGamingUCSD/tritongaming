@@ -42,21 +42,27 @@ export default async function OurStoryPage() {
 
   return (
     <div className={styles.page}>
-      <PageHero label={(content.hero_label as string) || 'Who we are'} title={(content.hero_title as string) || 'Our story'} sub={(content.hero_sub as string) || 'Gaming Org at UC San Diego'} />
-      {shown.map((id) => SECTIONS.find((x) => x.key === id)!).map((s, position) => (
-        <ZineBand key={s.key} tone={tones[position % tones.length]} edge={position > 0} label={s.tag}>
-          <InfoSection
-            title={content[`${s.key}_title`] as string}
-            text={content[`${s.key}_body`] as string}
-            image={content[`${s.key}_image`] as string}
-            imageAlt={s.imageAlt}
-            tag={s.tag}
-            photoCredit={s.photoCredit}
-            photoCreditLink={s.photoCreditLink}
-            reverse={position % 2 === 1}
-          />
-        </ZineBand>
-      ))}
+      <PageHero
+        label={(content.hero_label as string) || 'Who we are'}
+        title={(content.hero_title as string) || 'Our story'}
+        sub={(content.hero_sub as string) || 'Gaming Org at UC San Diego'}
+      />
+      {shown
+        .map((id) => SECTIONS.find((x) => x.key === id)!)
+        .map((s, position) => (
+          <ZineBand key={s.key} tone={tones[position % tones.length]} edge={position > 0} label={s.tag}>
+            <InfoSection
+              title={content[`${s.key}_title`] as string}
+              text={content[`${s.key}_body`] as string}
+              image={content[`${s.key}_image`] as string}
+              imageAlt={s.imageAlt}
+              tag={s.tag}
+              photoCredit={s.photoCredit}
+              photoCreditLink={s.photoCreditLink}
+              reverse={position % 2 === 1}
+            />
+          </ZineBand>
+        ))}
     </div>
   );
 }

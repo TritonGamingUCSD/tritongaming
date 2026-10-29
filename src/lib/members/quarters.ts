@@ -13,7 +13,14 @@ import { invalidate } from '@/lib/site/revalidate';
 
 export type Term = 'fall' | 'winter' | 'spring';
 export const TERMS: Term[] = ['fall', 'winter', 'spring'];
-export interface Quarter { id: string; term: Term; start_year: number; starts_on: string; ends_on: string; carried_over_at?: string | null }
+export interface Quarter {
+  id: string;
+  term: Term;
+  start_year: number;
+  starts_on: string;
+  ends_on: string;
+  carried_over_at?: string | null;
+}
 
 const TERM_LABEL: Record<Term, string> = { fall: 'Fall', winter: 'Winter', spring: 'Spring' };
 // Fall belongs to the calendar year the academic year starts in; Winter and Spring to the next one.
@@ -42,7 +49,8 @@ export function startedQuarters(quarters: Quarter[], today: string = pacificDayK
 }
 
 // Only officers and leads can be inactive (exec and admin never are).
-export const canBeInactive = (roles: { role: string }[]) => roles.some((r) => r.role === 'officer' || r.role === 'lead') && !roles.some((r) => r.role === 'exec' || r.role === 'admin');
+export const canBeInactive = (roles: { role: string }[]) =>
+  roles.some((r) => r.role === 'officer' || r.role === 'lead') && !roles.some((r) => r.role === 'exec' || r.role === 'admin');
 
 // Everyone who is inactive right now.
 export async function inactiveIds(svc: SupabaseClient): Promise<Set<string>> {
@@ -58,11 +66,16 @@ export async function loadQuarters(svc: SupabaseClient): Promise<Quarter[]> {
 // 'manage' = exec / admin (the Quarter status page); 'setup' = admin only (the quarter dates).
 export async function authorizeQuarters(mode: 'manage' | 'setup') {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const ok = mode === 'manage' ? hasCapability(roles ?? [], 'manage_quarters') : hasCapability(roles ?? [], 'manage_roles');
-  if (!ok) return { error: NextResponse.json({ error: mode === 'manage' ? 'Only exec and admins can change quarter status.' : 'Only admins can set the quarter dates.' }, { status: 403 }) };
+  if (!ok)
+    return {
+      error: NextResponse.json({ error: mode === 'manage' ? 'Only exec and admins can change quarter status.' : 'Only admins can set the quarter dates.' }, { status: 403 }),
+    };
   return { user, svc: createServiceClient(), canSetup: hasCapability(roles ?? [], 'manage_roles') };
 }
 
@@ -72,19 +85,31 @@ export async function authorizeQuarters(mode: 'manage' | 'setup') {
 async function carryOver(svc: SupabaseClient, quarters: Quarter[], cur: Quarter): Promise<void> {
   const { data: claimed } = await svc.from('academic_quarters').update({ carried_over_at: new Date().toISOString() }).eq('id', cur.id).is('carried_over_at', null).select('id');
   if (!claimed?.length) return;
-  const prev = quarters.filter((q) => q.starts_on < cur.starts_on).sort(byStart).pop();
+  const prev = quarters
+    .filter((q) => q.starts_on < cur.starts_on)
+    .sort(byStart)
+    .pop();
   if (!prev) return;
   const { data: already } = await svc.from('officer_quarter_status').select('user_id').eq('quarter_id', cur.id).limit(1);
   if (already?.length) return;
   const { data: before } = await svc.from('officer_quarter_status').select('user_id').eq('quarter_id', prev.id);
   const ids = [...new Set((before ?? []).map((m) => m.user_id as string))];
   if (!ids.length) return;
-  await svc.from('officer_quarter_status').upsert(ids.map((user_id) => ({ user_id, quarter_id: cur.id, set_by: null })), { onConflict: 'user_id,quarter_id' });
+  await svc.from('officer_quarter_status').upsert(
+    ids.map((user_id) => ({ user_id, quarter_id: cur.id, set_by: null })),
+    { onConflict: 'user_id,quarter_id' },
+  );
   const { data: staff } = await svc.from('user_roles').select('user_id').in('role', ['exec', 'admin']);
-  await createNotifications(svc, [...new Set((staff ?? []).map((u) => u.user_id as string))].map((user_id) => ({
-    user_id, type: 'quarter_status', title: `Check who’s inactive for ${quarterName(cur)}`,
-    body: `${ids.length} ${ids.length === 1 ? 'person was' : 'people were'} copied over from ${quarterName(prev)}. Change anyone who’s different.`, href: '/portal/quarters',
-  })));
+  await createNotifications(
+    svc,
+    [...new Set((staff ?? []).map((u) => u.user_id as string))].map((user_id) => ({
+      user_id,
+      type: 'quarter_status',
+      title: `Check who’s inactive for ${quarterName(cur)}`,
+      body: `${ids.length} ${ids.length === 1 ? 'person was' : 'people were'} copied over from ${quarterName(prev)}. Change anyone who’s different.`,
+      href: '/portal/quarters',
+    })),
+  );
 }
 
 // Make the inactive markers match the calendar: everyone marked for the current quarter carries the marker, everyone else does not. Run after every change
@@ -107,11 +132,24 @@ export async function syncInactive(svc: SupabaseClient, today: string = pacificD
   const added = [...want].filter((id) => !have.has(id));
   const removed = [...have.keys()].filter((id) => !want.has(id));
   if (added.length) await svc.from('user_roles').insert(added.map((user_id) => ({ user_id, role: 'inactive' })));
-  if (removed.length) await svc.from('user_roles').delete().in('id', removed.map((id) => have.get(id)!));
-  if (added.length || removed.length) invalidate('board');   // the Team page shows an Inactive tag
+  if (removed.length)
+    await svc
+      .from('user_roles')
+      .delete()
+      .in(
+        'id',
+        removed.map((id) => have.get(id)!),
+      );
+  if (added.length || removed.length) invalidate('board'); // the Team page shows an Inactive tag
   const name = cur ? quarterName(cur) : 'this quarter';
   await createNotifications(svc, [
-    ...added.map((user_id) => ({ user_id, type: 'quarter_status', title: `You’re inactive for ${name}`, body: 'You keep your title. You have view-only access and aren’t expected at meetings.', href: '/portal/profile' })),
+    ...added.map((user_id) => ({
+      user_id,
+      type: 'quarter_status',
+      title: `You’re inactive for ${name}`,
+      body: 'You keep your title. You have view-only access and aren’t expected at meetings.',
+      href: '/portal/profile',
+    })),
     ...removed.map((user_id) => ({ user_id, type: 'quarter_status', title: 'You’re active again', body: 'Meetings and your officer tools are back.', href: '/portal' })),
   ]);
   return { added, removed, quarter: cur ? quarterName(cur) : null };

@@ -11,7 +11,11 @@ import styles from './qrstudio.module.css';
 
 const PLACEHOLDER_URL = 'https://www.example.com';
 
-export interface QRDivisionLogo { id: string; name: string; logo: string }
+export interface QRDivisionLogo {
+  id: string;
+  name: string;
+  logo: string;
+}
 
 export default function QRStudioClient({ divisions = [] }: { divisions?: QRDivisionLogo[] }) {
   // Starts empty (the field shows example.com as a placeholder, so nothing has to be deleted first).
@@ -24,7 +28,10 @@ export default function QRStudioClient({ divisions = [] }: { divisions?: QRDivis
   const [copied, setCopied] = useState(false);
   async function handleCopy() {
     const ok = await qrRef.current?.copy();
-    if (ok) { setCopied(true); window.setTimeout(() => setCopied(false), 1600); } else showToast('Your browser would not copy the image. Use Download instead.');
+    if (ok) {
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1600);
+    } else showToast('Your browser would not copy the image. Use Download instead.');
   }
 
   async function handleDownload() {
@@ -39,18 +46,12 @@ export default function QRStudioClient({ divisions = [] }: { divisions?: QRDivis
         <div>
           <p className={styles.eyebrow}>Preview</p>
           <h2 className={styles.previewTitle}>Live output</h2>
-          <p className={styles.previewHint}>
-            Updates instantly as you tune the settings. Download PNG or JPEG when you&apos;re ready.
-          </p>
+          <p className={styles.previewHint}>Updates instantly as you tune the settings. Download PNG or JPEG when you&apos;re ready.</p>
         </div>
 
         <div
           className={styles.canvasFrame}
-          style={
-            options.transparentBg
-              ? { backgroundImage: 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%)', backgroundSize: '20px 20px' }
-              : { backgroundColor: '#fff' }
-          }
+          style={options.transparentBg ? { backgroundImage: 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%)', backgroundSize: '20px 20px' } : { backgroundColor: '#fff' }}
         >
           <StyledQRCode ref={qrRef} options={previewOptions} className={styles.canvasInner} />
           {!hasData && <span className={styles.sampleTag}>Sample — enter a link to make yours</span>}
@@ -68,10 +69,28 @@ export default function QRStudioClient({ divisions = [] }: { divisions?: QRDivis
         </div>
 
         <div className={styles.previewActions}>
-          <Button onClick={handleDownload} disabled={!hasData || options.size <= 0}><Download size={15} aria-hidden="true" /> Download {options.downloadFormat.toUpperCase()}</Button>
-          <Button variant="secondary" onClick={handleCopy} disabled={!hasData}>{copied ? <><Check size={15} aria-hidden="true" /> Copied</> : <><Copy size={15} aria-hidden="true" /> Copy image</>}</Button>
+          <Button onClick={handleDownload} disabled={!hasData || options.size <= 0}>
+            <Download size={15} aria-hidden="true" /> Download {options.downloadFormat.toUpperCase()}
+          </Button>
+          <Button variant="secondary" onClick={handleCopy} disabled={!hasData}>
+            {copied ? (
+              <>
+                <Check size={15} aria-hidden="true" /> Copied
+              </>
+            ) : (
+              <>
+                <Copy size={15} aria-hidden="true" /> Copy image
+              </>
+            )}
+          </Button>
         </div>
-        {!hasData ? null : <p className={styles.previewHint}>{options.transparentBg ? 'Transparent background: it shows through on dark pages, so use white if you are not sure where it will go.' : 'White background scans on every camera and in dark mode.'}</p>}
+        {!hasData ? null : (
+          <p className={styles.previewHint}>
+            {options.transparentBg
+              ? 'Transparent background: it shows through on dark pages, so use white if you are not sure where it will go.'
+              : 'White background scans on every camera and in dark mode.'}
+          </p>
+        )}
       </aside>
     </div>
   );

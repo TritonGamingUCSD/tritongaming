@@ -9,5 +9,9 @@ import styles from './PortalThemeToggle.module.css';
 export default function ScanLink() {
   const touch = useTouchDevice();
   if (!touch) return null;
-  return <Link href="/portal/scan" prefetch={false} className={styles.btn} aria-label="Scan a code" title="Scan a code"><TGcodeIcon size={20} /></Link>;
+  return (
+    <Link href="/portal/scan" prefetch={false} className={styles.btn} aria-label="Scan a code" title="Scan a code">
+      <TGcodeIcon size={20} />
+    </Link>
+  );
 }

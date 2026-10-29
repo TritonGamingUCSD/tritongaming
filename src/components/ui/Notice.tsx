@@ -11,7 +11,11 @@ export type NoticeTone = 'error' | 'warning' | 'info' | 'success';
 const ICONS = { error: CircleAlert, warning: TriangleAlert, info: Info, success: CircleCheck } as const;
 
 export default function Notice({
-  tone = 'info', onLight = false, compact = false, className = '', children,
+  tone = 'info',
+  onLight = false,
+  compact = false,
+  className = '',
+  children,
 }: {
   tone?: NoticeTone;
   onLight?: boolean;

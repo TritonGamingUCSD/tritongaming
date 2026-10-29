@@ -35,25 +35,25 @@ async function getDiscordCount(invite: string): Promise<{ members: number; onlin
 }
 
 const SOCIAL_DEFAULTS = {
-  email:     'mailto:tritongamingofficial@gmail.com',
-  discord:   DISCORD_URL,
+  email: 'mailto:tritongamingofficial@gmail.com',
+  discord: DISCORD_URL,
   instagram: 'https://www.instagram.com/tritongamingsd/',
-  twitter:   'https://twitter.com/tritongamingsd',
-  tiktok:    'https://tiktok.com/@tritongamingsd',
-  twitch:    'https://twitch.tv/tritongaming',
-  youtube:   'https://www.youtube.com/@tritongamingofficial',
-  linkedin:  'https://www.linkedin.com/company/triton-gaming/',
+  twitter: 'https://twitter.com/tritongamingsd',
+  tiktok: 'https://tiktok.com/@tritongamingsd',
+  twitch: 'https://twitch.tv/tritongaming',
+  youtube: 'https://www.youtube.com/@tritongamingofficial',
+  linkedin: 'https://www.linkedin.com/company/triton-gaming/',
 };
 
 const SOCIAL_ICONS: Array<{ key: keyof typeof SOCIAL_DEFAULTS; src: string; label: string }> = [
-  { key: 'email',     src: '/logos/email.svg',     label: 'Email' },
-  { key: 'discord',   src: '/logos/discord.svg',   label: 'Discord' },
+  { key: 'email', src: '/logos/email.svg', label: 'Email' },
+  { key: 'discord', src: '/logos/discord.svg', label: 'Discord' },
   { key: 'instagram', src: '/logos/instagram.svg', label: 'Instagram' },
-  { key: 'twitter',   src: '/logos/x.svg',         label: 'X (Twitter)' },
-  { key: 'tiktok',    src: '/logos/tiktok.svg',    label: 'TikTok' },
-  { key: 'twitch',    src: '/logos/twitch.svg',    label: 'Twitch' },
-  { key: 'youtube',   src: '/logos/youtube.svg',   label: 'YouTube' },
-  { key: 'linkedin',  src: '/logos/linkedin.svg',  label: 'LinkedIn' },
+  { key: 'twitter', src: '/logos/x.svg', label: 'X (Twitter)' },
+  { key: 'tiktok', src: '/logos/tiktok.svg', label: 'TikTok' },
+  { key: 'twitch', src: '/logos/twitch.svg', label: 'Twitch' },
+  { key: 'youtube', src: '/logos/youtube.svg', label: 'YouTube' },
+  { key: 'linkedin', src: '/logos/linkedin.svg', label: 'LinkedIn' },
 ];
 
 export default async function Footer() {
@@ -98,14 +98,26 @@ export default async function Footer() {
           <nav className={styles.col} aria-label="Explore">
             <h3 className={styles.heading}>Explore</h3>
             <ul className={styles.navList}>
-              {EXPLORE_LINKS.map(({ href, label }) => <li key={href}><Link href={href} className={styles.navLink}>{label}</Link></li>)}
+              {EXPLORE_LINKS.map(({ href, label }) => (
+                <li key={href}>
+                  <Link href={href} className={styles.navLink}>
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </nav>
 
           <nav className={styles.col} aria-label="Get involved">
             <h3 className={styles.heading}>Get involved</h3>
             <ul className={styles.navList}>
-              {INVOLVED_LINKS.map(({ href, label }) => <li key={href}><Link href={href} className={styles.navLink}>{label}</Link></li>)}
+              {INVOLVED_LINKS.map(({ href, label }) => (
+                <li key={href}>
+                  <Link href={href} className={styles.navLink}>
+                    {label}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </nav>
 
@@ -124,7 +136,6 @@ export default async function Footer() {
           </div>
         </div>
 
-
         <div className={styles.bottom}>
           <Image src="/logos/tg_logo.png" alt="Triton Gaming logo" width={44} height={44} className={styles.logo} />
           <div className={styles.bottomText}>
@@ -132,11 +143,17 @@ export default async function Footer() {
             <p className={styles.copy}>
               {copyright}
               {copyright && ' · '}
-              <Link href="/privacy" className={styles.portalLink}>Privacy</Link>
+              <Link href="/privacy" className={styles.portalLink}>
+                Privacy
+              </Link>
               {' · '}
-              <Link href="/terms" className={styles.portalLink}>Terms</Link>
+              <Link href="/terms" className={styles.portalLink}>
+                Terms
+              </Link>
               {' · '}
-              <Link href="/portal" prefetch={false} className={styles.portalLink}>Member portal</Link>
+              <Link href="/portal" prefetch={false} className={styles.portalLink}>
+                Member portal
+              </Link>
             </p>
           </div>
           <BackToTop />

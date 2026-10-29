@@ -29,7 +29,10 @@ export default function DivisionsSectionContent({ canManageDivisions, allDivisio
   ];
   const [tab, setTab] = useState<Tab>(tabs.some((t) => t.id === urlTab) ? (urlTab as Tab) : (tabs[0]?.id ?? 'all'));
   const sync = usePortalTabSync('divisions', () => tabs[0]?.id);
-  function select(t: Tab) { setTab(t); sync(t); }
+  function select(t: Tab) {
+    setTab(t);
+    sync(t);
+  }
 
   return (
     <div className={styles.page}>

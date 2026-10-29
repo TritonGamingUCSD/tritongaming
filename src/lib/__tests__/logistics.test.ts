@@ -5,8 +5,23 @@ import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilitie
 import type { AppRole } from '@/types/database';
 
 const base: Device = {
-  id: 'd1', tag: 'TECM1', name: null, type: 'Gaming PC', shelf: 'Shelf A', tier: 'T1', place_note: null, condition: 'working',
-  ports: [], login: null, games: [], kit: [{ item: 'Power cable', qty: 1, missing: false }], quantity: null, quantity_is_estimate: true, notes: null, created_at: '', updated_at: '',
+  id: 'd1',
+  tag: 'TECM1',
+  name: null,
+  type: 'Gaming PC',
+  shelf: 'Shelf A',
+  tier: 'T1',
+  place_note: null,
+  condition: 'working',
+  ports: [],
+  login: null,
+  games: [],
+  kit: [{ item: 'Power cable', qty: 1, missing: false }],
+  quantity: null,
+  quantity_is_estimate: true,
+  notes: null,
+  created_at: '',
+  updated_at: '',
 };
 
 describe('device IDs', () => {
@@ -34,7 +49,10 @@ describe('reading a device from the browser', () => {
   it('cleans lists and kits: no blanks, no repeats, sane quantities', () => {
     expect(cleanList([' HDMI ', 'hdmi', '', 'USB-C'])).toEqual(['HDMI', 'USB-C']);
     expect(cleanList('nope')).toEqual([]);
-    expect(cleanKit([{ item: 'Charger', qty: 0, missing: true }, { item: 'charger' }, { item: 'Mouse', qty: 2.4 }, { item: '' }])).toEqual([{ item: 'Charger', qty: 1, missing: true }, { item: 'Mouse', qty: 2, missing: false }]);
+    expect(cleanKit([{ item: 'Charger', qty: 0, missing: true }, { item: 'charger' }, { item: 'Mouse', qty: 2.4 }, { item: '' }])).toEqual([
+      { item: 'Charger', qty: 1, missing: true },
+      { item: 'Mouse', qty: 2, missing: false },
+    ]);
   });
   it('lets a counted quantity be an estimate or not', () => {
     expect(cleanDevice({ quantity: 30, quantity_is_estimate: true }).value).toEqual({ quantity: 30, quantity_is_estimate: true });
@@ -48,7 +66,16 @@ describe('reading a device from the browser', () => {
 
 describe('the history lines for a change', () => {
   it('says what changed in words', () => {
-    const lines = describeChange(base, { ...base, condition: 'dead', shelf: 'Shelf C', tier: 'T0', kit: [{ item: 'Power cable', qty: 1, missing: true }, { item: 'HDMI cable', qty: 1, missing: false }] }).map((l) => l.summary);
+    const lines = describeChange(base, {
+      ...base,
+      condition: 'dead',
+      shelf: 'Shelf C',
+      tier: 'T0',
+      kit: [
+        { item: 'Power cable', qty: 1, missing: true },
+        { item: 'HDMI cable', qty: 1, missing: false },
+      ],
+    }).map((l) => l.summary);
     expect(lines).toContain('Condition: Working → Dead');
     expect(lines).toContain('Moved: Shelf A · T1 → Shelf C · T0');
     expect(lines).toContain('Marked missing: Power cable');
@@ -73,7 +100,7 @@ describe('who can use Logistics', () => {
   const can = (role: AppRole, cap: 'view_logistics' | 'manage_logistics' | 'request_logistics') => hasCapability([{ role, division_id: null }], cap);
   it('lets every officer and above look, but only exec and admin change by default', () => {
     for (const r of ['recruit', 'officer', 'lead', 'exec', 'admin'] as AppRole[]) expect(can(r, 'view_logistics')).toBe(true);
-    expect(can('division', 'view_logistics')).toBe(false);   // a division account sees only the Requests pages
+    expect(can('division', 'view_logistics')).toBe(false); // a division account sees only the Requests pages
     for (const r of ['recruit', 'officer', 'division', 'lead', 'exec', 'admin'] as AppRole[]) expect(can(r, 'request_logistics')).toBe(true);
     for (const r of ['ucsd', 'alumni'] as AppRole[]) expect(can(r, 'request_logistics')).toBe(false);
     for (const r of ['ucsd', 'alumni'] as AppRole[]) expect(can(r, 'view_logistics')).toBe(false);
@@ -85,7 +112,13 @@ describe('who can use Logistics', () => {
     expect(hasCapability(roles, 'manage_logistics')).toBe(true);
   });
   it('is taken away from an inactive officer who was granted it', () => {
-    const roles = withGrantedCapabilities([{ role: 'officer', division_id: null }, { role: 'inactive', division_id: null }], ['manage_logistics']);
+    const roles = withGrantedCapabilities(
+      [
+        { role: 'officer', division_id: null },
+        { role: 'inactive', division_id: null },
+      ],
+      ['manage_logistics'],
+    );
     expect(hasCapability(roles, 'manage_logistics')).toBe(false);
     expect(hasCapability(roles, 'view_logistics')).toBe(true);
   });

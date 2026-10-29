@@ -38,21 +38,36 @@ export default function VenuePinMap({ value, onChange }: { value: Pin | null; on
       ro = new ResizeObserver(() => m.invalidateSize());
       ro.observe(el.current);
     })();
-    return () => { dead = true; ro?.disconnect(); map.current?.remove(); map.current = null; marker.current = null; };
+    return () => {
+      dead = true;
+      ro?.disconnect();
+      map.current?.remove();
+      map.current = null;
+      marker.current = null;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function sync(L = leaflet.current) {
     const m = map.current;
     if (!m || !L) return;
-    if (!value) { marker.current?.remove(); marker.current = null; return; }
+    if (!value) {
+      marker.current?.remove();
+      marker.current = null;
+      return;
+    }
     if (!marker.current) {
       const icon = L.divIcon({ className: '', html: `<span class="${styles.pin}"></span>`, iconSize: [28, 36], iconAnchor: [14, 34] });
       marker.current = L.marker(value, { icon, draggable: true }).addTo(m);
-      marker.current.on('dragend', () => { const p = marker.current!.getLatLng(); changeRef.current({ lat: round(p.lat), lng: round(p.lng) }); });
+      marker.current.on('dragend', () => {
+        const p = marker.current!.getLatLng();
+        changeRef.current({ lat: round(p.lat), lng: round(p.lng) });
+      });
     } else marker.current.setLatLng(value);
   }
-  useEffect(() => { sync(); }, [value?.lat, value?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    sync();
+  }, [value?.lat, value?.lng]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function search() {
     const q = query.trim();
@@ -61,23 +76,48 @@ export default function VenuePinMap({ value, onChange }: { value: Pin | null; on
     try {
       const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(q)}`);
       const j = (await r.json()) as { lat: string; lon: string }[];
-      if (!j[0]) { setMsg('Nothing found. Try a nearby landmark, or click the map.'); return; }
+      if (!j[0]) {
+        setMsg('Nothing found. Try a nearby landmark, or click the map.');
+        return;
+      }
       const p = { lat: round(parseFloat(j[0].lat)), lng: round(parseFloat(j[0].lon)) };
       map.current?.setView(p, 17);
       onChange(p);
       setMsg('');
-    } catch { setMsg('Search is unavailable right now. Click the map instead.'); }
+    } catch {
+      setMsg('Search is unavailable right now. Click the map instead.');
+    }
   }
 
   return (
     <div className={styles.wrap}>
       <div className={styles.searchRow}>
-        <input className={styles.input} value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); search(); } }} placeholder="Search a place or landmark" aria-label="Search the map" />
-        <button type="button" className={styles.btn} onClick={search}><Search size={14} aria-hidden="true" /> Find</button>
-        {value && <button type="button" className={styles.btn} onClick={() => onChange(null)}><X size={14} aria-hidden="true" /> Remove pin</button>}
+        <input
+          className={styles.input}
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              search();
+            }
+          }}
+          placeholder="Search a place or landmark"
+          aria-label="Search the map"
+        />
+        <button type="button" className={styles.btn} onClick={search}>
+          <Search size={14} aria-hidden="true" /> Find
+        </button>
+        {value && (
+          <button type="button" className={styles.btn} onClick={() => onChange(null)}>
+            <X size={14} aria-hidden="true" /> Remove pin
+          </button>
+        )}
       </div>
       <div ref={el} className={styles.map} />
-      <span className={styles.hint}>{msg || (value ? 'Drag the pin to adjust it, or click elsewhere to move it.' : 'Click the map to drop a pin. It only needs to be close.')}</span>
+      <span className={styles.hint}>
+        {msg || (value ? 'Drag the pin to adjust it, or click elsewhere to move it.' : 'Click the map to drop a pin. It only needs to be close.')}
+      </span>
     </div>
   );
 }

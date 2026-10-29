@@ -6,8 +6,12 @@ import { DOC_END, DOC_START, sectionsDoc } from '../src/lib/portal/sections.ts';
 const file = new URL('../docs/code-map.md', import.meta.url);
 const text = fs.readFileSync(file, 'utf8');
 const block = `${DOC_START}\n${sectionsDoc()}\n${DOC_END}`;
-const a = text.indexOf(DOC_START), b = text.indexOf(DOC_END);
+const a = text.indexOf(DOC_START),
+  b = text.indexOf(DOC_END);
 if (a === -1 || b === -1) throw new Error('docs/code-map.md has no sections block: add the DOC_START and DOC_END lines where the table should go.');
 const next = text.slice(0, a) + block + text.slice(b + DOC_END.length);
 if (next === text) console.log('docs/code-map.md is up to date.');
-else { fs.writeFileSync(file, next); console.log('docs/code-map.md updated.'); }
+else {
+  fs.writeFileSync(file, next);
+  console.log('docs/code-map.md updated.');
+}

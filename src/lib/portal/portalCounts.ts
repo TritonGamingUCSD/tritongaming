@@ -10,14 +10,18 @@ import type { AppRole } from '@/types/database';
 
 /** How many people hold a real org role (the same number the Members page lists). It only feeds a card badge, so it is worked out at most every 5 minutes
  *  for everyone together (the portal home used to read every role row on every visit). */
-export const getMemberCount = unstable_cache(async (): Promise<number> => {
-  const { data } = await createServiceClient().from('user_roles').select('user_id, role');
-  const byUser = new Map<string, { role: AppRole }[]>();
-  for (const r of data ?? []) byUser.set(r.user_id as string, [...(byUser.get(r.user_id as string) ?? []), { role: r.role as AppRole }]);
-  let n = 0;
-  for (const roles of byUser.values()) if (isOrgMember(roles)) n++;
-  return n;
-}, ['portal-member-count'], { revalidate: 300 });
+export const getMemberCount = unstable_cache(
+  async (): Promise<number> => {
+    const { data } = await createServiceClient().from('user_roles').select('user_id, role');
+    const byUser = new Map<string, { role: AppRole }[]>();
+    for (const r of data ?? []) byUser.set(r.user_id as string, [...(byUser.get(r.user_id as string) ?? []), { role: r.role as AppRole }]);
+    let n = 0;
+    for (const roles of byUser.values()) if (isOrgMember(roles)) n++;
+    return n;
+  },
+  ['portal-member-count'],
+  { revalidate: 300 },
+);
 
 /** The point tiers, kept for 10 minutes (and dropped at once when an admin edits them). Same answer for everyone. */
 export const getTiersCached = unstable_cache(async (): Promise<Tier[]> => fetchTiers(createServiceClient()), ['portal-tiers'], { revalidate: 600, tags: ['tiers'] });

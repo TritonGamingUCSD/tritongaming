@@ -14,6 +14,12 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { count } = await auth.svc.from('meeting_attendance').select('user_id', { count: 'exact', head: true }).eq('meeting_id', id);
   const { error } = await auth.svc.from('meetings').delete().eq('id', id);
   if (error) return NextResponse.json({ error: 'Failed to delete.' }, { status: 500 });
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'delete', entityType: 'meeting', entityId: id, summary: `Deleted "${m.title}" (${m.meeting_date}) and its ${count ?? 0} check-in${count === 1 ? '' : 's'}` });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'delete',
+    entityType: 'meeting',
+    entityId: id,
+    summary: `Deleted "${m.title}" (${m.meeting_date}) and its ${count ?? 0} check-in${count === 1 ? '' : 's'}`,
+  });
   return NextResponse.json({ ok: true });
 }

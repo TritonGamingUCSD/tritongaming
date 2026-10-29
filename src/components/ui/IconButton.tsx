@@ -8,20 +8,20 @@ import styles from './IconButton.module.css';
 // bar chart. Pass `href` to render a link instead of a button. `label` is required for accessibility —
 // it becomes the tooltip and the screen-reader name (include what it acts on: "Edit /linktree").
 const KINDS = {
-  edit:      { icon: Pencil,         title: 'Edit',      tone: 'default' },
-  delete:    { icon: Trash2,         title: 'Delete',    tone: 'danger' },
-  close:     { icon: X,              title: 'Close',     tone: 'default' },
-  remove:    { icon: X,              title: 'Remove',    tone: 'danger' },
-  analytics: { icon: BarChart3,      title: 'Analytics', tone: 'default' },
-  view:      { icon: Eye,            title: 'View',      tone: 'default' },
-  open:      { icon: ExternalLink,   title: 'Open',      tone: 'default' },
-  copy:      { icon: Copy,           title: 'Copy',      tone: 'default' },
-  pause:     { icon: Pause,          title: 'Pause',     tone: 'default' },
-  play:      { icon: Play,           title: 'Resume',    tone: 'default' },
-  history:   { icon: History,        title: 'History',   tone: 'default' },
-  more:      { icon: MoreHorizontal, title: 'More',      tone: 'default' },
-  checkin:   { icon: UserPlus,       title: 'Check in',  tone: 'default' },
-  absent:    { icon: UserX,          title: 'Mark absent', tone: 'default' },
+  edit: { icon: Pencil, title: 'Edit', tone: 'default' },
+  delete: { icon: Trash2, title: 'Delete', tone: 'danger' },
+  close: { icon: X, title: 'Close', tone: 'default' },
+  remove: { icon: X, title: 'Remove', tone: 'danger' },
+  analytics: { icon: BarChart3, title: 'Analytics', tone: 'default' },
+  view: { icon: Eye, title: 'View', tone: 'default' },
+  open: { icon: ExternalLink, title: 'Open', tone: 'default' },
+  copy: { icon: Copy, title: 'Copy', tone: 'default' },
+  pause: { icon: Pause, title: 'Pause', tone: 'default' },
+  play: { icon: Play, title: 'Resume', tone: 'default' },
+  history: { icon: History, title: 'History', tone: 'default' },
+  more: { icon: MoreHorizontal, title: 'More', tone: 'default' },
+  checkin: { icon: UserPlus, title: 'Check in', tone: 'default' },
+  absent: { icon: UserX, title: 'Mark absent', tone: 'default' },
 } as const;
 
 export type IconButtonKind = keyof typeof KINDS;
@@ -44,9 +44,19 @@ export default function IconButton({ kind, label, size = 'md', href, active, ico
   const glyph = icon ?? <Icon size={size === 'sm' ? 14 : 16} strokeWidth={1.75} aria-hidden="true" />;
   if (href) {
     const external = /^https?:/i.test(href);
-    return external
-      ? <a href={href} className={cls} aria-label={text} title={text} target="_blank" rel="noopener noreferrer">{glyph}</a>
-      : <Link href={href} className={cls} aria-label={text} title={text}>{glyph}</Link>;
+    return external ? (
+      <a href={href} className={cls} aria-label={text} title={text} target="_blank" rel="noopener noreferrer">
+        {glyph}
+      </a>
+    ) : (
+      <Link href={href} className={cls} aria-label={text} title={text}>
+        {glyph}
+      </Link>
+    );
   }
-  return <button type={type} className={cls} aria-label={text} title={text} {...rest}>{glyph}</button>;
+  return (
+    <button type={type} className={cls} aria-label={text} title={text} {...rest}>
+      {glyph}
+    </button>
+  );
 }

@@ -4,7 +4,14 @@ import type { Bucket } from '@/lib/events/eventSummary';
 import type { ReportChoices, ReportData } from './reportTypes';
 import { niceScale, twoLines } from './chartMath';
 
-const NAVY = '#011941', GOLD = '#ffc72c', GOLD_DEEP = '#b8860b', ROYAL = '#275a8f', TRACK = '#e8ebf1', INK_SOFT = '#4a5a78', LINE = '#d5dbe6', PANEL = '#f4f6fa';
+const NAVY = '#011941',
+  GOLD = '#ffc72c',
+  GOLD_DEEP = '#b8860b',
+  ROYAL = '#275a8f',
+  TRACK = '#e8ebf1',
+  INK_SOFT = '#4a5a78',
+  LINE = '#d5dbe6',
+  PANEL = '#f4f6fa';
 
 let fontsReady = false;
 function registerFonts(origin: string) {
@@ -81,9 +88,12 @@ const st = StyleSheet.create({
 
 const pct = (n: number, total: number) => (total ? Math.round((n / total) * 100) : 0);
 
-function polar(cx: number, cy: number, r: number, a: number) { return [cx + r * Math.cos(a), cy + r * Math.sin(a)]; }
+function polar(cx: number, cy: number, r: number, a: number) {
+  return [cx + r * Math.cos(a), cy + r * Math.sin(a)];
+}
 function arc(cx: number, cy: number, r: number, from: number, to: number) {
-  const [x1, y1] = polar(cx, cy, r, from), [x2, y2] = polar(cx, cy, r, to);
+  const [x1, y1] = polar(cx, cy, r, from),
+    [x2, y2] = polar(cx, cy, r, to);
   return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${to - from > Math.PI ? 1 : 0} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
 }
 
@@ -93,30 +103,61 @@ function Ring({ size, r, width, parts }: { size: number; r: number; width: numbe
   return (
     <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
       <Circle cx={c} cy={c} r={r} stroke={TRACK} strokeWidth={width} fill="none" />
-      {parts.filter((p) => p.frac > 0).map((p, i) => {
-        const from = a, to = a + Math.min(p.frac, 0.9995) * Math.PI * 2;
-        a += p.frac * Math.PI * 2;
-        return <Path key={i} d={arc(c, c, r, from, to)} stroke={p.color} strokeWidth={width} fill="none" />;
-      })}
+      {parts
+        .filter((p) => p.frac > 0)
+        .map((p, i) => {
+          const from = a,
+            to = a + Math.min(p.frac, 0.9995) * Math.PI * 2;
+          a += p.frac * Math.PI * 2;
+          return <Path key={i} d={arc(c, c, r, from, to)} stroke={p.color} strokeWidth={width} fill="none" />;
+        })}
     </Svg>
   );
 }
 
 // Bars with a value axis and light gridlines, the number above each bar and the label under it on two lines.
-function BarChart({ data, color, height = 130, width = 250, xTitle, yTitle }: { data: Bucket[]; color: string; height?: number; width?: number; xTitle?: string; yTitle?: string }) {
+function BarChart({
+  data,
+  color,
+  height = 130,
+  width = 250,
+  xTitle,
+  yTitle,
+}: {
+  data: Bucket[];
+  color: string;
+  height?: number;
+  width?: number;
+  xTitle?: string;
+  yTitle?: string;
+}) {
   if (!data.length || data.every((d) => d.count === 0)) return <Text style={st.note}>Nothing recorded yet.</Text>;
-  const W = width, H = height, L = 24, R = 4, T = yTitle ? 24 : 14, B = xTitle ? 48 : 32;
+  const W = width,
+    H = height,
+    L = 24,
+    R = 4,
+    T = yTitle ? 24 : 14,
+    B = xTitle ? 48 : 32;
   const { top, ticks } = niceScale(Math.max(...data.map((d) => d.count)), 3);
-  const plotW = W - L - R, plotH = H - T - B, slot = plotW / data.length, bw = Math.min(width > 300 ? 34 : 22, slot * 0.62);
+  const plotW = W - L - R,
+    plotH = H - T - B,
+    slot = plotW / data.length,
+    bw = Math.min(width > 300 ? 34 : 22, slot * 0.62);
   const y = (v: number) => T + plotH - (v / top) * plotH;
   const font = { fontFamily: 'FuturaM' };
   return (
     <Svg width="100%" viewBox={`0 0 ${W} ${H}`}>
-      {yTitle ? <Text x={2} y={9} style={{ ...font, fontSize: 7.2, fill: NAVY }}>{tx(yTitle)}</Text> : null}
+      {yTitle ? (
+        <Text x={2} y={9} style={{ ...font, fontSize: 7.2, fill: NAVY }}>
+          {tx(yTitle)}
+        </Text>
+      ) : null}
       {ticks.map((t) => (
         <G key={t}>
           <Line x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke={t === 0 ? '#9aa6bd' : '#e3e7ee'} strokeWidth={t === 0 ? 0.7 : 0.5} />
-          <Text x={L - 4} y={y(t) + 2.5} textAnchor="end" style={{ ...font, fontSize: 7, fill: INK_SOFT }}>{String(t)}</Text>
+          <Text x={L - 4} y={y(t) + 2.5} textAnchor="end" style={{ ...font, fontSize: 7, fill: INK_SOFT }}>
+            {String(t)}
+          </Text>
         </G>
       ))}
       {data.map((d, i) => {
@@ -125,17 +166,28 @@ function BarChart({ data, color, height = 130, width = 250, xTitle, yTitle }: { 
         return (
           <G key={d.label}>
             <Rect x={cx - bw / 2} y={y(d.count)} width={bw} height={Math.max(T + plotH - y(d.count), d.count ? 1 : 0)} fill={color} />
-            <Text x={cx} y={y(d.count) - 3} textAnchor="middle" style={{ ...font, fontSize: 7.5, fill: NAVY }}>{String(d.count)}</Text>
-            <Text x={cx} y={H - B + 11} textAnchor="middle" style={{ ...font, fontSize: 6.8, fill: INK_SOFT }}>{l1}</Text>
-            {l2 ? <Text x={cx} y={H - B + 20} textAnchor="middle" style={{ ...font, fontSize: 6.8, fill: INK_SOFT }}>{l2}</Text> : null}
+            <Text x={cx} y={y(d.count) - 3} textAnchor="middle" style={{ ...font, fontSize: 7.5, fill: NAVY }}>
+              {String(d.count)}
+            </Text>
+            <Text x={cx} y={H - B + 11} textAnchor="middle" style={{ ...font, fontSize: 6.8, fill: INK_SOFT }}>
+              {l1}
+            </Text>
+            {l2 ? (
+              <Text x={cx} y={H - B + 20} textAnchor="middle" style={{ ...font, fontSize: 6.8, fill: INK_SOFT }}>
+                {l2}
+              </Text>
+            ) : null}
           </G>
         );
       })}
-      {xTitle ? <Text x={L + (W - L - R) / 2} y={H - 2} textAnchor="middle" style={{ ...font, fontSize: 7.2, fill: NAVY }}>{tx(xTitle)}</Text> : null}
+      {xTitle ? (
+        <Text x={L + (W - L - R) / 2} y={H - 2} textAnchor="middle" style={{ ...font, fontSize: 7.2, fill: NAVY }}>
+          {tx(xTitle)}
+        </Text>
+      ) : null}
     </Svg>
   );
 }
-
 
 // Compact pieces for the one-page layout.
 function MiniRank({ data, color, base, n = 5 }: { data: Bucket[]; color: string; base: number; n?: number }) {
@@ -145,8 +197,13 @@ function MiniRank({ data, color, base, n = 5 }: { data: Bucket[]; color: string;
     <View>
       {rows.map((b) => (
         <View key={b.label} style={{ marginBottom: 2.6 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 6 }}><Text style={{ fontSize: 7.5, flexShrink: 1 }}>{tx(b.label)}</Text><Text style={{ fontSize: 7.5, color: INK_SOFT }}>{pct(b.count, base)}%</Text></View>
-          <View style={{ height: 3.5, backgroundColor: TRACK, marginTop: 1.5 }}><View style={{ width: `${Math.min(pct(b.count, base), 100)}%`, minWidth: 2, height: 3.5, backgroundColor: color }} /></View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 6 }}>
+            <Text style={{ fontSize: 7.5, flexShrink: 1 }}>{tx(b.label)}</Text>
+            <Text style={{ fontSize: 7.5, color: INK_SOFT }}>{pct(b.count, base)}%</Text>
+          </View>
+          <View style={{ height: 3.5, backgroundColor: TRACK, marginTop: 1.5 }}>
+            <View style={{ width: `${Math.min(pct(b.count, base), 100)}%`, minWidth: 2, height: 3.5, backgroundColor: color }} />
+          </View>
         </View>
       ))}
     </View>
@@ -192,24 +249,65 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
   const rot = [-6, 5, -3, 7, -5, 4];
   const kpiW = Math.floor((548 - 6 * (Math.min(kpis.length, 6) - 1)) / Math.min(kpis.length, 6));
   // The charts take whatever height page 1 has left, so a long title, a long summary, more findings or a second row of social tiles shrink them instead of spilling onto a new page.
-  const titleLines = Math.ceil(r.title.length / 42), summaryLines = Math.ceil(r.summary.length / 105);
+  const titleLines = Math.ceil(r.title.length / 42),
+    summaryLines = Math.ceil(r.summary.length / 105);
   const hasArrivals = s.arrivals.some((a) => a.count > 0); // no scans recorded (a free-entry event, say): the claim chart takes the full width instead of leaving a blank panel
   const socialPerRow = social.length > 6 ? Math.ceil(social.length / 2) : Math.max(social.length, 1);
-  const chartH = Math.max(150, Math.min(300, 218 - (titleLines - 1) * 24 - Math.max(0, summaryLines - 2) * 13 - Math.max(0, r.highlights.length - 3) * 13 - (c.preparedFor?.logo ? 0 : -8) - (social.length > 6 ? 46 : 0) + (social.length ? 0 : 76)));
+  const chartH = Math.max(
+    150,
+    Math.min(
+      300,
+      218 -
+        (titleLines - 1) * 24 -
+        Math.max(0, summaryLines - 2) * 13 -
+        Math.max(0, r.highlights.length - 3) * 13 -
+        (c.preparedFor?.logo ? 0 : -8) -
+        (social.length > 6 ? 46 : 0) +
+        (social.length ? 0 : 76),
+    ),
+  );
   const hasPage2 = hasAudience || c.photos.length > 0 || c.thanks.length > 0;
   return (
     <Document title={`${r.title} - Event Impact Report`} author="Triton Gaming" subject="Event Impact Report" creator="Triton Gaming">
       <Page size="LETTER" style={st.page}>
         <Footer title={r.title} />
-        <Text fixed style={{ position: 'absolute', left: 32, right: 32, bottom: 40, borderTopWidth: 0.6, borderTopColor: LINE, paddingTop: 4, fontSize: 6.3, lineHeight: 1.35, color: INK_SOFT }}>About these figures: registration and attendance come from Triton Gaming's ticketing and on-site check-in at tritongaming.org and have been collected since the 2026-2027 school year (September 2026). Gender and pronouns are asked of every member, and class year, college and major of UCSD students, when they claim a ticket; platforms and games are optional, and guests and earlier accounts may have left details blank. Those figures cover only attendees who answered; "Not provided" counts those who did not. Shown as totals only; no individual's answers appear.</Text>
+        <Text
+          fixed
+          style={{
+            position: 'absolute',
+            left: 32,
+            right: 32,
+            bottom: 40,
+            borderTopWidth: 0.6,
+            borderTopColor: LINE,
+            paddingTop: 4,
+            fontSize: 6.3,
+            lineHeight: 1.35,
+            color: INK_SOFT,
+          }}
+        >
+          About these figures: registration and attendance come from Triton Gaming's ticketing and on-site check-in at tritongaming.org and have been collected since the 2026-2027
+          school year (September 2026). Gender and pronouns are asked of every member, and class year, college and major of UCSD students, when they claim a ticket; platforms and
+          games are optional, and guests and earlier accounts may have left details blank. Those figures cover only attendees who answered; "Not provided" counts those who did not.
+          Shown as totals only; no individual's answers appear.
+        </Text>
         <View style={st.masthead}>
           <View style={st.brand}>
             <Image src={`${origin}/logos/tg_logo.png`} style={{ width: 30, height: 30 }} />
-            <View><Text style={[st.brandName, { fontSize: 12 }]}>Triton Gaming</Text><Text style={[st.brandTag, { fontSize: 7.8 }]}>Gaming Org at UC San Diego</Text></View>
+            <View>
+              <Text style={[st.brandName, { fontSize: 12 }]}>Triton Gaming</Text>
+              <Text style={[st.brandTag, { fontSize: 7.8 }]}>Gaming Org at UC San Diego</Text>
+            </View>
           </View>
-          <View><Text style={st.docType}>Event Impact Report</Text><Text style={st.docDate}>Prepared {tx(r.prepared)}</Text></View>
+          <View>
+            <Text style={st.docType}>Event Impact Report</Text>
+            <Text style={st.docDate}>Prepared {tx(r.prepared)}</Text>
+          </View>
         </View>
-        <View style={[st.ruleRow, { marginTop: 8 }]}><View style={st.ruleGold} /><View style={st.ruleNavy} /></View>
+        <View style={[st.ruleRow, { marginTop: 8 }]}>
+          <View style={st.ruleGold} />
+          <View style={st.ruleNavy} />
+        </View>
 
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 14, marginTop: 10 }} wrap={false}>
           <View style={{ flex: 1 }}>
@@ -229,14 +327,21 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center', marginTop: 7 }} wrap={false}>
           <View style={{ width: 62, height: 62, alignItems: 'center', justifyContent: 'center' }}>
             <Ring size={62} r={26} width={5} parts={[{ frac: s.attendanceRate / 100, color: NAVY }]} />
-            <View style={{ position: 'absolute', top: 0, left: 0, width: 62, height: 62, alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontFamily: 'FuturaH', fontSize: 12, lineHeight: 1.1 }}>{s.attendanceRate}%</Text></View>
+            <View style={{ position: 'absolute', top: 0, left: 0, width: 62, height: 62, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontFamily: 'FuturaH', fontSize: 12, lineHeight: 1.1 }}>{s.attendanceRate}%</Text>
+            </View>
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 9, lineHeight: 1.5 }}>{tx(r.summary)}</Text>
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 6, marginTop: 6 }} wrap={false}>
-          {kpis.map((k) => (<View key={k.label} style={[st.kpi, { width: kpiW, paddingTop: 4, paddingBottom: 5 }]}><Text style={[st.kpiValue, { fontSize: 14 }]}>{k.value}</Text><Text style={[st.kpiLabel, { fontSize: 6.8 }]}>{tx(k.label)}</Text></View>))}
+          {kpis.map((k) => (
+            <View key={k.label} style={[st.kpi, { width: kpiW, paddingTop: 4, paddingBottom: 5 }]}>
+              <Text style={[st.kpiValue, { fontSize: 14 }]}>{k.value}</Text>
+              <Text style={[st.kpiLabel, { fontSize: 6.8 }]}>{tx(k.label)}</Text>
+            </View>
+          ))}
         </View>
 
         {r.highlights.length > 0 && (
@@ -246,7 +351,10 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
               {r.highlights.map((h) => (
                 <View key={h.label} style={{ flexDirection: 'row', gap: 6 }}>
                   <View style={{ width: 4, height: 4, backgroundColor: GOLD, marginTop: 3.5, transform: 'rotate(45deg)' }} />
-                  <Text style={{ flex: 1, fontSize: 8.3, lineHeight: 1.4 }}><Text style={{ fontFamily: 'FuturaH' }}>{tx(h.label)}  </Text>{tx(h.text)}</Text>
+                  <Text style={{ flex: 1, fontSize: 8.3, lineHeight: 1.4 }}>
+                    <Text style={{ fontFamily: 'FuturaH' }}>{tx(h.label)} </Text>
+                    {tx(h.text)}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -254,13 +362,24 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
         )}
 
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-          {hasArrivals && <Panel title={r.multiDay ? 'Attendance by day' : 'Arrival times'} note={r.peakNote ?? undefined} style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.arrivals} color={ROYAL} height={chartH} width={262} xTitle={r.multiDay ? 'Day' : 'Time of arrival (Pacific time)'} yTitle="People checked in" /></Panel>}
-          <Panel title="When tickets were claimed" note="How far ahead of the event people registered." style={{ flex: 1, flexBasis: 0 }}><BarChart data={s.claimTiming} color={ROYAL} height={chartH} width={hasArrivals ? 262 : 540} xTitle="How far ahead of the event" yTitle="Tickets claimed" /></Panel>
+          {hasArrivals && (
+            <Panel title={r.multiDay ? 'Attendance by day' : 'Arrival times'} note={r.peakNote ?? undefined} style={{ flex: 1, flexBasis: 0 }}>
+              <BarChart data={s.arrivals} color={ROYAL} height={chartH} width={262} xTitle={r.multiDay ? 'Day' : 'Time of arrival (Pacific time)'} yTitle="People checked in" />
+            </Panel>
+          )}
+          <Panel title="When tickets were claimed" note="How far ahead of the event people registered." style={{ flex: 1, flexBasis: 0 }}>
+            <BarChart data={s.claimTiming} color={ROYAL} height={chartH} width={hasArrivals ? 262 : 540} xTitle="How far ahead of the event" yTitle="Tickets claimed" />
+          </Panel>
         </View>
         {social.length > 0 && (
           <Panel title="Social media reach" note="Reported by Triton Gaming from its own accounts." style={{ marginTop: 10 }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {social.map((m, i) => (<View key={i} style={[st.kpi, { width: `${(100 - 1.2 * (socialPerRow - 1)) / socialPerRow}%`, paddingTop: 4, paddingBottom: 5 }]}><Text style={[st.kpiValue, { fontSize: 13 }]}>{tx(m.value)}</Text><Text style={[st.kpiLabel, { fontSize: 6.8 }]}>{tx(m.label)}</Text></View>))}
+              {social.map((m, i) => (
+                <View key={i} style={[st.kpi, { width: `${(100 - 1.2 * (socialPerRow - 1)) / socialPerRow}%`, paddingTop: 4, paddingBottom: 5 }]}>
+                  <Text style={[st.kpiValue, { fontSize: 13 }]}>{tx(m.value)}</Text>
+                  <Text style={[st.kpiLabel, { fontSize: 6.8 }]}>{tx(m.label)}</Text>
+                </View>
+              ))}
             </View>
           </Panel>
         )}
@@ -271,18 +390,38 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
           <Footer title={r.title} />
           {hasAudience && (
             <View>
-              <View style={[st.sectionHead, { marginTop: 0 }]}><Text style={st.sectionTitle}>Who attended</Text></View>
-              <Text style={st.lead}>Shares of the {s.checkedIn.toLocaleString()} people who checked in. Optional profile details cover only attendees who chose to share them.</Text>
+              <View style={[st.sectionHead, { marginTop: 0 }]}>
+                <Text style={st.sectionTitle}>Who attended</Text>
+              </View>
+              <Text style={st.lead}>
+                Shares of the {s.checkedIn.toLocaleString()} people who checked in. Optional profile details cover only attendees who chose to share them.
+              </Text>
               <View style={{ gap: 8, marginTop: 6 }}>
-                {([
-                  [['Class year', s.year, NAVY], ['Colleges', s.college, ROYAL]],
-                  [['Fields of study', s.field, NAVY], ['Top majors', s.major, ROYAL]],
-                  [['Gender', s.gender, NAVY], ['Pronouns', s.pronouns, ROYAL]],
-                  [['Platforms', s.platforms, GOLD_DEEP], ['Favorite games', s.games, GOLD_DEEP]],
-                ] as [string, Bucket[], string][][]).map((pair) => (
+                {(
+                  [
+                    [
+                      ['Class year', s.year, NAVY],
+                      ['Colleges', s.college, ROYAL],
+                    ],
+                    [
+                      ['Fields of study', s.field, NAVY],
+                      ['Top majors', s.major, ROYAL],
+                    ],
+                    [
+                      ['Gender', s.gender, NAVY],
+                      ['Pronouns', s.pronouns, ROYAL],
+                    ],
+                    [
+                      ['Platforms', s.platforms, GOLD_DEEP],
+                      ['Favorite games', s.games, GOLD_DEEP],
+                    ],
+                  ] as [string, Bucket[], string][][]
+                ).map((pair) => (
                   <View key={pair[0][0]} style={{ flexDirection: 'row', gap: 10 }}>
                     {pair.map(([t, d, col]) => (
-                      <Panel key={t} title={t} style={{ flex: 1, flexBasis: 0 }}><MiniRank data={d} color={col} base={s.checkedIn} n={4} /></Panel>
+                      <Panel key={t} title={t} style={{ flex: 1, flexBasis: 0 }}>
+                        <MiniRank data={d} color={col} base={s.checkedIn} n={4} />
+                      </Panel>
                     ))}
                   </View>
                 ))}
@@ -291,12 +430,20 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
           )}
           {c.photos.length > 0 && (
             <View break={hasAudience} style={{ marginTop: 0 }}>
-              <View style={[st.sectionHead, { marginTop: 0 }]}><Text style={st.sectionTitle}>Event photos</Text></View>
+              <View style={[st.sectionHead, { marginTop: 0 }]}>
+                <Text style={st.sectionTitle}>Event photos</Text>
+              </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 8 }}>
                 {c.photos.map((p, i) => (
                   <View key={i} style={{ width: c.photos.length === 1 ? '100%' : '48.8%' }} wrap={false}>
                     <Image src={p.src} style={{ width: '100%', height: c.photos.length === 1 ? 240 : 110, objectFit: 'cover' }} />
-                    {(p.caption || p.credit) ? <Text style={{ fontSize: 7.5, color: INK_SOFT, marginTop: 3 }}>{tx(p.caption)}{p.caption && p.credit ? ' | ' : ''}{p.credit ? `Photo: ${tx(p.credit)}` : ''}</Text> : null}
+                    {p.caption || p.credit ? (
+                      <Text style={{ fontSize: 7.5, color: INK_SOFT, marginTop: 3 }}>
+                        {tx(p.caption)}
+                        {p.caption && p.credit ? ' | ' : ''}
+                        {p.credit ? `Photo: ${tx(p.credit)}` : ''}
+                      </Text>
+                    ) : null}
                   </View>
                 ))}
               </View>
@@ -304,7 +451,9 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
           )}
           {c.thanks.length > 0 && (
             <View style={{ marginTop: 14 }} wrap={false}>
-              <View style={[st.sectionHead, { marginTop: 0 }]}><Text style={st.sectionTitle}>{c.preparedFor ? `Thank you, ${tx(c.preparedFor.name)}` : 'With thanks to our sponsors'}</Text></View>
+              <View style={[st.sectionHead, { marginTop: 0 }]}>
+                <Text style={st.sectionTitle}>{c.preparedFor ? `Thank you, ${tx(c.preparedFor.name)}` : 'With thanks to our sponsors'}</Text>
+              </View>
               <Text style={st.lead}>{c.preparedFor ? 'Thank you for supporting this event.' : 'This event was supported by:'}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 22, marginTop: 8, alignItems: 'center' }}>
                 {c.thanks.map((sp) => (
@@ -318,7 +467,9 @@ export default function ReportPdf({ r, c, origin }: { r: ReportData; c: ReportCh
           )}
           {c.stickers.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', gap: 24, marginTop: 26 }} wrap={false}>
-              {c.stickers.map((u, i) => <Image key={i} src={u} style={{ height: 50, maxWidth: 86, objectFit: 'contain', transform: `rotate(${rot[i % rot.length]}deg)` }} />)}
+              {c.stickers.map((u, i) => (
+                <Image key={i} src={u} style={{ height: 50, maxWidth: 86, objectFit: 'contain', transform: `rotate(${rot[i % rot.length]}deg)` }} />
+              ))}
             </View>
           )}
         </Page>

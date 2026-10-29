@@ -15,5 +15,12 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
   const { data: here } = await auth.svc.from('meeting_attendance').select('user_id').eq('meeting_id', id).eq('user_id', auth.user.id).maybeSingle();
   if (!here) return NextResponse.json({ error: 'Check in first to see results.' }, { status: 403 });
   const { data: rows } = await auth.svc.from('meeting_answers').select('answer').eq('meeting_id', id);
-  return NextResponse.json({ open: isMeetingOpen(m), ...tally(m.question_type, m.question_options, (rows ?? []).map((r) => r.answer as string)) });
+  return NextResponse.json({
+    open: isMeetingOpen(m),
+    ...tally(
+      m.question_type,
+      m.question_options,
+      (rows ?? []).map((r) => r.answer as string),
+    ),
+  });
 }

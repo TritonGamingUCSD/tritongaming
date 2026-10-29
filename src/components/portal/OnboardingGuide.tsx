@@ -72,7 +72,9 @@ export default function OnboardingGuide({ userId }: { userId: string }) {
 
         <div className={styles.actions}>
           {step > 0 && (
-            <button type="button" className={styles.backBtn} onClick={() => setStep((s) => s - 1)}>Back</button>
+            <button type="button" className={styles.backBtn} onClick={() => setStep((s) => s - 1)}>
+              Back
+            </button>
           )}
           <button type="button" className={styles.nextBtn} onClick={() => (isLast ? dismiss() : setStep((s) => s + 1))}>
             {isLast ? "Let's go" : 'Next'} <ArrowRight size={14} strokeWidth={2} aria-hidden="true" />

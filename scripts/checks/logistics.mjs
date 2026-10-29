@@ -17,7 +17,11 @@ try {
   t.ok('a student cannot open Logistics', (await student.call('GET', '/api/logistics')).s === 403);
   const view = await officer.call('GET', '/api/logistics');
   t.ok('an officer can look', view.s === 200 && view.j.canManage === false);
-  t.ok('the starting lists are there', view.j.lists?.type?.length >= 25 && view.j.lists.shelf.length >= 10 && view.j.lists.tier.length >= 6 && view.j.lists.kit.length > 5, JSON.stringify(Object.fromEntries(Object.entries(view.j.lists ?? {}).map(([k, v]) => [k, v.length]))));
+  t.ok(
+    'the starting lists are there',
+    view.j.lists?.type?.length >= 25 && view.j.lists.shelf.length >= 10 && view.j.lists.tier.length >= 6 && view.j.lists.kit.length > 5,
+    JSON.stringify(Object.fromEntries(Object.entries(view.j.lists ?? {}).map(([k, v]) => [k, v.length]))),
+  );
   t.ok('Prizing is not a device type', !view.j.lists.type.some((x) => x.value === 'Prizing'));
   t.ok('the portal game list comes along', view.j.portalGames?.includes('Valorant'));
   const managed = await exec.call('GET', '/api/logistics');
@@ -32,11 +36,25 @@ try {
   // ---- devices
   const noTag = await exec.call('POST', '/api/logistics/devices', { type: 'Gaming PC' });
   t.ok('an individual type needs an ID', noTag.s === 400, JSON.stringify(noTag));
-  const a = await exec.call('POST', '/api/logistics/devices', { tag: 'ZZ1', name: 'Test PC', type: 'Gaming PC', shelf: 'Shelf A', tier: 'T1', condition: 'working', kit: [{ item: 'Power cable', qty: 1, missing: false }], games: ['Valorant'], ports: ['HDMI'], login: 'zz-login' });
+  const a = await exec.call('POST', '/api/logistics/devices', {
+    tag: 'ZZ1',
+    name: 'Test PC',
+    type: 'Gaming PC',
+    shelf: 'Shelf A',
+    tier: 'T1',
+    condition: 'working',
+    kit: [{ item: 'Power cable', qty: 1, missing: false }],
+    games: ['Valorant'],
+    ports: ['HDMI'],
+    login: 'zz-login',
+  });
   t.ok('exec adds a device', a.s === 201 && a.j.device?.tag === 'ZZ1', JSON.stringify(a));
   if (a.j.device) createdDevices.push(a.j.device.id);
   t.ok('the same ID is refused, however it is typed', (await exec.call('POST', '/api/logistics/devices', { tag: 'zz 1', type: 'Gaming PC' })).s === 409);
-  t.ok('officers can see the login', (await officer.call('GET', '/api/logistics')).j.devices.some((d) => d.tag === 'ZZ1' && d.login === 'zz-login'));
+  t.ok(
+    'officers can see the login',
+    (await officer.call('GET', '/api/logistics')).j.devices.some((d) => d.tag === 'ZZ1' && d.login === 'zz-login'),
+  );
 
   const bad = await exec.call('PATCH', `/api/logistics/devices/${a.j.device.id}`, { condition: 'smashed' });
   t.ok('a made-up condition is refused', bad.s === 400);
@@ -46,11 +64,24 @@ try {
   t.ok('an ID cannot be changed to one that exists', (await exec.call('PATCH', `/api/logistics/devices/${b.j.device.id}`, { tag: 'ZZ 1' })).s === 409);
   t.ok('an individual device cannot lose its ID', (await exec.call('PATCH', `/api/logistics/devices/${b.j.device.id}`, { tag: '' })).s === 400);
 
-  const up = await exec.call('PATCH', `/api/logistics/devices/${a.j.device.id}`, { condition: 'dead', shelf: 'Shelf C', tier: 'T0', kit: [{ item: 'Power cable', qty: 1, missing: true }] });
+  const up = await exec.call('PATCH', `/api/logistics/devices/${a.j.device.id}`, {
+    condition: 'dead',
+    shelf: 'Shelf C',
+    tier: 'T0',
+    kit: [{ item: 'Power cable', qty: 1, missing: true }],
+  });
   t.ok('exec edits a device', up.s === 200 && up.j.device.condition === 'dead' && up.j.device.shelf === 'Shelf C');
   const hist = await officer.call('GET', `/api/logistics/devices/${a.j.device.id}`);
   const lines = (hist.j.log ?? []).map((l) => l.summary);
-  t.ok('the history says what changed', lines.includes('Condition: Not Tested → Dead') === false && lines.some((l) => l.startsWith('Condition: Working → Dead')) && lines.some((l) => l.startsWith('Moved: Shelf A · T1 → Shelf C · T0')) && lines.includes('Marked missing: Power cable') && lines.includes('Added to the catalog'), JSON.stringify(lines));
+  t.ok(
+    'the history says what changed',
+    lines.includes('Condition: Not Tested → Dead') === false &&
+      lines.some((l) => l.startsWith('Condition: Working → Dead')) &&
+      lines.some((l) => l.startsWith('Moved: Shelf A · T1 → Shelf C · T0')) &&
+      lines.includes('Marked missing: Power cable') &&
+      lines.includes('Added to the catalog'),
+    JSON.stringify(lines),
+  );
   t.ok('an officer can read the history', hist.s === 200 && hist.j.log?.[0]?.by);
 
   // ---- counted types (an estimated quantity)
@@ -58,7 +89,11 @@ try {
   t.ok('a counted type is added', ty.s === 201 && ty.j.option?.counted === true, JSON.stringify(ty));
   const cnt = await exec.call('POST', '/api/logistics/devices', { type: 'ZZ Cables', shelf: 'Shelf C', tier: 'T2', quantity: 30, quantity_is_estimate: true });
   if (cnt.j.device) createdDevices.push(cnt.j.device.id);
-  t.ok('a counted row needs no ID and keeps an estimated quantity', cnt.s === 201 && cnt.j.device.tag === null && cnt.j.device.quantity === 30 && cnt.j.device.quantity_is_estimate === true, JSON.stringify(cnt));
+  t.ok(
+    'a counted row needs no ID and keeps an estimated quantity',
+    cnt.s === 201 && cnt.j.device.tag === null && cnt.j.device.quantity === 30 && cnt.j.device.quantity_is_estimate === true,
+    JSON.stringify(cnt),
+  );
   const cnt2 = await exec.call('POST', '/api/logistics/devices', { type: 'ZZ Cables', quantity: 12, quantity_is_estimate: false });
   if (cnt2.j.device) createdDevices.push(cnt2.j.device.id);
   t.ok('two counted rows without an ID can sit side by side', cnt2.s === 201);
@@ -78,7 +113,10 @@ try {
   await exec.call('PATCH', `/api/logistics/options/${game.j.option.id}`, { value: 'ZZ Game 2' });
   t.ok('renaming a game follows into a device', (await exec.call('GET', '/api/logistics')).j.devices.find((d) => d.id === b.j.device.id).games.includes('ZZ Game 2'));
   const flip = await exec.call('PATCH', `/api/logistics/options/${ty.j.option.id}`, { counted: false });
-  t.ok('a type can be switched from counted to individual', flip.s === 200 && (await exec.call('GET', '/api/logistics')).j.lists.type.find((x) => x.value === 'ZZ Cables').counted === false);
+  t.ok(
+    'a type can be switched from counted to individual',
+    flip.s === 200 && (await exec.call('GET', '/api/logistics')).j.lists.type.find((x) => x.value === 'ZZ Cables').counted === false,
+  );
   await exec.call('PATCH', '/api/logistics/devices/' + b.j.device.id, { shelf: null, games: [] });
   t.ok('an unused shelf can be deleted', (await exec.call('DELETE', `/api/logistics/options/${sh.j.option.id}`)).s === 200);
   t.ok('an unused game can be deleted', (await exec.call('DELETE', `/api/logistics/options/${game.j.option.id}`)).s === 200);
@@ -103,7 +141,11 @@ try {
   // ---- removing, and the audit log
   t.ok('exec removes a device', (await exec.call('DELETE', `/api/logistics/devices/${g.j.device.id}`)).s === 200);
   const { data: audit } = await svc.from('audit_log').select('action, entity_type').in('actor_id', made).eq('entity_type', 'logistics device');
-  t.ok('adds and removals are in the audit log, and a removal is not a "delete" (which would alert every admin)', audit.some((x) => x.action === 'create') && audit.some((x) => x.action === 'remove') && !audit.some((x) => x.action === 'delete'), JSON.stringify(audit));
+  t.ok(
+    'adds and removals are in the audit log, and a removal is not a "delete" (which would alert every admin)',
+    audit.some((x) => x.action === 'create') && audit.some((x) => x.action === 'remove') && !audit.some((x) => x.action === 'delete'),
+    JSON.stringify(audit),
+  );
 } finally {
   await svc.from('logistics_devices').delete().in('id', createdDevices);
   await svc.from('logistics_devices').delete().like('tag', 'ZZ%');

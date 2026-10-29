@@ -9,26 +9,55 @@ import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import styles from './docs.module.css';
 
-const ROLES = [{ id: 'officer', label: 'Officers' }, { id: 'lead', label: 'Leads' }, { id: 'division', label: 'Division leads' }, { id: 'exec', label: 'Exec' }] as const;
+const ROLES = [
+  { id: 'officer', label: 'Officers' },
+  { id: 'lead', label: 'Leads' },
+  { id: 'division', label: 'Division leads' },
+  { id: 'exec', label: 'Exec' },
+] as const;
 
 async function call<T = Record<string, unknown>>(url: string, init?: RequestInit): Promise<{ ok: boolean; json: T & { error?: string } }> {
   try {
     const r = await fetch(url, { ...init, headers: { 'Content-Type': 'application/json' } });
     return { ok: r.ok, json: (await r.json().catch(() => ({}))) as T & { error?: string } };
-  } catch { return { ok: false, json: { error: 'Couldn’t reach the server. Check your connection and try again.' } as T & { error?: string } }; }
+  } catch {
+    return { ok: false, json: { error: 'Couldn’t reach the server. Check your connection and try again.' } as T & { error?: string } };
+  }
 }
 
 /** On the docs home: the docs you are required to read and haven't opened yet. Nothing shows when you are up to date. */
 // On the docs home it opens a doc in place (onOpen); elsewhere (the dashboard) it links to the doc (hrefBase + id). A string, not a function, so a server page can use it.
 export function RequiredBanner({ onOpen, hrefBase }: { onOpen?: (id: string) => void; hrefBase?: string }) {
   const [unread, setUnread] = useState<{ id: string; title: string }[]>([]);
-  useEffect(() => { let live = true; call<{ unread: { id: string; title: string }[] }>('/api/docs/required').then((r) => { if (live && r.ok) setUnread(r.json.unread ?? []); }); return () => { live = false; }; }, []);
+  useEffect(() => {
+    let live = true;
+    call<{ unread: { id: string; title: string }[] }>('/api/docs/required').then((r) => {
+      if (live && r.ok) setUnread(r.json.unread ?? []);
+    });
+    return () => {
+      live = false;
+    };
+  }, []);
   if (!unread.length) return null;
   return (
     <section className={styles.requiredBox} aria-label="Required reading">
-      <h2 className={styles.requiredH}><BookCheck size={15} aria-hidden="true" /> Required reading <span className={styles.catCount}>{unread.length}</span></h2>
+      <h2 className={styles.requiredH}>
+        <BookCheck size={15} aria-hidden="true" /> Required reading <span className={styles.catCount}>{unread.length}</span>
+      </h2>
       <ul className={styles.requiredList}>
-        {unread.map((d) => <li key={d.id}>{hrefBase ? <PortalLink href={`${hrefBase}${d.id}`} className={styles.requiredLink}>{d.title}</PortalLink> : <button type="button" className={styles.requiredLink} onClick={() => onOpen?.(d.id)}>{d.title}</button>}</li>)}
+        {unread.map((d) => (
+          <li key={d.id}>
+            {hrefBase ? (
+              <PortalLink href={`${hrefBase}${d.id}`} className={styles.requiredLink}>
+                {d.title}
+              </PortalLink>
+            ) : (
+              <button type="button" className={styles.requiredLink} onClick={() => onOpen?.(d.id)}>
+                {d.title}
+              </button>
+            )}
+          </li>
+        ))}
       </ul>
     </section>
   );
@@ -46,23 +75,44 @@ export function RequiredReadingDialog({ doc, onClose }: { doc: { id: string; tit
     let live = true;
     call<{ roles: string[]; people: typeof people }>(`/api/docs/required?id=${doc.id}`).then((r) => {
       if (!live) return;
-      if (!r.ok) { setErr(r.json.error || 'Couldn’t load that.'); setRoles([]); return; }
-      setRoles(r.json.roles); setSaved(r.json.roles); setPeople(r.json.people);
+      if (!r.ok) {
+        setErr(r.json.error || 'Couldn’t load that.');
+        setRoles([]);
+        return;
+      }
+      setRoles(r.json.roles);
+      setSaved(r.json.roles);
+      setPeople(r.json.people);
     });
-    return () => { live = false; };
+    return () => {
+      live = false;
+    };
   }, [doc.id]);
   const dirty = roles !== null && (roles.length !== saved.length || roles.some((r) => !saved.includes(r)));
   const unread = people.filter((p) => !p.read_at).length;
   async function save() {
-    setBusy('save'); setErr(''); setMsg('');
+    setBusy('save');
+    setErr('');
+    setMsg('');
     const r = await call<{ roles: string[]; people: typeof people }>('/api/docs/required', { method: 'PUT', body: JSON.stringify({ id: doc.id, roles }) });
-    if (!r.ok) setErr(r.json.error || 'Couldn’t save that.'); else { setSaved(r.json.roles); setRoles(r.json.roles); setPeople(r.json.people); setMsg('Saved.'); }
+    if (!r.ok) setErr(r.json.error || 'Couldn’t save that.');
+    else {
+      setSaved(r.json.roles);
+      setRoles(r.json.roles);
+      setPeople(r.json.people);
+      setMsg('Saved.');
+    }
     setBusy(null);
   }
   async function remind(action: 'remind' | 'reread' = 'remind') {
-    setBusy(action); setErr(''); setMsg('');
+    setBusy(action);
+    setErr('');
+    setMsg('');
     const r = await call<{ sent: number; already: number }>('/api/docs/required', { method: 'POST', body: JSON.stringify({ id: doc.id, action }) });
-    if (r.ok && action === 'reread') { const g = await call<{ people: typeof people }>(`/api/docs/required?id=${doc.id}`); if (g.ok) setPeople(g.json.people); }
+    if (r.ok && action === 'reread') {
+      const g = await call<{ people: typeof people }>(`/api/docs/required?id=${doc.id}`);
+      if (g.ok) setPeople(g.json.people);
+    }
     if (!r.ok) setErr(r.json.error || 'Couldn’t send that.');
     else setMsg(r.json.sent ? `Reminder sent to ${r.json.sent} ${r.json.sent === 1 ? 'person' : 'people'}.` : 'Everyone left was already reminded today.');
     setBusy(null);
@@ -73,30 +123,64 @@ export function RequiredReadingDialog({ doc, onClose }: { doc: { id: string; tit
       <div className={styles.reqRoles} role="group" aria-label="Required for">
         {ROLES.map((r) => (
           <label key={r.id} className={styles.reqRole}>
-            <input type="checkbox" checked={roles?.includes(r.id) ?? false} disabled={roles === null} onChange={(e) => setRoles((cur) => (e.target.checked ? [...(cur ?? []), r.id] : (cur ?? []).filter((x) => x !== r.id)))} /> {r.label}
+            <input
+              type="checkbox"
+              checked={roles?.includes(r.id) ?? false}
+              disabled={roles === null}
+              onChange={(e) => setRoles((cur) => (e.target.checked ? [...(cur ?? []), r.id] : (cur ?? []).filter((x) => x !== r.id)))}
+            />{' '}
+            {r.label}
           </label>
         ))}
       </div>
       {!dirty && saved.length > 0 && (
         <>
-          <p className={styles.reqCount}><strong>{people.length - unread}/{people.length}</strong> have read it</p>
+          <p className={styles.reqCount}>
+            <strong>
+              {people.length - unread}/{people.length}
+            </strong>{' '}
+            have read it
+          </p>
           <ul className={styles.reqPeople} aria-label="Who has read it">
-            {people.map((p) => <li key={p.id} className={p.read_at ? undefined : styles.reqUnread}><span>{p.name}</span><small>{p.read_at ? `Read ${formatPacificDateTime(p.read_at)}` : 'Not yet'}</small></li>)}
+            {people.map((p) => (
+              <li key={p.id} className={p.read_at ? undefined : styles.reqUnread}>
+                <span>{p.name}</span>
+                <small>{p.read_at ? `Read ${formatPacificDateTime(p.read_at)}` : 'Not yet'}</small>
+              </li>
+            ))}
           </ul>
         </>
       )}
       {!doc.published && saved.length > 0 && <Notice tone="warning">This doc isn’t published yet, so people can’t read it. Publish it first.</Notice>}
       {err && <Notice tone="error">{err}</Notice>}
-      {msg && <p className={styles.muted} role="status">{msg}</p>}
+      {msg && (
+        <p className={styles.muted} role="status">
+          {msg}
+        </p>
+      )}
       {!dirty && saved.length > 0 && doc.published && (
         <div className={styles.reqExtras}>
-          {unread > 0 && <Button size="sm" variant="secondary" loading={busy === 'remind'} onClick={() => remind('remind')}><Bell size={14} aria-hidden="true" /> Remind {unread} unread</Button>}
-          <Button size="sm" variant="secondary" loading={busy === 'reread'} onClick={() => remind('reread')} title="Clears everyone’s read mark and sends one bell. Use it after a change that matters.">Ask everyone to re-read</Button>
+          {unread > 0 && (
+            <Button size="sm" variant="secondary" loading={busy === 'remind'} onClick={() => remind('remind')}>
+              <Bell size={14} aria-hidden="true" /> Remind {unread} unread
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="secondary"
+            loading={busy === 'reread'}
+            onClick={() => remind('reread')}
+            title="Clears everyone’s read mark and sends one bell. Use it after a change that matters."
+          >
+            Ask everyone to re-read
+          </Button>
         </div>
       )}
       <DialogActions>
         <DialogCancel onClick={onClose}>Close</DialogCancel>
-        <Button loading={busy === 'save'} disabled={!dirty} onClick={save}>Save</Button>
+        <Button loading={busy === 'save'} disabled={!dirty} onClick={save}>
+          Save
+        </Button>
       </DialogActions>
     </Dialog>
   );

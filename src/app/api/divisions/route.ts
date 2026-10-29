@@ -37,13 +37,12 @@ function cleanSocialEmbeds(value: unknown): SocialEmbed[] {
 // manage_divisions_directory (see the divisions_content_fields migration).
 
 async function requireDivisionsManager(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: roles } = await supabase
-    .from('user_roles')
-    .select('role, division_id')
-    .eq('user_id', user.id);
+  const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
 
   if (!hasCapability(roles ?? [], 'manage_divisions_directory')) {
     return NextResponse.json({ error: 'Exec or admin access required' }, { status: 403 });
@@ -60,13 +59,12 @@ async function requireDivisionsManager(supabase: Awaited<ReturnType<typeof creat
 // handler whether directory-level fields (name/slug) are off-limits for
 // this particular caller.
 async function requireDivisionAccess(supabase: Awaited<ReturnType<typeof createClient>>) {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
 
-  const { data: roleRows } = await supabase
-    .from('user_roles')
-    .select('role, division_id')
-    .eq('user_id', user.id);
+  const { data: roleRows } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const roles = roleRows ?? [];
 
   const canManageDirectory = hasCapability(roles, 'manage_divisions_directory');
@@ -81,9 +79,16 @@ export async function POST(request: Request) {
   const authError = await requireDivisionsManager(supabase);
   if (authError) return authError;
 
-  const { name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks } = await request.json() as {
-    name?: string; slug?: string; description?: string; logo_url?: string; discord_url?: string;
-    application_url?: string; social_links?: unknown; social_embeds?: unknown; page_blocks?: unknown;
+  const { name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks } = (await request.json()) as {
+    name?: string;
+    slug?: string;
+    description?: string;
+    logo_url?: string;
+    discord_url?: string;
+    application_url?: string;
+    social_links?: unknown;
+    social_embeds?: unknown;
+    page_blocks?: unknown;
   };
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
@@ -122,9 +127,17 @@ export async function PATCH(request: Request) {
   const { error: authError, canManageDirectory } = await requireDivisionAccess(supabase);
   if (authError) return authError;
 
-  const { id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks } = await request.json() as {
-    id?: string; name?: string; slug?: string; description?: string; logo_url?: string; discord_url?: string;
-    application_url?: string; social_links?: unknown; social_embeds?: unknown; page_blocks?: unknown;
+  const { id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks } = (await request.json()) as {
+    id?: string;
+    name?: string;
+    slug?: string;
+    description?: string;
+    logo_url?: string;
+    discord_url?: string;
+    application_url?: string;
+    social_links?: unknown;
+    social_embeds?: unknown;
+    page_blocks?: unknown;
   };
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
@@ -173,7 +186,7 @@ export async function DELETE(request: Request) {
   const authError = await requireDivisionsManager(supabase);
   if (authError) return authError;
 
-  const { id } = await request.json() as { id?: string };
+  const { id } = (await request.json()) as { id?: string };
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
   const { error } = await supabase.from('divisions').delete().eq('id', id);

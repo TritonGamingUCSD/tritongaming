@@ -8,7 +8,11 @@ const asGame = (d: unknown) => d as GameRow;
 
 // A lobby nobody opened a game from for hours is left over from a screen that was closed: clear those whenever a new game is made.
 async function clearStaleLobbies(svc: SupabaseClient) {
-  await svc.from('trivia_games').delete().eq('status', 'lobby').lt('created_at', new Date(Date.now() - 6 * 3600 * 1000).toISOString());
+  await svc
+    .from('trivia_games')
+    .delete()
+    .eq('status', 'lobby')
+    .lt('created_at', new Date(Date.now() - 6 * 3600 * 1000).toISOString());
 }
 
 export async function createGame(svc: SupabaseClient, quiz: { id: string; per_game: number }, hostId: string): Promise<GameRow | null> {
@@ -16,13 +20,17 @@ export async function createGame(svc: SupabaseClient, quiz: { id: string; per_ga
   for (let i = 0; i < 8; i++) {
     const { data, error } = await svc.from('trivia_games').insert({ quiz_id: quiz.id, code: makeCode(), host_id: hostId, per_game: quiz.per_game }).select(SELECT).single();
     if (data) return asGame(data);
-    if (error && error.code !== '23505') return null;   // anything but a code clash is a real failure
+    if (error && error.code !== '23505') return null; // anything but a code clash is a real failure
   }
   return null;
 }
 
 async function setPlayerTotals(svc: SupabaseClient, gameId: string, rows: { user_id: string; name: string; score: number; time_ms: number }[]) {
-  if (rows.length) await svc.from('trivia_players').upsert(rows.map((r) => ({ game_id: gameId, user_id: r.user_id, name: r.name, score: r.score, time_ms: r.time_ms })), { onConflict: 'game_id,user_id' });
+  if (rows.length)
+    await svc.from('trivia_players').upsert(
+      rows.map((r) => ({ game_id: gameId, user_id: r.user_id, name: r.name, score: r.score, time_ms: r.time_ms })),
+      { onConflict: 'game_id,user_id' },
+    );
 }
 
 // Where everyone stands: scores from all the answers so far, for the players still in.
@@ -39,12 +47,12 @@ async function standingsNow(svc: SupabaseClient, gameId: string) {
 const OPEN = (g: GameRow, index: number) => {
   const q = g.plan[index];
   const now = Date.now();
-  const start = now + (index === 0 ? COUNTDOWN_MS : 0) + (q.category ? CARD_MS : 0);   // the first question opens with the 3-2-1-GO countdown, a question with a category on its category card; the clock starts after them
+  const start = now + (index === 0 ? COUNTDOWN_MS : 0) + (q.category ? CARD_MS : 0); // the first question opens with the 3-2-1-GO countdown, a question with a category on its category card; the clock starts after them
   return { status: 'question', current: index, q_started_at: new Date(start).toISOString(), q_ends_at: new Date(start + q.secs * 1000).toISOString(), reveal: null };
 };
 
 async function save(svc: SupabaseClient, g: GameRow, from: GameRow['status'], patch: Record<string, unknown>): Promise<GameRow | null> {
-  const { data } = await svc.from('trivia_games').update(patch).eq('id', g.id).eq('status', from).select(SELECT).maybeSingle();   // the status check stops a double click moving it twice
+  const { data } = await svc.from('trivia_games').update(patch).eq('id', g.id).eq('status', from).select(SELECT).maybeSingle(); // the status check stops a double click moving it twice
   return data ? asGame(data) : null;
 }
 
@@ -86,7 +94,7 @@ export async function revealQuestion(svc: SupabaseClient, g: GameRow): Promise<G
   const results: Record<string, PlayerResult> = {};
   for (const p of list) {
     const a = answers.find((x) => x.q_index === g.current && x.user_id === p.user_id);
-    let streak = 0;   // right answers in a row, ending with this question
+    let streak = 0; // right answers in a row, ending with this question
     for (let i = g.current; i >= 0 && answers.some((x) => x.q_index === i && x.user_id === p.user_id && x.ok); i--) streak++;
     results[p.user_id] = { pos: a?.pos ?? null, ok: !!a?.ok, pts: a?.points ?? 0, rank: p.rank, score: p.score, streak };
   }
@@ -110,12 +118,23 @@ export async function finishGame(svc: SupabaseClient, g: GameRow): Promise<GameR
   const right = new Map<string, number>();
   for (const a of answers) if (a.ok) right.set(a.user_id, (right.get(a.user_id) ?? 0) + 1);
   const placing = (p: (typeof list)[number]) => ({ name: p.name, score: p.score, rank: p.rank, right: right.get(p.user_id) ?? 0 });
-  const reveal: Reveal = { final: true, top: topThree(list).map(placing), more: list.filter((p) => p.rank > 3 && p.score > 0).slice(0, 7).map(placing), stats: endStats(g.plan, list, answers), results, of: list.length };   // nobody on zero is on the podium
+  const reveal: Reveal = {
+    final: true,
+    top: topThree(list).map(placing),
+    more: list
+      .filter((p) => p.rank > 3 && p.score > 0)
+      .slice(0, 7)
+      .map(placing),
+    stats: endStats(g.plan, list, answers),
+    results,
+    of: list.length,
+  }; // nobody on zero is on the podium
   const next = await save(svc, over, 'done', { reveal });
   if (!next) return { error: 'That game is over.', status: 409 };
   await setPlayerTotals(svc, g.id, list);
   await svc.from('trivia_winners').delete().eq('game_id', g.id);
-  if (g.trivia_quizzes?.block_winners) {   // the quiz's setting: its top three can't join the next game of this quiz
+  if (g.trivia_quizzes?.block_winners) {
+    // the quiz's setting: its top three can't join the next game of this quiz
     const winners = topThree(list);
     if (winners.length) await svc.from('trivia_winners').insert(winners.map((w, i) => ({ game_id: g.id, quiz_id: g.quiz_id, user_id: w.user_id, rank: Math.min(3, i + 1) })));
   }

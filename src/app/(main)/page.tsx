@@ -36,9 +36,7 @@ const ORGANIZATION_JSON_LD = {
   description: 'Gaming Org at UC San Diego',
   url: process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000',
   logo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'}/logos/tg_logo.png`,
-  sameAs: [
-    DISCORD_URL,
-  ],
+  sameAs: [DISCORD_URL],
 };
 
 export default async function HomePage() {
@@ -47,12 +45,12 @@ export default async function HomePage() {
     getContentBlocks(['homepage.hero', 'homepage.about', 'homepage.stats', 'homepage.events', 'homepage.explore', 'homepage.recruitment', 'layout.homepage']),
   ]);
 
-  const heroContent        = content['homepage.hero']        ?? {};
-  const aboutContent       = content['homepage.about']       ?? {};
-  const statsContent       = content['homepage.stats']       ?? {};
-  const eventsContent      = content['homepage.events']      ?? {};
+  const heroContent = content['homepage.hero'] ?? {};
+  const aboutContent = content['homepage.about'] ?? {};
+  const statsContent = content['homepage.stats'] ?? {};
+  const eventsContent = content['homepage.events'] ?? {};
   const recruitmentContent = content['homepage.recruitment'] ?? {};
-  const statsItems         = (statsContent.items as StatInput[] | undefined) ?? undefined;
+  const statsItems = (statsContent.items as StatInput[] | undefined) ?? undefined;
 
   const sections: Record<string, React.ReactNode> = {
     stats: <LandingStatistics stats={statsItems} />,
@@ -65,10 +63,12 @@ export default async function HomePage() {
 
   return (
     <>
-      { }
+      {}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }} />
       <Hero content={heroContent as Parameters<typeof Hero>[0]['content']} />
-      {resolveSections('homepage', content['layout.homepage']?.sections).map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
+      {resolveSections('homepage', content['layout.homepage']?.sections).map((id) => (
+        <Fragment key={id}>{sections[id]}</Fragment>
+      ))}
     </>
   );
 }

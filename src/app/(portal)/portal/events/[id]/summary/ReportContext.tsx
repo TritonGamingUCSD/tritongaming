@@ -4,7 +4,11 @@ import { createContext, useContext } from 'react';
 import type { EventSponsor, ReportMetric } from '@/types/database';
 import styles from './summary.module.css';
 
-export interface ReportState { preparedFor: EventSponsor | null; social: ReportMetric[]; sponsors: EventSponsor[] }
+export interface ReportState {
+  preparedFor: EventSponsor | null;
+  social: ReportMetric[];
+  sponsors: EventSponsor[];
+}
 export const ReportCtx = createContext<ReportState>({ preparedFor: null, social: [], sponsors: [] });
 
 // Shown under the date when a sponsor is chosen above the sheet.
@@ -32,7 +36,12 @@ export function SocialReach() {
       <h3 className={styles.cardTitle}>Social media reach</h3>
       <p className={styles.note}>Reported by Triton Gaming from its own social accounts.</p>
       <dl className={styles.metrics}>
-        {rows.map((m, i) => (<div key={i}><dd>{m.value}</dd><dt>{m.label}</dt></div>))}
+        {rows.map((m, i) => (
+          <div key={i}>
+            <dd>{m.value}</dd>
+            <dt>{m.label}</dt>
+          </div>
+        ))}
       </dl>
     </div>
   );
@@ -45,7 +54,10 @@ export function SponsorThanks({ n }: { n: string }) {
   if (!list.length) return null;
   return (
     <section className={styles.section}>
-      <h2 className={styles.sectionTitle}><span className={styles.sectionNum}>{n}</span>{preparedFor ? `Thank you, ${preparedFor.name}` : 'With thanks to our sponsors'}</h2>
+      <h2 className={styles.sectionTitle}>
+        <span className={styles.sectionNum}>{n}</span>
+        {preparedFor ? `Thank you, ${preparedFor.name}` : 'With thanks to our sponsors'}
+      </h2>
       <p className={styles.lead}>{preparedFor ? 'Thank you for supporting this event.' : 'This event was supported by:'}</p>
       <ul className={styles.thanks}>
         {list.map((sp) => (

@@ -16,7 +16,9 @@ function csvField(v: unknown): string {
 // Admin-only CSV of the audit log, honouring the same type/search filters as the tab.
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   if (!hasCapability(roles ?? [], 'view_admin_dashboard')) return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
@@ -32,10 +34,20 @@ export async function GET(request: Request) {
   if (error) return NextResponse.json({ error: 'Failed to export.' }, { status: 500 });
 
   const header = ['Time (Pacific)', 'Actor', 'Action', 'Type', 'Item ID', 'Summary', 'Details'];
-  const lines = [header, ...(data ?? []).map((r) => [
-    new Date(r.created_at).toLocaleString('en-US', { timeZone: PACIFIC_TZ, dateStyle: 'medium', timeStyle: 'medium' }),
-    r.actor_name, r.action, r.entity_type, r.entity_id, r.summary, r.details,
-  ])].map((row) => row.map(csvField).join(',')).join('\r\n');
+  const lines = [
+    header,
+    ...(data ?? []).map((r) => [
+      new Date(r.created_at).toLocaleString('en-US', { timeZone: PACIFIC_TZ, dateStyle: 'medium', timeStyle: 'medium' }),
+      r.actor_name,
+      r.action,
+      r.entity_type,
+      r.entity_id,
+      r.summary,
+      r.details,
+    ]),
+  ]
+    .map((row) => row.map(csvField).join(','))
+    .join('\r\n');
 
   return new NextResponse(lines, {
     headers: {

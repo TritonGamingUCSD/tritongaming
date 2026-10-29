@@ -15,14 +15,26 @@ export function useMeetingLive(meetingId: string | null | undefined, onChange: (
     let last = 0;
     let joined = false;
     const channel = supabase.channel(`meeting-live:${meetingId}`);
-    channel.on('broadcast', { event: 'changed' }, () => {
-      if (pending) return;   // one is already on its way
-      pending = setTimeout(() => { pending = undefined; last = Date.now(); if (!document.hidden) ref.current(); }, Math.max(400, 2000 - (Date.now() - last)));
-    }).subscribe((status) => {
-      if (status !== 'SUBSCRIBED') return;
-      if (joined) ref.current();   // reconnected: catch up on anything missed
-      joined = true;
-    });
-    return () => { clearTimeout(pending); void supabase.removeChannel(channel); };
+    channel
+      .on('broadcast', { event: 'changed' }, () => {
+        if (pending) return; // one is already on its way
+        pending = setTimeout(
+          () => {
+            pending = undefined;
+            last = Date.now();
+            if (!document.hidden) ref.current();
+          },
+          Math.max(400, 2000 - (Date.now() - last)),
+        );
+      })
+      .subscribe((status) => {
+        if (status !== 'SUBSCRIBED') return;
+        if (joined) ref.current(); // reconnected: catch up on anything missed
+        joined = true;
+      });
+    return () => {
+      clearTimeout(pending);
+      void supabase.removeChannel(channel);
+    };
   }, [meetingId, enabled]);
 }

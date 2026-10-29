@@ -9,17 +9,26 @@ export const SKIPS = [
 ] as const;
 export type Skip = (typeof SKIPS)[number]['id'];
 
-export interface Rules { roles: AudienceRole[]; people: string[]; skip: Skip[]; block: string[] }
+export interface Rules {
+  roles: AudienceRole[];
+  people: string[];
+  skip: Skip[];
+  block: string[];
+}
 export const NO_RULES: Rules = { roles: [...AUDIENCE_ROLES], people: [], skip: [], block: [] };
 
 // A person as the rules see them: their roles and how many marks (a warning counts as the first) are on their record.
-export interface Person { id: string; roles: string[]; marks: number }
+export interface Person {
+  id: string;
+  roles: string[];
+  marks: number;
+}
 
 const UUID = /^[0-9a-f-]{36}$/i;
 // Reads the rules a client sent: only known roles and well-formed ids.
 export function cleanRules(raw: unknown): Rules {
   const r = (raw ?? {}) as Record<string, unknown>;
-  const list = <T,>(v: unknown, ok: (x: unknown) => x is T): T[] => [...new Set((Array.isArray(v) ? v : []).filter(ok))];
+  const list = <T>(v: unknown, ok: (x: unknown) => x is T): T[] => [...new Set((Array.isArray(v) ? v : []).filter(ok))];
   const role = (x: unknown): x is AudienceRole => AUDIENCE_ROLES.some((a) => a === x);
   const skip = (x: unknown): x is Skip => SKIPS.some((a) => a.id === x);
   const id = (x: unknown): x is string => typeof x === 'string' && UUID.test(x);
@@ -39,7 +48,13 @@ export function canEnter(rules: Rules, p: Person): { ok: true } | { ok: false; w
   const idle = p.roles.includes('alumni');
   if (!idle && rules.roles.some((r) => p.roles.includes(r))) return { ok: true };
   const who = rules.roles.map((r) => AUDIENCE_LABELS[r].toLowerCase());
-  return { ok: false, why: idle && rules.roles.some((r) => p.roles.includes(r)) ? 'Alumni can only enter when they are picked by name.' : `This Staffle is only open to ${who.length ? who.join(' and ') : 'the people picked'}.` };
+  return {
+    ok: false,
+    why:
+      idle && rules.roles.some((r) => p.roles.includes(r))
+        ? 'Alumni can only enter when they are picked by name.'
+        : `This Staffle is only open to ${who.length ? who.join(' and ') : 'the people picked'}.`,
+  };
 }
 
 // A line for the Staffle's card: who it is open to.

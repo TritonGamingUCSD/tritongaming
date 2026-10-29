@@ -9,21 +9,31 @@
 const CHECKIN_GRACE_MS = 24 * 60 * 60 * 1000;
 
 export function isCheckinWindowOpen(event: { start_date: string; end_date?: string | null }): boolean {
-  const deadline = event.end_date
-    ? new Date(event.end_date).getTime()
-    : new Date(event.start_date).getTime() + CHECKIN_GRACE_MS;
+  const deadline = event.end_date ? new Date(event.end_date).getTime() : new Date(event.start_date).getTime() + CHECKIN_GRACE_MS;
   return Date.now() <= deadline;
 }
 
 // Per-day check-in hours for a multi-day event (Pacific time). A day without an entry is open all day.
-export interface CheckinDayWindow { day: string; start: string; end: string }
+export interface CheckinDayWindow {
+  day: string;
+  start: string;
+  end: string;
+}
 
 export const to12h = (hhmm: string) => {
   const [h, m] = hhmm.split(':').map(Number);
   return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
 };
 const pacificParts = (d: Date) => {
-  const f = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(d);
+  const f = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Los_Angeles',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(d);
   const get = (t: string) => f.find((p) => p.type === t)!.value;
   return { day: `${get('year')}-${get('month')}-${get('day')}`, hhmm: `${get('hour')}:${get('minute')}` };
 };
@@ -68,7 +78,8 @@ export function endedEventsFilter(nowMs: number = Date.now()): string {
 
 // "The event that is on right now", for telling staff when a scanned ticket belongs to some other event. From an hour before the start (doors, setup) until the end; an event with no end time
 // counts as running for 12 hours after its start.
-const EARLY_MS = 60 * 60 * 1000, NO_END_MS = 12 * 60 * 60 * 1000;
+const EARLY_MS = 60 * 60 * 1000,
+  NO_END_MS = 12 * 60 * 60 * 1000;
 export function isHappeningNow(event: { start_date: string; end_date?: string | null }, nowMs: number = Date.now()): boolean {
   const start = new Date(event.start_date).getTime();
   const end = event.end_date ? new Date(event.end_date).getTime() : start + NO_END_MS;

@@ -21,13 +21,18 @@ export default function SiteContentSectionContent({ canEditContent, contentBlock
   const [query, setQuery] = useState('');
   return (
     <div className={styles.page} data-wide>
-      <SectionHeader title="Site Content" sub="Everything that shows up on the public site"
-        actions={canEditContent ? (
-          <label className={styles.headerSearch}>
-            <Search size={14} aria-hidden="true" />
-            <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search all blocks…" aria-label="Search content blocks" />
-          </label>
-        ) : undefined} />
+      <SectionHeader
+        title="Site Content"
+        sub="Everything that shows up on the public site"
+        actions={
+          canEditContent ? (
+            <label className={styles.headerSearch}>
+              <Search size={14} aria-hidden="true" />
+              <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search all blocks…" aria-label="Search content blocks" />
+            </label>
+          ) : undefined
+        }
+      />
       {canEditContent && contentBlocks && contentMap && (
         <ContentEditor query={query} setQuery={setQuery} blocks={contentBlocks} contentMap={contentMap} lastEdited={lastEdited ?? {}} creditPeople={creditPeople} />
       )}

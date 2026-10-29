@@ -30,8 +30,17 @@ export async function POST(request: Request) {
   if (!undo && !meeting.series_id) {
     await auth.svc.from('meetings').delete().eq('id', meeting.id);
   } else {
-    await auth.svc.from('meetings').update({ cancelled: !undo, ...(undo ? {} : { opened_at: null, closed_at: null }) }).eq('id', meeting.id);
+    await auth.svc
+      .from('meetings')
+      .update({ cancelled: !undo, ...(undo ? {} : { opened_at: null, closed_at: null }) })
+      .eq('id', meeting.id);
   }
-  await logAudit(auth.svc, { actorId: auth.user.id, action: undo ? 'restore' : 'cancel', entityType: 'meeting', entityId: meeting.id, summary: `${undo ? 'Restored' : 'Skipped'} "${meeting.title}" on ${meeting.meeting_date}` });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: undo ? 'restore' : 'cancel',
+    entityType: 'meeting',
+    entityId: meeting.id,
+    summary: `${undo ? 'Restored' : 'Skipped'} "${meeting.title}" on ${meeting.meeting_date}`,
+  });
   return NextResponse.json({ ok: true });
 }

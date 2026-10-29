@@ -8,7 +8,9 @@ export const dynamic = 'force-dynamic';
 
 async function me() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user;
 }
 
@@ -24,7 +26,15 @@ export async function GET() {
     svc.from('push_preferences').select('muted, declined_at').eq('user_id', user.id).maybeSingle(),
   ]);
   // Each device is named from its browser string and given a short id (never its address), so this browser can pick out which one is itself.
-  const list = await Promise.all((subs ?? []).map(async (x) => ({ id: x.id as string, fp: await endpointFingerprint(x.endpoint as string), label: describeDevice(x.user_agent as string | null), added: x.created_at as string, lastSent: (x.last_sent_at as string | null) ?? null })));
+  const list = await Promise.all(
+    (subs ?? []).map(async (x) => ({
+      id: x.id as string,
+      fp: await endpointFingerprint(x.endpoint as string),
+      label: describeDevice(x.user_agent as string | null),
+      added: x.created_at as string,
+      lastSent: (x.last_sent_at as string | null) ?? null,
+    })),
+  );
   return NextResponse.json({ configured: true, devices: list.length, list, muted: (pref?.muted as string[] | undefined) ?? [], declined: !!pref?.declined_at, categories });
 }
 
@@ -35,13 +45,17 @@ export async function PATCH(request: Request) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const b = await request.json().catch(() => ({}));
   if (typeof b.declined === 'boolean') {
-    const { error } = await createServiceClient().from('push_preferences').upsert({ user_id: user.id, declined_at: b.declined ? new Date().toISOString() : null, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+    const { error } = await createServiceClient()
+      .from('push_preferences')
+      .upsert({ user_id: user.id, declined_at: b.declined ? new Date().toISOString() : null, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
     if (error) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
     return NextResponse.json({ ok: true });
   }
   const valid = new Set<string>(PUSH_CATEGORIES.map((c) => c.id));
   if (!Array.isArray(b.muted) || !b.muted.every((m: unknown) => typeof m === 'string' && valid.has(m))) return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
-  const { error } = await createServiceClient().from('push_preferences').upsert({ user_id: user.id, muted: [...new Set<string>(b.muted)], updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+  const { error } = await createServiceClient()
+    .from('push_preferences')
+    .upsert({ user_id: user.id, muted: [...new Set<string>(b.muted)], updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
   if (error) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

@@ -19,17 +19,18 @@ export default function ProfileIncompleteBanner({ missing, officerTabOnly = fals
 
   const here = pathname + (searchParams.toString() ? `?${searchParams.toString()}` : '');
   // Only the officer title missing -> open the Officer Card tab directly.
-  const href = officerTabOnly
-    ? `/portal/profile/card?next=${encodeURIComponent(here)}`
-    : `/portal/profile?next=${encodeURIComponent(here)}`;
+  const href = officerTabOnly ? `/portal/profile/card?next=${encodeURIComponent(here)}` : `/portal/profile?next=${encodeURIComponent(here)}`;
 
   return (
     <div className={styles.banner} role="status">
       <UserRoundPen size={18} strokeWidth={1.75} aria-hidden="true" className={styles.icon} />
       <p className={styles.text}>
-        <strong>Finish your profile.</strong><span className={styles.need}> Still needed: {missing.join(', ')}.</span>
+        <strong>Finish your profile.</strong>
+        <span className={styles.need}> Still needed: {missing.join(', ')}.</span>
       </p>
-      <Link href={href} className={styles.btn}>Update profile</Link>
+      <Link href={href} className={styles.btn}>
+        Update profile
+      </Link>
     </div>
   );
 }

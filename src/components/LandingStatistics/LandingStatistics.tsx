@@ -56,7 +56,7 @@ function StatItem({ stat }: { stat: StatInput }) {
           requestAnimationFrame(step);
         }
       },
-      { threshold: 0.4 }
+      { threshold: 0.4 },
     );
 
     observer.observe(el);
@@ -79,12 +79,7 @@ export default function LandingStatistics({ stats }: { stats?: StatInput[] }) {
 
   return (
     <section className={styles.section} aria-label="Statistics">
-      <motion.div
-        className={styles.panel}
-        initial={{ opacity: 0, y: 32 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
-      >
+      <motion.div className={styles.panel} initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}>
         {stats.map((s) => (
           <StatItem key={s.label} stat={s} />
         ))}

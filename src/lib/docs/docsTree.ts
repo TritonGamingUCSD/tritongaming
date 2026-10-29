@@ -1,11 +1,34 @@
 // Pure helpers for the documentation section: the nested page tree (any depth), moving pages, breadcrumbs, searching with highlights, tags and "how old is this".
 // Kept free of React and Supabase so the rules can be tested.
 
-export interface TreeDoc { id: string; title: string; category_id: string | null; parent_id: string | null; order_index: number; content?: string; tags?: string[] }
-export interface TreeCategory { id: string; name: string; order_index: number; color?: string | null }
+export interface TreeDoc {
+  id: string;
+  title: string;
+  category_id: string | null;
+  parent_id: string | null;
+  order_index: number;
+  content?: string;
+  tags?: string[];
+}
+export interface TreeCategory {
+  id: string;
+  name: string;
+  order_index: number;
+  color?: string | null;
+}
 
-export interface DocNode<T extends TreeDoc> { doc: T; children: DocNode<T>[]; depth: number }
-export interface DocSection<T extends TreeDoc> { id: string | null; name: string; color: string | null; nodes: DocNode<T>[]; count: number }
+export interface DocNode<T extends TreeDoc> {
+  doc: T;
+  children: DocNode<T>[];
+  depth: number;
+}
+export interface DocSection<T extends TreeDoc> {
+  id: string | null;
+  name: string;
+  color: string | null;
+  nodes: DocNode<T>[];
+  count: number;
+}
 
 /** The colours a category can take (a dot and a stripe in the docs list). */
 export const CATEGORY_COLORS = ['#2563eb', '#7c3aed', '#db2777', '#dc2626', '#ea580c', '#ca8a04', '#16a34a', '#0d9488', '#64748b'];
@@ -20,14 +43,24 @@ export function buildSections<T extends TreeDoc>(docs: T[], categories: TreeCate
   for (const d of docs) if (d.parent_id && ids.has(d.parent_id)) kids.set(d.parent_id, [...(kids.get(d.parent_id) ?? []), d]);
   const node = (d: T, depth: number, seen: Set<string>): DocNode<T> => {
     seen.add(d.id);
-    return { doc: d, depth, children: (kids.get(d.id) ?? []).filter((c) => !seen.has(c.id)).sort(byOrder).map((c) => node(c, depth + 1, seen)) };
+    return {
+      doc: d,
+      depth,
+      children: (kids.get(d.id) ?? [])
+        .filter((c) => !seen.has(c.id))
+        .sort(byOrder)
+        .map((c) => node(c, depth + 1, seen)),
+    };
   };
   // A page whose parent is missing (deleted, or hidden from this reader) counts as top-level.
   const roots = docs.filter((d) => !d.parent_id || !ids.has(d.parent_id));
   const count = (n: DocNode<T>): number => 1 + n.children.reduce((s, c) => s + count(c), 0);
   const cats = [...categories].sort((a, b) => a.order_index - b.order_index || a.name.localeCompare(b.name));
   const make = (id: string | null, name: string, color: string | null = null): DocSection<T> => {
-    const nodes = roots.filter((d) => (d.category_id ?? null) === id).sort(byOrder).map((d) => node(d, 0, new Set()));
+    const nodes = roots
+      .filter((d) => (d.category_id ?? null) === id)
+      .sort(byOrder)
+      .map((d) => node(d, 0, new Set()));
     return { id, name, color, nodes, count: nodes.reduce((s, n) => s + count(n), 0) };
   };
   const sections = cats.map((c) => make(c.id, c.name, c.color ?? null));
@@ -44,7 +77,12 @@ export function ancestors<T extends TreeDoc>(docs: T[], id: string): T[] {
   const out: T[] = [];
   const seen = new Set<string>([id]);
   let cur = byId.get(id)?.parent_id ?? null;
-  while (cur && byId.has(cur) && !seen.has(cur)) { seen.add(cur); const d = byId.get(cur)!; out.unshift(d); cur = d.parent_id; }
+  while (cur && byId.has(cur) && !seen.has(cur)) {
+    seen.add(cur);
+    const d = byId.get(cur)!;
+    out.unshift(d);
+    cur = d.parent_id;
+  }
   return out;
 }
 export function descendantIds<T extends TreeDoc>(docs: T[], id: string): Set<string> {
@@ -52,12 +90,17 @@ export function descendantIds<T extends TreeDoc>(docs: T[], id: string): Set<str
   const stack = [id];
   while (stack.length) {
     const cur = stack.pop()!;
-    for (const d of docs) if (d.parent_id === cur && !out.has(d.id)) { out.add(d.id); stack.push(d.id); }
+    for (const d of docs)
+      if (d.parent_id === cur && !out.has(d.id)) {
+        out.add(d.id);
+        stack.push(d.id);
+      }
   }
   return out;
 }
 // Can `id` go under `parentId`? Not under itself or anything inside it.
-export const canMoveUnder = <T extends TreeDoc>(docs: T[], id: string, parentId: string | null): boolean => parentId === null || (parentId !== id && !descendantIds(docs, id).has(parentId));
+export const canMoveUnder = <T extends TreeDoc>(docs: T[], id: string, parentId: string | null): boolean =>
+  parentId === null || (parentId !== id && !descendantIds(docs, id).has(parentId));
 // The category a page belongs to: its own if it is top-level, else its top-level ancestor's.
 export function categoryOf<T extends TreeDoc>(docs: T[], id: string): string | null {
   const chain = [...ancestors(docs, id), docs.find((d) => d.id === id)].filter((d): d is T => !!d);
@@ -75,8 +118,20 @@ export function reorder<T extends TreeDoc>(siblings: T[], movingId: string, befo
 }
 
 // ── Search ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-export interface SearchHit<T extends TreeDoc> { doc: T; titleMatch: boolean; snippet: string | null; score: number }
-const plain = (md: string) => md.replace(/```[\s\S]*?```/g, ' ').replace(/<[^>]+>/g, '').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1').replace(/[#>*_`~|-]+/g, ' ').replace(/\s+/g, ' ').trim();
+export interface SearchHit<T extends TreeDoc> {
+  doc: T;
+  titleMatch: boolean;
+  snippet: string | null;
+  score: number;
+}
+const plain = (md: string) =>
+  md
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/<[^>]+>/g, '')
+    .replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_`~|-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 /** The first line or two of a doc as plain text, for cards. */
 // The one-line preview of a doc. Pass the title and a first line that only repeats it is left out ("Roles & Access Roles & Access Every person…" becomes "Every person…").
 export const docSummary = (md: string, max = 110, title?: string): string => {
@@ -85,7 +140,12 @@ export const docSummary = (md: string, max = 110, title?: string): string => {
   if (lead && t.toLowerCase().startsWith(lead.toLowerCase())) t = t.slice(lead.length).replace(/^[\s:.\-–—]+/, '');
   return t.length > max ? `${t.slice(0, max).trimEnd()}…` : t;
 };
-export const searchTerms = (q: string) => q.toLowerCase().split(/\s+/).map((t) => t.trim()).filter(Boolean);
+export const searchTerms = (q: string) =>
+  q
+    .toLowerCase()
+    .split(/\s+/)
+    .map((t) => t.trim())
+    .filter(Boolean);
 
 // Every word has to appear somewhere (title, tags or text). Titles and tags rank above body text. The snippet is the stretch of text around the first match.
 export function searchDocs<T extends TreeDoc>(docs: T[], query: string): SearchHit<T>[] {
@@ -101,7 +161,10 @@ export function searchDocs<T extends TreeDoc>(docs: T[], query: string): SearchH
     const titleMatch = terms.some((t) => title.includes(t));
     let score = 0;
     for (const t of terms) score += (title.startsWith(t) ? 6 : title.includes(t) ? 4 : 0) + (tags.includes(t) ? 3 : 0) + (body.includes(t) ? 1 : 0);
-    const first = terms.map((t) => body.indexOf(t)).filter((i) => i >= 0).sort((a, b) => a - b)[0];
+    const first = terms
+      .map((t) => body.indexOf(t))
+      .filter((i) => i >= 0)
+      .sort((a, b) => a - b)[0];
     const snippet = first === undefined ? null : `${first > 50 ? '…' : ''}${text.slice(Math.max(0, first - 50), first + 120).trim()}${text.length > first + 120 ? '…' : ''}`;
     hits.push({ doc: d, titleMatch, snippet, score });
   }
@@ -110,10 +173,15 @@ export function searchDocs<T extends TreeDoc>(docs: T[], query: string): SearchH
 
 // Splits text so the matching words can be wrapped for highlighting: [{text, hit}].
 export function highlightParts(text: string, query: string): { text: string; hit: boolean }[] {
-  const terms = searchTerms(query).sort((a, b) => b.length - a.length).map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  const terms = searchTerms(query)
+    .sort((a, b) => b.length - a.length)
+    .map((t) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
   if (!terms.length || !text) return [{ text, hit: false }];
   const re = new RegExp(`(${terms.join('|')})`, 'gi');
-  return text.split(re).filter((p) => p !== '').map((p) => ({ text: p, hit: re.test(p) && (re.lastIndex = 0, true) }));
+  return text
+    .split(re)
+    .filter((p) => p !== '')
+    .map((p) => ({ text: p, hit: re.test(p) && ((re.lastIndex = 0), true) }));
 }
 
 // ── Tags and age ──────────────────────────────────────────────────────────────────────────────────────────────────────────────────
@@ -122,7 +190,12 @@ export function cleanTags(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   const out: string[] = [];
   for (const t of raw) {
-    const v = String(t).trim().toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '').slice(0, 24);
+    const v = String(t)
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, '-')
+      .replace(/[^a-z0-9-]/g, '')
+      .slice(0, 24);
     if (v && !out.includes(v)) out.push(v);
   }
   return out.slice(0, MAX_TAGS);
@@ -131,6 +204,17 @@ export const STALE_DAYS = 180;
 // "Updated today", "Updated 3 weeks ago"; stale = not touched for about six months, so readers know to double-check it.
 export function ageLabel(iso: string, now: number = Date.now()): { label: string; stale: boolean } {
   const days = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 86_400_000));
-  const label = days === 0 ? 'Updated today' : days === 1 ? 'Updated yesterday' : days < 14 ? `Updated ${days} days ago` : days < 60 ? `Updated ${Math.floor(days / 7)} weeks ago` : days < 365 ? `Updated ${Math.floor(days / 30)} months ago` : `Updated ${Math.floor(days / 365)} ${Math.floor(days / 365) === 1 ? 'year' : 'years'} ago`;
+  const label =
+    days === 0
+      ? 'Updated today'
+      : days === 1
+        ? 'Updated yesterday'
+        : days < 14
+          ? `Updated ${days} days ago`
+          : days < 60
+            ? `Updated ${Math.floor(days / 7)} weeks ago`
+            : days < 365
+              ? `Updated ${Math.floor(days / 30)} months ago`
+              : `Updated ${Math.floor(days / 365)} ${Math.floor(days / 365) === 1 ? 'year' : 'years'} ago`;
   return { label, stale: days >= STALE_DAYS };
 }

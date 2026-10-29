@@ -24,7 +24,10 @@ export async function POST(request: Request) {
   }
   if ('pinned' in b) patch.pinned = b.pinned === true;
   // An editor says the page is still correct: remembered with the date and who, whether or not its text changed.
-  if (b.reviewed === true) { patch.reviewed_at = new Date().toISOString(); patch.reviewed_by = auth.user.id; }
+  if (b.reviewed === true) {
+    patch.reviewed_at = new Date().toISOString();
+    patch.reviewed_by = auth.user.id;
+  }
   // Which teams the doc is for: the whole list is replaced (empty = everyone).
   if ('teams' in b) patch.teams = [...new Set((Array.isArray(b.teams) ? b.teams : []).map(String).filter((t: string) => UUID.test(t)))].slice(0, 30);
   if ('add_tags' in b || 'remove_tags' in b) {

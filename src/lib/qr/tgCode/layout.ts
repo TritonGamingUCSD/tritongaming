@@ -12,20 +12,20 @@ export { R_LOGO, R_IN, R_OUT, U, FINDER_C, SPAN, FINDERS, DOTS, R_SMALL };
 //     The reader weighs every block (how sure it is of the pattern), hands the shaky ones to the repair as "known unreliable", and so can mend more than it could blind
 //   • the cells left over after the blocks (and none under the marks) are never read; where one fits, a filler arc is drawn there in the brand's other colours
 export const RINGS = 7;
-export const SECTORS = [34, 42, 50, 57, 65, 73, 81] as const;   // cells in each ring, from the inside
-export const THICK = (R_OUT - R_IN) / RINGS;                    // 0.08
-export const DASH = 0.056;                                      // width of an arc (a ring is THICK across, so rings stay clearly apart)
-export const BLOCK = 10;                                        // cells in a block: an arc, then a pattern of arcs of two or more cells with one gap between them
-export const NSYM = 9;                                          // repair bytes
-export const DATA_BYTES = 5;                                    // version and kind, then the 4 bytes of key
-export const TOTAL_BYTES = DATA_BYTES + NSYM;                   // 14
-export const NIBBLES = TOTAL_BYTES * 2;                         // 28 blocks
-export const KEY_HEX = 8;                                       // hex digits of key in a code (32 bits)
+export const SECTORS = [34, 42, 50, 57, 65, 73, 81] as const; // cells in each ring, from the inside
+export const THICK = (R_OUT - R_IN) / RINGS; // 0.08
+export const DASH = 0.056; // width of an arc (a ring is THICK across, so rings stay clearly apart)
+export const BLOCK = 10; // cells in a block: an arc, then a pattern of arcs of two or more cells with one gap between them
+export const NSYM = 9; // repair bytes
+export const DATA_BYTES = 5; // version and kind, then the 4 bytes of key
+export const TOTAL_BYTES = DATA_BYTES + NSYM; // 14
+export const NIBBLES = TOTAL_BYTES * 2; // 28 blocks
+export const KEY_HEX = 8; // hex digits of key in a code (32 bits)
 const VERSION = 2;
 
 /** What the page hands the drawing: a kind letter and the first 12 hex digits of a key. The code carries the first KEY_HEX of them; the server accepts that many. */
 export const PAYLOAD = /^[mtr][0-9a-f]{12}$/;
-export type Kind = 'm' | 't' | 'r';   // meeting check-in, event ticket, reward pickup
+export type Kind = 'm' | 't' | 'r'; // meeting check-in, event ticket, reward pickup
 const KIND_BYTE: Record<Kind, number> = { m: 1, t: 2, r: 3 };
 const KIND_OF = ['', 'm', 't', 'r'] as const;
 
@@ -43,7 +43,24 @@ export const markClearance = (ring: number, sector: number) => {
 };
 
 // The patterns of a block: it starts with an arc, there is one cell of gap between arcs, and no arc is shorter than two cells. 22 exist; these 16 are the ones least like one another.
-const PATTERNS = ['1101101110', '1101101111', '1101110110', '1101110111', '1101111011', '1101111110', '1110110110', '1110110111', '1110111011', '1110111110', '1111011011', '1111011110', '1111011111', '1111101110', '1111101111', '1111110110'];
+const PATTERNS = [
+  '1101101110',
+  '1101101111',
+  '1101110110',
+  '1101110111',
+  '1101111011',
+  '1101111110',
+  '1110110110',
+  '1110110111',
+  '1110111011',
+  '1110111110',
+  '1111011011',
+  '1111011110',
+  '1111011111',
+  '1111101110',
+  '1111101111',
+  '1111110110',
+];
 const PATTERN_BITS = PATTERNS.map((p) => [...p].map((c) => (c === '1' ? 1 : 0)));
 export const PATTERN_COUNT = PATTERNS.length;
 export const patternCells = (nibble: number): number[] => PATTERN_BITS[nibble];
@@ -52,34 +69,58 @@ export const patternCells = (nibble: number): number[] => PATTERN_BITS[nibble];
 type Cell = [number, number];
 const ALL_BLOCKS: Cell[][] = [];
 // What is left of a stretch after its blocks (fewer than a block's cells) is a "tail": nothing is read there, and it may be drawn as one filler arc in the brand's other colours.
-interface Tail { ring: number; cells: number[]; last: Cell[] | null; nextIsArc: boolean }
+interface Tail {
+  ring: number;
+  cells: number[];
+  last: Cell[] | null;
+  nextIsArc: boolean;
+}
 const TAILS: Tail[] = [];
 for (let ring = 0; ring < RINGS; ring++) {
   const S = SECTORS[ring];
   const free = Array.from({ length: S }, (_, s) => markClearance(ring, s) > 0);
   const first = free.findIndex((v) => !v);
-  const cyclic = first < 0;   // no mark reaches this ring: its one stretch goes all the way round
+  const cyclic = first < 0; // no mark reaches this ring: its one stretch goes all the way round
   const flush = (run: number[], startsAfterBlock: boolean) => {
     void startsAfterBlock;
     const n = Math.floor(run.length / BLOCK);
     let last: Cell[] | null = null;
-    for (let b = 0; b < n; b++) { last = run.slice(b * BLOCK, (b + 1) * BLOCK).map((s) => [ring, s] as Cell); ALL_BLOCKS.push(last); }
+    for (let b = 0; b < n; b++) {
+      last = run.slice(b * BLOCK, (b + 1) * BLOCK).map((s) => [ring, s] as Cell);
+      ALL_BLOCKS.push(last);
+    }
     const cells = run.slice(n * BLOCK);
     if (cells.length) TAILS.push({ ring, cells, last, nextIsArc: cyclic && n > 0 });
   };
-  if (cyclic) { flush(Array.from({ length: S }, (_, s) => s), false); continue; }
+  if (cyclic) {
+    flush(
+      Array.from({ length: S }, (_, s) => s),
+      false,
+    );
+    continue;
+  }
   let run: number[] = [];
   for (let k = 1; k <= S; k++) {
     const s = (first + k) % S;
-    if (free[s]) run.push(s); else { flush(run, false); run = []; }
+    if (free[s]) run.push(s);
+    else {
+      flush(run, false);
+      run = [];
+    }
   }
 }
 if (ALL_BLOCKS.length < NIBBLES) throw new Error(`TGcode layout has room for only ${ALL_BLOCKS.length} blocks`);
 {
   // A deterministic shuffle (a seeded Fisher–Yates), so neighbouring blocks hold bytes far apart in the message; blocks beyond what the message needs stay empty.
   let seed = 0x51ad3;
-  const rnd = () => { seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x80000000; };
-  for (let i = ALL_BLOCKS.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [ALL_BLOCKS[i], ALL_BLOCKS[j]] = [ALL_BLOCKS[j], ALL_BLOCKS[i]]; }
+  const rnd = () => {
+    seed = (seed * 1103515245 + 12345) & 0x7fffffff;
+    return seed / 0x80000000;
+  };
+  for (let i = ALL_BLOCKS.length - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    [ALL_BLOCKS[i], ALL_BLOCKS[j]] = [ALL_BLOCKS[j], ALL_BLOCKS[i]];
+  }
   ALL_BLOCKS.splice(NIBBLES);
 }
 /** The cells of block i (the i-th half-byte of the coded message), in reading order. */
@@ -89,7 +130,15 @@ for (const t of TAILS) for (const s of t.cells) FILL_AT.add(t.ring * 100 + s);
 /** Whether a cell is part of a tail (never read; drawn, when it fits, as a filler arc). */
 export const isTail = (ring: number, sector: number) => FILL_AT.has(ring * 100 + sector);
 
-const MASK = (() => { const m: number[] = []; let s = 0x5a3c; for (let i = 0; i < TOTAL_BYTES; i++) { s = (s * 1103515245 + 12345) & 0x7fffffff; m.push((s >> 16) & 0xff); } return m; })();
+const MASK = (() => {
+  const m: number[] = [];
+  let s = 0x5a3c;
+  for (let i = 0; i < TOTAL_BYTES; i++) {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    m.push((s >> 16) & 0xff);
+  }
+  return m;
+})();
 
 /** The coded, masked message as half-bytes (null for a payload that is not valid). */
 export function nibblesOf(payload: string): number[] | null {
@@ -105,12 +154,18 @@ export function dashGrid(payload: string): boolean[][] | null {
   const nib = nibblesOf(payload);
   if (!nib) return null;
   const grid = SECTORS.map((S) => new Array<boolean>(S).fill(false));
-  nib.forEach((n, i) => BLOCKS[i].forEach(([r, s], k) => { grid[r][s] = PATTERN_BITS[n][k] === 1; }));
+  nib.forEach((n, i) =>
+    BLOCKS[i].forEach(([r, s], k) => {
+      grid[r][s] = PATTERN_BITS[n][k] === 1;
+    }),
+  );
   // A tail gets one filler arc if it can have one of two cells or more with a gap of one cell from the arcs beside it.
   for (const t of TAILS) {
     const idx = t.last ? BLOCKS.indexOf(t.last) : -1;
     const lastBit = idx >= 0 ? PATTERN_BITS[nib[idx]][BLOCK - 1] : 0;
-    const lead = lastBit ? 1 : 0, trail = t.nextIsArc ? 1 : 0, len = t.cells.length - lead - trail;
+    const lead = lastBit ? 1 : 0,
+      trail = t.nextIsArc ? 1 : 0,
+      len = t.cells.length - lead - trail;
     if (len >= 2) for (let k = 0; k < len; k++) grid[t.ring][t.cells[lead + k]] = true;
   }
   return grid;
@@ -126,7 +181,13 @@ export function payloadFromNibbles(nib: number[], doubtful: number[] = []): stri
   if (data[0] >> 4 !== VERSION) return null;
   const kind = KIND_OF[data[0] & 15];
   if (!kind) return null;
-  return kind + data.slice(1).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return (
+    kind +
+    data
+      .slice(1)
+      .map((b) => b.toString(16).padStart(2, '0'))
+      .join('')
+  );
 }
 
 /** The arcs to draw: in each ring, runs of consecutive arc cells: [ring, firstSector, lastSector, filler] (a run that crosses the top stays one arc, with lastSector past the ring's last sector). */
@@ -139,12 +200,22 @@ export function dashRuns(payload: string): [number, number, number, boolean][] {
     const same = (a: number, b: number) => grid[r][b] && isTail(r, a) === isTail(r, b);
     // Start where an arc cannot continue from the cell before, so a run crossing sector 0 is kept whole.
     let start = -1;
-    for (let s = 0; s < S; s++) if (!(grid[r][s] && same(s, (s + S - 1) % S))) { start = s; break; }
-    if (start < 0) { runs.push([r, 0, S - 1, isTail(r, 0)]); continue; }
+    for (let s = 0; s < S; s++)
+      if (!(grid[r][s] && same(s, (s + S - 1) % S))) {
+        start = s;
+        break;
+      }
+    if (start < 0) {
+      runs.push([r, 0, S - 1, isTail(r, 0)]);
+      continue;
+    }
     let i = 0;
     while (i < S) {
       const s = (start + i) % S;
-      if (!grid[r][s]) { i++; continue; }
+      if (!grid[r][s]) {
+        i++;
+        continue;
+      }
       let n = 1;
       while (i + n < S && same(s, (start + i + n) % S)) n++;
       runs.push([r, s, s + n - 1, isTail(r, s)]);
@@ -154,12 +225,18 @@ export function dashRuns(payload: string): [number, number, number, boolean][] {
   return runs;
 }
 
-export const EXT = -0.05;    // how far, in cells, an arc is drawn into the gap beside it (negative: short of its cell edge). A gap is one cell, so what shows is 1 − 2·EXT = 1.1 cells, the same everywhere
+export const EXT = -0.05; // how far, in cells, an arc is drawn into the gap beside it (negative: short of its cell edge). A gap is one cell, so what shows is 1 − 2·EXT = 1.1 cells, the same everywhere
 /** An arc as drawn: its ring, and where it starts and ends (radians, a1 past a0; a1 − a0 ≥ 2π for a ring that is one arc all the way round). */
-export interface Arc { ring: number; a0: number; a1: number; fill: boolean }
+export interface Arc {
+  ring: number;
+  a0: number;
+  a1: number;
+  fill: boolean;
+}
 export function arcs(payload: string): Arc[] {
   return dashRuns(payload).map(([ring, s, e, fill]) => {
-    const S = SECTORS[ring], delta = (2 * Math.PI) / S;
+    const S = SECTORS[ring],
+      delta = (2 * Math.PI) / S;
     if (e - s + 1 >= S) return { ring, a0: 0, a1: 2 * Math.PI, fill };
     return { ring, a0: (s - EXT) * delta, a1: (e + 1 + EXT) * delta, fill };
   });

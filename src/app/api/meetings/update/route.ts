@@ -1,6 +1,18 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
-import { authorizeMeetings, ensureOccurrence, isMeetingOpen, isMeetingOver, occurrenceTimes, validateDocUrl, type MeetingRow, type SeriesRow, canManageMeeting, notYourMeeting, notifyMeetingInvites } from '@/lib/meetings/meetings';
+import {
+  authorizeMeetings,
+  ensureOccurrence,
+  isMeetingOpen,
+  isMeetingOver,
+  occurrenceTimes,
+  validateDocUrl,
+  type MeetingRow,
+  type SeriesRow,
+  canManageMeeting,
+  notYourMeeting,
+  notifyMeetingInvites,
+} from '@/lib/meetings/meetings';
 import { MAX_QUESTION_LENGTH, asQuestionType, cleanOptions } from '@/lib/meetings/meetingFun';
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import { validateAudienceInput } from '@/lib/meetings/meetingAudience';
@@ -17,8 +29,16 @@ export async function POST(request: Request) {
     if (!doc.ok) return NextResponse.json({ error: 'The doc link must start with https:// (or be a path on this site).' }, { status: 400 });
     patch.doc_url = doc.value;
   }
-  if ('location' in b) patch.location = String(b.location ?? '').trim().slice(0, 80) || null;
-  if ('question' in b) patch.question = String(b.question ?? '').trim().slice(0, MAX_QUESTION_LENGTH) || null;
+  if ('location' in b)
+    patch.location =
+      String(b.location ?? '')
+        .trim()
+        .slice(0, 80) || null;
+  if ('question' in b)
+    patch.question =
+      String(b.question ?? '')
+        .trim()
+        .slice(0, MAX_QUESTION_LENGTH) || null;
   if ('question_type' in b || 'question_options' in b) {
     const type = asQuestionType(b.question_type);
     const options = type === 'poll' ? cleanOptions(b.question_options) : null;
@@ -56,14 +76,17 @@ export async function POST(request: Request) {
   // Name and time can be changed any time, even after check-in started. (Not the date: to move a
   // meeting to another day, make a new one. A repeating meeting's weeks keep the shared name.)
   if ('title' in b) {
-    const t = String(b.title ?? '').trim().slice(0, 60);
+    const t = String(b.title ?? '')
+      .trim()
+      .slice(0, 60);
     if (!t) return NextResponse.json({ error: 'Give the meeting a name.' }, { status: 400 });
     if (row0.series_id && t !== row0.title) return NextResponse.json({ error: 'A repeating meeting keeps its name every week.' }, { status: 400 });
     patch.title = t;
   }
   if ('start' in b || 'end' in b) {
     const re = /^([01]\d|2[0-3]):[0-5]\d$/;
-    const st = String(b.start ?? ''), en = String(b.end ?? '');
+    const st = String(b.start ?? ''),
+      en = String(b.end ?? '');
     if (!re.test(st) || !re.test(en) || en <= st) return NextResponse.json({ error: 'Pick a start time and a later end time.' }, { status: 400 });
     const { starts, ends } = occurrenceTimes(row0.meeting_date, st, en);
     patch.starts_at = starts.toISOString();
@@ -75,7 +98,13 @@ export async function POST(request: Request) {
   if ('question' in patch || 'question_type' in patch) {
     const { data: cur } = await auth.svc.from('meetings').select('*').eq('id', id).maybeSingle();
     const row = cur as MeetingRow | null;
-    if (row && isMeetingOpen(row) && ((row.question ?? null) !== patch.question || ('question_type' in patch && (row.question_type ?? 'text') !== patch.question_type) || ('question_options' in patch && JSON.stringify(row.question_options ?? null) !== JSON.stringify(patch.question_options)))) {
+    if (
+      row &&
+      isMeetingOpen(row) &&
+      ((row.question ?? null) !== patch.question ||
+        ('question_type' in patch && (row.question_type ?? 'text') !== patch.question_type) ||
+        ('question_options' in patch && JSON.stringify(row.question_options ?? null) !== JSON.stringify(patch.question_options)))
+    ) {
       return NextResponse.json({ error: 'The question can’t be changed while check-in is open. Close check-in first.' }, { status: 409 });
     }
   }
@@ -84,8 +113,25 @@ export async function POST(request: Request) {
   if ('audience' in patch || 'invitees' in patch || 'group_ids' in patch) {
     const { data: fresh } = await auth.svc.from('meetings').select('starts_at, location').eq('id', id).maybeSingle();
     const when = fresh ? `${formatPacificDateTime(fresh.starts_at, { weekday: true })}${fresh.location ? ` · ${fresh.location}` : ''}` : m.meeting_date;
-    await notifyMeetingInvites(auth.svc, { title: m.title, when }, { audience: (patch.audience ?? row0.audience) as string[] | null, invitees: (patch.invitees ?? row0.invitees) as string[] | null, group_ids: (patch.group_ids ?? row0.group_ids) as string[] | null }, { before: row0, hostId: auth.user.id });
+    await notifyMeetingInvites(
+      auth.svc,
+      { title: m.title, when },
+      {
+        audience: (patch.audience ?? row0.audience) as string[] | null,
+        invitees: (patch.invitees ?? row0.invitees) as string[] | null,
+        group_ids: (patch.group_ids ?? row0.group_ids) as string[] | null,
+      },
+      { before: row0, hostId: auth.user.id },
+    );
   }
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'meeting', entityId: id, summary: `Updated ${Object.keys(patch).map((k) => k.replace('_url', ' link')).join(' and ')} for "${m.title}" (${m.meeting_date})` });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'update',
+    entityType: 'meeting',
+    entityId: id,
+    summary: `Updated ${Object.keys(patch)
+      .map((k) => k.replace('_url', ' link'))
+      .join(' and ')} for "${m.title}" (${m.meeting_date})`,
+  });
   return NextResponse.json({ id, ...patch });
 }

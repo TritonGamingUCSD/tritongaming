@@ -50,30 +50,45 @@ export default function MarkdownContent({ children, className, headingIds }: { c
     const byLine = headingIds ? new Map(extractToc(children).map((t) => [t.line, t.id])) : null;
     const idFor = (text: string, node?: { position?: { start?: { line?: number } } }) => byLine?.get(node?.position?.start?.line ?? -1) ?? headingId(text);
     return {
-          blockquote: ({ children: c }) => {
-            const call = asCallout(c);
-            return call ? <aside className={`${styles.callout} ${styles['callout_' + call.kind]}`}><strong className={styles.calloutLabel}>{CALLOUT_LABEL[call.kind]}</strong>{call.body}</aside> : <blockquote>{c}</blockquote>;
-          },
-          table: ({ children: c }) => <div className={styles.tableWrap}><table>{c}</table></div>,
-          // Links to other sites open in a new tab; links inside this site stay in the tab.
-          a: ({ href, children: c }) => (/^https?:\/\//i.test(href ?? '')
-            ? <a href={href} target="_blank" rel="noopener noreferrer">{c}</a>
-            : <a href={href}>{c}</a>),
-          ...(headingIds ? {
+      blockquote: ({ children: c }) => {
+        const call = asCallout(c);
+        return call ? (
+          <aside className={`${styles.callout} ${styles['callout_' + call.kind]}`}>
+            <strong className={styles.calloutLabel}>{CALLOUT_LABEL[call.kind]}</strong>
+            {call.body}
+          </aside>
+        ) : (
+          <blockquote>{c}</blockquote>
+        );
+      },
+      table: ({ children: c }) => (
+        <div className={styles.tableWrap}>
+          <table>{c}</table>
+        </div>
+      ),
+      // Links to other sites open in a new tab; links inside this site stay in the tab.
+      a: ({ href, children: c }) =>
+        /^https?:\/\//i.test(href ?? '') ? (
+          <a href={href} target="_blank" rel="noopener noreferrer">
+            {c}
+          </a>
+        ) : (
+          <a href={href}>{c}</a>
+        ),
+      ...(headingIds
+        ? {
             h1: ({ children: c, node }: { children?: ReactNode; node?: { position?: { start?: { line?: number } } } }) => <h1 id={idFor(textOf(c), node)}>{c}</h1>,
             h2: ({ children: c, node }: { children?: ReactNode; node?: { position?: { start?: { line?: number } } } }) => <h2 id={idFor(textOf(c), node)}>{c}</h2>,
             h3: ({ children: c, node }: { children?: ReactNode; node?: { position?: { start?: { line?: number } } } }) => <h3 id={idFor(textOf(c), node)}>{c}</h3>,
             h4: ({ children: c, node }: { children?: ReactNode; node?: { position?: { start?: { line?: number } } } }) => <h4 id={idFor(textOf(c), node)}>{c}</h4>,
             h5: ({ children: c, node }: { children?: ReactNode; node?: { position?: { start?: { line?: number } } } }) => <h5 id={idFor(textOf(c), node)}>{c}</h5>,
-          } : {}),
-        };
+          }
+        : {}),
+    };
   }, [children, headingIds]);
   return (
     <div data-md className={`${styles.markdown} ${className ?? ''}`}>
-      <ReactMarkdown
-        remarkPlugins={[remarkGfm, remarkDocColors]}
-        components={components}
-      >
+      <ReactMarkdown remarkPlugins={[remarkGfm, remarkDocColors]} components={components}>
         {children}
       </ReactMarkdown>
     </div>

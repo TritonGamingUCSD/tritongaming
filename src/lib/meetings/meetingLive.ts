@@ -11,5 +11,9 @@ export async function notifyMeetingLive(meetingId: string) {
     await svc.removeChannel(channel);
   };
   // Never holds up (or fails) the action itself: give up after a moment.
-  try { await Promise.race([send(), new Promise((resolve) => setTimeout(resolve, 1500))]); } catch (e) { console.warn('meeting broadcast failed', e); }
+  try {
+    await Promise.race([send(), new Promise((resolve) => setTimeout(resolve, 1500))]);
+  } catch (e) {
+    console.warn('meeting broadcast failed', e);
+  }
 }

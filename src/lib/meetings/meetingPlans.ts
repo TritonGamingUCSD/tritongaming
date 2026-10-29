@@ -13,20 +13,31 @@ export type PlanSlots = Record<string, Record<string, SlotValue>>;
 export interface PlanShape {
   kind: 'once' | 'weekly';
   duration_min: number;
-  window_start: string;   // HH:MM or HH:MM:SS, Pacific
+  window_start: string; // HH:MM or HH:MM:SS, Pacific
   window_end: string;
   range_start: string | null;
   range_end: string | null;
 }
 
 const hhmm = (t: string) => t.slice(0, 5);
-export const toMin = (t: string) => { const [h, m] = hhmm(t).split(':').map(Number); return h * 60 + m; };
+export const toMin = (t: string) => {
+  const [h, m] = hhmm(t).split(':').map(Number);
+  return h * 60 + m;
+};
 export const toHhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
-export const addDays = (key: string, n: number) => { const d = new Date(`${key}T12:00:00Z`); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); };
+export const addDays = (key: string, n: number) => {
+  const d = new Date(`${key}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.toISOString().slice(0, 10);
+};
 export const daysBetween = (a: string, b: string) => Math.round((new Date(`${b}T12:00:00Z`).getTime() - new Date(`${a}T12:00:00Z`).getTime()) / 86_400_000);
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-export const dayLabel = (key: string, kind: 'once' | 'weekly') => kind === 'weekly' ? WEEKDAYS[Number(key)] : formatPacificDate(key, { weekday: true });
-export const clockLabel = (t: string) => { const m = toMin(t); const h = Math.floor(m / 60); return `${h % 12 || 12}:${String(m % 60).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`; };
+export const dayLabel = (key: string, kind: 'once' | 'weekly') => (kind === 'weekly' ? WEEKDAYS[Number(key)] : formatPacificDate(key, { weekday: true }));
+export const clockLabel = (t: string) => {
+  const m = toMin(t);
+  const h = Math.floor(m / 60);
+  return `${h % 12 || 12}:${String(m % 60).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+};
 
 // Every slot start shown in a day: from the window start, while the slot still ends by the window end.
 export function slotStarts(windowStart: string, windowEnd: string): string[] {
@@ -85,19 +96,49 @@ export function cleanSlots(raw: unknown, days: string[], starts: string[]): Plan
   return out;
 }
 
-export interface Person { id: string; name: string }
-export interface BestTime { /** True for every time tied for the very best score. */ top?: boolean; day: string; start: string; available: Person[]; ifNeeded: Person[]; unavailable: Person[]; noResponse: Person[]; /** Of those unavailable: who already has a meeting or event then (host only). */ blocked: { person: Person; titles: string[] }[] }
+export interface Person {
+  id: string;
+  name: string;
+}
+export interface BestTime {
+  /** True for every time tied for the very best score. */ top?: boolean;
+  day: string;
+  start: string;
+  available: Person[];
+  ifNeeded: Person[];
+  unavailable: Person[];
+  noResponse: Person[];
+  /** Of those unavailable: who already has a meeting or event then (host only). */ blocked: { person: Person; titles: string[] }[];
+}
 
 // Every possible start time, scored for the people who have answered (people who haven't answered are listed but don't count against it).
-export function evaluateStart(day: string, start: string, durationMin: number, people: Person[], responses: Record<string, PlanSlots>, blocked?: Record<string, BusyBlock[]>): BestTime {
+export function evaluateStart(
+  day: string,
+  start: string,
+  durationMin: number,
+  people: Person[],
+  responses: Record<string, PlanSlots>,
+  blocked?: Record<string, BusyBlock[]>,
+): BestTime {
   const t: BestTime = { day, start, available: [], ifNeeded: [], unavailable: [], noResponse: [], blocked: [] };
   const covered = new Set(coveredSlots(start, durationMin));
   for (const p of people) {
     // A meeting or event already then: unavailable for sure (even if they haven't answered).
-    const titles = [...new Set((blocked?.[p.id] ?? []).filter((b) => b.day === day && [...covered].some((s) => toMin(s) < toMin(b.end) && toMin(s) + SLOT_MIN > toMin(b.start))).map((b) => b.title))];
-    if (titles.length) { t.blocked.push({ person: p, titles }); t.unavailable.push(p); continue; }
+    const titles = [
+      ...new Set(
+        (blocked?.[p.id] ?? []).filter((b) => b.day === day && [...covered].some((s) => toMin(s) < toMin(b.end) && toMin(s) + SLOT_MIN > toMin(b.start))).map((b) => b.title),
+      ),
+    ];
+    if (titles.length) {
+      t.blocked.push({ person: p, titles });
+      t.unavailable.push(p);
+      continue;
+    }
     const r = responses[p.id];
-    if (!r) { t.noResponse.push(p); continue; }
+    if (!r) {
+      t.noResponse.push(p);
+      continue;
+    }
     const a = availabilityFor(r, day, start, durationMin);
     (a === 'available' ? t.available : a === 'if_needed' ? t.ifNeeded : t.unavailable).push(p);
   }
@@ -109,14 +150,23 @@ export function evaluateStart(day: string, start: string, durationMin: number, p
 export const penalty = (t: BestTime) => t.unavailable.length + t.blocked.length;
 export function bestTimes(plan: PlanShape, days: string[], people: Person[], responses: Record<string, PlanSlots>, limit = 3, blocked?: Record<string, BusyBlock[]>): BestTime[] {
   const all: BestTime[] = [];
-  for (const day of days) for (const start of slotStarts(plan.window_start, plan.window_end)) {
-    if (!canStartAt(plan, start)) continue;
-    all.push(evaluateStart(day, start, plan.duration_min, people, responses, blocked));
-  }
+  for (const day of days)
+    for (const start of slotStarts(plan.window_start, plan.window_end)) {
+      if (!canStartAt(plan, start)) continue;
+      all.push(evaluateStart(day, start, plan.duration_min, people, responses, blocked));
+    }
   const dayIdx = new Map(days.map((d, i) => [d, i]));
   const ranked = all
     .filter((t) => t.available.length + t.ifNeeded.length > 0)
-      .sort((a, b) => penalty(a) - penalty(b) || a.blocked.length - b.blocked.length || b.available.length - a.available.length || a.ifNeeded.length - b.ifNeeded.length || (dayIdx.get(a.day)! - dayIdx.get(b.day)!) || toMin(a.start) - toMin(b.start));
+    .sort(
+      (a, b) =>
+        penalty(a) - penalty(b) ||
+        a.blocked.length - b.blocked.length ||
+        b.available.length - a.available.length ||
+        a.ifNeeded.length - b.ifNeeded.length ||
+        dayIdx.get(a.day)! - dayIdx.get(b.day)! ||
+        toMin(a.start) - toMin(b.start),
+    );
   // Every time that scores the same as the best one is a best time (however many that is). If that is fewer than `limit`, the list is filled up
   // with the next best, skipping a time that only shifts one already listed on its day by less than the meeting length.
   const score = (t: BestTime) => [penalty(t), t.blocked.length, t.available.length, t.ifNeeded.length].join('|');
@@ -180,7 +230,13 @@ export interface PlanView {
 }
 
 // Something a person already has (a meeting or an event with a ticket). `day` is a date (one-time plan) or a weekday 0-6 (weekly plan); times are Pacific HH:MM.
-export interface BusyBlock { day: string; start: string; end: string; title: string; /** Why it is blocked, in plain words. */ why: string }
+export interface BusyBlock {
+  day: string;
+  start: string;
+  end: string;
+  title: string;
+  /** Why it is blocked, in plain words. */ why: string;
+}
 
 // The slots (by start time) that these blocks take on a day, with what is on at that time.
 export function busySlots(blocks: BusyBlock[], day: string, starts: string[]): Map<string, string> {

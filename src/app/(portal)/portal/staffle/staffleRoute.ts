@@ -9,9 +9,13 @@ export function parseStaffleRoute(tab: string | undefined, subtab: string | unde
 
 export function staffleParams(r: StaffleRoute): { tab: string | null; subtab: string | null } {
   switch (r.view) {
-    case 'list': return { tab: null, subtab: null };
-    case 'new': return { tab: 'new', subtab: null };
-    case 'one': return { tab: r.slug, subtab: null };
-    case 'draw': return { tab: r.slug, subtab: 'draw' };
+    case 'list':
+      return { tab: null, subtab: null };
+    case 'new':
+      return { tab: 'new', subtab: null };
+    case 'one':
+      return { tab: r.slug, subtab: null };
+    case 'draw':
+      return { tab: r.slug, subtab: 'draw' };
   }
 }

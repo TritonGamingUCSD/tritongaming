@@ -73,7 +73,14 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
   }
 
   async function handleDelete(d: Division) {
-    if (!(await confirmHold({ title: `Delete "${d.name}"?`, message: `Anyone currently assigned as its division lead will lose that role, and its public /divisions/${d.slug} page will disappear.`, confirmLabel: 'Hold to delete' }))) return;
+    if (
+      !(await confirmHold({
+        title: `Delete "${d.name}"?`,
+        message: `Anyone currently assigned as its division lead will lose that role, and its public /divisions/${d.slug} page will disappear.`,
+        confirmLabel: 'Hold to delete',
+      }))
+    )
+      return;
     setBusyId(d.id);
     setError('');
     try {
@@ -104,22 +111,12 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
         <h2 className={styles.addTitle}>+ Add Division</h2>
         <span className={styles.hint}>Just the basics — logo, description, links, and everything else are set up on the division's own edit page right after.</span>
         <div className={styles.fieldRow}>
-          <input
-            className={styles.input}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Name (e.g. Triton Chess)"
-            maxLength={80}
-          />
-          <input
-            className={styles.input}
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            placeholder="Slug (optional — derived from name)"
-            maxLength={80}
-          />
+          <input className={styles.input} value={name} onChange={(e) => setName(e.target.value)} placeholder="Name (e.g. Triton Chess)" maxLength={80} />
+          <input className={styles.input} value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="Slug (optional — derived from name)" maxLength={80} />
         </div>
-        <Button type="submit" loading={adding} disabled={!name.trim()}>{adding ? 'Adding…' : 'Add Division'}</Button>
+        <Button type="submit" loading={adding} disabled={!name.trim()}>
+          {adding ? 'Adding…' : 'Add Division'}
+        </Button>
       </form>
 
       <div className={styles.list}>
@@ -129,17 +126,20 @@ export default function DivisionsManager({ divisions: initial }: { divisions: Di
           const isBusy = busyId === d.id;
           return (
             <div key={d.id} className={styles.listRow}>
-              {src ? (
-                <Image src={src} alt="" width={40} height={40} className={styles.logo} unoptimized />
-              ) : (
-                <div className={styles.logoFallback}>{d.name[0]}</div>
-              )}
+              {src ? <Image src={src} alt="" width={40} height={40} className={styles.logo} unoptimized /> : <div className={styles.logoFallback}>{d.name[0]}</div>}
               <div className={styles.listRowText}>
                 <div className={styles.name}>{d.name}</div>
                 <div className={styles.slug}>/divisions/{d.slug}</div>
               </div>
               <div className={styles.actions}>
-                <RowMenu phoneOnly label={`More for ${d.name}`} items={[{ label: 'Edit', href: `/portal/divisions/${d.id}` }, { label: 'Delete', danger: true, onClick: () => handleDelete(d), disabled: isBusy }]} />
+                <RowMenu
+                  phoneOnly
+                  label={`More for ${d.name}`}
+                  items={[
+                    { label: 'Edit', href: `/portal/divisions/${d.id}` },
+                    { label: 'Delete', danger: true, onClick: () => handleDelete(d), disabled: isBusy },
+                  ]}
+                />
                 <span className={styles.notPhone}>
                   <IconButton kind="edit" href={`/portal/divisions/${d.id}`} label={`Edit ${d.name}`} />
                   <IconButton kind="delete" label={`Delete ${d.name}`} onClick={() => handleDelete(d)} disabled={isBusy} />

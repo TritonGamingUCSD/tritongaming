@@ -18,9 +18,30 @@ const GROUP_LIMIT = 6;
 const LINK_LIMIT = 8;
 const PIN_LIMIT = 4;
 
-export default function DocHome({ docs, sections, favorites, onOpen, canEdit, catName, onReorderPins, teams, myTeamIds, links, onLinks }: {
-  docs: Doc[]; sections: DocSection<Doc>[]; favorites: Set<string>; onOpen: (id: string) => void; canEdit: boolean; catName: (d: Doc) => string; onReorderPins: (ids: string[]) => void;
-  teams: { id: string; name: string }[]; myTeamIds: string[]; links: QuickLink[]; onLinks: (next: QuickLink[]) => void;
+export default function DocHome({
+  docs,
+  sections,
+  favorites,
+  onOpen,
+  canEdit,
+  catName,
+  onReorderPins,
+  teams,
+  myTeamIds,
+  links,
+  onLinks,
+}: {
+  docs: Doc[];
+  sections: DocSection<Doc>[];
+  favorites: Set<string>;
+  onOpen: (id: string) => void;
+  canEdit: boolean;
+  catName: (d: Doc) => string;
+  onReorderPins: (ids: string[]) => void;
+  teams: { id: string; name: string }[];
+  myTeamIds: string[];
+  links: QuickLink[];
+  onLinks: (next: QuickLink[]) => void;
 }) {
   const [linkDialog, setLinkDialog] = useState<{ link: QuickLink | null } | null>(null);
   const [dragLink, setDragLink] = useState<string | null>(null);
@@ -37,7 +58,10 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
     const prev = links;
     onLinks(ids.map((id, i) => ({ ...links.find((l) => l.id === id)!, order_index: i })));
     const r = await docsPost('/api/docs/links', { action: 'reorder', ids });
-    if (!r.ok) { onLinks(prev); showToast(r.json.error || 'Couldn’t save the new order.'); }
+    if (!r.ok) {
+      onLinks(prev);
+      showToast(r.json.error || 'Couldn’t save the new order.');
+    }
   }
   const forMe = guides.filter((d) => d.teams.length > 0 && overlaps(d.teams, myTeamIds));
   const myTeamNames = teams.filter((t) => myTeamIds.includes(t.id)).map((t) => t.name);
@@ -63,7 +87,7 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
     ro.observe(el);
     return () => ro.disconnect();
   }, [hasGroups]);
-  const columns: typeof groups[] = Array.from({ length: colCount }, () => []);
+  const columns: (typeof groups)[] = Array.from({ length: colCount }, () => []);
   const heights = new Array(colCount).fill(0);
   for (const g of groups) {
     const k = heights.indexOf(Math.min(...heights));
@@ -74,115 +98,195 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
   return (
     <div className={styles.home}>
       <RequiredBanner onOpen={onOpen} />
-      {canEdit && stale > 0 && <p className={styles.note}>{stale} guide{stale === 1 ? ' hasn’t' : 's haven’t'} been updated or reviewed in six months. Worth a look.</p>}
+      {canEdit && stale > 0 && (
+        <p className={styles.note}>
+          {stale} guide{stale === 1 ? ' hasn’t' : 's haven’t'} been updated or reviewed in six months. Worth a look.
+        </p>
+      )}
 
       <div className={styles.topGrid}>
-      {(shownLinks.length > 0 || canEdit) && (
-        <section aria-labelledby="home-links">
-          <h2 id="home-links" className={styles.h2}><ExternalLink size={16} aria-hidden="true" /> Quick links
-            {canEdit && <button type="button" className={styles.addLink} onClick={() => setLinkDialog({ link: null })}><Plus size={13} aria-hidden="true" /> Add quick link</button>}
-          </h2>
-          {shownLinks.length === 0 && <p className={`${styles.note} ${styles.linkHint}`}>Buttons to the club’s Google Drive files and forms go here. Add the ones people ask for most.</p>}
-          <ul className={styles.quick}>
-            {(moreLinks ? shownLinks : shownLinks.slice(0, LINK_LIMIT)).map((l) => (
-              <li key={l.id} className={`${styles.quickItem} ${dragLink === l.id ? styles.dragging : ''}`} draggable={canEdit}
-                onDragStart={(e) => { setDragLink(l.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', l.id); }}
-                onDragEnd={() => { setDragLink(null); setLiveLinks(null); }}
-                // The others move out of the way while you drag; nothing is saved until you let go.
-                onDragOver={(e) => {
-                  if (!dragLink) return;
-                  e.preventDefault();
-                  if (dragLink === l.id) return;
-                  const ids = shownLinks.map((x) => x.id);
-                  const next = ids.filter((id) => id !== dragLink);
-                  next.splice(ids.indexOf(l.id), 0, dragLink);
-                  if (next.join() !== ids.join()) setLiveLinks(next);
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const ids = liveLinks; setDragLink(null); setLiveLinks(null);
-                  if (ids && ids.join() !== byOrder.map((x) => x.id).join()) void saveLinkOrder(ids);
-                }}>
-                <a className={styles.quickLink} href={l.url} title={l.note || undefined} target="_blank" rel="noopener noreferrer" draggable={false}>
-                  <strong>{l.title}</strong>
-                  <ExternalLink size={13} className={styles.quickOpen} aria-hidden="true" />
-                </a>
-                {canEdit && <GripVertical size={14} className={styles.quickGrip} aria-hidden="true" />}
-                {canEdit && <button type="button" className={styles.quickEdit} onClick={() => setLinkDialog({ link: l })} aria-label={`Edit the quick link ${l.title}`} title="Edit"><Pencil size={14} aria-hidden="true" /></button>}
-              </li>
-            ))}
-          </ul>
-          {shownLinks.length > LINK_LIMIT && <button type="button" className={styles.more} onClick={() => setMoreLinks((v) => !v)}>{moreLinks ? 'Show fewer' : `Show ${shownLinks.length - LINK_LIMIT} more`}</button>}
-        </section>
-      )}
-      {pinned.length > 0 && (
-        <section aria-labelledby="home-pinned">
-          <h2 id="home-pinned" className={styles.h2}><Pin size={16} aria-hidden="true" /> Start here</h2>
-          <div className={styles.cards}>
-            {(morePins ? shownPins : shownPins.slice(0, PIN_LIMIT)).map((d) => (
-              <div key={d.id} className={`${styles.pinSlot} ${dragPin === d.id ? styles.dragging : ''}`} draggable={canEdit}
-                onDragStart={(e) => { setDragPin(d.id); e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', d.id); }}
-                onDragEnd={() => { setDragPin(null); setLive(null); }}
-                // The others move out of the way while you drag; nothing is saved until you let go.
-                onDragOver={(e) => {
-                  if (!dragPin) return;
-                  e.preventDefault();
-                  if (dragPin === d.id) return;
-                  const ids = shownPins.map((x) => x.id);
-                  const next = ids.filter((id) => id !== dragPin);
-                  next.splice(ids.indexOf(d.id), 0, dragPin);
-                  if (next.join() !== ids.join()) setLive(next);
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const ids = live; setDragPin(null); setLive(null);
-                  if (ids && ids.join() !== pinned.map((x) => x.id).join()) onReorderPins(ids);
-                }}>
-                {canEdit && <GripVertical size={14} className={styles.grip} aria-hidden="true" />}
-                <DocCard d={d} meta={catName(d)} onOpen={onOpen} />
-              </div>
-            ))}
-          </div>
-          {shownPins.length > PIN_LIMIT && <button type="button" className={styles.more} onClick={() => setMorePins((v) => !v)}>{morePins ? 'Show fewer' : `Show ${shownPins.length - PIN_LIMIT} more`}</button>}
-        </section>
-      )}
-
+        {(shownLinks.length > 0 || canEdit) && (
+          <section aria-labelledby="home-links">
+            <h2 id="home-links" className={styles.h2}>
+              <ExternalLink size={16} aria-hidden="true" /> Quick links
+              {canEdit && (
+                <button type="button" className={styles.addLink} onClick={() => setLinkDialog({ link: null })}>
+                  <Plus size={13} aria-hidden="true" /> Add quick link
+                </button>
+              )}
+            </h2>
+            {shownLinks.length === 0 && (
+              <p className={`${styles.note} ${styles.linkHint}`}>Buttons to the club’s Google Drive files and forms go here. Add the ones people ask for most.</p>
+            )}
+            <ul className={styles.quick}>
+              {(moreLinks ? shownLinks : shownLinks.slice(0, LINK_LIMIT)).map((l) => (
+                <li
+                  key={l.id}
+                  className={`${styles.quickItem} ${dragLink === l.id ? styles.dragging : ''}`}
+                  draggable={canEdit}
+                  onDragStart={(e) => {
+                    setDragLink(l.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', l.id);
+                  }}
+                  onDragEnd={() => {
+                    setDragLink(null);
+                    setLiveLinks(null);
+                  }}
+                  // The others move out of the way while you drag; nothing is saved until you let go.
+                  onDragOver={(e) => {
+                    if (!dragLink) return;
+                    e.preventDefault();
+                    if (dragLink === l.id) return;
+                    const ids = shownLinks.map((x) => x.id);
+                    const next = ids.filter((id) => id !== dragLink);
+                    next.splice(ids.indexOf(l.id), 0, dragLink);
+                    if (next.join() !== ids.join()) setLiveLinks(next);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const ids = liveLinks;
+                    setDragLink(null);
+                    setLiveLinks(null);
+                    if (ids && ids.join() !== byOrder.map((x) => x.id).join()) void saveLinkOrder(ids);
+                  }}
+                >
+                  <a className={styles.quickLink} href={l.url} title={l.note || undefined} target="_blank" rel="noopener noreferrer" draggable={false}>
+                    <strong>{l.title}</strong>
+                    <ExternalLink size={13} className={styles.quickOpen} aria-hidden="true" />
+                  </a>
+                  {canEdit && <GripVertical size={14} className={styles.quickGrip} aria-hidden="true" />}
+                  {canEdit && (
+                    <button type="button" className={styles.quickEdit} onClick={() => setLinkDialog({ link: l })} aria-label={`Edit the quick link ${l.title}`} title="Edit">
+                      <Pencil size={14} aria-hidden="true" />
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+            {shownLinks.length > LINK_LIMIT && (
+              <button type="button" className={styles.more} onClick={() => setMoreLinks((v) => !v)}>
+                {moreLinks ? 'Show fewer' : `Show ${shownLinks.length - LINK_LIMIT} more`}
+              </button>
+            )}
+          </section>
+        )}
+        {pinned.length > 0 && (
+          <section aria-labelledby="home-pinned">
+            <h2 id="home-pinned" className={styles.h2}>
+              <Pin size={16} aria-hidden="true" /> Start here
+            </h2>
+            <div className={styles.cards}>
+              {(morePins ? shownPins : shownPins.slice(0, PIN_LIMIT)).map((d) => (
+                <div
+                  key={d.id}
+                  className={`${styles.pinSlot} ${dragPin === d.id ? styles.dragging : ''}`}
+                  draggable={canEdit}
+                  onDragStart={(e) => {
+                    setDragPin(d.id);
+                    e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', d.id);
+                  }}
+                  onDragEnd={() => {
+                    setDragPin(null);
+                    setLive(null);
+                  }}
+                  // The others move out of the way while you drag; nothing is saved until you let go.
+                  onDragOver={(e) => {
+                    if (!dragPin) return;
+                    e.preventDefault();
+                    if (dragPin === d.id) return;
+                    const ids = shownPins.map((x) => x.id);
+                    const next = ids.filter((id) => id !== dragPin);
+                    next.splice(ids.indexOf(d.id), 0, dragPin);
+                    if (next.join() !== ids.join()) setLive(next);
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const ids = live;
+                    setDragPin(null);
+                    setLive(null);
+                    if (ids && ids.join() !== pinned.map((x) => x.id).join()) onReorderPins(ids);
+                  }}
+                >
+                  {canEdit && <GripVertical size={14} className={styles.grip} aria-hidden="true" />}
+                  <DocCard d={d} meta={catName(d)} onOpen={onOpen} />
+                </div>
+              ))}
+            </div>
+            {shownPins.length > PIN_LIMIT && (
+              <button type="button" className={styles.more} onClick={() => setMorePins((v) => !v)}>
+                {morePins ? 'Show fewer' : `Show ${shownPins.length - PIN_LIMIT} more`}
+              </button>
+            )}
+          </section>
+        )}
       </div>
       {linkDialog && <QuickLinkDialog link={linkDialog.link} links={links} teams={teams} onSaved={onLinks} onClose={() => setLinkDialog(null)} />}
 
       {forMe.length > 0 && (
         <section aria-labelledby="home-team">
-          <h2 id="home-team" className={styles.h2}><Users size={16} aria-hidden="true" /> For your team <span className={styles.h2Note}>{myTeamNames.join(', ')}</span></h2>
+          <h2 id="home-team" className={styles.h2}>
+            <Users size={16} aria-hidden="true" /> For your team <span className={styles.h2Note}>{myTeamNames.join(', ')}</span>
+          </h2>
           <div className={styles.cards}>
-            {forMe.map((d) => <DocCard key={d.id} d={d} meta={catName(d)} onOpen={onOpen} />)}
+            {forMe.map((d) => (
+              <DocCard key={d.id} d={d} meta={catName(d)} onOpen={onOpen} />
+            ))}
           </div>
         </section>
       )}
 
       {groups.length > 0 && (
         <section aria-labelledby="home-guides">
-          <h2 id="home-guides" className={styles.h2}><FileText size={16} aria-hidden="true" /> How-to guides</h2>
+          <h2 id="home-guides" className={styles.h2}>
+            <FileText size={16} aria-hidden="true" /> How-to guides
+          </h2>
           <div className={styles.groups} ref={groupsRef}>
             {columns.map((col, ci) => (
               <div key={ci} className={styles.groupCol}>
                 {col.map((g) => (
-                <div key={g.id ?? 'none'} className={styles.group} style={g.color ? ({ '--cat': g.color } as React.CSSProperties) : undefined}>
-                  <h3 className={styles.groupName}><span className={styles.dot} aria-hidden="true" />{g.name} <span className={styles.count}>{g.shown.length}</span></h3>
-                  <ul className={styles.list}>
-                    {(allOpen.has(g.id ?? 'none') ? g.shown : g.shown.slice(0, GROUP_LIMIT)).map(({ doc, depth }) => (
-                      <li key={doc.id}>
-                        <button type="button" className={styles.row} style={{ paddingLeft: `${0.6 + Math.min(depth, 3) * 1}rem` }} onClick={() => onOpen(doc.id)} title={docSummary(doc.content, 160, doc.title) || undefined}>
-                          <span className={styles.rowTitle}>{depth > 0 ? '└ ' : ''}{doc.title}</span>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                  {g.shown.length > GROUP_LIMIT && (
-                    <button type="button" className={styles.more} onClick={() => setAllOpen((p) => { const n = new Set(p); const k = g.id ?? 'none'; if (n.has(k)) n.delete(k); else n.add(k); return n; })}>
-                      {allOpen.has(g.id ?? 'none') ? 'Show fewer' : `Show ${g.shown.length - GROUP_LIMIT} more`}
-                    </button>
-                  )}
-                </div>
+                  <div key={g.id ?? 'none'} className={styles.group} style={g.color ? ({ '--cat': g.color } as React.CSSProperties) : undefined}>
+                    <h3 className={styles.groupName}>
+                      <span className={styles.dot} aria-hidden="true" />
+                      {g.name} <span className={styles.count}>{g.shown.length}</span>
+                    </h3>
+                    <ul className={styles.list}>
+                      {(allOpen.has(g.id ?? 'none') ? g.shown : g.shown.slice(0, GROUP_LIMIT)).map(({ doc, depth }) => (
+                        <li key={doc.id}>
+                          <button
+                            type="button"
+                            className={styles.row}
+                            style={{ paddingLeft: `${0.6 + Math.min(depth, 3) * 1}rem` }}
+                            onClick={() => onOpen(doc.id)}
+                            title={docSummary(doc.content, 160, doc.title) || undefined}
+                          >
+                            <span className={styles.rowTitle}>
+                              {depth > 0 ? '└ ' : ''}
+                              {doc.title}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                    {g.shown.length > GROUP_LIMIT && (
+                      <button
+                        type="button"
+                        className={styles.more}
+                        onClick={() =>
+                          setAllOpen((p) => {
+                            const n = new Set(p);
+                            const k = g.id ?? 'none';
+                            if (n.has(k)) n.delete(k);
+                            else n.add(k);
+                            return n;
+                          })
+                        }
+                      >
+                        {allOpen.has(g.id ?? 'none') ? 'Show fewer' : `Show ${g.shown.length - GROUP_LIMIT} more`}
+                      </button>
+                    )}
+                  </div>
                 ))}
               </div>
             ))}
@@ -193,17 +297,47 @@ export default function DocHome({ docs, sections, favorites, onOpen, canEdit, ca
       {(favs.length > 0 || recent.length > 0) && (
         <div className={styles.twoCol}>
           {favs.length > 0 && (
-            <section aria-labelledby="home-fav"><h2 id="home-fav" className={styles.h2}><Star size={16} aria-hidden="true" /> Your favorites</h2>
-              <ul className={styles.mini}>{favs.slice(0, 6).map((d) => <li key={d.id}><button type="button" onClick={() => onOpen(d.id)}><span>{d.title}</span><small>{catName(d)}</small></button></li>)}</ul></section>
+            <section aria-labelledby="home-fav">
+              <h2 id="home-fav" className={styles.h2}>
+                <Star size={16} aria-hidden="true" /> Your favorites
+              </h2>
+              <ul className={styles.mini}>
+                {favs.slice(0, 6).map((d) => (
+                  <li key={d.id}>
+                    <button type="button" onClick={() => onOpen(d.id)}>
+                      <span>{d.title}</span>
+                      <small>{catName(d)}</small>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
           {recent.length > 0 && (
-            <section aria-labelledby="home-recent"><h2 id="home-recent" className={styles.h2}>Recently updated</h2>
-              <ul className={styles.mini}>{recent.map((d) => <li key={d.id}><button type="button" onClick={() => onOpen(d.id)}><span>{d.title}</span><small>{ageLabel(d.updated_at).label.replace('Updated ', '')}</small></button></li>)}</ul></section>
+            <section aria-labelledby="home-recent">
+              <h2 id="home-recent" className={styles.h2}>
+                Recently updated
+              </h2>
+              <ul className={styles.mini}>
+                {recent.map((d) => (
+                  <li key={d.id}>
+                    <button type="button" onClick={() => onOpen(d.id)}>
+                      <span>{d.title}</span>
+                      <small>{ageLabel(d.updated_at).label.replace('Updated ', '')}</small>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
           )}
         </div>
       )}
 
-      {docs.length === 0 && <div className={styles.empty}><p>{canEdit ? 'No docs yet. Press New doc to add the first how-to guide.' : 'No docs have been published yet.'}</p></div>}
+      {docs.length === 0 && (
+        <div className={styles.empty}>
+          <p>{canEdit ? 'No docs yet. Press New doc to add the first how-to guide.' : 'No docs have been published yet.'}</p>
+        </div>
+      )}
     </div>
   );
 }

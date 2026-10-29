@@ -29,7 +29,11 @@ describe('meeting plans', () => {
     expect(out).toEqual({ '2026-10-05': { '09:00': 1 } });
   });
   it('ranks start times by fewest unavailable', () => {
-    const people = [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }, { id: 'c', name: 'C' }];
+    const people = [
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+      { id: 'c', name: 'C' },
+    ];
     const responses = {
       a: { '2026-10-05': { '09:00': 1 as const, '09:30': 1 as const, '10:00': 1 as const } },
       b: { '2026-10-05': { '09:00': 1 as const, '09:30': 1 as const } },
@@ -40,7 +44,10 @@ describe('meeting plans', () => {
     expect(best[0].unavailable).toHaveLength(0);
   });
   it('lists every time tied for best, then fills up to the limit', () => {
-    const people = [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }];
+    const people = [
+      { id: 'a', name: 'A' },
+      { id: 'b', name: 'B' },
+    ];
     const full = { '09:00': 1 as const, '09:30': 1 as const, '10:00': 1 as const, '10:30': 1 as const, '11:00': 1 as const, '11:30': 1 as const };
     const responses = { a: { '2026-10-05': full, '2026-10-06': { '09:00': 1 as const, '09:30': 1 as const } }, b: { '2026-10-05': full } };
     const best = bestTimes(plan, ['2026-10-05', '2026-10-06'], people, responses, 1);

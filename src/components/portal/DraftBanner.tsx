@@ -10,8 +10,12 @@ export default function DraftBanner({ at, what = 'draft', onContinue, onDiscard 
     <Notice tone="info">
       <strong>Continue your {what}?</strong> You started one {draftAge(at)} and did not finish it.{' '}
       <span style={{ display: 'inline-flex', gap: '0.5rem', flexWrap: 'wrap', marginLeft: '0.4rem' }}>
-        <Button size="sm" onClick={onContinue}>Continue</Button>
-        <Button size="sm" variant="ghost" onClick={onDiscard}>Start over</Button>
+        <Button size="sm" onClick={onContinue}>
+          Continue
+        </Button>
+        <Button size="sm" variant="ghost" onClick={onDiscard}>
+          Start over
+        </Button>
       </span>
     </Notice>
   );

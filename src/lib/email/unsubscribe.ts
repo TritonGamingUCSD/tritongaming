@@ -15,7 +15,8 @@ export function verifyUnsubscribeToken(token: string): { userId: string; kind: E
   const [body, sig] = String(token ?? '').split('.');
   if (!body || !sig || !secret()) return null;
   const want = sign(body);
-  const a = Buffer.from(sig), b = Buffer.from(want);
+  const a = Buffer.from(sig),
+    b = Buffer.from(want);
   if (a.length !== b.length || !timingSafeEqual(a, b)) return null;
   const [userId, kind] = Buffer.from(body, 'base64url').toString().split('.');
   return userId && isEmailKind(kind) ? { userId, kind } : null;

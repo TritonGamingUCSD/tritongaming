@@ -18,7 +18,9 @@ export default function MajorPicker({ value, onChange, required, noun = 'major' 
   const [otherText, setOtherText] = useState('');
   const full = chosen.length >= MAX_MAJORS;
 
-  function set(list: string[]) { onChange(list.join(MAJOR_SEPARATOR)); }
+  function set(list: string[]) {
+    onChange(list.join(MAJOR_SEPARATOR));
+  }
   function add(name: string) {
     const n = name.trim().slice(0, 60);
     if (!n || full || chosen.some((c) => c.toLowerCase() === n.toLowerCase())) return;
@@ -49,8 +51,20 @@ export default function MajorPicker({ value, onChange, required, noun = 'major' 
             else add(e.target.value);
           }}
         >
-          <option value="">{chosen.length ? (noun === 'minor' ? 'Add another minor' : 'Add another major (double major?)') : noun === 'minor' ? 'Select your minor (optional)' : 'Select your major'}</option>
-          {MAJOR_OPTIONS.filter((o) => !chosen.includes(o)).map((o) => <option key={o} value={o}>{o}</option>)}
+          <option value="">
+            {chosen.length
+              ? noun === 'minor'
+                ? 'Add another minor'
+                : 'Add another major (double major?)'
+              : noun === 'minor'
+                ? 'Select your minor (optional)'
+                : 'Select your major'}
+          </option>
+          {MAJOR_OPTIONS.filter((o) => !chosen.includes(o)).map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
           <option value={OTHER}>Other (type it in)…</option>
         </Select>
       )}
@@ -60,13 +74,39 @@ export default function MajorPicker({ value, onChange, required, noun = 'major' 
             className={styles.input}
             value={otherText}
             onChange={(e) => setOtherText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); add(otherText); setOtherText(''); setOther(false); } }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                add(otherText);
+                setOtherText('');
+                setOther(false);
+              }
+            }}
             maxLength={60}
             placeholder={`Type your ${noun}`}
             autoFocus
           />
-          <Button size="sm" onClick={() => { add(otherText); setOtherText(''); setOther(false); }} disabled={!otherText.trim()}>Add</Button>
-          <Button size="sm" variant="ghost" onClick={() => { setOther(false); setOtherText(''); }}>Cancel</Button>
+          <Button
+            size="sm"
+            onClick={() => {
+              add(otherText);
+              setOtherText('');
+              setOther(false);
+            }}
+            disabled={!otherText.trim()}
+          >
+            Add
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setOther(false);
+              setOtherText('');
+            }}
+          >
+            Cancel
+          </Button>
         </div>
       )}
       <span className={styles.charCount} style={{ textAlign: 'left' }}>

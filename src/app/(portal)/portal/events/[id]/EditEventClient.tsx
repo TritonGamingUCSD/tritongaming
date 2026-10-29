@@ -36,7 +36,7 @@ export default function EditEventClient({
       .from('events')
       .update({
         title: form.title.trim(),
-        ...(initial.slug ? {} : { slug: finalSlug || null }),   // the slug is set once and never changed (the database refuses it too)
+        ...(initial.slug ? {} : { slug: finalSlug || null }), // the slug is set once and never changed (the database refuses it too)
         content: form.content.trim() || null,
         description: form.details.trim() || null,
         venue_address: form.venue_address.trim() || null,
@@ -44,7 +44,9 @@ export default function EditEventClient({
         venue_name: form.venue_name.trim() || null,
         venue_lat: form.venue_lat,
         venue_lng: form.venue_lng,
-        schedule: form.schedule.filter((x) => x.title.trim()).map((x) => ({ time: x.time.trim(), title: x.title.trim(), ...(x.description?.trim() ? { description: x.description.trim() } : {}) })),
+        schedule: form.schedule
+          .filter((x) => x.title.trim())
+          .map((x) => ({ time: x.time.trim(), title: x.title.trim(), ...(x.description?.trim() ? { description: x.description.trim() } : {}) })),
         sponsors: form.sponsors.filter((x) => x.name.trim()).map((x) => ({ name: x.name.trim(), logo_url: x.logo_url, ...(x.url?.trim() ? { url: x.url.trim() } : {}) })),
         location: form.location.trim() || null,
         start_date: pacificDatetimeLocalToUTC(form.start_date).toISOString(),

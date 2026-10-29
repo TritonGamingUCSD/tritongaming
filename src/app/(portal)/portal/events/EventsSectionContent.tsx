@@ -4,10 +4,7 @@ import { useState } from 'react';
 import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Link from '@/components/portal/NoPrefetchLink';
-import {
-  ResponsiveContainer, LineChart, Line, BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-} from 'recharts';
+import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
 import EventRowActions from './EventRowActions';
 import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, Mail } from 'lucide-react';
 import { formatEventDateRangeShort, formatEventTimeRange, eventDayCount } from '@/lib/core/timezone';
@@ -101,31 +98,52 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
   });
   const [deleteTarget, setDeleteTarget] = useState<EventRow | null>(null);
 
-  const counts = ({
+  const counts = {
     all: events.length,
     upcoming: events.filter((e) => isCheckinWindowOpen(e)).length,
     past: events.filter((e) => !isCheckinWindowOpen(e)).length,
     draft: events.filter((e) => !e.is_published).length,
-  });
+  };
 
   const filtered = (() => {
     const q = query.trim().toLowerCase();
-    return events
-      .filter((e) => {
-        if (filter === 'upcoming' && !isCheckinWindowOpen(e)) return false;
-        if (filter === 'past' && isCheckinWindowOpen(e)) return false;
-        if (filter === 'draft' && e.is_published) return false;
-        if (q && !e.title.toLowerCase().includes(q) && !(e.location ?? '').toLowerCase().includes(q)) return false;
-        return true;
-      });
+    return events.filter((e) => {
+      if (filter === 'upcoming' && !isCheckinWindowOpen(e)) return false;
+      if (filter === 'past' && isCheckinWindowOpen(e)) return false;
+      if (filter === 'draft' && e.is_published) return false;
+      if (q && !e.title.toLowerCase().includes(q) && !(e.location ?? '').toLowerCase().includes(q)) return false;
+      return true;
+    });
   })();
 
-  if (checkinsKey) return <div className={styles.page}><EventCheckinsPage eventKey={checkinsKey} canManagePoints={canManagePoints} onBack={() => { setCheckinsKey(null); setTab('list'); syncUrl('list'); }} /></div>;
+  if (checkinsKey)
+    return (
+      <div className={styles.page}>
+        <EventCheckinsPage
+          eventKey={checkinsKey}
+          canManagePoints={canManagePoints}
+          onBack={() => {
+            setCheckinsKey(null);
+            setTab('list');
+            syncUrl('list');
+          }}
+        />
+      </div>
+    );
 
   return (
     <div className={styles.page}>
-      <SectionHeader title="Events" sub={canEdit ? 'Create, run and review events.' : 'What’s coming up and what you’ve been to.'}
-        actions={canEdit ? <ButtonLink href="/portal/events/new"><Plus size={15} strokeWidth={2} aria-hidden="true" /> Create Event</ButtonLink> : undefined} />
+      <SectionHeader
+        title="Events"
+        sub={canEdit ? 'Create, run and review events.' : 'What’s coming up and what you’ve been to.'}
+        actions={
+          canEdit ? (
+            <ButtonLink href="/portal/events/new">
+              <Plus size={15} strokeWidth={2} aria-hidden="true" /> Create Event
+            </ButtonLink>
+          ) : undefined
+        }
+      />
 
       {(canEdit || canEmail) && (
         <SectionTabs
@@ -141,9 +159,12 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
 
       {tab === 'emails' && canEmail && <EventEmailsTab />}
 
-      {tab === 'analytics' && canEdit && (
-        eventsPerMonth.length === 0 && ticketsPerMonth.length === 0 && eventStats.length === 0 ? (
-          <div className={styles.empty}><p>Not enough data yet to chart trends.</p></div>
+      {tab === 'analytics' &&
+        canEdit &&
+        (eventsPerMonth.length === 0 && ticketsPerMonth.length === 0 && eventStats.length === 0 ? (
+          <div className={styles.empty}>
+            <p>Not enough data yet to chart trends.</p>
+          </div>
         ) : (
           <div className={styles.analyticsCharts}>
             <div className={chartStyles.chartRow}>
@@ -210,102 +231,123 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
               </>
             )}
           </div>
-        )
-      )}
+        ))}
 
-      {tab === 'list' && (events.length === 0 ? (
-        <div className={styles.empty}>
-          <p>No events yet.</p>
-          {canEdit && <Link href="/portal/events/new" className={styles.createLink}>Create your first event →</Link>}
-        </div>
-      ) : (
-        <>
-          <div className={styles.toolbar}>
-            <div className={styles.searchWrap}>
-              <Search size={15} strokeWidth={1.75} aria-hidden="true" className={styles.searchIcon} />
-              <input
-                className={styles.searchInput}
-                value={query}
-                onChange={(e) => { setQuery(e.target.value); setParams({ q: e.target.value || null }); }}
-                placeholder="Search by name or location…"
+      {tab === 'list' &&
+        (events.length === 0 ? (
+          <div className={styles.empty}>
+            <p>No events yet.</p>
+            {canEdit && (
+              <Link href="/portal/events/new" className={styles.createLink}>
+                Create your first event →
+              </Link>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className={styles.toolbar}>
+              <div className={styles.searchWrap}>
+                <Search size={15} strokeWidth={1.75} aria-hidden="true" className={styles.searchIcon} />
+                <input
+                  className={styles.searchInput}
+                  value={query}
+                  onChange={(e) => {
+                    setQuery(e.target.value);
+                    setParams({ q: e.target.value || null });
+                  }}
+                  placeholder="Search by name or location…"
+                />
+              </div>
+              <SectionTabs
+                variant="segmented"
+                label="Filter events"
+                value={filter}
+                onChange={(f) => {
+                  setFilter(f);
+                  setParams({ status: f === 'all' ? null : f });
+                }}
+                tabs={FILTERS.map((f) => ({ id: f.key, label: f.label, count: counts[f.key] }))}
               />
             </div>
-            <SectionTabs
-              variant="segmented"
-              label="Filter events"
-              value={filter}
-              onChange={(f) => { setFilter(f); setParams({ status: f === 'all' ? null : f }); }}
-              tabs={FILTERS.map((f) => ({ id: f.key, label: f.label, count: counts[f.key] }))}
-            />
-          </div>
 
-          {filtered.length === 0 ? (
-            <div className={styles.empty}><p>No events match your search.</p></div>
-          ) : (
-            <div className={styles.table}>
-              <div className={styles.tableHeader}>
-                <span>Event</span>
-                <span>Date</span>
-                <span>Tickets</span>
-                <span>Status</span>
-                <span className={styles.actionsHead}>Actions</span>
+            {filtered.length === 0 ? (
+              <div className={styles.empty}>
+                <p>No events match your search.</p>
               </div>
-              {filtered.map((event) => {
-                // Greyed only once the event has actually ended (same rule as
-                // check-in), not as soon as it starts.
-                const isPast = !isCheckinWindowOpen(event);
-                return (
-                  <div key={event.id} className={`${styles.tableRow} ${isPast ? styles.tableRowPast : ''}`}>
-                    <div>
-                      <div className={styles.eventTitle}>{event.title}</div>
-                      {event.location && (
-                        <div className={styles.eventLocation}><MapPin size={11} strokeWidth={1.75} aria-hidden="true" /> {event.location}</div>
-                      )}
-                      {event.points_value > 0 && (
-                        <div className={styles.eventPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> {event.points_value} pts</div>
-                      )}
+            ) : (
+              <div className={styles.table}>
+                <div className={styles.tableHeader}>
+                  <span>Event</span>
+                  <span>Date</span>
+                  <span>Tickets</span>
+                  <span>Status</span>
+                  <span className={styles.actionsHead}>Actions</span>
+                </div>
+                {filtered.map((event) => {
+                  // Greyed only once the event has actually ended (same rule as
+                  // check-in), not as soon as it starts.
+                  const isPast = !isCheckinWindowOpen(event);
+                  return (
+                    <div key={event.id} className={`${styles.tableRow} ${isPast ? styles.tableRowPast : ''}`}>
+                      <div>
+                        <div className={styles.eventTitle}>{event.title}</div>
+                        {event.location && (
+                          <div className={styles.eventLocation}>
+                            <MapPin size={11} strokeWidth={1.75} aria-hidden="true" /> {event.location}
+                          </div>
+                        )}
+                        {event.points_value > 0 && (
+                          <div className={styles.eventPointsBadge}>
+                            <Award size={11} strokeWidth={1.75} aria-hidden="true" /> {event.points_value} pts
+                          </div>
+                        )}
+                      </div>
+                      <div className={styles.eventDate}>
+                        {formatEventDateRangeShort(event.start_date, event.end_date)}
+                        <span className={styles.checkinSub}>
+                          {' '}
+                          {formatEventTimeRange(event.start_date, event.end_date)}
+                          {eventDayCount(event.start_date, event.end_date) > 1 && ` · ${eventDayCount(event.start_date, event.end_date)} days`}
+                        </span>
+                      </div>
+                      <div className={styles.ticketInfo}>
+                        {event.requires_ticket ? (
+                          <button
+                            type="button"
+                            className={styles.checkinLink}
+                            onClick={() => {
+                              const key = event.slug ?? event.id;
+                              setCheckinsKey(key);
+                              syncUrl('check-ins', key);
+                            }}
+                          >
+                            <Ticket size={12} strokeWidth={1.75} aria-hidden="true" /> {event.ticketsIssued}
+                            {event.ticketsIssued > 0 && <span className={styles.checkinSub}> · {event.ticketsCheckedIn} in</span>}
+                          </button>
+                        ) : (
+                          <span className={styles.noTicket}>No ticket</span>
+                        )}
+                      </div>
+                      <div className={styles.statusCol}>
+                        <span className={`${styles.badge} ${event.is_published ? styles.published : styles.draft}`}>{event.is_published ? 'Published' : 'Draft'}</span>
+                        {event.audience === 'ucsd_only' && <span className={`${styles.badge} ${styles.ucsdBadge}`}>UCSD Only</span>}
+                      </div>
+                      <EventRowActions
+                        eventId={event.id}
+                        title={event.title}
+                        showSummary={event.requires_ticket}
+                        canEdit={canEdit}
+                        previewUrl={event.checkinFormPreviewUrl}
+                        canDelete={canDelete}
+                        onDelete={() => setDeleteTarget(event)}
+                      />
                     </div>
-                    <div className={styles.eventDate}>
-                      {formatEventDateRangeShort(event.start_date, event.end_date)}
-                      <span className={styles.checkinSub}>
-                        {' '}{formatEventTimeRange(event.start_date, event.end_date)}
-                        {eventDayCount(event.start_date, event.end_date) > 1 && ` · ${eventDayCount(event.start_date, event.end_date)} days`}
-                      </span>
-                    </div>
-                    <div className={styles.ticketInfo}>
-                      {event.requires_ticket ? (
-                        <button type="button" className={styles.checkinLink} onClick={() => { const key = event.slug ?? event.id; setCheckinsKey(key); syncUrl('check-ins', key); }}>
-                          <Ticket size={12} strokeWidth={1.75} aria-hidden="true" /> {event.ticketsIssued}
-                          {event.ticketsIssued > 0 && <span className={styles.checkinSub}> · {event.ticketsCheckedIn} in</span>}
-                        </button>
-                      ) : (
-                        <span className={styles.noTicket}>No ticket</span>
-                      )}
-                    </div>
-                    <div className={styles.statusCol}>
-                      <span className={`${styles.badge} ${event.is_published ? styles.published : styles.draft}`}>
-                        {event.is_published ? 'Published' : 'Draft'}
-                      </span>
-                      {event.audience === 'ucsd_only' && (
-                        <span className={`${styles.badge} ${styles.ucsdBadge}`}>UCSD Only</span>
-                      )}
-                    </div>
-                    <EventRowActions
-                      eventId={event.id}
-                      title={event.title}
-                      showSummary={event.requires_ticket}
-                      canEdit={canEdit}
-                      previewUrl={event.checkinFormPreviewUrl}
-                      canDelete={canDelete}
-                      onDelete={() => setDeleteTarget(event)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </>
-      ))}
+                  );
+                })}
+              </div>
+            )}
+          </>
+        ))}
 
       {deleteTarget && (
         <DeleteEventModal
@@ -313,7 +355,6 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
           onClose={() => setDeleteTarget(null)}
         />
       )}
-
     </div>
   );
 }

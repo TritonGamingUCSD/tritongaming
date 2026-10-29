@@ -15,18 +15,48 @@ export async function GET() {
     lockedQuizIds(auth),
     auth.svc.from('trivia_games').select('quiz_id, created_at').neq('status', 'lobby').order('created_at', { ascending: false }).limit(5000),
   ]);
-  const games = new Map<string, { n: number; last: string }>();   // how many games each quiz has had, and when the latest was
-  for (const g of (played.data ?? []) as { quiz_id: string; created_at: string }[]) { const c = games.get(g.quiz_id); if (c) c.n++; else games.set(g.quiz_id, { n: 1, last: g.created_at }); }
-  const total = new Map<string, number>(), ready = new Map<string, number>();
+  const games = new Map<string, { n: number; last: string }>(); // how many games each quiz has had, and when the latest was
+  for (const g of (played.data ?? []) as { quiz_id: string; created_at: string }[]) {
+    const c = games.get(g.quiz_id);
+    if (c) c.n++;
+    else games.set(g.quiz_id, { n: 1, last: g.created_at });
+  }
+  const total = new Map<string, number>(),
+    ready = new Map<string, number>();
   for (const q of (questions.data ?? []) as { quiz_id: string; category: string; text: string; choices: string[]; correct: number }[]) {
     total.set(q.quiz_id, (total.get(q.quiz_id) ?? 0) + 1);
     if (isAskable(q)) ready.set(q.quiz_id, (ready.get(q.quiz_id) ?? 0) + 1);
   }
   // A quiz shared with other officers shows to this one as its name and a lock, nothing else.
   const lock = new Set(locked);
-  return NextResponse.json({ quizzes: (quizzes.data ?? []).map(({ created_by: _by, ...q }) => lock.has(q.id as string)
-    ? { id: q.id, slug: q.slug, name: q.name, per_game: 0, block_winners: false, restricted: true, open_to_guests: false, locked: true, questions: 0, ready: 0, games: 0, last_played: null, created_at: q.created_at }
-    : { ...q, locked: false, questions: total.get(q.id as string) ?? 0, ready: ready.get(q.id as string) ?? 0, games: games.get(q.id as string)?.n ?? 0, last_played: games.get(q.id as string)?.last ?? null }) });
+  return NextResponse.json({
+    quizzes: (quizzes.data ?? []).map(({ created_by: _by, ...q }) =>
+      lock.has(q.id as string)
+        ? {
+            id: q.id,
+            slug: q.slug,
+            name: q.name,
+            per_game: 0,
+            block_winners: false,
+            restricted: true,
+            open_to_guests: false,
+            locked: true,
+            questions: 0,
+            ready: 0,
+            games: 0,
+            last_played: null,
+            created_at: q.created_at,
+          }
+        : {
+            ...q,
+            locked: false,
+            questions: total.get(q.id as string) ?? 0,
+            ready: ready.get(q.id as string) ?? 0,
+            games: games.get(q.id as string)?.n ?? 0,
+            last_played: games.get(q.id as string)?.last ?? null,
+          },
+    ),
+  });
 }
 
 export async function POST(request: Request) {
@@ -39,7 +69,7 @@ export async function POST(request: Request) {
   for (let i = 0; i < 6; i++) {
     const slug = i === 0 ? base : `${base}-${i + 1}`;
     const { data, error } = await auth.svc.from('trivia_quizzes').insert({ slug, name, created_by: auth.user.id }).select(QUIZ_COLUMNS).single();
-if (data) {
+    if (data) {
       const { created_by: _by, ...quiz } = data as typeof data & { created_by: string | null };
       return NextResponse.json({ quiz: { ...quiz, locked: false, questions: 0, ready: 0, games: 0, last_played: null } }, { status: 201 });
     }

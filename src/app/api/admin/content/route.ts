@@ -16,17 +16,18 @@ export async function GET() {
 export async function POST(request: Request) {
   // 1. Verify caller is officer+
   const userClient = await createClient();
-  const { data: { user } } = await strictUser(userClient);
+  const {
+    data: { user },
+  } = await strictUser(userClient);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: roles } = await userClient
-    .from('user_roles').select('role, division_id').eq('user_id', user.id);
+  const { data: roles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);
 
   if (!hasCapability(roles ?? [], 'manage_site_content')) {
     return NextResponse.json({ error: 'Content editor access required (lead, exec, or admin)' }, { status: 403 });
   }
 
-  const body = await request.json() as { key?: string; content?: Record<string, unknown> };
+  const body = (await request.json()) as { key?: string; content?: Record<string, unknown> };
   const { key, content } = body;
 
   if (!key || content === undefined) {
@@ -35,18 +36,16 @@ export async function POST(request: Request) {
 
   // 2. Upsert via service client — bypasses RLS; auth is already verified above
   const adminClient = createServiceClient();
-  const { error } = await adminClient
-    .from('site_contents')
-    .upsert(
-      {
-        key,
-        title: key,          // default title = key (satisfies NOT NULL)
-        content,
-        updated_by: user.id,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'key' }
-    );
+  const { error } = await adminClient.from('site_contents').upsert(
+    {
+      key,
+      title: key, // default title = key (satisfies NOT NULL)
+      content,
+      updated_by: user.id,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'key' },
+  );
 
   if (error) {
     console.error('[content] upsert error:', error);

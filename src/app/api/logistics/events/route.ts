@@ -19,14 +19,25 @@ export async function GET(request: Request) {
     let q = auth.svc.from('events').select('id, title, start_date, end_date').order('start_date', { ascending: !past }).limit(60);
     q = past ? q.lt('start_date', new Date(`${today}T00:00:00-08:00`).toISOString()) : q.gte('end_date', new Date(`${today}T00:00:00-08:00`).toISOString());
     const { data } = await q;
-    return NextResponse.json({ events: (data ?? []).map((e) => ({ id: e.id as string, title: e.title as string, starts_on: dayOf(e.start_date as string), ends_on: dayOf((e.end_date as string | null) ?? (e.start_date as string)) })) });
+    return NextResponse.json({
+      events: (data ?? []).map((e) => ({
+        id: e.id as string,
+        title: e.title as string,
+        starts_on: dayOf(e.start_date as string),
+        ends_on: dayOf((e.end_date as string | null) ?? (e.start_date as string)),
+      })),
+    });
   }
   const { data: plans } = await auth.svc.from('logistics_plans').select(PLAN_COLUMNS).order('starts_on', { ascending: false }).limit(200);
   // A division account only needs to find the event to send a request to: no counts, nothing about devices or prizes.
-  if (!auth.canView) return NextResponse.json({ plans: (plans ?? []).map((p) => ({ ...p, devices: 0, empty: 0, teams: 0, requests: 0, newRequests: 0, prizes: 0, prizeValue: 0 })), today: pacificToday() });
+  if (!auth.canView)
+    return NextResponse.json({
+      plans: (plans ?? []).map((p) => ({ ...p, devices: 0, empty: 0, teams: 0, requests: 0, newRequests: 0, prizes: 0, prizeValue: 0 })),
+      today: pacificToday(),
+    });
   const ids = (plans ?? []).map((p) => p.id as string);
-  const counts = new Map<string, number>();   // device rows in all
-  const empty = new Map<string, number>();    // of them, still waiting for a device
+  const counts = new Map<string, number>(); // device rows in all
+  const empty = new Map<string, number>(); // of them, still waiting for a device
   const teams = new Map<string, number>();
   const asked = new Map<string, { all: number; fresh: number }>();
   const prizes = new Map<string, { qty: number; total: number }>();
@@ -43,13 +54,39 @@ export async function GET(request: Request) {
     for (const r of [...(rows ?? []), ...(bor ?? []), ...(sl ?? [])]) bump(counts, r.plan_id as string);
     for (const r of sl ?? []) bump(empty, r.plan_id as string);
     for (const r of sts ?? []) bump(teams, r.plan_id as string);
-    for (const r of reqs ?? []) { const e = asked.get(r.plan_id as string) ?? { all: 0, fresh: 0 }; e.all++; if (r.status === 'submitted') e.fresh++; asked.set(r.plan_id as string, e); }
+    for (const r of reqs ?? []) {
+      const e = asked.get(r.plan_id as string) ?? { all: 0, fresh: 0 };
+      e.all++;
+      if (r.status === 'submitted') e.fresh++;
+      asked.set(r.plan_id as string, e);
+    }
     const prizeIds = [...new Set((lines ?? []).map((l) => l.prize_id as string))];
     const { data: prices } = prizeIds.length ? await auth.svc.from('logistics_prizes').select('id, price').in('id', prizeIds) : { data: [] };
     const price = new Map((prices ?? []).map((x) => [x.id as string, Number(x.price ?? 0)]));
-    for (const l of lines ?? []) { const e = prizes.get(l.plan_id as string) ?? { qty: 0, total: 0 }; e.qty += l.quantity as number; e.total += (l.quantity as number) * (price.get(l.prize_id as string) ?? 0); prizes.set(l.plan_id as string, e); }
+    for (const l of lines ?? []) {
+      const e = prizes.get(l.plan_id as string) ?? { qty: 0, total: 0 };
+      e.qty += l.quantity as number;
+      e.total += (l.quantity as number) * (price.get(l.prize_id as string) ?? 0);
+      prizes.set(l.plan_id as string, e);
+    }
   }
-  return NextResponse.json({ plans: (plans ?? []).map((p) => { const id = p.id as string, pz = prizes.get(id); return { ...p, devices: counts.get(id) ?? 0, empty: empty.get(id) ?? 0, teams: teams.get(id) ?? 0, requests: asked.get(id)?.all ?? 0, newRequests: asked.get(id)?.fresh ?? 0, prizes: pz?.qty ?? 0, prizeValue: Math.round((pz?.total ?? 0) * 100) / 100 }; }), today: pacificToday() });
+  return NextResponse.json({
+    plans: (plans ?? []).map((p) => {
+      const id = p.id as string,
+        pz = prizes.get(id);
+      return {
+        ...p,
+        devices: counts.get(id) ?? 0,
+        empty: empty.get(id) ?? 0,
+        teams: teams.get(id) ?? 0,
+        requests: asked.get(id)?.all ?? 0,
+        newRequests: asked.get(id)?.fresh ?? 0,
+        prizes: pz?.qty ?? 0,
+        prizeValue: Math.round((pz?.total ?? 0) * 100) / 100,
+      };
+    }),
+    today: pacificToday(),
+  });
 }
 
 // Make a plan for a portal event (name and dates come from the event unless given) or a Logistics-only event (a name and dates).
@@ -57,8 +94,11 @@ export async function POST(request: Request) {
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));
-  let name = String(b.name ?? '').trim().slice(0, 120);
-  let starts = String(b.starts_on ?? ''), ends = String(b.ends_on ?? b.starts_on ?? '');
+  let name = String(b.name ?? '')
+    .trim()
+    .slice(0, 120);
+  let starts = String(b.starts_on ?? ''),
+    ends = String(b.ends_on ?? b.starts_on ?? '');
   let eventId: string | null = null;
   let eventSlug: string | null = null;
   if (b.event_id) {
@@ -81,8 +121,29 @@ export async function POST(request: Request) {
   let slug = base;
   if (used.has(slug) || RESERVED_SLUGS.includes(slug)) slug = `${base}-${starts.slice(0, 4)}`;
   for (let n = 2; used.has(slug); n++) slug = `${base}-${starts.slice(0, 4)}-${n}`;
-  const { data, error } = await auth.svc.from('logistics_plans').insert({ name, slug, event_id: eventId, starts_on: starts, ends_on: ends, notes: String(b.notes ?? '').trim().slice(0, 2000) || null, created_by: auth.user.id }).select(PLAN_COLUMNS).single();
+  const { data, error } = await auth.svc
+    .from('logistics_plans')
+    .insert({
+      name,
+      slug,
+      event_id: eventId,
+      starts_on: starts,
+      ends_on: ends,
+      notes:
+        String(b.notes ?? '')
+          .trim()
+          .slice(0, 2000) || null,
+      created_by: auth.user.id,
+    })
+    .select(PLAN_COLUMNS)
+    .single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t make the plan.' }, { status: 500 });
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'logistics plan', entityId: data.id as string, summary: `Made the equipment plan “${name}” (${starts}${ends !== starts ? ` to ${ends}` : ''})` });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'create',
+    entityType: 'logistics plan',
+    entityId: data.id as string,
+    summary: `Made the equipment plan “${name}” (${starts}${ends !== starts ? ` to ${ends}` : ''})`,
+  });
   return NextResponse.json({ plan: { ...data, devices: 0 } }, { status: 201 });
 }

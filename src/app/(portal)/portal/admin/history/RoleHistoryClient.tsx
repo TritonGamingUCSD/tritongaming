@@ -26,9 +26,7 @@ function diff(before: Grant[], after: Grant[]) {
 }
 
 function RoleChip({ grant, divisionNameById }: { grant: Grant; divisionNameById: Map<string, string> }) {
-  const label = grant.role === 'division' && grant.division_id
-    ? `${ROLE_LABELS.division} — ${divisionNameById.get(grant.division_id) ?? 'Unknown'}`
-    : ROLE_LABELS[grant.role];
+  const label = grant.role === 'division' && grant.division_id ? `${ROLE_LABELS.division} — ${divisionNameById.get(grant.division_id) ?? 'Unknown'}` : ROLE_LABELS[grant.role];
   return (
     <span className={styles.chip} style={{ background: ROLE_COLORS[grant.role] + '18', color: roleInk(ROLE_COLORS[grant.role]), borderColor: ROLE_COLORS[grant.role] + '44' }}>
       {label}
@@ -43,7 +41,9 @@ export default function RoleHistoryClient({ entries, divisions }: { entries: Rol
   if (entries.length === 0) {
     return (
       <div className={styles.empty}>
-        <span className={styles.emptyIcon}><History size={40} strokeWidth={1.25} aria-hidden="true" /></span>
+        <span className={styles.emptyIcon}>
+          <History size={40} strokeWidth={1.25} aria-hidden="true" />
+        </span>
         <h2 className={styles.emptyTitle}>No role changes yet</h2>
         <p className={styles.emptySub}>Every save made in the Role Manager will show up here.</p>
       </div>
@@ -71,9 +71,7 @@ export default function RoleHistoryClient({ entries, divisions }: { entries: Rol
                 </div>
                 <div className={styles.itemMeta}>
                   <span>by {entry.changed_by?.display_name || 'Unknown'}</span>
-                  <span>
-                    {formatPacificDateTime(entry.created_at)}
-                  </span>
+                  <span>{formatPacificDateTime(entry.created_at)}</span>
                   <ChevronDown size={16} strokeWidth={1.75} className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`} aria-hidden="true" />
                 </div>
               </button>
@@ -82,13 +80,21 @@ export default function RoleHistoryClient({ entries, divisions }: { entries: Rol
                   <div className={styles.diffCol}>
                     <span className={styles.diffLabel}>Before</span>
                     <div className={styles.chipRow}>
-                      {entry.before.length === 0 ? <span className={styles.itemMuted}>No roles</span> : entry.before.map((g) => <RoleChip key={grantKey(g)} grant={g} divisionNameById={divisionNameById} />)}
+                      {entry.before.length === 0 ? (
+                        <span className={styles.itemMuted}>No roles</span>
+                      ) : (
+                        entry.before.map((g) => <RoleChip key={grantKey(g)} grant={g} divisionNameById={divisionNameById} />)
+                      )}
                     </div>
                   </div>
                   <div className={styles.diffCol}>
                     <span className={styles.diffLabel}>After</span>
                     <div className={styles.chipRow}>
-                      {entry.after.length === 0 ? <span className={styles.itemMuted}>No roles</span> : entry.after.map((g) => <RoleChip key={grantKey(g)} grant={g} divisionNameById={divisionNameById} />)}
+                      {entry.after.length === 0 ? (
+                        <span className={styles.itemMuted}>No roles</span>
+                      ) : (
+                        entry.after.map((g) => <RoleChip key={grantKey(g)} grant={g} divisionNameById={divisionNameById} />)
+                      )}
                     </div>
                   </div>
                 </div>

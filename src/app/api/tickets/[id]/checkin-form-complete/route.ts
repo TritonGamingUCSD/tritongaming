@@ -21,24 +21,19 @@ export async function POST(request: Request, { params }: Params) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: ticket } = await supabase
-    .from('tickets')
-    .select('user_id')
-    .eq('id', id)
-    .single();
+  const { data: ticket } = await supabase.from('tickets').select('user_id').eq('id', id).single();
 
   if (!ticket || ticket.user_id !== user.id) {
     return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
   }
 
   const serviceClient = createServiceClient();
-  const { error } = await serviceClient
-    .from('tickets')
-    .update({ checkin_form_completed_at: new Date().toISOString() })
-    .eq('id', id);
+  const { error } = await serviceClient.from('tickets').update({ checkin_form_completed_at: new Date().toISOString() }).eq('id', id);
 
   if (error) {
     console.error('[checkin-form-complete] update error:', error);

@@ -5,8 +5,20 @@ const known = { bundles: ['PC Station'], types: ['Monitor', 'Gaming Laptop'], si
 
 describe('request items', () => {
   it('accepts a bundle or a type, ignoring capitals, with games', () => {
-    const r = cleanRequestItems('devices', [{ what: 'pc station', qty: 4, games: ['Valorant', ' '] }, { what: 'MONITOR', qty: 2 }], known);
-    expect(r).toEqual({ items: [{ what: 'PC Station', qty: 4, games: ['Valorant'] }, { what: 'Monitor', qty: 2, games: [] }] });
+    const r = cleanRequestItems(
+      'devices',
+      [
+        { what: 'pc station', qty: 4, games: ['Valorant', ' '] },
+        { what: 'MONITOR', qty: 2 },
+      ],
+      known,
+    );
+    expect(r).toEqual({
+      items: [
+        { what: 'PC Station', qty: 4, games: ['Valorant'] },
+        { what: 'Monitor', qty: 2, games: [] },
+      ],
+    });
   });
   it('refuses what does not exist or makes no sense', () => {
     expect(cleanRequestItems('devices', [{ what: 'Toaster', qty: 1 }], known)).toHaveProperty('error');
@@ -20,13 +32,33 @@ describe('request items', () => {
     expect(requestSummary('prizes', [])).toBe('prizes, no amount set');
   });
   it('lets a prize line leave the size blank (any size), counting toward the total only', () => {
-    const r = cleanRequestItems('prizes', [{ qty: 4, size: '' }, { qty: 1, size: null }, { qty: 2, size: 'Free' }], known) as { items: PrizeItem[] };
-    expect(r.items).toEqual([{ qty: 4, size: null }, { qty: 1, size: null }, { qty: 2, size: 'Free' }]);
+    const r = cleanRequestItems(
+      'prizes',
+      [
+        { qty: 4, size: '' },
+        { qty: 1, size: null },
+        { qty: 2, size: 'Free' },
+      ],
+      known,
+    ) as { items: PrizeItem[] };
+    expect(r.items).toEqual([
+      { qty: 4, size: null },
+      { qty: 1, size: null },
+      { qty: 2, size: 'Free' },
+    ]);
     expect(prizeSizes(r.items)).toEqual({ Free: 2 });
     expect(requestSummary('prizes', r.items)).toBe('4 prizes of any size, 1 prizes of any size, 2 Free');
   });
   it('takes a prize size, ignoring capitals, and adds up the sizes', () => {
-    const r = cleanRequestItems('prizes', [{ qty: 10, size: 'small prizing' }, { qty: 3, size: 'Large Prizing' }, { qty: 2, size: 'Small Prizing' }], known) as { items: PrizeItem[] };
+    const r = cleanRequestItems(
+      'prizes',
+      [
+        { qty: 10, size: 'small prizing' },
+        { qty: 3, size: 'Large Prizing' },
+        { qty: 2, size: 'Small Prizing' },
+      ],
+      known,
+    ) as { items: PrizeItem[] };
     expect(r.items[0]).toEqual({ qty: 10, size: 'Small Prizing' });
     expect(prizeSizes(r.items)).toEqual({ 'Small Prizing': 12, 'Large Prizing': 3 });
   });
@@ -35,7 +67,12 @@ describe('request items', () => {
 describe('request words and rights', () => {
   it('says a request in one line', () => {
     expect(requestSummary('devices', [{ what: 'PC Station', qty: 4, games: ['Valorant'] }] as DeviceItem[])).toBe('4 × PC Station (Valorant)');
-    expect(requestSummary('prizes', [{ qty: 1, size: 'Large Prizing' }, { qty: 10, size: 'Free' }])).toBe('1 Large Prizing, 10 Free');
+    expect(
+      requestSummary('prizes', [
+        { qty: 1, size: 'Large Prizing' },
+        { qty: 10, size: 'Free' },
+      ]),
+    ).toBe('1 Large Prizing, 10 Free');
   });
   it('lets only the Event Logistics team change or remove a submitted request', () => {
     expect(canEditRequest(false)).toBe(false);
@@ -45,23 +82,68 @@ describe('request words and rights', () => {
 
 import { rowDiff, wantedRows } from '@/lib/logistics/requestRows';
 describe('request rows', () => {
-  const bundles = new Map([['pc station', [{ type: 'Gaming PC', qty: 1 }, { type: 'Monitor', qty: 2 }]]]);
+  const bundles = new Map([
+    [
+      'pc station',
+      [
+        { type: 'Gaming PC', qty: 1 },
+        { type: 'Monitor', qty: 2 },
+      ],
+    ],
+  ]);
   it('makes a set per unit of a bundle and plain rows for a type', () => {
-    const w = wantedRows([{ what: 'PC Station', qty: 2, games: ['Valorant'] }, { what: 'Mouse', qty: 3, games: [] }], bundles);
+    const w = wantedRows(
+      [
+        { what: 'PC Station', qty: 2, games: ['Valorant'] },
+        { what: 'Mouse', qty: 3, games: [] },
+      ],
+      bundles,
+    );
     expect(w.length).toBe(9);
     expect(w.filter((x) => x.set === 1).length).toBe(3);
     expect(w.filter((x) => x.type === 'Gaming PC').every((x) => x.games[0] === 'Valorant')).toBe(true);
   });
   it('says how many rows to add or take away', () => {
     const w = wantedRows([{ what: 'PC Station', qty: 2, games: [] }], bundles);
-    expect(Object.fromEntries(rowDiff(w, new Map([['gaming pc', 2], ['monitor', 4]])))).toEqual({});
-    expect(Object.fromEntries(rowDiff(w, new Map([['gaming pc', 3], ['monitor', 1]])))).toEqual({ 'gaming pc': -1, monitor: 3 });
+    expect(
+      Object.fromEntries(
+        rowDiff(
+          w,
+          new Map([
+            ['gaming pc', 2],
+            ['monitor', 4],
+          ]),
+        ),
+      ),
+    ).toEqual({});
+    expect(
+      Object.fromEntries(
+        rowDiff(
+          w,
+          new Map([
+            ['gaming pc', 3],
+            ['monitor', 1],
+          ]),
+        ),
+      ),
+    ).toEqual({ 'gaming pc': -1, monitor: 3 });
   });
 });
 
 import { planProblems } from '@/lib/logistics/plans';
 describe('allocation matches the requests', () => {
-  const row = (id: string, requested: boolean | undefined) => ({ id, kind: 'club' as const, type: 'Monitor', tag: id, station_id: 's', games_needed: [], games: [], counted: false, located: true, requested });
+  const row = (id: string, requested: boolean | undefined) => ({
+    id,
+    kind: 'club' as const,
+    type: 'Monitor',
+    tag: id,
+    station_id: 's',
+    games_needed: [],
+    games: [],
+    counted: false,
+    located: true,
+    requested,
+  });
   it('flags a device that no request asked for, and nothing else', () => {
     const p = planProblems([row('A', false), row('B', true), row('C', undefined)], [], [], new Set(), [], () => null);
     expect(p.filter((x) => x.why === 'unrequested').map((x) => x.row_id)).toEqual(['A']);
@@ -70,7 +152,13 @@ describe('allocation matches the requests', () => {
 
 import { ANY_SIZE, suggestPrizes } from '@/lib/logistics/prizes';
 describe('prize suggestions', () => {
-  const stock = [{ id: 'a', size: 'Small Prizing', left: 10, sponsor: false }, { id: 'b', size: 'Small Prizing', left: 2, sponsor: false }, { id: 's', size: 'Medium Prizing', left: 1, sponsor: true }, { id: 'm', size: 'Medium Prizing', left: 1, sponsor: false }, { id: 'z', size: 'Large Prizing', left: 0, sponsor: false }];
+  const stock = [
+    { id: 'a', size: 'Small Prizing', left: 10, sponsor: false },
+    { id: 'b', size: 'Small Prizing', left: 2, sponsor: false },
+    { id: 's', size: 'Medium Prizing', left: 1, sponsor: true },
+    { id: 'm', size: 'Medium Prizing', left: 1, sponsor: false },
+    { id: 'z', size: 'Large Prizing', left: 0, sponsor: false },
+  ];
   it('fills each size from prizes of that size, never more than is left', () => {
     const { picks, short } = suggestPrizes(stock, { 'Small Prizing': 3, 'Medium Prizing': 2 });
     expect([...picks.entries()].filter(([id]) => id === 'a' || id === 'b').reduce((n, [, x]) => n + x, 0)).toBe(3);

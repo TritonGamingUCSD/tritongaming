@@ -16,11 +16,7 @@ export async function getDocsData({ userId, canEdit }: { userId: string; canEdit
   if (!canEdit) docsQuery = docsQuery.eq('published', true);
   const [{ data: docs }, { data: categories }, { data: favs }, { data: groups }, { data: links }] = await Promise.all([
     docsQuery,
-    supabase
-      .from('doc_categories')
-      .select('id, name, order_index, color, created_at')
-      .order('order_index', { ascending: true })
-      .order('name', { ascending: true }),
+    supabase.from('doc_categories').select('id, name, order_index, color, created_at').order('order_index', { ascending: true }).order('name', { ascending: true }),
     createServiceClient().from('doc_favorites').select('doc_id').eq('user_id', userId),
     // The teams (the Team tab in TG Members): a doc can say which teams it is most useful for, and the home shows people the docs for theirs.
     createServiceClient().from('meeting_groups').select('id, name, member_ids').order('name'),

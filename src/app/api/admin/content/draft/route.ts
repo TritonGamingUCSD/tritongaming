@@ -12,9 +12,10 @@ export async function PUT(request: Request) {
   if (!userId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { data: roles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', userId);
   const r = roles ?? [];
-  if (!hasCapability(r, 'manage_site_content') && !hasCapability(r, 'manage_events') && !hasCapability(r, 'manage_division')) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!hasCapability(r, 'manage_site_content') && !hasCapability(r, 'manage_events') && !hasCapability(r, 'manage_division'))
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
-  const body = await request.json().catch(() => null) as { drafts?: Record<string, Record<string, unknown>> } | null;
+  const body = (await request.json().catch(() => null)) as { drafts?: Record<string, Record<string, unknown>> } | null;
   const drafts = body?.drafts;
   if (!drafts || typeof drafts !== 'object' || Array.isArray(drafts) || JSON.stringify(drafts).length > 1_000_000) {
     return NextResponse.json({ error: 'Bad drafts' }, { status: 400 });

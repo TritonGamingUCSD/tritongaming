@@ -8,7 +8,11 @@ import styles from './Button.module.css';
 //   ghost     — quiet, for the lowest-priority action (Cancel, Back)
 //   danger    — destructive, red-tinted (Delete, Remove). For irreversible actions also use confirmHold().
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
-interface Common { variant?: Variant; size?: 'sm' | 'md'; className?: string }
+interface Common {
+  variant?: Variant;
+  size?: 'sm' | 'md';
+  className?: string;
+}
 
 const cls = ({ variant = 'primary', size = 'md', className = '' }: Common) => `${styles.btn} ${styles[variant]} ${styles[size]} ${className}`;
 
@@ -26,5 +30,9 @@ export default function Button({ variant = 'primary', size = 'md', loading = fal
 
 // A link that looks exactly like a Button (navigation, not an action on the page).
 export function ButtonLink({ variant = 'primary', size = 'md', className = '', children, ...rest }: Common & ComponentProps<typeof Link>) {
-  return <Link className={cls({ variant, size, className })} {...rest}>{children}</Link>;
+  return (
+    <Link className={cls({ variant, size, className })} {...rest}>
+      {children}
+    </Link>
+  );
 }

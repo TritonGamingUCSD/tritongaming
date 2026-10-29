@@ -20,11 +20,7 @@ export interface StorageObject {
 // Recurses into subfolders (avatars are stored as "<user_id>/<file>") —
 // Supabase Storage's list() only returns one level at a time, and a folder
 // entry comes back with id: null instead of file metadata.
-export async function listAllObjects(
-  supabase: SupabaseClient,
-  bucket: string,
-  prefix = ''
-): Promise<StorageObject[]> {
+export async function listAllObjects(supabase: SupabaseClient, bucket: string, prefix = ''): Promise<StorageObject[]> {
   const results: StorageObject[] = [];
   const limit = 1000;
   let offset = 0;
@@ -36,7 +32,7 @@ export async function listAllObjects(
     for (const entry of data) {
       const fullPath = prefix ? `${prefix}/${entry.name}` : entry.name;
       if (entry.id === null) {
-        results.push(...await listAllObjects(supabase, bucket, fullPath));
+        results.push(...(await listAllObjects(supabase, bucket, fullPath)));
       } else {
         results.push({ path: fullPath, size: entry.metadata?.size ?? 0, createdAt: entry.created_at ? new Date(entry.created_at).getTime() : 0 });
       }

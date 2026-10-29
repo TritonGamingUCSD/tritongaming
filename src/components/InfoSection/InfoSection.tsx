@@ -25,7 +25,13 @@ export default function InfoSection({ title, text, image, imageAlt, reverse = fa
         {photoCredit && (
           <figcaption className={styles.credit}>
             Photo:{' '}
-            {photoCreditLink ? <a href={photoCreditLink} target="_blank" rel="noopener noreferrer">{photoCredit}</a> : photoCredit}
+            {photoCreditLink ? (
+              <a href={photoCreditLink} target="_blank" rel="noopener noreferrer">
+                {photoCredit}
+              </a>
+            ) : (
+              photoCredit
+            )}
           </figcaption>
         )}
       </figure>

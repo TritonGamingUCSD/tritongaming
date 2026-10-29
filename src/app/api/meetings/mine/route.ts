@@ -11,7 +11,13 @@ export async function GET() {
   if (auth.error) return auth.error;
 
   const [{ data: held }, { data: mine }] = await Promise.all([
-    auth.svc.from('meetings').select('id, title, meeting_date, starts_at, ends_at, closed_at, audience, invitees, group_ids').eq('cancelled', false).not('opened_at', 'is', null).order('starts_at', { ascending: false }).limit(26),
+    auth.svc
+      .from('meetings')
+      .select('id, title, meeting_date, starts_at, ends_at, closed_at, audience, invitees, group_ids')
+      .eq('cancelled', false)
+      .not('opened_at', 'is', null)
+      .order('starts_at', { ascending: false })
+      .limit(26),
     auth.svc.from('meeting_attendance').select('meeting_id, checked_in_at, method').eq('user_id', auth.user.id),
   ]);
   const attended = new Map((mine ?? []).map((r) => [r.meeting_id as string, r]));
@@ -22,17 +28,35 @@ export async function GET() {
 
   // Only meetings that were meant for this person (by role, group or invitation) count toward "X of N".
   // Exec/admin can check in to anything, but a meeting they weren't invited to isn't a miss.
-  const heldWithExtras = withExtras((held ?? []).map((m) => ({ ...m, audience: m.audience as string[] | null, invitees: m.invitees as string[] | null, group_ids: m.group_ids as string[] | null })), await loadGroups(auth.svc));
-  const locks = await lockedExpected(auth.svc, heldWithExtras.map((m) => ({ ...m, ends_at: m.ends_at as string, closed_at: m.closed_at as string | null })));
-  const heldIds = new Set(heldWithExtras.filter((m) => attended.has(m.id as string) || wasExpected(locks, m as typeof m & { id: string }, auth.user.id, auth.roles)).map((m) => m.id as string));
+  const heldWithExtras = withExtras(
+    (held ?? []).map((m) => ({ ...m, audience: m.audience as string[] | null, invitees: m.invitees as string[] | null, group_ids: m.group_ids as string[] | null })),
+    await loadGroups(auth.svc),
+  );
+  const locks = await lockedExpected(
+    auth.svc,
+    heldWithExtras.map((m) => ({ ...m, ends_at: m.ends_at as string, closed_at: m.closed_at as string | null })),
+  );
+  const heldIds = new Set(
+    heldWithExtras.filter((m) => attended.has(m.id as string) || wasExpected(locks, m as typeof m & { id: string }, auth.user.id, auth.roles)).map((m) => m.id as string),
+  );
 
   const rows = (meetings ?? [])
     .filter((m) => attended.has(m.id as string) || heldIds.has(m.id as string))
     .map((m) => {
       const a = attended.get(m.id as string);
-      return { id: m.id as string, title: m.title as string, date: m.meeting_date as string, starts_at: m.starts_at as string, location: m.location as string | null, attended: !!a, checked_in_at: (a?.checked_in_at as string | undefined) ?? null, method: (a?.method as string | undefined) ?? null, doc_url: a ? (m.doc_url as string | null) : null };
+      return {
+        id: m.id as string,
+        title: m.title as string,
+        date: m.meeting_date as string,
+        starts_at: m.starts_at as string,
+        location: m.location as string | null,
+        attended: !!a,
+        checked_in_at: (a?.checked_in_at as string | undefined) ?? null,
+        method: (a?.method as string | undefined) ?? null,
+        doc_url: a ? (m.doc_url as string | null) : null,
+      };
     })
-    .sort((x, y) => y.starts_at.localeCompare(x.starts_at));   // newest first, by the full date and time
+    .sort((x, y) => y.starts_at.localeCompare(x.starts_at)); // newest first, by the full date and time
   return NextResponse.json({
     meetings: rows,
     attended: rows.filter((r) => r.attended && heldIds.has(r.id)).length,

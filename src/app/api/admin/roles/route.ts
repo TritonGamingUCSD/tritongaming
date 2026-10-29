@@ -16,20 +16,19 @@ interface RoleInput {
 export async function PUT(request: Request) {
   // 1. Verify the caller is an admin via the user's session
   const userClient = await createClient();
-  const { data: { user } } = await strictUser(userClient);
+  const {
+    data: { user },
+  } = await strictUser(userClient);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: callerRoles } = await userClient
-    .from('user_roles')
-    .select('role, division_id')
-    .eq('user_id', user.id);
+  const { data: callerRoles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);
 
   if (!hasCapability(callerRoles ?? [], 'manage_roles')) {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
   // 2. Parse and validate the body — a full replacement of the target user's role set
-  const { userId, roles } = await request.json() as { userId: string; roles: RoleInput[] };
+  const { userId, roles } = (await request.json()) as { userId: string; roles: RoleInput[] };
   if (!userId || !Array.isArray(roles)) {
     return NextResponse.json({ error: 'Missing userId or roles' }, { status: 400 });
   }
@@ -52,9 +51,22 @@ export async function PUT(request: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
-  await notifyRoleChange(adminClient, userId, user.id, (beforeRows ?? []).map((r) => r.role as string), roles.map((r) => r.role));
+  await notifyRoleChange(
+    adminClient,
+    userId,
+    user.id,
+    (beforeRows ?? []).map((r) => r.role as string),
+    roles.map((r) => r.role),
+  );
 
   const { data: target } = await adminClient.from('profiles').select('display_name').eq('id', userId).maybeSingle();
-  await logAudit(adminClient, { actorId: user.id, action: 'update', entityType: 'roles', entityId: userId, summary: `Roles for "${target?.display_name ?? 'someone'}" set to ${roles.length ? roles.map((r) => r.role).join(', ') : 'none'}`, details: { roles } });
+  await logAudit(adminClient, {
+    actorId: user.id,
+    action: 'update',
+    entityType: 'roles',
+    entityId: userId,
+    summary: `Roles for "${target?.display_name ?? 'someone'}" set to ${roles.length ? roles.map((r) => r.role).join(', ') : 'none'}`,
+    details: { roles },
+  });
   return NextResponse.json({ ok: true });
 }

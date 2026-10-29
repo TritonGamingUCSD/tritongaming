@@ -18,14 +18,22 @@ export default function PhotoStrip({ photos, caption, tone = 'ink', placeholders
             </div>
             <span className={styles.credit}>
               Photo:{' '}
-              {p.creditUrl ? <a href={p.creditUrl} target="_blank" rel="noopener noreferrer">{p.credit}</a> : p.credit}
+              {p.creditUrl ? (
+                <a href={p.creditUrl} target="_blank" rel="noopener noreferrer">
+                  {p.credit}
+                </a>
+              ) : (
+                p.credit
+              )}
             </span>
           </li>
         ))}
         {Array.from({ length: placeholders }, (_, i) => (
           <li key={`ph-${i}`} className={`${styles.print} ${styles[`t${(photos.length + i) % 3}`]}`}>
             <span className={styles.tape} aria-hidden="true" />
-            <div className={`${styles.photo} ${styles.empty}`}><span>your photo here</span></div>
+            <div className={`${styles.photo} ${styles.empty}`}>
+              <span>your photo here</span>
+            </div>
             <span className={styles.credit}>Photo: credit goes here</span>
           </li>
         ))}

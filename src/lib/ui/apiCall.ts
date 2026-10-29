@@ -8,5 +8,7 @@ export async function call<T>(url: string, method = 'GET', body?: unknown): Prom
     const j = await r.json().catch(() => ({}));
     if (!r.ok) return { ok: false, error: j.error || 'Something went wrong.', status: r.status, body: j };
     return { ok: true, data: j as T };
-  } catch { return { ok: false, error: 'Couldn’t reach the server.', status: 0 }; }
+  } catch {
+    return { ok: false, error: 'Couldn’t reach the server.', status: 0 };
+  }
 }

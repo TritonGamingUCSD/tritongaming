@@ -5,7 +5,11 @@ import { useEffect, useRef, useState } from 'react';
 import styles from './checkinsection.module.css';
 import Select from '@/components/ui/Select';
 
-interface Event { id: string; title: string; start_date: string; }
+interface Event {
+  id: string;
+  title: string;
+  start_date: string;
+}
 
 // Officer-facing half of online self-check-in — reveals the current code
 // to relay in Discord/Zoom chat. See PointsSectionContent... actually see
@@ -24,7 +28,10 @@ export default function OnlineCheckinPanel({ events }: { events: Event[] }) {
     try {
       const res = await fetch(`/api/checkin/online/${eventId}/code`);
       const json = await res.json();
-      if (!res.ok) { setError(json.error || 'Failed to load code.'); return; }
+      if (!res.ok) {
+        setError(json.error || 'Failed to load code.');
+        return;
+      }
       setError('');
       setCode(json.code);
       setSecondsRemaining(json.secondsRemaining);
@@ -43,11 +50,16 @@ export default function OnlineCheckinPanel({ events }: { events: Event[] }) {
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
       setSecondsRemaining((s) => {
-        if (s <= 1) { loadCode(); return 0; }
+        if (s <= 1) {
+          loadCode();
+          return 0;
+        }
         return s - 1;
       });
     }, 1000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eventId]);
 
@@ -58,12 +70,15 @@ export default function OnlineCheckinPanel({ events }: { events: Event[] }) {
   return (
     <div className={styles.onlinePanel}>
       <Select className={styles.eventSelect} value={eventId} onChange={(e) => setEventId(e.target.value)}>
-        {events.map((e) => <option key={e.id} value={e.id}>{e.title}</option>)}
+        {events.map((e) => (
+          <option key={e.id} value={e.id}>
+            {e.title}
+          </option>
+        ))}
       </Select>
 
       <p className={styles.onlineHint}>
-        Post this code in Discord/Zoom chat — attendees enter it themselves under their own ticket in the portal.
-        Only works for people who already have a ticket for this event.
+        Post this code in Discord/Zoom chat — attendees enter it themselves under their own ticket in the portal. Only works for people who already have a ticket for this event.
       </p>
 
       {error && <Notice tone="error">{error}</Notice>}

@@ -11,7 +11,11 @@ export default function PageBlocks({ blocks }: { blocks: PageBlock[] }) {
       {blocks.map((b) => {
         switch (b.type) {
           case 'text':
-            return <div key={b.id} className={`${styles.text} ${styles.paper}`}><MarkdownContent>{b.markdown}</MarkdownContent></div>;
+            return (
+              <div key={b.id} className={`${styles.text} ${styles.paper}`}>
+                <MarkdownContent>{b.markdown}</MarkdownContent>
+              </div>
+            );
           case 'highlights':
             return (
               <ul key={b.id} className={styles.highlights} data-count={b.items.length}>

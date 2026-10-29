@@ -9,7 +9,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
-  { const denied = await guardSeries(auth, id); if (denied) return denied; }
+  {
+    const denied = await guardSeries(auth, id);
+    if (denied) return denied;
+  }
   const body = await request.json().catch(() => ({}));
   const patch: Record<string, unknown> = {};
   if (typeof body.active === 'boolean') patch.active = body.active;
@@ -27,11 +30,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     patch.open_to_team = aud.open_to_team;
   }
   if ('title' in body) {
-    const t = String(body.title ?? '').trim().slice(0, 60);
+    const t = String(body.title ?? '')
+      .trim()
+      .slice(0, 60);
     if (!t) return NextResponse.json({ error: 'Give the meeting a name.' }, { status: 400 });
     patch.title = t;
   }
-  if ('location' in body) patch.location = String(body.location ?? '').trim().slice(0, 80) || null;
+  if ('location' in body)
+    patch.location =
+      String(body.location ?? '')
+        .trim()
+        .slice(0, 80) || null;
   if ('ends_on' in body) {
     const e = body.ends_on ? String(body.ends_on) : null;
     if (e && (!/^\d{4}-\d{2}-\d{2}$/.test(e) || e < pacificDayKey())) return NextResponse.json({ error: 'The last day can’t be in the past.' }, { status: 400 });
@@ -44,7 +53,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if ('start' in body || 'end' in body) {
     const re = /^([01]\d|2[0-3]):[0-5]\d$/;
-    const st = String(body.start ?? ''), en = String(body.end ?? '');
+    const st = String(body.start ?? ''),
+      en = String(body.end ?? '');
     if (!re.test(st) || !re.test(en) || en <= st) return NextResponse.json({ error: 'Pick a start time and a later end time.' }, { status: 400 });
     patch.start_time = st;
     patch.end_time = en;
@@ -58,14 +68,15 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (before) {
     const old = before as SeriesRow;
     const { data: rows } = await auth.svc.from('meetings').select('*').eq('series_id', id).is('opened_at', null).gte('meeting_date', pacificDayKey());
-    const norm = (v: unknown) => (Array.isArray(v) && v.length === 0 ? null : v ?? null);
+    const norm = (v: unknown) => (Array.isArray(v) && v.length === 0 ? null : (v ?? null));
     const same = (a: unknown, b: unknown) => JSON.stringify(norm(a)) === JSON.stringify(norm(b));
     for (const r of rows ?? []) {
       const up: Record<string, unknown> = {};
       for (const k of ['title', 'location', 'doc_url', 'audience', 'invitees', 'group_ids', 'open_to_team'] as const) {
         if (k in patch && same(r[k], old[k])) up[k] = patch[k];
       }
-      const oldStart = old.start_time.slice(0, 5), oldEnd = old.end_time.slice(0, 5);
+      const oldStart = old.start_time.slice(0, 5),
+        oldEnd = old.end_time.slice(0, 5);
       const o = occurrenceTimes(r.meeting_date, oldStart, oldEnd);
       const unchangedTimes = new Date(r.starts_at).getTime() === o.starts.getTime() && new Date(r.ends_at).getTime() === o.ends.getTime();
       const untouched = (['title', 'location', 'doc_url', 'audience', 'invitees', 'group_ids', 'open_to_team'] as const).every((k) => same(r[k], old[k]));
@@ -75,9 +86,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         if (unchangedTimes && untouched && !r.question) await auth.svc.from('meetings').delete().eq('id', r.id);
         continue;
       }
-      if (('start_time' in patch) && unchangedTimes) {
+      if ('start_time' in patch && unchangedTimes) {
         const n = occurrenceTimes(r.meeting_date, String(patch.start_time), String(patch.end_time));
-        up.starts_at = n.starts.toISOString(); up.ends_at = n.ends.toISOString();
+        up.starts_at = n.starts.toISOString();
+        up.ends_at = n.ends.toISOString();
       }
       if (Object.keys(up).length) await auth.svc.from('meetings').update(up).eq('id', r.id);
     }
@@ -85,10 +97,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (before && 'audience' in patch) {
     const b = before as SeriesRow;
     const day = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][b.weekday];
-    await notifyMeetingInvites(auth.svc, { title: data.title, when: `Every ${day}, ${b.start_time.slice(0, 5)}–${b.end_time.slice(0, 5)}${b.location ? ` · ${b.location}` : ''}` },
-      { audience: patch.audience as string[] | null, invitees: patch.invitees as string[] | null, group_ids: patch.group_ids as string[] | null }, { before: b, hostId: auth.user.id });
+    await notifyMeetingInvites(
+      auth.svc,
+      { title: data.title, when: `Every ${day}, ${b.start_time.slice(0, 5)}–${b.end_time.slice(0, 5)}${b.location ? ` · ${b.location}` : ''}` },
+      { audience: patch.audience as string[] | null, invitees: patch.invitees as string[] | null, group_ids: patch.group_ids as string[] | null },
+      { before: b, hostId: auth.user.id },
+    );
   }
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'meeting series', entityId: id, summary: `Updated repeating meeting "${data.title}"`, details: patch });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'update',
+    entityType: 'meeting series',
+    entityId: id,
+    summary: `Updated repeating meeting "${data.title}"`,
+    details: patch,
+  });
   return NextResponse.json({ ok: true });
 }
 
@@ -96,7 +119,10 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
-  { const denied = await guardSeries(auth, id); if (denied) return denied; }
+  {
+    const denied = await guardSeries(auth, id);
+    if (denied) return denied;
+  }
   const { data } = await auth.svc.from('meeting_series').select('title').eq('id', id).maybeSingle();
   const { error } = await auth.svc.from('meeting_series').delete().eq('id', id);
   if (error) return NextResponse.json({ error: 'Failed to delete.' }, { status: 500 });

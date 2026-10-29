@@ -14,7 +14,11 @@ export default function SectionHeader({ title, sub, actions, flush, foldOnPhone 
       <div className={styles.text}>
         <h1 className={styles.title}>{title}</h1>
         {sub && <p className={styles.sub}>{sub}</p>}
-        {sub && foldOnPhone && <div className={styles.phoneFold}><PhoneFold label={foldOnPhone}>{sub}</PhoneFold></div>}
+        {sub && foldOnPhone && (
+          <div className={styles.phoneFold}>
+            <PhoneFold label={foldOnPhone}>{sub}</PhoneFold>
+          </div>
+        )}
       </div>
       {actions && <div className={styles.actions}>{actions}</div>}
     </div>

@@ -37,20 +37,26 @@ const StyledQRCode = forwardRef<StyledQRCodeHandle, Props>(function StyledQRCode
     }
   }, [options]);
 
-  useImperativeHandle(ref, () => ({
-    download: async (name: string) => {
-      if (!qrRef.current) return;
-      await qrRef.current.download({ name, extension: options.downloadFormat });
-    },
-    copy: async () => {
-      try {
-        const raw = await qrRef.current?.getRawData('png');
-        if (!raw || typeof ClipboardItem === 'undefined') return false;
-        await navigator.clipboard.write([new ClipboardItem({ 'image/png': raw as Blob })]);
-        return true;
-      } catch { return false; }
-    },
-  }), [options.downloadFormat]);
+  useImperativeHandle(
+    ref,
+    () => ({
+      download: async (name: string) => {
+        if (!qrRef.current) return;
+        await qrRef.current.download({ name, extension: options.downloadFormat });
+      },
+      copy: async () => {
+        try {
+          const raw = await qrRef.current?.getRawData('png');
+          if (!raw || typeof ClipboardItem === 'undefined') return false;
+          await navigator.clipboard.write([new ClipboardItem({ 'image/png': raw as Blob })]);
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    }),
+    [options.downloadFormat],
+  );
 
   return <div ref={containerRef} className={className} />;
 });

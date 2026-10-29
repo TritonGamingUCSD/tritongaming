@@ -23,10 +23,24 @@ export const maxDuration = 300;
 async function recordStep(svc: ReturnType<typeof createServiceClient>, name: string, r: unknown) {
   const x = (r ?? {}) as Record<string, number>;
   const n = (k: string) => Number(x[k]) || 0;
-  if (name === 'grants' && n('removed')) await logSystem(svc, 'role grant', `Removed ${n('removed')} unused role grant${n('removed') === 1 ? '' : 's'} that waited 90 days for a first sign-in`, x);
-  if (name === 'quarters' && (n('added') || n('removed'))) await logSystem(svc, 'quarter', `New quarter: marked ${n('added')} officer${n('added') === 1 ? '' : 's'} inactive and ${n('removed')} active again`, x);
-  if (name === 'teams' && (n('archived') || n('moved'))) await logSystem(svc, 'team year', `Team roster: archived ${n('archived')} finished year${n('archived') === 1 ? '' : 's'}, moved ${n('moved')} graduate${n('moved') === 1 ? '' : 's'} to Alumni`, x);
-  if (name === 'storage' && (n('deletedFiles') || n('compressedFiles'))) await logSystem(svc, 'storage', `Weekly tidy-up: removed ${n('deletedFiles')} unused file${n('deletedFiles') === 1 ? '' : 's'}, re-saved ${n('compressedFiles')} picture${n('compressedFiles') === 1 ? '' : 's'} smaller`, x);
+  if (name === 'grants' && n('removed'))
+    await logSystem(svc, 'role grant', `Removed ${n('removed')} unused role grant${n('removed') === 1 ? '' : 's'} that waited 90 days for a first sign-in`, x);
+  if (name === 'quarters' && (n('added') || n('removed')))
+    await logSystem(svc, 'quarter', `New quarter: marked ${n('added')} officer${n('added') === 1 ? '' : 's'} inactive and ${n('removed')} active again`, x);
+  if (name === 'teams' && (n('archived') || n('moved')))
+    await logSystem(
+      svc,
+      'team year',
+      `Team roster: archived ${n('archived')} finished year${n('archived') === 1 ? '' : 's'}, moved ${n('moved')} graduate${n('moved') === 1 ? '' : 's'} to Alumni`,
+      x,
+    );
+  if (name === 'storage' && (n('deletedFiles') || n('compressedFiles')))
+    await logSystem(
+      svc,
+      'storage',
+      `Weekly tidy-up: removed ${n('deletedFiles')} unused file${n('deletedFiles') === 1 ? '' : 's'}, re-saved ${n('compressedFiles')} picture${n('compressedFiles') === 1 ? '' : 's'} smaller`,
+      x,
+    );
 }
 
 const SAFE_ANY_TIME = ['quarters', 'teams'];
@@ -41,7 +55,13 @@ export async function GET(request: Request) {
   const steps: [string, () => Promise<unknown>][] = [
     ['notifications', () => cleanupNotifications(svc)],
     ['grants', () => cleanupExpiredGrants(svc)],
-    ['quarters', async () => { const r = await syncInactive(svc); return { added: r.added.length, removed: r.removed.length, quarter: r.quarter }; }],
+    [
+      'quarters',
+      async () => {
+        const r = await syncInactive(svc);
+        return { added: r.added.length, removed: r.removed.length, quarter: r.quarter };
+      },
+    ],
     ['teams', () => runTeamSync(svc)],
     ['help', () => remindStaleHelp(svc)],
     ['signups', () => digestNewMembers(svc)],
@@ -53,7 +73,14 @@ export async function GET(request: Request) {
   const out: Record<string, unknown> = {};
   for (const [name, run] of steps) {
     if (only && only !== name) continue;
-    try { out[name] = await run(); await recordStep(svc, name, out[name]); } catch (e) { console.error(`[cron] ${name} failed:`, e); out[name] = { error: 'failed' }; await alertJobFailed(svc, 'maintenance', name).catch(() => {}); }
+    try {
+      out[name] = await run();
+      await recordStep(svc, name, out[name]);
+    } catch (e) {
+      console.error(`[cron] ${name} failed:`, e);
+      out[name] = { error: 'failed' };
+      await alertJobFailed(svc, 'maintenance', name).catch(() => {});
+    }
   }
   return NextResponse.json(out);
 }

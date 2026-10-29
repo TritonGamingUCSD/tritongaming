@@ -44,7 +44,7 @@ export function qrToken(secret: string, windowIndex: number): string {
 export const SCAN_GRACE_SECONDS = 5;
 export function scanWindows(): number[] {
   const w = currentWindow();
-  return Date.now() / 1000 % ROTATION_SECONDS < SCAN_GRACE_SECONDS ? [w, w - 1] : [w];
+  return (Date.now() / 1000) % ROTATION_SECONDS < SCAN_GRACE_SECONDS ? [w, w - 1] : [w];
 }
 
 export function secondsUntilNextWindow(): number {

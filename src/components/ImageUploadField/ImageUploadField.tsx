@@ -82,15 +82,29 @@ export default function ImageUploadField({
   const displaySrc = value || fallbackPreview;
 
   return (
-    <div className={`${styles.field} ${compact ? styles.compact : ''}`}> 
+    <div className={`${styles.field} ${compact ? styles.compact : ''}`}>
       {!compact && <span className={styles.label}>{label}</span>}
 
       {displaySrc ? (
         <div className={styles.wrap}>
           {/* The picture itself is the replace button; the small x in its corner removes it. */}
-          <button type="button" className={`${styles.preview} ${shape === 'circle' ? styles.previewRound : ''}`} onClick={() => setPicking(true)} disabled={uploading} aria-label={`Replace ${label.toLowerCase()}`}>
+          <button
+            type="button"
+            className={`${styles.preview} ${shape === 'circle' ? styles.previewRound : ''}`}
+            onClick={() => setPicking(true)}
+            disabled={uploading}
+            aria-label={`Replace ${label.toLowerCase()}`}
+          >
             <Image src={displaySrc} alt="" width={width} height={height} unoptimized referrerPolicy="no-referrer" className={previewClass} />
-            <span className={styles.overlay} aria-hidden="true">{uploading ? 'Uploading…' : <><Camera size={16} /> Replace</>}</span>
+            <span className={styles.overlay} aria-hidden="true">
+              {uploading ? (
+                'Uploading…'
+              ) : (
+                <>
+                  <Camera size={16} /> Replace
+                </>
+              )}
+            </span>
           </button>
           {value && (
             <button type="button" className={styles.removeChip} onClick={() => onChange('')} disabled={uploading} aria-label={`Remove ${label.toLowerCase()}`} title="Remove">
@@ -104,11 +118,26 @@ export default function ImageUploadField({
         </button>
       )}
       {picking && (
-        <PictureDialog title={`Choose ${label.toLowerCase()}`} current={displaySrc || undefined} aspect={shape === 'circle' || shape === 'square' ? 1 : undefined} round={shape === 'circle'} accept={ALLOWED_IMAGE_TYPES.join(',')} hint="PNG, JPG, WebP or GIF, under 8 MB"
-          onUse={(f) => { void handleFile(f[0]); }} onRemove={value ? () => onChange('') : undefined} onClose={() => setPicking(false)} />
+        <PictureDialog
+          title={`Choose ${label.toLowerCase()}`}
+          current={displaySrc || undefined}
+          aspect={shape === 'circle' || shape === 'square' ? 1 : undefined}
+          round={shape === 'circle'}
+          accept={ALLOWED_IMAGE_TYPES.join(',')}
+          hint="PNG, JPG, WebP or GIF, under 8 MB"
+          onUse={(f) => {
+            void handleFile(f[0]);
+          }}
+          onRemove={value ? () => onChange('') : undefined}
+          onClose={() => setPicking(false)}
+        />
       )}
 
-      {error && <span className={styles.hint} style={{ color: '#fca5a5' }}>{error}</span>}
+      {error && (
+        <span className={styles.hint} style={{ color: '#fca5a5' }}>
+          {error}
+        </span>
+      )}
       {hint && !compact && <span className={styles.hint}>{hint}</span>}
     </div>
   );

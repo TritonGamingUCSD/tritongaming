@@ -10,12 +10,12 @@ export async function logAudit(
   service: SupabaseClient,
   entry: {
     actorId: string | null;
-    action: string;            // e.g. "delete", "merge", "reverse"
-    entityType: string;        // e.g. "account", "points", "check-in"
+    action: string; // e.g. "delete", "merge", "reverse"
+    entityType: string; // e.g. "account", "points", "check-in"
     entityId?: string | null;
     summary: string;
     details?: Record<string, unknown> | null;
-  }
+  },
 ): Promise<void> {
   try {
     await service.rpc('log_audit', {
@@ -37,12 +37,20 @@ export async function logAudit(
     const who = (actor?.display_name as string | undefined) ?? null;
     if (who && /^zz/i.test(who)) return;
     const ids = (await adminIds(service)).filter((id) => id !== entry.actorId);
-    await pushOnly(service, ids.map((user_id) => ({ user_id, type: 'audit_alert', title: `Audit alert: ${entry.action} ${entry.entityType}`, body: `${entry.summary}${who ? ` — by ${who}` : ''}`, href: '/portal?section=admin&tab=audit' })));
+    await pushOnly(
+      service,
+      ids.map((user_id) => ({
+        user_id,
+        type: 'audit_alert',
+        title: `Audit alert: ${entry.action} ${entry.entityType}`,
+        body: `${entry.summary}${who ? ` — by ${who}` : ''}`,
+        href: '/portal?section=admin&tab=audit',
+      })),
+    );
   } catch (err) {
     console.error('[audit] failed to push alert:', err);
   }
 }
-
 
 // What the scheduled jobs did on their own, so the log answers "who changed this?" with "the daily job" and not a blank. One line per step, and only
 // when it actually changed something (a quiet day writes nothing).

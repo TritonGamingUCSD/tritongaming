@@ -18,7 +18,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void, group?: string) {
   const [drag, setDrag] = useState<{ from: number; at: number } | null>(null);
   const dragIndex = drag ? drag.at : null;
-  const overIndex: number | null = null;   // no drop line any more: the rows themselves show where it will land
+  const overIndex: number | null = null; // no drop line any more: the rows themselves show where it will land
   const view = (() => {
     if (!drag || drag.from === drag.at || drag.from >= items.length || drag.at >= items.length) return items;
     const next = [...items];
@@ -66,7 +66,10 @@ export function useDragReorder<T>(items: T[], onReorder: (next: T[]) => void, gr
           const hit = document.elementFromPoint(ev.clientX, ev.clientY)?.closest('[data-drag-index]');
           const el = hit && (group === undefined || hit.getAttribute('data-drag-group') === group) ? hit : null;
           const idx = el ? Number(el.getAttribute('data-drag-index')) : null;
-          if (idx !== null && !Number.isNaN(idx) && idx !== over) { over = idx; setDrag({ from: index, at: idx }); }
+          if (idx !== null && !Number.isNaN(idx) && idx !== over) {
+            over = idx;
+            setDrag({ from: index, at: idx });
+          }
           // Scroll the page when dragging near the top/bottom edge.
           if (ev.clientY < 70) window.scrollBy(0, -14);
           else if (ev.clientY > window.innerHeight - 70) window.scrollBy(0, 14);

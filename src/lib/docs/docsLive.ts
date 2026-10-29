@@ -13,5 +13,9 @@ export async function notifyDocs() {
     if (!sent.success) console.warn('docs broadcast was not accepted', sent);
     await svc.removeChannel(channel);
   };
-  try { await Promise.race([send(), new Promise((resolve) => setTimeout(resolve, 1500))]); } catch (e) { console.warn('docs broadcast failed', e); }
+  try {
+    await Promise.race([send(), new Promise((resolve) => setTimeout(resolve, 1500))]);
+  } catch (e) {
+    console.warn('docs broadcast failed', e);
+  }
 }

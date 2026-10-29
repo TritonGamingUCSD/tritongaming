@@ -3,7 +3,14 @@ import { authorizeTrivia, broadcast, displayName, loadGame, publicState } from '
 import { cleanCode } from '@/lib/trivia/game';
 
 // A guest's nickname: trimmed, spaces squeezed, no control characters, at most 20 characters.
-const cleanNick = (v: unknown) => (typeof v === 'string' ? v.replace(/[\u0000-\u001f\u007f]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 20) : '');
+const cleanNick = (v: unknown) =>
+  typeof v === 'string'
+    ? v
+        .replace(/[\u0000-\u001f\u007f]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 20)
+    : '';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,17 +35,26 @@ export async function POST(request: Request) {
       // The same nickname twice in a game gets a number, so players can tell each other apart.
       const { data: taken } = await auth.svc.from('trivia_players').select('name').eq('game_id', g.id).limit(1000);
       const used = new Set((taken ?? []).map((p) => (p.name as string).toLowerCase()));
-      let n = 1, tryName = name;
-      while (used.has(tryName.toLowerCase())) { n++; tryName = `${name.slice(0, 17)} ${n}`; }
+      let n = 1,
+        tryName = name;
+      while (used.has(tryName.toLowerCase())) {
+        n++;
+        tryName = `${name.slice(0, 17)} ${n}`;
+      }
       name = tryName;
     } else name = await displayName(auth.svc, auth.user.id);
-    const barred = !auth.guest && !!g.trivia_quizzes?.block_winners && ((await auth.svc.from('trivia_winners').select('user_id', { count: 'exact', head: true }).eq('quiz_id', g.quiz_id).eq('user_id', auth.user.id)).count ?? 0) > 0;
+    const barred =
+      !auth.guest &&
+      !!g.trivia_quizzes?.block_winners &&
+      ((await auth.svc.from('trivia_winners').select('user_id', { count: 'exact', head: true }).eq('quiz_id', g.quiz_id).eq('user_id', auth.user.id)).count ?? 0) > 0;
     const status = barred ? 'blocked' : 'in';
-    const { error } = await auth.svc.from('trivia_players').upsert({ game_id: g.id, user_id: auth.user.id, name, status }, { onConflict: 'game_id,user_id', ignoreDuplicates: true });
+    const { error } = await auth.svc
+      .from('trivia_players')
+      .upsert({ game_id: g.id, user_id: auth.user.id, name, status }, { onConflict: 'game_id,user_id', ignoreDuplicates: true });
     if (error) return NextResponse.json({ error: 'Couldn’t join. Try again.' }, { status: 500 });
     me = { status, score: 0 };
     const state = await publicState(auth.svc, g);
-    await broadcast(g.id, 'players', state, true);   // only the host's screen follows who joins
+    await broadcast(g.id, 'players', state, true); // only the host's screen follows who joins
     return NextResponse.json({ state, me });
   }
   return NextResponse.json({ state: await publicState(auth.svc, g), me });

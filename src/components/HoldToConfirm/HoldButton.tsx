@@ -8,7 +8,14 @@ import styles from './HoldToConfirm.module.css';
 // confirmation or an easy-to-mis-tap OK button. Works with mouse, touch and
 // keyboard (hold Space/Enter).
 export default function HoldButton({
-  label, holdingLabel = 'Keep holding…', busyLabel = 'Working…', onConfirm, disabled = false, busy = false, durationMs = 1500, className = '',
+  label,
+  holdingLabel = 'Keep holding…',
+  busyLabel = 'Working…',
+  onConfirm,
+  disabled = false,
+  busy = false,
+  durationMs = 1500,
+  className = '',
 }: {
   label: string;
   holdingLabel?: string;
@@ -24,7 +31,9 @@ export default function HoldButton({
   const startedAt = useRef<number | null>(null);
   const fired = useRef(false);
   const onConfirmRef = useRef(onConfirm);
-  useEffect(() => { onConfirmRef.current = onConfirm; }, [onConfirm]);
+  useEffect(() => {
+    onConfirmRef.current = onConfirm;
+  }, [onConfirm]);
 
   function stop() {
     if (raf.current) cancelAnimationFrame(raf.current);
@@ -53,11 +62,19 @@ export default function HoldButton({
     raf.current = requestAnimationFrame(tick);
   }
 
-  useEffect(() => () => { if (raf.current) cancelAnimationFrame(raf.current); }, []);
+  useEffect(
+    () => () => {
+      if (raf.current) cancelAnimationFrame(raf.current);
+    },
+    [],
+  );
 
   // A failed action leaves the dialog open — let them hold again.
   useEffect(() => {
-    if (!busy) { fired.current = false; setProgress(0); }
+    if (!busy) {
+      fired.current = false;
+      setProgress(0);
+    }
   }, [busy]);
 
   return (
@@ -70,8 +87,15 @@ export default function HoldButton({
       onPointerLeave={stop}
       onPointerCancel={stop}
       onContextMenu={(e) => e.preventDefault()}
-      onKeyDown={(e) => { if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) { e.preventDefault(); start(); } }}
-      onKeyUp={(e) => { if (e.key === ' ' || e.key === 'Enter') stop(); }}
+      onKeyDown={(e) => {
+        if ((e.key === ' ' || e.key === 'Enter') && !e.repeat) {
+          e.preventDefault();
+          start();
+        }
+      }}
+      onKeyUp={(e) => {
+        if (e.key === ' ' || e.key === 'Enter') stop();
+      }}
       onBlur={stop}
     >
       <span className={styles.holdFill} style={{ transform: `scaleX(${progress})` }} />

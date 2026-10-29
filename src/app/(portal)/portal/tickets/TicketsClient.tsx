@@ -79,7 +79,10 @@ const STATUS_ICON: Record<string, ReactNode> = {
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  active: 'Active', used: 'Checked In', cancelled: 'Cancelled', expired: 'Expired',
+  active: 'Active',
+  used: 'Checked In',
+  cancelled: 'Cancelled',
+  expired: 'Expired',
 };
 
 export default function TicketsClient({ tickets: initialTickets, upcomingEvents, isUcsd, canEarnPoints }: Props) {
@@ -127,7 +130,9 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
         if (cachedMinutesLeft(t.id) >= 45) return;
         fetch(`/api/tickets/${t.id}/qr?ahead=1`)
           .then((r) => (r.ok ? r.json() : null))
-          .then((data) => { if (data) saveTicketCodes(t.id, data); })
+          .then((data) => {
+            if (data) saveTicketCodes(t.id, data);
+          })
           .catch(() => {});
       });
     }
@@ -173,7 +178,10 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
     if (checkoutResult !== 'success') return;
     const t1 = setTimeout(() => router.refresh(), 2000);
     const t2 = setTimeout(() => router.refresh(), 6000);
-    return () => { clearTimeout(t1); clearTimeout(t2); };
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
   }, [checkoutResult, router]);
 
   async function handleGetTicket(eventId: string) {
@@ -213,7 +221,18 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           status: data.ticket.status,
           checked_in_at: data.ticket.checked_in_at,
           created_at: data.ticket.created_at,
-          event: event ? { id: event.id, title: event.title, start_date: event.start_date, end_date: null, location: event.location, flyer_url: null, points_value: event.points_value, is_online: event.is_online ?? false } : null,
+          event: event
+            ? {
+                id: event.id,
+                title: event.title,
+                start_date: event.start_date,
+                end_date: null,
+                location: event.location,
+                flyer_url: null,
+                points_value: event.points_value,
+                is_online: event.is_online ?? false,
+              }
+            : null,
         };
         setTickets((prev) => [newTicket, ...prev]);
         // On the event day (or while it runs) they will want the code right now. Before that, just confirm they have the ticket.
@@ -254,7 +273,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   // the Active list.
   const isLive = (t: TicketData) => (t.status === 'active' || (t.status === 'used' && isMultiDay(t))) && !!t.event && isCheckinWindowOpen(t.event);
   const activeTickets = tickets.filter(isLive);
-  const pastTickets   = tickets.filter((t) => !isLive(t));
+  const pastTickets = tickets.filter((t) => !isLive(t));
 
   // Tickets come back sorted by when they were registered, not by event date —
   // pick whichever active ticket's event is soonest, not just the first one
@@ -263,8 +282,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   // on start_date >= now made the featured ticket vanish the moment the
   // event began — right when people most need it to scan in. An event
   // already underway sorts ahead of later ones.
-  const nextActiveTicket = activeTickets
-    .sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
+  const nextActiveTicket = activeTickets.sort((a, b) => new Date(a.event!.start_date).getTime() - new Date(b.event!.start_date).getTime())[0];
 
   // Don't repeat the ticket already featured in the hero card above.
   const otherActiveTickets = activeTickets.filter((t) => t.id !== nextActiveTicket?.id);
@@ -277,16 +295,18 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
     <div className={styles.page}>
       <SectionHeader title="My Tickets" flush sub="Your event tickets and what you’ve been to." />
 
-      {checkoutResult === 'success' && (
-        <Notice tone="success">Payment received — your ticket will appear here in a few seconds.</Notice>
-      )}
-      {checkoutResult === 'cancelled' && (
-        <Notice tone="warning">Checkout was cancelled — no charge was made.</Notice>
-      )}
+      {checkoutResult === 'success' && <Notice tone="success">Payment received — your ticket will appear here in a few seconds.</Notice>}
+      {checkoutResult === 'cancelled' && <Notice tone="warning">Checkout was cancelled — no charge was made.</Notice>}
       {claimed && (
         <Notice tone="success">
-          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your TGcode will be right here in My Tickets when the day comes.
-          {' '}<button type="button" onClick={() => setClaimed(null)} style={{ background: 'none', border: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', font: 'inherit', padding: 0 }}>Dismiss</button>
+          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your TGcode will be right here in My Tickets when the day comes.{' '}
+          <button
+            type="button"
+            onClick={() => setClaimed(null)}
+            style={{ background: 'none', border: 0, color: 'inherit', textDecoration: 'underline', cursor: 'pointer', font: 'inherit', padding: 0 }}
+          >
+            Dismiss
+          </button>
         </Notice>
       )}
       {error && <Notice tone="error">{error}</Notice>}
@@ -295,7 +315,6 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       {nextActiveTicket && (
         <section className={styles.heroSection}>
           <div className={styles.heroCard}>
-            
             <div className={styles.heroCardInner}>
               <div className={styles.heroMeta}>
                 <span className={styles.heroLabel}>NEXT EVENT</span>
@@ -305,16 +324,22 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                     {formatEventDateRange(nextActiveTicket.event.start_date, nextActiveTicket.event.end_date, { weekday: true })}
                     {' · '}
                     {new Date(nextActiveTicket.event.start_date).toLocaleTimeString('en-US', {
-                      timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit',
+                      timeZone: PACIFIC_TZ,
+                      hour: 'numeric',
+                      minute: '2-digit',
                     })}
                   </p>
                 )}
                 {nextActiveTicket.event?.location && (
-                  <p className={styles.heroLocation}><MapPin size={13} strokeWidth={1.5} aria-hidden="true" /> {nextActiveTicket.event.location}</p>
+                  <p className={styles.heroLocation}>
+                    <MapPin size={13} strokeWidth={1.5} aria-hidden="true" /> {nextActiveTicket.event.location}
+                  </p>
                 )}
                 {nextActiveTicket.event && isMultiDay(nextActiveTicket) && <CheckinHours windows={nextActiveTicket.event.checkin_windows} />}
                 {canEarnPoints && !!nextActiveTicket.event?.points_value && (
-                  <span className={styles.heroPointsBadge}><Award size={12} strokeWidth={1.75} aria-hidden="true" /> +{nextActiveTicket.event.points_value} pts on check-in</span>
+                  <span className={styles.heroPointsBadge}>
+                    <Award size={12} strokeWidth={1.75} aria-hidden="true" /> +{nextActiveTicket.event.points_value} pts on check-in
+                  </span>
                 )}
               </div>
               {nextActiveTicket.event?.is_online ? (
@@ -326,11 +351,10 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   onFormComplete={handleFormCompleted}
                 />
               ) : (
-                <button
-                  className={styles.showQrBtn}
-                  onClick={() => setQrTicket(nextActiveTicket)}
-                >
-                  <span className={styles.showQrIcon}><TGcodeIcon size={18} /></span>
+                <button className={styles.showQrBtn} onClick={() => setQrTicket(nextActiveTicket)}>
+                  <span className={styles.showQrIcon}>
+                    <TGcodeIcon size={18} />
+                  </span>
                   Show TGcode
                 </button>
               )}
@@ -344,9 +368,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           the hero above, so the same ticket never appears twice on screen. */}
       {otherActiveTickets.length > 0 && (
         <section>
-          <h2 className={styles.sectionTitle}>
-            {nextActiveTicket ? 'Other Active Tickets' : 'Active Tickets'}
-          </h2>
+          <h2 className={styles.sectionTitle}>{nextActiveTicket ? 'Other Active Tickets' : 'Active Tickets'}</h2>
           <div className={styles.ticketList}>
             {otherActiveTickets.map((ticket) => (
               <TicketRow
@@ -369,49 +391,52 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           <div className={styles.eventList}>
             {unregisteredEvents.map((event, i) => (
               <Fragment key={event.id}>
-              {startsWeekGroup(unregisteredEvents.map((x) => pacificKey(x.start_date)), i) && <div className={styles.weekBand}><WeekHead as="div" date={pacificKey(event.start_date)} /></div>}
-              <div className={styles.eventRow}>
-                <div className={styles.eventDateBlock}>
-                  <span className={styles.eventMon}>
-                    {new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short' })}
-                  </span>
-                  <span className={styles.eventDay}>
-                    {/* Date.getDate() reads the day-of-month in the runtime's
+                {startsWeekGroup(
+                  unregisteredEvents.map((x) => pacificKey(x.start_date)),
+                  i,
+                ) && (
+                  <div className={styles.weekBand}>
+                    <WeekHead as="div" date={pacificKey(event.start_date)} />
+                  </div>
+                )}
+                <div className={styles.eventRow}>
+                  <div className={styles.eventDateBlock}>
+                    <span className={styles.eventMon}>{new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short' })}</span>
+                    <span className={styles.eventDay}>
+                      {/* Date.getDate() reads the day-of-month in the runtime's
                         local timezone — for a viewer far from Pacific time,
                         near a midnight boundary this can be a different day
                         than what the month label above (correctly Pacific)
                         shows. Format it instead of reading it raw. */}
-                    {new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, day: 'numeric' })}
-                  </span>
-                </div>
-                <div className={styles.eventBody}>
-                  <div className={styles.eventTitle}>{event.title}</div>
-                  {event.location && (
-                    <div className={styles.eventLoc}><MapPin size={12} strokeWidth={1.5} aria-hidden="true" /> {event.location}</div>
+                      {new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, day: 'numeric' })}
+                    </span>
+                  </div>
+                  <div className={styles.eventBody}>
+                    <div className={styles.eventTitle}>{event.title}</div>
+                    {event.location && (
+                      <div className={styles.eventLoc}>
+                        <MapPin size={12} strokeWidth={1.5} aria-hidden="true" /> {event.location}
+                      </div>
+                    )}
+                    {canEarnPoints && !!event.points_value && (
+                      <div className={styles.eventPointsBadge}>
+                        <Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{event.points_value} pts on check-in
+                      </div>
+                    )}
+                  </div>
+                  {event.audience === 'ucsd_only' && !isUcsd ? (
+                    <span className={styles.ucsdOnlyBox}>
+                      <span className={styles.registerBtnDisabled}>UCSD students only</span>
+                      <button type="button" className={styles.switchBtn} onClick={switchToUcsd}>
+                        Use my UCSD account
+                      </button>
+                    </span>
+                  ) : (
+                    <button className={styles.registerBtn} disabled={purchasing === event.id} onClick={() => handleGetTicket(event.id)}>
+                      {purchasing === event.id ? 'Please wait…' : isUcsd || event.ticket_price <= 0 ? 'Get Ticket — Free' : `Buy Ticket — $${event.ticket_price}`}
+                    </button>
                   )}
-                  {canEarnPoints && !!event.points_value && (
-                    <div className={styles.eventPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{event.points_value} pts on check-in</div>
-                  )}
                 </div>
-                {event.audience === 'ucsd_only' && !isUcsd ? (
-                  <span className={styles.ucsdOnlyBox}>
-                    <span className={styles.registerBtnDisabled}>UCSD students only</span>
-                    <button type="button" className={styles.switchBtn} onClick={switchToUcsd}>Use my UCSD account</button>
-                  </span>
-                ) : (
-                  <button
-                    className={styles.registerBtn}
-                    disabled={purchasing === event.id}
-                    onClick={() => handleGetTicket(event.id)}
-                  >
-                    {purchasing === event.id
-                      ? 'Please wait…'
-                      : isUcsd || event.ticket_price <= 0
-                      ? 'Get Ticket — Free'
-                      : `Buy Ticket — $${event.ticket_price}`}
-                  </button>
-                )}
-              </div>
               </Fragment>
             ))}
           </div>
@@ -421,10 +446,14 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       {/* Empty state */}
       {tickets.length === 0 && unregisteredEvents.length === 0 && (
         <div className={styles.empty}>
-          <span className={styles.emptyIcon}><Ticket size={40} strokeWidth={1.25} aria-hidden="true" /></span>
+          <span className={styles.emptyIcon}>
+            <Ticket size={40} strokeWidth={1.25} aria-hidden="true" />
+          </span>
           <p className={styles.emptyText}>No tickets yet</p>
           <p className={styles.emptyHint}>Register for events to get your tickets here.</p>
-          <Link href="/events" className={styles.browseLink}>Browse Events →</Link>
+          <Link href="/events" className={styles.browseLink}>
+            Browse Events →
+          </Link>
         </div>
       )}
 
@@ -458,7 +487,10 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
 }
 
 // Multi-day events let a ticket be scanned once per day, so "used" doesn't mean "done" for them.
-const hoursLabel = (hhmm: string) => { const [h, m] = hhmm.split(':').map(Number); return `${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'AM' : 'PM'}`; };
+const hoursLabel = (hhmm: string) => {
+  const [h, m] = hhmm.split(':').map(Number);
+  return `${h % 12 || 12}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'AM' : 'PM'}`;
+};
 
 // Each day's check-in hours for a multi-day event (only days the organizers set hours for); today's row is highlighted.
 function CheckinHours({ windows }: { windows?: { day: string; start: string; end: string }[] | null }) {
@@ -466,12 +498,17 @@ function CheckinHours({ windows }: { windows?: { day: string; start: string; end
   const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: PACIFIC_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
   return (
     <ul className={styles.hoursList} aria-label="Check-in hours">
-      {windows.slice().sort((a, b) => a.day.localeCompare(b.day)).map((w) => (
-        <li key={w.day} className={w.day === todayKey ? styles.hoursToday : ''}>
-          <span>{formatPacificDate(w.day, { weekday: true })}</span>
-          <span>{hoursLabel(w.start)} – {hoursLabel(w.end)}</span>
-        </li>
-      ))}
+      {windows
+        .slice()
+        .sort((a, b) => a.day.localeCompare(b.day))
+        .map((w) => (
+          <li key={w.day} className={w.day === todayKey ? styles.hoursToday : ''}>
+            <span>{formatPacificDate(w.day, { weekday: true })}</span>
+            <span>
+              {hoursLabel(w.start)} – {hoursLabel(w.end)}
+            </span>
+          </li>
+        ))}
     </ul>
   );
 }
@@ -544,12 +581,18 @@ function TicketRow({
         {ev?.start_date && (
           <div className={styles.ticketDate}>
             {new Date(ev.start_date).toLocaleDateString('en-US', {
-              timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric',
+              timeZone: PACIFIC_TZ,
+              weekday: 'short',
+              month: 'short',
+              day: 'numeric',
             })}
           </div>
         )}
         {dayProgress && (
-          <div className={styles.dayLine}>Day {dayProgress.day} of {dayProgress.total}{ticket.checkedInToday ? ' · checked in today' : ' · scan in today'}</div>
+          <div className={styles.dayLine}>
+            Day {dayProgress.day} of {dayProgress.total}
+            {ticket.checkedInToday ? ' · checked in today' : ' · scan in today'}
+          </div>
         )}
         {multiDay && <CheckinHours windows={ev?.checkin_windows} />}
         {ticket.checked_in_at && (
@@ -572,11 +615,16 @@ function TicketRow({
             url={ticket.checkinFormUrl}
             opened={!!formCompletedAt}
             compact
-            onOpened={() => { setFormCompletedAt(new Date().toISOString()); onFormComplete?.(ticket.id); }}
+            onOpened={() => {
+              setFormCompletedAt(new Date().toISOString());
+              onFormComplete?.(ticket.id);
+            }}
           />
         )}
         {canEarnPoints && isActionable && !!ev?.points_value && (
-          <div className={styles.ticketPointsBadge}><Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{ev.points_value} pts on check-in</div>
+          <div className={styles.ticketPointsBadge}>
+            <Award size={11} strokeWidth={1.75} aria-hidden="true" /> +{ev.points_value} pts on check-in
+          </div>
         )}
       </div>
       <div className={styles.ticketRight}>
@@ -588,13 +636,13 @@ function TicketRow({
               <TGcodeIcon size={14} /> View TGcode
             </button>
           ) : (
-            <span className={`${styles.statusBadge} ${styles[`status_${displayStatus}`]}`}>
-              {STATUS_LABEL[displayStatus]}
-            </span>
+            <span className={`${styles.statusBadge} ${styles[`status_${displayStatus}`]}`}>{STATUS_LABEL[displayStatus]}</span>
           )}
         </div>
         {ticket.status === 'used' && eventHasEnded && ev?.id && (
-          <Link href={`/portal/recap/${ev.id}`} className={styles.recapLink}>Photos &amp; feedback →</Link>
+          <Link href={`/portal/recap/${ev.id}`} className={styles.recapLink}>
+            Photos &amp; feedback →
+          </Link>
         )}
       </div>
     </div>

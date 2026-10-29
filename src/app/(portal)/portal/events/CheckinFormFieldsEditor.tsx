@@ -26,11 +26,20 @@ export interface CheckinFormConfigValue {
 }
 
 export const EMPTY_CHECKIN_FORM_CONFIG: CheckinFormConfigValue = {
-  form_url: '', entry_event_name: '', entry_academic_year: '', entry_affiliation: '', entry_food_item: '',
-  year_mapping: [], affiliation_mapping: [],
+  form_url: '',
+  entry_event_name: '',
+  entry_academic_year: '',
+  entry_affiliation: '',
+  entry_food_item: '',
+  year_mapping: [],
+  affiliation_mapping: [],
 };
 
-interface DetectedQuestion { title: string; entryId: string; options: string[] | null; }
+interface DetectedQuestion {
+  title: string;
+  entryId: string;
+  options: string[] | null;
+}
 
 type AssignableField = 'entry_event_name' | 'entry_academic_year' | 'entry_affiliation' | 'entry_food_item';
 const ASSIGNABLE_FIELDS: { key: AssignableField; label: string }[] = [
@@ -69,7 +78,15 @@ function guessAssignment(title: string): AssignableField | null {
 // real fixed list to pick from rather than retyping a value that has to
 // match exactly or the mapping silently does nothing.
 function MappingField({
-  label, hint, keyOptions, keyPlaceholder, valuePlaceholder, valueOptions, rows, onChange, staleRows,
+  label,
+  hint,
+  keyOptions,
+  keyPlaceholder,
+  valuePlaceholder,
+  valueOptions,
+  rows,
+  onChange,
+  staleRows,
 }: {
   label: string;
   hint: string;
@@ -97,47 +114,75 @@ function MappingField({
                 <Select
                   className={styles.input}
                   value={row.value ?? ''}
-                  onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], value: e.target.value }; onChange(n); }}
+                  onChange={(e) => {
+                    const n = [...rows];
+                    n[i] = { ...n[i], value: e.target.value };
+                    onChange(n);
+                  }}
                 >
-                  <option value="" disabled>{keyPlaceholder}</option>
-                  {keyOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                  <option value="" disabled>
+                    {keyPlaceholder}
+                  </option>
+                  {keyOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
                 </Select>
               ) : (
                 <input
                   className={styles.input}
                   value={row.value ?? ''}
                   placeholder={keyPlaceholder}
-                  onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], value: e.target.value }; onChange(n); }}
+                  onChange={(e) => {
+                    const n = [...rows];
+                    n[i] = { ...n[i], value: e.target.value };
+                    onChange(n);
+                  }}
                 />
               )}
               {valueOptions && valueOptions.length > 0 ? (
                 <Select
                   className={styles.input}
                   value={row.label ?? ''}
-                  onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], label: e.target.value }; onChange(n); }}
+                  onChange={(e) => {
+                    const n = [...rows];
+                    n[i] = { ...n[i], label: e.target.value };
+                    onChange(n);
+                  }}
                 >
                   <option value="">{valuePlaceholder}</option>
-                  {row.label && !valueOptions.includes(row.label) && (
-                    <option value={row.label}>{row.label} (not on the form)</option>
-                  )}
-                  {valueOptions.map((opt) => <option key={opt} value={opt}>{opt}</option>)}
+                  {row.label && !valueOptions.includes(row.label) && <option value={row.label}>{row.label} (not on the form)</option>}
+                  {valueOptions.map((opt) => (
+                    <option key={opt} value={opt}>
+                      {opt}
+                    </option>
+                  ))}
                 </Select>
               ) : (
                 <input
                   className={styles.input}
                   value={row.label ?? ''}
                   placeholder={valuePlaceholder}
-                  onChange={(e) => { const n = [...rows]; n[i] = { ...n[i], label: e.target.value }; onChange(n); }}
+                  onChange={(e) => {
+                    const n = [...rows];
+                    n[i] = { ...n[i], label: e.target.value };
+                    onChange(n);
+                  }}
                 />
               )}
               <IconButton kind="remove" size="sm" label="Remove" onClick={() => onChange(rows.filter((_, j) => j !== i))} />
             </div>
             {staleRows?.[i] && (
-              <Notice tone="warning" compact>&quot;{row.label}&quot; doesn&apos;t match a current option on the form — that question will just show up blank instead of pre-filled.</Notice>
+              <Notice tone="warning" compact>
+                &quot;{row.label}&quot; doesn&apos;t match a current option on the form — that question will just show up blank instead of pre-filled.
+              </Notice>
             )}
           </div>
         ))}
-        <button type="button" className={styles.mappingAddBtn} onClick={() => onChange([...rows, { value: '', label: '' }])}>+ Add Mapping</button>
+        <button type="button" className={styles.mappingAddBtn} onClick={() => onChange([...rows, { value: '', label: '' }])}>
+          + Add Mapping
+        </button>
       </div>
       <span className={styles.hint}>{hint}</span>
     </div>
@@ -151,10 +196,7 @@ function MappingField({
 // and lists every question with a plain assignment dropdown, so nobody
 // managing the portal ever has to know what an "entry ID" is or go
 // through Google's own "Get pre-filled link" flow by hand.
-export default function CheckinFormFieldsEditor({ value, onChange }: {
-  value: CheckinFormConfigValue;
-  onChange: (value: CheckinFormConfigValue) => void;
-}) {
+export default function CheckinFormFieldsEditor({ value, onChange }: { value: CheckinFormConfigValue; onChange: (value: CheckinFormConfigValue) => void }) {
   const [detecting, setDetecting] = useState(false);
   const [detectError, setDetectError] = useState('');
   const [questions, setQuestions] = useState<DetectedQuestion[] | null>(null);
@@ -249,13 +291,9 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
         if (next[key]) fields[key] = !byEntryId.has(next[key]);
       });
       const yearQuestion = next.entry_academic_year ? byEntryId.get(next.entry_academic_year) : undefined;
-      const yearRows = next.year_mapping.map((row) =>
-        !!row.label && !!yearQuestion?.options && !yearQuestion.options.includes(row.label)
-      );
+      const yearRows = next.year_mapping.map((row) => !!row.label && !!yearQuestion?.options && !yearQuestion.options.includes(row.label));
       const affiliationQuestion = next.entry_affiliation ? byEntryId.get(next.entry_affiliation) : undefined;
-      const affiliationRows = next.affiliation_mapping.map((row) =>
-        !!row.label && !!affiliationQuestion?.options && !affiliationQuestion.options.includes(row.label)
-      );
+      const affiliationRows = next.affiliation_mapping.map((row) => !!row.label && !!affiliationQuestion?.options && !affiliationQuestion.options.includes(row.label));
       setStale({ fields, yearRows, affiliationRows });
     } catch (e) {
       setDetectError(e instanceof Error ? e.message : 'Failed to read that form.');
@@ -282,7 +320,9 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
 
   function unassign(entryId: string) {
     const next = { ...value };
-    ASSIGNABLE_FIELDS.forEach(({ key }) => { if (next[key] === entryId) next[key] = ''; });
+    ASSIGNABLE_FIELDS.forEach(({ key }) => {
+      if (next[key] === entryId) next[key] = '';
+    });
     onChange(next);
   }
 
@@ -298,17 +338,13 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
             onChange={(e) => set('form_url', e.target.value)}
             placeholder="https://docs.google.com/forms/d/e/…/viewform"
           />
-          <button
-            type="button"
-            className={styles.previewBtn}
-            style={{ flexShrink: 0 }}
-            onClick={handleDetect}
-            disabled={detecting || !value.form_url.trim()}
-          >
+          <button type="button" className={styles.previewBtn} style={{ flexShrink: 0 }} onClick={handleDetect} disabled={detecting || !value.form_url.trim()}>
             {detecting ? 'Reading…' : 'Detect Questions'}
           </button>
         </div>
-        <span className={styles.hint}>Paste this event's form link — the questions are read automatically and matched up for you. Use Detect Questions to re-read it if UCSD edits the form.</span>
+        <span className={styles.hint}>
+          Paste this event's form link — the questions are read automatically and matched up for you. Use Detect Questions to re-read it if UCSD edits the form.
+        </span>
       </label>
 
       {detectError && <Notice tone="error">{detectError}</Notice>}
@@ -335,16 +371,17 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
                     }}
                   >
                     <option value="">Don&apos;t use</option>
-                    {ASSIGNABLE_FIELDS.map(({ key, label }) => <option key={key} value={key}>{label}</option>)}
+                    {ASSIGNABLE_FIELDS.map(({ key, label }) => (
+                      <option key={key} value={key}>
+                        {label}
+                      </option>
+                    ))}
                   </Select>
                 </div>
               );
             })}
           </div>
-          <span className={styles.hint}>
-            Assigning Academic Year or Affiliation auto-fills that option list below — just pick which of our own
-            values matches each one.
-          </span>
+          <span className={styles.hint}>Assigning Academic Year or Affiliation auto-fills that option list below — just pick which of our own values matches each one.</span>
         </div>
       )}
 
@@ -352,12 +389,20 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
         <label className={styles.field}>
           <span className={styles.label}>Entry ID — Event Name</span>
           <input className={styles.input} value={value.entry_event_name} onChange={(e) => set('entry_event_name', e.target.value)} />
-          {stale?.fields.entry_event_name && <Notice tone="warning" compact>Not found on the form anymore — re-detect to fix.</Notice>}
+          {stale?.fields.entry_event_name && (
+            <Notice tone="warning" compact>
+              Not found on the form anymore — re-detect to fix.
+            </Notice>
+          )}
         </label>
         <label className={styles.field}>
           <span className={styles.label}>Entry ID — Food/Item Received</span>
           <input className={styles.input} value={value.entry_food_item} onChange={(e) => set('entry_food_item', e.target.value)} />
-          {stale?.fields.entry_food_item && <Notice tone="warning" compact>Not found on the form anymore — re-detect to fix.</Notice>}
+          {stale?.fields.entry_food_item && (
+            <Notice tone="warning" compact>
+              Not found on the form anymore — re-detect to fix.
+            </Notice>
+          )}
         </label>
       </div>
 
@@ -365,18 +410,25 @@ export default function CheckinFormFieldsEditor({ value, onChange }: {
         <label className={styles.field}>
           <span className={styles.label}>Entry ID — Academic Year</span>
           <input className={styles.input} value={value.entry_academic_year} onChange={(e) => set('entry_academic_year', e.target.value)} />
-          {stale?.fields.entry_academic_year && <Notice tone="warning" compact>Not found on the form anymore — re-detect to fix.</Notice>}
+          {stale?.fields.entry_academic_year && (
+            <Notice tone="warning" compact>
+              Not found on the form anymore — re-detect to fix.
+            </Notice>
+          )}
         </label>
         <label className={styles.field}>
           <span className={styles.label}>Entry ID — Affiliation with Triton Gaming</span>
           <input className={styles.input} value={value.entry_affiliation} onChange={(e) => set('entry_affiliation', e.target.value)} />
-          {stale?.fields.entry_affiliation && <Notice tone="warning" compact>Not found on the form anymore — re-detect to fix.</Notice>}
+          {stale?.fields.entry_affiliation && (
+            <Notice tone="warning" compact>
+              Not found on the form anymore — re-detect to fix.
+            </Notice>
+          )}
         </label>
       </div>
       <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
-        These fill in automatically once you assign a detected question above — only edit them directly if you
-        already know the entry ID (e.g. from Google's own &quot;Get pre-filled link&quot;). Click Detect Questions
-        again any time to check these are still valid — useful after UCSD changes the form.
+        These fill in automatically once you assign a detected question above — only edit them directly if you already know the entry ID (e.g. from Google's own &quot;Get
+        pre-filled link&quot;). Click Detect Questions again any time to check these are still valid — useful after UCSD changes the form.
       </span>
 
       <MappingField

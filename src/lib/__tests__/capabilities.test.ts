@@ -58,8 +58,14 @@ describe('permissions granted to a person or group (Admin → Access)', () => {
 });
 
 describe('inactive officers and leads', () => {
-  const inactiveOfficer = [{ role: 'officer' as AppRole, division_id: null }, { role: 'inactive' as AppRole, division_id: null }];
-  const inactiveLead = [{ role: 'lead' as AppRole, division_id: null }, { role: 'inactive' as AppRole, division_id: null }];
+  const inactiveOfficer = [
+    { role: 'officer' as AppRole, division_id: null },
+    { role: 'inactive' as AppRole, division_id: null },
+  ];
+  const inactiveLead = [
+    { role: 'lead' as AppRole, division_id: null },
+    { role: 'inactive' as AppRole, division_id: null },
+  ];
   it('keep every viewing permission and QR studio', () => {
     for (const cap of ['view_events', 'view_docs', 'view_members', 'view_division_members', 'generate_qr_codes'] as const) {
       expect(hasCapability(inactiveOfficer, cap)).toBe(true);
@@ -86,7 +92,6 @@ describe('inactive officers and leads', () => {
     expect(isInactiveStripped('view_whatever')).toBe(false);
   });
 });
-
 
 describe('rewards are for UCSD students only', () => {
   it('a student whose only role is UCSD Student is eligible', () => {

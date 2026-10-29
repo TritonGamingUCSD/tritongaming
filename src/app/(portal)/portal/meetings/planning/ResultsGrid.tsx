@@ -9,7 +9,17 @@ import styles from './planning.module.css';
 // stripes (the same as the "If needed" button on the availability grid) mean some of them can only if needed. A green outline marks times that work for
 // everyone. Tap a cell to see who, and (for the host) to pick the meeting time starting there. The same grid on a phone: swipe sideways to move through the days.
 const STRIPES = 'repeating-linear-gradient(135deg, rgba(251, 191, 36, 0.42) 0 3px, transparent 3px 9px)';
-export default function ResultsGrid({ plan, selected, onSelect, preview }: { plan: PlanView; selected: { day: string; start: string } | null; onSelect: (s: { day: string; start: string }) => void; preview?: { day: string; start: string } | null }) {
+export default function ResultsGrid({
+  plan,
+  selected,
+  onSelect,
+  preview,
+}: {
+  plan: PlanView;
+  selected: { day: string; start: string } | null;
+  onSelect: (s: { day: string; start: string }) => void;
+  preview?: { day: string; start: string } | null;
+}) {
   const [hover, setHover] = useState<{ day: string; t: string; x: number; y: number } | null>(null);
   const block = useRef<HTMLDivElement>(null);
   // If the previewed time is scrolled out of sight sideways in the grid, slide it into view (never scrolls the page itself).
@@ -17,7 +27,8 @@ export default function ResultsGrid({ plan, selected, onSelect, preview }: { pla
     const el = block.current?.querySelector('[data-preview]') as HTMLElement | null;
     const wrap = block.current?.querySelector('[data-gridwrap]') as HTMLElement | null;
     if (!preview || !el || !wrap) return;
-    const e = el.getBoundingClientRect(), w = wrap.getBoundingClientRect();
+    const e = el.getBoundingClientRect(),
+      w = wrap.getBoundingClientRect();
     if (e.left < w.left + 64) wrap.scrollLeft -= w.left + 64 - e.left;
     else if (e.right > w.right) wrap.scrollLeft += e.right - w.right;
   }, [preview]);
@@ -27,10 +38,12 @@ export default function ResultsGrid({ plan, selected, onSelect, preview }: { pla
 
   // Per cell: who is available / if needed for that single half hour.
   const cell = (day: string, t: string) => {
-    let a = 0, m = 0;
+    let a = 0,
+      m = 0;
     for (const p of plan.people) {
       const v = plan.responses[p.id]?.[day]?.[t];
-      if (v === 1) a++; else if (v === 2) m++;
+      if (v === 1) a++;
+      else if (v === 2) m++;
     }
     return { a, m, can: a + m, ratio: (a + m) / total };
   };
@@ -41,7 +54,13 @@ export default function ResultsGrid({ plan, selected, onSelect, preview }: { pla
   const style = (day: string, t: string) => {
     const { ratio, m } = cell(day, t);
     // Light text on the faint cells, dark text on the deep green ones, so the number always reads.
-    return ratio > 0 ? { backgroundColor: `rgba(52, 211, 153, ${0.12 + ratio * 0.78})`, backgroundImage: m > 0 ? STRIPES : undefined, color: ratio >= 0.45 ? '#04140e' : 'rgba(242, 241, 240, 0.92)' } : undefined;
+    return ratio > 0
+      ? {
+          backgroundColor: `rgba(52, 211, 153, ${0.12 + ratio * 0.78})`,
+          backgroundImage: m > 0 ? STRIPES : undefined,
+          color: ratio >= 0.45 ? '#04140e' : 'rgba(242, 241, 240, 0.92)',
+        }
+      : undefined;
   };
   // The meeting covers `duration` from the chosen start; mark those cells.
   const inSelection = (day: string, t: string) => !!selected && selected.day === day && toMin(t) >= toMin(selected.start) && toMin(t) < toMin(selected.start) + plan.duration_min;
@@ -62,7 +81,9 @@ export default function ResultsGrid({ plan, selected, onSelect, preview }: { pla
         className={`${styles.heat} ${outline} ${sel ? styles.heatSel : ''} ${inPreview(day, t) ? styles.heatPreview : ''} ${startOk(t) ? '' : styles.heatNoStart}`}
         style={style(day, t)}
         data-preview={inPreview(day, t) ? '' : undefined}
-        onPointerMove={(e) => { if (e.pointerType !== 'touch') setHover({ day, t, x: e.clientX, y: e.clientY }); }}
+        onPointerMove={(e) => {
+          if (e.pointerType !== 'touch') setHover({ day, t, x: e.clientX, y: e.clientY });
+        }}
         onClick={() => onSelect({ day, start: startOk(t) ? t : toHhmm(Math.max(toMin(plan.window_start), Math.min(toMin(t), toMin(plan.window_end) - plan.duration_min))) })}
         aria-label={`${dayLabel(day, plan.kind)} ${clockLabel(t)}: ${c.can} can make it${c.m ? `, ${c.m} of them if needed` : ''}${f ? ', works for everyone' : ''}`}
       >
@@ -76,22 +97,37 @@ export default function ResultsGrid({ plan, selected, onSelect, preview }: { pla
       <div className={styles.gridWrap} data-gridwrap>
         <div className={styles.gridTable} style={{ gridTemplateColumns: `var(--timeW) repeat(${days.length}, var(--colW))` }} onPointerLeave={() => setHover(null)}>
           <div className={styles.corner} />
-          {days.map((d) => <div key={d} className={`${styles.colHead} ${hover?.day === d ? styles.hot : ''} ${preview?.day === d ? styles.previewHead : ''}`}><span>{dayLabel(d, plan.kind)}</span></div>)}
+          {days.map((d) => (
+            <div key={d} className={`${styles.colHead} ${hover?.day === d ? styles.hot : ''} ${preview?.day === d ? styles.previewHead : ''}`}>
+              <span>{dayLabel(d, plan.kind)}</span>
+            </div>
+          ))}
           {starts.map((t) => (
             <div key={t} style={{ display: 'contents' }}>
-              <div className={`${styles.timeLbl} ${t.endsWith(':00') ? '' : styles.timeHalf} ${hover?.t === t ? styles.timeHot : ''} ${preview && inPreview(preview.day, t) ? styles.previewTime : ''}`}>{t.endsWith(':00') || hover?.t === t || (preview && inPreview(preview.day, t) && t === preview.start) ? clockLabel(t) : ''}</div>
+              <div
+                className={`${styles.timeLbl} ${t.endsWith(':00') ? '' : styles.timeHalf} ${hover?.t === t ? styles.timeHot : ''} ${preview && inPreview(preview.day, t) ? styles.previewTime : ''}`}
+              >
+                {t.endsWith(':00') || hover?.t === t || (preview && inPreview(preview.day, t) && t === preview.start) ? clockLabel(t) : ''}
+              </div>
               {days.map((d) => render(d, t))}
             </div>
           ))}
         </div>
       </div>
-      {hover && (() => { const c = cell(hover.day, hover.t); const names = ifNeededNames(hover.day, hover.t); return (
-        <div className={styles.hoverTip} style={{ left: hover.x + 14, top: hover.y + 16 }} aria-hidden="true">
-          {dayLabel(hover.day, plan.kind)} · {clockLabel(hover.t)}
-          <em>{c.can} can make it{fits(hover.day, hover.t) ? ' (everyone)' : ''}</em>
-          {names.length > 0 && <em>If needed: {names.join(', ')}</em>}
-        </div>
-      ); })()}
+      {hover &&
+        (() => {
+          const c = cell(hover.day, hover.t);
+          const names = ifNeededNames(hover.day, hover.t);
+          return (
+            <div className={styles.hoverTip} style={{ left: hover.x + 14, top: hover.y + 16 }} aria-hidden="true">
+              {dayLabel(hover.day, plan.kind)} · {clockLabel(hover.t)}
+              <em>
+                {c.can} can make it{fits(hover.day, hover.t) ? ' (everyone)' : ''}
+              </em>
+              {names.length > 0 && <em>If needed: {names.join(', ')}</em>}
+            </div>
+          );
+        })()}
       <Legend total={plan.people.length} />
     </div>
   );
@@ -100,9 +136,15 @@ export default function ResultsGrid({ plan, selected, onSelect, preview }: { pla
 function Legend({ total }: { total: number }) {
   return (
     <div className={styles.legend}>
-      <span className={styles.legendItem}><span className={styles.legendBar} aria-hidden="true" /> {total <= 1 ? 'person' : `people (of ${total})`} who can</span>
-      <span className={styles.legendItem}><span className={`${styles.legendBox} ${styles.legendStripe}`} aria-hidden="true" /> some only if needed</span>
-      <span className={styles.legendItem}><span className={`${styles.legendBox} ${styles.legendAll}`} aria-hidden="true" /> everyone</span>
+      <span className={styles.legendItem}>
+        <span className={styles.legendBar} aria-hidden="true" /> {total <= 1 ? 'person' : `people (of ${total})`} who can
+      </span>
+      <span className={styles.legendItem}>
+        <span className={`${styles.legendBox} ${styles.legendStripe}`} aria-hidden="true" /> some only if needed
+      </span>
+      <span className={styles.legendItem}>
+        <span className={`${styles.legendBox} ${styles.legendAll}`} aria-hidden="true" /> everyone
+      </span>
     </div>
   );
 }
@@ -120,21 +162,44 @@ export function WhoPanel({ plan, pick }: { plan: PlanView; pick: { day: string; 
   ];
   return (
     <div className={styles.who}>
-      <strong className={styles.whoTitle}><CalendarClock size={16} aria-hidden="true" /> {dayLabel(pick.day, plan.kind)}, {clockLabel(pick.start)} to {clockLabel(end)}</strong>
+      <strong className={styles.whoTitle}>
+        <CalendarClock size={16} aria-hidden="true" /> {dayLabel(pick.day, plan.kind)}, {clockLabel(pick.start)} to {clockLabel(end)}
+      </strong>
       <div className={styles.whoBar} role="img" aria-label={groups.map((g) => `${g.list.length} ${g.label.toLowerCase()}`).join(', ')}>
-        {groups.map((g) => g.list.length > 0 && <span key={g.key} className={g.tone} style={{ flexGrow: g.list.length / total }} title={`${g.label}: ${g.list.length}`}>{g.list.length}</span>)}
+        {groups.map(
+          (g) =>
+            g.list.length > 0 && (
+              <span key={g.key} className={g.tone} style={{ flexGrow: g.list.length / total }} title={`${g.label}: ${g.list.length}`}>
+                {g.list.length}
+              </span>
+            ),
+        )}
       </div>
-      {groups.filter((g) => g.list.length > 0).map((g) => (
-        <div key={g.key} className={`${styles.whoRow} ${g.tone}`}>
-          <span className={styles.whoHead}>{g.icon} {g.label} <b>{g.list.length}</b></span>
-          <span className={styles.whoPeople}>
-            {g.list.map((p) => {
-              const b = g.key === 'no' ? t.blocked.find((x) => x.person.id === p.id) : null;
-              return <span key={p.id} className={styles.person}><i aria-hidden="true">{p.name[0]?.toUpperCase()}</i>{p.name}{b && <em title={`Booked: ${b.titles.join(', ')}`}><CalendarX size={11} aria-hidden="true" /> {b.titles.join(', ')}</em>}</span>;
-            })}
-          </span>
-        </div>
-      ))}
+      {groups
+        .filter((g) => g.list.length > 0)
+        .map((g) => (
+          <div key={g.key} className={`${styles.whoRow} ${g.tone}`}>
+            <span className={styles.whoHead}>
+              {g.icon} {g.label} <b>{g.list.length}</b>
+            </span>
+            <span className={styles.whoPeople}>
+              {g.list.map((p) => {
+                const b = g.key === 'no' ? t.blocked.find((x) => x.person.id === p.id) : null;
+                return (
+                  <span key={p.id} className={styles.person}>
+                    <i aria-hidden="true">{p.name[0]?.toUpperCase()}</i>
+                    {p.name}
+                    {b && (
+                      <em title={`Booked: ${b.titles.join(', ')}`}>
+                        <CalendarX size={11} aria-hidden="true" /> {b.titles.join(', ')}
+                      </em>
+                    )}
+                  </span>
+                );
+              })}
+            </span>
+          </div>
+        ))}
     </div>
   );
 }

@@ -9,7 +9,10 @@ import { decodeTGcodeAt } from '@/lib/qr/tgCode/decode';
 import { scanArea, inScanCircle } from '@/lib/qr/scanArea';
 import styles from './meetings.module.css';
 
-interface Caps { zoom?: { min: number; max: number; step: number }; torch?: boolean }
+interface Caps {
+  zoom?: { min: number; max: number; step: number };
+  torch?: boolean;
+}
 type ZoomTrack = MediaStreamTrack & { getCapabilities?: () => Caps; applyConstraints: (c: unknown) => Promise<void> };
 
 // A full-screen camera with zoom (the phone's own zoom where it has one, otherwise a digital zoom) and a flashlight where the phone offers it,
@@ -20,29 +23,61 @@ type ZoomTrack = MediaStreamTrack & { getCapabilities?: () => Caps; applyConstra
 // The middle and half-size of the points of a code's outline (video pixels).
 function around(points: { x: number; y: number }[]): { x: number; y: number; r: number } | null {
   if (points.length < 3) return null;
-  const x = points.reduce((s, p) => s + p.x, 0) / points.length, y = points.reduce((s, p) => s + p.y, 0) / points.length;
+  const x = points.reduce((s, p) => s + p.x, 0) / points.length,
+    y = points.reduce((s, p) => s + p.y, 0) / points.length;
   return { x, y, r: Math.max(...points.map((p) => Math.hypot(p.x - x, p.y - y))) };
 }
 // Video pixels → where they show on the stage: the picture fills the stage with its middle kept ("cover"), then a digital zoom scales it about the middle.
 function toStage(f: { x: number; y: number; r: number }, v: HTMLVideoElement, z: number): { x: number; y: number; r: number } | null {
   const stage = v.parentElement?.getBoundingClientRect();
   if (!stage || !v.videoWidth || !v.videoHeight) return null;
-  const SW = stage.width, SH = stage.height, s = Math.max(SW / v.videoWidth, SH / v.videoHeight);
-  const px = (SW - v.videoWidth * s) / 2 + f.x * s, py = (SH - v.videoHeight * s) / 2 + f.y * s;
+  const SW = stage.width,
+    SH = stage.height,
+    s = Math.max(SW / v.videoWidth, SH / v.videoHeight);
+  const px = (SW - v.videoWidth * s) / 2 + f.x * s,
+    py = (SH - v.videoHeight * s) / 2 + f.y * s;
   return { x: SW / 2 + (px - SW / 2) * z, y: SH / 2 + (py - SH / 2) * z, r: f.r * s * z };
 }
 
 // The ring and icon placed over the code: the code's own middle and size, kept inside the stage and never tiny or bigger than the screen.
 function fit(spot: { x: number; y: number; r: number }, stage: HTMLElement | null) {
-  const SW = stage?.clientWidth ?? 360, SH = stage?.clientHeight ?? 600;
+  const SW = stage?.clientWidth ?? 360,
+    SH = stage?.clientHeight ?? 600;
   const r = Math.min(Math.max(spot.r * 1.08, 44), Math.min(SW, SH) * 0.46);
   return { x: Math.min(Math.max(spot.x, r * 0.5), SW - r * 0.5), y: Math.min(Math.max(spot.y, r * 0.5), SH - r * 0.5), r };
 }
-const ringBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement | null): React.CSSProperties => { const f = fit(spot, stage); return { left: f.x, top: f.y, width: f.r * 2 }; };
-const iconBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement | null): React.CSSProperties => { const f = fit(spot, stage); const d = Math.min(Math.max(f.r * 0.9, 56), 110); return { left: f.x, top: f.y, width: d, maxWidth: 'none' }; };
+const ringBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement | null): React.CSSProperties => {
+  const f = fit(spot, stage);
+  return { left: f.x, top: f.y, width: f.r * 2 };
+};
+const iconBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement | null): React.CSSProperties => {
+  const f = fit(spot, stage);
+  const d = Math.min(Math.max(f.r * 0.9, 56), 110);
+  return { left: f.x, top: f.y, width: d, maxWidth: 'none' };
+};
 
 export type ScanLock = { tone: 'busy' | 'ok' | 'warn' | 'bad' };
-export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', note, footer, extra, lock, sheet, sheetKey }: { onScan: (text: string) => boolean | void; onClose: () => void; title?: string; note?: string; footer?: ReactNode; /** Sits in the row with the zoom and light buttons. */ extra?: ReactNode; lock?: ScanLock | null; sheet?: ReactNode; sheetKey?: string }) {
+export default function QrScanner({
+  onScan,
+  onClose,
+  title = 'Scan A QR Code',
+  note,
+  footer,
+  extra,
+  lock,
+  sheet,
+  sheetKey,
+}: {
+  onScan: (text: string) => boolean | void;
+  onClose: () => void;
+  title?: string;
+  note?: string;
+  footer?: ReactNode;
+  /** Sits in the row with the zoom and light buttons. */ extra?: ReactNode;
+  lock?: ScanLock | null;
+  sheet?: ReactNode;
+  sheetKey?: string;
+}) {
   const video = useRef<HTMLVideoElement>(null);
   const frame = useRef<HTMLDivElement>(null);
   const track = useRef<ZoomTrack | null>(null);
@@ -51,7 +86,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   const [torch, setTorch] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
-  const [spot, setSpot] = useState<{ x: number; y: number; r: number } | null>(null);   // where on the screen the code was when it was read (stage pixels)   // the first picture is in and the zoom has settled: only then does the camera fade in
+  const [spot, setSpot] = useState<{ x: number; y: number; r: number } | null>(null); // where on the screen the code was when it was read (stage pixels)   // the first picture is in and the zoom has settled: only then does the camera fade in
   // The result sheet's height follows its content smoothly (a spinner line becoming a result with a button), instead of jumping.
   const sheetBody = useRef<HTMLDivElement>(null);
   const [sheetH, setSheetH] = useState<number | null>(null);
@@ -64,7 +99,11 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   const [leaving, setLeaving] = useState(false);
   const wasLocked = useRef(false);
   useEffect(() => {
-    if (lock) { wasLocked.current = true; setLeaving(false); return; }
+    if (lock) {
+      wasLocked.current = true;
+      setLeaving(false);
+      return;
+    }
     if (!wasLocked.current) return;
     wasLocked.current = false;
     setLeaving(true);
@@ -73,16 +112,26 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   }, [lock]);
   useEffect(() => {
     const el = sheetBody.current;
-    if (!sheetShown || !el) { setSheetH(null); return; }
+    if (!sheetShown || !el) {
+      setSheetH(null);
+      return;
+    }
     const ro = new ResizeObserver(() => setSheetH(el.offsetHeight));
     ro.observe(el);
     return () => ro.disconnect();
   }, [sheetShown]);
   // Waiting for the camera (the phone may be asking for permission): say what is going on instead of looking stuck.
   const [slowStart, setSlowStart] = useState(false);
-  useEffect(() => { if (ready) { setSlowStart(false); return; } const id = window.setTimeout(() => setSlowStart(true), 3500); return () => window.clearTimeout(id); }, [ready]);
-  const seenRef = useRef({ text: '', at: -1e9 });   // the code last seen and when: the same one is not taken again while it stays in view
-  const pausedRef = useRef(false);   // a taken scan freezes the picture and stops reading until the caller clears `lock`
+  useEffect(() => {
+    if (ready) {
+      setSlowStart(false);
+      return;
+    }
+    const id = window.setTimeout(() => setSlowStart(true), 3500);
+    return () => window.clearTimeout(id);
+  }, [ready]);
+  const seenRef = useRef({ text: '', at: -1e9 }); // the code last seen and when: the same one is not taken again while it stays in view
+  const pausedRef = useRef(false); // a taken scan freezes the picture and stops reading until the caller clears `lock`
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
   // The zoom lives in refs, not state: a pinch fires many times a second and re-rendering for each one is what made it lag.
@@ -92,71 +141,121 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   const capsRef = useRef<Caps>({});
   capsRef.current = caps;
 
-  useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   useEffect(() => {
     // The page behind must not scroll or zoom while the camera is open.
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
+    return () => {
+      document.body.style.overflow = prev;
+    };
   }, []);
 
   useEffect(() => {
     if (!mounted) return;
-    let stream: MediaStream | null = null, raf = 0, dead = false, last = 0;
+    let stream: MediaStream | null = null,
+      raf = 0,
+      dead = false,
+      last = 0;
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    const Detector = (window as unknown as { BarcodeDetector?: new (o: { formats: string[] }) => { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string; cornerPoints?: { x: number; y: number }[] }[]> } }).BarcodeDetector;
+    const Detector = (
+      window as unknown as {
+        BarcodeDetector?: new (o: { formats: string[] }) => { detect: (v: HTMLVideoElement) => Promise<{ rawValue: string; cornerPoints?: { x: number; y: number }[] }[]> };
+      }
+    ).BarcodeDetector;
     const detector = Detector ? new Detector({ formats: ['qr_code'] }) : null;
     (async () => {
       try {
         stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false });
-        if (dead) { stream.getTracks().forEach((t) => t.stop()); return; }
+        if (dead) {
+          stream.getTracks().forEach((t) => t.stop());
+          return;
+        }
         const t = stream.getVideoTracks()[0] as ZoomTrack;
         track.current = t;
         const c = t.getCapabilities?.() as Caps | undefined;
         if (c) setCaps({ zoom: c.zoom && c.zoom.max > c.zoom.min ? c.zoom : undefined, torch: !!c.torch });
-        if (c?.zoom) { zoomRef.current = Math.min(Math.max(c.zoom.min, 1), c.zoom.max); hw.current.want = zoomRef.current; hw.current.applied = -1; hw.current.shown = zoomRef.current; applyHardware(); showZoom(); }   // start at 1×, not the ultra-wide the camera may open on
+        if (c?.zoom) {
+          zoomRef.current = Math.min(Math.max(c.zoom.min, 1), c.zoom.max);
+          hw.current.want = zoomRef.current;
+          hw.current.applied = -1;
+          hw.current.shown = zoomRef.current;
+          applyHardware();
+          showZoom();
+        } // start at 1×, not the ultra-wide the camera may open on
         if (video.current) {
-          video.current.srcObject = stream; await video.current.play().catch(() => {});
+          video.current.srcObject = stream;
+          await video.current.play().catch(() => {});
           const v0 = video.current;
           for (let i = 0; i < 20 && v0.readyState < 2 && !dead; i++) await new Promise((r) => setTimeout(r, 50));
-          await new Promise((r) => setTimeout(r, 300));   // the phone's zoom (back to 1×) lands a moment after the first picture
+          await new Promise((r) => setTimeout(r, 300)); // the phone's zoom (back to 1×) lands a moment after the first picture
           if (!dead) setReady(true);
         }
         const tick = async (now: number) => {
           raf = requestAnimationFrame(tick);
           const v = video.current;
-          if (dead || pausedRef.current || zoomBusy.current || !v || v.readyState < 2 || now - last < 140) return;   // (not while the zoom is moving: reading is the heavy part, and it would make the pinch stutter)
+          if (dead || pausedRef.current || zoomBusy.current || !v || v.readyState < 2 || now - last < 140) return; // (not while the zoom is moving: reading is the heavy part, and it would make the pinch stutter)
           last = now;
           let text: string | null = null;
-          let found: { x: number; y: number; r: number } | null = null;   // where it was, in video pixels
+          let found: { x: number; y: number; r: number } | null = null; // where it was, in video pixels
           // Only what is in (or very near) the circle on the screen is read, not the whole camera picture: another code at the edge of the view, or on a screen across the room, is never picked up by
           // accident. The picture is cropped to a square a little bigger than the circle (so a code that fills the circle still fits), which also gives a small code more pixels to be read from.
           const z = digitalRef.current ? zoomRef.current : 1;
           const stageEl = v.parentElement;
-          const area = scanArea({ w: v.videoWidth, h: v.videoHeight }, { w: stageEl?.clientWidth ?? v.videoWidth, h: stageEl?.clientHeight ?? v.videoHeight }, { w: window.innerWidth, h: window.innerHeight }, z);
+          const area = scanArea(
+            { w: v.videoWidth, h: v.videoHeight },
+            { w: stageEl?.clientWidth ?? v.videoWidth, h: stageEl?.clientHeight ?? v.videoHeight },
+            { w: window.innerWidth, h: window.innerHeight },
+            z,
+          );
           const { cx, cy, side: L } = area;
           const inCircle = (f: { x: number; y: number; r: number } | null) => inScanCircle(area, f);
           if (detector && z === 1) {
             try {
               const hit = (await detector.detect(v))[0];
-              if (hit) { const f = around(hit.cornerPoints ?? []); if (inCircle(f)) { text = hit.rawValue; found = f; } }
-            } catch { /* fall back below */ }
+              if (hit) {
+                const f = around(hit.cornerPoints ?? []);
+                if (inCircle(f)) {
+                  text = hit.rawValue;
+                  found = f;
+                }
+              }
+            } catch {
+              /* fall back below */
+            }
           }
           if (!text && ctx) {
-            canvas.width = Math.min(720, Math.round(L)); canvas.height = canvas.width;
+            canvas.width = Math.min(720, Math.round(L));
+            canvas.height = canvas.width;
             ctx.drawImage(v, cx - L / 2, cy - L / 2, L, L, 0, 0, canvas.width, canvas.height);
             const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const k = L / canvas.width, ox = cx - L / 2, oy = cy - L / 2;   // the picture it read is the square in the middle, scaled to fit
+            const k = L / canvas.width,
+              ox = cx - L / 2,
+              oy = cy - L / 2; // the picture it read is the square in the middle, scaled to fit
             const inVideo = (p: { x: number; y: number }) => ({ x: ox + p.x * k, y: oy + p.y * k });
             // A QR first (an event's check-in link and the like), then the portal's own TGcode.
             const q = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
-            if (q) { const f = around([q.location.topLeftCorner, q.location.topRightCorner, q.location.bottomRightCorner, q.location.bottomLeftCorner].map(inVideo)); if (inCircle(f)) { text = q.data; found = f; } }
+            if (q) {
+              const f = around([q.location.topLeftCorner, q.location.topRightCorner, q.location.bottomRightCorner, q.location.bottomLeftCorner].map(inVideo));
+              if (inCircle(f)) {
+                text = q.data;
+                found = f;
+              }
+            }
             if (!text) {
               const gray = new Uint8ClampedArray(img.width * img.height);
               for (let i = 0, j = 0; i < gray.length; i++, j += 4) gray[i] = (img.data[j] * 77 + img.data[j + 1] * 150 + img.data[j + 2] * 29) >> 8;
               const ring = decodeTGcodeAt(gray, img.width, img.height);
-              if (ring) { const f = { x: ox + ring.spot.x * k, y: oy + ring.spot.y * k, r: ring.spot.r * k }; if (inCircle(f)) { text = `tg:${ring.payload}`; found = f; } }
+              if (ring) {
+                const f = { x: ox + ring.spot.x * k, y: oy + ring.spot.y * k, r: ring.spot.r * k };
+                if (inCircle(f)) {
+                  text = `tg:${ring.payload}`;
+                  found = f;
+                }
+              }
             }
           }
           // The caller decides what the text is: true = taken (freeze the picture), anything else = keep looking. The same text is not offered again for 3 s.
@@ -164,28 +263,42 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
           // only once it has been out of sight for a moment, or another code comes.
           const seen = seenRef.current;
           const repeat = !!text && text === seen.text && now - seen.at < 1500;
-          if (text) { seen.text = text; seen.at = now; }
+          if (text) {
+            seen.text = text;
+            seen.at = now;
+          }
           if (text && !repeat) {
             if (onScanRef.current(text) === true) {
-              pausedRef.current = true; v.pause();   // freeze right away, so the ring lands where the code is in the frozen picture
+              pausedRef.current = true;
+              v.pause(); // freeze right away, so the ring lands where the code is in the frozen picture
               setSpot(found ? toStage(found, v, z) : null);
             }
           }
         };
         raf = requestAnimationFrame(tick);
       } catch (e) {
-        const insecure = typeof window !== 'undefined' && !window.isSecureContext;   // a phone only lets a page use its camera over https
-        setError(insecure ? 'This page isn’t on a secure (https) connection, so the phone won’t let it use the camera. Type the code below instead.' : (e as Error)?.name === 'NotAllowedError' ? 'The camera is blocked. Allow it in your browser’s settings, or type the code below instead.' : 'Couldn’t open the camera. Type the code below instead.');
+        const insecure = typeof window !== 'undefined' && !window.isSecureContext; // a phone only lets a page use its camera over https
+        setError(
+          insecure
+            ? 'This page isn’t on a secure (https) connection, so the phone won’t let it use the camera. Type the code below instead.'
+            : (e as Error)?.name === 'NotAllowedError'
+              ? 'The camera is blocked. Allow it in your browser’s settings, or type the code below instead.'
+              : 'Couldn’t open the camera. Type the code below instead.',
+        );
       }
     })();
-    return () => { dead = true; cancelAnimationFrame(raf); stream?.getTracks().forEach((t) => t.stop()); };
+    return () => {
+      dead = true;
+      cancelAnimationFrame(raf);
+      stream?.getTracks().forEach((t) => t.stop());
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted]);
 
   useEffect(() => {
     if (lock || !pausedRef.current) return;
     setSpot(null);
-    seenRef.current.at = performance.now();   // the camera starts again with the same code probably still in front of it: that one does not count as a new scan
+    seenRef.current.at = performance.now(); // the camera starts again with the same code probably still in front of it: that one does not count as a new scan
     pausedRef.current = false;
     void video.current?.play().catch(() => {});
   }, [lock]);
@@ -194,25 +307,38 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   // How zoom stays smooth: while fingers (or the wheel) move, ONLY the picture's scale changes (a transform the phone's graphics chip does, nothing else runs: the code reading waits).
   // Once the movement stops, a phone with its own zoom is asked for that value (one request at a time) and, when its pictures have caught up, the scale goes back to 1 and reading
   // carries on. A phone without its own zoom keeps the scale as the zoom.
-  const hw = useRef({ busy: false, want: 1, applied: 1, shown: 1 });   // shown: the zoom the camera's pictures really have
-  const zoomBusy = useRef(false);   // reading waits while the zoom is moving or settling
-  const gestureOn = useRef(false);  // two fingers are down
+  const hw = useRef({ busy: false, want: 1, applied: 1, shown: 1 }); // shown: the zoom the camera's pictures really have
+  const zoomBusy = useRef(false); // reading waits while the zoom is moving or settling
+  const gestureOn = useRef(false); // two fingers are down
   const settleT = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   function finishHardware() {
     window.setTimeout(() => {
       const h = hw.current;
-      if (gestureOn.current || Math.abs(zoomRef.current - h.applied) > 0.001) return;   // moved again meanwhile: the next settle handles it
+      if (gestureOn.current || Math.abs(zoomRef.current - h.applied) > 0.001) return; // moved again meanwhile: the next settle handles it
       h.shown = h.applied;
       if (video.current) video.current.style.transform = '';
       zoomBusy.current = false;
-    }, 200);   // the camera's pictures take a moment to show the new zoom: removing the scale sooner would flash the old one
+    }, 200); // the camera's pictures take a moment to show the new zoom: removing the scale sooner would flash the old one
   }
   function applyHardware() {
     const h = hw.current;
     if (h.busy || !track.current) return;
-    if (h.want === h.applied) { finishHardware(); return; }
-    h.busy = true; h.applied = h.want;
-    track.current.applyConstraints({ advanced: [{ zoom: h.want }] }).catch(() => { /* keep going */ }).finally(() => { h.busy = false; if (h.want !== h.applied) applyHardware(); else finishHardware(); });
+    if (h.want === h.applied) {
+      finishHardware();
+      return;
+    }
+    h.busy = true;
+    h.applied = h.want;
+    track.current
+      .applyConstraints({ advanced: [{ zoom: h.want }] })
+      .catch(() => {
+        /* keep going */
+      })
+      .finally(() => {
+        h.busy = false;
+        if (h.want !== h.applied) applyHardware();
+        else finishHardware();
+      });
   }
   // Called whenever the wanted zoom changes: after a short stillness (and never with fingers down) it is made real.
   function afterZoom() {
@@ -220,19 +346,31 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
     clearTimeout(settleT.current);
     settleT.current = setTimeout(() => {
       if (gestureOn.current) return;
-      if (digitalRef.current) { zoomBusy.current = false; return; }
-      if (Math.abs(zoomRef.current - hw.current.shown) < 0.001 && !hw.current.busy) { if (video.current) video.current.style.transform = ''; zoomBusy.current = false; return; }
-      hw.current.want = zoomRef.current; applyHardware();
+      if (digitalRef.current) {
+        zoomBusy.current = false;
+        return;
+      }
+      if (Math.abs(zoomRef.current - hw.current.shown) < 0.001 && !hw.current.busy) {
+        if (video.current) video.current.style.transform = '';
+        zoomBusy.current = false;
+        return;
+      }
+      hw.current.want = zoomRef.current;
+      applyHardware();
     }, 140);
   }
   // Zoom: pinch with two fingers (or ctrl + scroll / pinch on a trackpad, or the wheel). The phone's own zoom where it has one, otherwise a digital zoom of the middle of the picture.
   // Nothing here re-renders the screen: the picture's scale and the little "1.7×" readout are written straight to the page.
   const readout = useRef<HTMLButtonElement>(null);
-  const limits = () => { const z = capsRef.current.zoom; return { min: z?.min ?? 1, max: z ? Math.min(z.max, 8) : 4 }; };
+  const limits = () => {
+    const z = capsRef.current.zoom;
+    return { min: z?.min ?? 1, max: z ? Math.min(z.max, 8) : 4 };
+  };
   const showZoom = () => {
     const el = readout.current;
     if (!el) return;
-    const z = zoomRef.current, t = `${z < 1 ? Number(z.toFixed(1)).toString().replace(/^0/, '') : Number(z.toFixed(1))}×`;
+    const z = zoomRef.current,
+      t = `${z < 1 ? Number(z.toFixed(1)).toString().replace(/^0/, '') : Number(z.toFixed(1))}×`;
     if (el.textContent !== t) el.textContent = t;
     el.setAttribute('aria-label', `Zoom ${t.replace('×', ' times')}. Tap to reset`);
   };
@@ -241,7 +379,7 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
     const { min, max } = limits();
     zoomRef.current = Math.max(min, Math.min(max, v));
     afterZoom();
-    if (paint.current) return;   // one paint per frame, whatever the number of touch events
+    if (paint.current) return; // one paint per frame, whatever the number of touch events
     paint.current = requestAnimationFrame(() => {
       paint.current = 0;
       showZoom();
@@ -251,7 +389,12 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
   }
   async function toggleTorch() {
     const next = !torch;
-    try { await track.current?.applyConstraints({ advanced: [{ torch: next }] }); setTorch(next); } catch { /* not supported after all */ }
+    try {
+      await track.current?.applyConstraints({ advanced: [{ torch: next }] });
+      setTorch(next);
+    } catch {
+      /* not supported after all */
+    }
   }
   useEffect(() => {
     const el = frame.current;
@@ -262,35 +405,74 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
     // Pinch: two pointers on the picture; the zoom follows how far apart they are, from where it was when the second finger came down.
     const pts = new Map<number, { x: number; y: number }>();
     let start: { d: number; z: number } | null = null;
-    const dist = () => { const [a, b] = [...pts.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    const dist = () => {
+      const [a, b] = [...pts.values()];
+      return Math.hypot(a.x - b.x, a.y - b.y);
+    };
     const down = (e: PointerEvent) => {
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      try { el.setPointerCapture(e.pointerId); } catch { /* fine */ }
-      if (pts.size === 2) { start = { d: Math.max(dist(), 1), z: zoomRef.current }; gestureOn.current = true; zoomBusy.current = true; }
+      try {
+        el.setPointerCapture(e.pointerId);
+      } catch {
+        /* fine */
+      }
+      if (pts.size === 2) {
+        start = { d: Math.max(dist(), 1), z: zoomRef.current };
+        gestureOn.current = true;
+        zoomBusy.current = true;
+      }
     };
     const move = (e: PointerEvent) => {
       if (!pts.has(e.pointerId)) return;
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pts.size === 2 && start) { e.preventDefault(); setZoomTo(start.z * (dist() / start.d)); }
+      if (pts.size === 2 && start) {
+        e.preventDefault();
+        setZoomTo(start.z * (dist() / start.d));
+      }
     };
-    const up = (e: PointerEvent) => { pts.delete(e.pointerId); start = pts.size === 2 ? { d: Math.max(dist(), 1), z: zoomRef.current } : null; if (pts.size < 2 && gestureOn.current) { gestureOn.current = false; afterZoom(); } };
+    const up = (e: PointerEvent) => {
+      pts.delete(e.pointerId);
+      start = pts.size === 2 ? { d: Math.max(dist(), 1), z: zoomRef.current } : null;
+      if (pts.size < 2 && gestureOn.current) {
+        gestureOn.current = false;
+        afterZoom();
+      }
+    };
     // A trackpad pinch (and ctrl + scroll) arrives as a wheel event with ctrlKey set; a plain scroll wheel zooms too. Without preventDefault the browser would zoom the page.
-    const wheel = (e: WheelEvent) => { e.preventDefault(); setZoomTo(zoomRef.current * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.002))); };
-    el.addEventListener('pointerdown', down); el.addEventListener('pointermove', move, { passive: false });
-    el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up); el.addEventListener('wheel', wheel, { passive: false });
+    const wheel = (e: WheelEvent) => {
+      e.preventDefault();
+      setZoomTo(zoomRef.current * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.002)));
+    };
+    el.addEventListener('pointerdown', down);
+    el.addEventListener('pointermove', move, { passive: false });
+    el.addEventListener('pointerup', up);
+    el.addEventListener('pointercancel', up);
+    el.addEventListener('wheel', wheel, { passive: false });
     return () => {
       types.forEach((t) => el.removeEventListener(t, stop));
-      el.removeEventListener('pointerdown', down); el.removeEventListener('pointermove', move);
-      el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up); el.removeEventListener('wheel', wheel);
+      el.removeEventListener('pointerdown', down);
+      el.removeEventListener('pointermove', move);
+      el.removeEventListener('pointerup', up);
+      el.removeEventListener('pointercancel', up);
+      el.removeEventListener('wheel', wheel);
     };
-  }, [mounted]);   // eslint-disable-line react-hooks/exhaustive-deps
+  }, [mounted]); // eslint-disable-line react-hooks/exhaustive-deps
   // The dimmed layer round the circle follows the ring (it is moved and scaled, which the phone can do without repainting the screen), so the dimming always hugs the ring.
   function dimStyle(): React.CSSProperties | undefined {
     if (!lock) return undefined;
-    const st = frame.current, SW = st?.clientWidth ?? 360, SH = st?.clientHeight ?? 600;
+    const st = frame.current,
+      SW = st?.clientWidth ?? 360,
+      SH = st?.clientHeight ?? 600;
     const guide = Math.min(0.72 * window.innerWidth, 0.52 * window.innerHeight);
-    let x = SW / 2, y = SH * 0.31, d = Math.min(0.46 * window.innerWidth, 0.28 * window.innerHeight);
-    if (spot) { const f = fit(spot, st); x = f.x; y = f.y; d = f.r * 2; }
+    let x = SW / 2,
+      y = SH * 0.31,
+      d = Math.min(0.46 * window.innerWidth, 0.28 * window.innerHeight);
+    if (spot) {
+      const f = fit(spot, st);
+      x = f.x;
+      y = f.y;
+      d = f.r * 2;
+    }
     return { transform: `translate(calc(-50% + ${(x - SW / 2).toFixed(1)}px), calc(-50% + ${(y - SH / 2).toFixed(1)}px)) scale(${(d / guide).toFixed(4)})` };
   }
 
@@ -300,31 +482,75 @@ export default function QrScanner({ onScan, onClose, title = 'Scan A QR Code', n
     <div className={styles.scanScreen} role="dialog" aria-modal="true" aria-label={title}>
       <header className={styles.scanTop}>
         <span className={styles.scanTitle}>{title}</span>
-        <button type="button" className={styles.scanClose} onClick={onClose} aria-label="Close scanner"><X size={22} aria-hidden="true" /></button>
+        <button type="button" className={styles.scanClose} onClick={onClose} aria-label="Close scanner">
+          <X size={22} aria-hidden="true" />
+        </button>
       </header>
-      {error ? <div className={styles.scanProblem}><TGcodeIcon size={44} /><p>{error}</p></div> : (
+      {error ? (
+        <div className={styles.scanProblem}>
+          <TGcodeIcon size={44} />
+          <p>{error}</p>
+        </div>
+      ) : (
         <div ref={frame} className={styles.scanStage}>
           <video ref={video} playsInline muted className={ready ? styles.scanReady : undefined} />
-          {!ready && <div className={styles.scanStarting} role="status"><span className={styles.scanStartSpin} aria-hidden="true" />Starting camera…{slowStart && <small>If your phone asks, allow the camera. Or type the code below.</small>}</div>}
+          {!ready && (
+            <div className={styles.scanStarting} role="status">
+              <span className={styles.scanStartSpin} aria-hidden="true" />
+              Starting camera…{slowStart && <small>If your phone asks, allow the camera. Or type the code below.</small>}
+            </div>
+          )}
           <div className={styles.scanDim} style={dimStyle()} aria-hidden="true" />
           <div className={`${styles.scanDimLock} ${lock ? styles.scanDimOn : ''}`} aria-hidden="true" />
-          <div className={`${styles.scanTarget} ${lock ? styles[`lock_${lock.tone}`] : styles.scanLive}`} style={lock && spot ? ringBox(spot, frame.current) : undefined} aria-hidden="true" />
-          {(lock ? lock.tone : leaving ? lastShown.current.tone : null) && (lock ? lock.tone : lastShown.current.tone) !== 'busy' && (() => {
-            const tone = (lock ? lock.tone : lastShown.current.tone)!;
-            return (
-              <span key={tone} className={`${styles.scanLockIcon} ${styles[`lockIcon_${tone}`]} ${lock ? '' : styles.scanLockIconOut}`} style={(lock ? spot : lastSpot.current) ? iconBox((lock ? spot : lastSpot.current)!, frame.current) : undefined} aria-hidden="true">
-                {tone === 'ok' ? <Check size={44} strokeWidth={2.75} /> : tone === 'warn' ? <TriangleAlert size={40} /> : <CircleAlert size={42} />}
-              </span>
-            );
-          })()}
+          <div
+            className={`${styles.scanTarget} ${lock ? styles[`lock_${lock.tone}`] : styles.scanLive}`}
+            style={lock && spot ? ringBox(spot, frame.current) : undefined}
+            aria-hidden="true"
+          />
+          {(lock ? lock.tone : leaving ? lastShown.current.tone : null) &&
+            (lock ? lock.tone : lastShown.current.tone) !== 'busy' &&
+            (() => {
+              const tone = (lock ? lock.tone : lastShown.current.tone)!;
+              return (
+                <span
+                  key={tone}
+                  className={`${styles.scanLockIcon} ${styles[`lockIcon_${tone}`]} ${lock ? '' : styles.scanLockIconOut}`}
+                  style={(lock ? spot : lastSpot.current) ? iconBox((lock ? spot : lastSpot.current)!, frame.current) : undefined}
+                  aria-hidden="true"
+                >
+                  {tone === 'ok' ? <Check size={44} strokeWidth={2.75} /> : tone === 'warn' ? <TriangleAlert size={40} /> : <CircleAlert size={42} />}
+                </span>
+              );
+            })()}
         </div>
       )}
-      {(sheetShown || (leaving && lastShown.current.node)) && <div className={`${styles.scanSheet} ${sheetShown ? '' : styles.scanSheetOut}`} style={sheetH ? { height: sheetH } : undefined} role="status" aria-live="polite"><div ref={sheetBody} className={styles.scanSheetBody}><div key={sheetShown ? sheetKey : lastShown.current.key} className={styles.scanSheetFade}>{sheetShown ? sheet : lastShown.current.node}</div></div></div>}
+      {(sheetShown || (leaving && lastShown.current.node)) && (
+        <div className={`${styles.scanSheet} ${sheetShown ? '' : styles.scanSheetOut}`} style={sheetH ? { height: sheetH } : undefined} role="status" aria-live="polite">
+          <div ref={sheetBody} className={styles.scanSheetBody}>
+            <div key={sheetShown ? sheetKey : lastShown.current.key} className={styles.scanSheetFade}>
+              {sheetShown ? sheet : lastShown.current.node}
+            </div>
+          </div>
+        </div>
+      )}
       <footer className={`${styles.scanBottom} ${lock ? styles.scanBottomOff : ''}`} aria-hidden={lock ? true : undefined}>
         <p className={styles.scanHint}>{note ?? 'Point the camera at the QR code.'}</p>
         <div className={styles.scanRow}>
-          <button ref={readout} type="button" className={styles.scanTool} onClick={() => setZoomTo(Math.abs(zoomRef.current - 1) < 0.05 ? 2 : 1)}>1×</button>
-          {caps.torch && <button type="button" className={`${styles.scanLight} ${torch ? styles.scanLightOn : ''}`} onClick={() => void toggleTorch()} aria-pressed={torch} aria-label={torch ? 'Turn the light off' : 'Turn the light on'} title={torch ? 'Light off' : 'Light on'}><Zap size={20} strokeWidth={2.2} fill={torch ? 'currentColor' : 'none'} aria-hidden="true" /></button>}
+          <button ref={readout} type="button" className={styles.scanTool} onClick={() => setZoomTo(Math.abs(zoomRef.current - 1) < 0.05 ? 2 : 1)}>
+            1×
+          </button>
+          {caps.torch && (
+            <button
+              type="button"
+              className={`${styles.scanLight} ${torch ? styles.scanLightOn : ''}`}
+              onClick={() => void toggleTorch()}
+              aria-pressed={torch}
+              aria-label={torch ? 'Turn the light off' : 'Turn the light on'}
+              title={torch ? 'Light off' : 'Light on'}
+            >
+              <Zap size={20} strokeWidth={2.2} fill={torch ? 'currentColor' : 'none'} aria-hidden="true" />
+            </button>
+          )}
           {extra}
         </div>
         {footer}

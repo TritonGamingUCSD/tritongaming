@@ -13,7 +13,13 @@ export const TIERS: Tier[] = ['exec', 'lead', 'officer'];
 export const TIER_RANK: Record<Tier, number> = { exec: 3, lead: 2, officer: 1 };
 export const topTier = (roles: { role: string }[]): Tier | null => TIERS.find((t) => roles.some((r) => r.role === t)) ?? null;
 
-export interface YearMember { user_id: string | null; name: string; title: string | null; tier: Tier; avatar_url: string | null }
+export interface YearMember {
+  user_id: string | null;
+  name: string;
+  title: string | null;
+  tier: Tier;
+  avatar_url: string | null;
+}
 
 const inQuarter = (q: Quarter, today: string) => q.starts_on <= today && today <= q.ends_on;
 
@@ -34,7 +40,14 @@ export async function captureRoster(svc: SupabaseClient, today: string = pacific
   const rows = (ps ?? []).map((p) => {
     const now = topTier(rolesOf.get(p.id as string) ?? [])!;
     const old = before.get(p.id as string);
-    return { quarter_id: q.id, user_id: p.id as string, tier: old && TIER_RANK[old] > TIER_RANK[now] ? old : now, title: (p.org_title as string | null) || null, name: (p.display_name as string | null) || 'Unnamed', last_seen: today };
+    return {
+      quarter_id: q.id,
+      user_id: p.id as string,
+      tier: old && TIER_RANK[old] > TIER_RANK[now] ? old : now,
+      title: (p.org_title as string | null) || null,
+      name: (p.display_name as string | null) || 'Unnamed',
+      last_seen: today,
+    };
   });
   await svc.from('quarter_roster').upsert(rows, { onConflict: 'quarter_id,user_id' });
   return rows.length;
@@ -54,20 +67,32 @@ export async function buildYear(svc: SupabaseClient, startYear: number): Promise
   const order = new Map(sorted.map((q, i) => [q.id, i]));
   const best = new Map<string, { tier: Tier; title: string | null; name: string; at: number }>();
   for (const r of roster ?? []) {
-    if (inactive.has(`${r.user_id}|${r.quarter_id}`)) continue;   // sitting that quarter out
+    if (inactive.has(`${r.user_id}|${r.quarter_id}`)) continue; // sitting that quarter out
     const at = order.get(r.quarter_id as string) ?? 0;
     const cur = best.get(r.user_id as string);
     const tier = r.tier as Tier;
     // Highest tier wins; for the title, the latest active quarter at that tier.
-    if (!cur || TIER_RANK[tier] > TIER_RANK[cur.tier] || (TIER_RANK[tier] === TIER_RANK[cur.tier] && at >= cur.at)) best.set(r.user_id as string, { tier, title: (r.title as string | null) ?? null, name: r.name as string, at });
+    if (!cur || TIER_RANK[tier] > TIER_RANK[cur.tier] || (TIER_RANK[tier] === TIER_RANK[cur.tier] && at >= cur.at))
+      best.set(r.user_id as string, { tier, title: (r.title as string | null) ?? null, name: r.name as string, at });
   }
   const userIds = [...best.keys()];
-  const { data: ps } = userIds.length ? await svc.from('profiles').select('id, display_name, avatar_url, custom_avatar_url').in('id', userIds) : { data: [] as Record<string, unknown>[] };
+  const { data: ps } = userIds.length
+    ? await svc.from('profiles').select('id, display_name, avatar_url, custom_avatar_url').in('id', userIds)
+    : { data: [] as Record<string, unknown>[] };
   const prof = new Map((ps ?? []).map((p) => [p.id as string, p]));
-  return userIds.map((id) => {
-    const b = best.get(id)!; const p = prof.get(id);
-    return { user_id: id, name: (p?.display_name as string | null) || b.name, title: b.title, tier: b.tier, avatar_url: p ? resolveAvatarUrl({ avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null }) : null };
-  }).sort((a, b) => TIER_RANK[b.tier] - TIER_RANK[a.tier] || a.name.localeCompare(b.name));
+  return userIds
+    .map((id) => {
+      const b = best.get(id)!;
+      const p = prof.get(id);
+      return {
+        user_id: id,
+        name: (p?.display_name as string | null) || b.name,
+        title: b.title,
+        tier: b.tier,
+        avatar_url: p ? resolveAvatarUrl({ avatar_url: p.avatar_url as string | null, custom_avatar_url: p.custom_avatar_url as string | null }) : null,
+      };
+    })
+    .sort((a, b) => TIER_RANK[b.tier] - TIER_RANK[a.tier] || a.name.localeCompare(b.name));
 }
 
 // Record a year's list. Names added or changed by hand ("manual") are kept; the rest is rebuilt from the quarters.
@@ -79,7 +104,9 @@ export async function archiveYear(svc: SupabaseClient, startYear: number, actorI
   const { data: kept } = await svc.from('team_year_members').select('user_id').eq('start_year', startYear).eq('manual', true);
   const keep = new Set((kept ?? []).map((k) => k.user_id as string | null).filter((x): x is string => !!x));
   await svc.from('team_year_members').delete().eq('start_year', startYear).eq('manual', false);
-  const rows = built.filter((m) => !m.user_id || !keep.has(m.user_id)).map((m) => ({ start_year: startYear, user_id: m.user_id, name: m.name, title: m.title, tier: m.tier, avatar_url: m.avatar_url, manual: false }));
+  const rows = built
+    .filter((m) => !m.user_id || !keep.has(m.user_id))
+    .map((m) => ({ start_year: startYear, user_id: m.user_id, name: m.name, title: m.title, tier: m.tier, avatar_url: m.avatar_url, manual: false }));
   if (rows.length) await svc.from('team_year_members').insert(rows);
   invalidate('board');
   return rows.length + keep.size;
@@ -113,7 +140,9 @@ export async function alumniCandidates(svc: SupabaseClient, today: string = paci
   const marked = new Set((marks ?? []).map((m) => `${m.user_id}|${m.quarter_id}`));
   const everActive = new Set<string>([...(past ?? []).map((p) => p.user_id as string)]);
   for (const r of roster ?? []) if (!marked.has(`${r.user_id}|${r.quarter_id}`)) everActive.add(r.user_id as string);
-  return (ps ?? []).filter((p) => graduated(p.class_of as number | null, today) && everActive.has(p.id as string)).map((p) => ({ id: p.id as string, name: (p.display_name as string | null) || 'Unnamed', class_of: p.class_of as number }));
+  return (ps ?? [])
+    .filter((p) => graduated(p.class_of as number | null, today) && everActive.has(p.id as string))
+    .map((p) => ({ id: p.id as string, name: (p.display_name as string | null) || 'Unnamed', class_of: p.class_of as number }));
 }
 
 export async function moveToAlumni(svc: SupabaseClient, userIds: string[], actorId: string | null): Promise<number> {
@@ -141,7 +170,11 @@ export async function runTeamSync(svc: SupabaseClient, today: string = pacificDa
   let moved = 0;
   if (await autoAlumniOn(svc)) {
     const ready = await alumniCandidates(svc, today);
-    moved = await moveToAlumni(svc, ready.map((r) => r.id), null);
+    moved = await moveToAlumni(
+      svc,
+      ready.map((r) => r.id),
+      null,
+    );
   }
   return { captured, archived, moved };
 }

@@ -11,7 +11,7 @@ export default function SocialLinksField({
   value,
   onChange,
   label = 'Social Links',
-  hint = "Just your handle, not the full link — optional.",
+  hint = 'Just your handle, not the full link — optional.',
   exclude = [],
 }: {
   value: Record<string, string>;

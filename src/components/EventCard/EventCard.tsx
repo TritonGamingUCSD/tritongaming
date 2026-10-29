@@ -24,21 +24,10 @@ export default function EventCard({ event, compact = false, outlined = false }: 
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={event.flyer_url} alt="" aria-hidden="true" className={styles.imgBackdrop} loading="lazy" />
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={event.flyer_url}
-              alt={event.full_name}
-              className={styles.img}
-              loading="lazy"
-            />
+            <img src={event.flyer_url} alt={event.full_name} className={styles.img} loading="lazy" />
           </>
         ) : (
-          <Image
-            src="/images/what_is_triton_gaming_justinlu.jpg"
-            alt={event.full_name}
-            fill
-            sizes="320px"
-            style={{ objectFit: 'cover' }}
-          />
+          <Image src="/images/what_is_triton_gaming_justinlu.jpg" alt={event.full_name} fill sizes="320px" style={{ objectFit: 'cover' }} />
         )}
       </div>
 
@@ -50,23 +39,17 @@ export default function EventCard({ event, compact = false, outlined = false }: 
           {timeStr}
         </p>
         <p className={styles.location}>{event.location}</p>
-        {event.points_value > 0 && (
-          <span className={styles.pointsBadge}>Earn {event.points_value} pts</span>
-        )}
-        <p className={styles.desc}>
-          {event.content.length > 280 ? `${event.content.slice(0, 280)}…` : event.content}
-        </p>
-        <span className={styles.link} aria-hidden="true">LEARN MORE &gt;</span>
+        {event.points_value > 0 && <span className={styles.pointsBadge}>Earn {event.points_value} pts</span>}
+        <p className={styles.desc}>{event.content.length > 280 ? `${event.content.slice(0, 280)}…` : event.content}</p>
+        <span className={styles.link} aria-hidden="true">
+          LEARN MORE &gt;
+        </span>
       </div>
 
       {/* Stretched link — makes the entire card clickable instead of just
           the "Learn More" text, matching the hover lift/shimmer that
           already reacts to the whole card. */}
-      <Link
-        href={`/events/${event.slug || event._id}`}
-        className={styles.cardLink}
-        aria-label={`Learn more about ${event.full_name}`}
-      />
+      <Link href={`/events/${event.slug || event._id}`} className={styles.cardLink} aria-label={`Learn more about ${event.full_name}`} />
     </article>
   );
 }

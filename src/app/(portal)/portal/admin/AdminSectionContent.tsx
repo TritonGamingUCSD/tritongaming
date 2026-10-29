@@ -45,7 +45,16 @@ const GROUPS: Record<Group, { label: string; icon: ReactNode; views: Tab[] }> = 
   insights: { label: 'Insights', icon: <BarChart3 />, views: ['analytics', 'audit-log'] },
   system: { label: 'System', icon: <Server />, views: ['system', 'short-links', 'email'] },
 };
-const VIEW_LABELS: Record<Tab, string> = { overview: 'Overview', members: 'Member Management', access: 'Access', analytics: 'Analytics', 'audit-log': 'Audit Log', 'short-links': 'Short Links', system: 'System Health', email: 'Email (Test)' };
+const VIEW_LABELS: Record<Tab, string> = {
+  overview: 'Overview',
+  members: 'Member Management',
+  access: 'Access',
+  analytics: 'Analytics',
+  'audit-log': 'Audit Log',
+  'short-links': 'Short Links',
+  system: 'System Health',
+  email: 'Email (Test)',
+};
 const groupOf = (t: Tab): Group => (Object.keys(GROUPS) as Group[]).find((g) => GROUPS[g].views.includes(t)) ?? 'overview';
 
 // Each tab is a real destination now instead of Overview being a junk
@@ -94,7 +103,10 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       try {
         const res = await fetch(`/api/admin/activity?user_id=${activityFor.id}`);
         const json = await res.json();
-        if (!res.ok) { setActivityError(json.error || 'Failed to load activity.'); return; }
+        if (!res.ok) {
+          setActivityError(json.error || 'Failed to load activity.');
+          return;
+        }
         setActivityEntries(json.entries ?? []);
       } catch {
         setActivityError('Network error loading activity.');
@@ -114,77 +126,79 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
         tabs={(Object.keys(GROUPS) as Group[]).filter((g) => GROUPS[g].views.some(viewOk)).map((g) => ({ id: g, label: GROUPS[g].label, icon: GROUPS[g].icon }))}
       />
       {GROUPS[groupOf(tab)].views.filter(viewOk).length > 1 && (
-        <SectionTabs<Tab> variant="segmented" label={`${GROUPS[groupOf(tab)].label} views`} value={tab} onChange={selectTab}
-          tabs={GROUPS[groupOf(tab)].views.filter(viewOk).map((v) => ({ id: v, label: VIEW_LABELS[v] }))} />
+        <SectionTabs<Tab>
+          variant="segmented"
+          label={`${GROUPS[groupOf(tab)].label} views`}
+          value={tab}
+          onChange={selectTab}
+          tabs={GROUPS[groupOf(tab)].views.filter(viewOk).map((v) => ({ id: v, label: VIEW_LABELS[v] }))}
+        />
       )}
 
       {tab === 'overview' && (
         <>
-        <div className={styles.statsGrid}>
-          {stats.map(({ label, value, icon }) => (
-            <div key={label} className={styles.statCard}>
-              <span className={styles.statIcon}>{icon}</span>
-              <div>
-                <div className={styles.statValue}>{value.toLocaleString()}</div>
-                <div className={styles.statLabel}>{label}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {isAdmin && <AdminOverviewPanels />}
-
-        {isAdmin && (
-          <section className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionLabel}>Admins</h2>
-              <span className={styles.sectionHint}>Everyone with the admin role — click a name to see what they&apos;ve done lately</span>
-            </div>
-            {admins.length === 0 ? (
-              <p className={styles.sectionHint}>No one currently holds the admin role.</p>
-            ) : (
-              <div className={styles.table}>
-                <div className={styles.tableHeader}>
-                  <span>Admin</span>
-                  <span>Joined</span>
-                  <span>Activity</span>
+          <div className={styles.statsGrid}>
+            {stats.map(({ label, value, icon }) => (
+              <div key={label} className={styles.statCard}>
+                <span className={styles.statIcon}>{icon}</span>
+                <div>
+                  <div className={styles.statValue}>{value.toLocaleString()}</div>
+                  <div className={styles.statLabel}>{label}</div>
                 </div>
-                {admins.map((admin) => {
-                  const avatarUrl = resolveAvatarUrl(admin);
-                  return (
-                    <div key={admin.id} className={styles.tableRow}>
-                      <span className={styles.adminCell}>
-                        {avatarUrl ? (
-                          <Image src={avatarUrl} alt="" width={28} height={28} className={styles.adminAvatar} unoptimized referrerPolicy="no-referrer" />
-                        ) : (
-                          <span className={styles.adminAvatarFallback}>{(admin.display_name || '?')[0].toUpperCase()}</span>
-                        )}
-                        <span>
-                          {admin.display_name || 'Unnamed'}
-                          {admin.linkedEmails && admin.linkedEmails.length > 0 ? (
-                            <span className={styles.sectionHint}>
-                              {' · '}{admin.linkedEmails.map((e) => e.email).join(' · ')}
-                            </span>
-                          ) : (
-                            admin.email && <span className={styles.sectionHint}> · {admin.email}</span>
-                          )}
-                        </span>
-                      </span>
-                      <span>{new Date(admin.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}</span>
-                      <button
-                        type="button"
-                        className={styles.activityBtn}
-                        onClick={() => setActivityFor({ id: admin.id, title: admin.display_name || 'Unnamed' })}
-                      >
-                        <Activity size={13} strokeWidth={1.5} aria-hidden="true" /> View
-                      </button>
-                    </div>
-                  );
-                })}
               </div>
-            )}
-          </section>
-        )}
+            ))}
+          </div>
+
+          {isAdmin && <AdminOverviewPanels />}
+
+          {isAdmin && (
+            <section className={styles.section}>
+              <div className={styles.sectionHeader}>
+                <h2 className={styles.sectionLabel}>Admins</h2>
+                <span className={styles.sectionHint}>Everyone with the admin role — click a name to see what they&apos;ve done lately</span>
+              </div>
+              {admins.length === 0 ? (
+                <p className={styles.sectionHint}>No one currently holds the admin role.</p>
+              ) : (
+                <div className={styles.table}>
+                  <div className={styles.tableHeader}>
+                    <span>Admin</span>
+                    <span>Joined</span>
+                    <span>Activity</span>
+                  </div>
+                  {admins.map((admin) => {
+                    const avatarUrl = resolveAvatarUrl(admin);
+                    return (
+                      <div key={admin.id} className={styles.tableRow}>
+                        <span className={styles.adminCell}>
+                          {avatarUrl ? (
+                            <Image src={avatarUrl} alt="" width={28} height={28} className={styles.adminAvatar} unoptimized referrerPolicy="no-referrer" />
+                          ) : (
+                            <span className={styles.adminAvatarFallback}>{(admin.display_name || '?')[0].toUpperCase()}</span>
+                          )}
+                          <span>
+                            {admin.display_name || 'Unnamed'}
+                            {admin.linkedEmails && admin.linkedEmails.length > 0 ? (
+                              <span className={styles.sectionHint}>
+                                {' · '}
+                                {admin.linkedEmails.map((e) => e.email).join(' · ')}
+                              </span>
+                            ) : (
+                              admin.email && <span className={styles.sectionHint}> · {admin.email}</span>
+                            )}
+                          </span>
+                        </span>
+                        <span>{new Date(admin.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}</span>
+                        <button type="button" className={styles.activityBtn} onClick={() => setActivityFor({ id: admin.id, title: admin.display_name || 'Unnamed' })}>
+                          <Activity size={13} strokeWidth={1.5} aria-hidden="true" /> View
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
         </>
       )}
 
@@ -205,17 +219,16 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
             <h2 className={styles.sectionLabel}>Member Management</h2>
             <span className={styles.sectionHint}>Search any user and change their role instantly</span>
             <div className={styles.sectionActions}>
-              <Button size="sm" variant="secondary" onClick={() => setPasteOpen(true)}><MailPlus size={14} aria-hidden="true" /> Give A Role By Email</Button>
-              {roleHistoryEntries && (
-                <IconButton kind="history" label="View role change history" onClick={() => setHistoryOpen(true)} />
-              )}
+              <Button size="sm" variant="secondary" onClick={() => setPasteOpen(true)}>
+                <MailPlus size={14} aria-hidden="true" /> Give A Role By Email
+              </Button>
+              {roleHistoryEntries && <IconButton kind="history" label="View role change history" onClick={() => setHistoryOpen(true)} />}
             </div>
           </div>
           <RoleManager users={allUsers} divisions={divisions} />
           {pasteOpen && <PasteEmailsDialog divisions={divisions} onClose={() => setPasteOpen(false)} />}
         </section>
       )}
-
 
       {tab === 'analytics' && <StatsClient data={statsData} />}
 
@@ -264,9 +277,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
                       <span className={styles.activityAction}>{entry.action}</span>
                       <span className={styles.sectionHint}> {entry.detail}</span>
                     </div>
-                    <span className={styles.sectionHint}>
-                      {formatPacificDateTime(entry.occurred_at)}
-                    </span>
+                    <span className={styles.sectionHint}>{formatPacificDateTime(entry.occurred_at)}</span>
                   </li>
                 ))}
               </ul>

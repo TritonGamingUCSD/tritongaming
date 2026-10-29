@@ -133,13 +133,13 @@ export interface SocialPlatform {
 }
 
 export const SOCIAL_PLATFORMS: SocialPlatform[] = [
-  { key: 'discord',   label: 'Discord', logo: '/logos/discord.svg', placeholder: 'username or name#1234' },
+  { key: 'discord', label: 'Discord', logo: '/logos/discord.svg', placeholder: 'username or name#1234' },
   { key: 'instagram', label: 'Instagram', logo: '/logos/instagram.svg', placeholder: 'yourhandle', urlPrefix: 'https://instagram.com/' },
-  { key: 'twitter',   label: 'X (Twitter)', logo: '/logos/x.svg', placeholder: 'yourhandle', urlPrefix: 'https://x.com/' },
-  { key: 'tiktok',    label: 'TikTok', logo: '/logos/tiktok.svg', placeholder: 'yourhandle', urlPrefix: 'https://tiktok.com/@' },
-  { key: 'twitch',    label: 'Twitch', logo: '/logos/twitch.svg', placeholder: 'yourhandle', urlPrefix: 'https://twitch.tv/' },
-  { key: 'youtube',   label: 'YouTube', logo: '/logos/youtube.svg', placeholder: 'yourhandle', urlPrefix: 'https://youtube.com/@' },
-  { key: 'linkedin',  label: 'LinkedIn', logo: '/logos/linkedin.svg', placeholder: 'yourhandle', urlPrefix: 'https://linkedin.com/in/' },
+  { key: 'twitter', label: 'X (Twitter)', logo: '/logos/x.svg', placeholder: 'yourhandle', urlPrefix: 'https://x.com/' },
+  { key: 'tiktok', label: 'TikTok', logo: '/logos/tiktok.svg', placeholder: 'yourhandle', urlPrefix: 'https://tiktok.com/@' },
+  { key: 'twitch', label: 'Twitch', logo: '/logos/twitch.svg', placeholder: 'yourhandle', urlPrefix: 'https://twitch.tv/' },
+  { key: 'youtube', label: 'YouTube', logo: '/logos/youtube.svg', placeholder: 'yourhandle', urlPrefix: 'https://youtube.com/@' },
+  { key: 'linkedin', label: 'LinkedIn', logo: '/logos/linkedin.svg', placeholder: 'yourhandle', urlPrefix: 'https://linkedin.com/in/' },
 ];
 
 // null means "not a clickable link" (Discord) — render as plain text/icon.
@@ -175,7 +175,10 @@ export function normalizePortfolioUrl(raw: string): string | null {
 }
 
 // A game account on someone's officer card (Steam, Riot ID, Genshin UID…), click-to-copy.
-export interface GameId { game: string; id: string }
+export interface GameId {
+  game: string;
+  id: string;
+}
 export const MAX_GAME_IDS = 10;
 export const GAME_ID_PRESETS: { game: string; placeholder: string }[] = [
   { game: 'Steam', placeholder: 'Steam friend code or profile name' },

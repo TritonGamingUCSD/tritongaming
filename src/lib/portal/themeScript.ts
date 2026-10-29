@@ -10,7 +10,11 @@ const THEME_BODY = `try{var K='${THEME_KEY}',t=null;try{t=localStorage.getItem(K
 
 export function saveTheme(mode: 'light' | 'dark') {
   document.documentElement.setAttribute('data-pp-theme', mode);
-  try { localStorage.setItem(THEME_KEY, mode); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(THEME_KEY, mode);
+  } catch {
+    /* ignore */
+  }
   document.cookie = `${THEME_KEY}=${mode};path=/;max-age=${ONE_YEAR};samesite=lax`;
 }
 
@@ -22,7 +26,14 @@ export const ROOT_THEME_SCRIPT = `(function(){if(/^\\/(portal|login|auth)(\\/|$)
 export function applyPortalTheme() {
   document.documentElement.setAttribute('data-area', 'portal');
   let saved: string | null = null;
-  try { saved = localStorage.getItem(THEME_KEY); } catch { /* ignore */ }
-  if (saved !== 'light' && saved !== 'dark') { const m = document.cookie.match(new RegExp(`(?:^|; )${THEME_KEY}=(light|dark)`)); saved = m ? m[1] : null; }
+  try {
+    saved = localStorage.getItem(THEME_KEY);
+  } catch {
+    /* ignore */
+  }
+  if (saved !== 'light' && saved !== 'dark') {
+    const m = document.cookie.match(new RegExp(`(?:^|; )${THEME_KEY}=(light|dark)`));
+    saved = m ? m[1] : null;
+  }
   saveTheme(saved === 'light' || saved === 'dark' ? saved : window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
 }

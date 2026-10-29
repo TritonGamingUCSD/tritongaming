@@ -12,7 +12,10 @@ export async function PUT(request: Request) {
   if (auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));
   const quarterId = String(b.quarter_id ?? '');
-  const ids: string[] = (Array.isArray(b.user_ids) ? b.user_ids : [b.user_id]).map(String).filter((x: string) => UUID.test(x)).slice(0, 300);
+  const ids: string[] = (Array.isArray(b.user_ids) ? b.user_ids : [b.user_id])
+    .map(String)
+    .filter((x: string) => UUID.test(x))
+    .slice(0, 300);
   if (!UUID.test(quarterId) || ids.length === 0 || typeof b.inactive !== 'boolean') return NextResponse.json({ error: 'Pick a quarter and who to change.' }, { status: 400 });
   const quarters = await loadQuarters(auth.svc);
   const q = markableQuarters(quarters, pacificDayKey()).find((x) => x.id === quarterId);
@@ -22,9 +25,19 @@ export async function PUT(request: Request) {
   for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), { role: g.role as string }]);
   const okIds = ids.filter((id) => canBeInactive(rolesOf.get(id) ?? []));
   if (b.inactive && okIds.length !== ids.length) return NextResponse.json({ error: 'Only officers and leads can be inactive (not exec or admins).' }, { status: 400 });
-  if (b.inactive) await auth.svc.from('officer_quarter_status').upsert(okIds.map((user_id) => ({ user_id, quarter_id: quarterId, set_by: auth.user.id })), { onConflict: 'user_id,quarter_id' });
+  if (b.inactive)
+    await auth.svc.from('officer_quarter_status').upsert(
+      okIds.map((user_id) => ({ user_id, quarter_id: quarterId, set_by: auth.user.id })),
+      { onConflict: 'user_id,quarter_id' },
+    );
   else await auth.svc.from('officer_quarter_status').delete().eq('quarter_id', quarterId).in('user_id', ids);
-  await logAudit(auth.svc, { actorId: auth.user.id, action: b.inactive ? 'inactive' : 'active', entityType: 'quarter status', entityId: quarterId, summary: `${b.inactive ? 'Marked' : 'Brought back'} ${ids.length} ${ids.length === 1 ? 'person' : 'people'} ${b.inactive ? 'inactive for' : 'to active for'} ${quarterName(q)}` });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: b.inactive ? 'inactive' : 'active',
+    entityType: 'quarter status',
+    entityId: quarterId,
+    summary: `${b.inactive ? 'Marked' : 'Brought back'} ${ids.length} ${ids.length === 1 ? 'person' : 'people'} ${b.inactive ? 'inactive for' : 'to active for'} ${quarterName(q)}`,
+  });
   const sync = await syncInactive(auth.svc);
   return NextResponse.json({ ok: true, ...sync });
 }

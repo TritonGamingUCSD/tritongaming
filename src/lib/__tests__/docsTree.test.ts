@@ -1,16 +1,43 @@
 import { diffDocs } from '../docs/docDiff';
 import { describe, expect, it } from 'vitest';
-import { ageLabel, ancestors, buildSections, canMoveUnder, categoryOf, cleanTags, descendantIds, docSummary, highlightParts, readingOrder, reorder, searchDocs } from '@/lib/docs/docsTree';
+import {
+  ageLabel,
+  ancestors,
+  buildSections,
+  canMoveUnder,
+  categoryOf,
+  cleanTags,
+  descendantIds,
+  docSummary,
+  highlightParts,
+  readingOrder,
+  reorder,
+  searchDocs,
+} from '@/lib/docs/docsTree';
 
-const d = (id: string, parent: string | null, extra: Partial<{ title: string; category_id: string | null; order_index: number; content: string; tags: string[] }> = {}) =>
-  ({ id, title: extra.title ?? id, parent_id: parent, category_id: extra.category_id ?? null, order_index: extra.order_index ?? 0, content: extra.content ?? '', tags: extra.tags ?? [] });
-const cats = [{ id: 'c1', name: 'Events', order_index: 0 }, { id: 'c2', name: 'Finance', order_index: 1 }];
+const d = (id: string, parent: string | null, extra: Partial<{ title: string; category_id: string | null; order_index: number; content: string; tags: string[] }> = {}) => ({
+  id,
+  title: extra.title ?? id,
+  parent_id: parent,
+  category_id: extra.category_id ?? null,
+  order_index: extra.order_index ?? 0,
+  content: extra.content ?? '',
+  tags: extra.tags ?? [],
+});
+const cats = [
+  { id: 'c1', name: 'Events', order_index: 0 },
+  { id: 'c2', name: 'Finance', order_index: 1 },
+];
 
 describe('tree', () => {
   const docs = [d('a', null, { category_id: 'c1' }), d('a1', 'a'), d('a1x', 'a1'), d('a2', 'a', { order_index: 1 }), d('b', null, { category_id: 'c2' }), d('z', null)];
   it('nests pages to any depth and groups by category', () => {
     const s = buildSections(docs, cats);
-    expect(s.map((x) => [x.name, x.count])).toEqual([['Events', 4], ['Finance', 1], ['Uncategorized', 1]]);
+    expect(s.map((x) => [x.name, x.count])).toEqual([
+      ['Events', 4],
+      ['Finance', 1],
+      ['Uncategorized', 1],
+    ]);
     expect(s[0].nodes[0].children[0].children[0].doc.id).toBe('a1x');
     expect(s[0].nodes[0].children[0].children[0].depth).toBe(2);
   });
@@ -34,8 +61,16 @@ describe('tree', () => {
 describe('reorder', () => {
   const sib = [d('x', null, { order_index: 0 }), d('y', null, { order_index: 1 }), d('w', null, { order_index: 2 })];
   it('puts a page before another, or last', () => {
-    expect(reorder(sib, 'w', 'x')).toEqual([{ id: 'w', order_index: 0 }, { id: 'x', order_index: 1 }, { id: 'y', order_index: 2 }]);
-    expect(reorder(sib, 'x', null)).toEqual([{ id: 'y', order_index: 0 }, { id: 'w', order_index: 1 }, { id: 'x', order_index: 2 }]);
+    expect(reorder(sib, 'w', 'x')).toEqual([
+      { id: 'w', order_index: 0 },
+      { id: 'x', order_index: 1 },
+      { id: 'y', order_index: 2 },
+    ]);
+    expect(reorder(sib, 'x', null)).toEqual([
+      { id: 'y', order_index: 0 },
+      { id: 'w', order_index: 1 },
+      { id: 'x', order_index: 2 },
+    ]);
   });
   it('only returns pages whose position changed', () => {
     expect(reorder(sib, 'w', null)).toEqual([]);
@@ -60,7 +95,11 @@ describe('search', () => {
     expect(searchDocs(docs, 'events')[0].doc.id).toBe('1');
   });
   it('splits text for highlighting', () => {
-    expect(highlightParts('A big Event day', 'event')).toEqual([{ text: 'A big ', hit: false }, { text: 'Event', hit: true }, { text: ' day', hit: false }]);
+    expect(highlightParts('A big Event day', 'event')).toEqual([
+      { text: 'A big ', hit: false },
+      { text: 'Event', hit: true },
+      { text: ' day', hit: false },
+    ]);
     expect(highlightParts('plain', '')).toEqual([{ text: 'plain', hit: false }]);
   });
 });
@@ -87,11 +126,20 @@ describe('version diff', () => {
     expect(b[1]).toEqual({ kind: 'same', text: 'Same line' });
   });
   it('shows whole added and removed lines as blocks', () => {
-    expect(diffDocs('One\nTwo', 'One\nTwo\nThree')).toEqual([{ kind: 'same', text: 'One\nTwo' }, { kind: 'add', text: 'Three' }]);
-    expect(diffDocs('One\nTwo', 'One')).toEqual([{ kind: 'same', text: 'One' }, { kind: 'del', text: 'Two' }]);
+    expect(diffDocs('One\nTwo', 'One\nTwo\nThree')).toEqual([
+      { kind: 'same', text: 'One\nTwo' },
+      { kind: 'add', text: 'Three' },
+    ]);
+    expect(diffDocs('One\nTwo', 'One')).toEqual([
+      { kind: 'same', text: 'One' },
+      { kind: 'del', text: 'Two' },
+    ]);
   });
   it('treats a rewritten line as one block out and one in', () => {
-    expect(diffDocs('Totally different words here', 'Nothing alike at all')).toEqual([{ kind: 'del', text: 'Totally different words here' }, { kind: 'add', text: 'Nothing alike at all' }]);
+    expect(diffDocs('Totally different words here', 'Nothing alike at all')).toEqual([
+      { kind: 'del', text: 'Totally different words here' },
+      { kind: 'add', text: 'Nothing alike at all' },
+    ]);
   });
 });
 

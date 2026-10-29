@@ -10,8 +10,8 @@ import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, confirmEv
 import { offerToScanHandlers } from '@/lib/portal/scanHandlers';
 import styles from './UniversalScanner.module.css';
 
-const MY_MEETING = '/portal/meetings?tab=mine';   // where a checked-in meeting's question and doc are
-const AUTO_MS = 2200;   // a plain success shows this long, then the camera is ready for the next one (a tap on the card does it at once)
+const MY_MEETING = '/portal/meetings?tab=mine'; // where a checked-in meeting's question and doc are
+const AUTO_MS = 2200; // a plain success shows this long, then the camera is ready for the next one (a tap on the card does it at once)
 
 // A success with nothing the person needs to read or act on: a ticket checked in with no form to remind about, a reward handed over. Everything else (already used, an error, a choice,
 // a form to tell them about, a reward to confirm) waits for the person.
@@ -35,15 +35,29 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   const router = useRouter();
   const [state, setState] = useState<State>({ kind: 'scanning' });
   const [problem, setProblem] = useState('');
-  const [said, setSaid] = useState<{ text: string; ok: boolean } | null>(null);   // what a page that took the scan (a device on the event day) says about it
+  const [said, setSaid] = useState<{ text: string; ok: boolean } | null>(null); // what a page that took the scan (a device on the event day) says about it
   const [busy, setBusy] = useState(false);
-  const [slow, setSlow] = useState(false);   // working for a while: say so, so a slow connection never looks like a frozen screen
-  const [typing, setTyping] = useState(false);   // the six-digit box is tucked away until it is wanted
+  const [slow, setSlow] = useState(false); // working for a while: say so, so a slow connection never looks like a frozen screen
+  const [typing, setTyping] = useState(false); // the six-digit box is tucked away until it is wanted
   const goTimer = useRef<number | undefined>(undefined);
   const autoTimer = useRef<number | undefined>(undefined);
-  useEffect(() => () => { window.clearTimeout(goTimer.current); window.clearTimeout(autoTimer.current); }, []);   // closing in the moment before a page opens cancels the move
-  useEffect(() => { if (!said) return; const id = window.setTimeout(() => setSaid(null), 4000); return () => window.clearTimeout(id); }, [said]);
-  useEffect(() => { if (!problem) return; const id = window.setTimeout(() => setProblem(''), 5000); return () => window.clearTimeout(id); }, [problem]);
+  useEffect(
+    () => () => {
+      window.clearTimeout(goTimer.current);
+      window.clearTimeout(autoTimer.current);
+    },
+    [],
+  ); // closing in the moment before a page opens cancels the move
+  useEffect(() => {
+    if (!said) return;
+    const id = window.setTimeout(() => setSaid(null), 4000);
+    return () => window.clearTimeout(id);
+  }, [said]);
+  useEffect(() => {
+    if (!problem) return;
+    const id = window.setTimeout(() => setProblem(''), 5000);
+    return () => window.clearTimeout(id);
+  }, [problem]);
 
   useEffect(() => {
     setSlow(false);
@@ -60,9 +74,18 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       const siteHost = /(^|\.)tritongaming\.org$/i.test(u.hostname);
       if (u.origin !== window.location.origin && !siteHost) return null;
       const ev = u.pathname.match(/^\/(?:portal\/)?in\/([^/]+)\/?$/);
-      if (ev) return { href: `/portal/in/${ev[1]}`, title: 'Checking You In To The Event', heading: 'Event check-in', text: 'Opening the event’s check-in, which checks you in and shows the result.' };
-      if (u.origin === window.location.origin && (u.pathname === '/portal' || u.pathname.startsWith('/portal/'))) return { href: `${u.pathname}${u.search}`, title: 'Opening The Page', heading: 'Portal page', text: 'Taking you there now.' };
-    } catch { /* not a link */ }
+      if (ev)
+        return {
+          href: `/portal/in/${ev[1]}`,
+          title: 'Checking You In To The Event',
+          heading: 'Event check-in',
+          text: 'Opening the event’s check-in, which checks you in and shows the result.',
+        };
+      if (u.origin === window.location.origin && (u.pathname === '/portal' || u.pathname.startsWith('/portal/')))
+        return { href: `${u.pathname}${u.search}`, title: 'Opening The Page', heading: 'Portal page', text: 'Taking you there now.' };
+    } catch {
+      /* not a link */
+    }
     return null;
   };
 
@@ -73,7 +96,8 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   async function finish(p: Promise<Outcome | null>) {
     const outcome = await p;
     if (!outcome) return;
-    if (outcome.kind === 'trivia') {   // a Trivia game's code was typed: the person is in it, so open it
+    if (outcome.kind === 'trivia') {
+      // a Trivia game's code was typed: the person is in it, so open it
       window.clearTimeout(goTimer.current);
       setState({ kind: 'opening', href: `/portal/trivia/play/${outcome.code}`, title: 'Joining The Game', heading: 'Trivia', text: 'Taking you into the game.' });
       goTimer.current = window.setTimeout(() => go(`/portal/trivia/play/${outcome.code}`), 250);
@@ -86,13 +110,16 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       window.dispatchEvent(new Event('tg:meetings-changed'));
       // The meeting's question and doc are on My Meetings, under "You're checked in": no prompt, the ring goes green and the page opens by itself.
       window.clearTimeout(goTimer.current);
-      goTimer.current = window.setTimeout(() => go(MY_MEETING), 450);   // just long enough to see the green ring and check
+      goTimer.current = window.setTimeout(() => go(MY_MEETING), 450); // just long enough to see the green ring and check
     }
   }
 
   function onScan(text: string): boolean {
     const t = text.trim();
-    if (!TGCODE.test(t) && !linkTarget(t) && offerToScanHandlers(t, (message, ok) => setSaid({ text: message, ok }))) { setProblem(''); return false; }   // a page that is open may take it (a device on the event day)
+    if (!TGCODE.test(t) && !linkTarget(t) && offerToScanHandlers(t, (message, ok) => setSaid({ text: message, ok }))) {
+      setProblem('');
+      return false;
+    } // a page that is open may take it (a device on the event day)
     const ring = t.match(TGCODE);
     if (ring) {
       setProblem('');
@@ -101,7 +128,12 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       return true;
     }
     const target = linkTarget(t);
-    if (target) { setProblem(''); setState({ kind: 'opening', ...target }); goTimer.current = window.setTimeout(() => go(target.href), 150); return true; }   // no pause to read: the sheet stays up while the page loads
+    if (target) {
+      setProblem('');
+      setState({ kind: 'opening', ...target });
+      goTimer.current = window.setTimeout(() => go(target.href), 150);
+      return true;
+    } // no pause to read: the sheet stays up while the page loads
     setProblem('That isn’t a TGcode or a portal QR. Try another.');
     return false;
   }
@@ -113,56 +145,101 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     setBusy(false);
   }
 
-  const rescan = () => { window.clearTimeout(autoTimer.current); setState({ kind: 'scanning' }); };
+  const rescan = () => {
+    window.clearTimeout(autoTimer.current);
+    setState({ kind: 'scanning' });
+  };
 
   // The camera stays on screen the whole time: what a scan did shows on its ring, and the result slides up over the frozen picture.
   let lock: ScanLock | null = null;
   let sheet: ReactNode = null;
   if (state.kind === 'working') {
     lock = { tone: 'busy' };
-    sheet = <div className={styles.result}><Loader2 size={30} className={styles.spin} aria-hidden="true" /><strong>{state.label}</strong>{slow && <span className={styles.slow}>The connection is slow. Still trying…</span>}</div>;
+    sheet = (
+      <div className={styles.result}>
+        <Loader2 size={30} className={styles.spin} aria-hidden="true" />
+        <strong>{state.label}</strong>
+        {slow && <span className={styles.slow}>The connection is slow. Still trying…</span>}
+      </div>
+    );
   } else if (state.kind === 'opening') {
     // No extra tap: the page it points at opens by itself, after a moment to read what is happening.
     lock = { tone: 'busy' };
-    sheet = <div className={styles.result}><Loader2 size={30} className={styles.spin} aria-hidden="true" /><strong>{state.heading}</strong><span>{state.text}</span>{slow && <span className={styles.slow}>The connection is slow. Still trying…</span>}</div>;
+    sheet = (
+      <div className={styles.result}>
+        <Loader2 size={30} className={styles.spin} aria-hidden="true" />
+        <strong>{state.heading}</strong>
+        <span>{state.text}</span>
+        {slow && <span className={styles.slow}>The connection is slow. Still trying…</span>}
+      </div>
+    );
   } else if (state.kind === 'result') {
     const o = state.outcome;
     const auto = clean(o);
     const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'reward' || o.kind === 'choose' || o.kind === 'confirmEvent';
-    lock = { tone: o.kind === 'error' ? 'bad' : o.kind === 'choose' || o.kind === 'confirmEvent' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already) ? 'warn' : 'ok' };
-    sheet = o.kind === 'meeting' ? (
-      // The page it moves to opens by itself; until it has, this says so (a slow connection can take a while), with no button to press.
-      <div className={styles.result}>
-        <strong>{o.already ? 'You’re already checked in' : 'You’re checked in'}</strong>
-        {o.title && <span>{o.title}</span>}
-        <span className={styles.moving}><Loader2 size={15} className={styles.spin} aria-hidden="true" /> Opening My Meetings…{slow && ' (slow connection)'}</span>
-        {slow && <a className={styles.openNow} href={MY_MEETING}>Open it now</a>}
-      </div>
-    ) : (
-      // A plain success carries itself away: a thin bar runs down, then the camera is ready for the next code; tapping the card does it at once.
-      <div className={auto ? styles.autoCard : undefined} onClick={auto ? rescan : undefined} role={auto ? 'button' : undefined} aria-label={auto ? 'Scan the next code' : undefined}>
-        {auto && <span className={styles.autoBar} style={{ animationDuration: `${AUTO_MS}ms` }} aria-hidden="true" />}
-        <CheckInOutcome
-          bare
-          noButton={auto}
-          outcome={o}
-          busy={busy}
-          doneLabel={again ? 'Scan Next' : 'Done'}
-          onDone={() => (again ? rescan() : onClose())}
-          onChoose={async (which) => { if (o.kind !== 'choose') return; setBusy(true); await finish(resolveChoice(o.code, which)); setBusy(false); }}
-          onConfirmEvent={async () => { if (o.kind !== 'confirmEvent') return; setBusy(true); await finish(confirmEventCheckIn(o.redo)); setBusy(false); }}
-          onConfirmReward={async () => {
-            if (o.kind !== 'reward') return;
-            setBusy(true);
-            const done = await confirmReward(o.id, o.title, o.member);
-            window.clearTimeout(autoTimer.current);
-            setState({ kind: 'result', outcome: done });
-            if (clean(done)) autoTimer.current = window.setTimeout(() => setState({ kind: 'scanning' }), AUTO_MS);
-            setBusy(false);
-          }}
-        />
-      </div>
-    );
+    lock = {
+      tone:
+        o.kind === 'error'
+          ? 'bad'
+          : o.kind === 'choose' || o.kind === 'confirmEvent' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already)
+            ? 'warn'
+            : 'ok',
+    };
+    sheet =
+      o.kind === 'meeting' ? (
+        // The page it moves to opens by itself; until it has, this says so (a slow connection can take a while), with no button to press.
+        <div className={styles.result}>
+          <strong>{o.already ? 'You’re already checked in' : 'You’re checked in'}</strong>
+          {o.title && <span>{o.title}</span>}
+          <span className={styles.moving}>
+            <Loader2 size={15} className={styles.spin} aria-hidden="true" /> Opening My Meetings…{slow && ' (slow connection)'}
+          </span>
+          {slow && (
+            <a className={styles.openNow} href={MY_MEETING}>
+              Open it now
+            </a>
+          )}
+        </div>
+      ) : (
+        // A plain success carries itself away: a thin bar runs down, then the camera is ready for the next code; tapping the card does it at once.
+        <div
+          className={auto ? styles.autoCard : undefined}
+          onClick={auto ? rescan : undefined}
+          role={auto ? 'button' : undefined}
+          aria-label={auto ? 'Scan the next code' : undefined}
+        >
+          {auto && <span className={styles.autoBar} style={{ animationDuration: `${AUTO_MS}ms` }} aria-hidden="true" />}
+          <CheckInOutcome
+            bare
+            noButton={auto}
+            outcome={o}
+            busy={busy}
+            doneLabel={again ? 'Scan Next' : 'Done'}
+            onDone={() => (again ? rescan() : onClose())}
+            onChoose={async (which) => {
+              if (o.kind !== 'choose') return;
+              setBusy(true);
+              await finish(resolveChoice(o.code, which));
+              setBusy(false);
+            }}
+            onConfirmEvent={async () => {
+              if (o.kind !== 'confirmEvent') return;
+              setBusy(true);
+              await finish(confirmEventCheckIn(o.redo));
+              setBusy(false);
+            }}
+            onConfirmReward={async () => {
+              if (o.kind !== 'reward') return;
+              setBusy(true);
+              const done = await confirmReward(o.id, o.title, o.member);
+              window.clearTimeout(autoTimer.current);
+              setState({ kind: 'result', outcome: done });
+              if (clean(done)) autoTimer.current = window.setTimeout(() => setState({ kind: 'scanning' }), AUTO_MS);
+              setBusy(false);
+            }}
+          />
+        </div>
+      );
   }
   return (
     <>
@@ -174,22 +251,36 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         lock={lock}
         sheet={sheet}
         sheetKey={state.kind === 'result' ? `result-${state.outcome.kind}` : state.kind}
-        extra={typing ? null : <button type="button" className={styles.typeLink} onClick={() => setTyping(true)}><Keyboard size={16} aria-hidden="true" /> Type a code</button>}
-        footer={typing ? (
-          <div className={styles.codeBar}>
-            <span>{staff ? 'The 6-digit code (meeting, ticket or Trivia game)' : 'The 6-digit code from the screen (meeting or Trivia game)'}</span>
-            <div className={styles.codeRow}>
-              <CodeEntry dark autoFocus onSubmit={(c) => void onCode(c)} busy={busy} />
-              <button type="button" className={styles.codeHide} onClick={() => setTyping(false)} aria-label="Back to the camera"><X size={18} aria-hidden="true" /></button>
+        extra={
+          typing ? null : (
+            <button type="button" className={styles.typeLink} onClick={() => setTyping(true)}>
+              <Keyboard size={16} aria-hidden="true" /> Type a code
+            </button>
+          )
+        }
+        footer={
+          typing ? (
+            <div className={styles.codeBar}>
+              <span>{staff ? 'The 6-digit code (meeting, ticket or Trivia game)' : 'The 6-digit code from the screen (meeting or Trivia game)'}</span>
+              <div className={styles.codeRow}>
+                <CodeEntry dark autoFocus onSubmit={(c) => void onCode(c)} busy={busy} />
+                <button type="button" className={styles.codeHide} onClick={() => setTyping(false)} aria-label="Back to the camera">
+                  <X size={18} aria-hidden="true" />
+                </button>
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null
+        }
       />
       {said && (
-        <div className={styles.toast} role="status">{said.ok ? <Check size={16} aria-hidden="true" /> : <CircleAlert size={16} aria-hidden="true" />} {said.text}</div>
+        <div className={styles.toast} role="status">
+          {said.ok ? <Check size={16} aria-hidden="true" /> : <CircleAlert size={16} aria-hidden="true" />} {said.text}
+        </div>
       )}
       {problem && (
-        <div className={styles.toast} role="status"><CircleAlert size={16} aria-hidden="true" /> {problem}</div>
+        <div className={styles.toast} role="status">
+          <CircleAlert size={16} aria-hidden="true" /> {problem}
+        </div>
       )}
     </>
   );

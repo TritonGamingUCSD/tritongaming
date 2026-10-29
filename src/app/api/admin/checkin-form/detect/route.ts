@@ -13,16 +13,17 @@ import { strictUser } from '@/lib/supabase/localAuth';
 // is ever submitted to it.
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: roles } = await supabase
-    .from('user_roles').select('role, division_id').eq('user_id', user.id);
+  const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   if (!hasCapability(roles ?? [], 'manage_events')) {
     return NextResponse.json({ error: 'Event management access required' }, { status: 403 });
   }
 
-  const { form_url } = await request.json() as { form_url?: string };
+  const { form_url } = (await request.json()) as { form_url?: string };
   if (!form_url?.trim()) return NextResponse.json({ error: 'Missing form_url' }, { status: 400 });
 
   let html: string;
@@ -74,7 +75,10 @@ function extractBalancedJson(text: string, startIdx: number): string | null {
       else if (c === '"') inString = false;
       continue;
     }
-    if (c === '"') { inString = true; continue; }
+    if (c === '"') {
+      inString = true;
+      continue;
+    }
     if (c === '[') depth++;
     else if (c === ']') {
       depth--;
@@ -108,9 +112,7 @@ function parseQuestions(data: unknown): DetectedQuestion[] {
         const entryId = entryBlock?.[0];
         if (!entryBlock || entryId == null || !title) return null;
         const rawOptions = entryBlock[1] as unknown[][] | null;
-        const options = rawOptions
-          ? rawOptions.map((o) => o[0] as string).filter((t) => t && t.trim())
-          : null;
+        const options = rawOptions ? rawOptions.map((o) => o[0] as string).filter((t) => t && t.trim()) : null;
         return { title, entryId: String(entryId), options: options && options.length > 0 ? options : null };
       })
       .filter((q): q is DetectedQuestion => q !== null);

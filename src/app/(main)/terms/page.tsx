@@ -17,8 +17,8 @@ export default function TermsPage() {
   return (
     <LegalPage label="The rules" title="Terms of service" sub="Please read these before using the site and portal." updated="October 6, 2026">
       <p>
-        These terms cover your use of the Triton Gaming website and member portal (the &ldquo;site&rdquo;). Triton Gaming is a Gaming Org at UC San Diego and is not affiliated with or endorsed by the University of California.
-        By using the site you agree to these terms.
+        These terms cover your use of the Triton Gaming website and member portal (the &ldquo;site&rdquo;). Triton Gaming is a Gaming Org at UC San Diego and is not affiliated with
+        or endorsed by the University of California. By using the site you agree to these terms.
       </p>
 
       <h2>Your account</h2>
@@ -50,21 +50,26 @@ export default function TermsPage() {
 
       <h2>Your content</h2>
       <p>
-        You keep ownership of what you submit, such as profile details, photos and messages. You give Triton Gaming permission to store and display it as needed to run the site and, where you choose to make it public (for example on a team card),
-        to show it there. You can remove it at any time in the portal or by asking us.
+        You keep ownership of what you submit, such as profile details, photos and messages. You give Triton Gaming permission to store and display it as needed to run the site
+        and, where you choose to make it public (for example on a team card), to show it there. You can remove it at any time in the portal or by asking us.
       </p>
 
       <h2>Our content</h2>
-      <p>The Triton Gaming name, logos, designs and site content belong to Triton Gaming or the people who made them. Do not copy or reuse them without permission, except for normal sharing of links to the site.</p>
+      <p>
+        The Triton Gaming name, logos, designs and site content belong to Triton Gaming or the people who made them. Do not copy or reuse them without permission, except for normal
+        sharing of links to the site.
+      </p>
 
       <h2>Disclaimers</h2>
       <p>
-        The site is provided &ldquo;as is&rdquo;, without promises that it will always be available or error free. Attending events and meeting others is at your own risk, and you are responsible for your own conduct and belongings.
+        The site is provided &ldquo;as is&rdquo;, without promises that it will always be available or error free. Attending events and meeting others is at your own risk, and you
+        are responsible for your own conduct and belongings.
       </p>
 
       <h2>Limit of liability</h2>
       <p>
-        To the extent the law allows, Triton Gaming and its officers and volunteers are not liable for indirect or consequential losses arising from your use of the site or events. Nothing here limits rights that cannot be limited by law.
+        To the extent the law allows, Triton Gaming and its officers and volunteers are not liable for indirect or consequential losses arising from your use of the site or events.
+        Nothing here limits rights that cannot be limited by law.
       </p>
 
       <h2>Ending your use</h2>
@@ -74,7 +79,9 @@ export default function TermsPage() {
       <p>We may update these terms. The date at the top shows the latest version, and continuing to use the site after a change means you accept it.</p>
 
       <h2>Contact</h2>
-      <p>Questions about these terms? Email <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.</p>
+      <p>
+        Questions about these terms? Email <a href={`mailto:${CONTACT}`}>{CONTACT}</a>.
+      </p>
     </LegalPage>
   );
 }

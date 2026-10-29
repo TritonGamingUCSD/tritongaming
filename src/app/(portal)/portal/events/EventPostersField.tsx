@@ -55,13 +55,27 @@ export default function EventPostersField({
             people={people}
             credit={credits[u]}
             onCredit={(patch) => setCredit(u, patch)}
-            grip={<span className={styles.grip} {...dragHandleProps(i)} aria-label={`Drag to reorder poster ${i + 1}`}><GripVertical size={16} aria-hidden="true" /></span>}
-            onRemoveEmpty={list.length > 1 ? () => onChange(list.filter((_, j) => j !== i), credits) : undefined}
+            grip={
+              <span className={styles.grip} {...dragHandleProps(i)} aria-label={`Drag to reorder poster ${i + 1}`}>
+                <GripVertical size={16} aria-hidden="true" />
+              </span>
+            }
+            onRemoveEmpty={
+              list.length > 1
+                ? () =>
+                    onChange(
+                      list.filter((_, j) => j !== i),
+                      credits,
+                    )
+                : undefined
+            }
           />
         </div>
       ))}
       {list.length < MAX_POSTERS && list[list.length - 1] !== '' && (
-        <Button size="sm" variant="secondary" onClick={() => onChange([...list, ''], credits)}><Plus size={14} aria-hidden="true" /> Add another poster</Button>
+        <Button size="sm" variant="secondary" onClick={() => onChange([...list, ''], credits)}>
+          <Plus size={14} aria-hidden="true" /> Add another poster
+        </Button>
       )}
     </div>
   );

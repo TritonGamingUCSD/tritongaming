@@ -54,7 +54,10 @@ export default function OnlineCheckinEntry({
         body: JSON.stringify({ event_id: eventId, code: code.trim() }),
       });
       const json = await res.json();
-      if (!res.ok) { setError(json.error || 'Failed to check in.'); return; }
+      if (!res.ok) {
+        setError(json.error || 'Failed to check in.');
+        return;
+      }
       onCheckedIn(ticketId, new Date().toISOString());
       setSuccess(true);
       setCode('');
@@ -76,7 +79,10 @@ export default function OnlineCheckinEntry({
             ticketId={ticketId}
             url={checkinFormUrl}
             opened={formCompleted}
-            onOpened={() => { setFormCompleted(true); onFormComplete?.(ticketId); }}
+            onOpened={() => {
+              setFormCompleted(true);
+              onFormComplete?.(ticketId);
+            }}
           />
         )}
       </div>
@@ -85,14 +91,7 @@ export default function OnlineCheckinEntry({
 
   return (
     <form className={`${styles.onlineCheckinForm} ${compact ? styles.onlineCheckinFormCompact : ''}`} onSubmit={handleSubmit}>
-      <input
-        className={styles.onlineCheckinInput}
-        value={code}
-        onChange={(e) => setCode(e.target.value)}
-        placeholder={compact ? 'Code' : 'Check-in code'}
-        maxLength={6}
-        required
-      />
+      <input className={styles.onlineCheckinInput} value={code} onChange={(e) => setCode(e.target.value)} placeholder={compact ? 'Code' : 'Check-in code'} maxLength={6} required />
       <button type="submit" className={styles.onlineCheckinSubmit} disabled={submitting || !code.trim()}>
         {submitting ? 'Checking in…' : 'Check In'}
       </button>

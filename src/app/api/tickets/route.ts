@@ -9,12 +9,20 @@ import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 export async function POST(request: Request) {
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { event_id, source: rawSource } = await request.json();
   // Where they came from (see lib/attribution) — free text from the browser, so tidy it before storing.
-  const source = typeof rawSource === 'string' ? rawSource.replace(/[\u0000-\u001f]/g, '').trim().slice(0, 60) || null : null;
+  const source =
+    typeof rawSource === 'string'
+      ? rawSource
+          .replace(/[\u0000-\u001f]/g, '')
+          .trim()
+          .slice(0, 60) || null
+      : null;
   if (!event_id) return NextResponse.json({ error: 'Missing event_id' }, { status: 400 });
 
   // Verified membership (any role held, including the auto-granted 'ucsd'
@@ -32,19 +40,11 @@ export async function POST(request: Request) {
   // against their account, so once it's filled in they never see this again.
   // Non-UCSD guests need a name, gender and pronouns; year/college/major are UCSD-only.
   if (!profile || !hasBasicProfileInfo({ ...profile, gender: priv?.gender ?? null }, isUcsd)) {
-    return NextResponse.json(
-      { error: 'Please complete your profile before getting a ticket.', needsProfile: true },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: 'Please complete your profile before getting a ticket.', needsProfile: true }, { status: 400 });
   }
 
   // Any published event can be ticketed — verify it exists and is published
-  const { data: event } = await supabase
-    .from('events')
-    .select('id, title, ticket_price, audience, start_date, end_date')
-    .eq('id', event_id)
-    .eq('is_published', true)
-    .single();
+  const { data: event } = await supabase.from('events').select('id, title, ticket_price, audience, start_date, end_date').eq('id', event_id).eq('is_published', true).single();
 
   if (!event) {
     return NextResponse.json({ error: 'Event not found' }, { status: 404 });
@@ -61,12 +61,7 @@ export async function POST(request: Request) {
   }
 
   // Already registered?
-  const { data: existing } = await supabase
-    .from('tickets')
-    .select('id')
-    .eq('event_id', event_id)
-    .eq('user_id', user.id)
-    .maybeSingle();
+  const { data: existing } = await supabase.from('tickets').select('id').eq('event_id', event_id).eq('user_id', user.id).maybeSingle();
   if (existing) {
     return NextResponse.json({ error: 'Already registered for this event' }, { status: 409 });
   }
@@ -75,11 +70,7 @@ export async function POST(request: Request) {
 
   // Free ticket (UCSD-affiliated, or a public event with no charge) — issue immediately.
   if (price <= 0) {
-    const { data: ticket, error } = await supabase
-      .from('tickets')
-      .insert({ event_id, user_id: user.id, source })
-      .select()
-      .single();
+    const { data: ticket, error } = await supabase.from('tickets').insert({ event_id, user_id: user.id, source }).select().single();
 
     if (error) {
       if (error.code === '23505') {
@@ -90,13 +81,15 @@ export async function POST(request: Request) {
 
     // Best-effort — a notification that fails to write shouldn't fail the
     // ticket purchase that already succeeded.
-    await createNotifications(supabase, [{
-      user_id: user.id,
-      type: 'ticket_confirmed',
-      title: 'Ticket confirmed',
-      body: `You're registered for ${event.title}.`,
-      href: '/portal/tickets',
-    }]);
+    await createNotifications(supabase, [
+      {
+        user_id: user.id,
+        type: 'ticket_confirmed',
+        title: 'Ticket confirmed',
+        body: `You're registered for ${event.title}.`,
+        href: '/portal/tickets',
+      },
+    ]);
 
     return NextResponse.json({ free: true, ticket }, { status: 201 });
   }
@@ -104,23 +97,22 @@ export async function POST(request: Request) {
   // Paid ticket (non-UCSD attendee on a priced public event) — send them to Stripe.
   // The ticket row itself is only created once the webhook confirms payment.
   if (!stripeEnabled || !stripe) {
-    return NextResponse.json(
-      { error: 'Ticket purchases for this event aren’t available yet. Please check back soon.' },
-      { status: 503 }
-    );
+    return NextResponse.json({ error: 'Ticket purchases for this event aren’t available yet. Please check back soon.' }, { status: 503 });
   }
 
   const origin = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const session = await stripe.checkout.sessions.create({
     mode: 'payment',
-    line_items: [{
-      quantity: 1,
-      price_data: {
-        currency: 'usd',
-        unit_amount: Math.round(price * 100),
-        product_data: { name: event.title },
+    line_items: [
+      {
+        quantity: 1,
+        price_data: {
+          currency: 'usd',
+          unit_amount: Math.round(price * 100),
+          product_data: { name: event.title },
+        },
       },
-    }],
+    ],
     metadata: { event_id, user_id: user.id, ...(source ? { source } : {}) },
     success_url: `${origin}/portal/tickets?checkout=success`,
     cancel_url: `${origin}/portal/tickets?checkout=cancelled`,
@@ -131,15 +123,19 @@ export async function POST(request: Request) {
 
 export async function GET() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: tickets } = await supabase
     .from('tickets')
-    .select(`
+    .select(
+      `
       id, status, checked_in_at, created_at,
       event:events(id, title, start_date, end_date, location, flyer_url)
-    `)
+    `,
+    )
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 

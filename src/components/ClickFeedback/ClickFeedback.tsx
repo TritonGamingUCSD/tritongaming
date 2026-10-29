@@ -8,13 +8,16 @@ import { usePathname } from 'next/navigation';
 // How it knows: it watches the requests the page sends. A request that starts within a moment of a tap belongs to that tap; the spinner is on from then until all of them have finished
 // (or the page has moved on, or 12 s). The styles are in globals.css ([data-tg-pending]). Skip an element with data-no-pending.
 
-const WINDOW_MS = 800;        // a request that starts this soon after a tap is the tap's
-const SHOW_AFTER_MS = 120;    // not for requests that finish at once
-const MIN_SHOWN_MS = 350;     // once shown, stay long enough to be seen
+const WINDOW_MS = 800; // a request that starts this soon after a tap is the tap's
+const SHOW_AFTER_MS = 120; // not for requests that finish at once
+const MIN_SHOWN_MS = 350; // once shown, stay long enough to be seen
 const GIVE_UP_MS = 12_000;
 
-interface Req { tap: number; done: boolean }
-let lastTap = { id: 0, t: -Infinity };   // the latest tap: a request that starts soon after it is its; a later tap takes over
+interface Req {
+  tap: number;
+  done: boolean;
+}
+let lastTap = { id: 0, t: -Infinity }; // the latest tap: a request that starts soon after it is its; a later tap takes over
 const log: Req[] = [];
 let patched = false;
 
@@ -22,7 +25,9 @@ function isPrefetch([input, init]: Parameters<typeof fetch>): boolean {
   try {
     const h = new Headers(init?.headers ?? (typeof input === 'object' && 'headers' in input ? input.headers : undefined));
     return h.has('next-router-prefetch');
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
 
 function watchRequests() {
@@ -36,8 +41,10 @@ function watchRequests() {
       const rec: Req = { tap: performance.now() - lastTap.t <= WINDOW_MS ? lastTap.id : 0, done: false };
       log.push(rec);
       if (log.length > 60) log.splice(0, log.length - 40);
-      const finish = () => { rec.done = true; };
-      p.then(finish, finish);   // (both ends handled here, and the caller still gets the original promise)
+      const finish = () => {
+        rec.done = true;
+      };
+      p.then(finish, finish); // (both ends handled here, and the caller still gets the original promise)
     }
     return p;
   };
@@ -54,16 +61,24 @@ function targetOf(e: MouseEvent): HTMLElement | null {
   if (el instanceof HTMLAnchorElement) {
     const href = el.getAttribute('href') ?? '';
     if (el.target === '_blank' || el.hasAttribute('download') || /^(#|mailto:|tel:|sms:|javascript:)/.test(href)) return null;
-    try { if (new URL(el.href, location.href).origin !== location.origin) return null; } catch { return null; }
+    try {
+      if (new URL(el.href, location.href).origin !== location.origin) return null;
+    } catch {
+      return null;
+    }
   }
   return el;
 }
 
 function clear(el: HTMLElement) {
-  el.removeAttribute('data-tg-pending'); el.removeAttribute('aria-busy');
+  el.removeAttribute('data-tg-pending');
+  el.removeAttribute('aria-busy');
   for (const v of ['--tg-pending-color', '--tg-spin-x', '--tg-spin-y', '--tg-spin-size']) el.style.removeProperty(v);
   el.querySelector('[data-tg-icon]')?.removeAttribute('data-tg-icon');
-  if (el.hasAttribute('data-tg-rel')) { el.style.removeProperty('position'); el.removeAttribute('data-tg-rel'); }
+  if (el.hasAttribute('data-tg-rel')) {
+    el.style.removeProperty('position');
+    el.removeAttribute('data-tg-rel');
+  }
 }
 
 export default function ClickFeedback() {
@@ -85,16 +100,25 @@ export default function ClickFeedback() {
       let shownAt = 0;
       const timer = window.setInterval(() => {
         const now = performance.now();
-        if (!el.isConnected) { window.clearInterval(timer); return; }
+        if (!el.isConnected) {
+          window.clearInterval(timer);
+          return;
+        }
         const mine = log.filter((r) => r.tap === id);
         const waiting = mine.some((r) => !r.done);
         const shown = el.hasAttribute('data-tg-pending');
-        if (!shown && !el.isConnected) { window.clearInterval(timer); return; }
+        if (!shown && !el.isConnected) {
+          window.clearInterval(timer);
+          return;
+        }
         if (!shown && waiting && now - t0 >= SHOW_AFTER_MS) {
           const r = el.getBoundingClientRect();
           const cs = getComputedStyle(el);
           el.style.setProperty('--tg-pending-color', cs.color);
-          if (cs.position === 'static') { el.style.position = 'relative'; el.setAttribute('data-tg-rel', ''); }   // (the spinner is placed against it; a fixed or absolute one already works for that)
+          if (cs.position === 'static') {
+            el.style.position = 'relative';
+            el.setAttribute('data-tg-rel', '');
+          } // (the spinner is placed against it; a fixed or absolute one already works for that)
           // Something with an icon (a bar button, "Show TGcode") gets its spinner where the icon is, and only the icon steps aside; anything else shows it in the middle in place of its label.
           const icon = el.querySelector<HTMLElement>('svg, img');
           const ir = icon?.getBoundingClientRect();
@@ -102,7 +126,7 @@ export default function ClickFeedback() {
             // Measured on screen, placed in the element's own units: a button that is mid-pop or pressed (scaled) would otherwise put the spinner off-centre. It never grows past the button.
             const k = el.offsetWidth > 0 && r.width > 0 ? r.width / el.offsetWidth : 1;
             const fit = Math.max(10, Math.min(el.clientWidth, el.clientHeight) - 6);
-            const size = Math.min(Math.max(Math.min(ir.width, ir.height) / k * 0.95, 16), 30, fit);
+            const size = Math.min(Math.max((Math.min(ir.width, ir.height) / k) * 0.95, 16), 30, fit);
             el.style.setProperty('--tg-spin-x', `${(ir.left + ir.width / 2 - r.left) / k - el.clientLeft}px`);
             el.style.setProperty('--tg-spin-y', `${(ir.top + ir.height / 2 - r.top) / k - el.clientTop}px`);
             el.style.setProperty('--tg-spin-size', `${size}px`);
@@ -116,7 +140,7 @@ export default function ClickFeedback() {
           el.setAttribute('aria-busy', 'true');
           shownAt = now;
         }
-        const over = now - t0 > WINDOW_MS && !waiting;   // nothing (more) is going on
+        const over = now - t0 > WINDOW_MS && !waiting; // nothing (more) is going on
         if ((shown && !waiting && now - shownAt >= MIN_SHOWN_MS) || (!shown && over) || now - t0 > GIVE_UP_MS) {
           clear(el);
           window.clearInterval(timer);

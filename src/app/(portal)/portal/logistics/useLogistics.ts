@@ -5,13 +5,32 @@ import type { OptionKind } from '@/lib/logistics/constants';
 import type { Device, DevicePatch } from '@/lib/logistics/devices';
 import { call } from '@/lib/ui/apiCall';
 
-export interface BundleItem { type: string; qty: number }
-export interface OptionItem { id: string; value: string; counted?: boolean; loose?: boolean; main?: boolean; applies?: 'all' | 'club' | 'borrowed'; kit?: boolean; gives?: boolean; leftover?: boolean; items?: BundleItem[] }
-export interface Sponsor { id: string; name: string; contact: string | null; notes: string | null }
+export interface BundleItem {
+  type: string;
+  qty: number;
+}
+export interface OptionItem {
+  id: string;
+  value: string;
+  counted?: boolean;
+  loose?: boolean;
+  main?: boolean;
+  applies?: 'all' | 'club' | 'borrowed';
+  kit?: boolean;
+  gives?: boolean;
+  leftover?: boolean;
+  items?: BundleItem[];
+}
+export interface Sponsor {
+  id: string;
+  name: string;
+  contact: string | null;
+  notes: string | null;
+}
 export interface Catalog {
   canManage: boolean;
-  me?: { id: string; name: string };   // who is looking
-  requestOnly?: boolean;   // a division account: only the Requests pages
+  me?: { id: string; name: string }; // who is looking
+  requestOnly?: boolean; // a division account: only the Requests pages
   lists: Record<OptionKind, OptionItem[]>;
   portalGames: string[];
   devices: Device[];
@@ -23,16 +42,28 @@ export interface Catalog {
 // so nothing reloads after a change. Opening the section again within a minute shows what is kept without asking the server; after that it refreshes quietly once.
 const FRESH_MS = 60_000;
 let kept: { at: number; data: Catalog } | null = null;
-let gen = 0;   // counts the edits made on screen, so a refresh that was already on its way when someone edited (and so holds the old value) is dropped instead of putting the old value back
-
+let gen = 0; // counts the edits made on screen, so a refresh that was already on its way when someone edited (and so holds the old value) is dropped instead of putting the old value back
 
 export function useLogistics() {
   const [data, setData] = useState<Catalog | null>(kept?.data ?? null);
   const [error, setError] = useState('');
   const loading = useRef(false);
 
-  const put = useCallback((next: Catalog) => { kept = { at: Date.now(), data: next }; setData(next); }, []);
-  const edit = useCallback((fn: (d: Catalog) => Catalog) => setData((cur) => { if (!cur) return cur; gen++; const next = fn(cur); kept = { at: kept?.at ?? Date.now(), data: next }; return next; }), []);
+  const put = useCallback((next: Catalog) => {
+    kept = { at: Date.now(), data: next };
+    setData(next);
+  }, []);
+  const edit = useCallback(
+    (fn: (d: Catalog) => Catalog) =>
+      setData((cur) => {
+        if (!cur) return cur;
+        gen++;
+        const next = fn(cur);
+        kept = { at: kept?.at ?? Date.now(), data: next };
+        return next;
+      }),
+    [],
+  );
 
   const load = useCallback(async () => {
     if (loading.current) return;
@@ -41,75 +72,185 @@ export function useLogistics() {
     const r = await call<Catalog>('/api/logistics', 'GET');
     loading.current = false;
     if (r.ok && g !== gen) return;
-    if (r.ok) { put(r.data); setError(''); } else if (!kept) setError(r.error);
+    if (r.ok) {
+      put(r.data);
+      setError('');
+    } else if (!kept) setError(r.error);
   }, [put]);
 
-  useEffect(() => { if (!kept || Date.now() - kept.at > FRESH_MS) void load(); }, [load]);
+  useEffect(() => {
+    if (!kept || Date.now() - kept.at > FRESH_MS) void load();
+  }, [load]);
 
   // ---- devices
   // An edit to an existing device shows on screen straight away and is confirmed (or put back, with the reason) when the server answers.
-  const saveDevice = useCallback(async (id: string | null, patch: DevicePatch): Promise<Device | null> => {
-    let before: Device | undefined;
-    if (id) edit((d) => ({ ...d, devices: d.devices.map((x) => { if (x.id !== id) return x; before = x; return { ...x, ...(patch as Partial<Device>) }; }) }));
-    const r = id ? await call<{ device: Device }>(`/api/logistics/devices/${id}`, 'PATCH', patch) : await call<{ device: Device }>('/api/logistics/devices', 'POST', patch);
-    if (!r.ok) {
-      setError(r.error);
-      if (id && before) { const old = before; edit((d) => ({ ...d, devices: d.devices.map((x) => (x.id === id ? old : x)) })); }
-      return null;
-    }
-    setError('');
-    edit((d) => ({ ...d, devices: id ? d.devices.map((x) => (x.id === id ? r.data.device : x)) : [...d.devices, r.data.device] }));
-    return r.data.device;
-  }, [edit]);
-  const removeDevice = useCallback(async (id: string): Promise<boolean> => {
-    const r = await call<{ ok: true }>(`/api/logistics/devices/${id}`, 'DELETE');
-    if (!r.ok) { setError(r.error); return false; }
-    edit((d) => ({ ...d, devices: d.devices.filter((x) => x.id !== id) }));
-    return true;
-  }, [edit]);
+  const saveDevice = useCallback(
+    async (id: string | null, patch: DevicePatch): Promise<Device | null> => {
+      let before: Device | undefined;
+      if (id)
+        edit((d) => ({
+          ...d,
+          devices: d.devices.map((x) => {
+            if (x.id !== id) return x;
+            before = x;
+            return { ...x, ...(patch as Partial<Device>) };
+          }),
+        }));
+      const r = id ? await call<{ device: Device }>(`/api/logistics/devices/${id}`, 'PATCH', patch) : await call<{ device: Device }>('/api/logistics/devices', 'POST', patch);
+      if (!r.ok) {
+        setError(r.error);
+        if (id && before) {
+          const old = before;
+          edit((d) => ({ ...d, devices: d.devices.map((x) => (x.id === id ? old : x)) }));
+        }
+        return null;
+      }
+      setError('');
+      edit((d) => ({ ...d, devices: id ? d.devices.map((x) => (x.id === id ? r.data.device : x)) : [...d.devices, r.data.device] }));
+      return r.data.device;
+    },
+    [edit],
+  );
+  const removeDevice = useCallback(
+    async (id: string): Promise<boolean> => {
+      const r = await call<{ ok: true }>(`/api/logistics/devices/${id}`, 'DELETE');
+      if (!r.ok) {
+        setError(r.error);
+        return false;
+      }
+      edit((d) => ({ ...d, devices: d.devices.filter((x) => x.id !== id) }));
+      return true;
+    },
+    [edit],
+  );
 
   // ---- dropdown lists
-  const addOption = useCallback(async (kind: OptionKind, value: string, extra: Record<string, unknown> = {}): Promise<string | null> => {
-    const r = await call<{ option: OptionItem }>('/api/logistics/options', 'POST', { kind, value, ...extra });
-    if (!r.ok) { setError(r.error); return null; }
-    edit((d) => (d.lists[kind].some((o) => o.id === r.data.option.id) ? d : { ...d, lists: { ...d.lists, [kind]: [...d.lists[kind], r.data.option] } }));
-    return r.data.option.value;
-  }, [edit]);
-  const changeOption = useCallback(async (id: string, patch: { value?: string; counted?: boolean; loose?: boolean; main?: boolean; applies?: string; kit?: boolean; gives?: boolean; leftover?: boolean; items?: BundleItem[]; move?: 'up' | 'down' }): Promise<boolean> => {
-    const r = await call<{ ok: true }>(`/api/logistics/options/${id}`, 'PATCH', patch);
-    if (!r.ok) { setError(r.error); return false; }
-    setError('');
-    // A rename (devices that used the old name follow it), a step's order or settings, and a bundle's items are read again; a counted switch is applied on screen.
-    if (patch.value !== undefined || patch.applies !== undefined || patch.kit !== undefined || patch.gives !== undefined || patch.leftover !== undefined || patch.items !== undefined || patch.move !== undefined) await load();
-    else edit((d) => ({ ...d, lists: Object.fromEntries(Object.entries(d.lists).map(([k, v]) => [k, v.map((o) => (o.id === id ? { ...o, ...(patch.counted !== undefined ? { counted: patch.counted } : {}), ...(patch.loose !== undefined ? { loose: patch.loose } : {}), ...(patch.main !== undefined ? { main: patch.main } : {}) } : o))])) as Catalog['lists'] }));
-    return true;
-  }, [edit, load]);
-  const deleteOption = useCallback(async (kind: OptionKind, id: string): Promise<boolean> => {
-    const r = await call<{ ok: true }>(`/api/logistics/options/${id}`, 'DELETE');
-    if (!r.ok) { setError(r.error); return false; }
-    setError('');
-    edit((d) => ({ ...d, lists: { ...d.lists, [kind]: d.lists[kind].filter((o) => o.id !== id) } }));
-    return true;
-  }, [edit]);
+  const addOption = useCallback(
+    async (kind: OptionKind, value: string, extra: Record<string, unknown> = {}): Promise<string | null> => {
+      const r = await call<{ option: OptionItem }>('/api/logistics/options', 'POST', { kind, value, ...extra });
+      if (!r.ok) {
+        setError(r.error);
+        return null;
+      }
+      edit((d) => (d.lists[kind].some((o) => o.id === r.data.option.id) ? d : { ...d, lists: { ...d.lists, [kind]: [...d.lists[kind], r.data.option] } }));
+      return r.data.option.value;
+    },
+    [edit],
+  );
+  const changeOption = useCallback(
+    async (
+      id: string,
+      patch: {
+        value?: string;
+        counted?: boolean;
+        loose?: boolean;
+        main?: boolean;
+        applies?: string;
+        kit?: boolean;
+        gives?: boolean;
+        leftover?: boolean;
+        items?: BundleItem[];
+        move?: 'up' | 'down';
+      },
+    ): Promise<boolean> => {
+      const r = await call<{ ok: true }>(`/api/logistics/options/${id}`, 'PATCH', patch);
+      if (!r.ok) {
+        setError(r.error);
+        return false;
+      }
+      setError('');
+      // A rename (devices that used the old name follow it), a step's order or settings, and a bundle's items are read again; a counted switch is applied on screen.
+      if (
+        patch.value !== undefined ||
+        patch.applies !== undefined ||
+        patch.kit !== undefined ||
+        patch.gives !== undefined ||
+        patch.leftover !== undefined ||
+        patch.items !== undefined ||
+        patch.move !== undefined
+      )
+        await load();
+      else
+        edit((d) => ({
+          ...d,
+          lists: Object.fromEntries(
+            Object.entries(d.lists).map(([k, v]) => [
+              k,
+              v.map((o) =>
+                o.id === id
+                  ? {
+                      ...o,
+                      ...(patch.counted !== undefined ? { counted: patch.counted } : {}),
+                      ...(patch.loose !== undefined ? { loose: patch.loose } : {}),
+                      ...(patch.main !== undefined ? { main: patch.main } : {}),
+                    }
+                  : o,
+              ),
+            ]),
+          ) as Catalog['lists'],
+        }));
+      return true;
+    },
+    [edit, load],
+  );
+  const deleteOption = useCallback(
+    async (kind: OptionKind, id: string): Promise<boolean> => {
+      const r = await call<{ ok: true }>(`/api/logistics/options/${id}`, 'DELETE');
+      if (!r.ok) {
+        setError(r.error);
+        return false;
+      }
+      setError('');
+      edit((d) => ({ ...d, lists: { ...d.lists, [kind]: d.lists[kind].filter((o) => o.id !== id) } }));
+      return true;
+    },
+    [edit],
+  );
 
   // ---- sponsors
-  const saveSponsor = useCallback(async (id: string | null, v: { name?: string; contact?: string | null; notes?: string | null }): Promise<Sponsor | null> => {
-    const r = id ? await call<{ sponsor: Sponsor }>(`/api/logistics/sponsors/${id}`, 'PATCH', v) : await call<{ sponsor: Sponsor }>('/api/logistics/sponsors', 'POST', v);
-    if (!r.ok) { setError(r.error); return null; }
-    setError('');
-    edit((d) => ({ ...d, sponsors: (id ? d.sponsors.map((s) => (s.id === id ? r.data.sponsor : s)) : d.sponsors.some((s) => s.id === r.data.sponsor.id) ? d.sponsors : [...d.sponsors, r.data.sponsor]).sort((a, b) => a.name.localeCompare(b.name)) }));
-    return r.data.sponsor;
-  }, [edit]);
-  const deleteSponsor = useCallback(async (id: string): Promise<boolean> => {
-    const r = await call<{ ok: true }>(`/api/logistics/sponsors/${id}`, 'DELETE');
-    if (!r.ok) { setError(r.error); return false; }
-    edit((d) => ({ ...d, sponsors: d.sponsors.filter((s) => s.id !== id) }));
-    return true;
-  }, [edit]);
+  const saveSponsor = useCallback(
+    async (id: string | null, v: { name?: string; contact?: string | null; notes?: string | null }): Promise<Sponsor | null> => {
+      const r = id ? await call<{ sponsor: Sponsor }>(`/api/logistics/sponsors/${id}`, 'PATCH', v) : await call<{ sponsor: Sponsor }>('/api/logistics/sponsors', 'POST', v);
+      if (!r.ok) {
+        setError(r.error);
+        return null;
+      }
+      setError('');
+      edit((d) => ({
+        ...d,
+        sponsors: (id
+          ? d.sponsors.map((s) => (s.id === id ? r.data.sponsor : s))
+          : d.sponsors.some((s) => s.id === r.data.sponsor.id)
+            ? d.sponsors
+            : [...d.sponsors, r.data.sponsor]
+        ).sort((a, b) => a.name.localeCompare(b.name)),
+      }));
+      return r.data.sponsor;
+    },
+    [edit],
+  );
+  const deleteSponsor = useCallback(
+    async (id: string): Promise<boolean> => {
+      const r = await call<{ ok: true }>(`/api/logistics/sponsors/${id}`, 'DELETE');
+      if (!r.ok) {
+        setError(r.error);
+        return false;
+      }
+      edit((d) => ({ ...d, sponsors: d.sponsors.filter((s) => s.id !== id) }));
+      return true;
+    },
+    [edit],
+  );
 
   // Loaner owners and device history are fetched only when someone asks.
-  const loadPeople = useCallback(async () => { const r = await call<{ people: { id: string; name: string }[] }>('/api/logistics/people', 'GET'); return r.ok ? r.data.people : []; }, []);
-  const loadHistory = useCallback(async (id: string) => { const r = await call<{ log: { id: string; at: string; summary: string; by: string | null }[] }>(`/api/logistics/devices/${id}`, 'GET'); return r.ok ? r.data.log : null; }, []);
+  const loadPeople = useCallback(async () => {
+    const r = await call<{ people: { id: string; name: string }[] }>('/api/logistics/people', 'GET');
+    return r.ok ? r.data.people : [];
+  }, []);
+  const loadHistory = useCallback(async (id: string) => {
+    const r = await call<{ log: { id: string; at: string; summary: string; by: string | null }[] }>(`/api/logistics/devices/${id}`, 'GET');
+    return r.ok ? r.data.log : null;
+  }, []);
 
   return { data, error, setError, saveDevice, removeDevice, addOption, changeOption, deleteOption, saveSponsor, deleteSponsor, loadPeople, loadHistory };
 }

@@ -22,8 +22,14 @@ export async function GET(request: Request) {
   const within = Number(url.searchParams.get('within')) || undefined;
   const only = process.env.NODE_ENV !== 'production' ? url.searchParams.get('users')?.split(',').filter(Boolean) : undefined;
   const svc = createServiceClient();
-  const step = async <T,>(name: string, run: () => Promise<T>): Promise<T | { error: string }> => {
-    try { return await run(); } catch (e) { console.error(`[cron] ${name} failed:`, e); await alertJobFailed(svc, 'reminders', name).catch(() => {}); return { error: 'failed' }; }
+  const step = async <T>(name: string, run: () => Promise<T>): Promise<T | { error: string }> => {
+    try {
+      return await run();
+    } catch (e) {
+      console.error(`[cron] ${name} failed:`, e);
+      await alertJobFailed(svc, 'reminders', name).catch(() => {});
+      return { error: 'failed' };
+    }
   };
   const events = await step('events', () => sendEventReminders(svc));
   const meetings = await step('meetings', () => sendMeetingReminders(svc, new Date(), within, only));

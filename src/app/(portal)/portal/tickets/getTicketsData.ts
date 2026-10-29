@@ -14,10 +14,12 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
   const [{ data: tickets }, { data: upcomingEvents }, { data: profile }] = await Promise.all([
     supabase
       .from('tickets')
-      .select(`
+      .select(
+        `
         id, status, checked_in_at, created_at, checkin_form_completed_at,
         event:events(id, title, start_date, end_date, location, flyer_url, points_value, is_online, checkin_windows, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)
-      `)
+      `,
+      )
       .eq('user_id', profileId)
       .order('created_at', { ascending: false }),
     supabase
@@ -61,15 +63,16 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
     // mappings live in checkin_form_override) — UCSD's form changes from
     // event to event, so there's no shared site-wide default any more.
     const config = event?.checkin_form_override ?? null;
-    const checkinFormUrl = event?.requires_checkin_form && config
-      ? buildCheckinFormUrl(config, {
-          eventTitle: event.checkin_form_event_name?.trim() || event.title,
-          year: profile?.year ?? null,
-          classOf: profile?.class_of ?? null,
-          roles: roleNames,
-          foodItem: event.checkin_food_item ?? null,
-        })
-      : null;
+    const checkinFormUrl =
+      event?.requires_checkin_form && config
+        ? buildCheckinFormUrl(config, {
+            eventTitle: event.checkin_form_event_name?.trim() || event.title,
+            year: profile?.year ?? null,
+            classOf: profile?.class_of ?? null,
+            roles: roleNames,
+            foodItem: event.checkin_food_item ?? null,
+          })
+        : null;
     return { ...t, checkinFormUrl, checkedInToday: checkedInToday.has(t.id) };
   });
 

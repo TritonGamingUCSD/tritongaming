@@ -22,15 +22,33 @@ export async function POST(request: Request) {
   if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const fields: Record<string, unknown> = {};
-  if ('title' in b) { const t = String(b.title ?? '').trim().slice(0, 120); if (!t) return bad('A quick link needs a title.'); fields.title = t; }
-  if ('url' in b) { const u = String(b.url ?? '').trim(); if (!HTTPS.test(u) || u.length > 2000) return bad('The address must start with https://.'); fields.url = u; }
-  if ('note' in b) fields.note = String(b.note ?? '').replace(/\s+/g, ' ').trim().slice(0, 200);
+  if ('title' in b) {
+    const t = String(b.title ?? '')
+      .trim()
+      .slice(0, 120);
+    if (!t) return bad('A quick link needs a title.');
+    fields.title = t;
+  }
+  if ('url' in b) {
+    const u = String(b.url ?? '').trim();
+    if (!HTTPS.test(u) || u.length > 2000) return bad('The address must start with https://.');
+    fields.url = u;
+  }
+  if ('note' in b)
+    fields.note = String(b.note ?? '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 200);
   if ('teams' in b) fields.teams = [...new Set((Array.isArray(b.teams) ? b.teams : []).map(String).filter((t: string) => UUID.test(t)))].slice(0, 30);
 
   if (b.action === 'create') {
     if (!fields.title || !fields.url) return bad('A quick link needs a title and an address.');
     const { data: last } = await auth.svc.from('quick_links').select('order_index').order('order_index', { ascending: false }).limit(1);
-    const { data, error } = await auth.svc.from('quick_links').insert({ ...fields, created_by: auth.user.id, order_index: ((last?.[0]?.order_index as number | undefined) ?? -1) + 1 }).select(COLUMNS).single();
+    const { data, error } = await auth.svc
+      .from('quick_links')
+      .insert({ ...fields, created_by: auth.user.id, order_index: ((last?.[0]?.order_index as number | undefined) ?? -1) + 1 })
+      .select(COLUMNS)
+      .single();
     if (error) return bad('Couldn’t add the quick link.', 500);
     await notifyDocs();
     return NextResponse.json({ link: data });
@@ -38,7 +56,12 @@ export async function POST(request: Request) {
   if (b.action === 'update') {
     const id = String(b.id ?? '');
     if (!UUID.test(id)) return bad('Quick link not found.', 404);
-    const { data, error } = await auth.svc.from('quick_links').update({ ...fields, updated_at: new Date().toISOString() }).eq('id', id).select(COLUMNS).maybeSingle();
+    const { data, error } = await auth.svc
+      .from('quick_links')
+      .update({ ...fields, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select(COLUMNS)
+      .maybeSingle();
     if (error) return bad('Couldn’t save the quick link.', 500);
     if (!data) return NextResponse.json({ error: 'Someone already removed this quick link.', code: 'deleted' }, { status: 404 });
     await notifyDocs();

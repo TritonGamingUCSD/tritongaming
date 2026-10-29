@@ -20,7 +20,9 @@ export default function LandingEvents({ initialEvents, content = {} }: LandingEv
         <Reveal>
           <div className={styles.header}>
             <p className={styles.sectionLabel}>{content.label || 'Next up'}</p>
-            <Link href="/events" className={styles.ctaLink}>All events →</Link>
+            <Link href="/events" className={styles.ctaLink}>
+              All events →
+            </Link>
           </div>
         </Reveal>
         <Reveal delay={0.08}>

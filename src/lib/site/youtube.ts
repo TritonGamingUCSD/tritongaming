@@ -4,9 +4,7 @@
 // post embeds) and the Media page (long-form video embeds) — both need the
 // exact same URL parsing, just for different-sized players.
 export function youtubeVideoId(url: string): string | null {
-  const patterns = [
-    /(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtube\.com\/embed\/|youtu\.be\/)([\w-]{11})/,
-  ];
+  const patterns = [/(?:youtube\.com\/watch\?v=|youtube\.com\/shorts\/|youtube\.com\/embed\/|youtu\.be\/)([\w-]{11})/];
   for (const re of patterns) {
     const match = url.match(re);
     if (match) return match[1];

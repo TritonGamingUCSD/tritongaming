@@ -7,14 +7,16 @@ import { strictUser } from '@/lib/supabase/localAuth';
 import { emailConfigured, emailFrom, sendBlast, verifyEmail } from '@/lib/email/mailer';
 
 export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';   // nodemailer needs Node's network sockets
+export const runtime = 'nodejs'; // nodemailer needs Node's network sockets
 
 // Admin only. GET: is email set up (and which address it sends from). POST { action: 'verify' }: log in to the mail server without sending. POST { recipients, subject, message }: send the blast.
 const lastSend = new Map<string, number>();
 
 async function admin() {
   const userClient = await createClient();
-  const { data: { user } } = await strictUser(userClient);
+  const {
+    data: { user },
+  } = await strictUser(userClient);
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const { data: roles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);
   if (!hasCapability(roles ?? [], 'manage_roles')) return { error: NextResponse.json({ error: 'Admin access required' }, { status: 403 }) };
@@ -46,6 +48,12 @@ export async function POST(request: Request) {
   // Who sent what to how many people. The addresses themselves stay out of the log.
   const results = (out as { results?: { ok: boolean }[] }).results ?? [];
   const delivered = results.filter((r) => r.ok).length;
-  await logAudit(createServiceClient(), { actorId: a.user!.id, action: 'send', entityType: 'email', summary: `Sent the email "${subject.slice(0, 80)}" to ${results.length} ${results.length === 1 ? 'address' : 'addresses'} (${delivered} delivered)`, details: { subject, recipients: results.length, delivered, failed: results.length - delivered } });
+  await logAudit(createServiceClient(), {
+    actorId: a.user!.id,
+    action: 'send',
+    entityType: 'email',
+    summary: `Sent the email "${subject.slice(0, 80)}" to ${results.length} ${results.length === 1 ? 'address' : 'addresses'} (${delivered} delivered)`,
+    details: { subject, recipients: results.length, delivered, failed: results.length - delivered },
+  });
   return NextResponse.json(out);
 }

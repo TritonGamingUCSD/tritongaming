@@ -17,7 +17,7 @@ import { audienceRoles, canAttendMeeting, isExpected, type MeetingAudience } fro
 // Gen Meeting check-in (see migration 20261002140000_gen_meetings.sql). An exec opens check-in and
 // shows a rotating 6-digit code in the room; people on the team type it into the portal.
 
-export const GRACE_MS = 0;   // check-in closes at the scheduled end; a host who needs longer re-opens it (that extends the end)
+export const GRACE_MS = 0; // check-in closes at the scheduled end; a host who needs longer re-opens it (that extends the end)
 // Members can check in this long BEFORE the meeting starts (so people arriving a few minutes early
 // can get it done), but not hours ahead of time.
 export const EARLY_MS = 10 * 60_000;
@@ -59,7 +59,9 @@ export function isMeetingOver(m: Pick<MeetingRow, 'ends_at' | 'closed_at' | 'ope
 
 // The early-arrival window before the start. Check-in itself opens whenever a host opens the meeting; this only decides whether the host who
 // opened it counts as in the room.
-export function checkInOpensAt(m: Pick<MeetingRow, 'starts_at'>): number { return new Date(m.starts_at).getTime() - EARLY_MS; }
+export function checkInOpensAt(m: Pick<MeetingRow, 'starts_at'>): number {
+  return new Date(m.starts_at).getTime() - EARLY_MS;
+}
 
 // Open for members right now: as soon as a host opens it (and until it is closed or long over), whatever the clock says.
 export function isCheckInAccepting(m: Pick<MeetingRow, 'starts_at' | 'ends_at' | 'closed_at' | 'opened_at'>, now: number = Date.now()): boolean {
@@ -67,7 +69,10 @@ export function isCheckInAccepting(m: Pick<MeetingRow, 'starts_at' | 'ends_at' |
 }
 
 // ── Saved groups, resolved live ──────────────────────────────────────────────
-export interface GroupInfo { name: string; members: string[] }
+export interface GroupInfo {
+  name: string;
+  members: string[];
+}
 
 export async function loadGroups(svc: SupabaseClient): Promise<Map<string, GroupInfo>> {
   const [{ data }, { data: idle }] = await Promise.all([
@@ -88,7 +93,23 @@ export async function attachExtras<T extends { invitees: string[] | null; group_
   return withExtras(rows, await loadGroups(svc));
 }
 
-export interface SeriesRow { ended?: boolean; ends_on?: string | null; id: string; title: string; weekday: number; start_time: string; end_time: string; location: string | null; active: boolean; doc_url: string | null; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; open_to_team?: boolean | null; created_by: string | null }
+export interface SeriesRow {
+  ended?: boolean;
+  ends_on?: string | null;
+  id: string;
+  title: string;
+  weekday: number;
+  start_time: string;
+  end_time: string;
+  location: string | null;
+  active: boolean;
+  doc_url: string | null;
+  audience: string[] | null;
+  invitees: string[] | null;
+  group_ids: string[] | null;
+  open_to_team?: boolean | null;
+  created_by: string | null;
+}
 
 // A meeting doc link: a full http(s) URL, or a path inside this site (like a portal doc). Empty clears it.
 export function validateDocUrl(raw: unknown): { ok: true; value: string | null } | { ok: false } {
@@ -96,12 +117,17 @@ export function validateDocUrl(raw: unknown): { ok: true; value: string | null }
   if (!v) return { ok: true, value: null };
   if (v.length > 500) return { ok: false };
   if (v.startsWith('/') && !v.startsWith('//')) return { ok: true, value: v };
-  try { const u = new URL(v); return u.protocol === 'http:' || u.protocol === 'https:' ? { ok: true, value: u.toString() } : { ok: false }; } catch { return { ok: false }; }
+  try {
+    const u = new URL(v);
+    return u.protocol === 'http:' || u.protocol === 'https:' ? { ok: true, value: u.toString() } : { ok: false };
+  } catch {
+    return { ok: false };
+  }
 }
 
 export interface ScheduleItem {
   key: string;
-  meeting_id: string | null;   // null until an exec opens (or skips) this occurrence
+  meeting_id: string | null; // null until an exec opens (or skips) this occurrence
   series_id: string | null;
   date: string;
   title: string;
@@ -132,7 +158,9 @@ export function addDaysKey(key: string, days: number): string {
   d.setUTCDate(d.getUTCDate() + days);
   return d.toISOString().slice(0, 10);
 }
-export function weekdayOfKey(key: string): number { return new Date(`${key}T12:00:00Z`).getUTCDay(); }
+export function weekdayOfKey(key: string): number {
+  return new Date(`${key}T12:00:00Z`).getUTCDay();
+}
 // Does a weekly meeting happen on this day: the right weekday, and not after its last day (ends_on).
 export const seriesRunsOn = (s: { weekday: number; ends_on?: string | null }, day: string) => weekdayOfKey(day) === s.weekday && (!s.ends_on || day <= s.ends_on);
 const hhmm = (t: string) => t.slice(0, 5);
@@ -142,19 +170,29 @@ export function occurrenceTimes(day: string, startTime: string, endTime: string)
 
 // The next two weeks of meetings (real rows plus not-yet-opened occurrences of repeating series)
 // and the last month of past ones.
-export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string; roles: { role: string }[] }, ownerOnly?: string, opts: { strict?: boolean; horizonDays?: number } = {}): Promise<{ series: SeriesRow[]; upcoming: ScheduleItem[]; past: ScheduleItem[] }> {
+export async function buildSchedule(
+  svc: SupabaseClient,
+  forUser?: { id: string; roles: { role: string }[] },
+  ownerOnly?: string,
+  opts: { strict?: boolean; horizonDays?: number } = {},
+): Promise<{ series: SeriesRow[]; upcoming: ScheduleItem[]; past: ScheduleItem[] }> {
   const today = pacificDayKey();
   const horizon = addDaysKey(today, opts.horizonDays ?? 14);
   const groups = await loadGroups(svc);
   const names = (ids: string[] | null) => (ids ?? []).map((g) => groups.get(g)?.name).filter((n): n is string => !!n);
   const [{ data: seriesData }, { data: rowData }] = await Promise.all([
-    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, open_to_team, created_by, ends_on').order('created_at'),
+    svc
+      .from('meeting_series')
+      .select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, open_to_team, created_by, ends_on')
+      .order('created_at'),
     svc.from('meetings').select('*').gte('meeting_date', addDaysKey(today, -30)).lte('meeting_date', horizon),
   ]);
   const series = (seriesData ?? []) as SeriesRow[];
   const rows = (rowData ?? []) as MeetingRow[];
   const hostIds = [...new Set([...rows.map((r) => r.created_by), ...series.map((x) => x.created_by)].filter((x): x is string => !!x))];
-  const { data: hostProfiles } = hostIds.length ? await svc.from('profiles').select('id, display_name').in('id', hostIds) : { data: [] as { id: string; display_name: string | null }[] };
+  const { data: hostProfiles } = hostIds.length
+    ? await svc.from('profiles').select('id, display_name').in('id', hostIds)
+    : { data: [] as { id: string; display_name: string | null }[] };
   const hostNames = new Map((hostProfiles ?? []).map((p) => [p.id as string, (p.display_name as string | null) || 'Unnamed']));
   const ids = rows.map((r) => r.id);
   const { data: att } = ids.length ? await svc.from('meeting_attendance').select('meeting_id').in('meeting_id', ids) : { data: [] as { meeting_id: string }[] };
@@ -165,15 +203,44 @@ export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string;
   for (const a of absRows ?? []) absentCounts.set(a.meeting_id, (absentCounts.get(a.meeting_id) ?? 0) + 1);
 
   // People a weekly plan found unavailable are absent from every occurrence, including ones nobody has opened yet.
-  const { data: standingRows } = series.length ? await svc.from('meeting_series_absences').select('series_id').in('series_id', series.map((x) => x.id)) : { data: [] as { series_id: string }[] };
+  const { data: standingRows } = series.length
+    ? await svc
+        .from('meeting_series_absences')
+        .select('series_id')
+        .in(
+          'series_id',
+          series.map((x) => x.id),
+        )
+    : { data: [] as { series_id: string }[] };
   const standingCounts = new Map<string, number>();
   for (const a of standingRows ?? []) standingCounts.set(a.series_id, (standingCounts.get(a.series_id) ?? 0) + 1);
 
   const now = Date.now();
   const fromRow = (r: MeetingRow): ScheduleItem => ({
-    key: r.id, meeting_id: r.id, series_id: r.series_id, date: r.meeting_date, title: r.title, location: r.location, doc_url: r.doc_url, question: r.question, question_type: r.question_type ?? 'text', question_options: r.question_options ?? null, audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, open_to_team: r.open_to_team, groupNames: names(r.group_ids), host_id: r.created_by, host_name: hostNames.get(r.created_by ?? '') ?? null,
-    starts_at: r.starts_at, ends_at: r.ends_at, count: counts.get(r.id) ?? 0, absent: absentCounts.get(r.id) ?? 0, is_today: r.meeting_date === today, repeats: !!r.series_id,
-    status: r.cancelled ? 'cancelled' : isMeetingOpen(r, now) ? 'open' : (r.opened_at || r.meeting_date < today) ? 'closed' : 'scheduled',
+    key: r.id,
+    meeting_id: r.id,
+    series_id: r.series_id,
+    date: r.meeting_date,
+    title: r.title,
+    location: r.location,
+    doc_url: r.doc_url,
+    question: r.question,
+    question_type: r.question_type ?? 'text',
+    question_options: r.question_options ?? null,
+    audience: r.audience,
+    invitees: r.invitees,
+    group_ids: r.group_ids,
+    open_to_team: r.open_to_team,
+    groupNames: names(r.group_ids),
+    host_id: r.created_by,
+    host_name: hostNames.get(r.created_by ?? '') ?? null,
+    starts_at: r.starts_at,
+    ends_at: r.ends_at,
+    count: counts.get(r.id) ?? 0,
+    absent: absentCounts.get(r.id) ?? 0,
+    is_today: r.meeting_date === today,
+    repeats: !!r.series_id,
+    status: r.cancelled ? 'cancelled' : isMeetingOpen(r, now) ? 'open' : r.opened_at || r.meeting_date < today ? 'closed' : 'scheduled',
   });
   // A lead only sees the meetings they planned.
   const items = rows.filter((r) => !ownerOnly || r.created_by === ownerOnly).map(fromRow);
@@ -183,22 +250,50 @@ export async function buildSchedule(svc: SupabaseClient, forUser?: { id: string;
     for (let day = today; day <= horizon; day = addDaysKey(day, 1)) {
       if (!seriesRunsOn(s, day) || taken.has(`${s.id}|${day}`)) continue;
       const { starts, ends } = occurrenceTimes(day, s.start_time, s.end_time);
-      items.push({ key: `${s.id}|${day}`, meeting_id: null, series_id: s.id, date: day, title: s.title, location: s.location, doc_url: s.doc_url, question: null, question_type: 'text', question_options: null, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, open_to_team: s.open_to_team, groupNames: names(s.group_ids), host_id: s.created_by, host_name: hostNames.get(s.created_by ?? '') ?? null, starts_at: starts.toISOString(), ends_at: ends.toISOString(), status: 'scheduled', count: 0, absent: standingCounts.get(s.id) ?? 0, is_today: day === today, repeats: true });
+      items.push({
+        key: `${s.id}|${day}`,
+        meeting_id: null,
+        series_id: s.id,
+        date: day,
+        title: s.title,
+        location: s.location,
+        doc_url: s.doc_url,
+        question: null,
+        question_type: 'text',
+        question_options: null,
+        audience: s.audience,
+        invitees: s.invitees,
+        group_ids: s.group_ids,
+        open_to_team: s.open_to_team,
+        groupNames: names(s.group_ids),
+        host_id: s.created_by,
+        host_name: hostNames.get(s.created_by ?? '') ?? null,
+        starts_at: starts.toISOString(),
+        ends_at: ends.toISOString(),
+        status: 'scheduled',
+        count: 0,
+        absent: standingCounts.get(s.id) ?? 0,
+        is_today: day === today,
+        repeats: true,
+      });
     }
   }
   // A team member only sees the meetings meant for them; exec see everything.
   // `strict` is the "what's on for me" view: only meetings meant for the person (or planned by them), so
   // exec/admin don't see meetings they weren't invited to just because they could check in to them.
-  const visible = forUser ? items.filter((i) => {
-    const m = { ...i, extra_ids: withExtras([i], groups)[0].extra_ids };
-    return opts.strict ? i.host_id === forUser.id || isExpected(m, forUser.id, forUser.roles) : canAttendMeeting(m, forUser.id, forUser.roles);
-  }) : items;
+  const visible = forUser
+    ? items.filter((i) => {
+        const m = { ...i, extra_ids: withExtras([i], groups)[0].extra_ids };
+        return opts.strict ? i.host_id === forUser.id || isExpected(m, forUser.id, forUser.roles) : canAttendMeeting(m, forUser.id, forUser.roles);
+      })
+    : items;
   // A meeting from earlier today that is over moves to past right away (a closed one as soon as it ends; one nobody opened after a
   // 30 minute grace, still time to start a late check-in). One still taking check-ins, or skipped, stays where it is.
   const nowMs = Date.now();
-  const isOver = (i: { date: string; status: string; ends_at: string }) => i.date === today && i.status !== 'open' && i.status !== 'cancelled' && nowMs > new Date(i.ends_at).getTime() + (i.status === 'closed' ? 0 : 30 * 60_000);
+  const isOver = (i: { date: string; status: string; ends_at: string }) =>
+    i.date === today && i.status !== 'open' && i.status !== 'cancelled' && nowMs > new Date(i.ends_at).getTime() + (i.status === 'closed' ? 0 : 30 * 60_000);
   const upcoming = visible.filter((i) => i.date >= today && !isOver(i)).sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-  const past = visible.filter((i) => (i.date < today || isOver(i)) && i.status !== 'cancelled').sort((a, b) => a.starts_at.localeCompare(b.starts_at));   // oldest first, like Upcoming
+  const past = visible.filter((i) => (i.date < today || isOver(i)) && i.status !== 'cancelled').sort((a, b) => a.starts_at.localeCompare(b.starts_at)); // oldest first, like Upcoming
   // A repeating meeting with a last day is ended once no meeting is left: no matching weekday from today to that day, or only today's, which is already over.
   const nowDate = new Date();
   const withEnded = series.map((s) => {
@@ -245,15 +340,20 @@ export function isValidQrToken(secret: string, token: string): boolean {
 
 export async function authorizeMeetings(capability: Extract<Capability, 'manage_meetings' | 'attend_meetings' | 'host_meetings' | 'view_attendance_reports'>) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const svc0 = createServiceClient();
   const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc0, user.id).catch(() => []));
   if (!hasCapability(grants, capability)) {
-    const msg = capability === 'attend_meetings' ? 'Meeting check-in is for officers, leads, exec and recruits.'
-      : capability === 'host_meetings' ? 'Only leads, exec and admins can plan meetings.'
-      : 'Only exec and admins can do that.';
+    const msg =
+      capability === 'attend_meetings'
+        ? 'Meeting check-in is for officers, leads, exec and recruits.'
+        : capability === 'host_meetings'
+          ? 'Only leads, exec and admins can plan meetings.'
+          : 'Only exec and admins can do that.';
     return { error: NextResponse.json({ error: msg }, { status: 403 }) };
   }
   // Exec/admin manage every meeting; a lead only the ones they planned (see canManageMeeting).
@@ -265,7 +365,9 @@ export async function authorizeTeamView() {
   const host = await authorizeMeetings('host_meetings');
   if (!host.error) return host;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return host;
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const svc = createServiceClient();
@@ -294,7 +396,12 @@ export async function getTodaysMeetings(svc: SupabaseClient): Promise<(MeetingRo
   return attachExtras(svc, (data as MeetingRow[] | null) ?? []);
 }
 
-export interface PersonRow { id: string; name: string; avatar_url: string | null; custom_avatar_url: string | null }
+export interface PersonRow {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  custom_avatar_url: string | null;
+}
 
 // Everyone expected at a Gen Meeting: holds officer, lead, exec or recruit.
 export async function getExpectedPeople(svc: SupabaseClient, m?: MeetingAudience & { invitees?: string[] | null; group_ids?: string[] | null }): Promise<PersonRow[]> {
@@ -324,11 +431,23 @@ export async function meetingHappeningNow(svc: SupabaseClient, user: { id: strin
   if (rows.some((m) => isMeetingOpen(m, t) || near(m.starts_at, m.ends_at))) return true;
   const today = pacificDayKey(now);
   const groups = await loadGroups(svc);
-  const { data: series } = await svc.from('meeting_series').select('id, weekday, start_time, end_time, audience, invitees, group_ids, open_to_team, ends_on').eq('active', true).eq('weekday', weekdayOfKey(today)).or(`ends_on.is.null,ends_on.gte.${today}`);
+  const { data: series } = await svc
+    .from('meeting_series')
+    .select('id, weekday, start_time, end_time, audience, invitees, group_ids, open_to_team, ends_on')
+    .eq('active', true)
+    .eq('weekday', weekdayOfKey(today))
+    .or(`ends_on.is.null,ends_on.gte.${today}`);
   return (series ?? []).some((s) => {
     if (rows.some((r) => r.series_id === s.id)) return false; // already a real row, handled above
     const sx = withExtras([{ invitees: s.invitees as string[] | null, group_ids: s.group_ids as string[] | null }], groups)[0];
-    if (!canAttendMeeting({ audience: s.audience as string[] | null, extra_ids: sx.extra_ids, invitees: sx.invitees, group_ids: sx.group_ids, open_to_team: s.open_to_team as boolean | null }, user.id, user.roles)) return false;
+    if (
+      !canAttendMeeting(
+        { audience: s.audience as string[] | null, extra_ids: sx.extra_ids, invitees: sx.invitees, group_ids: sx.group_ids, open_to_team: s.open_to_team as boolean | null },
+        user.id,
+        user.roles,
+      )
+    )
+      return false;
     const { starts, ends } = occurrenceTimes(today, s.start_time as string, s.end_time as string);
     return near(starts.toISOString(), ends.toISOString());
   });
@@ -346,13 +465,15 @@ export async function notifyMeetingInvites(
 ): Promise<number> {
   const [now, prev] = await Promise.all([getExpectedPeople(svc, after), opts.before ? getExpectedPeople(svc, opts.before) : Promise.resolve([])]);
   const skip = new Set([...prev.map((p) => p.id), ...(opts.hostId ? [opts.hostId] : [])]);
-  const rows = now.filter((p) => !skip.has(p.id)).map((p) => ({
-    user_id: p.id,
-    type: 'meeting_invite',
-    title: `You’re invited to ${meeting.title}`,
-    body: meeting.when,
-    href: meeting.href ?? '/portal/meetings/mine',
-  }));
+  const rows = now
+    .filter((p) => !skip.has(p.id))
+    .map((p) => ({
+      user_id: p.id,
+      type: 'meeting_invite',
+      title: `You’re invited to ${meeting.title}`,
+      body: meeting.when,
+      href: meeting.href ?? '/portal/meetings/mine',
+    }));
   return createNotifications(svc, rows);
 }
 
@@ -362,7 +483,9 @@ export async function authorizeAttendance() {
   const first = await authorizeMeetings('host_meetings');
   if (!first.error) return { ...first, reportsAll: first.manageAll || hasCapability(first.roles, 'view_attendance_reports') };
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const svc = createServiceClient();
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -374,20 +497,35 @@ export async function authorizeAttendance() {
 // Makes sure an occurrence of a repeating meeting has its meetings row, creating it if needed. A brand new row also gets the series'
 // standing absences (people a weekly plan found unavailable at the chosen time), so every week starts with them marked.
 export async function ensureOccurrence(svc: SupabaseClient, s: SeriesRow, date: string): Promise<MeetingRow | null> {
-  const find = async () => ((await svc.from('meetings').select('*').eq('series_id', s.id).eq('meeting_date', date).maybeSingle()).data as MeetingRow | null);
+  const find = async () => (await svc.from('meetings').select('*').eq('series_id', s.id).eq('meeting_date', date).maybeSingle()).data as MeetingRow | null;
   const existing = await find();
   if (existing) return existing;
   const { starts, ends } = occurrenceTimes(date, s.start_time, s.end_time);
   await svc.from('meetings').upsert(
-    { series_id: s.id, title: s.title, meeting_date: date, starts_at: starts.toISOString(), ends_at: ends.toISOString(), location: s.location, doc_url: s.doc_url, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, open_to_team: s.open_to_team, created_by: s.created_by },
-    { onConflict: 'series_id,meeting_date', ignoreDuplicates: true });
+    {
+      series_id: s.id,
+      title: s.title,
+      meeting_date: date,
+      starts_at: starts.toISOString(),
+      ends_at: ends.toISOString(),
+      location: s.location,
+      doc_url: s.doc_url,
+      audience: s.audience,
+      invitees: s.invitees,
+      group_ids: s.group_ids,
+      open_to_team: s.open_to_team,
+      created_by: s.created_by,
+    },
+    { onConflict: 'series_id,meeting_date', ignoreDuplicates: true },
+  );
   const row = await find();
   if (row) {
     const { data: standing } = await svc.from('meeting_series_absences').select('user_id, reason, excused, plan_id').eq('series_id', s.id);
     if (standing?.length) {
       await svc.from('meeting_absences').upsert(
         standing.map((a) => ({ meeting_id: row.id, user_id: a.user_id, reason: a.reason, excused: a.excused, plan_id: a.plan_id, marked_by: s.created_by })),
-        { onConflict: 'meeting_id,user_id', ignoreDuplicates: true });
+        { onConflict: 'meeting_id,user_id', ignoreDuplicates: true },
+      );
     }
   }
   return row;
@@ -399,7 +537,11 @@ export async function markEveryWeek(svc: SupabaseClient, seriesId: string, userI
   await svc.from('meeting_series_absences').upsert({ series_id: seriesId, user_id: userId, reason, excused, plan_id: null }, { onConflict: 'series_id,user_id' });
   const { data: coming } = await svc.from('meetings').select('id').eq('series_id', seriesId).gte('meeting_date', pacificDayKey()).is('opened_at', null);
   const ids = (coming ?? []).map((m) => m.id as string);
-  if (ids.length) await svc.from('meeting_absences').upsert(ids.map((meeting_id) => ({ meeting_id, user_id: userId, reason, excused, marked_by: actorId })), { onConflict: 'meeting_id,user_id' });
+  if (ids.length)
+    await svc.from('meeting_absences').upsert(
+      ids.map((meeting_id) => ({ meeting_id, user_id: userId, reason, excused, marked_by: actorId })),
+      { onConflict: 'meeting_id,user_id' },
+    );
 }
 export async function stopEveryWeek(svc: SupabaseClient, seriesId: string, userId: string): Promise<void> {
   await svc.from('meeting_series_absences').delete().eq('series_id', seriesId).eq('user_id', userId);

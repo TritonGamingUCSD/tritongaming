@@ -16,8 +16,14 @@ async function copyText(text: string) {
     await navigator.clipboard.writeText(text);
   } catch {
     const t = document.createElement('textarea');
-    t.value = text; document.body.appendChild(t); t.select();
-    try { document.execCommand('copy'); } catch { /* ignore */ }
+    t.value = text;
+    document.body.appendChild(t);
+    t.select();
+    try {
+      document.execCommand('copy');
+    } catch {
+      /* ignore */
+    }
     t.remove();
   }
 }
@@ -45,21 +51,68 @@ export default function PortalCopyLink() {
     setLook(document.documentElement.getAttribute('data-pp-theme') === 'dark' ? 'dark' : 'light');
     setOpen((v) => !v);
   };
-  const title = () => { try { return `tg-${new URL(href).pathname.replace(/^\/portal\/?/, '').replace(/[^a-z0-9]+/gi, '-') || 'portal'}-qr`; } catch { return 'tg-portal-qr'; } };
+  const title = () => {
+    try {
+      return `tg-${new URL(href).pathname.replace(/^\/portal\/?/, '').replace(/[^a-z0-9]+/gi, '-') || 'portal'}-qr`;
+    } catch {
+      return 'tg-portal-qr';
+    }
+  };
 
   return (
     <>
-      <button type="button" className={`${styles.btn} ${styles.wide}`} onClick={copy} title="Copy a link to exactly this view">{done ? 'Copied' : 'Copy link'}</button>
-      <button ref={btn} type="button" className={styles.btn} onClick={toggleQr} aria-expanded={open} aria-haspopup="dialog" aria-label="QR code for this page" title="QR code for this page"><QrCode size={17} aria-hidden="true" /></button>
+      <button type="button" className={`${styles.btn} ${styles.wide}`} onClick={copy} title="Copy a link to exactly this view">
+        {done ? 'Copied' : 'Copy link'}
+      </button>
+      <button
+        ref={btn}
+        type="button"
+        className={styles.btn}
+        onClick={toggleQr}
+        aria-expanded={open}
+        aria-haspopup="dialog"
+        aria-label="QR code for this page"
+        title="QR code for this page"
+      >
+        <QrCode size={17} aria-hidden="true" />
+      </button>
       {open && (
         <Popover anchor={btn} onClose={() => setOpen(false)} width={340} label="QR code for this page">
           <div className={qr.box}>
-            <div className={`${qr.tile} ${look === 'dark' ? qr.tileDark : ''}`}><StyledQRCode ref={code} className={qr.code} options={{ ...DEFAULT_QR_OPTIONS, ...(look === 'dark' && dark ? dark : {}), data: href, size: 640, downloadFormat: 'png' }} /></div>
-            <p className={qr.url} title={href}>{href.replace(/^https?:\/\//, '')}</p>
+            <div className={`${qr.tile} ${look === 'dark' ? qr.tileDark : ''}`}>
+              <StyledQRCode
+                ref={code}
+                className={qr.code}
+                options={{ ...DEFAULT_QR_OPTIONS, ...(look === 'dark' && dark ? dark : {}), data: href, size: 640, downloadFormat: 'png' }}
+              />
+            </div>
+            <p className={qr.url} title={href}>
+              {href.replace(/^https?:\/\//, '')}
+            </p>
             <div className={qr.actions}>
-              <Button size="sm" onClick={() => void code.current?.download(title())}><Download size={14} aria-hidden="true" /> Download</Button>
-              <Button size="sm" variant="secondary" onClick={async () => { const ok = await code.current?.copy(); if (ok) { setCopiedImg(true); window.setTimeout(() => setCopiedImg(false), 1600); } else showToast('Your browser would not copy the image. Use Download instead.'); }}>
-                {copiedImg ? <><Check size={14} aria-hidden="true" /> Copied</> : <><Copy size={14} aria-hidden="true" /> Copy image</>}
+              <Button size="sm" onClick={() => void code.current?.download(title())}>
+                <Download size={14} aria-hidden="true" /> Download
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={async () => {
+                  const ok = await code.current?.copy();
+                  if (ok) {
+                    setCopiedImg(true);
+                    window.setTimeout(() => setCopiedImg(false), 1600);
+                  } else showToast('Your browser would not copy the image. Use Download instead.');
+                }}
+              >
+                {copiedImg ? (
+                  <>
+                    <Check size={14} aria-hidden="true" /> Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy size={14} aria-hidden="true" /> Copy image
+                  </>
+                )}
               </Button>
             </div>
           </div>

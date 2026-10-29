@@ -42,8 +42,7 @@ export default async function MediaPage() {
     .map((v) => ({ title: v.value as string, videoId: youtubeVideoId(v.label as string) }))
     .filter((v) => v.videoId);
 
-  const albums = ((albumsContent.items as ListItem[] | undefined) ?? [])
-    .filter((a) => a.value && a.label);
+  const albums = ((albumsContent.items as ListItem[] | undefined) ?? []).filter((a) => a.value && a.label);
 
   const sections: Record<string, React.ReactNode> = {
     videos: (
@@ -71,10 +70,14 @@ export default async function MediaPage() {
             {albums.map((a, i) => (
               <li key={`${a.value}-${i}`}>
                 <a href={a.label} target="_blank" rel="noopener noreferrer" className={`${styles.albumCard} ${i % 2 ? styles.tiltR : styles.tiltL}`}>
-                  <span className={styles.albumIcon}><Camera size={22} strokeWidth={1.75} aria-hidden="true" /></span>
+                  <span className={styles.albumIcon}>
+                    <Camera size={22} strokeWidth={1.75} aria-hidden="true" />
+                  </span>
                   <span className={styles.albumText}>
                     <span className={styles.albumTitle}>{a.value}</span>
-                    <span className={styles.albumSub}>{(content.albums_link as string) || 'View album'} <span aria-hidden="true">→</span></span>
+                    <span className={styles.albumSub}>
+                      {(content.albums_link as string) || 'View album'} <span aria-hidden="true">→</span>
+                    </span>
                   </span>
                 </a>
               </li>
@@ -93,7 +96,9 @@ export default async function MediaPage() {
   return (
     <div className={styles.page}>
       <PageHero label={(content.hero_label as string) || 'Media'} title={(content.hero_title as string) || 'Watch & explore'} sub={content.hero_subtitle as string} />
-      {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
+      {order.map((id) => (
+        <Fragment key={id}>{sections[id]}</Fragment>
+      ))}
       <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'More where that came from.'} photos={pickPhotos(sitePhotos, 1, 3)} />
     </div>
   );

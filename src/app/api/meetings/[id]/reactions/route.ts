@@ -9,7 +9,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const auth = await authorizeMeetings('host_meetings');
   if (auth.error) return auth.error;
   const { id } = await params;
-  { const denied = await guardMeeting(auth, id); if (denied) return denied; }
+  {
+    const denied = await guardMeeting(auth, id);
+    if (denied) return denied;
+  }
   const { batches } = await request.json().catch(() => ({}));
   if (!Array.isArray(batches) || batches.length > 2000) return NextResponse.json({ error: 'Bad request.' }, { status: 400 });
   const clean: { b: string; r: Record<string, number> }[] = [];

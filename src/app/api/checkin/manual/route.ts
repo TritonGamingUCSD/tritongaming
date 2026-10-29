@@ -16,7 +16,9 @@ import { canCheckInNow } from '@/lib/events/checkinDays';
 // ignoreWindow) — this is where missed check-ins get fixed afterwards.
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -37,7 +39,10 @@ export async function POST(request: Request) {
   if (!ticket) return NextResponse.json({ error: 'Ticket not found' }, { status: 404 });
   const eventData = Array.isArray(ticket.event) ? ticket.event[0] : ticket.event;
   if (!(await canCheckInNow(serviceClient, ticket, eventData))) {
-    return NextResponse.json({ error: ticket.status === 'used' ? 'Already checked in today.' : `This ticket is ${ticket.status}, not active — nothing to check in.` }, { status: 409 });
+    return NextResponse.json(
+      { error: ticket.status === 'used' ? 'Already checked in today.' : `This ticket is ${ticket.status}, not active — nothing to check in.` },
+      { status: 409 },
+    );
   }
   const { error } = await performCheckin(
     serviceClient,
@@ -50,13 +55,19 @@ export async function POST(request: Request) {
       end_date: eventData?.end_date ?? null,
     },
     user.id,
-    { ignoreWindow: true }
+    { ignoreWindow: true },
   );
   if (error) {
-    const status = (error.includes('already ended') || error.startsWith('Already')) ? 409 : 500;
+    const status = error.includes('already ended') || error.startsWith('Already') ? 409 : 500;
     return NextResponse.json({ error }, { status });
   }
 
-  await logAudit(serviceClient, { actorId: user.id, action: 'manual', entityType: 'check-in', entityId: ticket_id, summary: `Manual check-in${eventData?.title ? ` for "${eventData.title}"` : ''}` });
+  await logAudit(serviceClient, {
+    actorId: user.id,
+    action: 'manual',
+    entityType: 'check-in',
+    entityId: ticket_id,
+    summary: `Manual check-in${eventData?.title ? ` for "${eventData.title}"` : ''}`,
+  });
   return NextResponse.json({ ok: true });
 }

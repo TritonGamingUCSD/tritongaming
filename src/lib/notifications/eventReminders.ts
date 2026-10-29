@@ -52,11 +52,15 @@ export async function sendEventReminders(svc: SupabaseClient, nowDate: Date = ne
     // Claim the ticket first so a concurrent/repeat run can't double-send.
     const stamp = new Date().toISOString();
     const patch = kind === '1h' ? { reminder_24h_sent_at: stamp, reminder_1h_sent_at: stamp } : { reminder_24h_sent_at: stamp };
-    const { data: claimed } = await svc.from('tickets').update(patch).eq('id', ticket.id).is(kind === '1h' ? 'reminder_1h_sent_at' : 'reminder_24h_sent_at', null).select('id');
+    const { data: claimed } = await svc
+      .from('tickets')
+      .update(patch)
+      .eq('id', ticket.id)
+      .is(kind === '1h' ? 'reminder_1h_sent_at' : 'reminder_24h_sent_at', null)
+      .select('id');
     if (!claimed?.length) continue;
 
     if (await createNotifications(svc, [{ user_id: ticket.user_id, type: 'event_reminder', title, body, href: '/portal/tickets' }])) inApp++;
-
   }
 
   return { sent: inApp };

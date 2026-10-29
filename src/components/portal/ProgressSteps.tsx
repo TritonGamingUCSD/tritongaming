@@ -6,7 +6,19 @@ import styles from './ProgressSteps.module.css';
 const R = 44;
 const CIRC = 2 * Math.PI * R;
 
-export default function ProgressSteps({ steps, active, title, doneTitle = 'All done', subtitle }: { steps: string[]; active: number; title?: string; doneTitle?: string; subtitle?: string }) {
+export default function ProgressSteps({
+  steps,
+  active,
+  title,
+  doneTitle = 'All done',
+  subtitle,
+}: {
+  steps: string[];
+  active: number;
+  title?: string;
+  doneTitle?: string;
+  subtitle?: string;
+}) {
   const done = active >= steps.length;
   // The step being worked on counts as half done, so the ring is always visibly moving.
   const fraction = done ? 1 : Math.min(1, (active + 0.5) / steps.length);
@@ -18,12 +30,28 @@ export default function ProgressSteps({ steps, active, title, doneTitle = 'All d
           <circle cx="50" cy="50" r={R} className={styles.arc} strokeDasharray={CIRC} strokeDashoffset={CIRC * (1 - fraction)} transform="rotate(-90 50 50)" />
         </svg>
         <span className={styles.center}>
-          {done ? <Check size={38} strokeWidth={3.2} className={styles.bigCheck} /> : <span className={styles.count}>{active + 1}<small>/{steps.length}</small></span>}
+          {done ? (
+            <Check size={38} strokeWidth={3.2} className={styles.bigCheck} />
+          ) : (
+            <span className={styles.count}>
+              {active + 1}
+              <small>/{steps.length}</small>
+            </span>
+          )}
         </span>
       </div>
 
       <div className={styles.head}>
-        <p className={styles.title}>{done ? doneTitle : steps[active]}{!done && <span className={styles.dots} aria-hidden="true"><i>.</i><i>.</i><i>.</i></span>}</p>
+        <p className={styles.title}>
+          {done ? doneTitle : steps[active]}
+          {!done && (
+            <span className={styles.dots} aria-hidden="true">
+              <i>.</i>
+              <i>.</i>
+              <i>.</i>
+            </span>
+          )}
+        </p>
         {(subtitle || title) && <p className={styles.sub}>{done ? subtitle : title}</p>}
       </div>
 
@@ -32,7 +60,9 @@ export default function ProgressSteps({ steps, active, title, doneTitle = 'All d
           const state = i < active ? 'done' : i === active ? 'now' : 'later';
           return (
             <li key={label} className={`${styles.item} ${styles[state]}`} aria-current={state === 'now' ? 'step' : undefined}>
-              <span className={styles.mark} aria-hidden="true">{state === 'done' ? <Check size={14} strokeWidth={3.4} /> : i + 1}</span>
+              <span className={styles.mark} aria-hidden="true">
+                {state === 'done' ? <Check size={14} strokeWidth={3.4} /> : i + 1}
+              </span>
               <span className={styles.label}>{label}</span>
               <span className={styles.state}>{state === 'done' ? 'Done' : state === 'now' ? 'Working' : 'Next'}</span>
             </li>

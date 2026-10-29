@@ -22,15 +22,25 @@ interface Entry {
 
 // Types are stored as plain words ("doc", "meeting attendance"); the list is built from the log itself, so new kinds of entries show up without editing anything.
 const typeLabel = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
-const RANGES: { id: string; label: string }[] = [{ id: '', label: 'All time' }, { id: 'today', label: 'Today' }, { id: '7d', label: 'Last 7 days' }, { id: '30d', label: 'Last 30 days' }, { id: 'custom', label: 'Pick dates…' }];
+const RANGES: { id: string; label: string }[] = [
+  { id: '', label: 'All time' },
+  { id: 'today', label: 'Today' },
+  { id: '7d', label: 'Last 7 days' },
+  { id: '30d', label: 'Last 30 days' },
+  { id: 'custom', label: 'Pick dates…' },
+];
 
 /** The from/to timestamps for a range choice (San Diego days), as ISO strings the server understands. */
 function rangeBounds(range: string, from: string, to: string): { from?: string; to?: string } {
-  const day = (offset: number) => { const d = new Date(Date.now() + offset * 86_400_000); return d.toLocaleDateString('en-CA', { timeZone: PACIFIC_TZ }); };
+  const day = (offset: number) => {
+    const d = new Date(Date.now() + offset * 86_400_000);
+    return d.toLocaleDateString('en-CA', { timeZone: PACIFIC_TZ });
+  };
   if (range === 'today') return { from: pacificDatetimeLocalToUTC(`${day(0)}T00:00`).toISOString() };
   if (range === '7d') return { from: pacificDatetimeLocalToUTC(`${day(-6)}T00:00`).toISOString() };
   if (range === '30d') return { from: pacificDatetimeLocalToUTC(`${day(-29)}T00:00`).toISOString() };
-  if (range === 'custom') return { ...(from ? { from: pacificDatetimeLocalToUTC(`${from}T00:00`).toISOString() } : {}), ...(to ? { to: pacificDatetimeLocalToUTC(`${to}T00:00`).toISOString() } : {}) };
+  if (range === 'custom')
+    return { ...(from ? { from: pacificDatetimeLocalToUTC(`${from}T00:00`).toISOString() } : {}), ...(to ? { to: pacificDatetimeLocalToUTC(`${to}T00:00`).toISOString() } : {}) };
   return {};
 }
 
@@ -52,11 +62,15 @@ function Changes({ details }: { details: Record<string, unknown> }) {
             {change ? (
               <dd className={styles.changeVal}>
                 <span className={styles.from}>{renderValue(change.from)}</span>
-                <span className={styles.arrow} aria-hidden="true">→</span>
+                <span className={styles.arrow} aria-hidden="true">
+                  →
+                </span>
                 <span className={styles.to}>{renderValue(change.to)}</span>
               </dd>
             ) : (
-              <dd className={styles.changeVal}><span className={styles.to}>{renderValue(v)}</span></dd>
+              <dd className={styles.changeVal}>
+                <span className={styles.to}>{renderValue(v)}</span>
+              </dd>
             )}
           </div>
         );
@@ -86,54 +100,126 @@ export default function AuditLogClient() {
     return () => clearTimeout(t);
   }, [search]);
 
-  const load = useCallback(async (before?: string) => {
-    setLoading(true);
-    setError('');
-    try {
-      const p = new URLSearchParams();
-      if (type) p.set('type', type);
-      if (action) p.set('action', action);
-      const b = rangeBounds(range, from, to);
-      if (b.from) p.set('from', b.from);
-      // An end date means the whole of that day, so the limit is the start of the day after.
-      if (b.to) p.set('to', new Date(new Date(b.to).getTime() + 86_400_000).toISOString());
-      if (q) p.set('q', q);
-      if (before) p.set('before', before);
-      else p.set('facets', '1');
-      const res = await fetch(`/api/admin/audit?${p}`);
-      const json = await res.json();
-      if (!res.ok) { setError(json.error || 'Failed to load audit log.'); return; }
-      setEntries((prev) => (before ? [...prev, ...json.entries] : json.entries));
-      setHasMore(!!json.hasMore);
-      if (json.facets) setFacets(json.facets);
-    } catch {
-      setError('Network error loading audit log.');
-    } finally {
-      setLoading(false);
-    }
-  }, [type, action, range, from, to, q]);
+  const load = useCallback(
+    async (before?: string) => {
+      setLoading(true);
+      setError('');
+      try {
+        const p = new URLSearchParams();
+        if (type) p.set('type', type);
+        if (action) p.set('action', action);
+        const b = rangeBounds(range, from, to);
+        if (b.from) p.set('from', b.from);
+        // An end date means the whole of that day, so the limit is the start of the day after.
+        if (b.to) p.set('to', new Date(new Date(b.to).getTime() + 86_400_000).toISOString());
+        if (q) p.set('q', q);
+        if (before) p.set('before', before);
+        else p.set('facets', '1');
+        const res = await fetch(`/api/admin/audit?${p}`);
+        const json = await res.json();
+        if (!res.ok) {
+          setError(json.error || 'Failed to load audit log.');
+          return;
+        }
+        setEntries((prev) => (before ? [...prev, ...json.entries] : json.entries));
+        setHasMore(!!json.hasMore);
+        if (json.facets) setFacets(json.facets);
+      } catch {
+        setError('Network error loading audit log.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [type, action, range, from, to, q],
+  );
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <div className={styles.wrap}>
       <div className={styles.filters}>
-        <Input className={styles.search} value={search} onChange={(e) => { setSearch(e.target.value); setParams({ aq: e.target.value || null }); }} placeholder="Search summary or person…" />
-        <Select className={styles.select} value={type} onChange={(e) => { setType(e.target.value); setParams({ atype: e.target.value || null }); }} aria-label="Filter by type">
+        <Input
+          className={styles.search}
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setParams({ aq: e.target.value || null });
+          }}
+          placeholder="Search summary or person…"
+        />
+        <Select
+          className={styles.select}
+          value={type}
+          onChange={(e) => {
+            setType(e.target.value);
+            setParams({ atype: e.target.value || null });
+          }}
+          aria-label="Filter by type"
+        >
           <option value="">All types</option>
-          {(facets?.types ?? (type ? [{ value: type, n: 0 }] : [])).map((t) => <option key={t.value} value={t.value}>{typeLabel(t.value)}{t.n ? ` (${t.n})` : ''}</option>)}
+          {(facets?.types ?? (type ? [{ value: type, n: 0 }] : [])).map((t) => (
+            <option key={t.value} value={t.value}>
+              {typeLabel(t.value)}
+              {t.n ? ` (${t.n})` : ''}
+            </option>
+          ))}
         </Select>
-        <Select className={styles.select} value={action} onChange={(e) => { setAction(e.target.value); setParams({ aaction: e.target.value || null }); }} aria-label="Filter by action">
+        <Select
+          className={styles.select}
+          value={action}
+          onChange={(e) => {
+            setAction(e.target.value);
+            setParams({ aaction: e.target.value || null });
+          }}
+          aria-label="Filter by action"
+        >
           <option value="">All actions</option>
-          {(facets?.actions ?? (action ? [{ value: action, n: 0 }] : [])).map((a) => <option key={a.value} value={a.value}>{a.value}{a.n ? ` (${a.n})` : ''}</option>)}
+          {(facets?.actions ?? (action ? [{ value: action, n: 0 }] : [])).map((a) => (
+            <option key={a.value} value={a.value}>
+              {a.value}
+              {a.n ? ` (${a.n})` : ''}
+            </option>
+          ))}
         </Select>
-        <Select className={styles.select} value={range} onChange={(e) => { setRange(e.target.value); setParams({ arange: e.target.value || null, ...(e.target.value === 'custom' ? {} : { afrom: null, ato: null }) }); if (e.target.value !== 'custom') { setFrom(''); setTo(''); } }} aria-label="Filter by date">
-          {RANGES.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}
+        <Select
+          className={styles.select}
+          value={range}
+          onChange={(e) => {
+            setRange(e.target.value);
+            setParams({ arange: e.target.value || null, ...(e.target.value === 'custom' ? {} : { afrom: null, ato: null }) });
+            if (e.target.value !== 'custom') {
+              setFrom('');
+              setTo('');
+            }
+          }}
+          aria-label="Filter by date"
+        >
+          {RANGES.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.label}
+            </option>
+          ))}
         </Select>
         {range === 'custom' && (
           <>
-            <DateInput value={from} onChange={(e) => { setFrom(e.target.value); setParams({ afrom: e.target.value || null }); }} aria-label="From date" />
-            <DateInput value={to} onChange={(e) => { setTo(e.target.value); setParams({ ato: e.target.value || null }); }} aria-label="To date" />
+            <DateInput
+              value={from}
+              onChange={(e) => {
+                setFrom(e.target.value);
+                setParams({ afrom: e.target.value || null });
+              }}
+              aria-label="From date"
+            />
+            <DateInput
+              value={to}
+              onChange={(e) => {
+                setTo(e.target.value);
+                setParams({ ato: e.target.value || null });
+              }}
+              aria-label="To date"
+            />
           </>
         )}
         <a
@@ -172,7 +258,9 @@ export default function AuditLogClient() {
       )}
       {loading && <Loading variant="inline" label="Loading…" />}
       {hasMore && !loading && (
-        <Button variant="ghost" className={styles.more} onClick={() => load(entries[entries.length - 1].created_at)}>Load more</Button>
+        <Button variant="ghost" className={styles.more} onClick={() => load(entries[entries.length - 1].created_at)}>
+          Load more
+        </Button>
       )}
     </div>
   );

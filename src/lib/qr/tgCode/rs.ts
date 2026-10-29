@@ -6,7 +6,8 @@ const LOG = new Uint8Array(256);
 (() => {
   let x = 1;
   for (let i = 0; i < 255; i++) {
-    EXP[i] = x; LOG[x] = i;
+    EXP[i] = x;
+    LOG[x] = i;
     x <<= 1;
     if (x & 0x100) x ^= 0x11d;
   }
@@ -14,7 +15,10 @@ const LOG = new Uint8Array(256);
 })();
 
 const mul = (a: number, b: number) => (a === 0 || b === 0 ? 0 : EXP[LOG[a] + LOG[b]]);
-const div = (a: number, b: number) => { if (b === 0) throw new Error('div0'); return a === 0 ? 0 : EXP[(LOG[a] + 255 - LOG[b]) % 255]; };
+const div = (a: number, b: number) => {
+  if (b === 0) throw new Error('div0');
+  return a === 0 ? 0 : EXP[(LOG[a] + 255 - LOG[b]) % 255];
+};
 const pow = (x: number, p: number) => EXP[(((LOG[x] * p) % 255) + 255) % 255];
 const inverse = (x: number) => EXP[255 - LOG[x]];
 
@@ -62,10 +66,15 @@ export function rsEncode(data: number[], nsym: number): number[] {
   return [...data, ...out.slice(data.length)];
 }
 
-const syndromes = (msg: number[], nsym: number) => { const s: number[] = []; for (let i = 0; i < nsym; i++) s.push(polyEval(msg, EXP[i])); return s; };
+const syndromes = (msg: number[], nsym: number) => {
+  const s: number[] = [];
+  for (let i = 0; i < nsym; i++) s.push(polyEval(msg, EXP[i]));
+  return s;
+};
 
 function errorLocator(synd: number[], nsym: number, eraseCount = 0): number[] {
-  let errLoc = [1], oldLoc = [1];
+  let errLoc = [1],
+    oldLoc = [1];
   for (let i = 0; i < nsym - eraseCount; i++) {
     let delta = synd[i];
     for (let j = 1; j < errLoc.length; j++) delta ^= mul(errLoc[errLoc.length - 1 - j], synd[i - j]);
@@ -96,7 +105,8 @@ function forneySyndromes(synd: number[], erase: number[], n: number): number[] {
 }
 
 function findErrors(errLocRev: number[], n: number): number[] {
-  const errs = errLocRev.length - 1, pos: number[] = [];
+  const errs = errLocRev.length - 1,
+    pos: number[] = [];
   for (let i = 0; i < n; i++) if (polyEval(errLocRev, pow(2, i)) === 0) pos.push(n - 1 - i);
   if (pos.length !== errs) throw new Error('could not locate errors');
   return pos;
@@ -115,7 +125,9 @@ function correctErrata(msg: number[], synd: number[], errPos: number[]): number[
   X.forEach((Xi, i) => {
     const XiInv = inverse(Xi);
     let prime = 1;
-    X.forEach((Xj, j) => { if (j !== i) prime = mul(prime, 1 ^ mul(XiInv, Xj)); });
+    X.forEach((Xj, j) => {
+      if (j !== i) prime = mul(prime, 1 ^ mul(XiInv, Xj));
+    });
     if (prime === 0) throw new Error('bad locator');
     let y = polyEval([...errEval].reverse().reverse(), XiInv);
     y = mul(pow(Xi, 1), y);
@@ -140,5 +152,7 @@ export function rsDecode(msg: number[], nsym: number, erase: number[] = [], maxF
     const fixed = correctErrata(work, synd, [...erase, ...pos]);
     if (!syndromes(fixed, nsym).every((s) => s === 0)) return null;
     return fixed.slice(0, fixed.length - nsym);
-  } catch { return null; }
+  } catch {
+    return null;
+  }
 }

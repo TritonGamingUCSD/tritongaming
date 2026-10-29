@@ -9,13 +9,16 @@ import { addDaysKey, loadGroups, occurrenceTimes, seriesRunsOn, withExtras, type
 // portal search uses it to list meetings.
 export interface BusyItem {
   kind: 'event' | 'meeting';
-  date: string;            // the Pacific day this entry sits on
+  date: string; // the Pacific day this entry sits on
   title: string;
-  start: string; end: string | null;   // ISO
-  mine: boolean;           // they have a ticket / are hosting
+  start: string;
+  end: string | null; // ISO
+  mine: boolean; // they have a ticket / are hosting
   repeats?: boolean;
   /** Meetings only (portal search lists them): a stable key, where it is and the page to open. */
-  key?: string; location?: string | null; href?: string;
+  key?: string;
+  location?: string | null;
+  href?: string;
 }
 
 export async function collectBusyItems(svc: SupabaseClient, user: { id: string }, roles: RoleGrant[], from: string, to: string): Promise<BusyItem[]> {
@@ -26,7 +29,10 @@ export async function collectBusyItems(svc: SupabaseClient, user: { id: string }
     svc.from('events').select('id, title, start_date, end_date').eq('is_published', true).lte('start_date', endIso).order('start_date'),
     svc.from('tickets').select('event_id').eq('user_id', user.id),
     loadGroups(svc),
-    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, created_by, created_at, ends_on').eq('active', true),
+    svc
+      .from('meeting_series')
+      .select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, created_by, created_at, ends_on')
+      .eq('active', true),
     svc.from('meetings').select('*').gte('meeting_date', from).lte('meeting_date', to).eq('cancelled', false),
   ]);
 
@@ -58,7 +64,18 @@ export async function collectBusyItems(svc: SupabaseClient, user: { id: string }
   const rows = (rowData ?? []) as MeetingRow[];
   for (const r of rows) {
     if (!mineOrHosted(r)) continue;
-    items.push({ kind: 'meeting', key: `m|${r.id}`, date: r.meeting_date, title: r.title, start: r.starts_at, end: r.ends_at, location: r.location, href: meetingHref(r.created_by), mine: r.created_by === user.id, repeats: !!r.series_id });
+    items.push({
+      kind: 'meeting',
+      key: `m|${r.id}`,
+      date: r.meeting_date,
+      title: r.title,
+      start: r.starts_at,
+      end: r.ends_at,
+      location: r.location,
+      href: meetingHref(r.created_by),
+      mine: r.created_by === user.id,
+      repeats: !!r.series_id,
+    });
   }
   const taken = new Set(rows.filter((r) => r.series_id).map((r) => `${r.series_id}|${r.meeting_date}`));
   // Occurrences of repeating meetings that nobody has opened yet (no row exists), never before the series began.
@@ -69,7 +86,18 @@ export async function collectBusyItems(svc: SupabaseClient, user: { id: string }
     for (let day = from; day <= to && day <= horizon; day = addDaysKey(day, 1)) {
       if (day < today || day < began || !seriesRunsOn(s, day) || taken.has(`${s.id}|${day}`)) continue;
       const { starts, ends } = occurrenceTimes(day, s.start_time, s.end_time);
-      items.push({ kind: 'meeting', key: `s|${s.id}|${day}`, date: day, title: s.title, start: starts.toISOString(), end: ends.toISOString(), location: s.location, href: meetingHref(s.created_by), mine: s.created_by === user.id, repeats: true });
+      items.push({
+        kind: 'meeting',
+        key: `s|${s.id}|${day}`,
+        date: day,
+        title: s.title,
+        start: starts.toISOString(),
+        end: ends.toISOString(),
+        location: s.location,
+        href: meetingHref(s.created_by),
+        mine: s.created_by === user.id,
+        repeats: true,
+      });
     }
   }
   items.sort((a, b) => a.date.localeCompare(b.date) || a.start.localeCompare(b.start));

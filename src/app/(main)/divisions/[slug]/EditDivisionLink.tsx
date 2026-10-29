@@ -18,19 +18,29 @@ export default function EditDivisionLink({ divisionId }: { divisionId: string })
     let cancelled = false;
     (async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
       const { data } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
       if (!cancelled && hasCapability(data ?? [], 'manage_division', divisionId)) setCanEdit(true);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [divisionId]);
 
   if (!canEdit) return null;
   return (
     <ZineBand tone="deep" label="Manage division page">
-      <BandHeader label="Leads only" title="Manage this page" sub="Write the page in Markdown and update the logo, Discord link, application link, social links and posts, all from the portal." />
-      <Link href={`/portal/divisions/${divisionId}`} className={styles.applyBtn}>Edit in portal →</Link>
+      <BandHeader
+        label="Leads only"
+        title="Manage this page"
+        sub="Write the page in Markdown and update the logo, Discord link, application link, social links and posts, all from the portal."
+      />
+      <Link href={`/portal/divisions/${divisionId}`} className={styles.applyBtn}>
+        Edit in portal →
+      </Link>
     </ZineBand>
   );
 }

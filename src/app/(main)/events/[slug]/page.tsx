@@ -46,8 +46,8 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const description = event.content?.trim()
     ? clampDescription(event.content)
     : event.details?.trim()
-    ? markdownToDescription(event.details)
-    : `Join Triton Gaming for ${event.full_name}${event.location ? ` at ${event.location}` : ''}.`;
+      ? markdownToDescription(event.details)
+      : `Join Triton Gaming for ${event.full_name}${event.location ? ` at ${event.location}` : ''}.`;
 
   // The card's address carries a fingerprint of what it shows, so a changed poster or title means a new address and a fresh card everywhere.
   const ogUrl = `/api/og/events/${encodeURIComponent(event.slug || event._id)}?v=${ogVersion(eventCardInputs(event), event.location, event.start_date)}`;
@@ -103,9 +103,7 @@ export default async function EventDetailPage({ params }: Params) {
   // Fetched in display order, in parallel — each is an independent network
   // call to a different Google Photos page, so awaiting them one at a time
   // would serialize what's otherwise an embarrassingly parallel fetch.
-  const albumPreviews = isPast
-    ? await Promise.all(event.photo_albums.map((a) => getAlbumPreview(a.url)))
-    : [];
+  const albumPreviews = isPast ? await Promise.all(event.photo_albums.map((a) => getAlbumPreview(a.url))) : [];
 
   const eventJsonLd = {
     '@context': 'https://schema.org',
@@ -113,9 +111,7 @@ export default async function EventDetailPage({ params }: Params) {
     name: event.full_name,
     startDate: event.start_date,
     ...(event.end_date ? { endDate: event.end_date } : {}),
-    eventAttendanceMode: event.url?.includes('discord') || !event.location
-      ? 'https://schema.org/OnlineEventAttendanceMode'
-      : 'https://schema.org/OfflineEventAttendanceMode',
+    eventAttendanceMode: event.url?.includes('discord') || !event.location ? 'https://schema.org/OnlineEventAttendanceMode' : 'https://schema.org/OfflineEventAttendanceMode',
     eventStatus: 'https://schema.org/EventScheduled',
     ...(event.location ? { location: { '@type': 'Place', name: event.location } } : {}),
     ...(event.flyer_url ? { image: [event.flyer_url] } : {}),
@@ -133,13 +129,23 @@ export default async function EventDetailPage({ params }: Params) {
     if (!sticks.length) return [];
     let seed = 0;
     for (const ch of slug) seed = (Math.imul(seed, 31) + ch.charCodeAt(0)) | 0;
-    const rnd = () => { seed = (seed + 0x6d2b79f5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+    const rnd = () => {
+      seed = (seed + 0x6d2b79f5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
     const count = Math.min(9, Math.max(5, sticks.length * 2 + Math.floor(rnd() * 3)));
-    let lastSide = rnd() > 0.5, run = 0;
+    let lastSide = rnd() > 0.5,
+      run = 0;
     return Array.from({ length: count }, (_, i) => {
       let right = rnd() > 0.5;
-      if (right === lastSide) run++; else run = 0;
-      if (run >= 2) { right = !right; run = 0; }   // never three on the same side in a row
+      if (right === lastSide) run++;
+      else run = 0;
+      if (run >= 2) {
+        right = !right;
+        run = 0;
+      } // never three on the same side in a row
       lastSide = right;
       const band = 100 / count;
       return {
@@ -148,8 +154,8 @@ export default async function EventDetailPage({ params }: Params) {
         right,
         rot: Math.round(rnd() * 28 - 14),
         scale: 0.75 + rnd() * 0.6,
-        bx: -(2 + rnd() * 3.5),      // how far into the margin on wide screens (rem)
-        x: rnd(),                    // where across the width a phone's gap sticker sits (0 = left edge, 1 = right edge)
+        bx: -(2 + rnd() * 3.5), // how far into the margin on wide screens (rem)
+        x: rnd(), // where across the width a phone's gap sticker sits (0 = left edge, 1 = right edge)
       };
     });
   })();
@@ -157,13 +163,12 @@ export default async function EventDetailPage({ params }: Params) {
   const posters = theme?.posters?.length ? theme.posters : isExternalFlyer && event.flyer_url ? [event.flyer_url] : [];
   const stickerCount = theme?.stickers.length ?? 0;
 
-
   // Fewer stickers get more room: one or two are drawn much bigger, a full set stays at the base size.
   const stickerScale = stickerCount <= 2 ? 1.8 : stickerCount === 3 ? 1.55 : stickerCount === 4 ? 1.35 : stickerCount <= 6 ? 1.15 : 1;
 
   return (
     <div className={styles.page} style={themeVars(theme) as React.CSSProperties}>
-      { }
+      {}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(eventJsonLd) }} />
       {fontsHref && <link rel="stylesheet" href={fontsHref} />}
       {fontFaceCss && <style dangerouslySetInnerHTML={{ __html: fontFaceCss }} />}
@@ -180,32 +185,46 @@ export default async function EventDetailPage({ params }: Params) {
 
         <div className={`${styles.heroInner} ${posters.length ? '' : styles.noPoster}`}>
           <div className={styles.heroCopy}>
-            <Link href="/events" className={styles.back} data-avoid>← All events</Link>
-            {isPast && <span className={styles.pastBadge} data-avoid>Past event</span>}
-            <h1 className={styles.title} data-avoid>{event.full_name}</h1>
-            {event.content && <p className={styles.summary} data-avoid>{event.content}</p>}
+            <Link href="/events" className={styles.back} data-avoid>
+              ← All events
+            </Link>
+            {isPast && (
+              <span className={styles.pastBadge} data-avoid>
+                Past event
+              </span>
+            )}
+            <h1 className={styles.title} data-avoid>
+              {event.full_name}
+            </h1>
+            {event.content && (
+              <p className={styles.summary} data-avoid>
+                {event.content}
+              </p>
+            )}
 
             {!isPast && (
               <div className={styles.ctaRow} data-avoid>
                 <Link href="/portal/tickets" className={styles.ticketBtn}>
-                  <span className={styles.stubLeft}><Ticket size={20} strokeWidth={1.75} aria-hidden="true" /></span>
+                  <span className={styles.stubLeft}>
+                    <Ticket size={20} strokeWidth={1.75} aria-hidden="true" />
+                  </span>
                   <span className={styles.stubRight}>
-                    {event.audience === 'ucsd_only'
-                      ? 'UCSD students: get ticket'
-                      : event.ticket_price > 0
-                      ? `Get ticket · $${event.ticket_price}`
-                      : 'Get ticket · free'}
+                    {event.audience === 'ucsd_only' ? 'UCSD students: get ticket' : event.ticket_price > 0 ? `Get ticket · $${event.ticket_price}` : 'Get ticket · free'}
                     {event.audience !== 'ucsd_only' && event.ticket_price > 0 && <small>free for UCSD students</small>}
                   </span>
                 </Link>
               </div>
             )}
             {!isPast && event.points_value > 0 && (
-              <p className={styles.pointsNote} data-avoid><Award size={15} strokeWidth={1.75} aria-hidden="true" /> Check in to earn {event.points_value} reward points</p>
+              <p className={styles.pointsNote} data-avoid>
+                <Award size={15} strokeWidth={1.75} aria-hidden="true" /> Check in to earn {event.points_value} reward points
+              </p>
             )}
           </div>
 
-          {posters.length > 0 && <PosterGallery posters={posters} credits={posters.map((u) => creditOf(u))} name={event.full_name} frameClass={styles.poster} tapeClass={styles.tape} />}
+          {posters.length > 0 && (
+            <PosterGallery posters={posters} credits={posters.map((u) => creditOf(u))} name={event.full_name} frameClass={styles.poster} tapeClass={styles.tape} />
+          )}
         </div>
         {/* Phones: no room to float stickers over the text, so they sit in a row under the poster instead. */}
         {theme && theme.stickers.length > 0 && (
@@ -216,9 +235,14 @@ export default async function EventDetailPage({ params }: Params) {
                 <div key={u + i} className={styles.shelfItem} style={{ transform: `rotate(${[-6, 5, -3, 7, -5, 4, -7, 6][i % 8]}deg)` }}>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={u} alt="" aria-hidden="true" decoding="async" />
-                  {credit && (credit.link
-                    ? <a href={credit.link} target="_blank" rel="noopener noreferrer" className={styles.stickerCredit} title={`Sticker by ${credit.name}`}>By {credit.name}</a>
-                    : <span className={styles.stickerCredit}>By {credit.name}</span>)}
+                  {credit &&
+                    (credit.link ? (
+                      <a href={credit.link} target="_blank" rel="noopener noreferrer" className={styles.stickerCredit} title={`Sticker by ${credit.name}`}>
+                        By {credit.name}
+                      </a>
+                    ) : (
+                      <span className={styles.stickerCredit}>By {credit.name}</span>
+                    ))}
                 </div>
               );
             })}
@@ -247,7 +271,9 @@ export default async function EventDetailPage({ params }: Params) {
                       <span className={styles.albumCardLabel}>
                         <Camera size={15} strokeWidth={1.5} aria-hidden="true" />
                         {album.title}
-                        <span className={styles.albumOpen} aria-hidden="true">open album →</span>
+                        <span className={styles.albumOpen} aria-hidden="true">
+                          open album →
+                        </span>
                       </span>
                     </a>
                   ) : (
@@ -261,7 +287,9 @@ export default async function EventDetailPage({ params }: Params) {
             {event.post_event_info && (
               <div className={styles.note}>
                 <span className={styles.noteLabel}>A note from the team</span>
-                <div className={styles.paper}><MarkdownContent>{event.post_event_info}</MarkdownContent></div>
+                <div className={styles.paper}>
+                  <MarkdownContent>{event.post_event_info}</MarkdownContent>
+                </div>
               </div>
             )}
           </section>
@@ -269,32 +297,47 @@ export default async function EventDetailPage({ params }: Params) {
 
         <div className={styles.facts}>
           <div className={styles.fact}>
-            <span className={styles.factIcon}><CalendarDays size={18} strokeWidth={1.75} aria-hidden="true" /></span>
+            <span className={styles.factIcon}>
+              <CalendarDays size={18} strokeWidth={1.75} aria-hidden="true" />
+            </span>
             <div>
               <div className={styles.factLabel}>When</div>
               <div className={styles.factValue}>{formatEventDateRange(event.start_date, event.end_date || null)}</div>
               {dayCount > 1 && (event.day_hours ?? []).length > 0 ? (
                 <ul className={styles.factList}>
-                  {[...(event.day_hours ?? [])].sort((a, b) => a.day.localeCompare(b.day)).map((w) => <li key={w.day}>{formatDayHours(w)}</li>)}
+                  {[...(event.day_hours ?? [])]
+                    .sort((a, b) => a.day.localeCompare(b.day))
+                    .map((w) => (
+                      <li key={w.day}>{formatDayHours(w)}</li>
+                    ))}
                 </ul>
               ) : (
-                <div className={styles.factSub}>{formatEventTimeRange(event.start_date, event.end_date || null)}{dayCount > 1 && ` · ${dayCount} days`}</div>
+                <div className={styles.factSub}>
+                  {formatEventTimeRange(event.start_date, event.end_date || null)}
+                  {dayCount > 1 && ` · ${dayCount} days`}
+                </div>
               )}
             </div>
           </div>
           {event.location && (
             <div className={styles.fact}>
-              <span className={styles.factIcon}><MapPin size={18} strokeWidth={1.75} aria-hidden="true" /></span>
+              <span className={styles.factIcon}>
+                <MapPin size={18} strokeWidth={1.75} aria-hidden="true" />
+              </span>
               <div>
                 <div className={styles.factLabel}>Where</div>
                 <div className={styles.factValue}>{event.location}</div>
-                {(venueAddress || (venueName && venueName !== event.location)) && <div className={styles.factSub}>{[venueName !== event.location ? venueName : '', venueAddress].filter(Boolean).join(' · ')}</div>}
+                {(venueAddress || (venueName && venueName !== event.location)) && (
+                  <div className={styles.factSub}>{[venueName !== event.location ? venueName : '', venueAddress].filter(Boolean).join(' · ')}</div>
+                )}
               </div>
             </div>
           )}
           {goingCount > 0 && (
             <div className={styles.fact}>
-              <span className={styles.factIcon}><Users size={18} strokeWidth={1.75} aria-hidden="true" /></span>
+              <span className={styles.factIcon}>
+                <Users size={18} strokeWidth={1.75} aria-hidden="true" />
+              </span>
               <div>
                 <div className={styles.factLabel}>{isPast ? 'Registered' : 'Going'}</div>
                 <div className={styles.factValue}>{goingCount.toLocaleString()}</div>
@@ -307,7 +350,9 @@ export default async function EventDetailPage({ params }: Params) {
         {event.details && (
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Event Details</h2>
-            <div className={styles.paper}><MarkdownContent>{event.details}</MarkdownContent></div>
+            <div className={styles.paper}>
+              <MarkdownContent>{event.details}</MarkdownContent>
+            </div>
           </section>
         )}
 
@@ -336,23 +381,29 @@ export default async function EventDetailPage({ params }: Params) {
             <h2 className={styles.sectionTitle}>Venue</h2>
             <div className={styles.venue}>
               <ScrollShield label="Tap to use the map" className={styles.mapWrap}>
-              <iframe
-                className={styles.map}
-                src={mapSrc}
-                title={`Map of ${venueName || venueAddress || 'the venue'}`}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-                allowFullScreen
-              />
+                <iframe
+                  className={styles.map}
+                  src={mapSrc}
+                  title={`Map of ${venueName || venueAddress || 'the venue'}`}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  allowFullScreen
+                />
               </ScrollShield>
               <div className={styles.venueInfo}>
-                <div className={styles.venueAddress}><MapPin size={16} strokeWidth={1.75} aria-hidden="true" /> {venueName || venueAddress || 'Approximate location'}</div>
+                <div className={styles.venueAddress}>
+                  <MapPin size={16} strokeWidth={1.75} aria-hidden="true" /> {venueName || venueAddress || 'Approximate location'}
+                </div>
                 {venueName && venueAddress && <p className={styles.venueNotes}>{venueAddress}</p>}
                 {!venueAddress && pin && <p className={styles.venueNotes}>Approximate location, see the notes for how to find it.</p>}
                 {event.venue_notes && <p className={styles.venueNotes}>{event.venue_notes}</p>}
                 <div className={styles.venueLinks}>
-                  <a href={directionsLink!} target="_blank" rel="noopener noreferrer" className={styles.venueBtn}><Navigation size={14} strokeWidth={1.75} aria-hidden="true" /> Get directions</a>
-                  <a href={mapsLink!} target="_blank" rel="noopener noreferrer" className={styles.venueBtn}><ExternalLink size={14} strokeWidth={1.75} aria-hidden="true" /> Open in Maps</a>
+                  <a href={directionsLink!} target="_blank" rel="noopener noreferrer" className={styles.venueBtn}>
+                    <Navigation size={14} strokeWidth={1.75} aria-hidden="true" /> Get directions
+                  </a>
+                  <a href={mapsLink!} target="_blank" rel="noopener noreferrer" className={styles.venueBtn}>
+                    <ExternalLink size={14} strokeWidth={1.75} aria-hidden="true" /> Open in Maps
+                  </a>
                 </div>
               </div>
             </div>
@@ -365,18 +416,16 @@ export default async function EventDetailPage({ params }: Params) {
             <div className={styles.sponsors}>
               {event.sponsors.map((sp, i) => {
                 const inner = (
-                  <>
-                    {sp.logo_url ? (
-                      <LogoPlate src={sp.logo_url} alt={sp.name} imgClassName={styles.sponsorLogo} />
-                    ) : (
-                      <span className={styles.sponsorName}>{sp.name}</span>
-                    )}
-                  </>
+                  <>{sp.logo_url ? <LogoPlate src={sp.logo_url} alt={sp.name} imgClassName={styles.sponsorLogo} /> : <span className={styles.sponsorName}>{sp.name}</span>}</>
                 );
                 return sp.url ? (
-                  <a key={i} href={sp.url} target="_blank" rel="noopener noreferrer nofollow" className={styles.sponsor} aria-label={sp.name}>{inner}</a>
+                  <a key={i} href={sp.url} target="_blank" rel="noopener noreferrer nofollow" className={styles.sponsor} aria-label={sp.name}>
+                    {inner}
+                  </a>
                 ) : (
-                  <div key={i} className={styles.sponsor} aria-label={sp.name}>{inner}</div>
+                  <div key={i} className={styles.sponsor} aria-label={sp.name}>
+                    {inner}
+                  </div>
                 );
               })}
             </div>

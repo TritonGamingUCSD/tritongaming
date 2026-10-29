@@ -9,7 +9,11 @@ export const dynamic = 'force-dynamic';
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizePlans();
   if ('error' in auth) return auth.error;
-  const { data } = await auth.svc.from('meeting_plans').select('*').eq('id', (await params).id).maybeSingle();
+  const { data } = await auth.svc
+    .from('meeting_plans')
+    .select('*')
+    .eq('id', (await params).id)
+    .maybeSingle();
   if (!data) return NextResponse.json({ error: 'Plan not found.' }, { status: 404 });
   const plan = data as PlanRow;
   const { people } = await planPeople(auth.svc, plan);
@@ -31,7 +35,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     if (Object.keys(keep).length) merged[day] = keep as PlanSlots[string];
   }
   for (const [day, row] of Object.entries(mine)) merged[day] = { ...(merged[day] ?? {}), ...row };
-  const { error } = await auth.svc.from('meeting_plan_responses').upsert({ plan_id: plan.id, user_id: auth.user.id, slots: merged, busy, updated_at: new Date().toISOString() }, { onConflict: 'plan_id,user_id' });
+  const { error } = await auth.svc
+    .from('meeting_plan_responses')
+    .upsert({ plan_id: plan.id, user_id: auth.user.id, slots: merged, busy, updated_at: new Date().toISOString() }, { onConflict: 'plan_id,user_id' });
   if (error) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
   return NextResponse.json({ ok: true });
 }

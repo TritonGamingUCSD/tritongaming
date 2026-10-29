@@ -4,25 +4,40 @@ import styles from './TGcode.module.css';
 // The portal's own circular code (see lib/qr/tgCode; the idea is Apple's App Clip codes, in Triton Gaming's colours): concentric rings of arcs (one cell of gap between them, always, and no tiny ones) with two ring marks at the top and a dot at each bottom corner, and the Triton logo
 // on a solid disc in the middle. Drawn in the portal's ink on its card colour, so it flips with the light and dark theme while keeping the contrast the reader
 // needs either way. Only the portal's Scan button reads it.
-const RING_COLOUR = [styles.c0, styles.c1];   // the message rings alternate the portal's ink and blue (both dark enough to read, and light in the dark theme)
-const FILL_COLOUR = [styles.f0, styles.f1];   // the filler arcs the scanner ignores: Triton yellow and light blue
-const CORNER = 0.5;   // the corner radius of an arc, as a share of its width (half: fully rounded ends)
+const RING_COLOUR = [styles.c0, styles.c1]; // the message rings alternate the portal's ink and blue (both dark enough to read, and light in the dark theme)
+const FILL_COLOUR = [styles.f0, styles.f1]; // the filler arcs the scanner ignores: Triton yellow and light blue
+const CORNER = 0.5; // the corner radius of an arc, as a share of its width (half: fully rounded ends)
 
-export default function TGcode({ payload, size, className = '', label = 'Code for the portal’s Scan button' }: { payload: string; size?: number; className?: string; label?: string }) {
+export default function TGcode({
+  payload,
+  size,
+  className = '',
+  label = 'Code for the portal’s Scan button',
+}: {
+  payload: string;
+  size?: number;
+  className?: string;
+  label?: string;
+}) {
   if (!PAYLOAD.test(payload)) return null;
   // The geometry (where each arc starts and ends) is lib/qr/tgCode's `arcs`.
   // Filler is drawn first, so a message arc is never covered.
-  const drawn = [...arcsOf(payload)].sort((x, y) => Number(y.fill) - Number(x.fill)).map(({ ring, a0, a1, fill }, i) => {
-    const r = R_IN + (ring + 0.5) * THICK;
-    const cls = (fill ? FILL_COLOUR : RING_COLOUR)[ring % 2];
-    if (a1 - a0 >= 2 * Math.PI) return <circle key={i} r={r} fill="none" strokeWidth={DASH} className={`${cls} ${styles.band}`} />;
-    const ro = r + DASH / 2, ri = r - DASH / 2, c = DASH * CORNER;
-    const pt = (a: number, rad: number) => `${(rad * Math.cos(a)).toFixed(4)} ${(rad * Math.sin(a)).toFixed(4)}`;
-    const dO = c / ro, dI = c / ri;
-    const large = a1 - a0 > Math.PI ? 1 : 0;
-    const d = `M ${pt(a0 + dO, ro)} A ${ro} ${ro} 0 ${large} 1 ${pt(a1 - dO, ro)} Q ${pt(a1, ro)} ${pt(a1, ro - c)} L ${pt(a1, ri + c)} Q ${pt(a1, ri)} ${pt(a1 - dI, ri)} A ${ri} ${ri} 0 ${large} 0 ${pt(a0 + dI, ri)} Q ${pt(a0, ri)} ${pt(a0, ri + c)} L ${pt(a0, ro - c)} Q ${pt(a0, ro)} ${pt(a0 + dO, ro)} Z`;
-    return <path key={i} d={d} className={cls} />;
-  });
+  const drawn = [...arcsOf(payload)]
+    .sort((x, y) => Number(y.fill) - Number(x.fill))
+    .map(({ ring, a0, a1, fill }, i) => {
+      const r = R_IN + (ring + 0.5) * THICK;
+      const cls = (fill ? FILL_COLOUR : RING_COLOUR)[ring % 2];
+      if (a1 - a0 >= 2 * Math.PI) return <circle key={i} r={r} fill="none" strokeWidth={DASH} className={`${cls} ${styles.band}`} />;
+      const ro = r + DASH / 2,
+        ri = r - DASH / 2,
+        c = DASH * CORNER;
+      const pt = (a: number, rad: number) => `${(rad * Math.cos(a)).toFixed(4)} ${(rad * Math.sin(a)).toFixed(4)}`;
+      const dO = c / ro,
+        dI = c / ri;
+      const large = a1 - a0 > Math.PI ? 1 : 0;
+      const d = `M ${pt(a0 + dO, ro)} A ${ro} ${ro} 0 ${large} 1 ${pt(a1 - dO, ro)} Q ${pt(a1, ro)} ${pt(a1, ro - c)} L ${pt(a1, ri + c)} Q ${pt(a1, ri)} ${pt(a1 - dI, ri)} A ${ri} ${ri} 0 ${large} 0 ${pt(a0 + dI, ri)} Q ${pt(a0, ri)} ${pt(a0, ri + c)} L ${pt(a0, ro - c)} Q ${pt(a0, ro)} ${pt(a0 + dO, ro)} Z`;
+      return <path key={i} d={d} className={cls} />;
+    });
   const finder = (c: { x: number; y: number }, k: string) => (
     <g key={k}>
       <circle cx={c.x} cy={c.y} r={1.5 * U} className={styles.solid} />
@@ -33,7 +48,8 @@ export default function TGcode({ payload, size, className = '', label = 'Code fo
     <svg viewBox="-1 -1 2 2" width={size} height={size} className={`${styles.code} ${className}`} role="img" aria-label={label}>
       <circle r="1" className={styles.plate} />
       <g className={styles.dashes}>{drawn}</g>
-      {finder(FINDERS.tl, 'tl')}{finder(FINDERS.tr, 'tr')}
+      {finder(FINDERS.tl, 'tl')}
+      {finder(FINDERS.tr, 'tr')}
       <circle cx={DOTS.bl.x} cy={DOTS.bl.y} r={R_SMALL} className={styles.solid} />
       <circle cx={DOTS.br.x} cy={DOTS.br.y} r={R_SMALL} className={styles.solid} />
       <circle r={R_LOGO} className={styles.solid} />

@@ -85,7 +85,12 @@ export interface HubSection {
   railHidden?: boolean;
 }
 
-export interface HubIdentity { name: string; avatarUrl: string | null; roleLabel: string; roles?: { label: string; color: string }[] }
+export interface HubIdentity {
+  name: string;
+  avatarUrl: string | null;
+  roleLabel: string;
+  roles?: { label: string; color: string }[];
+}
 
 // Params that belong to whatever was open, cleared when switching sections.
 const CLEAR_NAV = { tab: null, subtab: null, block: null, id: null, q: null, status: null, view: null, atype: null, aq: null, ticket: null, plan: null };
@@ -146,11 +151,35 @@ interface GroupedSection {
 // onOpenChange reports whether a panel is open so a sibling (the portal's
 // "next ticket" banner) can react to that directly — e.g. hide itself while
 // a section takes over the screen on mobile.
-export interface HubFrame { greeting: string; tiles: ReactNode; viewAs: ReactNode; banners?: ReactNode }
+export interface HubFrame {
+  greeting: string;
+  tiles: ReactNode;
+  viewAs: ReactNode;
+  banners?: ReactNode;
+}
 
-export default function PortalHub({ sections: sectionsProp, identity, railFooter, homeExtras, onOpenChange, frame, plain = false }: { sections: HubSection[]; identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; onOpenChange?: (open: boolean) => void; frame?: HubFrame; /** Guests and UCSD-only accounts: on a desktop, a plain top bar instead of the sidebar app frame. */ plain?: boolean }) {
+export default function PortalHub({
+  sections: sectionsProp,
+  identity,
+  railFooter,
+  homeExtras,
+  onOpenChange,
+  frame,
+  plain = false,
+}: {
+  sections: HubSection[];
+  identity?: HubIdentity;
+  railFooter?: ReactNode;
+  homeExtras?: ReactNode;
+  onOpenChange?: (open: boolean) => void;
+  frame?: HubFrame;
+  /** Guests and UCSD-only accounts: on a desktop, a plain top bar instead of the sidebar app frame. */ plain?: boolean;
+}) {
   const sections = useMemo(() => {
-    const rank = (id: string) => { const i = SECTION_ORDER.indexOf(id); return i === -1 ? SECTION_ORDER.length : i; };
+    const rank = (id: string) => {
+      const i = SECTION_ORDER.indexOf(id);
+      return i === -1 ? SECTION_ORDER.length : i;
+    };
     return [...sectionsProp].sort((a, b) => rank(a.id) - rank(b.id));
   }, [sectionsProp]);
   const setParams = usePortalParams();
@@ -178,37 +207,61 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   const [sheetDragging, setSheetDragging] = useState(false);
   const sheetGesture = useRef<{ startY: number; lastY: number; lastT: number; v: number; active: boolean; fromGrab: boolean } | null>(null);
   const sheetEl = useRef<HTMLDivElement | null>(null);
-  useEffect(() => { if (!moreOpen) { setSheetDy(0); setSheetDragging(false); sheetGesture.current = null; } }, [moreOpen]);
+  useEffect(() => {
+    if (!moreOpen) {
+      setSheetDy(0);
+      setSheetDragging(false);
+      sheetGesture.current = null;
+    }
+  }, [moreOpen]);
   const sheetStart = (y: number, fromGrab: boolean) => {
     // From the body only when the list is at its top (otherwise it's an ordinary scroll).
-    if (!fromGrab && (sheetEl.current?.scrollTop ?? 0) > 0) { sheetGesture.current = null; return; }
+    if (!fromGrab && (sheetEl.current?.scrollTop ?? 0) > 0) {
+      sheetGesture.current = null;
+      return;
+    }
     sheetGesture.current = { startY: y, lastY: y, lastT: performance.now(), v: 0, active: false, fromGrab };
   };
   const sheetMove = (y: number) => {
-    const g = sheetGesture.current; if (!g) return;
+    const g = sheetGesture.current;
+    if (!g) return;
     const dy = y - g.startY;
     if (!g.active) {
       // Start pulling only for a clear downward move (and, from the body, only if the list is still at the top).
-      if (dy > 6 && (g.fromGrab || (sheetEl.current?.scrollTop ?? 0) <= 0)) { g.active = true; setSheetDragging(true); } else if (dy < -6) { sheetGesture.current = null; return; } else return;
+      if (dy > 6 && (g.fromGrab || (sheetEl.current?.scrollTop ?? 0) <= 0)) {
+        g.active = true;
+        setSheetDragging(true);
+      } else if (dy < -6) {
+        sheetGesture.current = null;
+        return;
+      } else return;
     }
     const now = performance.now();
-    g.v = (y - g.lastY) / Math.max(1, now - g.lastT); g.lastY = y; g.lastT = now;
+    g.v = (y - g.lastY) / Math.max(1, now - g.lastT);
+    g.lastY = y;
+    g.lastT = now;
     setSheetDy(Math.max(0, dy));
   };
   const sheetEnd = () => {
-    const g = sheetGesture.current; sheetGesture.current = null;
+    const g = sheetGesture.current;
+    sheetGesture.current = null;
     if (!g?.active) return;
     setSheetDragging(false);
-    if (sheetDy > 90 || g.v > 0.6) setMoreOpen(false); else setSheetDy(0);
+    if (sheetDy > 90 || g.v > 0.6) setMoreOpen(false);
+    else setSheetDy(0);
   };
   // A notification link can point at another tab (or a specific item) of the section that's already
   // open. Sections read their starting tab from the URL when they mount, so remount once the URL has
   // changed. In-section tab clicks never do this (they only edit the URL themselves).
   const [navNonce, setNavNonce] = useState(0);
-  const [openingScan, setOpeningScan] = useState(false);   // the Scan button was pressed: a screen shows at once while the camera page loads
-  useEffect(() => { if (!openingScan) return; const id = window.setTimeout(() => setOpeningScan(false), 10_000); return () => window.clearTimeout(id); }, [openingScan]);
+  const [openingScan, setOpeningScan] = useState(false); // the Scan button was pressed: a screen shows at once while the camera page loads
+  useEffect(() => {
+    if (!openingScan) return;
+    const id = window.setTimeout(() => setOpeningScan(false), 10_000);
+    return () => window.clearTimeout(id);
+  }, [openingScan]);
   const pendingNav = useRef(false);
-  const navFrom = useRef<string | null>(null);   // the section that was open when the link was followed
+  const navFrom = useRef<string | null>(null); // the section that was open when the link was followed
   const openIdNow = useRef<string | null>(null);
   openIdNow.current = openId;
   // A link to a section that was not open already mounts it fresh, so only a link into the section that is already open needs it rebuilt (a second rebuild
@@ -221,15 +274,23 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   };
   // Browser Back/Forward between portal views: the address changes under us, so remount the open section to re-read its tab.
   useEffect(() => {
-    const onPop = () => { const w = window as unknown as { __tgPop?: number; __tgPush?: number }; w.__tgPop = Date.now(); w.__tgPush = Math.max(0, (w.__tgPush ?? 0) - 1); // Back/Forward may land on another section (or home): show the one the address now names.
+    const onPop = () => {
+      const w = window as unknown as { __tgPop?: number; __tgPush?: number };
+      w.__tgPop = Date.now();
+      w.__tgPush = Math.max(0, (w.__tgPush ?? 0) - 1); // Back/Forward may land on another section (or home): show the one the address now names.
       const id = mergedPortalParams(window.location.pathname, window.location.search).get('section');
       setOpenId(id && sectionIdsRef.current.has(id) ? id : null);
-      window.setTimeout(() => setNavNonce((n) => n + 1), 0); };
+      window.setTimeout(() => setNavNonce((n) => n + 1), 0);
+    };
     window.addEventListener('popstate', onPop);
     return () => window.removeEventListener('popstate', onPop);
   }, []);
   useEffect(() => {
-    const onNav = () => { pendingNav.current = true; navFrom.current = openIdNow.current; window.setTimeout(rebuildIfSameSection, 600); };
+    const onNav = () => {
+      pendingNav.current = true;
+      navFrom.current = openIdNow.current;
+      window.setTimeout(rebuildIfSameSection, 600);
+    };
     window.addEventListener('tg:portal-nav', onNav);
     return () => window.removeEventListener('tg:portal-nav', onNav);
   }, []);
@@ -253,7 +314,6 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
   useEffect(() => {
     setOpenId(validRequested);
-     
   }, [validRequested]);
 
   useEffect(() => {
@@ -264,19 +324,28 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openId, isDesktop]);
 
-  const open = useCallback((id: string) => {
-    // Switching sections would throw away unsaved edits in the open one.
-    if (id !== openId && !confirmDiscardUnsaved()) return;
-    // Help records which page the person came from, to attach to their ticket.
-    if (id === 'help') { try { sessionStorage.setItem('tg_help_from', openId ?? 'home'); } catch { /* ignore */ } }
-    // Choosing the section you are already in goes back to its first tab (the section is rebuilt), not wherever you left it.
-    if (id === openId) setNavNonce((n) => n + 1);
-    setOpenId(id);
-    // Pure UI change — every section's content is already on the page — so update the address bar
-    // directly. (router.replace re-rendered the whole portal on the server and, being slow, could
-    // finish after a later click and snap the view back to an older section.)
-    setParams({ section: id, ...CLEAR_NAV });
-  }, [setParams, openId]);
+  const open = useCallback(
+    (id: string) => {
+      // Switching sections would throw away unsaved edits in the open one.
+      if (id !== openId && !confirmDiscardUnsaved()) return;
+      // Help records which page the person came from, to attach to their ticket.
+      if (id === 'help') {
+        try {
+          sessionStorage.setItem('tg_help_from', openId ?? 'home');
+        } catch {
+          /* ignore */
+        }
+      }
+      // Choosing the section you are already in goes back to its first tab (the section is rebuilt), not wherever you left it.
+      if (id === openId) setNavNonce((n) => n + 1);
+      setOpenId(id);
+      // Pure UI change — every section's content is already on the page — so update the address bar
+      // directly. (router.replace re-rendered the whole portal on the server and, being slow, could
+      // finish after a later click and snap the view back to an older section.)
+      setParams({ section: id, ...CLEAR_NAV });
+    },
+    [setParams, openId],
+  );
 
   const close = useCallback(() => {
     if (!confirmDiscardUnsaved()) return;
@@ -288,29 +357,43 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 
   // A link to a page this person's roles don't include (a UCSD student or someone with no role following a shared
   // link, say) used to just land on home with no explanation. Point them to Help, which explains how to get the role.
-  const lockedSection = requestedSection && !validRequested && SECTION_ORDER.includes(requestedSection) && requestedSection !== 'help'
-    ? sectionLabel(requestedSection)
-    : null;
+  const lockedSection = requestedSection && !validRequested && SECTION_ORDER.includes(requestedSection) && requestedSection !== 'help' ? sectionLabel(requestedSection) : null;
   const [lockedDismissed, setLockedDismissed] = useState(false);
-  const lockedNotice = lockedSection && !lockedDismissed ? (
-    <div className={styles.lockedNotice} role="status">
-      <span><strong>{lockedSection}</strong> needs a role your account doesn’t have yet. Open Help to see which role it is and how to get it.</span>
-      <span className={styles.lockedActions}>
-        <button type="button" className={styles.lockedHelp} onClick={() => open('help')}>Open Help</button>
-        <button type="button" className={styles.lockedClose} onClick={() => setLockedDismissed(true)} aria-label="Dismiss">×</button>
-      </span>
-    </div>
-  ) : null;
-  const frameWithNotice: HubFrame | undefined = frame && lockedNotice ? { ...frame, banners: <>{frame.banners}{lockedNotice}</> } : frame;
+  const lockedNotice =
+    lockedSection && !lockedDismissed ? (
+      <div className={styles.lockedNotice} role="status">
+        <span>
+          <strong>{lockedSection}</strong> needs a role your account doesn’t have yet. Open Help to see which role it is and how to get it.
+        </span>
+        <span className={styles.lockedActions}>
+          <button type="button" className={styles.lockedHelp} onClick={() => open('help')}>
+            Open Help
+          </button>
+          <button type="button" className={styles.lockedClose} onClick={() => setLockedDismissed(true)} aria-label="Dismiss">
+            ×
+          </button>
+        </span>
+      </div>
+    ) : null;
+  const frameWithNotice: HubFrame | undefined =
+    frame && lockedNotice
+      ? {
+          ...frame,
+          banners: (
+            <>
+              {frame.banners}
+              {lockedNotice}
+            </>
+          ),
+        }
+      : frame;
 
   // Groups a plain member actually qualifies for (just Tickets/Profile/
   // Activity) only render that one section, no empty "Community"/"Staff &
   // Admin" headers with nothing under them — capability gating already
   // decides which sections exist at all (see portal/page.tsx), this just
   // decides how the ones that do exist are clustered.
-  const groupedSections: GroupedSection[] = GROUP_ORDER
-    .map((group) => ({ group, items: sections.filter((s) => s.group === group) }))
-    .filter((g) => g.items.length > 0);
+  const groupedSections: GroupedSection[] = GROUP_ORDER.map((group) => ({ group, items: sections.filter((s) => s.group === group) })).filter((g) => g.items.length > 0);
 
   // Server render and first paint use the role/context defaults; once mounted, what this person
   // actually opens and the time of week are folded in.
@@ -319,24 +402,37 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   // the page stay as they are.
   const [refreshPending, startRefresh] = useTransition();
   const wasPending = useRef(false);
-  const keepScroll = useRef(0);   // where the page was scrolled to when a refresh began: the rebuilt section is put back there
-  const keepUrl = useRef('');   // the address when a refresh began: Next's refresh brings back the address the page was first loaded with (it does not know the portal moved the address itself), so it is put back
+  const keepScroll = useRef(0); // where the page was scrolled to when a refresh began: the rebuilt section is put back there
+  const keepUrl = useRef(''); // the address when a refresh began: Next's refresh brings back the address the page was first loaded with (it does not know the portal moved the address itself), so it is put back
   useEffect(() => {
-    const on = () => { keepScroll.current = window.scrollY; keepUrl.current = `${window.location.pathname}${window.location.search}${window.location.hash}`; startRefresh(() => router.refresh()); };
+    const on = () => {
+      keepScroll.current = window.scrollY;
+      keepUrl.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      startRefresh(() => router.refresh());
+    };
     window.addEventListener(REFRESH_EVENT, on);
     return () => window.removeEventListener(REFRESH_EVENT, on);
   }, [router]);
   useEffect(() => {
-    if (refreshPending) { wasPending.current = true; return; }
+    if (refreshPending) {
+      wasPending.current = true;
+      return;
+    }
     if (!wasPending.current) return;
-    wasPending.current = false;   // the server's answer has been applied: rebuild the open section with it
+    wasPending.current = false; // the server's answer has been applied: rebuild the open section with it
     // First the address goes back to where the person was (the rebuilt section reads it to know which page, tab and view to show).
     const url = keepUrl.current;
     if (url && `${window.location.pathname}${window.location.search}${window.location.hash}` !== url) window.history.replaceState(window.history.state, '', url);
     setNavNonce((n) => n + 1);
     // The rebuilt section is shorter for a moment while it loads, which would drop the page back to the top: keep putting it where it was until it has grown tall enough.
     const y = keepScroll.current;
-    if (y > 0) { let tries = 0; const id = window.setInterval(() => { window.scrollTo(0, y); if (Math.abs(window.scrollY - y) < 2 || ++tries > 25) window.clearInterval(id); }, 80); }
+    if (y > 0) {
+      let tries = 0;
+      const id = window.setInterval(() => {
+        window.scrollTo(0, y);
+        if (Math.abs(window.scrollY - y) < 2 || ++tries > 25) window.clearInterval(id);
+      }, 80);
+    }
     window.dispatchEvent(new Event(REFRESHED_EVENT));
   }, [refreshPending]);
   // Five slots: Home, two pages, the scanner in the middle... so the bar keeps two pages, then More.
@@ -356,24 +452,72 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   const primaryTabs = sections.filter((s) => dock.ids.has(s.id));
   // The phone's bottom bar (GlassDock): Home, the two slots the dock picker chose with Scan between them (one camera for every QR the portal makes, see UniversalScanner), and More.
   const dockItems: DockEntry[] = [];
-  dockItems.push({ id: 'home', label: 'Home', icon: <Home size={20} strokeWidth={1.9} aria-hidden="true" />, active: openId === null && !moreOpen, onClick: () => { setMoreOpen(false); close(); } });
-  const scanEntry: DockEntry = { id: 'scan', label: 'Scan', raised: true, ariaLabel: 'Scan a TGcode', icon: <TGcodeIcon size={24} />, onClick: () => { setMoreOpen(false); setOpeningScan(true); router.push('/portal/scan'); } };
+  dockItems.push({
+    id: 'home',
+    label: 'Home',
+    icon: <Home size={20} strokeWidth={1.9} aria-hidden="true" />,
+    active: openId === null && !moreOpen,
+    onClick: () => {
+      setMoreOpen(false);
+      close();
+    },
+  });
+  const scanEntry: DockEntry = {
+    id: 'scan',
+    label: 'Scan',
+    raised: true,
+    ariaLabel: 'Scan a TGcode',
+    icon: <TGcodeIcon size={24} />,
+    onClick: () => {
+      setMoreOpen(false);
+      setOpeningScan(true);
+      router.push('/portal/scan');
+    },
+  };
   primaryTabs.forEach((sec, i) => {
     if (i === 1) dockItems.push(scanEntry);
     dockItems.push({
-      id: sec.id, label: (sec.dockLabel ?? sec.label).replace(/^My /, ''), active: openId === sec.id && !moreOpen, urgent: dock.urgent.has(sec.id), badge: sec.badge,
-      icon: smallIcon(sec.icon, DOCK_ICON_SIZE[sec.id] ?? 20), onClick: () => { setMoreOpen(false); recordUse(sec.id); open(sec.id); },
+      id: sec.id,
+      label: (sec.dockLabel ?? sec.label).replace(/^My /, ''),
+      active: openId === sec.id && !moreOpen,
+      urgent: dock.urgent.has(sec.id),
+      badge: sec.badge,
+      icon: smallIcon(sec.icon, DOCK_ICON_SIZE[sec.id] ?? 20),
+      onClick: () => {
+        setMoreOpen(false);
+        recordUse(sec.id);
+        open(sec.id);
+      },
     });
   });
   if (primaryTabs.length < 2) dockItems.push(scanEntry);
   const primaryTabIds = new Set(primaryTabs.map((s) => s.id));
   const moreSections = sections.filter((s) => !primaryTabIds.has(s.id));
   const isMoreActive = openId !== null && !primaryTabIds.has(openId);
-  if (moreSections.length > 0) dockItems.push({ id: 'more', label: 'More', active: isMoreActive || moreOpen, expanded: moreOpen, icon: <MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" />, onClick: () => setMoreOpen((v) => !v) });
+  if (moreSections.length > 0)
+    dockItems.push({
+      id: 'more',
+      label: 'More',
+      active: isMoreActive || moreOpen,
+      expanded: moreOpen,
+      icon: <MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" />,
+      onClick: () => setMoreOpen((v) => !v),
+    });
 
   if (isDesktop && plain) {
     return (
-      <PlainShell identity={identity} railFooter={railFooter} homeExtras={homeExtras} groupedSections={groupedSections} openSection={openSection} openId={openId} open={open} close={close} frame={frameWithNotice} navNonce={navNonce} />
+      <PlainShell
+        identity={identity}
+        railFooter={railFooter}
+        homeExtras={homeExtras}
+        groupedSections={groupedSections}
+        openSection={openSection}
+        openId={openId}
+        open={open}
+        close={close}
+        frame={frameWithNotice}
+        navNonce={navNonce}
+      />
     );
   }
 
@@ -403,7 +547,11 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
       key={s.id}
       type="button"
       className={`${mob.row} ${inSheet && openId === s.id ? mob.rowActive : ''}`}
-      onClick={() => { if (inSheet) setMoreOpen(false); recordUse(s.id); open(s.id); }}
+      onClick={() => {
+        if (inSheet) setMoreOpen(false);
+        recordUse(s.id);
+        open(s.id);
+      }}
     >
       <span className={mob.rowText}>
         <span className={mob.rowLabel}>{s.label}</span>
@@ -420,11 +568,19 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
       {!openSection && (
         <div className={styles.launcher}>
           <h2 className={styles.forYouLabel}>For you</h2>
-          <div className={`${mob.list} ${mob.compact}`}>{tilesInOrder(sections).filter((s) => forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
+          <div className={`${mob.list} ${mob.compact}`}>
+            {tilesInOrder(sections)
+              .filter((s) => forYou.has(s.id))
+              .map((s) => renderTile(s, false))}
+          </div>
           {sections.some((s) => !forYou.has(s.id)) && (
             <details className={styles.allPages}>
               <summary>All pages</summary>
-              <div className={`${mob.list} ${mob.compact}`}>{tilesInOrder(sections).filter((s) => !forYou.has(s.id)).map((s) => renderTile(s, false))}</div>
+              <div className={`${mob.list} ${mob.compact}`}>
+                {tilesInOrder(sections)
+                  .filter((s) => !forYou.has(s.id))
+                  .map((s) => renderTile(s, false))}
+              </div>
             </details>
           )}
         </div>
@@ -464,7 +620,6 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
             </div>
           </motion.div>
         ) : null}
-
       </AnimatePresence>
 
       <GlassDock items={dockItems} />
@@ -498,16 +653,25 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
               <div
                 className={styles.moreSheetGrab}
                 data-sheet-grab=""
-                onPointerDown={(e) => { if (e.pointerType === 'mouse') { (e.target as Element).setPointerCapture?.(e.pointerId); sheetStart(e.clientY, true); } }}
-                onPointerMove={(e) => { if (e.pointerType === 'mouse') sheetMove(e.clientY); }}
-                onPointerUp={(e) => { if (e.pointerType === 'mouse') sheetEnd(); }}
+                onPointerDown={(e) => {
+                  if (e.pointerType === 'mouse') {
+                    (e.target as Element).setPointerCapture?.(e.pointerId);
+                    sheetStart(e.clientY, true);
+                  }
+                }}
+                onPointerMove={(e) => {
+                  if (e.pointerType === 'mouse') sheetMove(e.clientY);
+                }}
+                onPointerUp={(e) => {
+                  if (e.pointerType === 'mouse') sheetEnd();
+                }}
               >
                 <div className={styles.moreSheetHandle} aria-hidden="true" />
               </div>
               {/* The list scrolls inside the sheet; the sheet itself (handle included) is what moves when it is swiped down. */}
               <div className={styles.moreSheetScroll} ref={sheetEl}>
-              {railFooter && <div className={styles.sheetFooter}>{railFooter}</div>}
-              <div className={mob.list}>{tilesInOrder(moreSections).map((s) => renderTile(s, true))}</div>
+                {railFooter && <div className={styles.sheetFooter}>{railFooter}</div>}
+                <div className={mob.list}>{tilesInOrder(moreSections).map((s) => renderTile(s, true))}</div>
               </div>
             </motion.div>
           </>
@@ -522,13 +686,27 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
 function HomeGroups({ groupedSections, open, forYou }: { groupedSections: GroupedSection[]; open: (id: string) => void; forYou: Set<string> }) {
   const picked = groupedSections.flatMap(({ items }) => items).filter((s) => forYou.has(s.id) && s.group !== 'Overview');
   const card = (s: HubSection) => (
-    <button key={s.id} className={styles.card} style={{ ['--accent' as string]: GROUP_ACCENT[s.group] }} onClick={() => { recordUse(s.id); open(s.id); }}>
-      <span className={styles.cardIconTile} aria-hidden="true">{s.icon}</span>
+    <button
+      key={s.id}
+      className={styles.card}
+      style={{ ['--accent' as string]: GROUP_ACCENT[s.group] }}
+      onClick={() => {
+        recordUse(s.id);
+        open(s.id);
+      }}
+    >
+      <span className={styles.cardIconTile} aria-hidden="true">
+        {s.icon}
+      </span>
       <span className={styles.cardText}>
         <span className={styles.cardLabel}>{s.label}</span>
         <span className={styles.cardDesc}>{s.description}</span>
       </span>
-      {s.badge !== undefined && s.badge !== 0 ? <span className={styles.cardBadge}>{s.badge}</span> : <ChevronRight size={16} strokeWidth={1.75} className={styles.cardChevron} aria-hidden="true" />}
+      {s.badge !== undefined && s.badge !== 0 ? (
+        <span className={styles.cardBadge}>{s.badge}</span>
+      ) : (
+        <ChevronRight size={16} strokeWidth={1.75} className={styles.cardChevron} aria-hidden="true" />
+      )}
     </button>
   );
   return (
@@ -539,34 +717,38 @@ function HomeGroups({ groupedSections, open, forYou }: { groupedSections: Groupe
       </section>
       <details className={styles.allPages}>
         <summary>All pages</summary>
-      {/* The Overview group (Profile and Help) lives in the sidebar only; no home card, to save space. */}
-      {groupedSections.filter(({ group }) => group !== 'Overview').map(({ group, items }) => (
-        <section key={group} className={styles.group} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
-          {groupedSections.length > 1 && (
-            <h2 className={styles.groupLabel}>
-              <span className={styles.groupDot} aria-hidden="true" />
-              {GROUP_LABEL[group]}
-              <span className={styles.groupCount}>{items.length}</span>
-            </h2>
-          )}
-          <div className={styles.grid}>
-            {items.map((s) => (
-              <button key={s.id} className={styles.card} onClick={() => open(s.id)}>
-                <span className={styles.cardIconTile} aria-hidden="true">{s.icon}</span>
-                <span className={styles.cardText}>
-                  <span className={styles.cardLabel}>{s.label}</span>
-                  <span className={styles.cardDesc}>{s.description}</span>
-                </span>
-                {s.badge !== undefined && s.badge !== 0 ? (
-                  <span className={styles.cardBadge}>{s.badge}</span>
-                ) : (
-                  <ChevronRight size={16} strokeWidth={1.75} className={styles.cardChevron} aria-hidden="true" />
-                )}
-              </button>
-            ))}
-          </div>
-        </section>
-      ))}
+        {/* The Overview group (Profile and Help) lives in the sidebar only; no home card, to save space. */}
+        {groupedSections
+          .filter(({ group }) => group !== 'Overview')
+          .map(({ group, items }) => (
+            <section key={group} className={styles.group} style={{ ['--accent' as string]: GROUP_ACCENT[group] }}>
+              {groupedSections.length > 1 && (
+                <h2 className={styles.groupLabel}>
+                  <span className={styles.groupDot} aria-hidden="true" />
+                  {GROUP_LABEL[group]}
+                  <span className={styles.groupCount}>{items.length}</span>
+                </h2>
+              )}
+              <div className={styles.grid}>
+                {items.map((s) => (
+                  <button key={s.id} className={styles.card} onClick={() => open(s.id)}>
+                    <span className={styles.cardIconTile} aria-hidden="true">
+                      {s.icon}
+                    </span>
+                    <span className={styles.cardText}>
+                      <span className={styles.cardLabel}>{s.label}</span>
+                      <span className={styles.cardDesc}>{s.description}</span>
+                    </span>
+                    {s.badge !== undefined && s.badge !== 0 ? (
+                      <span className={styles.cardBadge}>{s.badge}</span>
+                    ) : (
+                      <ChevronRight size={16} strokeWidth={1.75} className={styles.cardChevron} aria-hidden="true" />
+                    )}
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
       </details>
     </>
   );
@@ -607,8 +789,23 @@ function DesktopShell({
 }) {
   // Icon-only sidebar: remembered per browser. Read after mount so server and first client render match.
   const [collapsed, setCollapsed] = useState(false);
-  useEffect(() => { try { setCollapsed(localStorage.getItem('tg_rail_collapsed') === '1'); } catch { /* ignore */ } }, []);
-  const toggleCollapsed = () => setCollapsed((c) => { const n = !c; try { localStorage.setItem('tg_rail_collapsed', n ? '1' : '0'); } catch { /* ignore */ } return n; });
+  useEffect(() => {
+    try {
+      setCollapsed(localStorage.getItem('tg_rail_collapsed') === '1');
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const toggleCollapsed = () =>
+    setCollapsed((c) => {
+      const n = !c;
+      try {
+        localStorage.setItem('tg_rail_collapsed', n ? '1' : '0');
+      } catch {
+        /* ignore */
+      }
+      return n;
+    });
   const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
   // the whole frame is on screen without scrolling the page. Re-measured when the window or the page above changes.
@@ -625,7 +822,10 @@ function DesktopShell({
     ro.observe(document.documentElement);
     if (el.parentElement) ro.observe(el.parentElement);
     window.addEventListener('resize', fit);
-    return () => { ro.disconnect(); window.removeEventListener('resize', fit); };
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', fit);
+    };
   }, []);
   return (
     <div ref={frameRef} className={`${styles.desktopShell} ${styles.appFrame}`} data-app-frame style={{ ['--frame-accent' as string]: accent }}>
@@ -637,19 +837,30 @@ function DesktopShell({
         }}
       >
         {identity && (
-          <button type="button" className={styles.railIdentity} onClick={() => open('profile')} aria-label={`${identity.name}${identity.roles?.length ? ` ${identity.roles.map((r) => r.label).join(' ')}` : ''}, open your profile`} title="Your profile">
+          <button
+            type="button"
+            className={styles.railIdentity}
+            onClick={() => open('profile')}
+            aria-label={`${identity.name}${identity.roles?.length ? ` ${identity.roles.map((r) => r.label).join(' ')}` : ''}, open your profile`}
+            title="Your profile"
+          >
             {identity.avatarUrl ? (
               <Image src={identity.avatarUrl} alt="" width={40} height={40} className={styles.railAvatar} unoptimized referrerPolicy="no-referrer" />
             ) : (
               <span className={styles.railAvatarFallback} aria-hidden="true" data-letter={identity.name[0]?.toUpperCase() ?? 'T'} />
             )}
             <span className={styles.railIdentityText}>
-              <span className={styles.railName}>{identity.name}</span>
-              {' '}
+              <span className={styles.railName}>{identity.name}</span>{' '}
               {identity.roles && identity.roles.length > 0 ? (
                 <span className={styles.railRoles}>
                   {identity.roles.map((r) => (
-                    <span key={r.label} className={styles.railRoleChip} style={{ color: `color-mix(in srgb, ${r.color} 30%, var(--pp-chrome-fg))`, background: `${r.color}26`, borderColor: `${r.color}66` }}>{r.label}</span>
+                    <span
+                      key={r.label}
+                      className={styles.railRoleChip}
+                      style={{ color: `color-mix(in srgb, ${r.color} 30%, var(--pp-chrome-fg))`, background: `${r.color}26`, borderColor: `${r.color}66` }}
+                    >
+                      {r.label}
+                    </span>
                   ))}
                 </span>
               ) : (
@@ -666,52 +877,75 @@ function DesktopShell({
             aria-current={!openSection ? 'page' : undefined}
             title="Dashboard"
           >
-            <span className={styles.railIcon} aria-hidden="true"><Home /></span>
+            <span className={styles.railIcon} aria-hidden="true">
+              <Home />
+            </span>
             <span className={styles.railLabel}>Dashboard</span>
           </button>
-          {groupedSections.map(({ group, items: all }) => ({ group, items: all.filter((s) => !s.railHidden) })).filter(({ items }) => items.length > 0).map(({ group, items }) => (
-            <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: items.length }}>
-              {groupedSections.length > 1 && group !== 'Overview' && (
-                <div className={styles.railGroupLabel}><span className={styles.railGroupDot} aria-hidden="true" />{GROUP_LABEL[group]}</div>
-              )}
-              {items.map((s) => (
-                <button
-                  key={s.id}
-                  className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''}`}
-                  onClick={() => open(s.id)}
-                  aria-current={s.id === openId ? 'page' : undefined}
-                  title={s.label}
-                  aria-label={collapsed ? s.label : undefined}
-                >
-                  <span className={styles.railMono} aria-hidden="true">{s.label.charAt(0)}</span>
-                  <span className={styles.railLabel}>{s.label}</span>
-                  {s.badge !== undefined && s.badge !== 0 && (
-                    <span className={styles.railBadge}>{s.badge}</span>
-                  )}
-                </button>
-              ))}
-            </div>
-          ))}
+          {groupedSections
+            .map(({ group, items: all }) => ({ group, items: all.filter((s) => !s.railHidden) }))
+            .filter(({ items }) => items.length > 0)
+            .map(({ group, items }) => (
+              <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: items.length }}>
+                {groupedSections.length > 1 && group !== 'Overview' && (
+                  <div className={styles.railGroupLabel}>
+                    <span className={styles.railGroupDot} aria-hidden="true" />
+                    {GROUP_LABEL[group]}
+                  </div>
+                )}
+                {items.map((s) => (
+                  <button
+                    key={s.id}
+                    className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''}`}
+                    onClick={() => open(s.id)}
+                    aria-current={s.id === openId ? 'page' : undefined}
+                    title={s.label}
+                    aria-label={collapsed ? s.label : undefined}
+                  >
+                    <span className={styles.railMono} aria-hidden="true">
+                      {s.label.charAt(0)}
+                    </span>
+                    <span className={styles.railLabel}>{s.label}</span>
+                    {s.badge !== undefined && s.badge !== 0 && <span className={styles.railBadge}>{s.badge}</span>}
+                  </button>
+                ))}
+              </div>
+            ))}
         </nav>
         {railFooter && <div className={styles.railFooter}>{railFooter}</div>}
       </aside>
 
       <div className={styles.frameMain}>
         <header className={styles.topBar}>
-          <button type="button" className={styles.topToggle} onClick={toggleCollapsed} aria-pressed={collapsed} aria-label={collapsed ? 'Show menu' : 'Hide menu'} title={collapsed ? 'Show menu' : 'Hide menu'}>{collapsed ? 'Menu' : 'Hide menu'}</button>
+          <button
+            type="button"
+            className={styles.topToggle}
+            onClick={toggleCollapsed}
+            aria-pressed={collapsed}
+            aria-label={collapsed ? 'Show menu' : 'Hide menu'}
+            title={collapsed ? 'Show menu' : 'Hide menu'}
+          >
+            {collapsed ? 'Menu' : 'Hide menu'}
+          </button>
           {openSection ? (
             <div className={styles.topTitle}>
-              <span className={styles.topIcon} aria-hidden="true">{smallIcon(openSection.icon, 18)}</span>
+              <span className={styles.topIcon} aria-hidden="true">
+                {smallIcon(openSection.icon, 18)}
+              </span>
               <span className={styles.topName}>
                 <PortalCrumbs section={openSection.id} sectionLabel={openSection.label} />
               </span>
             </div>
           ) : (
-            <div className={styles.topTitle}><span className={styles.topName}>{frame?.greeting ?? 'Dashboard'}</span></div>
+            <div className={styles.topTitle}>
+              <span className={styles.topName}>{frame?.greeting ?? 'Dashboard'}</span>
+            </div>
           )}
           <div className={styles.topRight}>
             {frame?.viewAs}
-            <div className={styles.topSearch}><PortalSearch compact /></div>
+            <div className={styles.topSearch}>
+              <PortalSearch compact />
+            </div>
             <ScanLink />
             <PortalCopyLink />
             <PortalRefresh />
@@ -731,7 +965,9 @@ function DesktopShell({
                   animate={{ opacity: 1, transition: { duration: 0.15 } }}
                   exit={{ opacity: 0, transition: { duration: 0.08 } }}
                 >
-                  <div className={styles.panelBody} key={navNonce}>{openSection.content}</div>
+                  <div className={styles.panelBody} key={navNonce}>
+                    {openSection.content}
+                  </div>
                 </motion.div>
               ) : (
                 <motion.div
@@ -757,41 +993,77 @@ function DesktopShell({
 
 // The desktop layout for people who are not on the team (guests and UCSD students): one plain top bar with the few pages they have, and the page below it.
 // The sidebar app frame is for people with many sections to move between.
-function PlainShell({ identity, railFooter, homeExtras, groupedSections, openSection, openId, open, close, frame, navNonce }: {
-  identity?: HubIdentity; railFooter?: ReactNode; homeExtras?: ReactNode; groupedSections: GroupedSection[]; openSection: HubSection | null; openId: string | null;
-  open: (id: string) => void; close: () => void; frame?: HubFrame; navNonce: number;
+function PlainShell({
+  identity,
+  railFooter,
+  homeExtras,
+  groupedSections,
+  openSection,
+  openId,
+  open,
+  close,
+  frame,
+  navNonce,
+}: {
+  identity?: HubIdentity;
+  railFooter?: ReactNode;
+  homeExtras?: ReactNode;
+  groupedSections: GroupedSection[];
+  openSection: HubSection | null;
+  openId: string | null;
+  open: (id: string) => void;
+  close: () => void;
+  frame?: HubFrame;
+  navNonce: number;
 }) {
   const items = groupedSections.flatMap((g) => g.items).filter((s) => !s.railHidden);
   return (
     <div className={simple.shell} data-app-frame>
       <div className={simple.barWrap}>
-      <header className={simple.bar}>
-        {identity && (
-          <button type="button" className={simple.who} onClick={() => open('profile')} aria-label={`${identity.name}, open your profile`}>
-            {identity.avatarUrl
-              ? <Image src={identity.avatarUrl} alt="" width={36} height={36} className={simple.avatar} unoptimized referrerPolicy="no-referrer" />
-              : <span className={simple.avatarFallback} aria-hidden="true">{identity.name[0]?.toUpperCase() ?? 'T'}</span>}
-            <span className={simple.whoText}><strong>{identity.name}</strong><small>{identity.roleLabel}</small></span>
-          </button>
-        )}
-        <nav className={simple.nav} aria-label="Portal pages">
-          <button type="button" className={`${simple.link} ${!openSection ? simple.active : ''}`} onClick={close} aria-current={!openSection ? 'page' : undefined}>Home</button>
-          {items.map((s) => (
-            <button key={s.id} type="button" className={`${simple.link} ${s.id === openId ? simple.active : ''}`} onClick={() => open(s.id)} aria-current={s.id === openId ? 'page' : undefined}>
-              {s.label}
-              {s.badge !== undefined && s.badge !== 0 && <span className={simple.badge}>{s.badge}</span>}
+        <header className={simple.bar}>
+          {identity && (
+            <button type="button" className={simple.who} onClick={() => open('profile')} aria-label={`${identity.name}, open your profile`}>
+              {identity.avatarUrl ? (
+                <Image src={identity.avatarUrl} alt="" width={36} height={36} className={simple.avatar} unoptimized referrerPolicy="no-referrer" />
+              ) : (
+                <span className={simple.avatarFallback} aria-hidden="true">
+                  {identity.name[0]?.toUpperCase() ?? 'T'}
+                </span>
+              )}
+              <span className={simple.whoText}>
+                <strong>{identity.name}</strong>
+                <small>{identity.roleLabel}</small>
+              </span>
             </button>
-          ))}
-        </nav>
-        <div className={simple.right}>
-          {frame?.viewAs}
-          <div className={simple.search}><PortalSearch compact /></div>
-          <ScanLink />
-          <PortalRefresh />
-          <PortalThemeToggle />
-          <NotificationBell inline />
-        </div>
-      </header>
+          )}
+          <nav className={simple.nav} aria-label="Portal pages">
+            <button type="button" className={`${simple.link} ${!openSection ? simple.active : ''}`} onClick={close} aria-current={!openSection ? 'page' : undefined}>
+              Home
+            </button>
+            {items.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                className={`${simple.link} ${s.id === openId ? simple.active : ''}`}
+                onClick={() => open(s.id)}
+                aria-current={s.id === openId ? 'page' : undefined}
+              >
+                {s.label}
+                {s.badge !== undefined && s.badge !== 0 && <span className={simple.badge}>{s.badge}</span>}
+              </button>
+            ))}
+          </nav>
+          <div className={simple.right}>
+            {frame?.viewAs}
+            <div className={simple.search}>
+              <PortalSearch compact />
+            </div>
+            <ScanLink />
+            <PortalRefresh />
+            <PortalThemeToggle />
+            <NotificationBell inline />
+          </div>
+        </header>
       </div>
       {frame?.banners && <div className={simple.banners}>{frame.banners}</div>}
       <main className={simple.main} data-save-anchor>

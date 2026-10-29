@@ -20,12 +20,18 @@ export default function AnnouncementClient({ text, link, linkText, tone, label }
   // On phones the pill drops to a second row under the buttons, so page headers need that much more room at the top (--banner-offset).
   useEffect(() => {
     const root = document.documentElement;
-    if (dismissed) { root.style.setProperty('--banner-offset', '0px'); return; }
+    if (dismissed) {
+      root.style.setProperty('--banner-offset', '0px');
+      return;
+    }
     const mq = window.matchMedia('(max-width: 860px)');
     const apply = () => root.style.setProperty('--banner-offset', mq.matches ? '3.6rem' : '0px');
     apply();
     mq.addEventListener('change', apply);
-    return () => { mq.removeEventListener('change', apply); root.style.setProperty('--banner-offset', '0px'); };
+    return () => {
+      mq.removeEventListener('change', apply);
+      root.style.setProperty('--banner-offset', '0px');
+    };
   }, [dismissed]);
 
   if (dismissed) return null;
@@ -34,7 +40,11 @@ export default function AnnouncementClient({ text, link, linkText, tone, label }
     <div className={`${styles.pill} ${styles[tone]}`} role="region" aria-label="Site announcement">
       <span className={styles.tag}>{label}</span>
       <p className={styles.text}>{text}</p>
-      {link && <Link href={link} className={styles.cta}>{linkText || 'Learn more'} <span aria-hidden="true">→</span></Link>}
+      {link && (
+        <Link href={link} className={styles.cta}>
+          {linkText || 'Learn more'} <span aria-hidden="true">→</span>
+        </Link>
+      )}
       <button type="button" className={styles.dismiss} onClick={() => setDismissed(true)} aria-label="Dismiss announcement">
         <X size={14} strokeWidth={2.5} />
       </button>

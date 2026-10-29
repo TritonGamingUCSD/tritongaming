@@ -34,18 +34,42 @@ export function useSectionData<T>(id: string, scope: string): { data: T | null; 
   const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     let alive = true;
-    fetchSection(id, key).then((d) => { if (alive) setState({ key, data: d as T, error: '' }); }).catch((e: Error) => { if (alive) setState({ key, data: null, error: e.message }); });
-    return () => { alive = false; };
+    fetchSection(id, key)
+      .then((d) => {
+        if (alive) setState({ key, data: d as T, error: '' });
+      })
+      .catch((e: Error) => {
+        if (alive) setState({ key, data: null, error: e.message });
+      });
+    return () => {
+      alive = false;
+    };
   }, [id, key, attempt]);
-  const retry = useCallback(() => { cache.delete(key); setState({ key, data: null, error: '' }); setAttempt((n) => n + 1); }, [key]);
+  const retry = useCallback(() => {
+    cache.delete(key);
+    setState({ key, data: null, error: '' });
+    setAttempt((n) => n + 1);
+  }, [key]);
   return state.key === key ? { data: state.data, error: state.error, retry } : { data: null, error: '', retry };
 }
 
 export function SectionLoading({ error, retry }: { error: string; retry: () => void }) {
-  if (!error) return <div style={{ color: 'var(--pp-ink)' }}><Loading variant="section" label="Loading…" /></div>;
+  if (!error)
+    return (
+      <div style={{ color: 'var(--pp-ink)' }}>
+        <Loading variant="section" label="Loading…" />
+      </div>
+    );
   return (
     <div role="status" style={{ padding: '2rem 0.5rem', color: 'var(--pp-ink)', fontSize: '0.95rem' }}>
-      {error} <button type="button" onClick={retry} style={{ marginLeft: '0.5rem', font: 'inherit', textDecoration: 'underline', background: 'none', border: 0, color: 'var(--p-accent-text)', cursor: 'pointer' }}>Try again</button>
+      {error}{' '}
+      <button
+        type="button"
+        onClick={retry}
+        style={{ marginLeft: '0.5rem', font: 'inherit', textDecoration: 'underline', background: 'none', border: 0, color: 'var(--p-accent-text)', cursor: 'pointer' }}
+      >
+        Try again
+      </button>
     </div>
   );
 }

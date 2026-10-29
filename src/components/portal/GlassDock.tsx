@@ -31,12 +31,17 @@ export default function GlassDock({ items, label = 'Portal quick navigation' }: 
     if (!el) return;
     const place = () => {
       const on = activeId ? el.querySelector<HTMLElement>(`[data-dock="${CSS.escape(activeId)}"]`) : null;
-      if (!on) { el.dataset.lens = 'off'; return; }
+      if (!on) {
+        el.dataset.lens = 'off';
+        return;
+      }
       el.style.setProperty('--lens-x', `${on.offsetLeft}px`);
       el.style.setProperty('--lens-w', `${on.offsetWidth}px`);
       el.dataset.lens = 'on';
       // The very first placement must not glide in from the corner.
-      requestAnimationFrame(() => { el.dataset.ready = '1'; });
+      requestAnimationFrame(() => {
+        el.dataset.ready = '1';
+      });
     };
     place();
     const ro = new ResizeObserver(place);

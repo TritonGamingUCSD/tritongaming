@@ -5,11 +5,25 @@ import { isOrgMember } from '@/lib/members/profile';
 import type { AppRole } from '@/types/database';
 
 export interface MemberProfileRow {
-  id: string; display_name: string | null; avatar_url: string | null; custom_avatar_url: string | null;
-  gamer_tag: string | null; major: string | null; minor: string | null; year: string | null; college: string | null; org_title: string | null;
-  portfolio_links: Array<{ label: string; url: string }> | null; game_ids: Array<{ game: string; id: string }> | null; created_at: string | null;
-  bio: string | null; pronouns: string | null; social_links: Record<string, string> | null;
-  board_visibility: Record<string, boolean> | null; preferred_email?: string | null; emails?: LinkedEmail[];
+  id: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  custom_avatar_url: string | null;
+  gamer_tag: string | null;
+  major: string | null;
+  minor: string | null;
+  year: string | null;
+  college: string | null;
+  org_title: string | null;
+  portfolio_links: Array<{ label: string; url: string }> | null;
+  game_ids: Array<{ game: string; id: string }> | null;
+  created_at: string | null;
+  bio: string | null;
+  pronouns: string | null;
+  social_links: Record<string, string> | null;
+  board_visibility: Record<string, boolean> | null;
+  preferred_email?: string | null;
+  emails?: LinkedEmail[];
   board_order: number | null;
   /** The teams (Team tab) they are on; only the TG team sees this. */
   teams?: string[];
@@ -32,10 +46,12 @@ export async function getMembersData() {
   // errors, and unchecked that silently becomes an empty page.
   const { data: rows, error } = await supabase
     .from('profiles')
-    .select(`
+    .select(
+      `
       id, display_name, avatar_url, custom_avatar_url, gamer_tag, major, minor, year, college, org_title, bio, pronouns, social_links, portfolio_links, game_ids, created_at, board_visibility, preferred_email, board_order,
       user_roles!user_roles_user_id_fkey(role, division:divisions(name))
-    `)
+    `,
+    )
     // Custom-ordered members (Board Order admin tool, exec/lead mainly)
     // sort first in that order; everyone else falls back to alphabetical,
     // same as before board_order existed.
@@ -59,7 +75,10 @@ export async function getMembersData() {
   // (Gender and the Gaming & Interests answers live in profile_private and are
   // deliberately not part of this roster.)
   try {
-    const emailsByUserId = await fetchLinkedEmails(createServiceClient(), members.map((m) => m.id));
+    const emailsByUserId = await fetchLinkedEmails(
+      createServiceClient(),
+      members.map((m) => m.id),
+    );
     members = members.map((m) => ({ ...m, emails: pickDisplayEmails(emailsByUserId.get(m.id) ?? [], m.preferred_email) }));
   } catch (err) {
     console.error('[members] failed to load member emails:', err);

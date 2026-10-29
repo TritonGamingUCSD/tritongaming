@@ -12,7 +12,9 @@ export async function GET(request: Request, { params }: Params) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -21,7 +23,11 @@ export async function GET(request: Request, { params }: Params) {
   }
 
   const byId = /^[0-9a-f-]{36}$/i.test(id);
-  const { data: event } = await supabase.from('events').select('id, title, start_date, end_date, location, requires_checkin_form').eq(byId ? 'id' : 'slug', id).maybeSingle();
+  const { data: event } = await supabase
+    .from('events')
+    .select('id, title, start_date, end_date, location, requires_checkin_form')
+    .eq(byId ? 'id' : 'slug', id)
+    .maybeSingle();
   if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
   const [{ data: ticketsData, error: ticketsError }] = await Promise.all([
     supabase

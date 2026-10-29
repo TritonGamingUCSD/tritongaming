@@ -8,21 +8,34 @@ import { createClient } from '@supabase/supabase-js';
 import fs from 'node:fs';
 
 const BASE = process.env.BASE_URL || 'http://localhost:3000';
-const env = Object.fromEntries(fs.readFileSync(new URL('../../.env.local', import.meta.url), 'utf8').split('\n').filter((l) => l && !l.startsWith('#') && l.includes('=')).map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).replace(/^"|"$/g, '')]));
+const env = Object.fromEntries(
+  fs
+    .readFileSync(new URL('../../.env.local', import.meta.url), 'utf8')
+    .split('\n')
+    .filter((l) => l && !l.startsWith('#') && l.includes('='))
+    .map((l) => [l.slice(0, l.indexOf('=')), l.slice(l.indexOf('=') + 1).replace(/^"|"$/g, '')]),
+);
 const url = env.NEXT_PUBLIC_SUPABASE_URL;
 const svc = createClient(url, env.SUPABASE_SERVICE_ROLE_KEY);
 const ref = new URL(url).hostname.split('.')[0];
 const stamp = Date.now();
 
-let passed = 0; const failures = [];
-const check = (name, ok, detail = '') => { if (ok) passed++; else failures.push(`${name}${detail ? ` (${detail})` : ''}`); };
+let passed = 0;
+const failures = [];
+const check = (name, ok, detail = '') => {
+  if (ok) passed++;
+  else failures.push(`${name}${detail ? ` (${detail})` : ''}`);
+};
 
 const users = {};
 async function mk(role) {
   const email = `mtg-test-${role}-${stamp}@example.test`;
   const { data } = await svc.auth.admin.createUser({ email, email_confirm: true });
   const id = data.user.id;
-  await svc.from('profiles').update({ display_name: `Test ${role}`, onboarded_at: new Date().toISOString() }).eq('id', id);
+  await svc
+    .from('profiles')
+    .update({ display_name: `Test ${role}`, onboarded_at: new Date().toISOString() })
+    .eq('id', id);
   await svc.from('user_roles').insert({ user_id: id, role });
   const c = createClient(url, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
   const { data: lk } = await svc.auth.admin.generateLink({ type: 'magiclink', email });
@@ -31,10 +44,16 @@ async function mk(role) {
 }
 async function call(who, path, method = 'GET', body) {
   const r = await fetch(BASE + path, { method, headers: { Cookie: users[who]?.cookie ?? '', 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
-  let json = null; try { json = await r.json(); } catch { /* not json */ }
+  let json = null;
+  try {
+    json = await r.json();
+  } catch {
+    /* not json */
+  }
   return [r.status, json];
 }
-const pacificHHMM = (ms) => new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(Date.now() + ms));
+const pacificHHMM = (ms) =>
+  new Intl.DateTimeFormat('en-GB', { timeZone: 'America/Los_Angeles', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(Date.now() + ms));
 // A start/end `lengthMin` apart, starting `offsetMin` from now but kept inside today (late at night "an hour from now" would
 // otherwise end after midnight, which the API rightly rejects).
 const todayWindow = (offsetMin, lengthMin) => {
@@ -45,18 +64,33 @@ const todayWindow = (offsetMin, lengthMin) => {
 };
 const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
 
-const meetingIds = [], eventIds = [], ticketIds = [], groupIds = [], seriesIds = [];
+const meetingIds = [],
+  eventIds = [],
+  ticketIds = [],
+  groupIds = [],
+  seriesIds = [];
 try {
   for (const r of ['admin', 'exec', 'lead', 'officer', 'recruit', 'alumni', 'division']) await mk(r);
   const U = (r) => users[r].id;
 
   // ── Meetings: who can plan ──────────────────────────────────────────────────
-  const meetingBody = { title: 'Perm check', repeat: 'once', date: today, ...todayWindow(-5, 60), audience: [], invitees: [U('officer'), U('lead')], group_ids: [], open_to_team: false };   // "not listed" must really mean not allowed here, so the per-meeting team switch is off
+  const meetingBody = {
+    title: 'Perm check',
+    repeat: 'once',
+    date: today,
+    ...todayWindow(-5, 60),
+    audience: [],
+    invitees: [U('officer'), U('lead')],
+    group_ids: [],
+    open_to_team: false,
+  }; // "not listed" must really mean not allowed here, so the per-meeting team switch is off
   check('officer cannot plan meetings', (await call('officer', '/api/meetings/schedule', 'POST', meetingBody))[0] === 403);
   check('recruit cannot plan meetings', (await call('recruit', '/api/meetings/schedule', 'POST', meetingBody))[0] === 403);
-  const [s1, m1] = await call('exec', '/api/meetings/schedule', 'POST', meetingBody); check('exec can plan meetings', s1 === 201);
+  const [s1, m1] = await call('exec', '/api/meetings/schedule', 'POST', meetingBody);
+  check('exec can plan meetings', s1 === 201);
   if (m1?.id) meetingIds.push(m1.id);
-  const [s2, m2] = await call('lead', '/api/meetings/schedule', 'POST', { ...meetingBody, title: 'Lead meeting' }); check('lead can plan meetings', s2 === 201);
+  const [s2, m2] = await call('lead', '/api/meetings/schedule', 'POST', { ...meetingBody, title: 'Lead meeting' });
+  check('lead can plan meetings', s2 === 201);
   if (m2?.id) meetingIds.push(m2.id);
 
   // ── Meetings: only listed people can check in, exec/admin included ─────────────
@@ -67,8 +101,13 @@ try {
   check('admin (not listed) cannot check in', (await call('admin', '/api/meetings/check-in', 'POST', { code }))[0] === 409);
   check('recruit (not listed) cannot check in', (await call('recruit', '/api/meetings/check-in', 'POST', { code }))[0] === 409);
   check('listed officer can check in', (await call('officer', '/api/meetings/check-in', 'POST', { code }))[0] === 200);
-  const [, todays] = await call('recruit', '/api/meetings/today'); check('recruit does not see a meeting they are not on', !(todays?.meetings ?? []).some((m) => m.id === m1.id));
-  const [, up] = await call('exec', '/api/meetings/upcoming'); check('exec upcoming excludes meetings they are not on', !(up?.meetings ?? []).some((m) => m.title === 'Perm check' && !m.hosting) || (up.meetings ?? []).every((m) => m.title !== 'Perm check' || m.hosting));
+  const [, todays] = await call('recruit', '/api/meetings/today');
+  check('recruit does not see a meeting they are not on', !(todays?.meetings ?? []).some((m) => m.id === m1.id));
+  const [, up] = await call('exec', '/api/meetings/upcoming');
+  check(
+    'exec upcoming excludes meetings they are not on',
+    !(up?.meetings ?? []).some((m) => m.title === 'Perm check' && !m.hosting) || (up.meetings ?? []).every((m) => m.title !== 'Perm check' || m.hosting),
+  );
   check('lead cannot edit exec meeting', (await call('lead', '/api/meetings/update', 'POST', { meeting_id: m1.id, location: 'x' }))[0] === 403);
   check('lead can edit their own meeting', (await call('lead', '/api/meetings/update', 'POST', { meeting_id: m2.id, location: 'Room 1' }))[0] === 200);
 
@@ -76,21 +115,65 @@ try {
   const future = new Date(Date.now() + 3 * 86400_000).toISOString().slice(0, 10);
   const [s3, m3] = await call('exec', '/api/meetings/schedule', 'POST', { ...meetingBody, title: 'Future perm check', date: future, start: '17:00', end: '18:00' });
   if (m3?.id) meetingIds.push(m3.id);
-  check('exec can mark someone absent before the meeting (one-off)', s3 === 201 && (await call('exec', '/api/meetings/absence', 'POST', { meeting_id: m3.id, user_id: U('officer'), reason: 'Midterm', excused: true }))[0] === 200);
+  check(
+    'exec can mark someone absent before the meeting (one-off)',
+    s3 === 201 && (await call('exec', '/api/meetings/absence', 'POST', { meeting_id: m3.id, user_id: U('officer'), reason: 'Midterm', excused: true }))[0] === 200,
+  );
   const [, abs1] = await call('exec', `/api/meetings/absence?meeting_id=${m3.id}`);
-  check('the absence and its reason are listed', (abs1?.absences ?? []).some((a) => a.user_id === U('officer') && a.reason === 'Midterm' && a.excused === true));
-  check('only people the meeting is for can be picked', (abs1?.people ?? []).every((p) => [U('officer'), U('lead')].includes(p.id)));
+  check(
+    'the absence and its reason are listed',
+    (abs1?.absences ?? []).some((a) => a.user_id === U('officer') && a.reason === 'Midterm' && a.excused === true),
+  );
+  check(
+    'only people the meeting is for can be picked',
+    (abs1?.people ?? []).every((p) => [U('officer'), U('lead')].includes(p.id)),
+  );
   check('lead cannot mark absences on exec meetings', (await call('lead', '/api/meetings/absence', 'POST', { meeting_id: m3.id, user_id: U('lead') }))[0] === 403);
   check('officer cannot mark absences', (await call('officer', '/api/meetings/absence', 'POST', { meeting_id: m3.id, user_id: U('officer') }))[0] === 403);
-  check('removing the mark works', (await call('exec', '/api/meetings/absence', 'DELETE', { meeting_id: m3.id, user_id: U('officer') }))[0] === 200 && ((await call('exec', `/api/meetings/absence?meeting_id=${m3.id}`))[1]?.absences ?? []).length === 0);
+  check(
+    'removing the mark works',
+    (await call('exec', '/api/meetings/absence', 'DELETE', { meeting_id: m3.id, user_id: U('officer') }))[0] === 200 &&
+      ((await call('exec', `/api/meetings/absence?meeting_id=${m3.id}`))[1]?.absences ?? []).length === 0,
+  );
   // A repeating meeting: the occurrence is created by the first absence.
   const wd = new Date(`${future}T12:00:00Z`).getUTCDay();
-  const [s4, ser] = await call('exec', '/api/meetings/schedule', 'POST', { title: 'Perm weekly', repeat: 'weekly', weekday: wd, start: '17:00', end: '18:00', audience: [], invitees: [U('officer')], group_ids: [] });
-  const { data: serRow } = await svc.from('meeting_series').select('id').eq('id', ser?.id ?? '').maybeSingle(); if (serRow) seriesIds.push(serRow.id);
-  check('exec can mark an absence for a repeating meeting that has not opened yet', s4 === 201 && (await call('exec', '/api/meetings/absence', 'POST', { series_id: ser.id, date: future, user_id: U('officer'), reason: 'Sick' }))[0] === 200);
-  const { data: occ } = await svc.from('meetings').select('id').eq('series_id', ser?.id ?? '').eq('meeting_date', future).maybeSingle(); if (occ) meetingIds.push(occ.id);
-  check('that week now shows one person away on the schedule', ((await call('exec', '/api/meetings/schedule'))[1]?.upcoming ?? []).some((i) => i.series_id === ser.id && i.date === future && i.absent === 1));
-  check('a date that is not that meeting’s weekday is rejected', (await call('exec', '/api/meetings/absence', 'POST', { series_id: ser.id, date: new Date(Date.now() + 4 * 86400_000).toISOString().slice(0, 10), user_id: U('officer') }))[0] === 404);
+  const [s4, ser] = await call('exec', '/api/meetings/schedule', 'POST', {
+    title: 'Perm weekly',
+    repeat: 'weekly',
+    weekday: wd,
+    start: '17:00',
+    end: '18:00',
+    audience: [],
+    invitees: [U('officer')],
+    group_ids: [],
+  });
+  const { data: serRow } = await svc
+    .from('meeting_series')
+    .select('id')
+    .eq('id', ser?.id ?? '')
+    .maybeSingle();
+  if (serRow) seriesIds.push(serRow.id);
+  check(
+    'exec can mark an absence for a repeating meeting that has not opened yet',
+    s4 === 201 && (await call('exec', '/api/meetings/absence', 'POST', { series_id: ser.id, date: future, user_id: U('officer'), reason: 'Sick' }))[0] === 200,
+  );
+  const { data: occ } = await svc
+    .from('meetings')
+    .select('id')
+    .eq('series_id', ser?.id ?? '')
+    .eq('meeting_date', future)
+    .maybeSingle();
+  if (occ) meetingIds.push(occ.id);
+  check(
+    'that week now shows one person away on the schedule',
+    ((await call('exec', '/api/meetings/schedule'))[1]?.upcoming ?? []).some((i) => i.series_id === ser.id && i.date === future && i.absent === 1),
+  );
+  check(
+    'a date that is not that meeting’s weekday is rejected',
+    (
+      await call('exec', '/api/meetings/absence', 'POST', { series_id: ser.id, date: new Date(Date.now() + 4 * 86400_000).toISOString().slice(0, 10), user_id: U('officer') })
+    )[0] === 404,
+  );
 
   // ── Attendance results: exec/admin, hosts (own), nobody else ───────────────────
   check('exec can see attendance results', (await call('exec', '/api/meetings/attendance'))[0] === 200);
@@ -101,7 +184,12 @@ try {
   check('exec can export', (await call('exec', '/api/meetings/export?type=summary'))[0] === 200);
 
   // ── Access: HR group gets attendance reports, nothing else ─────────────────────
-  const { data: g } = await svc.from('meeting_groups').insert({ name: `Perm HR ${stamp}`, member_ids: [U('alumni')], created_by: U('admin') }).select('id').single(); groupIds.push(g.id);
+  const { data: g } = await svc
+    .from('meeting_groups')
+    .insert({ name: `Perm HR ${stamp}`, member_ids: [U('alumni')], created_by: U('admin') })
+    .select('id')
+    .single();
+  groupIds.push(g.id);
   check('non-admin cannot grant access', (await call('exec', '/api/admin/access', 'POST', { capability: 'view_attendance_reports', group_id: g.id }))[0] === 403);
   check('cannot grant a role-only permission', (await call('admin', '/api/admin/access', 'POST', { capability: 'manage_roles', user_id: U('alumni') }))[0] === 400);
   check('admin can grant to a group', (await call('admin', '/api/admin/access', 'POST', { capability: 'view_attendance_reports', group_id: g.id }))[0] === 201);
@@ -113,18 +201,25 @@ try {
   check('removing the grant removes the access', (await call('alumni', '/api/meetings/attendance'))[0] === 403);
 
   // ── Help tickets ──────────────────────────────────────────────────────────────
-  const [h1, t] = await call('recruit', '/api/help', 'POST', { category: 'bug', subject: `Perm ticket ${stamp}`, body: 'testing' }); check('member can open a ticket', h1 === 201);
+  const [h1, t] = await call('recruit', '/api/help', 'POST', { category: 'bug', subject: `Perm ticket ${stamp}`, body: 'testing' });
+  check('member can open a ticket', h1 === 201);
   const tid = t?.id;
   check('another member cannot read it', (await call('officer', `/api/help/${tid}`))[0] === 404);
   check('exec can read it', (await call('exec', `/api/help/${tid}`))[0] === 200);
-  check('member cannot list everyone’s tickets', ((await call('recruit', '/api/help?scope=all'))[1]?.tickets ?? []).every((x) => x.user_id === U('recruit')));
+  check(
+    'member cannot list everyone’s tickets',
+    ((await call('recruit', '/api/help?scope=all'))[1]?.tickets ?? []).every((x) => x.user_id === U('recruit')),
+  );
   check('member cannot assign tickets', (await call('recruit', `/api/help/${tid}`, 'PATCH', { assigned_to: U('recruit') }))[0] === 403);
   check('member cannot use saved replies', (await call('recruit', '/api/help/canned'))[0] === 403);
   check('exec can use saved replies', (await call('exec', '/api/help/canned'))[0] === 200);
 } finally {
   if (meetingIds.length) await svc.from('meetings').delete().in('id', meetingIds);
   if (seriesIds.length) await svc.from('meeting_series').delete().in('id', seriesIds);
-  if (groupIds.length) { await svc.from('capability_grants').delete().in('group_id', groupIds); await svc.from('meeting_groups').delete().in('id', groupIds); }
+  if (groupIds.length) {
+    await svc.from('capability_grants').delete().in('group_id', groupIds);
+    await svc.from('meeting_groups').delete().in('id', groupIds);
+  }
   // A new help ticket notifies every real exec/admin; take those test notifications back out.
   await svc.from('notifications').delete().eq('title', `New help ticket: Perm ticket ${stamp}`);
   for (const u of Object.values(users)) {

@@ -36,7 +36,9 @@ export async function DELETE(request: Request, { params }: Params) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -69,7 +71,10 @@ export async function DELETE(request: Request, { params }: Params) {
   const flyer = (result as { flyer_url?: string | null } | null)?.flyer_url;
   const parsed = flyer ? parseStorageUrl(flyer) : null;
   if (parsed) {
-    await service.storage.from(parsed.bucket).remove([parsed.path]).catch(() => {});
+    await service.storage
+      .from(parsed.bucket)
+      .remove([parsed.path])
+      .catch(() => {});
   }
 
   invalidate('events');

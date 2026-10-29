@@ -9,7 +9,8 @@ async function loadOwn(auth: Exclude<Awaited<ReturnType<typeof authorizePlans>>,
   const { data } = await auth.svc.from('meeting_plans').select('*').eq('id', id).maybeSingle();
   if (!data) return { error: NextResponse.json({ error: 'Plan not found.' }, { status: 404 }) };
   const plan = data as PlanRow;
-  if (!auth.canHost || (plan.created_by !== auth.user.id && !auth.manageAll)) return { error: NextResponse.json({ error: 'Only the host, exec and admins can change this plan.' }, { status: 403 }) };
+  if (!auth.canHost || (plan.created_by !== auth.user.id && !auth.manageAll))
+    return { error: NextResponse.json({ error: 'Only the host, exec and admins can change this plan.' }, { status: 403 }) };
   return { plan };
 }
 
@@ -36,7 +37,9 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { data: updated, error } = await auth.svc.from('meeting_plans').update(patch).eq('id', plan.id).select('*').single();
   if (error || !updated) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
   const next = updated as PlanRow;
-  const timeChanged = ['range_start', 'range_end', 'window_start', 'window_end', 'duration_min'].some((k) => String(plan[k as keyof PlanRow] ?? '').slice(0, 10) !== String(next[k as keyof PlanRow] ?? '').slice(0, 10));
+  const timeChanged = ['range_start', 'range_end', 'window_start', 'window_end', 'duration_min'].some(
+    (k) => String(plan[k as keyof PlanRow] ?? '').slice(0, 10) !== String(next[k as keyof PlanRow] ?? '').slice(0, 10),
+  );
   if (audChanged) {
     // People newly asked get the invitation; everyone else only hears about changed dates.
     const [before, after] = await Promise.all([planPeople(auth.svc, plan), planPeople(auth.svc, next)]);

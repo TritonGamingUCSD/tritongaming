@@ -23,13 +23,28 @@ export default function PreviewBridge() {
       // Bring the part being edited into view: the footer sits at the bottom of every page; otherwise find the section by a bit of
       // its own text (the block's title/label), scroll to it and flash an outline so it is easy to spot.
       if (e.data?.type === 'tg-preview-focus') {
-        if (e.data.target === 'top') { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
-        if (e.data.target === 'footer') { document.querySelector('footer')?.scrollIntoView({ block: 'end', behavior: 'smooth' }); return; }
+        if (e.data.target === 'top') {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+        if (e.data.target === 'footer') {
+          document.querySelector('footer')?.scrollIntoView({ block: 'end', behavior: 'smooth' });
+          return;
+        }
         const needle = typeof e.data.text === 'string' ? e.data.text.trim().toLowerCase() : '';
         const el = needle ? findByText(needle) : null;
-        if (!el) { window.scrollTo({ top: 0, behavior: 'smooth' }); return; }
+        if (!el) {
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
         el.scrollIntoView({ block: 'center', behavior: 'smooth' });
-        el.animate([{ outline: '3px solid #ffc72c', outlineOffset: '6px' }, { outline: '3px solid transparent', outlineOffset: '6px' }], { duration: 1600 });
+        el.animate(
+          [
+            { outline: '3px solid #ffc72c', outlineOffset: '6px' },
+            { outline: '3px solid transparent', outlineOffset: '6px' },
+          ],
+          { duration: 1600 },
+        );
       }
     };
     const onClick = (e: MouseEvent) => {
@@ -38,7 +53,10 @@ export default function PreviewBridge() {
     window.addEventListener('message', onMessage);
     document.addEventListener('click', onClick, true);
     window.parent?.postMessage({ type: 'tg-preview-ready' }, window.location.origin);
-    return () => { window.removeEventListener('message', onMessage); document.removeEventListener('click', onClick, true); };
+    return () => {
+      window.removeEventListener('message', onMessage);
+      document.removeEventListener('click', onClick, true);
+    };
   }, [router]);
   return null;
 }

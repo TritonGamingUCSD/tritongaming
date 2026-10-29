@@ -72,7 +72,8 @@ export interface EventFormValues {
 
 // The calendar days a form's start/end span (Pacific dates straight from the datetime-local values).
 export function formDays(start: string, end: string): string[] {
-  const s = start.slice(0, 10), e = end.slice(0, 10);
+  const s = start.slice(0, 10),
+    e = end.slice(0, 10);
   if (!s || !e || e <= s) return s ? [s] : [];
   const out: string[] = [];
   for (let d = new Date(`${s}T12:00:00Z`); d.toISOString().slice(0, 10) <= e && out.length < 31; d.setUTCDate(d.getUTCDate() + 1)) out.push(d.toISOString().slice(0, 10));
@@ -139,18 +140,11 @@ function MarkdownField({
       <div className={styles.mdFieldHeader}>
         <span className={styles.label}>{label}</span>
       </div>
-      <textarea
-        className={`${styles.input} ${styles.textarea}`}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={rows}
-        placeholder={placeholder}
-      />
+      <textarea className={`${styles.input} ${styles.textarea}`} value={value} onChange={(e) => onChange(e.target.value)} rows={rows} placeholder={placeholder} />
       {hint && <span className={styles.hint}>{hint}</span>}
     </div>
   );
 }
-
 
 type EventTab = 'basics' | 'page' | 'tickets' | 'after';
 const EVENT_TABS: { id: EventTab; label: string }[] = [
@@ -190,7 +184,9 @@ export default function EventForm({
   creditPeople?: import('@/lib/members/creditPeople').CreditPerson[];
 }) {
   // Older events have only a flyer: it becomes poster 1.
-  const [form, setForm] = useState<EventFormValues>(() => (initial.theme.posters?.length || !initial.flyer_url ? initial : { ...initial, theme: { ...initial.theme, posters: [initial.flyer_url] } }));
+  const [form, setForm] = useState<EventFormValues>(() =>
+    initial.theme.posters?.length || !initial.flyer_url ? initial : { ...initial, theme: { ...initial.theme, posters: [initial.flyer_url] } },
+  );
   // Warn before leaving with unsaved edits (links, Back, closing the tab).
   const { dirty, markSaved, saved: savedForm } = useUnsavedChanges(form);
   // A new event autosaves in this browser, so a closed tab or lost connection does not lose the work (editing an existing event does not need it).
@@ -204,7 +200,10 @@ export default function EventForm({
   // A required field in a tab that is not showing: jump to that tab and show the browser's message there.
   function onInvalid(e: React.FormEvent) {
     const t = (e.target as HTMLElement).closest('[data-tab]')?.getAttribute('data-tab') as EventTab | null;
-    if (t && t !== tab) { setTab(t); requestAnimationFrame(() => formRef.current?.reportValidity()); }
+    if (t && t !== tab) {
+      setTab(t);
+      requestAnimationFrame(() => formRef.current?.reportValidity());
+    }
   }
 
   function set(field: keyof EventFormValues, value: string | boolean) {
@@ -223,15 +222,16 @@ export default function EventForm({
   // see getTicketsData), with a representative sample year/role rather than
   // a real attendee's, since it's just "does the mapping actually work".
   const checkinPreviewConfig = form.checkin_form_override ?? null;
-  const checkinPreviewUrl = form.requires_checkin_form && checkinPreviewConfig
-    ? buildCheckinFormUrl(checkinPreviewConfig, {
-        eventTitle: form.checkin_form_event_name.trim() || form.title || 'Test Event',
-        year: previewViewer?.year ?? null,
-        classOf: previewViewer?.classOf ?? null,
-        roles: previewViewer?.roles ?? [],
-        foodItem: form.checkin_food_item.trim() || null,
-      })
-    : null;
+  const checkinPreviewUrl =
+    form.requires_checkin_form && checkinPreviewConfig
+      ? buildCheckinFormUrl(checkinPreviewConfig, {
+          eventTitle: form.checkin_form_event_name.trim() || form.title || 'Test Event',
+          year: previewViewer?.year ?? null,
+          classOf: previewViewer?.classOf ?? null,
+          roles: previewViewer?.roles ?? [],
+          foodItem: form.checkin_food_item.trim() || null,
+        })
+      : null;
 
   // The AS Form's event question is a pick-list of every club's events
   // ("Org - Event name"). Read the live list from the form itself so an admin
@@ -260,7 +260,9 @@ export default function EventForm({
         // fall back to the text box
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [form.requires_checkin_form, asFormUrl, asFormEventEntry]);
 
   // Options from our own org float to the top; best guess at this event's
@@ -270,15 +272,27 @@ export default function EventForm({
     const isOwn = (o: string) => o.toLowerCase().startsWith('triton gaming');
     const own = asFormEventOptions.filter(isOwn);
     const other = asFormEventOptions.filter((o) => !isOwn(o));
-    const words = (s: string) => new Set(s.toLowerCase().replace(/[^a-z0-9 ]/g, ' ').split(/\s+/).filter((w) => w.length > 1 && w !== 'triton' && w !== 'gaming'));
+    const words = (s: string) =>
+      new Set(
+        s
+          .toLowerCase()
+          .replace(/[^a-z0-9 ]/g, ' ')
+          .split(/\s+/)
+          .filter((w) => w.length > 1 && w !== 'triton' && w !== 'gaming'),
+      );
     const titleWords = words(form.title);
     let best: string | null = null;
     let bestScore = 0;
     for (const o of own) {
       const ow = words(o);
       let score = 0;
-      titleWords.forEach((w) => { if (ow.has(w)) score++; });
-      if (score > bestScore) { bestScore = score; best = o; }
+      titleWords.forEach((w) => {
+        if (ow.has(w)) score++;
+      });
+      if (score > bestScore) {
+        bestScore = score;
+        best = o;
+      }
     }
     // A single Triton Gaming entry on the form is an obvious match even with
     // no shared words.
@@ -316,7 +330,7 @@ export default function EventForm({
     const eventDays = formDays(form.start_date, form.end_date);
     if (eventDays.length > 1 && !dayHoursComplete(form.day_hours, eventDays)) {
       setTab('basics');
-      setError("Set a start and end time for every day of this multi-day event (the end must be after the start).");
+      setError('Set a start and end time for every day of this multi-day event (the end must be after the start).');
       return;
     }
     if (!(form.theme.posters ?? []).some(Boolean)) {
@@ -326,15 +340,20 @@ export default function EventForm({
     }
     if (form.requires_checkin_form && !form.checkin_form_override?.form_url?.trim()) {
       setTab('tickets');
-      setError("This event requires the AS Form — paste its form link first (or turn off “Requires AS Form”).");
+      setError('This event requires the AS Form — paste its form link first (or turn off “Requires AS Form”).');
       return;
     }
     setSaving(true);
     setError('');
     // A multi-day event's overall start and end are the first day's start and the last day's end.
-    const submitForm = eventDays.length > 1
-      ? { ...form, start_date: `${eventDays[0]}T${form.day_hours.find((w) => w.day === eventDays[0])!.start}`, end_date: `${eventDays[eventDays.length - 1]}T${form.day_hours.find((w) => w.day === eventDays[eventDays.length - 1])!.end}` }
-      : form;
+    const submitForm =
+      eventDays.length > 1
+        ? {
+            ...form,
+            start_date: `${eventDays[0]}T${form.day_hours.find((w) => w.day === eventDays[0])!.start}`,
+            end_date: `${eventDays[eventDays.length - 1]}T${form.day_hours.find((w) => w.day === eventDays[eventDays.length - 1])!.end}`,
+          }
+        : form;
     if (submitForm !== form) setForm(submitForm);
     const err = await onSubmit(submitForm);
     setSaving(false);
@@ -350,307 +369,395 @@ export default function EventForm({
 
   return (
     <div className={styles.page} data-wide-page>
-      <Link href="/portal/events" className={styles.back}>← Back to Events</Link>
+      <Link href="/portal/events" className={styles.back}>
+        ← Back to Events
+      </Link>
       <SectionHeader title={heading} />
       <EditingNow room={eventId ? `event:${eventId}` : null} what="this event" />
-      {isNewEvent && draft.offer && <DraftBanner at={draft.offer.at} what="event" onContinue={() => { const d = draft.accept(); if (d) setForm({ ...EMPTY_EVENT_FORM, ...d, day_hours: d.day_hours ?? [] }); }} onDiscard={draft.discard} />}
+      {isNewEvent && draft.offer && (
+        <DraftBanner
+          at={draft.offer.at}
+          what="event"
+          onContinue={() => {
+            const d = draft.accept();
+            if (d) setForm({ ...EMPTY_EVENT_FORM, ...d, day_hours: d.day_hours ?? [] });
+          }}
+          onDiscard={draft.discard}
+        />
+      )}
 
       <div className={styles.editLayout}>
-      <form id="event-form" ref={formRef} className={`${styles.form}${saving ? ` ${styles.formSaving}` : ''}`} onSubmit={handleSubmit} onInvalidCapture={onInvalid} aria-busy={saving}>
-        <SectionTabs<EventTab> label="Event sections" value={tab} onChange={setTab} tabs={EVENT_TABS} />
+        <form
+          id="event-form"
+          ref={formRef}
+          className={`${styles.form}${saving ? ` ${styles.formSaving}` : ''}`}
+          onSubmit={handleSubmit}
+          onInvalidCapture={onInvalid}
+          aria-busy={saving}
+        >
+          <SectionTabs<EventTab> label="Event sections" value={tab} onChange={setTab} tabs={EVENT_TABS} />
 
-        <div data-tab="basics" hidden={tab !== 'basics'} className={styles.tabPanel}>
-        <label className={styles.field}>
-          <span className={styles.label}>Event Title *</span>
-          <input className={styles.input} value={form.title} onChange={(e) => set('title', e.target.value)} required maxLength={120} />
-        </label>
+          <div data-tab="basics" hidden={tab !== 'basics'} className={styles.tabPanel}>
+            <label className={styles.field}>
+              <span className={styles.label}>Event Title *</span>
+              <input className={styles.input} value={form.title} onChange={(e) => set('title', e.target.value)} required maxLength={120} />
+            </label>
 
-        <label className={styles.field}>
-          <span className={styles.label}>URL Slug</span>
-          {/* Set once, when the event is made: links, QR codes and the Logistics plan all use it, so it can't be changed afterwards. */}
-          <input className={styles.input} value={form.slug} onChange={(e) => set('slug', e.target.value)} placeholder="Auto-generated from title if left blank" maxLength={120} readOnly={!!eventId && !!initial.slug} aria-describedby={eventId && initial.slug ? 'slug-locked' : undefined} />
-          {eventId && initial.slug && <span id="slug-locked" className={styles.hint}>Set when the event was made, so it can’t be changed.</span>}
-        </label>
+            <label className={styles.field}>
+              <span className={styles.label}>URL Slug</span>
+              {/* Set once, when the event is made: links, QR codes and the Logistics plan all use it, so it can't be changed afterwards. */}
+              <input
+                className={styles.input}
+                value={form.slug}
+                onChange={(e) => set('slug', e.target.value)}
+                placeholder="Auto-generated from title if left blank"
+                maxLength={120}
+                readOnly={!!eventId && !!initial.slug}
+                aria-describedby={eventId && initial.slug ? 'slug-locked' : undefined}
+              />
+              {eventId && initial.slug && (
+                <span id="slug-locked" className={styles.hint}>
+                  Set when the event was made, so it can’t be changed.
+                </span>
+              )}
+            </label>
 
-        <div className={styles.row}>
-          <label className={styles.field}>
-            <span className={styles.label}>Start Date & Time *</span>
-            <DateTimeInput className={styles.input} value={form.start_date} onChange={(e) => set('start_date', e.target.value)} required />
-          </label>
-          <label className={styles.field}>
-            <span className={styles.label}>End Date & Time *</span>
-            <DateTimeInput className={styles.input} value={form.end_date} min={form.start_date} onChange={(e) => set('end_date', e.target.value)} required />
-          </label>
-        </div>
-        <p className={styles.hint}>
-          {form.start_date && form.end_date && new Date(form.end_date) > new Date(form.start_date)
-            ? (() => {
-                const days = eventDayCount(pacificDatetimeLocalToUTC(form.start_date).toISOString(), pacificDatetimeLocalToUTC(form.end_date).toISOString());
-                return days > 1 ? `Multi-day event: ${days} days. One ticket covers every day. Set each day's hours below; the start and end times come from them.` : 'Single-day event.';
-              })()
-            : 'Every event needs an end time. Running over several days (like a weekend LAN)? Set the end date to the last day — one ticket covers every day.'}
-        </p>
+            <div className={styles.row}>
+              <label className={styles.field}>
+                <span className={styles.label}>Start Date & Time *</span>
+                <DateTimeInput className={styles.input} value={form.start_date} onChange={(e) => set('start_date', e.target.value)} required />
+              </label>
+              <label className={styles.field}>
+                <span className={styles.label}>End Date & Time *</span>
+                <DateTimeInput className={styles.input} value={form.end_date} min={form.start_date} onChange={(e) => set('end_date', e.target.value)} required />
+              </label>
+            </div>
+            <p className={styles.hint}>
+              {form.start_date && form.end_date && new Date(form.end_date) > new Date(form.start_date)
+                ? (() => {
+                    const days = eventDayCount(pacificDatetimeLocalToUTC(form.start_date).toISOString(), pacificDatetimeLocalToUTC(form.end_date).toISOString());
+                    return days > 1
+                      ? `Multi-day event: ${days} days. One ticket covers every day. Set each day's hours below; the start and end times come from them.`
+                      : 'Single-day event.';
+                  })()
+                : 'Every event needs an end time. Running over several days (like a weekend LAN)? Set the end date to the last day — one ticket covers every day.'}
+            </p>
 
-        {formDays(form.start_date, form.end_date).length > 1 && (
-          <div className={styles.field}>
-            <span className={styles.label}>Hours for each day *</span>
-            <p className={styles.hint}>When the event runs each day (Pacific time). They show on the event page, and self check-in closes at the end of each day.</p>
-            {form.start_date.slice(11, 16) && form.end_date.slice(11, 16) && form.start_date.slice(11, 16) < form.end_date.slice(11, 16) && (
-              <div>
-                <button type="button" className={styles.previewBtn} onClick={() => setForm((f) => ({ ...f, day_hours: formDays(f.start_date, f.end_date).map((day) => ({ day, start: f.start_date.slice(11, 16), end: f.end_date.slice(11, 16) })) }))}>
-                  Use {form.start_date.slice(11, 16)} to {form.end_date.slice(11, 16)} every day
-                </button>
+            {formDays(form.start_date, form.end_date).length > 1 && (
+              <div className={styles.field}>
+                <span className={styles.label}>Hours for each day *</span>
+                <p className={styles.hint}>When the event runs each day (Pacific time). They show on the event page, and self check-in closes at the end of each day.</p>
+                {form.start_date.slice(11, 16) && form.end_date.slice(11, 16) && form.start_date.slice(11, 16) < form.end_date.slice(11, 16) && (
+                  <div>
+                    <button
+                      type="button"
+                      className={styles.previewBtn}
+                      onClick={() =>
+                        setForm((f) => ({
+                          ...f,
+                          day_hours: formDays(f.start_date, f.end_date).map((day) => ({ day, start: f.start_date.slice(11, 16), end: f.end_date.slice(11, 16) })),
+                        }))
+                      }
+                    >
+                      Use {form.start_date.slice(11, 16)} to {form.end_date.slice(11, 16)} every day
+                    </button>
+                  </div>
+                )}
+                <div>
+                  {formDays(form.start_date, form.end_date).map((day, i) => {
+                    const w = form.day_hours.find((x) => x.day === day) ?? { day, start: '', end: '' };
+                    const setW = (patch: Partial<typeof w>) => setForm((f) => ({ ...f, day_hours: [...f.day_hours.filter((x) => x.day !== day), { ...w, ...patch }] }));
+                    const bad = !!w.start && !!w.end && w.end <= w.start;
+                    return (
+                      <div key={day} className={styles.row} style={{ alignItems: 'end', marginBottom: '0.5rem' }}>
+                        <div className={styles.field}>
+                          <span className={styles.label}>
+                            Day {i + 1} · {formatPacificDate(day, { weekday: true })}
+                          </span>
+                          <TimeInput className={styles.input} value={w.start} onChange={(e) => setW({ start: e.target.value })} aria-label={`Day ${i + 1} starts`} />
+                        </div>
+                        <div className={styles.field}>
+                          <span className={styles.label}>{bad ? 'Ends (must be after it starts)' : 'Ends'}</span>
+                          <TimeInput className={styles.input} value={w.end} onChange={(e) => setW({ end: e.target.value })} aria-label={`Day ${i + 1} ends`} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
-            <div>
-              {formDays(form.start_date, form.end_date).map((day, i) => {
-                const w = form.day_hours.find((x) => x.day === day) ?? { day, start: '', end: '' };
-                const setW = (patch: Partial<typeof w>) => setForm((f) => ({ ...f, day_hours: [...f.day_hours.filter((x) => x.day !== day), { ...w, ...patch }] }));
-                const bad = !!w.start && !!w.end && w.end <= w.start;
-                return (
-                  <div key={day} className={styles.row} style={{ alignItems: 'end', marginBottom: '0.5rem' }}>
-                    <div className={styles.field}>
-                      <span className={styles.label}>Day {i + 1} · {formatPacificDate(day, { weekday: true })}</span>
-                      <TimeInput className={styles.input} value={w.start} onChange={(e) => setW({ start: e.target.value })} aria-label={`Day ${i + 1} starts`} />
-                    </div>
-                    <div className={styles.field}>
-                      <span className={styles.label}>{bad ? 'Ends (must be after it starts)' : 'Ends'}</span>
-                      <TimeInput className={styles.input} value={w.end} onChange={(e) => setW({ end: e.target.value })} aria-label={`Day ${i + 1} ends`} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
-
-        <label className={styles.field}>
-          <span className={styles.label}>Location</span>
-          <input className={styles.input} value={form.location} onChange={(e) => set('location', e.target.value)} placeholder={form.is_online ? 'e.g. Discord — #main-stage' : 'e.g. Price Center Ballroom'} />
-        </label>
-
-        <label className={styles.checkbox}>
-          <input type="checkbox" checked={form.is_online} onChange={(e) => set('is_online', e.target.checked)} />
-          <span>This event is online</span>
-        </label>
-        <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
-          Changes how attendees check in: in-person events get the QR scanner, online events get a check-in code they type in themselves.
-        </span>
-
-        <label className={styles.field}>
-          <span className={styles.label}>Short Summary</span>
-          <textarea className={`${styles.input} ${styles.textarea}`} value={form.content} onChange={(e) => set('content', e.target.value)} rows={3} />
-          <span className={styles.hint}>Shown on event cards on the homepage and /events list.</span>
-        </label>
-
-        <label className={styles.checkbox}>
-          <input type="checkbox" checked={form.is_published} onChange={(e) => set('is_published', e.target.checked)} />
-          <span>Publish immediately (visible to all)</span>
-        </label>
-        </div>
-
-        <div data-tab="page" hidden={tab !== 'page'} className={styles.tabPanel}>
-        <EventPostersField
-          people={creditPeople}
-          posters={form.theme.posters ?? []}
-          credits={form.theme.asset_credits ?? {}}
-          onChange={(posters, credits) => setForm((f) => ({ ...f, flyer_url: posters.find(Boolean) ?? '', theme: { ...f.theme, posters, asset_credits: credits } }))}
-        />
-
-        <MarkdownField
-          label="Event Details / Instructions"
-          value={form.details}
-          onChange={(v) => set('details', v)}
-          rows={8}
-          hint={<>The full write-up shown on this event&apos;s own page (what &quot;Learn More&quot; links to). Markdown supported — **bold**, _italic_, [links](https://…), lists, headings.</>}
-        />
-
-        <PageBlocksEditor blocks={form.page_blocks} onChange={(b) => setForm((f) => ({ ...f, page_blocks: b }))} creditPeople={creditPeople} />
-
-        <EventExtrasEditor
-          venueAddress={form.venue_address}
-          venueNotes={form.venue_notes}
-          venueName={form.venue_name}
-          venuePin={form.venue_lat != null && form.venue_lng != null ? { lat: form.venue_lat, lng: form.venue_lng } : null}
-          schedule={form.schedule}
-          sponsors={form.sponsors}
-          onVenueAddress={(v) => set('venue_address', v)}
-          onVenueNotes={(v) => set('venue_notes', v)}
-          onVenueName={(v) => set('venue_name', v)}
-          onVenuePin={(p) => setForm((f) => ({ ...f, venue_lat: p?.lat ?? null, venue_lng: p?.lng ?? null }))}
-          onSchedule={(v) => setForm((f) => ({ ...f, schedule: v }))}
-          onSponsors={(v) => setForm((f) => ({ ...f, sponsors: v }))}
-        />
-
-        <EventThemePanel theme={form.theme} onChange={(t) => setForm((f) => ({ ...f, theme: t }))} people={creditPeople} />
-
-        <SocialEmbedsField
-          value={form.social_embeds}
-          onChange={(v) => setForm((f) => ({ ...f, social_embeds: v }))}
-          hint="Shown on this event's own page. Instagram, X, TikTok, and YouTube embed live; Discord links show as a card."
-        />
-        </div>
-
-        <div data-tab="tickets" hidden={tab !== 'tickets'} className={styles.tabPanel}>
-        <label className={styles.field}>
-          <span className={styles.label}>Audience</span>
-          <Select
-            className={styles.input}
-            value={form.audience}
-            onChange={(e) => set('audience', e.target.value as 'public' | 'ucsd_only')}
-          >
-            <option value="public">Open to the public</option>
-            <option value="ucsd_only">UCSD-affiliated only</option>
-          </Select>
-        </label>
-
-        {form.audience === 'public' && (
-          <label className={styles.field}>
-            <span className={styles.label}>Ticket Price for non-UCSD attendees ($)</span>
-            <NumberInput className={styles.input} min="0" step="0.01" value={form.ticket_price} onChange={(e) => set('ticket_price', e.target.value)} />
-            <span className={styles.hint}>Every published event gets a ticket automatically. UCSD-affiliated attendees (@ucsd.edu) always get a free ticket.</span>
-          </label>
-        )}
-
-        <label className={styles.field}>
-          <span className={styles.label}>Points for Checking In</span>
-          <NumberInput className={styles.input} min="0" value={form.points_value} onChange={(e) => set('points_value', e.target.value)} />
-          <span className={styles.hint}>How many reward points an attendee earns the moment they're checked in at this event.</span>
-        </label>
-
-        <label className={styles.checkbox}>
-          <input type="checkbox" checked={form.requires_checkin_form} onChange={(e) => set('requires_checkin_form', e.target.checked)} />
-          <span>Requires AS Form</span>
-        </label>
-        <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
-          Shows a pre-filled AS Form button on the attendee's own phone the moment an officer checks them in. UCSD
-          makes a new form for each event, so paste this event's link below.
-        </span>
-
-        {form.requires_checkin_form && (
-          <>
-            <div className={styles.sectionDivider}>
-              <span className={styles.sectionLabel}>This Event's AS Form</span>
-              <CheckinFormFieldsEditor
-                value={form.checkin_form_override ?? seedCheckinFormConfig ?? EMPTY_CHECKIN_FORM_CONFIG}
-                onChange={(v) => setForm((f) => ({ ...f, checkin_form_override: v }))}
+            <label className={styles.field}>
+              <span className={styles.label}>Location</span>
+              <input
+                className={styles.input}
+                value={form.location}
+                onChange={(e) => set('location', e.target.value)}
+                placeholder={form.is_online ? 'e.g. Discord — #main-stage' : 'e.g. Price Center Ballroom'}
               />
-            </div>
-
-            <label className={styles.field}>
-              <span className={styles.label}>Event on the AS Form</span>
-              {asFormEventOptions ? (
-                <Select className={styles.input} value={form.checkin_form_event_name} onChange={(e) => set('checkin_form_event_name', e.target.value)}>
-                  <option value="">— Pick this event from the AS Form's list —</option>
-                  {eventNameMissing && <option value={form.checkin_form_event_name}>{form.checkin_form_event_name} (not on the form)</option>}
-                  {ownOptions.length > 0 && (
-                    <optgroup label="Triton Gaming">
-                      {ownOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-                    </optgroup>
-                  )}
-                  {otherOptions.length > 0 && (
-                    <optgroup label="Other clubs' events">
-                      {otherOptions.map((o) => <option key={o} value={o}>{o}</option>)}
-                    </optgroup>
-                  )}
-                </Select>
-              ) : (
-                <input className={styles.input} value={form.checkin_form_event_name} onChange={(e) => set('checkin_form_event_name', e.target.value)} placeholder="Exactly as listed on the AS Form, e.g. Triton Gaming - Fall GBM 2026" />
-              )}
-              {suggestion && !eventNameOnForm && (
-                <button type="button" className={styles.previewBtn} style={{ marginTop: '0.4rem' }} onClick={() => set('checkin_form_event_name', suggestion)}>
-                  Use “{suggestion}”
-                </button>
-              )}
-              {eventNameMissing && (
-                <span className={styles.hint} style={{ color: '#f59e0b' }}>
-                  ⚠ That option isn't on the AS Form right now — UCSD may not have added this event yet. Attendees would have to pick it themselves.
-                </span>
-              )}
-              {asFormEventOptions && !eventNameOnForm && !suggestion && (
-                <span className={styles.hint} style={{ color: '#f59e0b' }}>
-                  ⚠ No Triton Gaming event on the form looks like this one. If UCSD hasn't added it yet, it can't be pre-selected.
-                </span>
-              )}
-              <span className={styles.hint}>The AS Form now makes people pick their event from a list of every club's events. Choosing it here pre-selects it for attendees. Must be the exact option text — the dropdown is read live from the form.</span>
             </label>
 
+            <label className={styles.checkbox}>
+              <input type="checkbox" checked={form.is_online} onChange={(e) => set('is_online', e.target.checked)} />
+              <span>This event is online</span>
+            </label>
+            <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
+              Changes how attendees check in: in-person events get the QR scanner, online events get a check-in code they type in themselves.
+            </span>
+
             <label className={styles.field}>
-              <span className={styles.label}>Food/Item Provided</span>
-              <input className={styles.input} value={form.checkin_food_item} onChange={(e) => set('checkin_food_item', e.target.value)} placeholder="e.g. Pizza & boba, T-shirts" />
-              <span className={styles.hint}>Pre-fills the AS Form's "food or item received" question. Leave blank if nothing was given out.</span>
+              <span className={styles.label}>Short Summary</span>
+              <textarea className={`${styles.input} ${styles.textarea}`} value={form.content} onChange={(e) => set('content', e.target.value)} rows={3} />
+              <span className={styles.hint}>Shown on event cards on the homepage and /events list.</span>
             </label>
 
-            {checkinPreviewUrl ? (
-              <a href={checkinPreviewUrl} target="_blank" rel="noopener noreferrer" className={styles.previewBtn}>
-                <ExternalLink size={14} strokeWidth={1.75} aria-hidden="true" /> Preview AS Form
-              </a>
-            ) : (
-              <span className={styles.hint}>Paste this event's form link above to enable a preview.</span>
+            <label className={styles.checkbox}>
+              <input type="checkbox" checked={form.is_published} onChange={(e) => set('is_published', e.target.checked)} />
+              <span>Publish immediately (visible to all)</span>
+            </label>
+          </div>
+
+          <div data-tab="page" hidden={tab !== 'page'} className={styles.tabPanel}>
+            <EventPostersField
+              people={creditPeople}
+              posters={form.theme.posters ?? []}
+              credits={form.theme.asset_credits ?? {}}
+              onChange={(posters, credits) => setForm((f) => ({ ...f, flyer_url: posters.find(Boolean) ?? '', theme: { ...f.theme, posters, asset_credits: credits } }))}
+            />
+
+            <MarkdownField
+              label="Event Details / Instructions"
+              value={form.details}
+              onChange={(v) => set('details', v)}
+              rows={8}
+              hint={
+                <>
+                  The full write-up shown on this event&apos;s own page (what &quot;Learn More&quot; links to). Markdown supported — **bold**, _italic_, [links](https://…), lists,
+                  headings.
+                </>
+              }
+            />
+
+            <PageBlocksEditor blocks={form.page_blocks} onChange={(b) => setForm((f) => ({ ...f, page_blocks: b }))} creditPeople={creditPeople} />
+
+            <EventExtrasEditor
+              venueAddress={form.venue_address}
+              venueNotes={form.venue_notes}
+              venueName={form.venue_name}
+              venuePin={form.venue_lat != null && form.venue_lng != null ? { lat: form.venue_lat, lng: form.venue_lng } : null}
+              schedule={form.schedule}
+              sponsors={form.sponsors}
+              onVenueAddress={(v) => set('venue_address', v)}
+              onVenueNotes={(v) => set('venue_notes', v)}
+              onVenueName={(v) => set('venue_name', v)}
+              onVenuePin={(p) => setForm((f) => ({ ...f, venue_lat: p?.lat ?? null, venue_lng: p?.lng ?? null }))}
+              onSchedule={(v) => setForm((f) => ({ ...f, schedule: v }))}
+              onSponsors={(v) => setForm((f) => ({ ...f, sponsors: v }))}
+            />
+
+            <EventThemePanel theme={form.theme} onChange={(t) => setForm((f) => ({ ...f, theme: t }))} people={creditPeople} />
+
+            <SocialEmbedsField
+              value={form.social_embeds}
+              onChange={(v) => setForm((f) => ({ ...f, social_embeds: v }))}
+              hint="Shown on this event's own page. Instagram, X, TikTok, and YouTube embed live; Discord links show as a card."
+            />
+          </div>
+
+          <div data-tab="tickets" hidden={tab !== 'tickets'} className={styles.tabPanel}>
+            <label className={styles.field}>
+              <span className={styles.label}>Audience</span>
+              <Select className={styles.input} value={form.audience} onChange={(e) => set('audience', e.target.value as 'public' | 'ucsd_only')}>
+                <option value="public">Open to the public</option>
+                <option value="ucsd_only">UCSD-affiliated only</option>
+              </Select>
+            </label>
+
+            {form.audience === 'public' && (
+              <label className={styles.field}>
+                <span className={styles.label}>Ticket Price for non-UCSD attendees ($)</span>
+                <NumberInput className={styles.input} min="0" step="0.01" value={form.ticket_price} onChange={(e) => set('ticket_price', e.target.value)} />
+                <span className={styles.hint}>Every published event gets a ticket automatically. UCSD-affiliated attendees (@ucsd.edu) always get a free ticket.</span>
+              </label>
             )}
-          </>
-        )}
 
-        {formDays(form.start_date, form.end_date).length > 1 && (
-          <div className={styles.field}>
-            <span className={styles.label}>Staff scanner hours for each day <span className={styles.hint}>(optional)</span></span>
-            <p className={styles.hint}>Only limits the staff ticket scanner. Leave a day blank and the scanner works all day. Set both times to only allow scanning in that window (Pacific time).</p>
-            <div>
-              {formDays(form.start_date, form.end_date).map((day, i) => {
-                const w = form.checkin_windows.find((x) => x.day === day) ?? { day, start: '', end: '' };
-                const setW = (patch: Partial<typeof w>) => setForm((f) => ({ ...f, checkin_windows: [...f.checkin_windows.filter((x) => x.day !== day), { ...w, ...patch }] }));
-                const bad = !!w.start && !!w.end && w.end <= w.start;
-                return (
-                  <div key={day} className={styles.row} style={{ alignItems: 'end', marginBottom: '0.5rem' }}>
-                    <div className={styles.field}>
-                      <span className={styles.label}>Day {i + 1} · {formatPacificDate(day, { weekday: true })}</span>
-                      <TimeInput className={styles.input} value={w.start} onChange={(e) => setW({ start: e.target.value })} aria-label={`Day ${i + 1} check-in opens`} />
-                    </div>
-                    <div className={styles.field}>
-                      <span className={styles.label}>{bad ? 'Closes (must be after it opens)' : 'Closes'}</span>
-                      <TimeInput className={styles.input} value={w.end} onChange={(e) => setW({ end: e.target.value })} aria-label={`Day ${i + 1} check-in closes`} />
-                    </div>
-                  </div>
-                );
-              })}
+            <label className={styles.field}>
+              <span className={styles.label}>Points for Checking In</span>
+              <NumberInput className={styles.input} min="0" value={form.points_value} onChange={(e) => set('points_value', e.target.value)} />
+              <span className={styles.hint}>How many reward points an attendee earns the moment they're checked in at this event.</span>
+            </label>
+
+            <label className={styles.checkbox}>
+              <input type="checkbox" checked={form.requires_checkin_form} onChange={(e) => set('requires_checkin_form', e.target.checked)} />
+              <span>Requires AS Form</span>
+            </label>
+            <span className={styles.hint} style={{ marginTop: '-0.75rem' }}>
+              Shows a pre-filled AS Form button on the attendee's own phone the moment an officer checks them in. UCSD makes a new form for each event, so paste this event's link
+              below.
+            </span>
+
+            {form.requires_checkin_form && (
+              <>
+                <div className={styles.sectionDivider}>
+                  <span className={styles.sectionLabel}>This Event's AS Form</span>
+                  <CheckinFormFieldsEditor
+                    value={form.checkin_form_override ?? seedCheckinFormConfig ?? EMPTY_CHECKIN_FORM_CONFIG}
+                    onChange={(v) => setForm((f) => ({ ...f, checkin_form_override: v }))}
+                  />
+                </div>
+
+                <label className={styles.field}>
+                  <span className={styles.label}>Event on the AS Form</span>
+                  {asFormEventOptions ? (
+                    <Select className={styles.input} value={form.checkin_form_event_name} onChange={(e) => set('checkin_form_event_name', e.target.value)}>
+                      <option value="">— Pick this event from the AS Form's list —</option>
+                      {eventNameMissing && <option value={form.checkin_form_event_name}>{form.checkin_form_event_name} (not on the form)</option>}
+                      {ownOptions.length > 0 && (
+                        <optgroup label="Triton Gaming">
+                          {ownOptions.map((o) => (
+                            <option key={o} value={o}>
+                              {o}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      {otherOptions.length > 0 && (
+                        <optgroup label="Other clubs' events">
+                          {otherOptions.map((o) => (
+                            <option key={o} value={o}>
+                              {o}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                    </Select>
+                  ) : (
+                    <input
+                      className={styles.input}
+                      value={form.checkin_form_event_name}
+                      onChange={(e) => set('checkin_form_event_name', e.target.value)}
+                      placeholder="Exactly as listed on the AS Form, e.g. Triton Gaming - Fall GBM 2026"
+                    />
+                  )}
+                  {suggestion && !eventNameOnForm && (
+                    <button type="button" className={styles.previewBtn} style={{ marginTop: '0.4rem' }} onClick={() => set('checkin_form_event_name', suggestion)}>
+                      Use “{suggestion}”
+                    </button>
+                  )}
+                  {eventNameMissing && (
+                    <span className={styles.hint} style={{ color: '#f59e0b' }}>
+                      ⚠ That option isn't on the AS Form right now — UCSD may not have added this event yet. Attendees would have to pick it themselves.
+                    </span>
+                  )}
+                  {asFormEventOptions && !eventNameOnForm && !suggestion && (
+                    <span className={styles.hint} style={{ color: '#f59e0b' }}>
+                      ⚠ No Triton Gaming event on the form looks like this one. If UCSD hasn't added it yet, it can't be pre-selected.
+                    </span>
+                  )}
+                  <span className={styles.hint}>
+                    The AS Form now makes people pick their event from a list of every club's events. Choosing it here pre-selects it for attendees. Must be the exact option text —
+                    the dropdown is read live from the form.
+                  </span>
+                </label>
+
+                <label className={styles.field}>
+                  <span className={styles.label}>Food/Item Provided</span>
+                  <input
+                    className={styles.input}
+                    value={form.checkin_food_item}
+                    onChange={(e) => set('checkin_food_item', e.target.value)}
+                    placeholder="e.g. Pizza & boba, T-shirts"
+                  />
+                  <span className={styles.hint}>Pre-fills the AS Form's "food or item received" question. Leave blank if nothing was given out.</span>
+                </label>
+
+                {checkinPreviewUrl ? (
+                  <a href={checkinPreviewUrl} target="_blank" rel="noopener noreferrer" className={styles.previewBtn}>
+                    <ExternalLink size={14} strokeWidth={1.75} aria-hidden="true" /> Preview AS Form
+                  </a>
+                ) : (
+                  <span className={styles.hint}>Paste this event's form link above to enable a preview.</span>
+                )}
+              </>
+            )}
+
+            {formDays(form.start_date, form.end_date).length > 1 && (
+              <div className={styles.field}>
+                <span className={styles.label}>
+                  Staff scanner hours for each day <span className={styles.hint}>(optional)</span>
+                </span>
+                <p className={styles.hint}>
+                  Only limits the staff ticket scanner. Leave a day blank and the scanner works all day. Set both times to only allow scanning in that window (Pacific time).
+                </p>
+                <div>
+                  {formDays(form.start_date, form.end_date).map((day, i) => {
+                    const w = form.checkin_windows.find((x) => x.day === day) ?? { day, start: '', end: '' };
+                    const setW = (patch: Partial<typeof w>) => setForm((f) => ({ ...f, checkin_windows: [...f.checkin_windows.filter((x) => x.day !== day), { ...w, ...patch }] }));
+                    const bad = !!w.start && !!w.end && w.end <= w.start;
+                    return (
+                      <div key={day} className={styles.row} style={{ alignItems: 'end', marginBottom: '0.5rem' }}>
+                        <div className={styles.field}>
+                          <span className={styles.label}>
+                            Day {i + 1} · {formatPacificDate(day, { weekday: true })}
+                          </span>
+                          <TimeInput className={styles.input} value={w.start} onChange={(e) => setW({ start: e.target.value })} aria-label={`Day ${i + 1} check-in opens`} />
+                        </div>
+                        <div className={styles.field}>
+                          <span className={styles.label}>{bad ? 'Closes (must be after it opens)' : 'Closes'}</span>
+                          <TimeInput className={styles.input} value={w.end} onChange={(e) => setW({ end: e.target.value })} aria-label={`Day ${i + 1} check-in closes`} />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div data-tab="after" hidden={tab !== 'after'} className={styles.tabPanel}>
+            <div className={styles.sectionDivider}>
+              <span className={styles.sectionLabel}>After the Event</span>
+              <span className={styles.hint}>Fill these in once the event has happened — they appear on the event&apos;s page in place of the ticket button.</span>
             </div>
+
+            <PhotoAlbumsField value={form.photo_albums} onChange={(v) => setForm((f) => ({ ...f, photo_albums: v }))} />
+
+            <MarkdownField
+              label="Post-Event Notes"
+              value={form.post_event_info}
+              onChange={(v) => set('post_event_info', v)}
+              rows={4}
+              placeholder="Recap, results, thank-yous, etc."
+              hint="Markdown supported, same as Event Details above."
+            />
+          </div>
+
+          {error && <Notice tone="error">{error}</Notice>}
+
+          <div className={styles.actions}>
+            <Link href="/portal/events" className={styles.cancelBtn}>
+              Back
+            </Link>
+          </div>
+          <SaveBar
+            dirty={dirty}
+            saving={saving}
+            formId="event-form"
+            saveLabel={submitLabel}
+            onDiscard={() => {
+              setForm(savedForm());
+              setError('');
+            }}
+          />
+        </form>
+        {saving && (
+          <div className={styles.savingPill} role="status">
+            <Loader2 size={18} className={styles.spin} aria-hidden="true" /> Saving your event…
           </div>
         )}
+        <div className={styles.editPreview}>
+          <LivePreview draftKey="event" path="/preview/events/__draft__" label={form.title.trim() || 'New event'} value={form} />
         </div>
-
-        <div data-tab="after" hidden={tab !== 'after'} className={styles.tabPanel}>
-        <div className={styles.sectionDivider}>
-          <span className={styles.sectionLabel}>After the Event</span>
-          <span className={styles.hint}>Fill these in once the event has happened — they appear on the event&apos;s page in place of the ticket button.</span>
-        </div>
-
-        <PhotoAlbumsField
-          value={form.photo_albums}
-          onChange={(v) => setForm((f) => ({ ...f, photo_albums: v }))}
-        />
-
-        <MarkdownField
-          label="Post-Event Notes"
-          value={form.post_event_info}
-          onChange={(v) => set('post_event_info', v)}
-          rows={4}
-          placeholder="Recap, results, thank-yous, etc."
-          hint="Markdown supported, same as Event Details above."
-        />
-        </div>
-
-        {error && <Notice tone="error">{error}</Notice>}
-
-        <div className={styles.actions}>
-          <Link href="/portal/events" className={styles.cancelBtn}>Back</Link>
-        </div>
-        <SaveBar dirty={dirty} saving={saving} formId="event-form" saveLabel={submitLabel} onDiscard={() => { setForm(savedForm()); setError(''); }} />
-      </form>
-      {saving && <div className={styles.savingPill} role="status"><Loader2 size={18} className={styles.spin} aria-hidden="true" /> Saving your event…</div>}
-      <div className={styles.editPreview}>
-        <LivePreview draftKey="event" path="/preview/events/__draft__" label={form.title.trim() || 'New event'} value={form} />
-      </div>
       </div>
     </div>
   );

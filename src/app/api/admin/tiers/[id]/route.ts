@@ -19,7 +19,9 @@ async function requireManager(system: string) {
   if (!capability) return { error: NextResponse.json({ error: 'Invalid tier system.' }, { status: 400 }) };
 
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -49,11 +51,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const serviceClient = createServiceClient();
   // See admin/tiers/route.ts's POST handler for why no .single() here.
   const { data, error } = await serviceClient.rpc('admin_upsert_tier', {
-    _system: system, _id: id, _name: name, _min_points: minPoints, _color: color,
+    _system: system,
+    _id: id,
+    _name: name,
+    _min_points: minPoints,
+    _color: color,
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  await logAudit(serviceClient, { actorId: ctx.userId ?? null, action: 'update', entityType: 'tier', entityId: id, summary: `Tier "${name}" edited (${minPoints} pts, ${system})` });
+  await logAudit(serviceClient, {
+    actorId: ctx.userId ?? null,
+    action: 'update',
+    entityType: 'tier',
+    entityId: id,
+    summary: `Tier "${name}" edited (${minPoints} pts, ${system})`,
+  });
   invalidate('tiers');
   return NextResponse.json({ tier: data });
 }

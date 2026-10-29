@@ -1,16 +1,36 @@
 import { CONDITIONS, LIMITS, conditionLabel, type Condition } from '@/lib/logistics/constants';
 
 // One piece of equipment, as stored (lib/logistics tables: logistics_devices).
-export interface KitLine { item: string; qty: number; missing: boolean }
+export interface KitLine {
+  item: string;
+  qty: number;
+  missing: boolean;
+}
 export interface Device {
-  id: string; tag: string | null; name: string | null; type: string; shelf: string | null; tier: string | null; place_note: string | null;
+  id: string;
+  tag: string | null;
+  name: string | null;
+  type: string;
+  shelf: string | null;
+  tier: string | null;
+  place_note: string | null;
   condition: Condition;
-  ports: string[]; login: string | null; games: string[]; kit: KitLine[]; quantity: number | null; quantity_is_estimate: boolean; notes: string | null;
-  created_at: string; updated_at: string;
+  ports: string[];
+  login: string | null;
+  games: string[];
+  kit: KitLine[];
+  quantity: number | null;
+  quantity_is_estimate: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // "TECM 1", "tecm1" and "TECM1" are the same device: the ID is compared with spaces and capitals ignored. This is what the typed ID on event day is matched with.
-export const tagKey = (tag: string | null | undefined): string => String(tag ?? '').toLowerCase().replace(/\s+/g, '');
+export const tagKey = (tag: string | null | undefined): string =>
+  String(tag ?? '')
+    .toLowerCase()
+    .replace(/\s+/g, '');
 
 const text = (v: unknown, max: number): string | null => {
   if (v === null || v === undefined) return null;
@@ -22,7 +42,9 @@ export function cleanList(v: unknown, max = LIMITS.listItems): string[] {
   const seen = new Set<string>();
   const out: string[] = [];
   for (const x of v) {
-    const s = String(x ?? '').trim().slice(0, LIMITS.option);
+    const s = String(x ?? '')
+      .trim()
+      .slice(0, LIMITS.option);
     if (!s || seen.has(s.toLowerCase())) continue;
     seen.add(s.toLowerCase());
     out.push(s);
@@ -36,7 +58,9 @@ export function cleanKit(v: unknown): KitLine[] {
   const out: KitLine[] = [];
   for (const x of v) {
     const o = (x ?? {}) as Record<string, unknown>;
-    const item = String(o.item ?? '').trim().slice(0, LIMITS.option);
+    const item = String(o.item ?? '')
+      .trim()
+      .slice(0, LIMITS.option);
     if (!item || seen.has(item.toLowerCase())) continue;
     seen.add(item.toLowerCase());
     const qty = Math.round(Number(o.qty));
@@ -46,7 +70,9 @@ export function cleanKit(v: unknown): KitLine[] {
   return out;
 }
 
-export type DevicePatch = Partial<Pick<Device, 'tag' | 'name' | 'type' | 'shelf' | 'tier' | 'place_note' | 'condition' | 'ports' | 'login' | 'games' | 'kit' | 'quantity' | 'quantity_is_estimate' | 'notes'>>;
+export type DevicePatch = Partial<
+  Pick<Device, 'tag' | 'name' | 'type' | 'shelf' | 'tier' | 'place_note' | 'condition' | 'ports' | 'login' | 'games' | 'kit' | 'quantity' | 'quantity_is_estimate' | 'notes'>
+>;
 
 // Reads what the browser sent. Only the fields that were sent come back (so an edit changes just those); anything unknown is dropped. `error` is a plain sentence for the person.
 export function cleanDevice(raw: unknown): { value: DevicePatch; error?: string } {
@@ -55,18 +81,29 @@ export function cleanDevice(raw: unknown): { value: DevicePatch; error?: string 
   const has = (k: string) => Object.prototype.hasOwnProperty.call(b, k);
   if (has('tag')) v.tag = text(b.tag, LIMITS.tag);
   if (has('name')) v.name = text(b.name, LIMITS.name);
-  if (has('type')) { const t = text(b.type, LIMITS.option); if (!t) return { value: v, error: 'Pick what kind of device it is.' }; v.type = t; }
+  if (has('type')) {
+    const t = text(b.type, LIMITS.option);
+    if (!t) return { value: v, error: 'Pick what kind of device it is.' };
+    v.type = t;
+  }
   if (has('shelf')) v.shelf = text(b.shelf, LIMITS.option);
   if (has('tier')) v.tier = text(b.tier, LIMITS.option);
   if (has('place_note')) v.place_note = text(b.place_note, LIMITS.note);
-  if (has('condition')) { if (!CONDITIONS.some((c) => c.id === b.condition)) return { value: v, error: 'Pick a condition from the list.' }; v.condition = b.condition as Condition; }
+  if (has('condition')) {
+    if (!CONDITIONS.some((c) => c.id === b.condition)) return { value: v, error: 'Pick a condition from the list.' };
+    v.condition = b.condition as Condition;
+  }
   if (has('ports')) v.ports = cleanList(b.ports);
   if (has('login')) v.login = text(b.login, LIMITS.login);
   if (has('games')) v.games = cleanList(b.games, 60);
   if (has('kit')) v.kit = cleanKit(b.kit);
   if (has('quantity')) {
     if (b.quantity === null || b.quantity === '' || b.quantity === undefined) v.quantity = null;
-    else { const q = Math.round(Number(b.quantity)); if (!Number.isFinite(q) || q < 0 || q > LIMITS.qtyMax) return { value: v, error: 'The quantity must be a whole number.' }; v.quantity = q; }
+    else {
+      const q = Math.round(Number(b.quantity));
+      if (!Number.isFinite(q) || q < 0 || q > LIMITS.qtyMax) return { value: v, error: 'The quantity must be a whole number.' };
+      v.quantity = q;
+    }
   }
   if (has('quantity_is_estimate')) v.quantity_is_estimate = b.quantity_is_estimate !== false;
   if (has('notes')) v.notes = text(b.notes, LIMITS.notes);
@@ -92,9 +129,11 @@ export function describeChange(before: Device, after: Device): { kind: string; s
   }
   for (const [key, k] of was) if (!now.has(key)) out.push({ kind: 'kit', summary: `Kit: removed ${k.item}` });
   if ((before.notes ?? '') !== (after.notes ?? '')) out.push({ kind: 'note', summary: after.notes ? 'Notes updated' : 'Notes cleared' });
-  if (before.quantity !== after.quantity) out.push({ kind: 'quantity', summary: `Quantity: ${before.quantity ?? 'unknown'} → ${after.quantity ?? 'unknown'}${after.quantity_is_estimate ? ' (estimate)' : ''}` });
+  if (before.quantity !== after.quantity)
+    out.push({ kind: 'quantity', summary: `Quantity: ${before.quantity ?? 'unknown'} → ${after.quantity ?? 'unknown'}${after.quantity_is_estimate ? ' (estimate)' : ''}` });
   return out;
 }
 
 // "about 30" or "30". Counted rows show an estimate with a leading "about".
-export const quantityText = (d: Pick<Device, 'quantity' | 'quantity_is_estimate'>): string => (d.quantity === null ? 'Unknown' : `${d.quantity_is_estimate ? 'about ' : ''}${d.quantity}`);
+export const quantityText = (d: Pick<Device, 'quantity' | 'quantity_is_estimate'>): string =>
+  d.quantity === null ? 'Unknown' : `${d.quantity_is_estimate ? 'about ' : ''}${d.quantity}`;

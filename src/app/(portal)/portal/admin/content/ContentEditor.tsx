@@ -37,7 +37,10 @@ interface Props {
 const ALL_PAGES = ['/', '/our-story', '/team', '/events', '/divisions', '/sponsors', '/get-involved', '/membership', '/media'];
 
 const COLOR_PREVIEW: Record<string, string> = {
-  yellow: '#ffc72c', blue: '#275a8f', green: '#059669', red: '#dc2626',
+  yellow: '#ffc72c',
+  blue: '#275a8f',
+  green: '#059669',
+  red: '#dc2626',
 };
 
 // Swaps two rows in place — used by every reorderable list editor below
@@ -60,7 +63,9 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
   });
   const [forms, setForms] = useState<Record<string, Record<string, unknown>>>(() => {
     const init: Record<string, Record<string, unknown>> = {};
-    blocks.forEach((b) => { init[b.key] = { ...(contentMap[b.key] || {}) }; });
+    blocks.forEach((b) => {
+      init[b.key] = { ...(contentMap[b.key] || {}) };
+    });
     return init;
   });
   // What's actually saved, per block — edits to several blocks can be pending
@@ -71,14 +76,16 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
   const hasUnsaved = JSON.stringify(forms) !== JSON.stringify(savedForms);
   useUnsavedChanges(hasUnsaved ? forms : 'CLEAN');
   // Only the blocks that differ from what is saved are kept as a draft in this browser.
-  const edited = Object.fromEntries(Object.keys(forms).filter((k) => JSON.stringify(forms[k]) !== JSON.stringify(savedForms[k])).map((k) => [k, forms[k]]));
+  const edited = Object.fromEntries(
+    Object.keys(forms)
+      .filter((k) => JSON.stringify(forms[k]) !== JSON.stringify(savedForms[k]))
+      .map((k) => [k, forms[k]]),
+  );
   const draft = useDraft<Record<string, Record<string, unknown>>>('site-content', edited, (v) => Object.keys(v).length === 0);
   const [error, setError] = useState<string | null>(null);
 
   const q = query.trim().toLowerCase();
-  const visibleBlocks = q
-    ? blocks.filter((b) => b.title.toLowerCase().includes(q) || b.description.toLowerCase().includes(q))
-    : blocks;
+  const visibleBlocks = q ? blocks.filter((b) => b.title.toLowerCase().includes(q) || b.description.toLowerCase().includes(q)) : blocks;
 
   function setField(key: string, field: string, value: unknown) {
     setForms((prev) => ({ ...prev, [key]: { ...prev[key], [field]: value } }));
@@ -120,13 +127,17 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
   const keyed = blocks.find((b) => b.key === activeKey);
   const tabCategory = category && categories.includes(category) ? category : (keyed?.category ?? categories[0]);
   // The blocks of the open page, in the order they appear on that page (BLOCK_ORDER), so editing goes top to bottom like the page reads.
-  const rank = (k: string) => { const i = BLOCK_ORDER.indexOf(k); return i === -1 ? 999 : i; };
+  const rank = (k: string) => {
+    const i = BLOCK_ORDER.indexOf(k);
+    return i === -1 ? 999 : i;
+  };
   const blocksInTab = blocks.filter((b) => b.category === tabCategory).sort((a, b) => rank(a.key) - rank(b.key));
   // Sub-tabs only where a page has blocks in more than one group (BLOCK_GROUPS); the blocks of the open group are stacked in page order.
   const groupOf = (k: string) => BLOCK_GROUPS[k] ?? 'Page';
   const groups = [...new Set(blocksInTab.map((b) => groupOf(b.key)))];
   const [groupPick, setGroupPick] = useState<string | null>(null);
-  const group = groupPick && groups.includes(groupPick) ? groupPick : (keyed && groups.includes(groupOf(keyed.key)) && keyed.category === tabCategory ? groupOf(keyed.key) : groups[0]);
+  const group =
+    groupPick && groups.includes(groupPick) ? groupPick : keyed && groups.includes(groupOf(keyed.key)) && keyed.category === tabCategory ? groupOf(keyed.key) : groups[0];
   const blocksShown = blocksInTab.filter((b) => groupOf(b.key) === group);
   const activeBlock = blocksShown.find((b) => b.key === activeKey) ?? blocksShown[0];
   const isDirty = (key: string) => JSON.stringify(forms[key]) !== JSON.stringify(savedForms[key]);
@@ -141,12 +152,16 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
   const [full, setFull] = useState(false);
   useEffect(() => {
     if (!full) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setFull(false); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setFull(false);
+    };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [full]);
   const dirtyDrafts: Record<string, Record<string, unknown>> = {};
-  blocks.forEach((b) => { if (isDirty(b.key)) dirtyDrafts[b.key] = forms[b.key]; });
+  blocks.forEach((b) => {
+    if (isDirty(b.key)) dirtyDrafts[b.key] = forms[b.key];
+  });
   const draftsJson = JSON.stringify(dirtyDrafts);
   // Sitewide blocks (banner, footer, links) can be previewed on any page; others on the page(s) they appear on.
   const pageChoices = activeBlock ? (activeBlock.pages.includes('*') ? ALL_PAGES : activeBlock.pages) : ['/'];
@@ -162,7 +177,10 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
       .map((f) => forms[activeBlock.key]?.[f.name])
       .filter((v): v is string => typeof v === 'string' && v.trim().length >= 4);
     // A heading-like field first (title/label), else whatever text there is.
-    const pref = (activeBlock.fields as FieldDef[]).filter((f) => /title|label|badge/i.test(f.name)).map((f) => forms[activeBlock.key]?.[f.name]).find((v): v is string => typeof v === 'string' && v.trim().length >= 4);
+    const pref = (activeBlock.fields as FieldDef[])
+      .filter((f) => /title|label|badge/i.test(f.name))
+      .map((f) => forms[activeBlock.key]?.[f.name])
+      .find((v): v is string => typeof v === 'string' && v.trim().length >= 4);
     return { type: 'tg-preview-focus', target: 'text', text: (pref ?? vals[0] ?? '').slice(0, 60) };
   })();
   const focusRef = useRef(focusMsg);
@@ -170,11 +188,15 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
   useEffect(() => {
     // The frame tells us when a page has loaded (a different page reloads it); scroll then, and also right away for a block on the same page.
     const send = () => frameRef.current?.contentWindow?.postMessage(focusRef.current, window.location.origin);
-    const onReady = (e: MessageEvent) => { if (e.origin === window.location.origin && e.data?.type === 'tg-preview-ready') setTimeout(send, 400); };
+    const onReady = (e: MessageEvent) => {
+      if (e.origin === window.location.origin && e.data?.type === 'tg-preview-ready') setTimeout(send, 400);
+    };
     window.addEventListener('message', onReady);
     const t = setTimeout(send, 150);
-    return () => { window.removeEventListener('message', onReady); clearTimeout(t); };
-     
+    return () => {
+      window.removeEventListener('message', onReady);
+      clearTimeout(t);
+    };
   }, [activeBlock?.key, previewPage]);
   // Keep the preview in step with the text box: send the latest edit shortly after typing pauses, one request at a time (if more typing
   // arrives while one is in flight, only the newest is sent next), then tell the frame to redraw.
@@ -194,7 +216,9 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
         sentJson.current = json;
         frameRef.current?.contentWindow?.postMessage({ type: 'tg-preview-refresh' }, window.location.origin);
       }
-    } catch { /* the preview just stays as it was */ }
+    } catch {
+      /* the preview just stays as it was */
+    }
     syncing.current = false;
   };
   useEffect(() => {
@@ -206,7 +230,10 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
   useEffect(() => {
     const el = boxRef.current;
     if (!el) return;
-    const measure = () => { setBoxWidth(el.clientWidth); setBoxHeight(el.clientHeight); };
+    const measure = () => {
+      setBoxWidth(el.clientWidth);
+      setBoxHeight(el.clientHeight);
+    };
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     measure();
@@ -223,7 +250,13 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
   const frameH = device === 'desktop' ? (zoomed ? Math.round(ZOOM_H / zoomScale) : 1080) : 844;
   // The preview area is as tall as the desktop page fitted to the panel; the phone is shrunk to fit that same height instead of towering over it.
   const areaH = 1080 * Math.min(1, boxWidth / 1920);
-  const scale = zoomed ? zoomScale : full ? Math.min(boxWidth / frameW, boxHeight / frameH) : device === 'phone' ? Math.min(1, areaH / frameH, boxWidth / frameW) : Math.min(1, boxWidth / frameW);
+  const scale = zoomed
+    ? zoomScale
+    : full
+      ? Math.min(boxWidth / frameW, boxHeight / frameH)
+      : device === 'phone'
+        ? Math.min(1, areaH / frameH, boxWidth / frameW)
+        : Math.min(1, boxWidth / frameW);
 
   // Opening the editor from a link to one block (?subtab=<key>) scrolls to it.
   useEffect(() => {
@@ -233,17 +266,35 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
   }, []);
 
   function selectCategory(c: string) {
-    setCategory(c); setGroupPick(null); setQuery(''); setActiveKey(null); setParams({ tab: c, subtab: null, block: null });
+    setCategory(c);
+    setGroupPick(null);
+    setQuery('');
+    setActiveKey(null);
+    setParams({ tab: c, subtab: null, block: null });
   }
   function selectBlock(block: BlockDef) {
-    setCategory(block.category); setGroupPick(groupOf(block.key)); setActiveKey(block.key); setQuery(''); setParams({ tab: block.category, subtab: block.key, block: null });
+    setCategory(block.category);
+    setGroupPick(groupOf(block.key));
+    setActiveKey(block.key);
+    setQuery('');
+    setParams({ tab: block.category, subtab: block.key, block: null });
     // the page's blocks are all on screen: bring this one into view once the list has drawn
     setTimeout(() => document.getElementById(`block-${block.key}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   }
 
   return (
     <div className={styles.shell}>
-      {draft.offer && <DraftBanner at={draft.offer.at} what="edits" onContinue={() => { const d = draft.accept(); if (d) setForms((f) => ({ ...f, ...Object.fromEntries(Object.entries(d).filter(([k]) => k in f)) })); }} onDiscard={draft.discard} />}
+      {draft.offer && (
+        <DraftBanner
+          at={draft.offer.at}
+          what="edits"
+          onContinue={() => {
+            const d = draft.accept();
+            if (d) setForms((f) => ({ ...f, ...Object.fromEntries(Object.entries(d).filter(([k]) => k in f)) }));
+          }}
+          onDiscard={draft.discard}
+        />
+      )}
       <SectionTabs
         label="Site areas"
         value={tabCategory}
@@ -252,20 +303,24 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
       />
       <EditingNow room={`content:${tabCategory}`} what={`the ${tabCategory} content`} />
 
-
       {!q && groups.length > 1 && (
         <SectionTabs
           label="Parts of this page"
           variant="segmented"
           value={group}
-          onChange={(g) => { setGroupPick(g); setActiveKey(null); }}
+          onChange={(g) => {
+            setGroupPick(g);
+            setActiveKey(null);
+          }}
           tabs={groups.map((g) => ({ id: g, label: g, badge: blocksInTab.filter((b) => groupOf(b.key) === g && isDirty(b.key)).length }))}
         />
       )}
 
       {q ? (
         <div className={styles.rows}>
-          <div className={styles.searchNote}>{visibleBlocks.length} result{visibleBlocks.length === 1 ? '' : 's'} across every area</div>
+          <div className={styles.searchNote}>
+            {visibleBlocks.length} result{visibleBlocks.length === 1 ? '' : 's'} across every area
+          </div>
           {visibleBlocks.length === 0 && <div className={styles.noResults}>No blocks match &quot;{query}&quot;.</div>}
           {visibleBlocks.map((block) => {
             const preview = getPreview(block, forms[block.key] || {});
@@ -273,7 +328,10 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
               <button key={block.key} className={styles.row} onClick={() => selectBlock(block)}>
                 <span className={styles.blockIcon}>{block.icon}</span>
                 <span className={styles.rowText}>
-                  <span className={styles.rowTitle}>{block.title}<span className={styles.rowCat}> · {block.category}</span></span>
+                  <span className={styles.rowTitle}>
+                    {block.title}
+                    <span className={styles.rowCat}> · {block.category}</span>
+                  </span>
                   {preview && <span className={styles.rowPreview}>{preview}</span>}
                 </span>
                 {isDirty(block.key) && <span className={styles.dirtyDot} title="Unsaved changes" />}
@@ -281,86 +339,161 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
             );
           })}
         </div>
-      ) : activeBlock && (
-        <>
+      ) : (
+        activeBlock && (
+          <>
+            <div className={`${styles.editorWithPreview} ${styles.previewOn}`}>
+              <div className={styles.editorStack}>
+                {blocksShown.map((block) => (
+                  <div
+                    key={block.key}
+                    id={`block-${block.key}`}
+                    className={`${styles.editorCard} ${block.key === activeBlock.key ? styles.editorCardActive : ''}`}
+                    onFocusCapture={() => {
+                      if (activeKey !== block.key) setActiveKey(block.key);
+                    }}
+                    onClick={() => {
+                      if (activeKey !== block.key) setActiveKey(block.key);
+                    }}
+                  >
+                    <div className={styles.editPanelHeader}>
+                      <div>
+                        <span className={styles.editPanelIcon}>{block.icon}</span>
+                        <h2 className={styles.editPanelTitle}>
+                          {block.title}
+                          {isDirty(block.key) && <span className={styles.dirtyDot} title="Unsaved changes" />}
+                        </h2>
+                        <p className={styles.editPanelDesc}>{block.description}</p>
+                      </div>
+                    </div>
 
-          <div className={`${styles.editorWithPreview} ${styles.previewOn}`}>
-          <div className={styles.editorStack}>
-            {blocksShown.map((block) => (
-              <div
-                key={block.key}
-                id={`block-${block.key}`}
-                className={`${styles.editorCard} ${block.key === activeBlock.key ? styles.editorCardActive : ''}`}
-                onFocusCapture={() => { if (activeKey !== block.key) setActiveKey(block.key); }}
-                onClick={() => { if (activeKey !== block.key) setActiveKey(block.key); }}
-              >
-                <div className={styles.editPanelHeader}>
-                  <div>
-                    <span className={styles.editPanelIcon}>{block.icon}</span>
-                    <h2 className={styles.editPanelTitle}>{block.title}{isDirty(block.key) && <span className={styles.dirtyDot} title="Unsaved changes" />}</h2>
-                    <p className={styles.editPanelDesc}>{block.description}</p>
+                    <div className={styles.fields}>
+                      {sortFields(block.key, block.fields as FieldDef[]).map((field) => (
+                        <FieldEditor
+                          key={field.name}
+                          field={field}
+                          value={forms[block.key]?.[field.name]}
+                          onChange={(val) => setField(block.key, field.name, val)}
+                          creditPeople={creditPeople}
+                          hasField={(n) => (block.fields as FieldDef[]).some((f) => f.name === n)}
+                          setSibling={(n, v) => setField(block.key, n, v)}
+                        />
+                      ))}
+                    </div>
+
+                    {error && saving === null && block.key === activeBlock.key && <div className={styles.editError}>{error}</div>}
                   </div>
-                </div>
-
-                <div className={styles.fields}>
-                  {sortFields(block.key, block.fields as FieldDef[]).map((field) => (
-                    <FieldEditor
-                      key={field.name}
-                      field={field}
-                      value={forms[block.key]?.[field.name]}
-                      onChange={(val) => setField(block.key, field.name, val)}
-                      creditPeople={creditPeople}
-                      hasField={(n) => (block.fields as FieldDef[]).some((f) => f.name === n)}
-                      setSibling={(n, v) => setField(block.key, n, v)}
-                    />
-                  ))}
-                </div>
-
-                {error && saving === null && block.key === activeBlock.key && <div className={styles.editError}>{error}</div>}
+                ))}
+                <SaveBar
+                  dirty={hasUnsaved}
+                  saving={saving !== null}
+                  onSave={saveAll}
+                  saveLabel="Save changes"
+                  message={dirtyKeys.length > 1 ? `${dirtyKeys.length} sections have unsaved changes` : 'You have unsaved changes'}
+                  onDiscard={() => {
+                    setForms(savedForms);
+                    setError(null);
+                  }}
+                />
               </div>
-            ))}
-            <SaveBar dirty={hasUnsaved} saving={saving !== null} onSave={saveAll} saveLabel="Save changes" message={dirtyKeys.length > 1 ? `${dirtyKeys.length} sections have unsaved changes` : 'You have unsaved changes'} onDiscard={() => { setForms(savedForms); setError(null); }} />
-          </div>
 
-          {(
-            <aside className={`${styles.previewPane} ${full ? styles.previewFull : ''} ${!previewOpen ? styles.previewCollapsed : ''}`} aria-label="Live preview">
-              <div className={styles.previewBar}>
-                <span className={styles.previewTitle}>
-                  Live preview
-                  {pageChoices.length > 1 ? (
-                    <Select className={styles.previewPick} value={previewPage} onChange={(e) => setPagePick(e.target.value)} aria-label="Page to preview">
-                      {pageChoices.map((pg) => <option key={pg} value={pg}>{pg === '/' ? 'Homepage' : pg}</option>)}
-                    </Select>
-                  ) : <em>{previewPage === '/' ? 'Homepage' : previewPage}</em>}
-                </span>
-                <div className={styles.previewTools}>
-                  <button type="button" className={`${styles.previewTool} ${device === 'desktop' ? styles.previewToolOn : ''}`} onClick={() => setDevice('desktop')} aria-label="Desktop width" title="Desktop"><Monitor size={14} /></button>
-                  <button type="button" className={`${styles.previewTool} ${device === 'phone' ? styles.previewToolOn : ''}`} onClick={() => setDevice('phone')} aria-label="Phone width" title="Phone"><Smartphone size={14} /></button>
-                  {!full && <button type="button" className={`${styles.previewTool} ${zoomed ? styles.previewToolOn : ''}`} onClick={() => setZoomPick(!zoomed)} aria-pressed={zoomed} aria-label="Zoom in on the section being edited" title={zoomed ? 'Show the whole page' : 'Zoom in on the section being edited'}><ZoomIn size={14} /></button>}
-                  <button type="button" className={styles.previewTool} onClick={() => setFull((f) => !f)} aria-label={full ? 'Exit full screen' : 'Full screen'} title={full ? 'Exit full screen (Esc)' : 'Full screen'}>{full ? <Minimize2 size={14} /> : <Maximize2 size={14} />}</button>
-                  {!full && <button type="button" className={`${styles.previewTool} ${styles.previewHideBtn}`} onClick={() => setPreviewOpen(false)} aria-label="Hide preview" title="Hide preview"><PanelRightClose size={14} /></button>}
-                </div>
-              </div>
-              <div ref={boxRef} className={`${styles.previewBox} ${device === 'phone' && !full ? styles.previewBoxPhone : ''}`} style={full ? undefined : zoomed ? { height: ZOOM_H } : { height: device === 'phone' ? areaH : frameH * scale }}>
-                <div className={styles.previewScaler} style={{ width: frameW * scale, height: frameH * scale }}>
-                  <iframe
-                    ref={frameRef}
-                    key={previewPage}
-                    title="Live preview of the public page"
-                    src={`/preview${previewPage === '/' ? '' : previewPage}`}
-                    className={styles.previewFrame}
-                    style={{ width: frameW, height: frameH, transform: `scale(${scale})` }}
-                  />
-                </div>
-              </div>
-              <p className={styles.previewNote}>Shows your unsaved edits on the real page. Nothing is public until you press Save Changes.</p>
-            </aside>
-          )}
-          {!previewOpen && (
-            <button type="button" className={`${styles.previewShow} ${styles.previewShowBtn}`} onClick={() => setPreviewOpen(true)}><PanelRightOpen size={14} aria-hidden="true" /> Show live preview</button>
-          )}
-          </div>
-        </>
+              {
+                <aside className={`${styles.previewPane} ${full ? styles.previewFull : ''} ${!previewOpen ? styles.previewCollapsed : ''}`} aria-label="Live preview">
+                  <div className={styles.previewBar}>
+                    <span className={styles.previewTitle}>
+                      Live preview
+                      {pageChoices.length > 1 ? (
+                        <Select className={styles.previewPick} value={previewPage} onChange={(e) => setPagePick(e.target.value)} aria-label="Page to preview">
+                          {pageChoices.map((pg) => (
+                            <option key={pg} value={pg}>
+                              {pg === '/' ? 'Homepage' : pg}
+                            </option>
+                          ))}
+                        </Select>
+                      ) : (
+                        <em>{previewPage === '/' ? 'Homepage' : previewPage}</em>
+                      )}
+                    </span>
+                    <div className={styles.previewTools}>
+                      <button
+                        type="button"
+                        className={`${styles.previewTool} ${device === 'desktop' ? styles.previewToolOn : ''}`}
+                        onClick={() => setDevice('desktop')}
+                        aria-label="Desktop width"
+                        title="Desktop"
+                      >
+                        <Monitor size={14} />
+                      </button>
+                      <button
+                        type="button"
+                        className={`${styles.previewTool} ${device === 'phone' ? styles.previewToolOn : ''}`}
+                        onClick={() => setDevice('phone')}
+                        aria-label="Phone width"
+                        title="Phone"
+                      >
+                        <Smartphone size={14} />
+                      </button>
+                      {!full && (
+                        <button
+                          type="button"
+                          className={`${styles.previewTool} ${zoomed ? styles.previewToolOn : ''}`}
+                          onClick={() => setZoomPick(!zoomed)}
+                          aria-pressed={zoomed}
+                          aria-label="Zoom in on the section being edited"
+                          title={zoomed ? 'Show the whole page' : 'Zoom in on the section being edited'}
+                        >
+                          <ZoomIn size={14} />
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        className={styles.previewTool}
+                        onClick={() => setFull((f) => !f)}
+                        aria-label={full ? 'Exit full screen' : 'Full screen'}
+                        title={full ? 'Exit full screen (Esc)' : 'Full screen'}
+                      >
+                        {full ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
+                      </button>
+                      {!full && (
+                        <button
+                          type="button"
+                          className={`${styles.previewTool} ${styles.previewHideBtn}`}
+                          onClick={() => setPreviewOpen(false)}
+                          aria-label="Hide preview"
+                          title="Hide preview"
+                        >
+                          <PanelRightClose size={14} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div
+                    ref={boxRef}
+                    className={`${styles.previewBox} ${device === 'phone' && !full ? styles.previewBoxPhone : ''}`}
+                    style={full ? undefined : zoomed ? { height: ZOOM_H } : { height: device === 'phone' ? areaH : frameH * scale }}
+                  >
+                    <div className={styles.previewScaler} style={{ width: frameW * scale, height: frameH * scale }}>
+                      <iframe
+                        ref={frameRef}
+                        key={previewPage}
+                        title="Live preview of the public page"
+                        src={`/preview${previewPage === '/' ? '' : previewPage}`}
+                        className={styles.previewFrame}
+                        style={{ width: frameW, height: frameH, transform: `scale(${scale})` }}
+                      />
+                    </div>
+                  </div>
+                  <p className={styles.previewNote}>Shows your unsaved edits on the real page. Nothing is public until you press Save Changes.</p>
+                </aside>
+              }
+              {!previewOpen && (
+                <button type="button" className={`${styles.previewShow} ${styles.previewShowBtn}`} onClick={() => setPreviewOpen(true)}>
+                  <PanelRightOpen size={14} aria-hidden="true" /> Show live preview
+                </button>
+              )}
+            </div>
+          </>
+        )
       )}
     </div>
   );
@@ -369,9 +502,20 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
 // ──────────────────────────────────────────────────────────────────
 // FieldEditor — renders the right input for each field type
 // ──────────────────────────────────────────────────────────────────
-function FieldEditor({ field, value, onChange, creditPeople, hasField, setSibling }: {
-  field: FieldDef; value: unknown; onChange: (val: unknown) => void;
-  creditPeople?: CreditPerson[]; hasField?: (name: string) => boolean; setSibling?: (name: string, value: unknown) => void;
+function FieldEditor({
+  field,
+  value,
+  onChange,
+  creditPeople,
+  hasField,
+  setSibling,
+}: {
+  field: FieldDef;
+  value: unknown;
+  onChange: (val: unknown) => void;
+  creditPeople?: CreditPerson[];
+  hasField?: (name: string) => boolean;
+  setSibling?: (name: string, value: unknown) => void;
 }) {
   const fieldAny = field as Record<string, unknown>;
   const isOptional = !!fieldAny.optional;
@@ -424,7 +568,7 @@ function FieldEditor({ field, value, onChange, creditPeople, hasField, setSiblin
 
   // ── Lines (array stored as newline-separated text) ───
   if (field.type === 'lines') {
-    const lines = Array.isArray(value) ? (value as string[]).join('\n') : (value as string) ?? '';
+    const lines = Array.isArray(value) ? (value as string[]).join('\n') : ((value as string) ?? '');
     return (
       <label className={styles.fieldGroup}>
         {labelEl}
@@ -452,11 +596,15 @@ function FieldEditor({ field, value, onChange, creditPeople, hasField, setSiblin
               key={opt}
               type="button"
               className={`${styles.selectOpt} ${value === opt ? styles.selectOptActive : ''}`}
-              style={value === opt ? {
-                background: (COLOR_PREVIEW[opt] || '#888888') + '22',
-                borderColor: COLOR_PREVIEW[opt] || 'var(--pp-ink)',
-                color: `color-mix(in srgb, ${COLOR_PREVIEW[opt] || 'var(--pp-ink)'} 55%, var(--pp-ink))`,
-              } : {}}
+              style={
+                value === opt
+                  ? {
+                      background: (COLOR_PREVIEW[opt] || '#888888') + '22',
+                      borderColor: COLOR_PREVIEW[opt] || 'var(--pp-ink)',
+                      color: `color-mix(in srgb, ${COLOR_PREVIEW[opt] || 'var(--pp-ink)'} 55%, var(--pp-ink))`,
+                    }
+                  : {}
+              }
               onClick={() => onChange(opt)}
             >
               {COLOR_PREVIEW[opt] && <span className={styles.colorDot} style={{ background: COLOR_PREVIEW[opt] }} />}
@@ -486,13 +634,7 @@ function FieldEditor({ field, value, onChange, creditPeople, hasField, setSiblin
     return (
       <div className={styles.fieldGroup}>
         {labelEl}
-        <ImageUploadField
-          label={field.label}
-          value={(value as string) ?? ''}
-          onChange={onChange}
-          bucket="site-content"
-          shape="wide"
-        />
+        <ImageUploadField label={field.label} value={(value as string) ?? ''} onChange={onChange} bucket="site-content" shape="wide" />
       </div>
     );
   }
@@ -527,16 +669,24 @@ function FieldEditor({ field, value, onChange, creditPeople, hasField, setSiblin
         placeholder={fieldAny.placeholder as string}
       />
       {isCredit && (
-        <Select className={styles.fieldInput} value="" aria-label={`Pick an officer for ${field.label}`}
+        <Select
+          className={styles.fieldInput}
+          value=""
+          aria-label={`Pick an officer for ${field.label}`}
           onChange={(e) => {
             const p = creditPeople!.find((x) => x.id === e.target.value);
             if (!p) return;
             onChange(`${prefix}${p.name}`);
             const urlField = `${field.name}_url`;
             if (p.link && hasField?.(urlField)) setSibling?.(urlField, p.link);
-          }}>
+          }}
+        >
           <option value="">Pick an officer…</option>
-          {creditPeople!.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+          {creditPeople!.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.name}
+            </option>
+          ))}
         </Select>
       )}
     </label>
@@ -550,7 +700,13 @@ function FieldEditor({ field, value, onChange, creditPeople, hasField, setSiblin
 // …)` branch of a bigger component that also handles every other field
 // type.
 // ──────────────────────────────────────────────────────────────────
-function KvListField({ value, onChange, labelEl, keyLbl, valLbl }: {
+function KvListField({
+  value,
+  onChange,
+  labelEl,
+  keyLbl,
+  valLbl,
+}: {
   value: Array<{ label?: string; value?: string }> | undefined;
   onChange: (val: Array<{ label?: string; value?: string }>) => void;
   labelEl: React.ReactNode;
@@ -574,17 +730,35 @@ function KvListField({ value, onChange, labelEl, keyLbl, valLbl }: {
               <GripVertical size={14} strokeWidth={1.75} aria-hidden="true" />
             </span>
             <div className={styles.kvRow}>
-              <input className={styles.fieldInput} value={item.value ?? ''} placeholder={keyLbl}
-                onChange={(e) => { const n=[...items]; n[i]={...n[i],value:e.target.value}; onChange(n); }} />
-              <input className={styles.fieldInput} value={item.label ?? ''} placeholder={valLbl}
-                onChange={(e) => { const n=[...items]; n[i]={...n[i],label:e.target.value}; onChange(n); }} />
+              <input
+                className={styles.fieldInput}
+                value={item.value ?? ''}
+                placeholder={keyLbl}
+                onChange={(e) => {
+                  const n = [...items];
+                  n[i] = { ...n[i], value: e.target.value };
+                  onChange(n);
+                }}
+              />
+              <input
+                className={styles.fieldInput}
+                value={item.label ?? ''}
+                placeholder={valLbl}
+                onChange={(e) => {
+                  const n = [...items];
+                  n[i] = { ...n[i], label: e.target.value };
+                  onChange(n);
+                }}
+              />
               <div className={styles.rowActions}>
-                <IconButton kind="remove" size="sm" label="Remove" onClick={() => onChange(items.filter((_,j)=>j!==i))} />
+                <IconButton kind="remove" size="sm" label="Remove" onClick={() => onChange(items.filter((_, j) => j !== i))} />
               </div>
             </div>
           </div>
         ))}
-        <Button size="sm" variant="secondary" onClick={() => onChange([...items, { value: '', label: '' }])}><Plus size={14} aria-hidden="true" /> Add item</Button>
+        <Button size="sm" variant="secondary" onClick={() => onChange([...items, { value: '', label: '' }])}>
+          <Plus size={14} aria-hidden="true" /> Add item
+        </Button>
       </div>
     </div>
   );
@@ -604,7 +778,14 @@ const DEFAULT_IMAGE_FIELDS: ImgFieldDef[] = [
   { key: 'tier', label: 'Tier (e.g. Gold)', type: 'text' },
 ];
 
-function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add Item', creditPeople }: {
+function ImageListField({
+  value,
+  onChange,
+  labelEl,
+  fields,
+  addLabel = '+ Add Item',
+  creditPeople,
+}: {
   value: ImgItem[] | undefined;
   onChange: (val: ImgItem[]) => void;
   labelEl: React.ReactNode;
@@ -628,72 +809,100 @@ function ImageListField({ value, onChange, labelEl, fields, addLabel = '+ Add It
             <span className={styles.dragHandle} {...dragHandleProps(i)} aria-label="Drag to reorder">
               <GripVertical size={14} strokeWidth={1.75} aria-hidden="true" />
             </span>
-            {!fields.some((f) => f.type === 'image') && <div className={styles.imageCardLeft}>
-              {item.logo_url ? (
-                <Image src={item.logo_url} alt={item.name||''} width={48} height={48}
-                  className={styles.imageLogo} unoptimized />
-              ) : (
-                <div className={styles.imageLogoFallback}>
-                  {(item.name || '?')[0].toUpperCase()}
-                </div>
-              )}
-            </div>}
+            {!fields.some((f) => f.type === 'image') && (
+              <div className={styles.imageCardLeft}>
+                {item.logo_url ? (
+                  <Image src={item.logo_url} alt={item.name || ''} width={48} height={48} className={styles.imageLogo} unoptimized />
+                ) : (
+                  <div className={styles.imageLogoFallback}>{(item.name || '?')[0].toUpperCase()}</div>
+                )}
+              </div>
+            )}
             <div className={styles.imageCardFields}>
-              {fields.map(({ key: k, label: lbl, type: t, optional }) => t === 'image' ? (
-                // Logos are uploaded (compressed and cropped like every other upload) rather than pasted as a link.
-                <div key={k} className={styles.personField}>
-                  <ImageUploadField
-                    label={optional ? `${lbl} (optional)` : lbl}
-                    value={item[k] ?? ''}
-                    onChange={(url) => { const n = [...items]; n[i] = { ...n[i], [k]: url }; onChange(n); }}
-                    bucket="site-content"
-                    shape="logo"
-                    maxDimension={600}
-                  />
-                </div>
-              ) : (
-                <label key={k} className={styles.personField}>
-                  <span className={styles.personFieldLabel}>{lbl}{optional && <span className={styles.optionalTag}>optional</span>}</span>
-                  <input
-                    type={t === 'url' ? 'url' : 'text'}
-                    className={styles.fieldInput}
-                    value={item[k] ?? ''}
-                    onChange={(e) => {
-                      const n = [...items];
-                      n[i] = { ...n[i], [k]: e.target.value };
-                      onChange(n);
-                    }}
-                  />
-                  {k === 'credit' && !!creditPeople?.length && (
-                    <Select className={styles.fieldInput} value="" aria-label="Pick an officer to credit"
-                      onChange={(e) => {
-                        const p = creditPeople.find((x) => x.id === e.target.value);
-                        if (!p) return;
+              {fields.map(({ key: k, label: lbl, type: t, optional }) =>
+                t === 'image' ? (
+                  // Logos are uploaded (compressed and cropped like every other upload) rather than pasted as a link.
+                  <div key={k} className={styles.personField}>
+                    <ImageUploadField
+                      label={optional ? `${lbl} (optional)` : lbl}
+                      value={item[k] ?? ''}
+                      onChange={(url) => {
                         const n = [...items];
-                        n[i] = { ...n[i], credit: p.name, ...(p.link && fields.some((f) => f.key === 'credit_url') ? { credit_url: p.link } : {}) };
+                        n[i] = { ...n[i], [k]: url };
                         onChange(n);
-                      }}>
-                      <option value="">Pick an officer…</option>
-                      {creditPeople.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-                    </Select>
-                  )}
-                </label>
-              ))}
+                      }}
+                      bucket="site-content"
+                      shape="logo"
+                      maxDimension={600}
+                    />
+                  </div>
+                ) : (
+                  <label key={k} className={styles.personField}>
+                    <span className={styles.personFieldLabel}>
+                      {lbl}
+                      {optional && <span className={styles.optionalTag}>optional</span>}
+                    </span>
+                    <input
+                      type={t === 'url' ? 'url' : 'text'}
+                      className={styles.fieldInput}
+                      value={item[k] ?? ''}
+                      onChange={(e) => {
+                        const n = [...items];
+                        n[i] = { ...n[i], [k]: e.target.value };
+                        onChange(n);
+                      }}
+                    />
+                    {k === 'credit' && !!creditPeople?.length && (
+                      <Select
+                        className={styles.fieldInput}
+                        value=""
+                        aria-label="Pick an officer to credit"
+                        onChange={(e) => {
+                          const p = creditPeople.find((x) => x.id === e.target.value);
+                          if (!p) return;
+                          const n = [...items];
+                          n[i] = { ...n[i], credit: p.name, ...(p.link && fields.some((f) => f.key === 'credit_url') ? { credit_url: p.link } : {}) };
+                          onChange(n);
+                        }}
+                      >
+                        <option value="">Pick an officer…</option>
+                        {creditPeople.map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {p.name}
+                          </option>
+                        ))}
+                      </Select>
+                    )}
+                  </label>
+                ),
+              )}
             </div>
             <div className={styles.rowActions}>
-              <IconButton kind="remove" size="sm" label="Remove" onClick={() => onChange(items.filter((_,j)=>j!==i))} />
+              <IconButton kind="remove" size="sm" label="Remove" onClick={() => onChange(items.filter((_, j) => j !== i))} />
             </div>
           </div>
         ))}
-        <Button size="sm" variant="secondary" onClick={() => onChange([...items, {}])}><Plus size={14} aria-hidden="true" /> {addLabel.replace(/^\+\s*/, '')}</Button>
+        <Button size="sm" variant="secondary" onClick={() => onChange([...items, {}])}>
+          <Plus size={14} aria-hidden="true" /> {addLabel.replace(/^\+\s*/, '')}
+        </Button>
       </div>
     </div>
   );
 }
 
 // Markdown text box. No separate preview: the live preview beside the editor shows the real page.
-function MarkdownField({ label, value, onChange, optional, placeholder }: {
-  label: string; value: string; onChange: (val: string) => void; optional?: boolean; placeholder?: string;
+function MarkdownField({
+  label,
+  value,
+  onChange,
+  optional,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChange: (val: string) => void;
+  optional?: boolean;
+  placeholder?: string;
 }) {
   return (
     <div className={styles.fieldGroup}>
@@ -703,13 +912,7 @@ function MarkdownField({ label, value, onChange, optional, placeholder }: {
           {optional && <span className={styles.optionalTag}>optional</span>}
         </div>
       </div>
-      <textarea
-        className={`${styles.fieldInput} ${styles.fieldTextarea}`}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        rows={6}
-        placeholder={placeholder}
-      />
+      <textarea className={`${styles.fieldInput} ${styles.fieldTextarea}`} value={value} onChange={(e) => onChange(e.target.value)} rows={6} placeholder={placeholder} />
     </div>
   );
 }
@@ -739,18 +942,20 @@ function getPreview(block: BlockDef, data: Record<string, unknown>): string {
     case 'homepage.sponsors':
       return (data.title as string) || (data.label as string) || '';
     case 'page.our-story':
-      return [data.section1_title, data.section2_title, data.section3_title]
-        .filter(Boolean).join(' · ');
+      return [data.section1_title, data.section2_title, data.section3_title].filter(Boolean).join(' · ');
     case 'homepage.recruitment':
-      return [data.officer_title, data.discord_title, data.social_title]
-        .filter(Boolean).join(' · ');
+      return [data.officer_title, data.discord_title, data.social_title].filter(Boolean).join(' · ');
     case 'homepage.stats': {
       const items = data.items as Array<{ value: string; label: string }> | undefined;
-      return items?.slice(0,2).map((i) => `${i.value} ${i.label}`).join(' · ') || '';
+      return (
+        items
+          ?.slice(0, 2)
+          .map((i) => `${i.value} ${i.label}`)
+          .join(' · ') || ''
+      );
     }
     case 'site.settings':
-      return [data.discord && 'Discord', data.instagram && 'Instagram', data.email && 'Email']
-        .filter(Boolean).join(' · ') || 'No links set';
+      return [data.discord && 'Discord', data.instagram && 'Instagram', data.email && 'Email'].filter(Boolean).join(' · ') || 'No links set';
     case 'footer':
       return (data.tagline as string) || (data.copyright as string) || '';
     case 'sponsors': {

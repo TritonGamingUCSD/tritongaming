@@ -52,7 +52,7 @@ export default async function GetInvolvedPage() {
     cta: content[`way${i + 1}_cta`] as string,
     href: content[`way${i + 1}_href`] as string,
   }));
-  const perks = (Array.isArray(officer.perks) ? officer.perks as string[] : [])?.filter(Boolean);
+  const perks = (Array.isArray(officer.perks) ? (officer.perks as string[]) : [])?.filter(Boolean);
 
   const metas = [
     { icon: <Calendar size={20} strokeWidth={1.75} aria-hidden="true" />, label: officer.stat1_label, value: officer.stat1_value },
@@ -91,7 +91,12 @@ export default async function GetInvolvedPage() {
             <p className={styles.officerBody}>{officer.body as string}</p>
             <ul className={styles.perkList}>
               {perks.map((perk) => (
-                <li key={perk} className={styles.perkItem}><span className={styles.perkDot} aria-hidden="true">▸</span> {perk}</li>
+                <li key={perk} className={styles.perkItem}>
+                  <span className={styles.perkDot} aria-hidden="true">
+                    ▸
+                  </span>{' '}
+                  {perk}
+                </li>
               ))}
             </ul>
             {officer.applications_closed ? (
@@ -132,7 +137,9 @@ export default async function GetInvolvedPage() {
   return (
     <div className={styles.page}>
       <PageHero label={content.hero_label as string} title={content.hero_title as string} sub={content.hero_subtitle as string} />
-      {order.map((id) => <Fragment key={id}>{sections[id]}</Fragment>)}
+      {order.map((id) => (
+        <Fragment key={id}>{sections[id]}</Fragment>
+      ))}
       <PhotoStrip tone="navy" caption={(content.strip_caption as string) || 'Come as you are. Leave with a team.'} photos={pickPhotos(sitePhotos, 0, 3)} />
     </div>
   );

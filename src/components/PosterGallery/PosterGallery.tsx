@@ -6,7 +6,19 @@ import styles from './PosterGallery.module.css';
 
 // The event page's poster: one taped print, or several. With more than one there are previous / next buttons and a row of small
 // thumbnails; the print itself keeps the same frame and tilt so the hero layout never changes.
-export default function PosterGallery({ posters, credits = [], name, frameClass, tapeClass }: { posters: string[]; credits?: ({ name: string; link?: string } | undefined)[]; name: string; frameClass: string; tapeClass: string }) {
+export default function PosterGallery({
+  posters,
+  credits = [],
+  name,
+  frameClass,
+  tapeClass,
+}: {
+  posters: string[];
+  credits?: ({ name: string; link?: string } | undefined)[];
+  name: string;
+  frameClass: string;
+  tapeClass: string;
+}) {
   const [i, setI] = useState(0);
   // With several posters the frame keeps the first poster's shape, so flipping to a poster of another shape never resizes the frame.
   const [ratio, setRatio] = useState<number | null>(null);
@@ -25,23 +37,51 @@ export default function PosterGallery({ posters, credits = [], name, frameClass,
       <figure className={`${frameClass} ${many && ratio ? styles.fixed : ''}`} style={many && ratio ? ({ '--ratio': ratio } as React.CSSProperties) : undefined}>
         <span className={tapeClass} aria-hidden="true" />
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img ref={imgRef} key={posters[i]} src={posters[i]} alt={many ? `${name} poster ${i + 1} of ${posters.length}` : `${name} poster`} className={styles.img} style={many && ratio ? { width: '100%', height: '100%', maxHeight: 'none', objectFit: 'contain' } : undefined} onLoad={(e) => { if (i === 0 && ratio === null) setRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight); }} />
+        <img
+          ref={imgRef}
+          key={posters[i]}
+          src={posters[i]}
+          alt={many ? `${name} poster ${i + 1} of ${posters.length}` : `${name} poster`}
+          className={styles.img}
+          style={many && ratio ? { width: '100%', height: '100%', maxHeight: 'none', objectFit: 'contain' } : undefined}
+          onLoad={(e) => {
+            if (i === 0 && ratio === null) setRatio(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight);
+          }}
+        />
         {many && (
           <>
-            <button type="button" className={`${styles.arrow} ${styles.prev}`} onClick={() => go(i - 1)} aria-label="Previous poster"><ChevronLeft size={20} aria-hidden="true" /></button>
-            <button type="button" className={`${styles.arrow} ${styles.next}`} onClick={() => go(i + 1)} aria-label="Next poster"><ChevronRight size={20} aria-hidden="true" /></button>
+            <button type="button" className={`${styles.arrow} ${styles.prev}`} onClick={() => go(i - 1)} aria-label="Previous poster">
+              <ChevronLeft size={20} aria-hidden="true" />
+            </button>
+            <button type="button" className={`${styles.arrow} ${styles.next}`} onClick={() => go(i + 1)} aria-label="Next poster">
+              <ChevronRight size={20} aria-hidden="true" />
+            </button>
           </>
         )}
       </figure>
       {credit && (
         <p className={styles.credit}>
-          By {credit.link ? <a href={credit.link} target="_blank" rel="noopener noreferrer">{credit.name}</a> : credit.name}
+          By{' '}
+          {credit.link ? (
+            <a href={credit.link} target="_blank" rel="noopener noreferrer">
+              {credit.name}
+            </a>
+          ) : (
+            credit.name
+          )}
         </p>
       )}
       {many && (
         <div className={styles.thumbs} role="group" aria-label="Choose a poster">
           {posters.map((u, n) => (
-            <button key={u + n} type="button" className={`${styles.thumb} ${n === i ? styles.thumbOn : ''}`} onClick={() => setI(n)} aria-label={`Show poster ${n + 1}`} aria-current={n === i}>
+            <button
+              key={u + n}
+              type="button"
+              className={`${styles.thumb} ${n === i ? styles.thumbOn : ''}`}
+              onClick={() => setI(n)}
+              aria-label={`Show poster ${n + 1}`}
+              aria-current={n === i}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={u} alt="" loading="lazy" />
             </button>

@@ -32,7 +32,10 @@ export interface MemberCardData {
 }
 
 export default function MemberCardBody({
-  data, copiedKey, onCopy, variant,
+  data,
+  copiedKey,
+  onCopy,
+  variant,
 }: {
   data: MemberCardData;
   copiedKey: string | null;
@@ -75,7 +78,11 @@ export default function MemberCardBody({
 
       {(data.teams?.length ?? 0) > 0 && (
         <ul className={styles.teams} aria-label="Teams">
-          {data.teams!.map((t) => <li key={t.name} className={styles.teamChip}>{t.name}</li>)}
+          {data.teams!.map((t) => (
+            <li key={t.name} className={styles.teamChip}>
+              {t.name}
+            </li>
+          ))}
         </ul>
       )}
 
@@ -87,13 +94,13 @@ export default function MemberCardBody({
                   flex column), so it stays right beside it however it wraps. */}
               <div className={styles.schoolMain}>
                 <GraduationCap size={14} strokeWidth={1.75} aria-hidden="true" className={styles.schoolIcon} />
-                {data.major
-                  ? <span>{noBreakHyphens(data.major)}</span>
-                  : <DotList items={classLine} />}
+                {data.major ? <span>{noBreakHyphens(data.major)}</span> : <DotList items={classLine} />}
               </div>
               {data.minor && <div className={styles.schoolMeta}>Minor: {noBreakHyphens(data.minor)}</div>}
               {data.major && (data.year || data.college) && (
-                <div className={styles.schoolMeta}><DotList items={classLine} /></div>
+                <div className={styles.schoolMeta}>
+                  <DotList items={classLine} />
+                </div>
               )}
             </div>
           )}
@@ -104,11 +111,21 @@ export default function MemberCardBody({
             </div>
           )}
           {emails.map((email) => (
-            <button key={email} type="button" className={`${styles.copyRow} ${styles.emailRow}`} onClick={() => onCopy(`email:${email}`, email)} title="Click to copy this email address">
+            <button
+              key={email}
+              type="button"
+              className={`${styles.copyRow} ${styles.emailRow}`}
+              onClick={() => onCopy(`email:${email}`, email)}
+              title="Click to copy this email address"
+            >
               <span className={styles.copyRowText}>{email}</span>
-              {copiedKey === `email:${email}`
-                ? <span className={styles.copied}><Check size={13} strokeWidth={2.25} aria-hidden="true" /> Copied!</span>
-                : <Copy size={13} strokeWidth={1.75} aria-hidden="true" className={styles.copyIcon} />}
+              {copiedKey === `email:${email}` ? (
+                <span className={styles.copied}>
+                  <Check size={13} strokeWidth={2.25} aria-hidden="true" /> Copied!
+                </span>
+              ) : (
+                <Copy size={13} strokeWidth={1.75} aria-hidden="true" className={styles.copyIcon} />
+              )}
             </button>
           ))}
           {copyOnly.map((p) => (
@@ -116,9 +133,13 @@ export default function MemberCardBody({
               {/* The logo files are near-white, so draw them as a mask in the text colour: readable on the light card too. */}
               <span className={styles.logoMask} style={{ maskImage: `url(${p.logo})`, WebkitMaskImage: `url(${p.logo})` }} aria-hidden="true" />
               <span className={styles.copyRowText}>{social[p.key]}</span>
-              {copiedKey === p.key
-                ? <span className={styles.copied}><Check size={13} strokeWidth={2.25} aria-hidden="true" /> Copied!</span>
-                : <Copy size={13} strokeWidth={1.75} aria-hidden="true" className={styles.copyIcon} />}
+              {copiedKey === p.key ? (
+                <span className={styles.copied}>
+                  <Check size={13} strokeWidth={2.25} aria-hidden="true" /> Copied!
+                </span>
+              ) : (
+                <Copy size={13} strokeWidth={1.75} aria-hidden="true" className={styles.copyIcon} />
+              )}
             </button>
           ))}
         </div>
@@ -131,10 +152,16 @@ export default function MemberCardBody({
           {gameIds.map((g, i) => (
             <button key={`${g.game}-${i}`} type="button" className={styles.copyRow} onClick={() => onCopy(`gid:${i}`, g.id)} title={`Click to copy their ${g.game}`}>
               <Gamepad2 size={14} strokeWidth={1.75} aria-hidden="true" />
-              <span className={styles.copyRowText}><strong>{g.game}:</strong> {g.id}</span>
-              {copiedKey === `gid:${i}`
-                ? <span className={styles.copied}><Check size={13} strokeWidth={2.25} aria-hidden="true" /> Copied!</span>
-                : <Copy size={13} strokeWidth={1.75} aria-hidden="true" className={styles.copyIcon} />}
+              <span className={styles.copyRowText}>
+                <strong>{g.game}:</strong> {g.id}
+              </span>
+              {copiedKey === `gid:${i}` ? (
+                <span className={styles.copied}>
+                  <Check size={13} strokeWidth={2.25} aria-hidden="true" /> Copied!
+                </span>
+              ) : (
+                <Copy size={13} strokeWidth={1.75} aria-hidden="true" className={styles.copyIcon} />
+              )}
             </button>
           ))}
         </div>

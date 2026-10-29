@@ -86,7 +86,7 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 function oneOf<T>(v: T | T[] | null): T | null {
-  return Array.isArray(v) ? v[0] ?? null : v;
+  return Array.isArray(v) ? (v[0] ?? null) : v;
 }
 
 interface Props {
@@ -113,9 +113,14 @@ type ManageSubTab = 'award' | 'items' | 'corrections' | 'tiers';
 const VALID_MANAGE_SUB_TABS: ManageSubTab[] = ['award', 'items', 'corrections', 'tiers'];
 
 export default function PointsSectionContent({
-  balance, lifetimeEarned,
+  balance,
+  lifetimeEarned,
   leaderboardAnonymous: initialAnonymous,
-  transactions, canManageShop, canManagePoints, manageOnly = false, tiers: initialTiers,
+  transactions,
+  canManageShop,
+  canManagePoints,
+  manageOnly = false,
+  tiers: initialTiers,
 }: Props) {
   const { tab: initialTab, subtab: initialSubTab } = useUrlNav();
   // Local state, not just the prop directly — editing a tier in the Tiers
@@ -124,13 +129,9 @@ export default function PointsSectionContent({
   // page reload.
   const [tiers, setTiers] = useState<Tier[]>(initialTiers);
   const [tab, setTab] = useState<Tab>(
-    VALID_TABS.includes(initialTab as Tab)
-      ? (initialTab as Tab)
-      : VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) || manageOnly ? 'tools' : 'mine'
+    VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) || manageOnly ? 'tools' : 'mine',
   );
-  const [manageSubTab, setManageSubTab] = useState<ManageSubTab>(
-    VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? (initialSubTab as ManageSubTab) : 'award'
-  );
+  const [manageSubTab, setManageSubTab] = useState<ManageSubTab>(VALID_MANAGE_SUB_TABS.includes(initialSubTab as ManageSubTab) ? (initialSubTab as ManageSubTab) : 'award');
   const syncUrl = usePortalTabSync('points');
   function selectTab(t: Tab) {
     setTab(t);
@@ -161,7 +162,10 @@ export default function PointsSectionContent({
       try {
         const res = await fetch('/api/rewards');
         const json = await res.json();
-        if (!res.ok) { setShopError(json.error || 'Failed to load shop.'); return; }
+        if (!res.ok) {
+          setShopError(json.error || 'Failed to load shop.');
+          return;
+        }
         setShopItems(json.items ?? []);
         setUnlocks(json.unlocks ?? []);
         setPending(json.pending ?? []);
@@ -194,7 +198,10 @@ export default function PointsSectionContent({
         body: JSON.stringify({ reward_id: item.id }),
       });
       const json = await res.json();
-      if (!res.ok) { setShopError(json.error || 'Failed to claim reward.'); return; }
+      if (!res.ok) {
+        setShopError(json.error || 'Failed to claim reward.');
+        return;
+      }
       setShopBalance((b) => b - item.point_cost);
       if (item.stock !== null) {
         setShopItems((prev) => prev?.map((i) => (i.id === item.id ? { ...i, stock: (i.stock ?? 1) - 1 } : i)) ?? null);
@@ -206,7 +213,10 @@ export default function PointsSectionContent({
         setClaimedNote(`You now have "${item.title}"!`);
         setTimeout(() => setClaimedNote(''), 4000);
       } else {
-        setPending((prev) => [{ id: json.redemptionId, reward_id: item.id, status: 'pending', point_cost: item.point_cost, claimed_at: new Date().toISOString(), reward: { title: item.title } }, ...prev]);
+        setPending((prev) => [
+          { id: json.redemptionId, reward_id: item.id, status: 'pending', point_cost: item.point_cost, claimed_at: new Date().toISOString(), reward: { title: item.title } },
+          ...prev,
+        ]);
         setQrFor(json.redemptionId);
       }
     } catch {
@@ -226,7 +236,10 @@ export default function PointsSectionContent({
         body: JSON.stringify({ reward_id: unlock.id }),
       });
       const json = await res.json();
-      if (!res.ok) { setShopError(json.error || 'Failed to claim reward.'); return; }
+      if (!res.ok) {
+        setShopError(json.error || 'Failed to claim reward.');
+        return;
+      }
       setUnlocks((prev) => prev.map((u) => (u.id === unlock.id ? { ...u, claimed: true } : u)));
       setClaimedNote(`You claimed "${unlock.title}"!`);
       setTimeout(() => setClaimedNote(''), 4000);
@@ -251,7 +264,10 @@ export default function PointsSectionContent({
       try {
         const res = await fetch('/api/points/leaderboard');
         const json = await res.json();
-        if (!res.ok) { setBoardError(json.error || 'Failed to load leaderboard.'); return; }
+        if (!res.ok) {
+          setBoardError(json.error || 'Failed to load leaderboard.');
+          return;
+        }
         setBoard(json.leaderboard ?? []);
       } catch {
         setBoardError('Network error loading leaderboard.');
@@ -262,7 +278,9 @@ export default function PointsSectionContent({
   async function setAnonymousPref(value: boolean) {
     setSavingPrefs(true);
     const supabase = createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) await supabase.from('profiles').update({ leaderboard_anonymous: value }).eq('id', user.id);
     setSavingPrefs(false);
     setAnonymous(value);
@@ -273,8 +291,15 @@ export default function PointsSectionContent({
   const [manageItems, setManageItems] = useState<RewardItem[] | null>(null);
   const [manageError, setManageError] = useState('');
   const [newReward, setNewReward] = useState({
-    title: '', description: '', point_cost: '', stock: '', min_tier: '',
-    max_per_user: '', reward_type: 'physical' as 'physical' | 'digital', grants_fast_pass: false, isTierUnlock: false,
+    title: '',
+    description: '',
+    point_cost: '',
+    stock: '',
+    min_tier: '',
+    max_per_user: '',
+    reward_type: 'physical' as 'physical' | 'digital',
+    grants_fast_pass: false,
+    isTierUnlock: false,
   });
   const [creating, setCreating] = useState(false);
 
@@ -294,14 +319,20 @@ export default function PointsSectionContent({
   const [reversingId, setReversingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!adjustTarget) { setTargetHistory(null); return; }
+    if (!adjustTarget) {
+      setTargetHistory(null);
+      return;
+    }
     setTargetHistory(null);
     setHistoryError('');
     (async () => {
       try {
         const res = await fetch(`/api/admin/points/history?user_id=${adjustTarget.id}`);
         const json = await res.json();
-        if (!res.ok) { setHistoryError(json.error || 'Failed to load history.'); return; }
+        if (!res.ok) {
+          setHistoryError(json.error || 'Failed to load history.');
+          return;
+        }
         setTargetHistory(json.transactions ?? []);
       } catch {
         setHistoryError('Network error loading history.');
@@ -311,7 +342,14 @@ export default function PointsSectionContent({
 
   async function handleReverse(txn: HistoryTxn) {
     const label = oneOf(txn.event)?.title ?? TYPE_LABELS[txn.type] ?? txn.type;
-    if (!(await confirmHold({ title: `Reverse "${label}" (${txn.amount >= 0 ? '+' : ''}${txn.amount} pts)?`, message: 'A reversed entry can\'t be reversed again.', confirmLabel: 'Hold to reverse' }))) return;
+    if (
+      !(await confirmHold({
+        title: `Reverse "${label}" (${txn.amount >= 0 ? '+' : ''}${txn.amount} pts)?`,
+        message: "A reversed entry can't be reversed again.",
+        confirmLabel: 'Hold to reverse',
+      }))
+    )
+      return;
     setReversingId(txn.id);
     try {
       const res = await fetch('/api/admin/points/reverse', {
@@ -320,7 +358,10 @@ export default function PointsSectionContent({
         body: JSON.stringify({ transaction_id: txn.id }),
       });
       const json = await res.json();
-      if (!res.ok) { setHistoryError(json.error || 'Failed to reverse.'); return; }
+      if (!res.ok) {
+        setHistoryError(json.error || 'Failed to reverse.');
+        return;
+      }
       setTargetHistory((prev) => prev?.map((t) => (t.id === txn.id ? { ...t, reversed_at: new Date().toISOString() } : t)) ?? null);
       setBoard(null); // leaderboard's cached fetch is now stale — force a refetch next time it's opened
     } catch {
@@ -331,7 +372,10 @@ export default function PointsSectionContent({
   }
 
   useEffect(() => {
-    if (adjustTarget || adjustQuery.trim().length < 2) { setAdjustResults([]); return; }
+    if (adjustTarget || adjustQuery.trim().length < 2) {
+      setAdjustResults([]);
+      return;
+    }
     const t = setTimeout(async () => {
       try {
         const res = await fetch(`/api/portal/search?q=${encodeURIComponent(adjustQuery.trim())}`);
@@ -355,7 +399,10 @@ export default function PointsSectionContent({
   const [awardResult, setAwardResult] = useState('');
 
   useEffect(() => {
-    if (awardQuery.trim().length < 2) { setAwardResults([]); return; }
+    if (awardQuery.trim().length < 2) {
+      setAwardResults([]);
+      return;
+    }
     const t = setTimeout(async () => {
       try {
         const res = await fetch(`/api/portal/search?q=${encodeURIComponent(awardQuery.trim())}`);
@@ -392,7 +439,10 @@ export default function PointsSectionContent({
         body: JSON.stringify({ user_ids: awardTargets.map((t) => t.id), amount: Number(awardAmount), note: awardNote.trim() }),
       });
       const json = await res.json();
-      if (!res.ok) { setAwardResult(json.error || 'Failed to award points.'); return; }
+      if (!res.ok) {
+        setAwardResult(json.error || 'Failed to award points.');
+        return;
+      }
       setAwardResult(`Done — awarded ${awardTargets.length} member${awardTargets.length === 1 ? '' : 's'}.`);
       setBoard(null); // leaderboard's cached fetch is now stale — force a refetch next time it's opened
       setAwardTargets([]);
@@ -411,7 +461,10 @@ export default function PointsSectionContent({
       try {
         const res = await fetch('/api/admin/rewards');
         const json = await res.json();
-        if (!res.ok) { setManageError(json.error || 'Failed to load rewards.'); return; }
+        if (!res.ok) {
+          setManageError(json.error || 'Failed to load rewards.');
+          return;
+        }
         setManageItems(json.items ?? []);
       } catch {
         setManageError('Network error loading rewards.');
@@ -438,16 +491,29 @@ export default function PointsSectionContent({
           point_cost: newReward.isTierUnlock ? 0 : Number(newReward.point_cost),
           stock: newReward.stock ? Number(newReward.stock) : null,
           min_tier: newReward.min_tier || null,
-          max_per_user: newReward.isTierUnlock ? 1 : (newReward.max_per_user ? Number(newReward.max_per_user) : null),
+          max_per_user: newReward.isTierUnlock ? 1 : newReward.max_per_user ? Number(newReward.max_per_user) : null,
           reward_type: newReward.reward_type,
           grants_fast_pass: newReward.grants_fast_pass,
         }),
       });
       const json = await res.json();
-      if (!res.ok) { setManageError(json.error || 'Failed to create reward.'); return; }
+      if (!res.ok) {
+        setManageError(json.error || 'Failed to create reward.');
+        return;
+      }
       setManageItems((prev) => [json.item, ...(prev ?? [])]);
       showToast('Reward created');
-      setNewReward({ title: '', description: '', point_cost: '', stock: '', min_tier: '', max_per_user: '', reward_type: 'physical', grants_fast_pass: false, isTierUnlock: false });
+      setNewReward({
+        title: '',
+        description: '',
+        point_cost: '',
+        stock: '',
+        min_tier: '',
+        max_per_user: '',
+        reward_type: 'physical',
+        grants_fast_pass: false,
+        isTierUnlock: false,
+      });
     } catch {
       setManageError('Network error. Please try again.');
     } finally {
@@ -473,8 +539,14 @@ export default function PointsSectionContent({
   // inline in its row rather than a modal.
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({
-    title: '', description: '', point_cost: '', stock: '', min_tier: '',
-    max_per_user: '', reward_type: 'physical' as 'physical' | 'digital', grants_fast_pass: false,
+    title: '',
+    description: '',
+    point_cost: '',
+    stock: '',
+    min_tier: '',
+    max_per_user: '',
+    reward_type: 'physical' as 'physical' | 'digital',
+    grants_fast_pass: false,
   });
   const { dirty: rewardDirty, saved: savedReward } = useUnsavedChanges(editingId ? editForm : null, undefined, editingId);
   const [savingEdit, setSavingEdit] = useState(false);
@@ -516,7 +588,10 @@ export default function PointsSectionContent({
         }),
       });
       const json = await res.json();
-      if (!res.ok) { setEditError(json.error || 'Failed to save changes.'); return; }
+      if (!res.ok) {
+        setEditError(json.error || 'Failed to save changes.');
+        return;
+      }
       setManageItems((prev) => prev?.map((i) => (i.id === editingId ? json.item : i)) ?? null);
       showToast('Reward saved');
       setEditingId(null);
@@ -528,7 +603,12 @@ export default function PointsSectionContent({
   }
 
   // ── Manage: tier ladder ──────────────────────────────────────────────
-  interface TierRow { id: string; name: string; min_points: number; color: string; }
+  interface TierRow {
+    id: string;
+    name: string;
+    min_points: number;
+    color: string;
+  }
   const [manageTiers, setManageTiers] = useState<TierRow[] | null>(null);
   const [tierError, setTierError] = useState('');
   const [newTier, setNewTier] = useState({ name: '', min_points: '', color: '#60a5fa' });
@@ -547,7 +627,10 @@ export default function PointsSectionContent({
       try {
         const res = await fetch('/api/admin/tiers?system=member');
         const json = await res.json();
-        if (!res.ok) { setTierError(json.error || 'Failed to load tiers.'); return; }
+        if (!res.ok) {
+          setTierError(json.error || 'Failed to load tiers.');
+          return;
+        }
         setManageTiers(json.tiers ?? []);
       } catch {
         setTierError('Network error loading tiers.');
@@ -575,7 +658,10 @@ export default function PointsSectionContent({
         body: JSON.stringify({ system: 'member', name: newTier.name.trim(), min_points: Number(newTier.min_points), color: newTier.color }),
       });
       const json = await res.json();
-      if (!res.ok) { setTierError(json.error || 'Failed to create tier.'); return; }
+      if (!res.ok) {
+        setTierError(json.error || 'Failed to create tier.');
+        return;
+      }
       const updated = [...(manageTiers ?? []), json.tier];
       setManageTiers(updated);
       showToast('Tier created');
@@ -606,7 +692,10 @@ export default function PointsSectionContent({
         body: JSON.stringify({ system: 'member', name: tierEditForm.name.trim(), min_points: Number(tierEditForm.min_points), color: tierEditForm.color }),
       });
       const json = await res.json();
-      if (!res.ok) { setTierError(json.error || 'Failed to save tier.'); return; }
+      if (!res.ok) {
+        setTierError(json.error || 'Failed to save tier.');
+        return;
+      }
       const updated = (manageTiers ?? []).map((t) => (t.id === editingTierId ? json.tier : t));
       setManageTiers(updated);
       showToast('Tier saved');
@@ -626,7 +715,10 @@ export default function PointsSectionContent({
     try {
       const res = await fetch(`/api/admin/tiers/${t.id}?system=member`, { method: 'DELETE' });
       const json = await res.json();
-      if (!res.ok) { setTierError(json.error || 'Failed to delete tier.'); return; }
+      if (!res.ok) {
+        setTierError(json.error || 'Failed to delete tier.');
+        return;
+      }
       const updated = (manageTiers ?? []).filter((x) => x.id !== t.id);
       setManageTiers(updated);
       showToast('Tier deleted');
@@ -646,7 +738,12 @@ export default function PointsSectionContent({
         value={tab}
         onChange={selectTab}
         tabs={[
-          ...(manageOnly ? [] : [{ id: 'mine' as const, label: 'My Points', icon: <Award />, badge: unclaimedUnlockCount }, { id: 'shop' as const, label: 'Shop', icon: <ShoppingBag /> }]),
+          ...(manageOnly
+            ? []
+            : [
+                { id: 'mine' as const, label: 'My Points', icon: <Award />, badge: unclaimedUnlockCount },
+                { id: 'shop' as const, label: 'Shop', icon: <ShoppingBag /> },
+              ]),
           { id: 'leaderboard', label: 'Leaderboard', icon: <Trophy /> },
           ...(canManageShop ? [{ id: 'tools' as const, label: 'Tools', icon: <Settings /> }] : []),
         ]}
@@ -659,10 +756,17 @@ export default function PointsSectionContent({
               <span className={styles.heroKicker}>Your points</span>
               <span className={styles.tierTag}>{tier.name}</span>
             </div>
-            <div className={styles.heroNum}>{balance.toLocaleString()}<small>to spend</small></div>
+            <div className={styles.heroNum}>
+              {balance.toLocaleString()}
+              <small>to spend</small>
+            </div>
             <ol className={styles.ladder} aria-label="Tiers" tabIndex={0}>
               {tiers.map((t) => (
-                <li key={t.name} className={`${styles.rung} ${lifetimeEarned >= t.min ? styles.rungReached : ''} ${t.name === tier.name ? styles.rungNow : ''}`} style={{ ['--rc' as string]: t.color }}>
+                <li
+                  key={t.name}
+                  className={`${styles.rung} ${lifetimeEarned >= t.min ? styles.rungReached : ''} ${t.name === tier.name ? styles.rungNow : ''}`}
+                  style={{ ['--rc' as string]: t.color }}
+                >
                   <i aria-hidden="true" />
                   <b>{t.name}</b>
                   <span>{t.min.toLocaleString()}</span>
@@ -670,7 +774,15 @@ export default function PointsSectionContent({
               ))}
             </ol>
             <p className={styles.heroNote}>
-              {lifetimeEarned.toLocaleString()} earned in total{next ? <> · <strong>{(next.min - lifetimeEarned).toLocaleString()} pts</strong> to {next.name}</> : ' · top tier reached'}
+              {lifetimeEarned.toLocaleString()} earned in total
+              {next ? (
+                <>
+                  {' '}
+                  · <strong>{(next.min - lifetimeEarned).toLocaleString()} pts</strong> to {next.name}
+                </>
+              ) : (
+                ' · top tier reached'
+              )}
             </p>
           </section>
 
@@ -679,11 +791,18 @@ export default function PointsSectionContent({
           {shopItems !== null && unlocks.length > 0 && (
             <div className={styles.historySection}>
               <div className={styles.tierUnlocksHeader}>
-                <h2 className={styles.sectionLabel}><Gift size={14} strokeWidth={1.75} aria-hidden="true" /> Tier Unlocks</h2>
+                <h2 className={styles.sectionLabel}>
+                  <Gift size={14} strokeWidth={1.75} aria-hidden="true" /> Tier Unlocks
+                </h2>
                 <Button type="button" onClick={() => setShowTierLadder((v) => !v)} variant="secondary" size="sm">
-                  {showTierLadder ? 'Hide Full Ladder' : 'View Full Ladder'}</Button>
+                  {showTierLadder ? 'Hide Full Ladder' : 'View Full Ladder'}
+                </Button>
               </div>
-              {claimedNote && <p className={styles.claimedNote}><Check size={14} strokeWidth={2} aria-hidden="true" /> {claimedNote}</p>}
+              {claimedNote && (
+                <p className={styles.claimedNote}>
+                  <Check size={14} strokeWidth={2} aria-hidden="true" /> {claimedNote}
+                </p>
+              )}
 
               {/* What's actually actionable stays visible regardless of the
                   toggle below — the full ladder (every tier, including ones
@@ -696,51 +815,60 @@ export default function PointsSectionContent({
                     <li key={u.id} className={styles.readyToClaimRow}>
                       <span className={styles.readyToClaimTitle}>{u.title}</span>
                       <Button type="button" onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id} size="sm">
-                        {claimingId === u.id ? 'Claiming…' : 'Claim'}</Button>
+                        {claimingId === u.id ? 'Claiming…' : 'Claim'}
+                      </Button>
                     </li>
                   ))}
                 </ul>
               ) : (
-                !showTierLadder && (
-                  <p className={styles.hint}>
-                    Free perks you unlock automatically by reaching a tier — nothing ready to claim right now.
-                  </p>
-                )
+                !showTierLadder && <p className={styles.hint}>Free perks you unlock automatically by reaching a tier — nothing ready to claim right now.</p>
               )}
 
               {/* Grouped by tier (in tier order) rather than one flat grid — which
                   tier unlocks which reward was otherwise only visible as small print
                   on a locked card's button, easy to miss entirely on an unlocked/claimed one. */}
-              {showTierLadder && tiers.map((t) => {
-                const rewardsForTier = unlocks.filter((u) => (u.min_tier ?? tiers[0].name) === t.name);
-                if (rewardsForTier.length === 0) return null;
-                return (
-                  <div key={t.name} className={styles.tierGroup}>
-                    <div className={styles.tierGroupHeader}>
-                      <span className={styles.tierGroupBadge} style={{ background: `${t.color}22`, color: t.color, borderColor: `${t.color}55` }}>{t.name}</span>
-                      <span className={styles.tierGroupThreshold}>{t.min.toLocaleString()} lifetime pts</span>
-                    </div>
-                    <div className={styles.shopGrid}>
-                      {rewardsForTier.map((u) => (
-                        <div key={u.id} className={`${styles.shopCard} ${u.unlocked ? styles.unlockCardReady : styles.unlockCardLocked}`} style={u.unlocked ? { borderColor: `${t.color}55` } : undefined}>
-                          <h3 className={styles.shopCardTitle}>{u.title}</h3>
-                          {u.description && <p className={styles.shopCardDesc}>{u.description}</p>}
-                          <div className={styles.shopCardFooter}>
-                            {u.claimed ? (
-                              <span className={styles.unlockClaimedLabel}><Check size={13} strokeWidth={2} aria-hidden="true" /> Claimed</span>
-                            ) : u.unlocked ? (
-                              <Button type="button" onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id} size="sm">
-                                {claimingId === u.id ? 'Claiming…' : 'Claim'}</Button>
-                            ) : (
-                              <span className={styles.unlockLockedLabel}><Lock size={12} strokeWidth={1.75} aria-hidden="true" /> Reach {t.name} to unlock</span>
-                            )}
+              {showTierLadder &&
+                tiers.map((t) => {
+                  const rewardsForTier = unlocks.filter((u) => (u.min_tier ?? tiers[0].name) === t.name);
+                  if (rewardsForTier.length === 0) return null;
+                  return (
+                    <div key={t.name} className={styles.tierGroup}>
+                      <div className={styles.tierGroupHeader}>
+                        <span className={styles.tierGroupBadge} style={{ background: `${t.color}22`, color: t.color, borderColor: `${t.color}55` }}>
+                          {t.name}
+                        </span>
+                        <span className={styles.tierGroupThreshold}>{t.min.toLocaleString()} lifetime pts</span>
+                      </div>
+                      <div className={styles.shopGrid}>
+                        {rewardsForTier.map((u) => (
+                          <div
+                            key={u.id}
+                            className={`${styles.shopCard} ${u.unlocked ? styles.unlockCardReady : styles.unlockCardLocked}`}
+                            style={u.unlocked ? { borderColor: `${t.color}55` } : undefined}
+                          >
+                            <h3 className={styles.shopCardTitle}>{u.title}</h3>
+                            {u.description && <p className={styles.shopCardDesc}>{u.description}</p>}
+                            <div className={styles.shopCardFooter}>
+                              {u.claimed ? (
+                                <span className={styles.unlockClaimedLabel}>
+                                  <Check size={13} strokeWidth={2} aria-hidden="true" /> Claimed
+                                </span>
+                              ) : u.unlocked ? (
+                                <Button type="button" onClick={() => handleClaimUnlock(u)} disabled={claimingId === u.id} size="sm">
+                                  {claimingId === u.id ? 'Claiming…' : 'Claim'}
+                                </Button>
+                              ) : (
+                                <span className={styles.unlockLockedLabel}>
+                                  <Lock size={12} strokeWidth={1.75} aria-hidden="true" /> Reach {t.name} to unlock
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           )}
 
@@ -760,12 +888,14 @@ export default function PointsSectionContent({
                           {t.reversed_at && <span className={styles.reversedTag}> · reversed</span>}
                         </div>
                         <div className={styles.historyMeta}>
-                          {t.note && t.type !== 'event_checkin' ? t.note : TYPE_LABELS[t.type] ?? t.type}
-                          {' · '}{formatPacificDate(t.created_at)}
+                          {t.note && t.type !== 'event_checkin' ? t.note : (TYPE_LABELS[t.type] ?? t.type)}
+                          {' · '}
+                          {formatPacificDate(t.created_at)}
                         </div>
                       </div>
                       <span className={t.amount >= 0 ? styles.amountPositive : styles.amountNegative}>
-                        {t.amount >= 0 ? '+' : ''}{t.amount}
+                        {t.amount >= 0 ? '+' : ''}
+                        {t.amount}
                       </span>
                     </li>
                   );
@@ -778,7 +908,9 @@ export default function PointsSectionContent({
 
       {tab === 'shop' && (
         <div className={styles.shopTab}>
-          <div className={styles.shopBalance}>Spendable balance: <strong>{shopBalance.toLocaleString()} pts</strong></div>
+          <div className={styles.shopBalance}>
+            Spendable balance: <strong>{shopBalance.toLocaleString()} pts</strong>
+          </div>
           {shopError && <Notice tone="error">{shopError}</Notice>}
 
           {pending.length > 0 && (
@@ -820,7 +952,8 @@ export default function PointsSectionContent({
                     <div className={styles.shopCardFooter}>
                       <span className={styles.shopCardCost}>{item.point_cost} pts</span>
                       <Button size="sm" onClick={() => handleClaim(item)} disabled={!canAfford || outOfStock || tierLocked || claimingId === item.id}>
-                        {claimingId === item.id ? 'Claiming…' : outOfStock ? 'Sold Out' : tierLocked ? `${item.min_tier}+ Only` : !canAfford ? 'Not Enough' : 'Redeem'}</Button>
+                        {claimingId === item.id ? 'Claiming…' : outOfStock ? 'Sold Out' : tierLocked ? `${item.min_tier}+ Only` : !canAfford ? 'Not Enough' : 'Redeem'}
+                      </Button>
                     </div>
                   </div>
                 );
@@ -837,7 +970,10 @@ export default function PointsSectionContent({
               <input type="checkbox" checked={anonymous} disabled={savingPrefs} onChange={(e) => setAnonymousPref(e.target.checked)} />
               <span>Stay anonymous on the leaderboard (otherwise shown under your name)</span>
             </label>
-            <p className={styles.hint}>Everyone&apos;s on the leaderboard — this only controls whether your full name or a masked version (like "Jas***") shows next to your rank. Your exact points are always shown either way.</p>
+            <p className={styles.hint}>
+              Everyone&apos;s on the leaderboard — this only controls whether your full name or a masked version (like "Jas***") shows next to your rank. Your exact points are
+              always shown either way.
+            </p>
           </div>
 
           {boardError && <Notice tone="error">{boardError}</Notice>}
@@ -852,8 +988,13 @@ export default function PointsSectionContent({
                 return (
                   <li key={row.rank} className={`${styles.boardRow} ${row.isSelf ? styles.boardRowSelf : ''}`}>
                     <span className={styles.boardRank}>#{row.rank}</span>
-                    <span className={styles.boardName}>{row.name}{row.isSelf ? ' (you)' : ''}</span>
-                    <span className={styles.boardTier} style={{ color: `color-mix(in srgb, ${rowTier.color} 55%, var(--pp-ink))`, borderColor: `${rowTier.color}88` }}>{row.tier}</span>
+                    <span className={styles.boardName}>
+                      {row.name}
+                      {row.isSelf ? ' (you)' : ''}
+                    </span>
+                    <span className={styles.boardTier} style={{ color: `color-mix(in srgb, ${rowTier.color} 55%, var(--pp-ink))`, borderColor: `${rowTier.color}88` }}>
+                      {row.tier}
+                    </span>
                     <span className={styles.boardPoints}>{row.points.toLocaleString()} pts</span>
                   </li>
                 );
@@ -879,281 +1020,414 @@ export default function PointsSectionContent({
           />
 
           {manageSubTab === 'award' && canManagePoints && (
-          <section className={styles.manageSection}>
-            <h2 className={styles.sectionLabel}>Award Points</h2>
-            <p className={styles.hint}>Award the same amount to one or more members at once — for a goodwill bonus, a correction, or any other contribution.</p>
-            <form className={styles.awardForm} onSubmit={handleAward}>
+            <section className={styles.manageSection}>
+              <h2 className={styles.sectionLabel}>Award Points</h2>
+              <p className={styles.hint}>Award the same amount to one or more members at once — for a goodwill bonus, a correction, or any other contribution.</p>
+              <form className={styles.awardForm} onSubmit={handleAward}>
+                <div className={styles.adjustSearchWrap}>
+                  <input className={styles.input} placeholder="Search members by name…" value={awardQuery} onChange={(e) => setAwardQuery(e.target.value)} />
+                  {awardResults.length > 0 && (
+                    <div className={styles.adjustDropdown}>
+                      {awardResults.map((m) => (
+                        <button key={m.id} type="button" className={styles.adjustResult} onClick={() => addAwardTarget(m)}>
+                          {m.title}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                {awardTargets.length > 0 && (
+                  <div className={styles.awardTargets}>
+                    {awardTargets.map((t) => (
+                      <span key={t.id} className={styles.awardChip}>
+                        {t.title}
+                        <button type="button" onClick={() => removeAwardTarget(t.id)} aria-label={`Remove ${t.title}`}>
+                          <X size={12} strokeWidth={2} aria-hidden="true" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <NumberInput className={styles.input} placeholder="Amount (+/-)" value={awardAmount} onChange={(e) => setAwardAmount(e.target.value)} />
+                <input className={styles.input} placeholder="Reason (required)" value={awardNote} onChange={(e) => setAwardNote(e.target.value)} maxLength={200} />
+                <Button type="submit" disabled={awarding || awardTargets.length === 0 || !awardAmount || !awardNote.trim()}>
+                  {awarding ? 'Awarding…' : `Award ${awardTargets.length || ''}`.trim()}
+                </Button>
+              </form>
+              {awardResult && <p className={styles.hint}>{awardResult}</p>}
+            </section>
+          )}
+
+          {manageSubTab === 'items' && (
+            <>
+              <form className={styles.newRewardForm} onSubmit={handleCreateReward}>
+                <input
+                  className={styles.input}
+                  placeholder="Reward title"
+                  value={newReward.title}
+                  onChange={(e) => setNewReward((f) => ({ ...f, title: e.target.value }))}
+                  maxLength={80}
+                />
+                <input
+                  className={styles.input}
+                  placeholder="Description (optional)"
+                  value={newReward.description}
+                  onChange={(e) => setNewReward((f) => ({ ...f, description: e.target.value }))}
+                  maxLength={200}
+                />
+                <NumberInput
+                  className={styles.input}
+                  min={0}
+                  placeholder="Point cost"
+                  value={newReward.isTierUnlock ? '0' : newReward.point_cost}
+                  onChange={(e) => setNewReward((f) => ({ ...f, point_cost: e.target.value }))}
+                  disabled={newReward.isTierUnlock}
+                />
+                <NumberInput
+                  className={styles.input}
+                  min={0}
+                  placeholder="Stock (blank = unlimited)"
+                  value={newReward.stock}
+                  onChange={(e) => setNewReward((f) => ({ ...f, stock: e.target.value }))}
+                />
+                <Select className={styles.input} value={newReward.min_tier} onChange={(e) => setNewReward((f) => ({ ...f, min_tier: e.target.value }))}>
+                  <option value="">No tier requirement</option>
+                  {tiers.map((t) => (
+                    <option key={t.name} value={t.name}>
+                      {t.name}+ only
+                    </option>
+                  ))}
+                </Select>
+                <NumberInput
+                  className={styles.input}
+                  min={1}
+                  placeholder="Max per person (blank = unlimited)"
+                  value={newReward.isTierUnlock ? '1' : newReward.max_per_user}
+                  onChange={(e) => setNewReward((f) => ({ ...f, max_per_user: e.target.value }))}
+                  disabled={newReward.isTierUnlock}
+                />
+                <Select
+                  className={styles.input}
+                  value={newReward.reward_type}
+                  onChange={(e) =>
+                    setNewReward((f) => ({
+                      ...f,
+                      reward_type: e.target.value as 'physical' | 'digital',
+                      grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false,
+                    }))
+                  }
+                >
+                  <option value="physical">Physical — officer confirms hand-over</option>
+                  <option value="digital">Digital — auto-granted on claim</option>
+                </Select>
+                {newReward.reward_type === 'digital' && (
+                  <label className={styles.checkboxField}>
+                    <input type="checkbox" checked={newReward.grants_fast_pass} onChange={(e) => setNewReward((f) => ({ ...f, grants_fast_pass: e.target.checked }))} />
+                    <span>Marks a Fast Pass badge on the member&apos;s ticket QR</span>
+                  </label>
+                )}
+                <label className={styles.checkboxField}>
+                  <input type="checkbox" checked={newReward.isTierUnlock} onChange={(e) => setNewReward((f) => ({ ...f, isTierUnlock: e.target.checked }))} />
+                  <span>Tier auto-unlock (free, one per person — appears in members&apos; &quot;To Claim&quot; tab once they reach the tier)</span>
+                </label>
+                {newReward.isTierUnlock && !newReward.min_tier && <Notice tone="error">A tier auto-unlock needs a tier requirement above.</Notice>}
+                <Button type="submit" disabled={creating || !newReward.title.trim() || (newReward.isTierUnlock && !newReward.min_tier)}>
+                  {creating ? 'Adding…' : 'Add reward'}
+                </Button>
+              </form>
+
+              {manageError && <Notice tone="error">{manageError}</Notice>}
+
+              {manageItems === null ? (
+                <Loading label="Loading rewards…" />
+              ) : (
+                <div className={styles.manageList}>
+                  {manageItems.map((item) =>
+                    editingId === item.id ? (
+                      <form key={item.id} className={styles.editForm} onSubmit={handleSaveEdit}>
+                        <EditingNow room={`reward:${item.id}`} what="this reward" />
+                        <input
+                          className={styles.input}
+                          placeholder="Reward title"
+                          value={editForm.title}
+                          onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
+                          maxLength={80}
+                        />
+                        <input
+                          className={styles.input}
+                          placeholder="Description (optional)"
+                          value={editForm.description}
+                          onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                          maxLength={200}
+                        />
+                        <NumberInput
+                          className={styles.input}
+                          min={0}
+                          placeholder="Point cost"
+                          value={editForm.point_cost}
+                          onChange={(e) => setEditForm((f) => ({ ...f, point_cost: e.target.value }))}
+                        />
+                        <NumberInput
+                          className={styles.input}
+                          min={0}
+                          placeholder="Stock (blank = unlimited)"
+                          value={editForm.stock}
+                          onChange={(e) => setEditForm((f) => ({ ...f, stock: e.target.value }))}
+                        />
+                        <Select className={styles.input} value={editForm.min_tier} onChange={(e) => setEditForm((f) => ({ ...f, min_tier: e.target.value }))}>
+                          <option value="">No tier requirement</option>
+                          {tiers.map((t) => (
+                            <option key={t.name} value={t.name}>
+                              {t.name}+ only
+                            </option>
+                          ))}
+                        </Select>
+                        <NumberInput
+                          className={styles.input}
+                          min={1}
+                          placeholder="Max per person (blank = unlimited)"
+                          value={editForm.max_per_user}
+                          onChange={(e) => setEditForm((f) => ({ ...f, max_per_user: e.target.value }))}
+                        />
+                        <Select
+                          className={styles.input}
+                          value={editForm.reward_type}
+                          onChange={(e) =>
+                            setEditForm((f) => ({
+                              ...f,
+                              reward_type: e.target.value as 'physical' | 'digital',
+                              grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false,
+                            }))
+                          }
+                        >
+                          <option value="physical">Physical — officer confirms hand-over</option>
+                          <option value="digital">Digital — auto-granted on claim</option>
+                        </Select>
+                        {editForm.reward_type === 'digital' && (
+                          <label className={styles.checkboxField}>
+                            <input type="checkbox" checked={editForm.grants_fast_pass} onChange={(e) => setEditForm((f) => ({ ...f, grants_fast_pass: e.target.checked }))} />
+                            <span>Marks a Fast Pass badge on the member&apos;s ticket QR</span>
+                          </label>
+                        )}
+                        {editError && <Notice tone="error">{editError}</Notice>}
+                        <div className={styles.editActions}>
+                          <Button type="button" onClick={() => setEditingId(null)} variant="ghost" size="sm">
+                            {rewardDirty ? 'Close without saving' : 'Close'}
+                          </Button>
+                          <SaveBar
+                            dirty={rewardDirty}
+                            saving={savingEdit}
+                            message="Unsaved changes to this reward"
+                            onSave={() => {
+                              if (editForm.title.trim()) void handleSaveEdit({ preventDefault() {} } as React.FormEvent);
+                            }}
+                            onDiscard={() => setEditForm(savedReward() ?? editForm)}
+                          />
+                        </div>
+                      </form>
+                    ) : (
+                      <div key={item.id} className={`${styles.manageRow} ${!item.active ? styles.manageRowInactive : ''}`}>
+                        <div>
+                          <div className={styles.shopCardTitle}>
+                            {item.title}
+                            {item.point_cost === 0 && <span className={styles.tierUnlockTag}>Tier Unlock</span>}
+                            {item.reward_type === 'digital' && <span className={styles.digitalTag}>Digital</span>}
+                          </div>
+                          <div className={styles.stockNote}>
+                            {item.point_cost} pts{item.stock !== null ? ` · ${item.stock} left` : ''}
+                            {item.min_tier ? ` · ${item.min_tier}+ only` : ''}
+                            {item.max_per_user ? ` · max ${item.max_per_user}/person` : ''}
+                          </div>
+                        </div>
+                        <div className={styles.manageRowActions}>
+                          <IconButton kind="edit" label={`Edit ${item.title}`} onClick={() => startEdit(item)} />
+                          <Button type="button" onClick={() => toggleActive(item)} variant="secondary" size="sm">
+                            {item.active ? 'Retire' : 'Reactivate'}
+                          </Button>
+                        </div>
+                      </div>
+                    ),
+                  )}
+                </div>
+              )}
+            </>
+          )}
+
+          {manageSubTab === 'corrections' && canManagePoints && (
+            <div className={styles.adjustSection}>
+              <h2 className={styles.sectionLabel}>Correct a Member&apos;s Points</h2>
+              <p className={styles.hint}>Find a member to see their points history and reverse a specific entry.</p>
+
               <div className={styles.adjustSearchWrap}>
                 <input
                   className={styles.input}
-                  placeholder="Search members by name…"
-                  value={awardQuery}
-                  onChange={(e) => setAwardQuery(e.target.value)}
+                  placeholder="Search member by name…"
+                  value={adjustTarget ? adjustTarget.title : adjustQuery}
+                  onChange={(e) => {
+                    setAdjustTarget(null);
+                    setAdjustQuery(e.target.value);
+                  }}
                 />
-                {awardResults.length > 0 && (
+                {adjustResults.length > 0 && !adjustTarget && (
                   <div className={styles.adjustDropdown}>
-                    {awardResults.map((m) => (
-                      <button key={m.id} type="button" className={styles.adjustResult} onClick={() => addAwardTarget(m)}>
+                    {adjustResults.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        className={styles.adjustResult}
+                        onClick={() => {
+                          setAdjustTarget(m);
+                          setAdjustResults([]);
+                        }}
+                      >
                         {m.title}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-              {awardTargets.length > 0 && (
-                <div className={styles.awardTargets}>
-                  {awardTargets.map((t) => (
-                    <span key={t.id} className={styles.awardChip}>
-                      {t.title}
-                      <button type="button" onClick={() => removeAwardTarget(t.id)} aria-label={`Remove ${t.title}`}><X size={12} strokeWidth={2} aria-hidden="true" /></button>
-                    </span>
-                  ))}
-                </div>
-              )}
-              <NumberInput className={styles.input} placeholder="Amount (+/-)" value={awardAmount} onChange={(e) => setAwardAmount(e.target.value)} />
-              <input className={styles.input} placeholder="Reason (required)" value={awardNote} onChange={(e) => setAwardNote(e.target.value)} maxLength={200} />
-              <Button type="submit" disabled={awarding || awardTargets.length === 0 || !awardAmount || !awardNote.trim()}>{awarding ? 'Awarding…' : `Award ${awardTargets.length || ''}`.trim()}</Button>
-            </form>
-            {awardResult && <p className={styles.hint}>{awardResult}</p>}
-          </section>
-          )}
 
-          {manageSubTab === 'items' && (
-          <>
-          <form className={styles.newRewardForm} onSubmit={handleCreateReward}>
-            <input className={styles.input} placeholder="Reward title" value={newReward.title} onChange={(e) => setNewReward((f) => ({ ...f, title: e.target.value }))} maxLength={80} />
-            <input className={styles.input} placeholder="Description (optional)" value={newReward.description} onChange={(e) => setNewReward((f) => ({ ...f, description: e.target.value }))} maxLength={200} />
-            <NumberInput
-              className={styles.input} min={0} placeholder="Point cost"
-              value={newReward.isTierUnlock ? '0' : newReward.point_cost}
-              onChange={(e) => setNewReward((f) => ({ ...f, point_cost: e.target.value }))}
-              disabled={newReward.isTierUnlock}
-            />
-            <NumberInput className={styles.input} min={0} placeholder="Stock (blank = unlimited)" value={newReward.stock} onChange={(e) => setNewReward((f) => ({ ...f, stock: e.target.value }))} />
-            <Select className={styles.input} value={newReward.min_tier} onChange={(e) => setNewReward((f) => ({ ...f, min_tier: e.target.value }))}>
-              <option value="">No tier requirement</option>
-              {tiers.map((t) => <option key={t.name} value={t.name}>{t.name}+ only</option>)}
-            </Select>
-            <NumberInput
-              className={styles.input} min={1} placeholder="Max per person (blank = unlimited)"
-              value={newReward.isTierUnlock ? '1' : newReward.max_per_user}
-              onChange={(e) => setNewReward((f) => ({ ...f, max_per_user: e.target.value }))}
-              disabled={newReward.isTierUnlock}
-            />
-            <Select className={styles.input} value={newReward.reward_type} onChange={(e) => setNewReward((f) => ({ ...f, reward_type: e.target.value as 'physical' | 'digital', grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false }))}>
-              <option value="physical">Physical — officer confirms hand-over</option>
-              <option value="digital">Digital — auto-granted on claim</option>
-            </Select>
-            {newReward.reward_type === 'digital' && (
-              <label className={styles.checkboxField}>
-                <input type="checkbox" checked={newReward.grants_fast_pass} onChange={(e) => setNewReward((f) => ({ ...f, grants_fast_pass: e.target.checked }))} />
-                <span>Marks a Fast Pass badge on the member&apos;s ticket QR</span>
-              </label>
-            )}
-            <label className={styles.checkboxField}>
-              <input
-                type="checkbox"
-                checked={newReward.isTierUnlock}
-                onChange={(e) => setNewReward((f) => ({ ...f, isTierUnlock: e.target.checked }))}
-              />
-              <span>Tier auto-unlock (free, one per person — appears in members&apos; &quot;To Claim&quot; tab once they reach the tier)</span>
-            </label>
-            {newReward.isTierUnlock && !newReward.min_tier && (
-              <Notice tone="error">A tier auto-unlock needs a tier requirement above.</Notice>
-            )}
-            <Button type="submit" disabled={creating || !newReward.title.trim() || (newReward.isTierUnlock && !newReward.min_tier)}>{creating ? 'Adding…' : 'Add reward'}</Button>
-          </form>
-
-          {manageError && <Notice tone="error">{manageError}</Notice>}
-
-          {manageItems === null ? (
-            <Loading label="Loading rewards…" />
-          ) : (
-            <div className={styles.manageList}>
-              {manageItems.map((item) => (
-                editingId === item.id ? (
-                  <form key={item.id} className={styles.editForm} onSubmit={handleSaveEdit}>
-                    <EditingNow room={`reward:${item.id}`} what="this reward" />
-                    <input className={styles.input} placeholder="Reward title" value={editForm.title} onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))} maxLength={80} />
-                    <input className={styles.input} placeholder="Description (optional)" value={editForm.description} onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))} maxLength={200} />
-                    <NumberInput className={styles.input} min={0} placeholder="Point cost" value={editForm.point_cost} onChange={(e) => setEditForm((f) => ({ ...f, point_cost: e.target.value }))} />
-                    <NumberInput className={styles.input} min={0} placeholder="Stock (blank = unlimited)" value={editForm.stock} onChange={(e) => setEditForm((f) => ({ ...f, stock: e.target.value }))} />
-                    <Select className={styles.input} value={editForm.min_tier} onChange={(e) => setEditForm((f) => ({ ...f, min_tier: e.target.value }))}>
-                      <option value="">No tier requirement</option>
-                      {tiers.map((t) => <option key={t.name} value={t.name}>{t.name}+ only</option>)}
-                    </Select>
-                    <NumberInput className={styles.input} min={1} placeholder="Max per person (blank = unlimited)" value={editForm.max_per_user} onChange={(e) => setEditForm((f) => ({ ...f, max_per_user: e.target.value }))} />
-                    <Select className={styles.input} value={editForm.reward_type} onChange={(e) => setEditForm((f) => ({ ...f, reward_type: e.target.value as 'physical' | 'digital', grants_fast_pass: e.target.value === 'digital' ? f.grants_fast_pass : false }))}>
-                      <option value="physical">Physical — officer confirms hand-over</option>
-                      <option value="digital">Digital — auto-granted on claim</option>
-                    </Select>
-                    {editForm.reward_type === 'digital' && (
-                      <label className={styles.checkboxField}>
-                        <input type="checkbox" checked={editForm.grants_fast_pass} onChange={(e) => setEditForm((f) => ({ ...f, grants_fast_pass: e.target.checked }))} />
-                        <span>Marks a Fast Pass badge on the member&apos;s ticket QR</span>
-                      </label>
-                    )}
-                    {editError && <Notice tone="error">{editError}</Notice>}
-                    <div className={styles.editActions}>
-                      <Button type="button" onClick={() => setEditingId(null)} variant="ghost" size="sm">{rewardDirty ? 'Close without saving' : 'Close'}</Button>
-                      <SaveBar dirty={rewardDirty} saving={savingEdit} message="Unsaved changes to this reward" onSave={() => { if (editForm.title.trim()) void handleSaveEdit({ preventDefault() {} } as React.FormEvent) }} onDiscard={() => setEditForm(savedReward() ?? editForm)} />
-                    </div>
-                  </form>
-                ) : (
-                  <div key={item.id} className={`${styles.manageRow} ${!item.active ? styles.manageRowInactive : ''}`}>
-                    <div>
-                      <div className={styles.shopCardTitle}>
-                        {item.title}
-                        {item.point_cost === 0 && <span className={styles.tierUnlockTag}>Tier Unlock</span>}
-                        {item.reward_type === 'digital' && <span className={styles.digitalTag}>Digital</span>}
-                      </div>
-                      <div className={styles.stockNote}>
-                        {item.point_cost} pts{item.stock !== null ? ` · ${item.stock} left` : ''}{item.min_tier ? ` · ${item.min_tier}+ only` : ''}{item.max_per_user ? ` · max ${item.max_per_user}/person` : ''}
-                      </div>
-                    </div>
-                    <div className={styles.manageRowActions}>
-                      <IconButton kind="edit" label={`Edit ${item.title}`} onClick={() => startEdit(item)} />
-                      <Button type="button" onClick={() => toggleActive(item)} variant="secondary" size="sm">
-                        {item.active ? 'Retire' : 'Reactivate'}</Button>
-                    </div>
-                  </div>
-                )
-              ))}
-            </div>
-          )}
-          </>
-          )}
-
-          {manageSubTab === 'corrections' && canManagePoints && (
-          <div className={styles.adjustSection}>
-            <h2 className={styles.sectionLabel}>Correct a Member&apos;s Points</h2>
-            <p className={styles.hint}>Find a member to see their points history and reverse a specific entry.</p>
-
-            <div className={styles.adjustSearchWrap}>
-              <input
-                className={styles.input}
-                placeholder="Search member by name…"
-                value={adjustTarget ? adjustTarget.title : adjustQuery}
-                onChange={(e) => { setAdjustTarget(null); setAdjustQuery(e.target.value); }}
-              />
-              {adjustResults.length > 0 && !adjustTarget && (
-                <div className={styles.adjustDropdown}>
-                  {adjustResults.map((m) => (
-                    <button key={m.id} type="button" className={styles.adjustResult} onClick={() => { setAdjustTarget(m); setAdjustResults([]); }}>
-                      {m.title}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {adjustTarget && (
-              <>
-                {historyError && <Notice tone="error">{historyError}</Notice>}
-                {targetHistory === null ? (
-                  <Loading variant="inline" label="Loading history…" />
-                ) : targetHistory.length === 0 ? (
-                  <p className={styles.empty}>No point activity for {adjustTarget.title} yet.</p>
-                ) : (
-                  <div className={styles.targetHistory}>
-                    {targetHistory.map((t) => {
-                      const label = oneOf(t.event)?.title ?? TYPE_LABELS[t.type] ?? t.type;
-                      return (
-                        <div key={t.id} className={`${styles.targetHistoryRow} ${t.reversed_at ? styles.targetHistoryReversed : ''}`}>
-                          <div className={styles.targetHistoryInfo}>
-                            <div className={styles.historyType}>{label}</div>
-                            <div className={styles.historyMeta}>
-                              {t.note && t.type !== 'event_checkin' ? t.note : TYPE_LABELS[t.type] ?? t.type}
-                              {' · '}{formatPacificDate(t.created_at)}
+              {adjustTarget && (
+                <>
+                  {historyError && <Notice tone="error">{historyError}</Notice>}
+                  {targetHistory === null ? (
+                    <Loading variant="inline" label="Loading history…" />
+                  ) : targetHistory.length === 0 ? (
+                    <p className={styles.empty}>No point activity for {adjustTarget.title} yet.</p>
+                  ) : (
+                    <div className={styles.targetHistory}>
+                      {targetHistory.map((t) => {
+                        const label = oneOf(t.event)?.title ?? TYPE_LABELS[t.type] ?? t.type;
+                        return (
+                          <div key={t.id} className={`${styles.targetHistoryRow} ${t.reversed_at ? styles.targetHistoryReversed : ''}`}>
+                            <div className={styles.targetHistoryInfo}>
+                              <div className={styles.historyType}>{label}</div>
+                              <div className={styles.historyMeta}>
+                                {t.note && t.type !== 'event_checkin' ? t.note : (TYPE_LABELS[t.type] ?? t.type)}
+                                {' · '}
+                                {formatPacificDate(t.created_at)}
+                              </div>
                             </div>
+                            <span className={`${styles.targetHistoryAmount} ${t.amount >= 0 ? styles.amountPositive : styles.amountNegative}`}>
+                              {t.amount >= 0 ? '+' : ''}
+                              {t.amount}
+                            </span>
+                            {t.reversed_at ? (
+                              <span className={styles.reversedLabel}>Reversed</span>
+                            ) : t.reverses_transaction_id ? (
+                              // A reversal itself — can't be reversed again (server enforces this
+                              // too); a mistaken reversal gets corrected with a new adjustment.
+                              <span className={styles.reversedLabel}>Reversal</span>
+                            ) : (
+                              <button type="button" className={styles.reverseBtn} onClick={() => handleReverse(t)} disabled={reversingId === t.id}>
+                                {reversingId === t.id ? 'Reversing…' : 'Reverse'}
+                              </button>
+                            )}
                           </div>
-                          <span className={`${styles.targetHistoryAmount} ${t.amount >= 0 ? styles.amountPositive : styles.amountNegative}`}>
-                            {t.amount >= 0 ? '+' : ''}{t.amount}
-                          </span>
-                          {t.reversed_at ? (
-                            <span className={styles.reversedLabel}>Reversed</span>
-                          ) : t.reverses_transaction_id ? (
-                            // A reversal itself — can't be reversed again (server enforces this
-                            // too); a mistaken reversal gets corrected with a new adjustment.
-                            <span className={styles.reversedLabel}>Reversal</span>
-                          ) : (
-                            <button type="button" className={styles.reverseBtn} onClick={() => handleReverse(t)} disabled={reversingId === t.id}>
-                              {reversingId === t.id ? 'Reversing…' : 'Reverse'}
-                            </button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           )}
 
           {manageSubTab === 'tiers' && (
-          <div>
-            <h2 className={styles.sectionLabel}>Rewards Tier Ladder</h2>
-            <p className={styles.hint}>
-              The starting tier always stays at 0 points and can&apos;t be renamed away or deleted — every other tier can be added, retitled, recolored, or removed (as long as no shop item still requires it).
-            </p>
+            <div>
+              <h2 className={styles.sectionLabel}>Rewards Tier Ladder</h2>
+              <p className={styles.hint}>
+                The starting tier always stays at 0 points and can&apos;t be renamed away or deleted — every other tier can be added, retitled, recolored, or removed (as long as no
+                shop item still requires it).
+              </p>
 
-            <form className={styles.newRewardForm} onSubmit={handleCreateTier}>
-              <input className={styles.input} placeholder="Tier name" value={newTier.name} onChange={(e) => setNewTier((f) => ({ ...f, name: e.target.value }))} maxLength={40} />
-              <NumberInput className={styles.input} min={1} placeholder="Points threshold" value={newTier.min_points} onChange={(e) => setNewTier((f) => ({ ...f, min_points: e.target.value }))} />
-              <label className={styles.colorField}>
-                Color
-                <ColorInput value={newTier.color} onChange={(e) => setNewTier((f) => ({ ...f, color: e.target.value }))} />
-              </label>
-              <Button type="submit" disabled={creatingTier || !newTier.name.trim() || newTier.min_points === ''}>{creatingTier ? 'Adding…' : 'Add tier'}</Button>
-            </form>
+              <form className={styles.newRewardForm} onSubmit={handleCreateTier}>
+                <input className={styles.input} placeholder="Tier name" value={newTier.name} onChange={(e) => setNewTier((f) => ({ ...f, name: e.target.value }))} maxLength={40} />
+                <NumberInput
+                  className={styles.input}
+                  min={1}
+                  placeholder="Points threshold"
+                  value={newTier.min_points}
+                  onChange={(e) => setNewTier((f) => ({ ...f, min_points: e.target.value }))}
+                />
+                <label className={styles.colorField}>
+                  Color
+                  <ColorInput value={newTier.color} onChange={(e) => setNewTier((f) => ({ ...f, color: e.target.value }))} />
+                </label>
+                <Button type="submit" disabled={creatingTier || !newTier.name.trim() || newTier.min_points === ''}>
+                  {creatingTier ? 'Adding…' : 'Add tier'}
+                </Button>
+              </form>
 
-            {tierError && <Notice tone="error">{tierError}</Notice>}
+              {tierError && <Notice tone="error">{tierError}</Notice>}
 
-            {manageTiers === null ? (
-              <Loading label="Loading tiers…" />
-            ) : (
-              <div className={styles.manageList}>
-                {[...manageTiers].sort((a, b) => a.min_points - b.min_points).map((t) => (
-                  editingTierId === t.id ? (
-                    <form key={t.id} className={styles.editForm} onSubmit={handleSaveTierEdit}>
-                      <EditingNow room={`tier:${t.id}`} what="this tier" />
-                      <input className={styles.input} placeholder="Tier name" value={tierEditForm.name} onChange={(e) => setTierEditForm((f) => ({ ...f, name: e.target.value }))} maxLength={40} />
-                      <NumberInput
-                        className={styles.input} min={t.min_points === 0 ? 0 : 1} placeholder="Points threshold"
-                        value={tierEditForm.min_points} onChange={(e) => setTierEditForm((f) => ({ ...f, min_points: e.target.value }))}
-                        disabled={t.min_points === 0}
-                      />
-                      <label className={styles.colorField}>
-                Color
-                <ColorInput value={tierEditForm.color} onChange={(e) => setTierEditForm((f) => ({ ...f, color: e.target.value }))} />
-              </label>
-                      <div className={styles.editActions}>
-                        <Button type="button" onClick={() => setEditingTierId(null)} variant="ghost" size="sm">{tierDirty ? 'Close without saving' : 'Close'}</Button>
-                        <SaveBar dirty={tierDirty} saving={savingTierEdit} message="Unsaved changes to this tier" onSave={() => { if (tierEditForm.name.trim() && tierEditForm.min_points !== '') void handleSaveTierEdit({ preventDefault() {} } as React.FormEvent) }} onDiscard={() => setTierEditForm(savedTier() ?? tierEditForm)} />
-                      </div>
-                    </form>
-                  ) : (
-                    <div key={t.id} className={styles.manageRow}>
-                      <div>
-                        <div className={styles.shopCardTitle}>
-                          <span className={styles.tierGroupBadge} style={{ background: `${t.color}22`, color: t.color, borderColor: `${t.color}55` }}>{t.name}</span>
-                          {t.min_points === 0 && <span className={styles.tierUnlockTag}>Starting tier</span>}
+              {manageTiers === null ? (
+                <Loading label="Loading tiers…" />
+              ) : (
+                <div className={styles.manageList}>
+                  {[...manageTiers]
+                    .sort((a, b) => a.min_points - b.min_points)
+                    .map((t) =>
+                      editingTierId === t.id ? (
+                        <form key={t.id} className={styles.editForm} onSubmit={handleSaveTierEdit}>
+                          <EditingNow room={`tier:${t.id}`} what="this tier" />
+                          <input
+                            className={styles.input}
+                            placeholder="Tier name"
+                            value={tierEditForm.name}
+                            onChange={(e) => setTierEditForm((f) => ({ ...f, name: e.target.value }))}
+                            maxLength={40}
+                          />
+                          <NumberInput
+                            className={styles.input}
+                            min={t.min_points === 0 ? 0 : 1}
+                            placeholder="Points threshold"
+                            value={tierEditForm.min_points}
+                            onChange={(e) => setTierEditForm((f) => ({ ...f, min_points: e.target.value }))}
+                            disabled={t.min_points === 0}
+                          />
+                          <label className={styles.colorField}>
+                            Color
+                            <ColorInput value={tierEditForm.color} onChange={(e) => setTierEditForm((f) => ({ ...f, color: e.target.value }))} />
+                          </label>
+                          <div className={styles.editActions}>
+                            <Button type="button" onClick={() => setEditingTierId(null)} variant="ghost" size="sm">
+                              {tierDirty ? 'Close without saving' : 'Close'}
+                            </Button>
+                            <SaveBar
+                              dirty={tierDirty}
+                              saving={savingTierEdit}
+                              message="Unsaved changes to this tier"
+                              onSave={() => {
+                                if (tierEditForm.name.trim() && tierEditForm.min_points !== '') void handleSaveTierEdit({ preventDefault() {} } as React.FormEvent);
+                              }}
+                              onDiscard={() => setTierEditForm(savedTier() ?? tierEditForm)}
+                            />
+                          </div>
+                        </form>
+                      ) : (
+                        <div key={t.id} className={styles.manageRow}>
+                          <div>
+                            <div className={styles.shopCardTitle}>
+                              <span className={styles.tierGroupBadge} style={{ background: `${t.color}22`, color: t.color, borderColor: `${t.color}55` }}>
+                                {t.name}
+                              </span>
+                              {t.min_points === 0 && <span className={styles.tierUnlockTag}>Starting tier</span>}
+                            </div>
+                            <div className={styles.stockNote}>{t.min_points.toLocaleString()} lifetime pts</div>
+                          </div>
+                          <div className={styles.manageRowActions}>
+                            <IconButton kind="edit" label={`Edit ${t.name} tier`} onClick={() => startEditTier(t)} />
+                            {t.min_points !== 0 && (
+                              <IconButton kind="delete" label={`Delete ${t.name} tier`} onClick={() => handleDeleteTier(t)} disabled={deletingTierId === t.id} />
+                            )}
+                          </div>
                         </div>
-                        <div className={styles.stockNote}>{t.min_points.toLocaleString()} lifetime pts</div>
-                      </div>
-                      <div className={styles.manageRowActions}>
-                        <IconButton kind="edit" label={`Edit ${t.name} tier`} onClick={() => startEditTier(t)} />
-                        {t.min_points !== 0 && (
-                          <IconButton kind="delete" label={`Delete ${t.name} tier`} onClick={() => handleDeleteTier(t)} disabled={deletingTierId === t.id} />
-                        )}
-                      </div>
-                    </div>
-                  )
-                ))}
-              </div>
-            )}
-          </div>
+                      ),
+                    )}
+                </div>
+              )}
+            </div>
           )}
         </div>
       )}
@@ -1162,8 +1436,12 @@ export default function PointsSectionContent({
         <div className={styles.qrOverlay} onClick={() => setQrFor(null)}>
           <div className={styles.qrModal} onClick={(e) => e.stopPropagation()}>
             <p className={styles.qrHint}>Show this to an officer at an event</p>
-            <div className={styles.qrCanvas}><TGcode payload={`r${qrFor.replace(/-/g, '').slice(0, 12)}`} /></div>
-            <Button type="button" onClick={() => setQrFor(null)}>Done</Button>
+            <div className={styles.qrCanvas}>
+              <TGcode payload={`r${qrFor.replace(/-/g, '').slice(0, 12)}`} />
+            </div>
+            <Button type="button" onClick={() => setQrFor(null)}>
+              Done
+            </Button>
           </div>
         </div>
       )}

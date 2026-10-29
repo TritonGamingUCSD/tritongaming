@@ -12,7 +12,11 @@ import styles from './asformbutton.module.css';
 // in-app browser navigates this same page to the form instead of opening a
 // tab (the marker request outlives the page unload).
 export default function AsFormButton({
-  ticketId, url, opened, onOpened, compact = false,
+  ticketId,
+  url,
+  opened,
+  onOpened,
+  compact = false,
 }: {
   ticketId: string;
   url: string;
@@ -35,31 +39,17 @@ export default function AsFormButton({
   if (opened) {
     return (
       <div className={styles.wrap}>
-        <a
-          href={url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={`${styles.reopen} ${compact ? styles.reopenLeft : ''}`}
-          onClick={markOpened}
-        >
+        <a href={url} target="_blank" rel="noopener noreferrer" className={`${styles.reopen} ${compact ? styles.reopenLeft : ''}`} onClick={markOpened}>
           <Check size={13} strokeWidth={2.25} aria-hidden="true" /> AS Form opened · <span className={styles.reopenLink}>reopen</span>
         </a>
-        {!compact && (
-          <p className={styles.note}>After you submit, keep the “response recorded” screen handy — staff may ask to see it.</p>
-        )}
+        {!compact && <p className={styles.note}>After you submit, keep the “response recorded” screen handy — staff may ask to see it.</p>}
       </div>
     );
   }
 
   return (
     <div className={styles.wrap}>
-      <a
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className={compact ? styles.btnCompact : styles.btn}
-        onClick={markOpened}
-      >
+      <a href={url} target="_blank" rel="noopener noreferrer" className={compact ? styles.btnCompact : styles.btn} onClick={markOpened}>
         <ExternalLink size={compact ? 14 : 16} strokeWidth={2} aria-hidden="true" /> Fill out AS Form
       </a>
       {!compact && <p className={styles.note}>Required by UCSD. It’s mostly filled in for you — just review it and hit Submit.</p>}

@@ -29,8 +29,10 @@ let flight: Promise<PushSubscription> | null = null;
 function ensureSubscription(publicKey: string): Promise<PushSubscription> {
   flight ??= (async () => {
     const reg = await registration();
-    return (await reg.pushManager.getSubscription()) ?? await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey) });
-  })().finally(() => { flight = null; });
+    return (await reg.pushManager.getSubscription()) ?? (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: keyBytes(publicKey) }));
+  })().finally(() => {
+    flight = null;
+  });
   return flight;
 }
 
@@ -57,7 +59,8 @@ export async function enablePush(): Promise<{ ok: boolean; error?: string; denie
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
   if (!publicKey) return { ok: false, error: 'Push notifications aren’t set up on this site yet.' };
   const perm = await Notification.requestPermission();
-  if (perm !== 'granted') return { ok: false, denied: perm === 'denied', error: perm === 'denied' ? 'Notifications are blocked for this site in your browser settings.' : undefined };
+  if (perm !== 'granted')
+    return { ok: false, denied: perm === 'denied', error: perm === 'denied' ? 'Notifications are blocked for this site in your browser settings.' : undefined };
   try {
     const sub = await ensureSubscription(publicKey);
     const saved = await save(sub);
@@ -72,11 +75,29 @@ export async function enablePush(): Promise<{ ok: boolean; error?: string; denie
 // The address this browser last told the server about. The quiet sync below only talks to the server when it changed, so a device you removed from another
 // device does not put itself back the next time the portal opens.
 const SAVED_KEY = 'tg-push-saved';
-const savedEndpoint = () => { try { return localStorage.getItem(SAVED_KEY); } catch { return null; } };
-const rememberEndpoint = (e: string | null) => { try { if (e) localStorage.setItem(SAVED_KEY, e); else localStorage.removeItem(SAVED_KEY); } catch { /* fine without it */ } };
+const savedEndpoint = () => {
+  try {
+    return localStorage.getItem(SAVED_KEY);
+  } catch {
+    return null;
+  }
+};
+const rememberEndpoint = (e: string | null) => {
+  try {
+    if (e) localStorage.setItem(SAVED_KEY, e);
+    else localStorage.removeItem(SAVED_KEY);
+  } catch {
+    /* fine without it */
+  }
+};
 // The key also names who is signed in, so a browser handed to someone else is saved to them (the session is read locally, no request).
 async function savedKey(endpoint: string): Promise<string | null> {
-  try { const { data } = await createClient().auth.getSession(); return data.session?.user.id ? `${data.session.user.id}|${endpoint}` : null; } catch { return null; }
+  try {
+    const { data } = await createClient().auth.getSession();
+    return data.session?.user.id ? `${data.session.user.id}|${endpoint}` : null;
+  } catch {
+    return null;
+  }
 }
 
 export async function disablePush(): Promise<void> {
@@ -96,5 +117,7 @@ export async function syncPush(): Promise<void> {
     const key = await savedKey(sub.endpoint);
     if (key && savedEndpoint() === key) return;
     if ((await save(sub)).ok) rememberEndpoint(key);
-  } catch { /* nothing to sync */ }
+  } catch {
+    /* nothing to sync */
+  }
 }

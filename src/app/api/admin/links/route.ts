@@ -8,7 +8,9 @@ import { strictUser } from '@/lib/supabase/localAuth';
 
 async function authorize() {
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   if (!hasCapability(roles ?? [], 'manage_roles')) return { error: NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 }) };
@@ -33,15 +35,28 @@ export async function POST(request: Request) {
   const slug = validateSlug(String(body.slug ?? ''));
   const destination = validateDestination(String(body.destination ?? ''));
   if (!slug) {
-    const raw = String(body.slug ?? '').trim().toLowerCase();
+    const raw = String(body.slug ?? '')
+      .trim()
+      .toLowerCase();
     return NextResponse.json({ error: RESERVED_SLUGS.has(raw) ? `"${raw}" is already used by the site.` : 'Use 1–48 letters, numbers, dashes or underscores.' }, { status: 400 });
   }
   if (!destination) return NextResponse.json({ error: 'Destination must be a full http(s) link or a path starting with /.' }, { status: 400 });
 
   const svc = createServiceClient();
-  const { data, error } = await svc.from('short_links')
-    .insert({ slug, destination, note: String(body.note ?? '').trim().slice(0, 200) || null, hide_from_search: body.hide_from_search !== false, created_by: auth.user!.id })
-    .select('id, slug, destination, note, clicks, is_active, hide_from_search, created_at').single();
+  const { data, error } = await svc
+    .from('short_links')
+    .insert({
+      slug,
+      destination,
+      note:
+        String(body.note ?? '')
+          .trim()
+          .slice(0, 200) || null,
+      hide_from_search: body.hide_from_search !== false,
+      created_by: auth.user!.id,
+    })
+    .select('id, slug, destination, note, clicks, is_active, hide_from_search, created_at')
+    .single();
   if (error) {
     if (error.code === '23505') return NextResponse.json({ error: 'That short link already exists.' }, { status: 409 });
     return NextResponse.json({ error: 'Failed to create link.' }, { status: 500 });
@@ -73,13 +88,18 @@ export async function PUT(request: Request) {
   if (body.hide_from_search !== undefined) patch.hide_from_search = !!body.hide_from_search;
 
   const svc = createServiceClient();
-  const { data, error } = await svc.from('short_links').update(patch).eq('id', id)
-    .select('id, slug, destination, note, clicks, is_active, hide_from_search, created_at').single();
+  const { data, error } = await svc.from('short_links').update(patch).eq('id', id).select('id, slug, destination, note, clicks, is_active, hide_from_search, created_at').single();
   if (error) {
     if (error.code === '23505') return NextResponse.json({ error: 'That short link already exists.' }, { status: 409 });
     return NextResponse.json({ error: 'Failed to update link.' }, { status: 500 });
   }
-  await logAudit(svc, { actorId: auth.user!.id, action: 'update', entityType: 'short link', entityId: id, summary: `Short link /${data.slug} → ${data.destination}${data.is_active ? '' : ' (disabled)'}${data.hide_from_search ? '' : ' (searchable)'}` });
+  await logAudit(svc, {
+    actorId: auth.user!.id,
+    action: 'update',
+    entityType: 'short link',
+    entityId: id,
+    summary: `Short link /${data.slug} → ${data.destination}${data.is_active ? '' : ' (disabled)'}${data.hide_from_search ? '' : ' (searchable)'}`,
+  });
   return NextResponse.json({ link: data });
 }
 

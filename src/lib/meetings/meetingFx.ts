@@ -20,26 +20,39 @@ export function useFxSender(meetingId: string, enabled = true) {
     const channel = supabase.channel(channelName(meetingId));
     channel.subscribe();
     channelRef.current = channel;
-    return () => { clearTimeout(timer.current); timer.current = undefined; pending.current = { r: {}, s: [] }; channelRef.current = null; void supabase.removeChannel(channel); };
+    return () => {
+      clearTimeout(timer.current);
+      timer.current = undefined;
+      pending.current = { r: {}, s: [] };
+      channelRef.current = null;
+      void supabase.removeChannel(channel);
+    };
   }, [meetingId, enabled]);
   const schedule = useCallback(() => {
     if (timer.current) return;
     timer.current = setTimeout(() => {
       timer.current = undefined;
-      const { r, s } = pending.current; pending.current = { r: {}, s: [] };
+      const { r, s } = pending.current;
+      pending.current = { r: {}, s: [] };
       if (!Object.keys(r).length && !s.length) return;
       const msg: Fx = { b: newId(), ...(Object.keys(r).length ? { r } : {}), ...(s.length ? { s } : {}) };
       void channelRef.current?.send({ type: 'broadcast', event: 'fx', payload: msg });
     }, FX_EVERY);
   }, []);
-  const react = useCallback((emoji: string) => {
-    pending.current.r[emoji] = Math.min(FX_MAX, (pending.current.r[emoji] ?? 0) + 1);
-    schedule();
-  }, [schedule]);
-  const sticker = useCallback((emoji: string, x: number, y: number) => {
-    if (pending.current.s.length < FX_MAX_STICKERS) pending.current.s.push({ e: emoji, x, y });
-    schedule();
-  }, [schedule]);
+  const react = useCallback(
+    (emoji: string) => {
+      pending.current.r[emoji] = Math.min(FX_MAX, (pending.current.r[emoji] ?? 0) + 1);
+      schedule();
+    },
+    [schedule],
+  );
+  const sticker = useCallback(
+    (emoji: string, x: number, y: number) => {
+      if (pending.current.s.length < FX_MAX_STICKERS) pending.current.s.push({ e: emoji, x, y });
+      schedule();
+    },
+    [schedule],
+  );
   return { react, sticker };
 }
 
@@ -51,8 +64,14 @@ export function useFxListener(meetingId: string | null | undefined, onFx: (raw: 
     if (!meetingId || !enabled) return;
     const supabase = createClient();
     const channel = supabase.channel(channelName(meetingId));
-    channel.on('broadcast', { event: 'fx' }, ({ payload }) => { if (!document.hidden) ref.current(payload); }).subscribe();
-    return () => { void supabase.removeChannel(channel); };
+    channel
+      .on('broadcast', { event: 'fx' }, ({ payload }) => {
+        if (!document.hidden) ref.current(payload);
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
   }, [meetingId, enabled]);
 }
 
@@ -73,39 +92,73 @@ export function useReactionLedger(meetingId: string, onSaved: () => void, enable
     const t: Record<string, number> = {};
     for (const b of batches.current) for (const [e, n] of Object.entries(b.r)) t[e] = (t[e] ?? 0) + n;
     setUnsaved(t);
-    try { if (batches.current.length) localStorage.setItem(key, JSON.stringify(batches.current)); else localStorage.removeItem(key); } catch { /* storage unavailable: counts are still sent every 10 s */ }
+    try {
+      if (batches.current.length) localStorage.setItem(key, JSON.stringify(batches.current));
+      else localStorage.removeItem(key);
+    } catch {
+      /* storage unavailable: counts are still sent every 10 s */
+    }
   }, [key]);
 
-  const save = useCallback(async (leaving = false) => {
-    if (saving.current || !batches.current.length) return;
-    saving.current = true;
-    const sent = batches.current.slice(0, leaving ? 300 : 2000);
-    try {
-      const res = await fetch(`/api/meetings/${meetingId}/reactions`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ batches: sent }), keepalive: leaving });
-      if (res.ok) {
-        const done = new Set(sent.map((b) => b.b));
-        batches.current = batches.current.filter((b) => !done.has(b.b));
-        publish(); onSavedRef.current();
+  const save = useCallback(
+    async (leaving = false) => {
+      if (saving.current || !batches.current.length) return;
+      saving.current = true;
+      const sent = batches.current.slice(0, leaving ? 300 : 2000);
+      try {
+        const res = await fetch(`/api/meetings/${meetingId}/reactions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ batches: sent }),
+          keepalive: leaving,
+        });
+        if (res.ok) {
+          const done = new Set(sent.map((b) => b.b));
+          batches.current = batches.current.filter((b) => !done.has(b.b));
+          publish();
+          onSavedRef.current();
+        }
+      } catch {
+        /* tried again at the next save */
       }
-    } catch { /* tried again at the next save */ }
-    saving.current = false;
-  }, [meetingId, publish]);
+      saving.current = false;
+    },
+    [meetingId, publish],
+  );
 
   useEffect(() => {
     if (!enabled) return;
-    try { const old = JSON.parse(localStorage.getItem(key) ?? '[]'); if (Array.isArray(old)) batches.current = old.filter((b) => b && typeof b.b === 'string' && b.r && typeof b.r === 'object'); } catch { /* none */ }
-    publish(); void save();
-    const timer = setInterval(() => { if (!document.hidden) void save(); }, 10_000);
-    const leave = () => { if (document.hidden) void save(true); };
+    try {
+      const old = JSON.parse(localStorage.getItem(key) ?? '[]');
+      if (Array.isArray(old)) batches.current = old.filter((b) => b && typeof b.b === 'string' && b.r && typeof b.r === 'object');
+    } catch {
+      /* none */
+    }
+    publish();
+    void save();
+    const timer = setInterval(() => {
+      if (!document.hidden) void save();
+    }, 10_000);
+    const leave = () => {
+      if (document.hidden) void save(true);
+    };
     const bye = () => void save(true);
     document.addEventListener('visibilitychange', leave);
     window.addEventListener('pagehide', bye);
-    return () => { clearInterval(timer); document.removeEventListener('visibilitychange', leave); window.removeEventListener('pagehide', bye); };
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', leave);
+      window.removeEventListener('pagehide', bye);
+    };
   }, [enabled, key, publish, save]);
 
-  const add = useCallback((b: string, r: Record<string, number>) => {
-    if (batches.current.some((x) => x.b === b)) return;
-    batches.current.push({ b, r }); publish();
-  }, [publish]);
+  const add = useCallback(
+    (b: string, r: Record<string, number>) => {
+      if (batches.current.some((x) => x.b === b)) return;
+      batches.current.push({ b, r });
+      publish();
+    },
+    [publish],
+  );
   return { unsaved, add };
 }

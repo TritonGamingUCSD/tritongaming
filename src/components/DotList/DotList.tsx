@@ -18,7 +18,10 @@ export default function DotList({ items }: { items: Array<string | null | undefi
       {list.map((item, i) => (
         <Fragment key={`${item}-${i}`}>
           {i > 0 && ' '}
-          <span className={styles.item}>{noBreakHyphens(item)}{i < list.length - 1 ? ' ·' : ''}</span>
+          <span className={styles.item}>
+            {noBreakHyphens(item)}
+            {i < list.length - 1 ? ' ·' : ''}
+          </span>
         </Fragment>
       ))}
     </>

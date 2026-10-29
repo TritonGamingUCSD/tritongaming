@@ -13,7 +13,10 @@ import styles from './recap.module.css';
 export const metadata = { title: 'After the Event' };
 export const dynamic = 'force-dynamic';
 
-interface Album { title: string; url: string }
+interface Album {
+  title: string;
+  url: string;
+}
 
 export default async function RecapPage({ params }: { params: Promise<{ eventId: string }> }) {
   const { eventId } = await params;
@@ -43,7 +46,9 @@ export default async function RecapPage({ params }: { params: Promise<{ eventId:
 
   return (
     <div className={styles.page}>
-      <Link href="/portal/tickets" className={styles.back}>← Back to My Tickets</Link>
+      <Link href="/portal/tickets" className={styles.back}>
+        ← Back to My Tickets
+      </Link>
       <header className={styles.hero}>
         <p className={styles.kicker}>Thanks for coming!</p>
         <h1 className={styles.title}>{event.title}</h1>
@@ -55,11 +60,19 @@ export default async function RecapPage({ params }: { params: Promise<{ eventId:
 
       {showPoints && ticket && pointsEarned > 0 && (
         <section className={styles.card}>
-          <span className={styles.icon}><Award size={18} strokeWidth={1.75} aria-hidden="true" /></span>
+          <span className={styles.icon}>
+            <Award size={18} strokeWidth={1.75} aria-hidden="true" />
+          </span>
           <div>
-            <h2 className={styles.cardTitle}>You earned {pointsEarned} point{pointsEarned === 1 ? '' : 's'}</h2>
-            <p className={styles.text}>Your balance is now {balance.toLocaleString()} points.{' '}
-              <Link href="/portal/rewards" className={styles.link}>Browse rewards</Link></p>
+            <h2 className={styles.cardTitle}>
+              You earned {pointsEarned} point{pointsEarned === 1 ? '' : 's'}
+            </h2>
+            <p className={styles.text}>
+              Your balance is now {balance.toLocaleString()} points.{' '}
+              <Link href="/portal/rewards" className={styles.link}>
+                Browse rewards
+              </Link>
+            </p>
           </div>
         </section>
       )}
@@ -74,7 +87,9 @@ export default async function RecapPage({ params }: { params: Promise<{ eventId:
       )}
 
       <section className={styles.card}>
-        <span className={styles.icon}><Images size={18} strokeWidth={1.75} aria-hidden="true" /></span>
+        <span className={styles.icon}>
+          <Images size={18} strokeWidth={1.75} aria-hidden="true" />
+        </span>
         <div className={styles.grow}>
           <h2 className={styles.cardTitle}>Photos</h2>
           {albums.length === 0 ? (
@@ -102,13 +117,17 @@ export default async function RecapPage({ params }: { params: Promise<{ eventId:
 
       {(upcoming ?? []).length > 0 && (
         <section className={styles.card}>
-          <span className={styles.icon}><CalendarDays size={18} strokeWidth={1.75} aria-hidden="true" /></span>
+          <span className={styles.icon}>
+            <CalendarDays size={18} strokeWidth={1.75} aria-hidden="true" />
+          </span>
           <div className={styles.grow}>
             <h2 className={styles.cardTitle}>Up next</h2>
             <ul className={styles.next}>
               {(upcoming ?? []).map((e) => (
                 <li key={e.id}>
-                  <Link href={`/events/${e.slug ?? e.id}`} className={styles.link}>{e.title}</Link>
+                  <Link href={`/events/${e.slug ?? e.id}`} className={styles.link}>
+                    {e.title}
+                  </Link>
                   <span className={styles.text}> · {formatPacificDate(e.start_date)}</span>
                 </li>
               ))}

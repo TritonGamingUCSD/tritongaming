@@ -23,7 +23,13 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <SmoothScroll />
-      <NavBar announcement={<Suspense fallback={null}><AnnouncementBanner /></Suspense>} />
+      <NavBar
+        announcement={
+          <Suspense fallback={null}>
+            <AnnouncementBanner />
+          </Suspense>
+        }
+      />
       <main>{children}</main>
       <Suspense fallback={null}>
         <Footer />

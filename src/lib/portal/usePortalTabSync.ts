@@ -10,23 +10,39 @@ import { MAIN_TABS } from '@/lib/portal/sections';
 //
 // A section's first tab is the section itself: /portal/<section> with no tab, so the main page keeps the short address.
 // Sections whose first tab depends on the person pass a function that says which one it is.
-const MAIN_TAB = MAIN_TABS;   // defined with each section in sections.ts
+const MAIN_TAB = MAIN_TABS; // defined with each section in sections.ts
 
 export function usePortalTabSync(sectionId: string, firstTab?: () => string | undefined) {
   const setParams = usePortalParams();
   const firstRef = useRef(firstTab);
   firstRef.current = firstTab;
 
-  return useCallback((tab: string, subtab?: string | null) => {
-    const main = firstRef.current ? firstRef.current() : MAIN_TAB[sectionId];
-    const isMain = tab === main && !subtab;
-    setParams({
-      section: sectionId,
-      tab: isMain ? null : tab,
-      subtab: subtab ?? null,
-      block: null, id: null, q: null, status: null, view: null, detail: null, atype: null, aq: null, aaction: null, arange: null, afrom: null, ato: null, ticket: null, plan: null,
-    });
-  }, [setParams, sectionId]);
+  return useCallback(
+    (tab: string, subtab?: string | null) => {
+      const main = firstRef.current ? firstRef.current() : MAIN_TAB[sectionId];
+      const isMain = tab === main && !subtab;
+      setParams({
+        section: sectionId,
+        tab: isMain ? null : tab,
+        subtab: subtab ?? null,
+        block: null,
+        id: null,
+        q: null,
+        status: null,
+        view: null,
+        detail: null,
+        atype: null,
+        aq: null,
+        aaction: null,
+        arange: null,
+        afrom: null,
+        ato: null,
+        ticket: null,
+        plan: null,
+      });
+    },
+    [setParams, sectionId],
+  );
 }
 
 // Where a section should start: read from the URL each time the section mounts (not from props the

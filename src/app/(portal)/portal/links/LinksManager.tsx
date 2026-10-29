@@ -14,7 +14,16 @@ import { showToast } from '@/lib/ui/toast';
 import IconButton from '@/components/ui/IconButton';
 import styles from './links.module.css';
 
-interface ShortLink { id: string; slug: string; destination: string; note: string | null; clicks: number; is_active: boolean; hide_from_search: boolean; created_at: string }
+interface ShortLink {
+  id: string;
+  slug: string;
+  destination: string;
+  note: string | null;
+  clicks: number;
+  is_active: boolean;
+  hide_from_search: boolean;
+  created_at: string;
+}
 
 // Short links like tritongaming.org/linktree → any URL. Anyone who can manage
 // events can create them; every change is written to the audit log.
@@ -30,27 +39,47 @@ export default function LinksManager() {
   const [editing, setEditing] = useState<{ id: string; slug: string; destination: string; note: string } | null>(null);
   const [origin, setOrigin] = useState('');
 
-  useEffect(() => { setOrigin(window.location.origin); }, []);
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const load = useCallback(async () => {
     try {
       const res = await fetch('/api/admin/links');
       const json = await res.json();
-      if (!res.ok) { setError(json.error || 'Failed to load links.'); return; }
+      if (!res.ok) {
+        setError(json.error || 'Failed to load links.');
+        return;
+      }
       setLinks(json.links);
-    } catch { setError('Network error loading links.'); }
+    } catch {
+      setError('Network error loading links.');
+    }
   }, []);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    load();
+  }, [load]);
 
   async function create(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true); setError('');
-    const res = await fetch('/api/admin/links', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ slug, destination, note, hide_from_search: hide }) });
+    setSaving(true);
+    setError('');
+    const res = await fetch('/api/admin/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slug, destination, note, hide_from_search: hide }),
+    });
     const json = await res.json().catch(() => ({}));
     setSaving(false);
-    if (!res.ok) { setError(json.error || 'Failed to create link.'); return; }
+    if (!res.ok) {
+      setError(json.error || 'Failed to create link.');
+      return;
+    }
     setLinks((l) => [json.link, ...(l ?? [])]);
-    setSlug(''); setDestination(''); setNote(''); setHide(true);
+    setSlug('');
+    setDestination('');
+    setNote('');
+    setHide(true);
     showToast('Short link created');
   }
 
@@ -58,7 +87,10 @@ export default function LinksManager() {
     setError('');
     const res = await fetch('/api/admin/links', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...patch }) });
     const json = await res.json().catch(() => ({}));
-    if (!res.ok) { setError(json.error || 'Failed to update link.'); return false; }
+    if (!res.ok) {
+      setError(json.error || 'Failed to update link.');
+      return false;
+    }
     setLinks((l) => (l ?? []).map((x) => (x.id === id ? json.link : x)));
     showToast(okMsg);
     return true;
@@ -67,7 +99,10 @@ export default function LinksManager() {
   async function remove(l: ShortLink) {
     if (!(await confirmHold({ title: `Delete /${l.slug}?`, message: 'Anyone with this link will land on a "not found" page.', confirmLabel: 'Hold to delete' }))) return;
     const res = await fetch(`/api/admin/links?id=${l.id}`, { method: 'DELETE' });
-    if (!res.ok) { setError('Failed to delete link.'); return; }
+    if (!res.ok) {
+      setError('Failed to delete link.');
+      return;
+    }
     setLinks((x) => (x ?? []).filter((y) => y.id !== l.id));
     showToast('Short link deleted');
   }
@@ -77,7 +112,9 @@ export default function LinksManager() {
       await navigator.clipboard.writeText(`${origin}/${l.slug}`);
       setCopied(l.id);
       setTimeout(() => setCopied((c) => (c === l.id ? null : c)), 1500);
-    } catch { /* clipboard unavailable */ }
+    } catch {
+      /* clipboard unavailable */
+    }
   }
 
   const host = origin.replace(/^https?:\/\//, '');
@@ -106,11 +143,16 @@ export default function LinksManager() {
             <span className={styles.label}>Note (optional)</span>
             <Input value={note} onChange={(e) => setNote(e.target.value)} placeholder="Where this is used, e.g. Instagram bio" maxLength={200} />
           </label>
-          <Button type="submit" loading={saving} disabled={!slug.trim() || !destination.trim()}>Create link</Button>
+          <Button type="submit" loading={saving} disabled={!slug.trim() || !destination.trim()}>
+            Create link
+          </Button>
         </div>
         <label className={styles.hideRow}>
           <input type="checkbox" checked={hide} onChange={(e) => setHide(e.target.checked)} />
-          <span>Keep this link out of Google and other search engines <span className={styles.hideHint}>(recommended. People can still use the link; the page it points to is not affected.)</span></span>
+          <span>
+            Keep this link out of Google and other search engines{' '}
+            <span className={styles.hideHint}>(recommended. People can still use the link; the page it points to is not affected.)</span>
+          </span>
         </label>
       </form>
 
@@ -119,7 +161,10 @@ export default function LinksManager() {
       {links === null ? (
         <Loading variant="inline" label="Loading…" />
       ) : links.length === 0 ? (
-        <div className={styles.empty}><Link2 size={32} strokeWidth={1.25} aria-hidden="true" /><p>No short links yet.</p></div>
+        <div className={styles.empty}>
+          <Link2 size={32} strokeWidth={1.25} aria-hidden="true" />
+          <p>No short links yet.</p>
+        </div>
       ) : (
         <ul className={styles.list}>
           {links.map((l) => (
@@ -131,29 +176,56 @@ export default function LinksManager() {
                   <Input value={editing.destination} onChange={(e) => setEditing({ ...editing, destination: e.target.value })} aria-label="Destination" />
                   <Input value={editing.note} onChange={(e) => setEditing({ ...editing, note: e.target.value })} placeholder="Note" aria-label="Note" />
                   <div className={styles.editActions}>
-                    <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>{editDirty ? 'Close without saving' : 'Close'}</Button>
-                    <SaveBar dirty={editDirty} saving={saving} message={`Unsaved changes to /${l.slug}`}
-                      onSave={async () => { if (await update(l.id, { slug: editing.slug, destination: editing.destination, note: editing.note }, 'Link updated')) setEditing(null); }}
-                      onDiscard={() => setEditing({ id: l.id, slug: l.slug, destination: l.destination, note: l.note ?? '' })} />
+                    <Button size="sm" variant="ghost" onClick={() => setEditing(null)}>
+                      {editDirty ? 'Close without saving' : 'Close'}
+                    </Button>
+                    <SaveBar
+                      dirty={editDirty}
+                      saving={saving}
+                      message={`Unsaved changes to /${l.slug}`}
+                      onSave={async () => {
+                        if (await update(l.id, { slug: editing.slug, destination: editing.destination, note: editing.note }, 'Link updated')) setEditing(null);
+                      }}
+                      onDiscard={() => setEditing({ id: l.id, slug: l.slug, destination: l.destination, note: l.note ?? '' })}
+                    />
                   </div>
                 </div>
               ) : (
                 <>
                   <div className={styles.main}>
                     <div className={styles.slug}>/{l.slug}</div>
-                    <a href={l.destination} target="_blank" rel="noopener noreferrer" className={styles.dest}>{l.destination} <ExternalLink size={11} aria-hidden="true" /></a>
+                    <a href={l.destination} target="_blank" rel="noopener noreferrer" className={styles.dest}>
+                      {l.destination} <ExternalLink size={11} aria-hidden="true" />
+                    </a>
                     {l.note && <div className={styles.note}>{l.note}</div>}
-                    <button type="button" role="switch" aria-checked={!l.hide_from_search} className={styles.searchSwitch}
-                      onClick={() => update(l.id, { hide_from_search: !l.hide_from_search }, l.hide_from_search ? 'Search engines may now list this link' : 'Search engines are asked not to list this link')}>
-                      <span className={styles.track} aria-hidden="true"><span className={styles.thumb} /></span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={!l.hide_from_search}
+                      className={styles.searchSwitch}
+                      onClick={() =>
+                        update(
+                          l.id,
+                          { hide_from_search: !l.hide_from_search },
+                          l.hide_from_search ? 'Search engines may now list this link' : 'Search engines are asked not to list this link',
+                        )
+                      }
+                    >
+                      <span className={styles.track} aria-hidden="true">
+                        <span className={styles.thumb} />
+                      </span>
                       <span>{l.hide_from_search ? 'Hidden from Google and other search engines' : 'Can appear in Google and other search engines'}</span>
                     </button>
                   </div>
-                  <div className={styles.clicks} title="Total clicks"><strong>{l.clicks.toLocaleString()}</strong> clicks</div>
+                  <div className={styles.clicks} title="Total clicks">
+                    <strong>{l.clicks.toLocaleString()}</strong> clicks
+                  </div>
                   <div className={styles.actions}>
                     <IconButton kind="copy" label={`Copy link /${l.slug}`} onClick={() => copy(l)} icon={copied === l.id ? <Check size={16} aria-hidden="true" /> : undefined} />
                     <IconButton kind="edit" label={`Edit /${l.slug}`} onClick={() => setEditing({ id: l.id, slug: l.slug, destination: l.destination, note: l.note ?? '' })} />
-                    <button type="button" className={styles.toggle} onClick={() => update(l.id, { is_active: !l.is_active }, l.is_active ? 'Link disabled' : 'Link enabled')}>{l.is_active ? 'Link on' : 'Link off'}</button>
+                    <button type="button" className={styles.toggle} onClick={() => update(l.id, { is_active: !l.is_active }, l.is_active ? 'Link disabled' : 'Link enabled')}>
+                      {l.is_active ? 'Link on' : 'Link off'}
+                    </button>
                     <IconButton kind="delete" label={`Delete /${l.slug}`} onClick={() => remove(l)} />
                   </div>
                 </>

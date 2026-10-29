@@ -54,7 +54,7 @@ function lookup(mapping: KvRow[] | undefined, key: string | null | undefined): s
 // to pick).
 export function buildCheckinFormUrl(
   config: CheckinFormConfig,
-  opts: { eventTitle: string; year: string | null; classOf?: number | null; roles: AppRole[]; foodItem: string | null }
+  opts: { eventTitle: string; year: string | null; classOf?: number | null; roles: AppRole[]; foodItem: string | null },
 ): string | null {
   if (!config.form_url?.trim()) return null;
 

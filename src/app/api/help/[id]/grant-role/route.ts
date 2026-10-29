@@ -36,9 +36,25 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (error) return NextResponse.json({ error: 'Couldn’t give the role.' }, { status: 500 });
   }
   const { data: who } = await auth.svc.from('profiles').select('display_name').eq('id', t.user_id).maybeSingle();
-  await auth.svc.from('help_messages').insert({ ticket_id: id, author_id: auth.user.id, body: `Approved: you are now ${label}. It shows up the next time you open the portal.`, attachments: [] });
-  await auth.svc.from('help_tickets').update({ status: 'resolved', resolved_at: new Date().toISOString(), updated_at: new Date().toISOString(), last_from_user: false, assigned_to: t.assigned_to ?? auth.user.id }).eq('id', id);
-  await notify(auth.svc, [t.user_id], { title: `Role approved: ${label}`, body: 'Your role request was approved. Reload the portal to see your new tools.', href: `/portal/help?ticket=${id}` });
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'roles', entityId: t.user_id, summary: `Approved a role request: "${who?.display_name ?? 'someone'}" is now ${label}`, details: { ticket_id: id, role, division_id: divisionId } });
+  await auth.svc
+    .from('help_messages')
+    .insert({ ticket_id: id, author_id: auth.user.id, body: `Approved: you are now ${label}. It shows up the next time you open the portal.`, attachments: [] });
+  await auth.svc
+    .from('help_tickets')
+    .update({ status: 'resolved', resolved_at: new Date().toISOString(), updated_at: new Date().toISOString(), last_from_user: false, assigned_to: t.assigned_to ?? auth.user.id })
+    .eq('id', id);
+  await notify(auth.svc, [t.user_id], {
+    title: `Role approved: ${label}`,
+    body: 'Your role request was approved. Reload the portal to see your new tools.',
+    href: `/portal/help?ticket=${id}`,
+  });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'update',
+    entityType: 'roles',
+    entityId: t.user_id,
+    summary: `Approved a role request: "${who?.display_name ?? 'someone'}" is now ${label}`,
+    details: { ticket_id: id, role, division_id: divisionId },
+  });
   return NextResponse.json({ ok: true });
 }

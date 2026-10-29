@@ -18,13 +18,5 @@ export default async function AnnouncementBanner() {
   if (!content.enabled || !content.text) return null;
 
   const tone: BannerTone = (TONES as readonly string[]).includes(content.color ?? '') ? (content.color as BannerTone) : 'navy';
-  return (
-    <AnnouncementClient
-      text={content.text}
-      link={content.link}
-      linkText={content.link_text}
-      tone={tone}
-      label={content.label || 'News'}
-    />
-  );
+  return <AnnouncementClient text={content.text} link={content.link} linkText={content.link_text} tone={tone} label={content.label || 'News'} />;
 }

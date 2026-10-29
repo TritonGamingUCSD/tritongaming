@@ -12,34 +12,70 @@ import { unsubscribeUrl } from './unsubscribe';
 import { sendOne } from './mailer';
 import { senderForKind } from './senders';
 
-export const BATCH = 40;   // how many emails one request sends (a serverless request is short); the page calls again for the next batch
+export const BATCH = 40; // how many emails one request sends (a serverless request is short); the page calls again for the next batch
 
 /** Who may write and send event emails: admins, and anyone granted "Send event emails" (directly or through a group). */
 export async function authorizeEventEmail() {
   const userClient = await createClient();
-  const { data: { user } } = await strictUser(userClient);
+  const {
+    data: { user },
+  } = await strictUser(userClient);
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const svc = createServiceClient();
   const { data: roles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
-  if (!hasCapability(grants, 'send_event_emails')) return { error: NextResponse.json({ error: 'Only admins and people granted “Send event emails” can send event emails.' }, { status: 403 }) };
+  if (!hasCapability(grants, 'send_event_emails'))
+    return { error: NextResponse.json({ error: 'Only admins and people granted “Send event emails” can send event emails.' }, { status: 403 }) };
   return { user, svc };
 }
 
 export async function loadEvent(svc: SupabaseClient, id: string): Promise<(EventForEmail & { id: string; is_published: boolean }) | null> {
-  const { data } = await svc.from('events').select('id, title, start_date, end_date, location, venue_name, is_online, banner_url, flyer_url, slug, is_published, description, venue_address, venue_notes, schedule, sponsors, day_hours, audience, ticket_price').eq('id', id).maybeSingle();
+  const { data } = await svc
+    .from('events')
+    .select(
+      'id, title, start_date, end_date, location, venue_name, is_online, banner_url, flyer_url, slug, is_published, description, venue_address, venue_notes, schedule, sponsors, day_hours, audience, ticket_price',
+    )
+    .eq('id', id)
+    .maybeSingle();
   if (!data) return null;
-  return { id: data.id as string, title: data.title as string, start_date: data.start_date as string, end_date: data.end_date as string | null, is_published: !!data.is_published,
-    location: ((data.venue_name as string | null) || (data.location as string | null)) ?? null, is_online: !!data.is_online, cover_url: ((data.flyer_url as string | null) || (data.banner_url as string | null)) ?? null, slug: data.slug as string | null,
-    description: data.description as string | null, venue_address: data.venue_address as string | null, venue_notes: data.venue_notes as string | null,
+  return {
+    id: data.id as string,
+    title: data.title as string,
+    start_date: data.start_date as string,
+    end_date: data.end_date as string | null,
+    is_published: !!data.is_published,
+    location: ((data.venue_name as string | null) || (data.location as string | null)) ?? null,
+    is_online: !!data.is_online,
+    cover_url: ((data.flyer_url as string | null) || (data.banner_url as string | null)) ?? null,
+    slug: data.slug as string | null,
+    description: data.description as string | null,
+    venue_address: data.venue_address as string | null,
+    venue_notes: data.venue_notes as string | null,
     schedule: Array.isArray(data.schedule) ? (data.schedule as { time?: string; title?: string }[]).map((s) => ({ time: String(s.time ?? ''), title: String(s.title ?? '') })) : [],
-    sponsors: Array.isArray(data.sponsors) ? (data.sponsors as { name?: string; url?: string }[]).map((s) => ({ name: String(s.name ?? ''), url: s.url ? String(s.url) : undefined })).filter((s) => s.name) : [],
-    day_hours: Array.isArray(data.day_hours) ? (data.day_hours as { day?: string; start?: string; end?: string }[]).map((h) => ({ day: String(h.day ?? ''), start: String(h.start ?? ''), end: String(h.end ?? '') })) : [],
-    audience: data.audience as string | null, ticket_price: data.ticket_price === null ? null : Number(data.ticket_price), pageUrl: `${siteUrl()}/events/${(data.slug as string | null) || id}` };
+    sponsors: Array.isArray(data.sponsors)
+      ? (data.sponsors as { name?: string; url?: string }[]).map((s) => ({ name: String(s.name ?? ''), url: s.url ? String(s.url) : undefined })).filter((s) => s.name)
+      : [],
+    day_hours: Array.isArray(data.day_hours)
+      ? (data.day_hours as { day?: string; start?: string; end?: string }[]).map((h) => ({ day: String(h.day ?? ''), start: String(h.start ?? ''), end: String(h.end ?? '') }))
+      : [],
+    audience: data.audience as string | null,
+    ticket_price: data.ticket_price === null ? null : Number(data.ticket_price),
+    pageUrl: `${siteUrl()}/events/${(data.slug as string | null) || id}`,
+  };
 }
 
-export interface Person { id: string; name: string; email: string; ticketId: string }
-export interface Audience { people: Person[]; ticketHolders: number; skippedOptOut: number; skippedNoEmail: number }
+export interface Person {
+  id: string;
+  name: string;
+  email: string;
+  ticketId: string;
+}
+export interface Audience {
+  people: Person[];
+  ticketHolders: number;
+  skippedOptOut: number;
+  skippedNoEmail: number;
+}
 
 /** The people to email for an event: everyone with an active ticket (one email each), minus those who opted out of this kind (or of all club emails) and those with no address. Sorted by id so a
  *  batch cursor stays put between calls. */
@@ -50,17 +86,27 @@ export async function audienceFor(svc: SupabaseClient, eventId: string, kind: Em
   const ids = [...byUser.keys()].sort();
   if (!ids.length) return { people: [], ticketHolders: 0, skippedOptOut: 0, skippedNoEmail: 0 };
   const [{ data: profiles }, emails] = await Promise.all([
-    svc.from('profiles').select(`id, display_name, preferred_email, ${EMAIL_COLUMNS.join(', ')}`).in('id', ids),
+    svc
+      .from('profiles')
+      .select(`id, display_name, preferred_email, ${EMAIL_COLUMNS.join(', ')}`)
+      .in('id', ids),
     authEmails(svc, new Set(ids)),
   ]);
   const prof = new Map((profiles ?? []).map((p) => [(p as unknown as { id: string }).id, p as unknown as Record<string, unknown>]));
   const people: Person[] = [];
-  let skippedOptOut = 0, skippedNoEmail = 0;
+  let skippedOptOut = 0,
+    skippedNoEmail = 0;
   for (const id of ids) {
     const p = prof.get(id) ?? {};
-    if (!wantsEmail(p, kind)) { skippedOptOut++; continue; }
+    if (!wantsEmail(p, kind)) {
+      skippedOptOut++;
+      continue;
+    }
     const email = (typeof p.preferred_email === 'string' && p.preferred_email.includes('@') ? p.preferred_email : emails.get(id)) ?? '';
-    if (!email) { skippedNoEmail++; continue; }
+    if (!email) {
+      skippedNoEmail++;
+      continue;
+    }
     people.push({ id, name: (p.display_name as string | null) || 'there', email, ticketId: byUser.get(id)! });
   }
   return { people, ticketHolders: ids.length, skippedOptOut, skippedNoEmail };
@@ -80,15 +126,38 @@ async function authEmails(svc: SupabaseClient, want: Set<string>): Promise<Map<s
 
 /** How many event emails went out in the last 24 hours, against the daily limit. */
 export async function sentLastDay(svc: SupabaseClient): Promise<number> {
-  const { data } = await svc.from('event_emails').select('sent').gte('sent_at', new Date(Date.now() - 24 * 3600_000).toISOString());
+  const { data } = await svc
+    .from('event_emails')
+    .select('sent')
+    .gte('sent_at', new Date(Date.now() - 24 * 3600_000).toISOString());
   return (data ?? []).reduce((n, r) => n + ((r.sent as number) ?? 0), 0);
 }
 export const quotaLeft = (used: number) => Math.max(0, EMAIL_DAILY_LIMIT - used);
 
-export function renderFor(opts: { event: EventForEmail; kind: EmailKind; subject: string; note: string; person: { id: string; ticketId: string | null }; test?: boolean; logoSrc?: string; showCover?: boolean }) {
+export function renderFor(opts: {
+  event: EventForEmail;
+  kind: EmailKind;
+  subject: string;
+  note: string;
+  person: { id: string; ticketId: string | null };
+  test?: boolean;
+  logoSrc?: string;
+  showCover?: boolean;
+}) {
   const site = siteUrl();
   const unsub = unsubscribeUrl(opts.person.id, opts.kind);
-  const o = { event: opts.event, kind: opts.kind, subject: opts.subject, note: opts.note, ticketUrl: opts.person.ticketId ? `${site}/portal/tickets?qr=${opts.person.ticketId}` : `${site}/portal/tickets`, unsubscribeUrl: unsub, settingsUrl: `${site}/portal/profile`, test: opts.test, logoSrc: opts.logoSrc, showCover: opts.showCover };
+  const o = {
+    event: opts.event,
+    kind: opts.kind,
+    subject: opts.subject,
+    note: opts.note,
+    ticketUrl: opts.person.ticketId ? `${site}/portal/tickets?qr=${opts.person.ticketId}` : `${site}/portal/tickets`,
+    unsubscribeUrl: unsub,
+    settingsUrl: `${site}/portal/profile`,
+    test: opts.test,
+    logoSrc: opts.logoSrc,
+    showCover: opts.showCover,
+  };
   return { html: eventEmailHtml(o), text: eventEmailText(o), unsubscribeUrl: unsub };
 }
 
@@ -98,13 +167,18 @@ export async function sendBatch(svc: SupabaseClient, send: { id: string; event_i
   if (!event) return { error: 'That event is gone.' as const };
   const { people } = await audienceFor(svc, send.event_id, send.kind);
   const slice = people.slice(from, from + BATCH);
-  let sent = 0, failed = 0;
+  let sent = 0,
+    failed = 0;
   for (const p of slice) {
     const r = renderFor({ event, kind: send.kind, subject: send.subject, note: send.note ?? '', person: { id: p.id, ticketId: p.ticketId }, showCover: send.cover });
     const res = await sendOne({ to: p.email, subject: send.subject, text: r.text, html: r.html, sender: senderForKind(send.kind), unsubscribeUrl: r.unsubscribeUrl });
-    if (res.ok) sent++; else failed++;
+    if (res.ok) sent++;
+    else failed++;
   }
   const { data: row } = await svc.from('event_emails').select('sent, failed').eq('id', send.id).maybeSingle();
-  await svc.from('event_emails').update({ sent: ((row?.sent as number) ?? 0) + sent, failed: ((row?.failed as number) ?? 0) + failed }).eq('id', send.id);
+  await svc
+    .from('event_emails')
+    .update({ sent: ((row?.sent as number) ?? 0) + sent, failed: ((row?.failed as number) ?? 0) + failed })
+    .eq('id', send.id);
   return { done: from + slice.length >= people.length, next: from + slice.length, total: people.length, sent, failed };
 }

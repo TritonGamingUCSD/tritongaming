@@ -15,7 +15,12 @@ export interface SectionTab<T extends string = string> {
 // Short joining words stay lower case, and a word that already has a capital inside it (TG, QR, iPhone) is left alone.
 const SMALL = new Set(['and', 'or', 'of', 'the', 'to', 'in', 'a', 'an', 'for', 'on', 'at', 'by']);
 export function titleCase(label: string): string {
-  return label.split(' ').map((w, i) => (w.length === 0 || /[A-Z]/.test(w.slice(1)) || /^[^a-zA-Z]/.test(w) ? w : i > 0 && SMALL.has(w.toLowerCase()) ? w.toLowerCase() : w[0].toUpperCase() + w.slice(1))).join(' ');
+  return label
+    .split(' ')
+    .map((w, i) =>
+      w.length === 0 || /[A-Z]/.test(w.slice(1)) || /^[^a-zA-Z]/.test(w) ? w : i > 0 && SMALL.has(w.toLowerCase()) ? w.toLowerCase() : w[0].toUpperCase() + w.slice(1),
+    )
+    .join(' ');
 }
 
 // The one tab bar for every portal section: sits directly under the section's
@@ -25,7 +30,11 @@ export function titleCase(label: string): string {
 // Pass only the tabs the viewer may see. Arrow keys / Home / End move between
 // tabs, as in a normal ARIA tablist.
 export default function SectionTabs<T extends string>({
-  tabs, value, onChange, variant = 'underline', label = 'Sections',
+  tabs,
+  value,
+  onChange,
+  variant = 'underline',
+  label = 'Sections',
 }: {
   tabs: SectionTab<T>[];
   value: T;
@@ -39,7 +48,9 @@ export default function SectionTabs<T extends string>({
   useEffect(() => {
     const el = bar.current;
     if (!el) return;
-    const check = () => { setOverflow(el.scrollWidth > el.clientWidth + 1); };
+    const check = () => {
+      setOverflow(el.scrollWidth > el.clientWidth + 1);
+    };
     check();
     const ro = new ResizeObserver(check);
     ro.observe(el);
@@ -78,7 +89,11 @@ export default function SectionTabs<T extends string>({
             onClick={() => onChange(t.id)}
             onKeyDown={(e) => onKeyDown(e, i)}
           >
-            {t.icon && variant !== 'segmented' && <span className={styles.icon} aria-hidden="true">{t.icon}</span>}
+            {t.icon && variant !== 'segmented' && (
+              <span className={styles.icon} aria-hidden="true">
+                {t.icon}
+              </span>
+            )}
             <span>{titleCase(t.label)}</span>
             {t.badge !== undefined && t.badge > 0 && <span className={styles.badge}>{t.badge}</span>}
             {t.count !== undefined && <span className={styles.count}>{t.count}</span>}

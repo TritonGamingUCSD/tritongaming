@@ -30,11 +30,7 @@ export async function getMyPointsData(userId: string) {
       .order('created_at', { ascending: false })
       .limit(50),
     supabase.from('point_transactions').select('amount, reversed_at').eq('user_id', userId),
-    supabase
-      .from('profiles')
-      .select('leaderboard_anonymous')
-      .eq('id', userId)
-      .single(),
+    supabase.from('profiles').select('leaderboard_anonymous').eq('id', userId).single(),
   ]);
 
   const rows = transactions ?? [];

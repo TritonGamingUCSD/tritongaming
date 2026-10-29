@@ -10,19 +10,27 @@ import { SELF_CHECKIN_MODES, SELF_CHECKIN_LABELS, type SelfCheckinMode } from '@
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   if (!hasCapability(roles ?? [], 'manage_points')) return NextResponse.json({ error: 'Only exec and admin can change self check-in.' }, { status: 403 });
 
-  const { mode } = await request.json().catch(() => ({})) as { mode?: SelfCheckinMode };
+  const { mode } = (await request.json().catch(() => ({}))) as { mode?: SelfCheckinMode };
   if (!mode || !SELF_CHECKIN_MODES.includes(mode)) return NextResponse.json({ error: 'Missing or invalid mode' }, { status: 400 });
 
   const svc = createServiceClient();
   const { data: event, error } = await svc.from('events').update({ self_checkin_mode: mode }).eq('id', id).select('title').maybeSingle();
   if (error || !event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
 
-  await logAudit(svc, { actorId: user.id, action: 'update', entityType: 'event', entityId: id, summary: `Self check-in set to "${SELF_CHECKIN_LABELS[mode]}" for "${event.title}"` });
+  await logAudit(svc, {
+    actorId: user.id,
+    action: 'update',
+    entityType: 'event',
+    entityId: id,
+    summary: `Self check-in set to "${SELF_CHECKIN_LABELS[mode]}" for "${event.title}"`,
+  });
   return NextResponse.json({ ok: true, mode });
 }

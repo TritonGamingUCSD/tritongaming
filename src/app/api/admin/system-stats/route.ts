@@ -49,7 +49,11 @@ async function fetchVercelStats() {
     const project = await projectRes.json();
     const deploymentsData = await deploymentsRes.json();
     const deployments: VercelDeployment[] = (deploymentsData.deployments ?? []).map((d: VercelDeployment) => ({
-      uid: d.uid, url: d.url, state: d.state, target: d.target, createdAt: d.createdAt,
+      uid: d.uid,
+      url: d.url,
+      state: d.state,
+      target: d.target,
+      createdAt: d.createdAt,
     }));
 
     return {
@@ -66,7 +70,9 @@ async function fetchVercelStats() {
 
 export async function GET() {
   const userClient = await createClient();
-  const { data: { user } } = await strictUser(userClient);
+  const {
+    data: { user },
+  } = await strictUser(userClient);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -79,33 +85,44 @@ export async function GET() {
   const [dbStatsRes, accountStatsRes, storageResults, vercel] = await Promise.all([
     supabase.rpc('admin_db_stats'),
     supabase.rpc('admin_account_stats'),
-    Promise.all(MANAGED_BUCKETS.map(async ({ bucket }) => {
-      const objects = await listAllObjects(supabase, bucket);
-      return { bucket, objectCount: objects.length, totalBytes: objects.reduce((sum, o) => sum + o.size, 0) };
-    })),
+    Promise.all(
+      MANAGED_BUCKETS.map(async ({ bucket }) => {
+        const objects = await listAllObjects(supabase, bucket);
+        return { bucket, objectCount: objects.length, totalBytes: objects.reduce((sum, o) => sum + o.size, 0) };
+      }),
+    ),
     fetchVercelStats(),
   ]);
 
   const dbStats = dbStatsRes.data as {
-    database_bytes: number; tables: TableStat[]; postgres_version: string;
-    active_connections: number; rls_enabled_tables: number; total_tables: number;
+    database_bytes: number;
+    tables: TableStat[];
+    postgres_version: string;
+    active_connections: number;
+    rls_enabled_tables: number;
+    total_tables: number;
   } | null;
   const accountStats = accountStatsRes.data as {
-    total_accounts: number; multi_identity_accounts: number; no_role_accounts: number; signups_last_30d: number;
+    total_accounts: number;
+    multi_identity_accounts: number;
+    no_role_accounts: number;
+    signups_last_30d: number;
   } | null;
 
   return NextResponse.json({
-    database: dbStats ? {
-      totalBytes: dbStats.database_bytes,
-      postgresVersion: dbStats.postgres_version,
-      activeConnections: dbStats.active_connections,
-      rlsEnabledTables: dbStats.rls_enabled_tables,
-      totalTables: dbStats.total_tables,
-      // Top 8 by size — a leaderboard of "what's actually taking up room",
-      // not every table (a schema-only table like doc_categories at 8KB
-      // isn't worth a row here).
-      tables: (dbStats.tables ?? []).slice(0, 8),
-    } : null,
+    database: dbStats
+      ? {
+          totalBytes: dbStats.database_bytes,
+          postgresVersion: dbStats.postgres_version,
+          activeConnections: dbStats.active_connections,
+          rlsEnabledTables: dbStats.rls_enabled_tables,
+          totalTables: dbStats.total_tables,
+          // Top 8 by size — a leaderboard of "what's actually taking up room",
+          // not every table (a schema-only table like doc_categories at 8KB
+          // isn't worth a row here).
+          tables: (dbStats.tables ?? []).slice(0, 8),
+        }
+      : null,
     accounts: accountStats,
     storage: storageResults,
     vercel,

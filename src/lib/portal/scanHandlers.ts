@@ -7,7 +7,9 @@ const handlers = new Set<ScanHandler>();
 
 export function registerScanHandler(h: ScanHandler): () => void {
   handlers.add(h);
-  return () => { handlers.delete(h); };
+  return () => {
+    handlers.delete(h);
+  };
 }
 
 export function offerToScanHandlers(text: string, say: (message: string, ok: boolean) => void): boolean {

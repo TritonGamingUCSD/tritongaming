@@ -22,9 +22,9 @@ export async function getAdminData(roles: RoleGrant[]) {
   ]);
 
   const stats = [
-    { label: 'Members',  value: usersRes.count   ?? 0, icon: createElement(Users, STAT_ICON_PROPS) },
-    { label: 'Events',   value: eventsRes.count  ?? 0, icon: createElement(Calendar, STAT_ICON_PROPS) },
-    { label: 'Tickets',  value: ticketsRes.count ?? 0, icon: createElement(Ticket, STAT_ICON_PROPS) },
+    { label: 'Members', value: usersRes.count ?? 0, icon: createElement(Users, STAT_ICON_PROPS) },
+    { label: 'Events', value: eventsRes.count ?? 0, icon: createElement(Calendar, STAT_ICON_PROPS) },
+    { label: 'Tickets', value: ticketsRes.count ?? 0, icon: createElement(Ticket, STAT_ICON_PROPS) },
   ];
 
   // Per-event ticket/check-in breakdown used to live here too — moved to
@@ -45,7 +45,9 @@ export async function getAdminData(roles: RoleGrant[]) {
     const [{ data: usersData, error: usersError }, { data: divisionsData }] = await Promise.all([
       supabase
         .from('profiles')
-        .select('id, display_name, avatar_url, custom_avatar_url, gamer_tag, created_at, preferred_email, board_order, google_first_name, google_last_name, user_roles!user_roles_user_id_fkey(role, division_id)')
+        .select(
+          'id, display_name, avatar_url, custom_avatar_url, gamer_tag, created_at, preferred_email, board_order, google_first_name, google_last_name, user_roles!user_roles_user_id_fkey(role, division_id)',
+        )
         .order('display_name', { ascending: true })
         .limit(2000),
       supabase.from('divisions').select('id, name, slug').order('name'),
@@ -73,7 +75,10 @@ export async function getAdminData(roles: RoleGrant[]) {
     // this fills in every linked email for the Role Manager and Admin
     // overview's roster to show instead of just that single value.
     try {
-      const emailsByUserId = await fetchLinkedEmails(createServiceClient(), allUsers.map((u) => u.id));
+      const emailsByUserId = await fetchLinkedEmails(
+        createServiceClient(),
+        allUsers.map((u) => u.id),
+      );
       allUsers = allUsers.map((u) => ({ ...u, linkedEmails: pickDisplayEmails(emailsByUserId.get(u.id) ?? [], u.preferred_email) }));
     } catch (err) {
       console.error('[admin] failed to load linked emails:', err);

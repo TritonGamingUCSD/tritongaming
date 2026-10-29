@@ -28,7 +28,9 @@ gsap.registerPlugin(Flip);
 function useFlipOnChange<T>(view: T) {
   const rootRef = useRef<HTMLDivElement>(null);
   const saved = useRef<Flip.FlipState | null>(null);
-  const capture = () => { saved.current = Flip.getState('[data-flip-id]'); };
+  const capture = () => {
+    saved.current = Flip.getState('[data-flip-id]');
+  };
   useLayoutEffect(() => {
     const state = saved.current;
     saved.current = null;
@@ -93,7 +95,11 @@ export function CardFace({ m }: { m: BoardMember }) {
         {m.gamer_tag && <span className={styles.tag}> &quot;{m.gamer_tag}&quot;</span>}
       </div>
       {m.org_title && <div className={styles.title}>{m.org_title}</div>}
-      {m.inactive && <span className={styles.idle}><Moon size={11} aria-hidden="true" /> Inactive</span>}
+      {m.inactive && (
+        <span className={styles.idle}>
+          <Moon size={11} aria-hidden="true" /> Inactive
+        </span>
+      )}
     </>
   );
 }
@@ -111,7 +117,11 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
   // 'now' is the current team; a number is a past academic year (its recorded team).
   const [view, setView] = useState<'now' | number>('now');
   const { rootRef, capture } = useFlipOnChange(view);
-  const changeView = (v: 'now' | number) => { if (v === view) return; capture(); setView(v); };
+  const changeView = (v: 'now' | number) => {
+    if (v === view) return;
+    capture();
+    setView(v);
+  };
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   // Discord has no public profile URL to link to from a bare username, so
@@ -132,15 +142,20 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
 
   useEffect(() => {
     if (!openId) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpenId(null); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setOpenId(null);
+    };
     document.addEventListener('keydown', onKey);
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prevOverflow; };
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prevOverflow;
+    };
   }, [openId]);
 
   if (members.length === 0 && years.length === 0) return null;
-  const past = typeof view === 'number' ? years.find((y) => y.start_year === view) ?? null : null;
+  const past = typeof view === 'number' ? (years.find((y) => y.start_year === view) ?? null) : null;
   // A past year's person opens the same popup when they are on the current board too.
   const openable = (p: PastMember) => (p.user_id && members.some((m) => m.id === p.user_id) ? p.user_id : null);
 
@@ -148,79 +163,115 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
     <div className={styles.root} ref={rootRef}>
       {years.length > 0 && (
         <div className={styles.yearPicker} role="tablist" aria-label="Team by year">
-          <button type="button" role="tab" aria-selected={view === 'now'} className={`${styles.yearChip} ${view === 'now' ? styles.yearOn : ''}`} onClick={() => changeView('now')}>Current team</button>
-          {years.map((y) => <button key={y.start_year} type="button" role="tab" aria-selected={view === y.start_year} className={`${styles.yearChip} ${view === y.start_year ? styles.yearOn : ''}`} onClick={() => changeView(y.start_year)}>{y.label}</button>)}
+          <button type="button" role="tab" aria-selected={view === 'now'} className={`${styles.yearChip} ${view === 'now' ? styles.yearOn : ''}`} onClick={() => changeView('now')}>
+            Current team
+          </button>
+          {years.map((y) => (
+            <button
+              key={y.start_year}
+              type="button"
+              role="tab"
+              aria-selected={view === y.start_year}
+              className={`${styles.yearChip} ${view === y.start_year ? styles.yearOn : ''}`}
+              onClick={() => changeView(y.start_year)}
+            >
+              {y.label}
+            </button>
+          ))}
         </div>
       )}
 
-      {past ? (
-        (['exec', 'lead', 'officer'] as const).map((tier) => {
-          const group = past.members.filter((m) => m.tier === tier);
-          if (group.length === 0) return null;
-          return (
-            <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
-              <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
-              <div className={tier === 'exec' ? styles.execGrid : styles.gridCenter} data-stagger>
-                {group.map((m) => {
-                  const open = openable(m);
-                  const face = (
-                    <>
-                      {m.avatar_url ? <Image src={m.avatar_url} alt="" width={120} height={120} className={styles.avatar} unoptimized referrerPolicy="no-referrer" /> : <div className={styles.avatarFallback}>{(m.name || '?')[0].toUpperCase()}</div>}
-                      <div className={styles.name}>{m.name}</div>
-                      {m.title && <div className={styles.title}>{m.title}</div>}
-                    </>
-                  );
-                  return open ? <motion.button key={m.id} data-flip-id={m.user_id ?? m.id} className={`${styles.card} ${tier === 'exec' ? styles.execCard : ''}`} onClick={() => setOpenId(open)} whileHover={{ y: -3, transition: { duration: 0.15 } }}>{face}</motion.button> : <div key={m.id} data-flip-id={m.user_id ?? m.id} className={`${styles.card} ${styles.plain} ${tier === 'exec' ? styles.execCard : ''}`}>{face}</div>;
-                })}
-              </div>
-            </section>
-          );
-        })
-      ) : (
-        TIER_ORDER.map((tier) => {
-          const group = members.filter((m) => m.tier === tier);
-          if (group.length === 0) return null;
-          // Alumni are a compact wall (small picture, name, title); the exec board gets the biggest cards.
-          if (tier === 'alumni') {
+      {past
+        ? (['exec', 'lead', 'officer'] as const).map((tier) => {
+            const group = past.members.filter((m) => m.tier === tier);
+            if (group.length === 0) return null;
             return (
               <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
                 <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
-                <ul className={styles.wall}>
+                <div className={tier === 'exec' ? styles.execGrid : styles.gridCenter} data-stagger>
                   {group.map((m) => {
-                    const url = resolveAvatarUrl(m);
-                    return (
-                      <li key={m.id} data-flip-id={m.id}>
-                        <button type="button" className={styles.wallItem} onClick={() => setOpenId(m.id)}>
-                          {url ? <Image src={url} alt="" width={44} height={44} className={styles.wallAvatar} unoptimized referrerPolicy="no-referrer" /> : <span className={styles.wallFallback}>{(m.display_name || '?')[0].toUpperCase()}</span>}
-                          <span><strong>{m.display_name || 'Anonymous'}</strong>{m.org_title && <small>{m.org_title}</small>}</span>
-                        </button>
-                      </li>
+                    const open = openable(m);
+                    const face = (
+                      <>
+                        {m.avatar_url ? (
+                          <Image src={m.avatar_url} alt="" width={120} height={120} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
+                        ) : (
+                          <div className={styles.avatarFallback}>{(m.name || '?')[0].toUpperCase()}</div>
+                        )}
+                        <div className={styles.name}>{m.name}</div>
+                        {m.title && <div className={styles.title}>{m.title}</div>}
+                      </>
+                    );
+                    return open ? (
+                      <motion.button
+                        key={m.id}
+                        data-flip-id={m.user_id ?? m.id}
+                        className={`${styles.card} ${tier === 'exec' ? styles.execCard : ''}`}
+                        onClick={() => setOpenId(open)}
+                        whileHover={{ y: -3, transition: { duration: 0.15 } }}
+                      >
+                        {face}
+                      </motion.button>
+                    ) : (
+                      <div key={m.id} data-flip-id={m.user_id ?? m.id} className={`${styles.card} ${styles.plain} ${tier === 'exec' ? styles.execCard : ''}`}>
+                        {face}
+                      </div>
                     );
                   })}
-                </ul>
+                </div>
               </section>
             );
-          }
-          return (
-            <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
-              <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
-              <div className={tier === 'exec' ? styles.execGrid : styles.grid} data-stagger>
-                {group.map((m) => (
-                  <motion.button
-                    key={m.id}
-                    data-flip-id={m.id}
-                    className={`${styles.card} ${tier === 'exec' ? styles.execCard : ''} ${m.inactive ? styles.cardIdle : ''}`}
-                    onClick={() => setOpenId(m.id)}
-                    whileHover={{ y: -3, transition: { duration: 0.15 } }}
-                  >
-                    <CardFace m={m} />
-                  </motion.button>
-                ))}
-              </div>
-            </section>
-          );
-        })
-      )}
+          })
+        : TIER_ORDER.map((tier) => {
+            const group = members.filter((m) => m.tier === tier);
+            if (group.length === 0) return null;
+            // Alumni are a compact wall (small picture, name, title); the exec board gets the biggest cards.
+            if (tier === 'alumni') {
+              return (
+                <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
+                  <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
+                  <ul className={styles.wall}>
+                    {group.map((m) => {
+                      const url = resolveAvatarUrl(m);
+                      return (
+                        <li key={m.id} data-flip-id={m.id}>
+                          <button type="button" className={styles.wallItem} onClick={() => setOpenId(m.id)}>
+                            {url ? (
+                              <Image src={url} alt="" width={44} height={44} className={styles.wallAvatar} unoptimized referrerPolicy="no-referrer" />
+                            ) : (
+                              <span className={styles.wallFallback}>{(m.display_name || '?')[0].toUpperCase()}</span>
+                            )}
+                            <span>
+                              <strong>{m.display_name || 'Anonymous'}</strong>
+                              {m.org_title && <small>{m.org_title}</small>}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </section>
+              );
+            }
+            return (
+              <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
+                <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
+                <div className={tier === 'exec' ? styles.execGrid : styles.grid} data-stagger>
+                  {group.map((m) => (
+                    <motion.button
+                      key={m.id}
+                      data-flip-id={m.id}
+                      className={`${styles.card} ${tier === 'exec' ? styles.execCard : ''} ${m.inactive ? styles.cardIdle : ''}`}
+                      onClick={() => setOpenId(m.id)}
+                      whileHover={{ y: -3, transition: { duration: 0.15 } }}
+                    >
+                      <CardFace m={m} />
+                    </motion.button>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
 
       <AnimatePresence>
         {openMember && (
@@ -244,7 +295,9 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
               exit={{ opacity: 0, scale: 0.96 }}
               transition={SPRING}
             >
-              <button className={styles.closeBtn} onClick={() => setOpenId(null)} aria-label="Close"><X size={16} strokeWidth={1.75} /></button>
+              <button className={styles.closeBtn} onClick={() => setOpenId(null)} aria-label="Close">
+                <X size={16} strokeWidth={1.75} />
+              </button>
               <PanelBody member={openMember} copiedKey={copiedKey} onCopy={copyHandle} />
             </motion.div>
           </motion.div>

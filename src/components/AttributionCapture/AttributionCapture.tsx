@@ -5,6 +5,8 @@ import { captureAttribution } from '@/lib/site/attribution';
 
 // Renders nothing; just notes how the visitor arrived (see lib/attribution).
 export default function AttributionCapture() {
-  useEffect(() => { captureAttribution(); }, []);
+  useEffect(() => {
+    captureAttribution();
+  }, []);
   return null;
 }

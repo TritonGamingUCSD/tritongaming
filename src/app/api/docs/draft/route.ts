@@ -17,18 +17,43 @@ export async function POST(request: Request) {
   const content = b.content === undefined ? undefined : String(b.content);
   const title = b.title === undefined ? undefined : String(b.title).trim().slice(0, 120);
   if (content !== undefined && content.length > MAX_DOC_CHARS) return bad('This doc is too long.');
-  const { data: doc } = await auth.svc.from('docs').select('id, revision, title, content, updated_by, updated_at, draft_title, draft_content, draft_updated_at, draft_updated_by').eq('id', id).maybeSingle();
+  const { data: doc } = await auth.svc
+    .from('docs')
+    .select('id, revision, title, content, updated_by, updated_at, draft_title, draft_content, draft_updated_at, draft_updated_by')
+    .eq('id', id)
+    .maybeSingle();
   if (!doc) return NextResponse.json({ error: 'This doc was deleted by someone else.', code: 'deleted' }, { status: 404 });
 
   if (b.base_revision !== undefined && Number(b.base_revision) !== doc.revision && !b.rebase) {
     const who = (await namesOf(auth.svc, [doc.updated_by as string | null])).get(doc.updated_by as string) ?? 'Someone';
-    return NextResponse.json({ error: `${who} published a newer version while you were editing.`, code: 'published_elsewhere', revision: doc.revision, by: who, at: doc.updated_at, title: doc.title, content: doc.content }, { status: 409 });
+    return NextResponse.json(
+      {
+        error: `${who} published a newer version while you were editing.`,
+        code: 'published_elsewhere',
+        revision: doc.revision,
+        by: who,
+        at: doc.updated_at,
+        title: doc.title,
+        content: doc.content,
+      },
+      { status: 409 },
+    );
   }
   const theirs = doc.draft_updated_at !== null && doc.draft_updated_by && doc.draft_updated_by !== auth.user.id;
   const sameAsMine = (b.base_draft_at ?? null) === doc.draft_updated_at;
   if (theirs && !sameAsMine && !b.force) {
     const who = (await namesOf(auth.svc, [doc.draft_updated_by as string])).get(doc.draft_updated_by as string) ?? 'Someone';
-    return NextResponse.json({ error: `${who} saved changes to this draft while you were editing.`, code: 'draft_changed', by: who, at: doc.draft_updated_at, title: doc.draft_title, content: doc.draft_content }, { status: 409 });
+    return NextResponse.json(
+      {
+        error: `${who} saved changes to this draft while you were editing.`,
+        code: 'draft_changed',
+        by: who,
+        at: doc.draft_updated_at,
+        title: doc.draft_title,
+        content: doc.draft_content,
+      },
+      { status: 409 },
+    );
   }
 
   const patch = { draft_title: title ?? doc.title, draft_content: content ?? doc.content, draft_updated_at: new Date().toISOString(), draft_updated_by: auth.user.id };

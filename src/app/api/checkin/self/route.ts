@@ -20,10 +20,19 @@ export async function POST(request: Request) {
   const svc = createServiceClient();
   const body = await request.json().catch(() => ({}));
   const event_id = body?.event_id;
-  const [{ data: { user } }, { data: event }] = await Promise.all([
+  const [
+    {
+      data: { user },
+    },
+    { data: event },
+  ] = await Promise.all([
     supabase.auth.getUser(),
     typeof event_id === 'string' && event_id
-      ? svc.from('events').select('id, title, points_value, start_date, end_date, requires_checkin_form, checkin_windows, day_hours, self_checkin_mode, is_published, audience, ticket_price').eq('id', event_id).maybeSingle()
+      ? svc
+          .from('events')
+          .select('id, title, points_value, start_date, end_date, requires_checkin_form, checkin_windows, day_hours, self_checkin_mode, is_published, audience, ticket_price')
+          .eq('id', event_id)
+          .maybeSingle()
       : Promise.resolve({ data: null }),
   ]);
   if (!user) return NextResponse.json({ error: 'Please sign in.' }, { status: 401 });
@@ -57,7 +66,11 @@ export async function POST(request: Request) {
     if (price > 0) {
       return NextResponse.json({ error: 'This event has a ticket price. Get your ticket first, then check in.', code: 'needs_payment' }, { status: 402 });
     }
-    const { data: created, error } = await svc.from('tickets').insert({ event_id: event.id, user_id: user.id, source: 'self_checkin' }).select('id, user_id, event_id, status, checked_in_at').single();
+    const { data: created, error } = await svc
+      .from('tickets')
+      .insert({ event_id: event.id, user_id: user.id, source: 'self_checkin' })
+      .select('id, user_id, event_id, status, checked_in_at')
+      .single();
     if (error) {
       // Two taps at once: the other one made the ticket.
       if (error.code === '23505') {
@@ -66,7 +79,9 @@ export async function POST(request: Request) {
       if (!ticket) return NextResponse.json({ error: 'Could not create your ticket. Please try again or see a staff member.' }, { status: 500 });
     } else {
       ticket = created;
-      await createNotifications(svc, [{ user_id: user.id, type: 'ticket_confirmed', title: 'Ticket confirmed', body: `You're registered for ${event.title}.`, href: '/portal/tickets' }]);
+      await createNotifications(svc, [
+        { user_id: user.id, type: 'ticket_confirmed', title: 'Ticket confirmed', body: `You're registered for ${event.title}.`, href: '/portal/tickets' },
+      ]);
     }
   }
   if (!ticket) return NextResponse.json({ error: 'Could not find your ticket.' }, { status: 500 });
@@ -81,7 +96,14 @@ export async function POST(request: Request) {
   const result = await performCheckin(
     svc,
     ticket,
-    { title: event.title, points_value: event.points_value, start_date: event.start_date, end_date: event.end_date, requires_checkin_form: event.requires_checkin_form, checkin_windows: event.checkin_windows },
+    {
+      title: event.title,
+      points_value: event.points_value,
+      start_date: event.start_date,
+      end_date: event.end_date,
+      requires_checkin_form: event.requires_checkin_form,
+      checkin_windows: event.checkin_windows,
+    },
     user.id,
     // Whether it is open is decided above by the event's self check-in setting, so the scanner's own end time and daily check-in hours do not apply here.
     { ignoreWindow: true },

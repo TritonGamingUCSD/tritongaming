@@ -34,9 +34,7 @@ export async function generateMetadata({ params }: Params) {
   if (!data) return { title: 'Division' };
 
   const title = data.name;
-  const description = data.description?.trim()
-    ? markdownToDescription(data.description)
-    : `${data.name}, a Triton Gaming division. Gaming Org at UC San Diego.`;
+  const description = data.description?.trim() ? markdownToDescription(data.description) : `${data.name}, a Triton Gaming division. Gaming Org at UC San Diego.`;
   const ogUrl = `/api/og/divisions/${encodeURIComponent(slug)}?v=${ogVersion(divisionCardInputs(data))}`;
 
   return {
@@ -80,7 +78,9 @@ export default async function DivisionPage({ params }: Params) {
             {logoUrl ? (
               <LogoPlate src={logoUrl} alt={division.name} className={styles.plate} imgClassName={styles.logo} />
             ) : (
-              <span className={styles.logoFallback} aria-hidden="true">{division.name[0]}</span>
+              <span className={styles.logoFallback} aria-hidden="true">
+                {division.name[0]}
+              </span>
             )}
           </div>
           <div className={styles.heroText}>

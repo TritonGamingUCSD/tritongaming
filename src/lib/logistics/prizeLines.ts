@@ -4,8 +4,10 @@ import { whoIs } from '@/lib/logistics/live';
 import { prizeLeft } from '@/lib/logistics/prizes';
 
 // What the routes for a station's prizes share: the names the history uses, who last changed a number, and the check that nothing is promised that is not there.
-export const planNameOf = async (svc: SupabaseClient, id: string) => ((await svc.from('logistics_plans').select('name').eq('id', id).maybeSingle()).data?.name as string | undefined) ?? null;
-export const stationNameOf = async (svc: SupabaseClient, id: string) => ((await svc.from('logistics_stations').select('name').eq('id', id).maybeSingle()).data?.name as string | undefined) ?? null;
+export const planNameOf = async (svc: SupabaseClient, id: string) =>
+  ((await svc.from('logistics_plans').select('name').eq('id', id).maybeSingle()).data?.name as string | undefined) ?? null;
+export const stationNameOf = async (svc: SupabaseClient, id: string) =>
+  ((await svc.from('logistics_stations').select('name').eq('id', id).maybeSingle()).data?.name as string | undefined) ?? null;
 export async function changedBy(svc: SupabaseClient, userId: string | null | undefined): Promise<string> {
   return userId ? (await whoIs(svc, userId)).name : 'Someone';
 }

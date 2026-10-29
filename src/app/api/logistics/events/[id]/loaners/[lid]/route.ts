@@ -4,7 +4,12 @@ import { BORROWED_COLUMNS, LOCKED_MESSAGE, rowsLocked, UUID, touchPlan } from '@
 import { cleanKit, cleanList, tagKey } from '@/lib/logistics/devices';
 
 export const dynamic = 'force-dynamic';
-const text = (v: unknown, n: number) => { const s = String(v ?? '').trim().slice(0, n); return s || null; };
+const text = (v: unknown, n: number) => {
+  const s = String(v ?? '')
+    .trim()
+    .slice(0, n);
+  return s || null;
+};
 const uuid = (v: unknown) => (typeof v === 'string' && UUID.test(v) ? v : null);
 
 // Sponsor and officer-loaner devices for ONE event. They are typed in here (not in the inventory), each with the ID it has that day. The ID only has to be unique within this plan,
@@ -24,9 +29,16 @@ async function clean(svc: ReturnType<typeof Object>, planId: string, b: Record<s
     if (same) return { error: `${same.tag} is already used at this event.`, status: 409 };
     out.tag = tag;
   }
-  if (!existingId || 'type' in b) { const type = text(b.type, 80); if (!type) return { error: 'Say what kind of device it is.' }; out.type = type; }
+  if (!existingId || 'type' in b) {
+    const type = text(b.type, 80);
+    if (!type) return { error: 'Say what kind of device it is.' };
+    out.type = type;
+  }
   if ('name' in b) out.name = text(b.name, 120);
-  if (!existingId || 'owner_kind' in b) { if (b.owner_kind !== 'sponsor' && b.owner_kind !== 'officer') return { error: 'Say whose it is: a sponsor’s or an officer’s.' }; out.owner_kind = b.owner_kind; }
+  if (!existingId || 'owner_kind' in b) {
+    if (b.owner_kind !== 'sponsor' && b.owner_kind !== 'officer') return { error: 'Say whose it is: a sponsor’s or an officer’s.' };
+    out.owner_kind = b.owner_kind;
+  }
   const kind = (out.owner_kind ?? b.owner_kind) as string | undefined;
   if ('sponsor_id' in b || out.owner_kind) out.sponsor_id = kind === 'sponsor' ? uuid(b.sponsor_id) : null;
   if ('owner_user_id' in b || out.owner_kind) out.owner_user_id = kind === 'officer' ? uuid(b.owner_user_id) : null;
@@ -36,7 +48,10 @@ async function clean(svc: ReturnType<typeof Object>, planId: string, b: Record<s
   if ('kit' in b) out.kit = cleanKit(b.kit);
   if ('station_id' in b) {
     const sid = uuid(b.station_id);
-    if (sid) { const { data: st } = await s.from('logistics_stations').select('id').eq('id', sid).eq('plan_id', planId).maybeSingle(); if (!st) return { error: 'That station is gone.' }; }
+    if (sid) {
+      const { data: st } = await s.from('logistics_stations').select('id').eq('id', sid).eq('plan_id', planId).maybeSingle();
+      if (!st) return { error: 'That station is gone.' };
+    }
     out.station_id = sid;
   }
   return { value: out };

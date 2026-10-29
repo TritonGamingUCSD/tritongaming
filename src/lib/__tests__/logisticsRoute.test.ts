@@ -2,20 +2,33 @@ import { describe, expect, it } from 'vitest';
 import { parseRoute, routeParams, type Route } from '../../app/(portal)/portal/logistics/logisticsRoute';
 
 // Every place has an address, and the address reads back to the same place.
-const roundTrip = (r: Route) => { const p = routeParams(r); return parseRoute(p.tab ?? undefined, p.subtab ?? undefined, p.detail ?? undefined, true, p.view ?? undefined); };
+const roundTrip = (r: Route) => {
+  const p = routeParams(r);
+  return parseRoute(p.tab ?? undefined, p.subtab ?? undefined, p.detail ?? undefined, true, p.view ?? undefined);
+};
 
 describe('Logistics addresses (the event first)', () => {
   it('writes and reads every place', () => {
     const places: Route[] = [
-      { tab: 'home' }, { tab: 'events', plan: null, page: 'requests' },
+      { tab: 'home' },
+      { tab: 'events', plan: null, page: 'requests' },
       { tab: 'events', plan: 'ds-2026', page: 'requests' },
       { tab: 'events', plan: 'ds-2026', page: 'requests-prizing' },
       { tab: 'events', plan: 'ds-2026', page: 'sponsor-loaners' },
       { tab: 'events', plan: 'ds-2026', page: 'officer-loaners' },
-      { tab: 'prizing', plan: null }, { tab: 'prizing', plan: 'ds-2026' }, { tab: 'prizing', plan: 'stock' }, { tab: 'prizing', plan: null, sheet: true }, { tab: 'prizing', plan: 'ds-2026', sheet: true },
-      { tab: 'devices', plan: null, sheet: true }, { tab: 'devices', plan: 'stock', group: 'shelf', sheet: true },
-      { tab: 'devices', plan: null }, { tab: 'devices', plan: 'stock' }, { tab: 'devices', plan: 'stock', group: 'shelf' },
-      { tab: 'devices', plan: 'ds-2026' }, { tab: 'devices', plan: 'ds-2026', day: true }, { tab: 'devices', plan: 'ds-2026', day: false, group: 'type', openOnly: true },
+      { tab: 'prizing', plan: null },
+      { tab: 'prizing', plan: 'ds-2026' },
+      { tab: 'prizing', plan: 'stock' },
+      { tab: 'prizing', plan: null, sheet: true },
+      { tab: 'prizing', plan: 'ds-2026', sheet: true },
+      { tab: 'devices', plan: null, sheet: true },
+      { tab: 'devices', plan: 'stock', group: 'shelf', sheet: true },
+      { tab: 'devices', plan: null },
+      { tab: 'devices', plan: 'stock' },
+      { tab: 'devices', plan: 'stock', group: 'shelf' },
+      { tab: 'devices', plan: 'ds-2026' },
+      { tab: 'devices', plan: 'ds-2026', day: true },
+      { tab: 'devices', plan: 'ds-2026', day: false, group: 'type', openOnly: true },
     ];
     for (const r of places) expect(roundTrip(r)).toEqual(r);
   });
@@ -23,7 +36,12 @@ describe('Logistics addresses (the event first)', () => {
     expect(routeParams({ tab: 'prizing', plan: 'ds-2026' })).toEqual({ tab: 'ds-2026', subtab: 'prizing', detail: null, view: null });
     expect(routeParams({ tab: 'prizing', plan: 'stock' })).toEqual({ tab: 'stock', subtab: 'prizes', detail: null, view: null });
     expect(routeParams({ tab: 'prizing', plan: null })).toEqual({ tab: 'prizing', subtab: null, detail: null, view: null });
-    expect(routeParams({ tab: 'devices', plan: 'ds-2026', day: true, group: 'shelf', openOnly: true })).toEqual({ tab: 'ds-2026', subtab: 'devices', detail: 'event-day', view: 'shelf,open' });
+    expect(routeParams({ tab: 'devices', plan: 'ds-2026', day: true, group: 'shelf', openOnly: true })).toEqual({
+      tab: 'ds-2026',
+      subtab: 'devices',
+      detail: 'event-day',
+      view: 'shelf,open',
+    });
     expect(routeParams({ tab: 'devices', plan: 'stock' })).toEqual({ tab: 'stock', subtab: 'devices', detail: null, view: null });
     expect(routeParams({ tab: 'devices', plan: 'ds-2026', group: 'station' })).toEqual({ tab: 'ds-2026', subtab: 'devices', detail: null, view: null });
     expect(routeParams({ tab: 'events', plan: 'ds-2026', page: 'requests-prizing' })).toEqual({ tab: 'ds-2026', subtab: 'requests', detail: 'prizes', view: null });
@@ -49,7 +67,8 @@ describe('old addresses still open the right place', () => {
     expect(parseRoute('devices', 'ds-2026', 'planning', false)).toEqual({ tab: 'devices', plan: 'ds-2026', day: false });
   });
   it('the prize pages', () => {
-    for (const w of ['allocation-prizing', 'event-day-prizing', 'allocation-sponsor-prizing', 'prizing']) expect(parseRoute('ds-2026', w, undefined, false)).toEqual({ tab: 'prizing', plan: 'ds-2026' });
+    for (const w of ['allocation-prizing', 'event-day-prizing', 'allocation-sponsor-prizing', 'prizing'])
+      expect(parseRoute('ds-2026', w, undefined, false)).toEqual({ tab: 'prizing', plan: 'ds-2026' });
     expect(parseRoute('events', 'ds-2026', 'prizing', false)).toEqual({ tab: 'prizing', plan: 'ds-2026' });
     expect(parseRoute('prizes', undefined, undefined, false)).toEqual({ tab: 'prizing', plan: 'stock' });
     expect(parseRoute('inventory', 'prizes', undefined, false)).toEqual({ tab: 'prizing', plan: 'stock' });

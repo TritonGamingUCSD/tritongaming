@@ -43,19 +43,46 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
         <span className={`${styles.label} ${styles.cap}`}>{label}</span>
         <Select className={styles.input} value={custom ? OTHER : v} onChange={(e) => setFont(k, e.target.value === OTHER ? ' ' : e.target.value)}>
           <option value="">Default (Futura)</option>
-          {own.length > 0 && <optgroup label="Your uploaded fonts">{own.map((f) => <option key={f.name} value={f.name}>{f.name}</option>)}</optgroup>}
-          <optgroup label="Google Fonts">{FONT_CHOICES.map((f) => <option key={f} value={f}>{f}</option>)}</optgroup>
+          {own.length > 0 && (
+            <optgroup label="Your uploaded fonts">
+              {own.map((f) => (
+                <option key={f.name} value={f.name}>
+                  {f.name}
+                </option>
+              ))}
+            </optgroup>
+          )}
+          <optgroup label="Google Fonts">
+            {FONT_CHOICES.map((f) => (
+              <option key={f} value={f}>
+                {f}
+              </option>
+            ))}
+          </optgroup>
           <option value={OTHER}>Other Google Font…</option>
         </Select>
-        {(custom || v === ' ') && <input className={styles.input} value={v.trim() === '' ? '' : v} onChange={(e) => setFont(k, e.target.value)} placeholder="Exact name from fonts.google.com, e.g. Rubik Glitch" aria-label={`${label} font name`} />}
+        {(custom || v === ' ') && (
+          <input
+            className={styles.input}
+            value={v.trim() === '' ? '' : v}
+            onChange={(e) => setFont(k, e.target.value)}
+            placeholder="Exact name from fonts.google.com, e.g. Rubik Glitch"
+            aria-label={`${label} font name`}
+          />
+        )}
         <span className={styles.hint}>{hint}</span>
       </label>
     );
   };
 
   const addFontFile = async (file: File) => {
-    const url = await uploadFontFile('event-flyers', file);   // a refusal is shown in the dialog
-    const base = file.name.replace(/\.[^.]+$/, '').replace(/[^A-Za-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+    const url = await uploadFontFile('event-flyers', file); // a refusal is shown in the dialog
+    const base = file.name
+      .replace(/\.[^.]+$/, '')
+      .replace(/[^A-Za-z0-9 ]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 40);
     let name = base.length >= 2 ? base : 'Custom font';
     while (own.some((f) => f.name === name)) name = `${name} 2`.slice(0, 40);
     set({ custom_fonts: [...own, { name, url }] });
@@ -83,8 +110,21 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
             <label key={f.key} className={styles.field}>
               <span className={`${styles.label} ${styles.cap}`}>{f.label}</span>
               <span className={styles.colorRow}>
-                <input type="color" value={HEX.test(v) ? v : '#000000'} onChange={(e) => setColor(f.key, e.target.value)} aria-label={`${f.label} color`} className={`${styles.swatch} ${HEX.test(v) ? '' : styles.swatchEmpty}`} />
-                <input className={`${styles.input} ${styles.hex}`} value={v} onChange={(e) => setColor(f.key, e.target.value)} placeholder="#rrggbb" maxLength={7} aria-label={`${f.label} hex`} />
+                <input
+                  type="color"
+                  value={HEX.test(v) ? v : '#000000'}
+                  onChange={(e) => setColor(f.key, e.target.value)}
+                  aria-label={`${f.label} color`}
+                  className={`${styles.swatch} ${HEX.test(v) ? '' : styles.swatchEmpty}`}
+                />
+                <input
+                  className={`${styles.input} ${styles.hex}`}
+                  value={v}
+                  onChange={(e) => setColor(f.key, e.target.value)}
+                  placeholder="#rrggbb"
+                  maxLength={7}
+                  aria-label={`${f.label} hex`}
+                />
               </span>
               <span className={styles.hint}>{f.hint}</span>
             </label>
@@ -101,24 +141,40 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
 
       <div className={styles.field}>
         <span className={`${styles.label} ${styles.cap}`}>Your own fonts (up to {MAX_CUSTOM_FONTS})</span>
-        <span className={styles.hint}>For fonts that are not on Google Fonts. Upload the web font file ({FONT_FILE_TYPES.map((t) => `.${t}`).join(', ')}, up to 3 MB) of a font you have a licence to use on the web. It then appears in the pickers above.</span>
+        <span className={styles.hint}>
+          For fonts that are not on Google Fonts. Upload the web font file ({FONT_FILE_TYPES.map((t) => `.${t}`).join(', ')}, up to 3 MB) of a font you have a licence to use on the
+          web. It then appears in the pickers above.
+        </span>
         {own.map((f, i) => (
           <div key={f.url} className={styles.stickerRow}>
             <div className={styles.stickerMain}>
               <input className={styles.input} value={f.name} onChange={(e) => renameFont(i, e.target.value)} maxLength={40} aria-label={`Name of uploaded font ${i + 1}`} />
-              <span className={styles.hint} style={{ fontFamily: `'${f.name}', sans-serif` }}>The quick brown fox jumps over the lazy dog</span>
+              <span className={styles.hint} style={{ fontFamily: `'${f.name}', sans-serif` }}>
+                The quick brown fox jumps over the lazy dog
+              </span>
             </div>
-            <button type="button" className={styles.remove} onClick={() => removeFont(i)} aria-label={`Remove font ${f.name}`}><X size={14} aria-hidden="true" /></button>
+            <button type="button" className={styles.remove} onClick={() => removeFont(i)} aria-label={`Remove font ${f.name}`}>
+              <X size={14} aria-hidden="true" />
+            </button>
           </div>
         ))}
         {own.length < MAX_CUSTOM_FONTS && (
           <>
-            <Button size="sm" variant="secondary" onClick={() => setChoosing(true)}><Upload size={14} aria-hidden="true" /> Upload A Font</Button>
-            {choosing && <FileDialog title="Upload A Font" accept={FONT_FILE_TYPES.map((t) => `.${t}`).join(',')} hint={`${FONT_FILE_TYPES.join(', ').toUpperCase()} font file`} onUse={addFontFile} onClose={() => setChoosing(false)} />}
+            <Button size="sm" variant="secondary" onClick={() => setChoosing(true)}>
+              <Upload size={14} aria-hidden="true" /> Upload A Font
+            </Button>
+            {choosing && (
+              <FileDialog
+                title="Upload A Font"
+                accept={FONT_FILE_TYPES.map((t) => `.${t}`).join(',')}
+                hint={`${FONT_FILE_TYPES.join(', ').toUpperCase()} font file`}
+                onUse={addFontFile}
+                onClose={() => setChoosing(false)}
+              />
+            )}
           </>
         )}
       </div>
-
 
       <div className={styles.field}>
         <span className={`${styles.label} ${styles.cap}`}>Stickers (up to {MAX_STICKERS})</span>
@@ -128,7 +184,9 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
             <ArtRow
               label={`Sticker ${i + 1}`}
               value={u}
-              onChange={(url) => set({ stickers: url ? theme.stickers.map((x, j) => (j === i ? url : x)) : theme.stickers.filter((_, j) => j !== i), asset_credits: carry(u, url) })}
+              onChange={(url) =>
+                set({ stickers: url ? theme.stickers.map((x, j) => (j === i ? url : x)) : theme.stickers.filter((_, j) => j !== i), asset_credits: carry(u, url) })
+              }
               shape="logo"
               maxDimension={512}
               people={people}
@@ -139,7 +197,9 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
           </div>
         ))}
         {theme.stickers.length < MAX_STICKERS && (
-          <Button size="sm" variant="secondary" onClick={() => set({ stickers: [...theme.stickers, ''] })}><Plus size={14} aria-hidden="true" /> Add a sticker</Button>
+          <Button size="sm" variant="secondary" onClick={() => set({ stickers: [...theme.stickers, ''] })}>
+            <Plus size={14} aria-hidden="true" /> Add a sticker
+          </Button>
         )}
       </div>
     </fieldset>

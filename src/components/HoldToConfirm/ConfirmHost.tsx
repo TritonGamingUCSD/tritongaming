@@ -13,7 +13,13 @@ export default function ConfirmHost() {
     const onRequest = (e: Event) => {
       const next = (e as CustomEvent<ConfirmHoldRequest>).detail;
       // One at a time: a request that arrives while another is open is declined.
-      setRequest((current) => { if (current) { next.resolve(false); return current; } return next; });
+      setRequest((current) => {
+        if (current) {
+          next.resolve(false);
+          return current;
+        }
+        return next;
+      });
     };
     window.addEventListener(CONFIRM_HOLD_EVENT, onRequest);
     return () => window.removeEventListener(CONFIRM_HOLD_EVENT, onRequest);

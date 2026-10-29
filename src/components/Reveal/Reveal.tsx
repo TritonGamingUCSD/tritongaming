@@ -95,12 +95,7 @@ export function RevealItem({
   style?: React.CSSProperties;
 }) {
   return (
-    <motion.div
-      variants={variants[variant]}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className={className}
-      style={style}
-    >
+    <motion.div variants={variants[variant]} transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }} className={className} style={style}>
       {children}
     </motion.div>
   );

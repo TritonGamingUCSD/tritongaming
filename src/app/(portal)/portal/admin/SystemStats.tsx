@@ -53,8 +53,12 @@ interface EnvironmentInfo {
 
 interface SystemStatsResponse {
   database: {
-    totalBytes: number; tables: TableStat[]; postgresVersion?: string;
-    activeConnections?: number; rlsEnabledTables?: number; totalTables?: number;
+    totalBytes: number;
+    tables: TableStat[];
+    postgresVersion?: string;
+    activeConnections?: number;
+    rlsEnabledTables?: number;
+    totalTables?: number;
   } | null;
   accounts: AccountStats | null;
   storage: BucketStat[];
@@ -113,7 +117,9 @@ export default function SystemStats() {
         if (!cancelled) setError('Network error loading system stats.');
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (error) {
@@ -130,32 +136,55 @@ export default function SystemStats() {
     <div className={styles.wrap}>
       <div className={adminStyles.statsGrid} aria-label="System at a glance">
         <div className={adminStyles.statCard}>
-          <span className={adminStyles.statIcon}><Database size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-          <div><div className={adminStyles.statValue}>{data.database ? formatBytes(data.database.totalBytes) : '—'}</div><div className={adminStyles.statLabel}>Database</div></div>
+          <span className={adminStyles.statIcon}>
+            <Database size={22} strokeWidth={1.5} aria-hidden="true" />
+          </span>
+          <div>
+            <div className={adminStyles.statValue}>{data.database ? formatBytes(data.database.totalBytes) : '—'}</div>
+            <div className={adminStyles.statLabel}>Database</div>
+          </div>
         </div>
         <div className={adminStyles.statCard}>
-          <span className={adminStyles.statIcon}><HardDrive size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-          <div><div className={adminStyles.statValue}>{formatBytes(totalStorageBytes)}</div><div className={adminStyles.statLabel}>File storage</div></div>
+          <span className={adminStyles.statIcon}>
+            <HardDrive size={22} strokeWidth={1.5} aria-hidden="true" />
+          </span>
+          <div>
+            <div className={adminStyles.statValue}>{formatBytes(totalStorageBytes)}</div>
+            <div className={adminStyles.statLabel}>File storage</div>
+          </div>
         </div>
         <div className={adminStyles.statCard}>
-          <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
-          <div><div className={adminStyles.statValue}>{data.database?.activeConnections ?? '—'}</div><div className={adminStyles.statLabel}>Active connections</div></div>
+          <span className={adminStyles.statIcon}>
+            <Server size={22} strokeWidth={1.5} aria-hidden="true" />
+          </span>
+          <div>
+            <div className={adminStyles.statValue}>{data.database?.activeConnections ?? '—'}</div>
+            <div className={adminStyles.statLabel}>Active connections</div>
+          </div>
         </div>
         <div className={adminStyles.statCard}>
-          <span className={adminStyles.statIcon}><Triangle size={20} strokeWidth={1.75} aria-hidden="true" /></span>
-          <div><div className={adminStyles.statValue}>{data.vercel.connected && data.vercel.deployments?.[0] ? data.vercel.deployments[0].state.toLowerCase() : '—'}</div><div className={adminStyles.statLabel}>Latest deploy</div></div>
+          <span className={adminStyles.statIcon}>
+            <Triangle size={20} strokeWidth={1.75} aria-hidden="true" />
+          </span>
+          <div>
+            <div className={adminStyles.statValue}>{data.vercel.connected && data.vercel.deployments?.[0] ? data.vercel.deployments[0].state.toLowerCase() : '—'}</div>
+            <div className={adminStyles.statLabel}>Latest deploy</div>
+          </div>
         </div>
       </div>
 
       <h2 className={styles.groupTitle}>Usage</h2>
       <section className={adminStyles.section}>
         <div className={adminStyles.sectionHeader}>
-          <h2 className={adminStyles.sectionLabel}><Database size={13} strokeWidth={1.75} aria-hidden="true" /> Database</h2>
+          <h2 className={adminStyles.sectionLabel}>
+            <Database size={13} strokeWidth={1.75} aria-hidden="true" /> Database
+          </h2>
           {data.database && (
             <span className={adminStyles.sectionHint}>
               {formatBytes(data.database.totalBytes)} total
               {data.database.activeConnections !== undefined && ` · ${data.database.activeConnections} active connections`}
-              {data.database.rlsEnabledTables !== undefined && data.database.totalTables !== undefined &&
+              {data.database.rlsEnabledTables !== undefined &&
+                data.database.totalTables !== undefined &&
                 ` · RLS on ${data.database.rlsEnabledTables}/${data.database.totalTables} tables`}
             </span>
           )}
@@ -183,7 +212,9 @@ export default function SystemStats() {
 
       <section className={adminStyles.section}>
         <div className={adminStyles.sectionHeader}>
-          <h2 className={adminStyles.sectionLabel}><HardDrive size={13} strokeWidth={1.75} aria-hidden="true" /> Storage Buckets</h2>
+          <h2 className={adminStyles.sectionLabel}>
+            <HardDrive size={13} strokeWidth={1.75} aria-hidden="true" /> Storage Buckets
+          </h2>
           <span className={adminStyles.sectionHint}>{formatBytes(totalStorageBytes)} across all buckets</span>
         </div>
 
@@ -193,51 +224,67 @@ export default function SystemStats() {
               <div key={b.bucket} className={styles.bucketCard}>
                 <span className={styles.bucketName}>{BUCKET_LABELS[b.bucket] ?? b.bucket}</span>
                 <span className={styles.bucketSize}>{formatBytes(b.totalBytes)}</span>
-                <span className={styles.bucketCount}>{b.objectCount.toLocaleString()} file{b.objectCount === 1 ? '' : 's'}</span>
+                <span className={styles.bucketCount}>
+                  {b.objectCount.toLocaleString()} file{b.objectCount === 1 ? '' : 's'}
+                </span>
               </div>
             );
           })}
         </div>
-
       </section>
 
       <section className={adminStyles.section}>
         <div className={adminStyles.sectionHeader}>
-          <h2 className={adminStyles.sectionLabel}><Trash2 size={13} strokeWidth={1.75} aria-hidden="true" /> Automatic tidy-up</h2>
+          <h2 className={adminStyles.sectionLabel}>
+            <Trash2 size={13} strokeWidth={1.75} aria-hidden="true" /> Automatic tidy-up
+          </h2>
         </div>
-        <p className={styles.empty}>Storage looks after itself. Pictures are compressed as they are uploaded, a replaced or removed picture is deleted right away, and every Sunday the site deletes any file nothing links to any more (once it is a day old) and compresses older pictures. There is nothing to run by hand.</p>
+        <p className={styles.empty}>
+          Storage looks after itself. Pictures are compressed as they are uploaded, a replaced or removed picture is deleted right away, and every Sunday the site deletes any file
+          nothing links to any more (once it is a day old) and compresses older pictures. There is nothing to run by hand.
+        </p>
       </section>
 
       <h2 className={styles.groupTitle}>Platform</h2>
       {data.accounts && (
         <section className={adminStyles.section}>
           <div className={adminStyles.sectionHeader}>
-            <h2 className={adminStyles.sectionLabel}><Users size={13} strokeWidth={1.75} aria-hidden="true" /> Accounts</h2>
+            <h2 className={adminStyles.sectionLabel}>
+              <Users size={13} strokeWidth={1.75} aria-hidden="true" /> Accounts
+            </h2>
           </div>
           <div className={adminStyles.statsGrid}>
             <div className={adminStyles.statCard}>
-              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <span className={adminStyles.statIcon}>
+                <Users size={22} strokeWidth={1.5} aria-hidden="true" />
+              </span>
               <div>
                 <div className={adminStyles.statValue}>{data.accounts.total_accounts.toLocaleString()}</div>
                 <div className={adminStyles.statLabel}>Total Accounts</div>
               </div>
             </div>
             <div className={adminStyles.statCard}>
-              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <span className={adminStyles.statIcon}>
+                <Users size={22} strokeWidth={1.5} aria-hidden="true" />
+              </span>
               <div>
                 <div className={adminStyles.statValue}>{data.accounts.signups_last_30d.toLocaleString()}</div>
                 <div className={adminStyles.statLabel}>Signups (30d)</div>
               </div>
             </div>
             <div className={adminStyles.statCard}>
-              <span className={adminStyles.statIcon}><ShieldCheck size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <span className={adminStyles.statIcon}>
+                <ShieldCheck size={22} strokeWidth={1.5} aria-hidden="true" />
+              </span>
               <div>
                 <div className={adminStyles.statValue}>{data.accounts.multi_identity_accounts.toLocaleString()}</div>
                 <div className={adminStyles.statLabel}>Have a Backup Google Linked</div>
               </div>
             </div>
             <div className={adminStyles.statCard}>
-              <span className={adminStyles.statIcon}><Users size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <span className={adminStyles.statIcon}>
+                <Users size={22} strokeWidth={1.5} aria-hidden="true" />
+              </span>
               <div>
                 <div className={adminStyles.statValue}>{data.accounts.no_role_accounts.toLocaleString()}</div>
                 <div className={adminStyles.statLabel}>No Role Assigned</div>
@@ -249,25 +296,33 @@ export default function SystemStats() {
 
       <section className={adminStyles.section}>
         <div className={adminStyles.sectionHeader}>
-          <h2 className={adminStyles.sectionLabel}><Server size={13} strokeWidth={1.75} aria-hidden="true" /> Environment</h2>
+          <h2 className={adminStyles.sectionLabel}>
+            <Server size={13} strokeWidth={1.75} aria-hidden="true" /> Environment
+          </h2>
         </div>
         <div className={adminStyles.statsGrid}>
           <div className={adminStyles.statCard}>
-            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+            <span className={adminStyles.statIcon}>
+              <Server size={22} strokeWidth={1.5} aria-hidden="true" />
+            </span>
             <div>
               <div className={styles.envValue}>{data.environment.vercelEnv ?? 'local'}</div>
               <div className={adminStyles.statLabel}>Environment</div>
             </div>
           </div>
           <div className={adminStyles.statCard}>
-            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+            <span className={adminStyles.statIcon}>
+              <Server size={22} strokeWidth={1.5} aria-hidden="true" />
+            </span>
             <div>
               <div className={styles.envValue}>{data.environment.gitCommitSha ?? '—'}</div>
               <div className={adminStyles.statLabel}>{data.environment.gitCommitRef ?? 'Commit'}</div>
             </div>
           </div>
           <div className={adminStyles.statCard}>
-            <span className={adminStyles.statIcon}><Server size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+            <span className={adminStyles.statIcon}>
+              <Server size={22} strokeWidth={1.5} aria-hidden="true" />
+            </span>
             <div>
               <div className={styles.envValue}>{data.environment.nodeVersion}</div>
               <div className={adminStyles.statLabel}>Node</div>
@@ -275,7 +330,9 @@ export default function SystemStats() {
           </div>
           {data.database?.postgresVersion && (
             <div className={adminStyles.statCard}>
-              <span className={adminStyles.statIcon}><Database size={22} strokeWidth={1.5} aria-hidden="true" /></span>
+              <span className={adminStyles.statIcon}>
+                <Database size={22} strokeWidth={1.5} aria-hidden="true" />
+              </span>
               <div>
                 <div className={styles.envValue}>{data.database.postgresVersion.replace('PostgreSQL ', '')}</div>
                 <div className={adminStyles.statLabel}>Postgres</div>
@@ -287,12 +344,14 @@ export default function SystemStats() {
 
       <section className={adminStyles.section}>
         <div className={adminStyles.sectionHeader}>
-          <h2 className={adminStyles.sectionLabel}><Triangle size={11} strokeWidth={2} aria-hidden="true" /> Vercel</h2>
+          <h2 className={adminStyles.sectionLabel}>
+            <Triangle size={11} strokeWidth={2} aria-hidden="true" /> Vercel
+          </h2>
         </div>
         {!data.vercel.connected ? (
           <p className={styles.empty}>
-            Not connected — set <code className={styles.code}>VERCEL_API_TOKEN</code> and <code className={styles.code}>VERCEL_PROJECT_ID</code> (and
-            optionally <code className={styles.code}>VERCEL_TEAM_ID</code>) to show deployment status here.
+            Not connected — set <code className={styles.code}>VERCEL_API_TOKEN</code> and <code className={styles.code}>VERCEL_PROJECT_ID</code> (and optionally{' '}
+            <code className={styles.code}>VERCEL_TEAM_ID</code>) to show deployment status here.
           </p>
         ) : data.vercel.error ? (
           <Notice tone="error">{data.vercel.error}</Notice>

@@ -1,8 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { cleanCode, drawGame, isAskable, makeCode, pointsFor, shuffle, standings, csvToBulk, endStats, parseBulk, suggestSecs, topThree, totals, type PoolQuestion } from '../trivia/game';
+import {
+  cleanCode,
+  drawGame,
+  isAskable,
+  makeCode,
+  pointsFor,
+  shuffle,
+  standings,
+  csvToBulk,
+  endStats,
+  parseBulk,
+  suggestSecs,
+  topThree,
+  totals,
+  type PoolQuestion,
+} from '../trivia/game';
 
 const q = (id: string, over: Partial<PoolQuestion> = {}): PoolQuestion => ({ id, text: `Question ${id}`, choices: ['a', 'b', 'c', 'd'], correct: 1, category: 'C', ...over });
-const seeded = (seed = 1) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+const seeded =
+  (seed = 1) =>
+  () => {
+    seed = (seed * 16807) % 2147483647;
+    return (seed - 1) / 2147483646;
+  };
 
 describe('join code', () => {
   it('makes 6 digits', () => {
@@ -12,7 +32,7 @@ describe('join code', () => {
     expect(cleanCode(' 482 913 ')).toBe('482913');
     expect(cleanCode('482-913')).toBe('482913');
     expect(cleanCode('https://x.test/portal/trivia/play/482913')).toBe('482913');
-    expect(cleanCode(' ab3 k9z ')).toBe('AB3K9Z');   // an older game's code, with letters
+    expect(cleanCode(' ab3 k9z ')).toBe('AB3K9Z'); // an older game's code, with letters
     expect(cleanCode('48')).toBeNull();
     expect(cleanCode('')).toBeNull();
   });
@@ -48,7 +68,7 @@ describe('drawing a game', () => {
       expect(ids.every((id) => !used.has(id))).toBe(true);
     }
     const six = drawGame(pool, used, 6, seeded(7)).map((x) => x.id);
-    expect(six.filter((id) => !used.has(id))).toHaveLength(4);   // all 4 unused come first, then 2 repeats
+    expect(six.filter((id) => !used.has(id))).toHaveLength(4); // all 4 unused come first, then 2 repeats
   });
   it('skips unfinished questions', () => {
     const mixed = [q('ok'), q('blank', { text: '' }), q('gap', { choices: ['a', '', 'c', 'd'] })];
@@ -79,10 +99,22 @@ describe('standings', () => {
     expect(s.map((x) => x.rank)).toEqual([1, 1, 3]);
   });
   it('adds up the answers of the players still in', () => {
-    const t = totals([{ user_id: 'a', name: 'A' }, { user_id: 'b', name: 'B' }], [
-      { user_id: 'a', points: 900, ms: 2000, ok: true }, { user_id: 'a', points: 0, ms: 5000, ok: false }, { user_id: 'gone', points: 1000, ms: 1, ok: true }, { user_id: 'b', points: 600, ms: 8000, ok: true },
+    const t = totals(
+      [
+        { user_id: 'a', name: 'A' },
+        { user_id: 'b', name: 'B' },
+      ],
+      [
+        { user_id: 'a', points: 900, ms: 2000, ok: true },
+        { user_id: 'a', points: 0, ms: 5000, ok: false },
+        { user_id: 'gone', points: 1000, ms: 1, ok: true },
+        { user_id: 'b', points: 600, ms: 8000, ok: true },
+      ],
+    );
+    expect(t).toEqual([
+      { user_id: 'a', name: 'A', score: 900, time_ms: 2000 },
+      { user_id: 'b', name: 'B', score: 600, time_ms: 8000 },
     ]);
-    expect(t).toEqual([{ user_id: 'a', name: 'A', score: 900, time_ms: 2000 }, { user_id: 'b', name: 'B', score: 600, time_ms: 8000 }]);
   });
   it('picks exactly three winners, even through a tie, and nobody on zero', () => {
     const s = standings([p('a', 900, 1), p('b', 900, 1), p('c', 900, 1), p('d', 900, 1), p('z', 0, 0)]);
@@ -118,7 +150,12 @@ C. Chair
 D. Desk
 Answer: B`);
     expect(problems).toEqual([]);
-    expect(questions.map((q) => [q.text, q.correct])).toEqual([['What is 2+2?', 1], ['Capital of France?', 1], ['Biggest planet?', 2], ['Which one is a fruit?', 1]]);
+    expect(questions.map((q) => [q.text, q.correct])).toEqual([
+      ['What is 2+2?', 1],
+      ['Capital of France?', 1],
+      ['Biggest planet?', 2],
+      ['Which one is a fruit?', 1],
+    ]);
     expect(questions[2].choices[2]).toBe('Jupiter');
   });
   it('lists what it cannot read and leaves it out', () => {
@@ -132,7 +169,9 @@ Answer: B`);
 
 describe('categories', () => {
   it('reads a Category line before a question, in text and in CSV, and carries it into a drawn game', () => {
-    const { questions } = parseBulk('Category: Space\nBiggest planet?\nA. Mars\n*B. Jupiter\nC. Venus\nD. Earth\nSecond one?\nA. a\n*B. b\nC. c\nD. d\nCategory: Gaming\nThird?\nA. a\n*B. b\nC. c\nD. d');
+    const { questions } = parseBulk(
+      'Category: Space\nBiggest planet?\nA. Mars\n*B. Jupiter\nC. Venus\nD. Earth\nSecond one?\nA. a\n*B. b\nC. c\nD. d\nCategory: Gaming\nThird?\nA. a\n*B. b\nC. c\nD. d',
+    );
     expect(questions.map((x) => x.category)).toEqual(['Space', 'Space', 'Gaming']);
     expect(parseBulk('Biggest planet?\nA. Mars\n*B. Jupiter\nC. Venus\nD. Earth').problems[0]).toMatch(/no category/);
     const csv = parseBulk(csvToBulk('category,question,A,B,C,D,answer\nSpace,Biggest planet?,Mars,Jupiter,Venus,Earth,B\n'));
@@ -145,7 +184,10 @@ describe('categories', () => {
 describe('suggested time', () => {
   it('is roomy, grows with how much there is to read and stays between 40 and 120 seconds', () => {
     const short = suggestSecs({ text: 'Capital of France?', choices: ['Rome', 'Paris', 'Oslo', 'Bern'] });
-    const long = suggestSecs({ text: 'Which of the following university buildings was the first to open on the campus after the founding of the school?', choices: ['Scripps Hall of Marine Sciences', 'The old Mandeville auditorium', 'Revelle College humanities library', 'The central Geisel library tower'] });
+    const long = suggestSecs({
+      text: 'Which of the following university buildings was the first to open on the campus after the founding of the school?',
+      choices: ['Scripps Hall of Marine Sciences', 'The old Mandeville auditorium', 'Revelle College humanities library', 'The central Geisel library tower'],
+    });
     expect(short).toBeGreaterThanOrEqual(40);
     expect(short % 5).toBe(0);
     expect(long).toBeGreaterThan(short);
@@ -158,16 +200,33 @@ describe('CSV import', () => {
     const csv = 'category,question,A,B,C,D,answer\r\nGeography,"Capital of France, the city?",Rome,Paris,Oslo,Bern,B\r\nSpace,Biggest planet?,Mars,Venus,Jupiter,Earth,Jupiter\r\n';
     const { questions, problems } = parseBulk(csvToBulk(csv));
     expect(problems).toEqual([]);
-    expect(questions.map((q) => [q.text, q.correct])).toEqual([['Capital of France, the city?', 1], ['Biggest planet?', 2]]);
+    expect(questions.map((q) => [q.text, q.correct])).toEqual([
+      ['Capital of France, the city?', 1],
+      ['Biggest planet?', 2],
+    ]);
   });
 });
 
 describe('the end screen facts', () => {
   const plan = [{ text: 'Easy one' }, { text: 'Hard one' }, { text: 'Middle' }];
-  const list = [{ user_id: 'a', name: 'Ann' }, { user_id: 'b', name: 'Bo' }, { user_id: 'c', name: 'Cy' }];
+  const list = [
+    { user_id: 'a', name: 'Ann' },
+    { user_id: 'b', name: 'Bo' },
+    { user_id: 'c', name: 'Cy' },
+  ];
   const ans = (user_id: string, q_index: number, ok: boolean, ms = 3000) => ({ user_id, q_index, ok, ms });
   it('finds the quickest answer, the longest streak, the hardest and the easiest question', () => {
-    const answers = [ans('a', 0, true, 900), ans('b', 0, true), ans('c', 0, true), ans('a', 1, false), ans('b', 1, false), ans('c', 1, true, 400), ans('a', 2, true), ans('b', 2, true), ans('c', 2, false)];
+    const answers = [
+      ans('a', 0, true, 900),
+      ans('b', 0, true),
+      ans('c', 0, true),
+      ans('a', 1, false),
+      ans('b', 1, false),
+      ans('c', 1, true, 400),
+      ans('a', 2, true),
+      ans('b', 2, true),
+      ans('c', 2, false),
+    ];
     const s = endStats(plan, list, answers);
     expect(s.asked).toBe(3);
     expect(s.accuracy).toBe(67);

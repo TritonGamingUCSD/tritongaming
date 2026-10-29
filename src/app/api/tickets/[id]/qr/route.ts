@@ -16,14 +16,12 @@ export async function GET(request: Request, { params }: Params) {
   const { id } = await params;
   const supabase = await createClient();
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: ticket } = await supabase
-    .from('tickets')
-    .select('id, user_id, ticket_code, status, event:events(slug, start_date, end_date)')
-    .eq('id', id)
-    .single();
+  const { data: ticket } = await supabase.from('tickets').select('id, user_id, ticket_code, status, event:events(slug, start_date, end_date)').eq('id', id).single();
 
   // Deliberately owner-only, even though staff can read tickets via RLS for
   // check-in — nobody but the attendee should be able to mint their live code.
@@ -39,14 +37,13 @@ export async function GET(request: Request, { params }: Params) {
   // Pass? Checked against the member Rewards shop — see 20260921105000_add_digital_rewards.sql's grants_fast_pass flag.
   // Not scoped to this specific event; it's a standing perk, not a
   // per-event consumable.
-  const { data: memberFastPass } = await
-  supabase
-      .from('reward_redemptions')
-      .select('id, reward:reward_items!inner(grants_fast_pass)')
-      .eq('user_id', user.id)
-      .eq('status', 'fulfilled')
-      .eq('reward.grants_fast_pass', true)
-      .limit(1);
+  const { data: memberFastPass } = await supabase
+    .from('reward_redemptions')
+    .select('id, reward:reward_items!inner(grants_fast_pass)')
+    .eq('user_id', user.id)
+    .eq('status', 'fulfilled')
+    .eq('reward.grants_fast_pass', true)
+    .limit(1);
   const hasFastPass = (memberFastPass?.length ?? 0) > 0;
 
   const code = rotatingCode(ticket.ticket_code, currentWindow());
@@ -83,7 +80,11 @@ export async function GET(request: Request, { params }: Params) {
     : undefined;
 
   return NextResponse.json({
-    code, qr_data: qrData, expires_in: secondsUntilNextWindow(), rotation_seconds: ROTATION_SECONDS, has_fast_pass: hasFastPass,
+    code,
+    qr_data: qrData,
+    expires_in: secondsUntilNextWindow(),
+    rotation_seconds: ROTATION_SECONDS,
+    has_fast_pass: hasFastPass,
     ...(upcoming ? { upcoming, server_now_ms: Date.now() } : {}),
   });
 }

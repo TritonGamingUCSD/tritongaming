@@ -11,8 +11,12 @@ describe('[[doc links]]', () => {
   it('uses the text after the bar as the shown words', () => {
     expect(resolveWikiLinks('[[Google Drive|our drive]]', docs)).toBe(`[our drive](/portal/docs?id=${A})`);
   });
-  it('leaves an unknown title as plain text', () => { expect(resolveWikiLinks('[[Nope]]', docs)).toBe('Nope'); });
-  it('does not touch code blocks', () => { expect(resolveWikiLinks('```\n[[Google Drive]]\n```', docs)).toBe('```\n[[Google Drive]]\n```'); });
+  it('leaves an unknown title as plain text', () => {
+    expect(resolveWikiLinks('[[Nope]]', docs)).toBe('Nope');
+  });
+  it('does not touch code blocks', () => {
+    expect(resolveWikiLinks('```\n[[Google Drive]]\n```', docs)).toBe('```\n[[Google Drive]]\n```');
+  });
 });
 
 describe('backlinks', () => {
@@ -22,8 +26,12 @@ describe('backlinks', () => {
     { id: 'c', title: 'C', content: 'x [[Google Drive]]', published: false },
     { id: 'd', title: 'D', content: 'nothing', published: true },
   ];
-  it('lists published docs that mention it', () => { expect(backlinksTo(me, pool).map((d) => d.id)).toEqual(['b']); });
-  it('includes drafts for editors', () => { expect(backlinksTo(me, pool, true).map((d) => d.id)).toEqual(['b', 'c']); });
+  it('lists published docs that mention it', () => {
+    expect(backlinksTo(me, pool).map((d) => d.id)).toEqual(['b']);
+  });
+  it('includes drafts for editors', () => {
+    expect(backlinksTo(me, pool, true).map((d) => d.id)).toEqual(['b', 'c']);
+  });
 });
 
 describe('escaped brackets (how the editor saves them)', () => {

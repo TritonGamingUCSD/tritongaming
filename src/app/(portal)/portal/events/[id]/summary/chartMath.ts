@@ -16,6 +16,8 @@ export function twoLines(label: string): [string, string] {
   if (label.length <= 7 || !label.includes(' ')) return [label, ''];
   const mid = label.length / 2;
   let best = -1;
-  label.split('').forEach((ch, i) => { if (ch === ' ' && (best < 0 || Math.abs(i - mid) < Math.abs(best - mid))) best = i; });
+  label.split('').forEach((ch, i) => {
+    if (ch === ' ' && (best < 0 || Math.abs(i - mid) < Math.abs(best - mid))) best = i;
+  });
   return [label.slice(0, best), label.slice(best + 1)];
 }

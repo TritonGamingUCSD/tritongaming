@@ -26,19 +26,18 @@ interface BulkRoleInput {
 // already holds (someone can lead more than one division).
 export async function POST(request: Request) {
   const userClient = await createClient();
-  const { data: { user } } = await strictUser(userClient);
+  const {
+    data: { user },
+  } = await strictUser(userClient);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const { data: callerRoles } = await userClient
-    .from('user_roles')
-    .select('role, division_id')
-    .eq('user_id', user.id);
+  const { data: callerRoles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);
 
   if (!hasCapability(callerRoles ?? [], 'manage_roles')) {
     return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
   }
 
-  const { userIds, role, divisionId } = await request.json() as BulkRoleInput;
+  const { userIds, role, divisionId } = (await request.json()) as BulkRoleInput;
   if (!Array.isArray(userIds) || userIds.length === 0 || !ASSIGNABLE_ROLES.includes(role)) {
     return NextResponse.json({ error: 'Missing userIds or invalid role' }, { status: 400 });
   }
@@ -47,23 +46,29 @@ export async function POST(request: Request) {
   }
 
   const adminClient = createServiceClient();
-  const results = await Promise.all(userIds.map(async (userId) => {
-    const { data: currentRoles } = await adminClient
-      .from('user_roles')
-      .select('role, division_id')
-      .eq('user_id', userId);
+  const results = await Promise.all(
+    userIds.map(async (userId) => {
+      const { data: currentRoles } = await adminClient.from('user_roles').select('role, division_id').eq('user_id', userId);
 
-    const nextRoles = withRole(currentRoles ?? [], role, divisionId ?? null);
-    if (!nextRoles) return { userId, skipped: true };
+      const nextRoles = withRole(currentRoles ?? [], role, divisionId ?? null);
+      if (!nextRoles) return { userId, skipped: true };
 
-    const { error } = await adminClient.rpc('admin_set_user_roles', {
-      _user_id: userId,
-      _roles: nextRoles,
-      _granted_by: user.id,
-    });
-    if (!error) await notifyRoleChange(adminClient, userId, user.id, (currentRoles ?? []).map((r) => r.role as string), nextRoles.map((r) => r.role as string));
-    return { userId, error: error?.message, roles: error ? undefined : nextRoles };
-  }));
+      const { error } = await adminClient.rpc('admin_set_user_roles', {
+        _user_id: userId,
+        _roles: nextRoles,
+        _granted_by: user.id,
+      });
+      if (!error)
+        await notifyRoleChange(
+          adminClient,
+          userId,
+          user.id,
+          (currentRoles ?? []).map((r) => r.role as string),
+          nextRoles.map((r) => r.role as string),
+        );
+      return { userId, error: error?.message, roles: error ? undefined : nextRoles };
+    }),
+  );
 
   const failed = results.filter((r) => r.error);
   if (failed.length > 0 && failed.length === results.length) {
@@ -72,7 +77,13 @@ export async function POST(request: Request) {
 
   const applied = results.filter((r) => !r.error && !('skipped' in r && r.skipped));
   if (applied.length > 0) {
-    await logAudit(adminClient, { actorId: user.id, action: 'update', entityType: 'roles', summary: `Added ${role} to ${applied.length} account${applied.length === 1 ? '' : 's'} in bulk`, details: { role, divisionId: divisionId ?? null, userIds: applied.map((r) => r.userId) } });
+    await logAudit(adminClient, {
+      actorId: user.id,
+      action: 'update',
+      entityType: 'roles',
+      summary: `Added ${role} to ${applied.length} account${applied.length === 1 ? '' : 's'} in bulk`,
+      details: { role, divisionId: divisionId ?? null, userIds: applied.map((r) => r.userId) },
+    });
   }
   return NextResponse.json({ ok: true, results });
 }

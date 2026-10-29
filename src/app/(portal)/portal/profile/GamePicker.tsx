@@ -19,13 +19,19 @@ export default function GamePicker({ value, onChange }: { value: string; onChang
   const joinedLength = chosen.join(GAME_SEPARATOR).length;
   const full = chosen.length >= MAX_GAMES || joinedLength >= MAX_GAMES_LENGTH - 10;
 
-  function set(list: string[]) { onChange(list.join(GAME_SEPARATOR)); }
+  function set(list: string[]) {
+    onChange(list.join(GAME_SEPARATOR));
+  }
   function add(name: string) {
     const n = name.replace(/[,;]/g, ' ').trim().slice(0, 40);
     if (!n || full || chosen.some((c) => c.toLowerCase() === n.toLowerCase())) return;
     set([...chosen, n]);
   }
-  function submitOther() { add(otherText); setOtherText(''); setOther(false); }
+  function submitOther() {
+    add(otherText);
+    setOtherText('');
+    setOther(false);
+  }
 
   return (
     <div className={styles.majorPicker}>
@@ -45,10 +51,17 @@ export default function GamePicker({ value, onChange }: { value: string; onChang
         <Select
           className={styles.input}
           value=""
-          onChange={(e) => { if (e.target.value === OTHER) setOther(true); else add(e.target.value); }}
+          onChange={(e) => {
+            if (e.target.value === OTHER) setOther(true);
+            else add(e.target.value);
+          }}
         >
           <option value="">{chosen.length ? 'Add another game' : 'Pick your favorite games'}</option>
-          {GAME_OPTIONS.filter((o) => !chosen.some((c) => c.toLowerCase() === o.toLowerCase())).map((o) => <option key={o} value={o}>{o}</option>)}
+          {GAME_OPTIONS.filter((o) => !chosen.some((c) => c.toLowerCase() === o.toLowerCase())).map((o) => (
+            <option key={o} value={o}>
+              {o}
+            </option>
+          ))}
           <option value={OTHER}>Other (type it in)…</option>
         </Select>
       )}
@@ -58,13 +71,29 @@ export default function GamePicker({ value, onChange }: { value: string; onChang
             className={styles.input}
             value={otherText}
             onChange={(e) => setOtherText(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitOther(); } }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                submitOther();
+              }
+            }}
             maxLength={40}
             placeholder="Type a game"
             autoFocus
           />
-          <Button size="sm" onClick={submitOther} disabled={!otherText.trim()}>Add</Button>
-          <Button size="sm" variant="ghost" onClick={() => { setOther(false); setOtherText(''); }}>Cancel</Button>
+          <Button size="sm" onClick={submitOther} disabled={!otherText.trim()}>
+            Add
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setOther(false);
+              setOtherText('');
+            }}
+          >
+            Cancel
+          </Button>
         </div>
       )}
       <span className={styles.charCount} style={{ textAlign: 'left' }}>

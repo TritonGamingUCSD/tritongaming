@@ -75,7 +75,9 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
       <Reveal variant="fadeUp">
         <div className={styles.header}>
           <p className={styles.sectionLabel}>JOIN THE TEAM</p>
-          <h2 className={styles.sectionTitle}>Be Part of <span>Something Bigger</span></h2>
+          <h2 className={styles.sectionTitle}>
+            Be Part of <span>Something Bigger</span>
+          </h2>
           <p className={styles.sectionSub}>
             {countWord} way{pathways.length === 1 ? '' : 's'} to get involved with Triton Gaming — find the one that fits you.
           </p>
@@ -94,9 +96,7 @@ export default function LandingRecruitment({ content = {} }: { content?: Recruit
                 <span className={styles.note}>{p.note}</span>
                 <h3 className={styles.pathTitle}>{p.title}</h3>
                 {p.body && <p className={styles.pathBody}>{p.body}</p>}
-                {p.cta && p.href && (
-                  <span className={styles.pathCta}>{p.cta} →</span>
-                )}
+                {p.cta && p.href && <span className={styles.pathCta}>{p.cta} →</span>}
                 {p.href && (
                   <a
                     href={p.href}

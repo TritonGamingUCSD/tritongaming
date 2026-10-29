@@ -41,7 +41,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (typeof b.step_id !== 'string' || !UUID.test(b.step_id)) return NextResponse.json({ error: 'Pick a step first.' }, { status: 400 });
   if (Array.isArray(b.items)) return markMany(svc, auth!.user.id, plan!.id, b.step_id, b.items);
   if (!b.tag && !b.device_id && !b.borrowed_id && !b.slot_id) return NextResponse.json({ error: 'Type the ID written on the device.' }, { status: 400 });
-  const [found, steps] = await Promise.all([findItem(svc, plan!.id, b), loadSteps(svc)]);   // the two reads don't depend on each other
+  const [found, steps] = await Promise.all([findItem(svc, plan!.id, b), loadSteps(svc)]); // the two reads don't depend on each other
   if (!found) return NextResponse.json({ error: `No device with the ID “${String(b.tag ?? '').trim()}”.` }, { status: 404 });
   const step = steps.find((s) => s.id === b.step_id);
   if (!step) return NextResponse.json({ error: 'That step is gone.' }, { status: 404 });
@@ -52,11 +52,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const itemId = found.kind === 'club' ? (found.device.id as string) : found.row.id;
   const [placed, { data: already }] = await Promise.all([
     found.kind === 'club'
-      ? svc.from('logistics_plan_devices').select('station_id, role').eq('plan_id', plan!.id).eq('device_id', itemId).maybeSingle().then((r) => r.data)
+      ? svc
+          .from('logistics_plan_devices')
+          .select('station_id, role')
+          .eq('plan_id', plan!.id)
+          .eq('device_id', itemId)
+          .maybeSingle()
+          .then((r) => r.data)
       : Promise.resolve({ station_id: found.row.station_id, role: found.kind === 'borrowed' ? found.row.role : 'planned' }),
     svc.from('logistics_plan_steps').select('done_at').eq('plan_id', plan!.id).eq(itemCol, itemId).eq('step_id', step.id).maybeSingle(),
   ]);
-  const { data: station } = placed?.station_id ? await svc.from('logistics_stations').select('id, name').eq('id', placed.station_id as string).maybeSingle() : { data: null };
+  const { data: station } = placed?.station_id
+    ? await svc
+        .from('logistics_stations')
+        .select('id, name')
+        .eq('id', placed.station_id as string)
+        .maybeSingle()
+    : { data: null };
 
   let item;
   if (found.kind === 'club') {
@@ -68,7 +80,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const lines = describeChange(device, { ...device, kit });
       if (lines.length) {
         await svc.from('logistics_devices').update({ kit, updated_at: new Date().toISOString() }).eq('id', device.id);
-        await svc.from('logistics_device_log').insert(lines.map((l) => ({ device_id: device.id, actor_id: auth!.user.id, kind: l.kind, summary: `${l.summary} (${step.name}, ${plan!.name})` })));
+        await svc
+          .from('logistics_device_log')
+          .insert(lines.map((l) => ({ device_id: device.id, actor_id: auth!.user.id, kind: l.kind, summary: `${l.summary} (${step.name}, ${plan!.name})` })));
         item = slimClub({ ...device, kit });
       }
     }
@@ -79,17 +93,33 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (step.kit && Array.isArray(b.kit)) {
       const flags = new Map((b.kit as { item?: unknown; missing?: unknown }[]).map((k) => [String(k.item ?? '').toLowerCase(), k.missing === true]));
       const kit = row.kit.map((k) => (flags.has(k.item.toLowerCase()) ? { ...k, missing: flags.get(k.item.toLowerCase())! } : k));
-      if (JSON.stringify(kit) !== JSON.stringify(row.kit)) { await svc.from('logistics_plan_borrowed').update({ kit }).eq('id', row.id); row = { ...row, kit }; }
+      if (JSON.stringify(kit) !== JSON.stringify(row.kit)) {
+        await svc.from('logistics_plan_borrowed').update({ kit }).eq('id', row.id);
+        row = { ...row, kit };
+      }
     }
     item = slimBorrowed(row, ownerLabelOf(row, await ownerNames(svc, [row])));
   }
   let done_at = already?.done_at as string | undefined;
   if (!already) {
-    const ins = await svc.from('logistics_plan_steps').insert({ plan_id: plan!.id, [itemCol]: itemId, step_id: step.id, done_by: auth!.user.id }).select('done_at').single();
+    const ins = await svc
+      .from('logistics_plan_steps')
+      .insert({ plan_id: plan!.id, [itemCol]: itemId, step_id: step.id, done_by: auth!.user.id })
+      .select('done_at')
+      .single();
     if (ins.error) return NextResponse.json({ error: 'Couldn’t save that step.' }, { status: 500 });
     done_at = ins.data.done_at as string;
   }
-  return NextResponse.json({ item, inPlan: found.kind !== 'club' || !!placed, role: placed?.role ?? null, station: station ?? null, already: !!already, done_at, step_id: step.id, by: already ? null : await myName(svc, auth!.user.id) });
+  return NextResponse.json({
+    item,
+    inPlan: found.kind !== 'club' || !!placed,
+    role: placed?.role ?? null,
+    station: station ?? null,
+    already: !!already,
+    done_at,
+    step_id: step.id,
+    by: already ? null : await myName(svc, auth!.user.id),
+  });
 }
 
 // "Mark all" for a team: the same step for many devices in one go (by their ids; steps that review the parts are marked one device at a time). One read of the step list, four reads of
@@ -100,7 +130,8 @@ async function markMany(svc: Parameters<typeof touchPlan>[0], userId: string, pl
   if (!step) return NextResponse.json({ error: 'That step is gone.' }, { status: 404 });
   if (step.kit) return NextResponse.json({ error: `“${step.name}” reviews the parts, so it is marked one device at a time.` }, { status: 400 });
   const want = { device_id: [] as string[], borrowed_id: [] as string[], slot_id: [] as string[] };
-  for (const x of raw.slice(0, 300) as Record<string, unknown>[]) for (const col of ['device_id', 'borrowed_id', 'slot_id'] as const) if (typeof x?.[col] === 'string' && UUID.test(x[col] as string)) want[col].push(x[col] as string);
+  for (const x of raw.slice(0, 300) as Record<string, unknown>[])
+    for (const col of ['device_id', 'borrowed_id', 'slot_id'] as const) if (typeof x?.[col] === 'string' && UUID.test(x[col] as string)) want[col].push(x[col] as string);
   const none = Promise.resolve({ data: [] as Record<string, unknown>[] });
   const [dev, bor, slo, done] = await Promise.all([
     want.device_id.length ? svc.from('logistics_plan_devices').select('device_id').eq('plan_id', planId).in('device_id', want.device_id) : none,
@@ -110,8 +141,11 @@ async function markMany(svc: Parameters<typeof touchPlan>[0], userId: string, pl
   ]);
   const has = new Set((done.data ?? []).map((d) => `${d.device_id ?? d.borrowed_id ?? d.slot_id}`));
   const rows: Record<string, unknown>[] = [];
-  for (const d of dev.data ?? []) if (stepAppliesTo(step, 'club') && !has.has(d.device_id as string)) rows.push({ plan_id: planId, device_id: d.device_id, step_id: step.id, done_by: userId });
-  for (const b of bor.data ?? []) if (stepAppliesTo(step, b.owner_kind as 'sponsor' | 'officer') && !has.has(b.id as string)) rows.push({ plan_id: planId, borrowed_id: b.id, step_id: step.id, done_by: userId });
+  for (const d of dev.data ?? [])
+    if (stepAppliesTo(step, 'club') && !has.has(d.device_id as string)) rows.push({ plan_id: planId, device_id: d.device_id, step_id: step.id, done_by: userId });
+  for (const b of bor.data ?? [])
+    if (stepAppliesTo(step, b.owner_kind as 'sponsor' | 'officer') && !has.has(b.id as string))
+      rows.push({ plan_id: planId, borrowed_id: b.id, step_id: step.id, done_by: userId });
   for (const s of slo.data ?? []) if (stepAppliesTo(step, 'club') && !has.has(s.id as string)) rows.push({ plan_id: planId, slot_id: s.id, step_id: step.id, done_by: userId });
   if (!rows.length) return NextResponse.json({ rows: [], by: null });
   const ins = await svc.from('logistics_plan_steps').insert(rows).select('device_id, borrowed_id, slot_id, step_id, done_at');
@@ -126,14 +160,23 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (c.error) return c.error;
   const { auth, plan } = c;
   const b = await request.json().catch(() => ({}));
-  const col = typeof b.slot_id === 'string' && UUID.test(b.slot_id) ? 'slot_id' : typeof b.borrowed_id === 'string' && UUID.test(b.borrowed_id) ? 'borrowed_id' : typeof b.device_id === 'string' && UUID.test(b.device_id) ? 'device_id' : null;
+  const col =
+    typeof b.slot_id === 'string' && UUID.test(b.slot_id)
+      ? 'slot_id'
+      : typeof b.borrowed_id === 'string' && UUID.test(b.borrowed_id)
+        ? 'borrowed_id'
+        : typeof b.device_id === 'string' && UUID.test(b.device_id)
+          ? 'device_id'
+          : null;
   if (!col || typeof b.step_id !== 'string' || !UUID.test(b.step_id)) return NextResponse.json({ error: 'Nothing to undo.' }, { status: 400 });
   const itemId = b[col] as string;
   const { data: gone } = await auth!.svc.from('logistics_plan_steps').delete().eq('plan_id', plan!.id).eq(col, itemId).eq('step_id', b.step_id).select('step_id');
   if (gone?.length) {
     if (col === 'device_id') {
       const { data: step } = await auth!.svc.from('logistics_options').select('value').eq('id', b.step_id).maybeSingle();
-      await auth!.svc.from('logistics_device_log').insert({ device_id: itemId, actor_id: auth!.user.id, kind: 'step', summary: `Undid “${step?.value ?? 'a step'}” at ${plan!.name}` });
+      await auth!.svc
+        .from('logistics_device_log')
+        .insert({ device_id: itemId, actor_id: auth!.user.id, kind: 'step', summary: `Undid “${step?.value ?? 'a step'}” at ${plan!.name}` });
     }
     await touchPlan(auth!.svc, plan!.id);
   }

@@ -14,7 +14,8 @@ import Button from '@/components/ui/Button';
 // linkIdentity() redirect round-trip — see that route's own comment for
 // why this can't just be a rejected promise like a normal API call.
 const LINK_ERROR_MESSAGES: Record<string, string> = {
-  identity_already_exists: 'That Google account is already linked to a different profile. Sign out and use the sign-in button for it directly if that’s the account you meant to sign into.',
+  identity_already_exists:
+    'That Google account is already linked to a different profile. Sign out and use the sign-in button for it directly if that’s the account you meant to sign into.',
   manual_linking_disabled: 'Account linking isn’t turned on for this site yet — an admin needs to enable "Manual linking" in Supabase’s Auth settings.',
 };
 
@@ -73,7 +74,9 @@ export default function LinkGoogleSection() {
   useEffect(() => {
     (async () => {
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) return;
 
       await loadIdentities();
@@ -102,7 +105,7 @@ export default function LinkGoogleSection() {
 
   async function handleUnlink(identity: UserIdentity) {
     const email = emailOf(identity);
-    if (!(await confirmHold({ title: `Unlink ${email}?`, message: 'You\'ll no longer be able to sign in with that Google account.', confirmLabel: 'Hold to unlink' }))) return;
+    if (!(await confirmHold({ title: `Unlink ${email}?`, message: "You'll no longer be able to sign in with that Google account.", confirmLabel: 'Hold to unlink' }))) return;
     setError('');
     setUnlinkingId(identity.identity_id);
     const supabase = createClient();
@@ -130,13 +133,7 @@ export default function LinkGoogleSection() {
             <li key={i.identity_id} className={styles.identityRow}>
               <span>{emailOf(i)}</span>
               {canUnlink && (
-                <button
-                  type="button"
-                  className={styles.unlinkBtn}
-                  onClick={() => handleUnlink(i)}
-                  disabled={unlinkingId === i.identity_id}
-                  aria-label={`Unlink ${emailOf(i)}`}
-                >
+                <button type="button" className={styles.unlinkBtn} onClick={() => handleUnlink(i)} disabled={unlinkingId === i.identity_id} aria-label={`Unlink ${emailOf(i)}`}>
                   {unlinkingId === i.identity_id ? '…' : <X size={13} strokeWidth={1.75} aria-hidden="true" />}
                 </button>
               )}
@@ -146,14 +143,14 @@ export default function LinkGoogleSection() {
       )}
 
       <p className={styles.backupLoginHint}>
-        UCSD deletes @ucsd.edu Google accounts some time after graduation — link a second Google
-        account (like a personal Gmail) now so you can still get back into this account (tickets,
-        activity history, everything) after that happens. This is especially worth doing once you
-        know you&apos;re graduating soon.
+        UCSD deletes @ucsd.edu Google accounts some time after graduation — link a second Google account (like a personal Gmail) now so you can still get back into this account
+        (tickets, activity history, everything) after that happens. This is especially worth doing once you know you&apos;re graduating soon.
       </p>
 
       {error && <Notice tone="error">{error}</Notice>}
-      <Button onClick={handleLink} loading={linking}>{linking ? 'Redirecting…' : 'Link Another Google Account'}</Button>
+      <Button onClick={handleLink} loading={linking}>
+        {linking ? 'Redirecting…' : 'Link Another Google Account'}
+      </Button>
     </div>
   );
 }

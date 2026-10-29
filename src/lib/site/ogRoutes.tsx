@@ -36,23 +36,21 @@ export async function eventOgResponse(slug: string) {
   const inp = event ? eventCardInputs(event) : null;
   const poster = await ogImage(inp?.posterUrl);
   return new ImageResponse(
-    (
-      <EventCard
-        p={{
-          title: inp?.title ?? 'Triton Gaming event',
-          past: inp?.past ?? false,
-          poster,
-          bg: inp?.bg ?? '#011941',
-          accent: inp?.accent ?? '#ffc72c',
-          text: inp?.text ?? '#f2f1f0',
-          date: inp ? formatEventDateRange(inp.start, inp.end, { weekday: true }) : '',
-          time: inp ? formatEventTimeRange(inp.start, inp.end) : '',
-          location: inp?.location ?? '',
-          logo,
-        }}
-      />
-    ),
-    { ...OG_SIZE, fonts, headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } }
+    <EventCard
+      p={{
+        title: inp?.title ?? 'Triton Gaming event',
+        past: inp?.past ?? false,
+        poster,
+        bg: inp?.bg ?? '#011941',
+        accent: inp?.accent ?? '#ffc72c',
+        text: inp?.text ?? '#f2f1f0',
+        date: inp ? formatEventDateRange(inp.start, inp.end, { weekday: true }) : '',
+        time: inp ? formatEventTimeRange(inp.start, inp.end) : '',
+        location: inp?.location ?? '',
+        logo,
+      }}
+    />,
+    { ...OG_SIZE, fonts, headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } },
   );
 }
 
@@ -68,8 +66,9 @@ export async function divisionOgResponse(slug: string) {
   const [division, fonts, tg] = await Promise.all([getDivisionBySlug(slug), ogFonts(), ogLogo()]);
   const inp = division ? divisionCardInputs(division) : null;
   const logo = inp ? await ogImage(inp.logo, 500) : '';
-  return new ImageResponse(
-    <DivisionCard p={{ name: inp?.name ?? 'Triton Gaming division', pitch: inp?.pitch ?? '', logoUrl: logo || tg }} />,
-    { ...OG_SIZE, fonts, headers: { 'Cache-Control': 'public, max-age=31536000, immutable' } }
-  );
+  return new ImageResponse(<DivisionCard p={{ name: inp?.name ?? 'Triton Gaming division', pitch: inp?.pitch ?? '', logoUrl: logo || tg }} />, {
+    ...OG_SIZE,
+    fonts,
+    headers: { 'Cache-Control': 'public, max-age=31536000, immutable' },
+  });
 }

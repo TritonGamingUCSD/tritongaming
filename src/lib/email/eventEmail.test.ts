@@ -3,8 +3,20 @@ import { eventEmailHtml, eventEmailSubject, eventEmailText, eventWhen, shortText
 import { EMAIL_KINDS, isEmailKind, wantsEmail } from './prefs';
 
 const base: EventEmailOptions = {
-  event: { title: 'Division <Showcase>', start_date: '2026-10-24T22:00:00Z', end_date: '2026-10-25T03:00:00Z', location: 'Price Center', is_online: false, cover_url: 'https://example.org/c.png' },
-  kind: 'reminders', subject: 'Coming up', note: 'Park in lot 7.\n\nBring your ID.', ticketUrl: 'https://tritongaming.org/portal/tickets?qr=1', unsubscribeUrl: 'https://tritongaming.org/api/email/unsubscribe?t=x', settingsUrl: 'https://tritongaming.org/portal/profile',
+  event: {
+    title: 'Division <Showcase>',
+    start_date: '2026-10-24T22:00:00Z',
+    end_date: '2026-10-25T03:00:00Z',
+    location: 'Price Center',
+    is_online: false,
+    cover_url: 'https://example.org/c.png',
+  },
+  kind: 'reminders',
+  subject: 'Coming up',
+  note: 'Park in lot 7.\n\nBring your ID.',
+  ticketUrl: 'https://tritongaming.org/portal/tickets?qr=1',
+  unsubscribeUrl: 'https://tritongaming.org/api/email/unsubscribe?t=x',
+  settingsUrl: 'https://tritongaming.org/portal/profile',
 };
 
 describe('event email', () => {
@@ -30,7 +42,18 @@ describe('event email', () => {
     expect(eventEmailHtml({ ...base, event: { ...base.event, is_online: true, location: null } })).toContain('Online');
   });
   it('adds what the event page says: a description, the address with a map link, the schedule, daily hours, price and every sponsor', () => {
-    const e = { ...base.event, description: 'A **night** of games. '.repeat(40), venue_address: '9500 Gilman Dr, La Jolla', venue_notes: 'Park in lot 7', schedule: [{ time: '5:00 PM', title: 'Doors' }], sponsors: [{ name: 'ASUS', url: 'https://asus.com' }, { name: 'MSI' }, ...Array.from({ length: 10 }, (_, i) => ({ name: `Sponsor ${i}` }))], day_hours: [{ day: 'Sat', start: '10 AM', end: '4 PM' }], ticket_price: 5, audience: 'ucsd_only', pageUrl: 'https://tritongaming.org/events/x' };
+    const e = {
+      ...base.event,
+      description: 'A **night** of games. '.repeat(40),
+      venue_address: '9500 Gilman Dr, La Jolla',
+      venue_notes: 'Park in lot 7',
+      schedule: [{ time: '5:00 PM', title: 'Doors' }],
+      sponsors: [{ name: 'ASUS', url: 'https://asus.com' }, { name: 'MSI' }, ...Array.from({ length: 10 }, (_, i) => ({ name: `Sponsor ${i}` }))],
+      day_hours: [{ day: 'Sat', start: '10 AM', end: '4 PM' }],
+      ticket_price: 5,
+      audience: 'ucsd_only',
+      pageUrl: 'https://tritongaming.org/events/x',
+    };
     const h = eventEmailHtml({ ...base, event: e });
     expect(h).toContain('Read more');
     expect(h).not.toContain('**');

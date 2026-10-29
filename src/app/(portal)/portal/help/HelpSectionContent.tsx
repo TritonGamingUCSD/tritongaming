@@ -17,16 +17,47 @@ import { uploadImageToStorage, parseStorageUrl, ALLOWED_IMAGE_TYPES } from '@/li
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import { showToast } from '@/lib/ui/toast';
 import { createClient } from '@/lib/supabase/client';
-import { HELP_CATEGORIES, HELP_STATUSES, HELP_TEMPLATES, MAX_ATTACHMENTS, MAX_BODY, MAX_SUBJECT, roleRequest, roleRequestBody, parseRoleRequest, REQUESTABLE_ROLES, type RequestableRole, type HelpCategory, type HelpStatus } from '@/lib/notifications/helpConstants';
+import {
+  HELP_CATEGORIES,
+  HELP_STATUSES,
+  HELP_TEMPLATES,
+  MAX_ATTACHMENTS,
+  MAX_BODY,
+  MAX_SUBJECT,
+  roleRequest,
+  roleRequestBody,
+  parseRoleRequest,
+  REQUESTABLE_ROLES,
+  type RequestableRole,
+  type HelpCategory,
+  type HelpStatus,
+} from '@/lib/notifications/helpConstants';
 import styles from './help.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 
 type Tab = 'ask' | 'mine' | 'inbox' | 'replies';
 interface TicketItem {
-  id: string; user_id: string; user_name: string; category: HelpCategory; subject: string; status: HelpStatus;
-  assigned_to: string | null; assignee_name: string | null; created_at: string; updated_at: string; last_from_user: boolean;
+  id: string;
+  user_id: string;
+  user_name: string;
+  category: HelpCategory;
+  subject: string;
+  status: HelpStatus;
+  assigned_to: string | null;
+  assignee_name: string | null;
+  created_at: string;
+  updated_at: string;
+  last_from_user: boolean;
 }
-interface Msg { id: string; body: string; created_at: string; author_id: string; author_name: string; from_staff: boolean; attachments: string[] }
+interface Msg {
+  id: string;
+  body: string;
+  created_at: string;
+  author_id: string;
+  author_name: string;
+  from_staff: boolean;
+  attachments: string[];
+}
 interface Detail {
   isStaff: boolean;
   roleGrant: { have: { role: string; division_id: string | null }[]; divisions: { id: string; name: string }[] } | null;
@@ -36,7 +67,25 @@ interface Detail {
 
 const catLabel = (c: string) => HELP_CATEGORIES.find((x) => x.id === c)?.label ?? c;
 const statusLabel = (s: string) => HELP_STATUSES.find((x) => x.id === s)?.label ?? s;
-const SECTION_NAMES: Record<string, string> = { home: 'Home', tickets: 'My Tickets', profile: 'Profile', activity: 'Activity', points: 'Rewards', events: 'Events', checkin: 'Check-In', meetings: 'Meetings', staffle: 'Staffle', members: 'TG Members', divisions: 'Divisions', 'division-members': 'Division Members', qrcode: 'QR Studio', docs: 'Documentation', albums: 'Photo Albums', admin: 'Admin', 'site-content': 'Site Content' };
+const SECTION_NAMES: Record<string, string> = {
+  home: 'Home',
+  tickets: 'My Tickets',
+  profile: 'Profile',
+  activity: 'Activity',
+  points: 'Rewards',
+  events: 'Events',
+  checkin: 'Check-In',
+  meetings: 'Meetings',
+  staffle: 'Staffle',
+  members: 'TG Members',
+  divisions: 'Divisions',
+  'division-members': 'Division Members',
+  qrcode: 'QR Studio',
+  docs: 'Documentation',
+  albums: 'Photo Albums',
+  admin: 'Admin',
+  'site-content': 'Site Content',
+};
 
 async function api<T = unknown>(url: string, init?: RequestInit): Promise<{ ok: boolean; data: T & { error?: string } }> {
   try {
@@ -56,7 +105,10 @@ export default function HelpSectionContent({ isStaff, userId }: { isStaff: boole
   const setParams = usePortalParams();
   const [openId, setOpenId] = useState<string | null>(params.get('ticket'));
   // The open ticket lives in the address (?ticket=<id>), so a notification link opens it, a copied link reopens it, and it survives a reload.
-  function showTicket(id: string | null) { setOpenId(id); setParams({ ticket: id }); }
+  function showTicket(id: string | null) {
+    setOpenId(id);
+    setParams({ ticket: id });
+  }
   // (On a fresh load the address isn't readable during the first render, so a ticket named there is picked up here as well.)
   useEffect(() => {
     const t = params.get('ticket');
@@ -66,27 +118,42 @@ export default function HelpSectionContent({ isStaff, userId }: { isStaff: boole
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params]);
 
-  function pick(t: Tab) { showTicket(null); setTab(t); sync(t); }
-  function created(id: string) { setTab('mine'); sync('mine'); showTicket(id); }
+  function pick(t: Tab) {
+    showTicket(null);
+    setTab(t);
+    sync(t);
+  }
+  function created(id: string) {
+    setTab('mine');
+    sync('mine');
+    showTicket(id);
+  }
 
   return (
     <div className={styles.page}>
-      <SectionHeader title="Help" flush sub={isStaff ? 'Answer questions and problems from members.' : 'Stuck on something, or found a bug? Tell the exec team and we’ll get back to you here.'} />
+      <SectionHeader
+        title="Help"
+        flush
+        sub={isStaff ? 'Answer questions and problems from members.' : 'Stuck on something, or found a bug? Tell the exec team and we’ll get back to you here.'}
+      />
       <SectionTabs<Tab>
         label="Help"
         value={tab}
         onChange={pick}
-        tabs={valid.map((id): { id: Tab; label: string; icon: React.ReactNode } => id === 'inbox'
-          ? { id, label: 'Inbox', icon: <Inbox size={15} /> }
-          : id === 'ask' ? { id, label: 'Ask for help', icon: <MessageSquarePlus size={15} /> }
-          : id === 'replies' ? { id, label: 'Saved replies', icon: <MessageSquareText size={15} /> }
-          : { id, label: 'My tickets', icon: <ListChecks size={15} /> })}
+        tabs={valid.map((id): { id: Tab; label: string; icon: React.ReactNode } =>
+          id === 'inbox'
+            ? { id, label: 'Inbox', icon: <Inbox size={15} /> }
+            : id === 'ask'
+              ? { id, label: 'Ask for help', icon: <MessageSquarePlus size={15} /> }
+              : id === 'replies'
+                ? { id, label: 'Saved replies', icon: <MessageSquareText size={15} /> }
+                : { id, label: 'My tickets', icon: <ListChecks size={15} /> },
+        )}
       />
       {tab === 'ask' && <NewTicket userId={userId} onCreated={created} />}
       {tab === 'replies' && isStaff && <CannedReplies />}
-      {(tab === 'mine' || tab === 'inbox') && (openId
-        ? <Thread id={openId} userId={userId} onBack={() => showTicket(null)} />
-        : <TicketList scope={tab === 'inbox' ? 'all' : 'mine'} onOpen={showTicket} />)}
+      {(tab === 'mine' || tab === 'inbox') &&
+        (openId ? <Thread id={openId} userId={userId} onBack={() => showTicket(null)} /> : <TicketList scope={tab === 'inbox' ? 'all' : 'mine'} onOpen={showTicket} />)}
     </div>
   );
 }
@@ -103,9 +170,12 @@ function TicketList({ scope, onOpen }: { scope: 'mine' | 'all'; onOpen: (id: str
     let live = true;
     api<{ tickets: TicketItem[] }>(`/api/help${scope === 'all' ? '?scope=all' : ''}`).then(({ ok, data }) => {
       if (!live) return;
-      if (ok) setItems(data.tickets); else setErr(data.error ?? 'Failed to load.');
+      if (ok) setItems(data.tickets);
+      else setErr(data.error ?? 'Failed to load.');
     });
-    return () => { live = false; };
+    return () => {
+      live = false;
+    };
   }, [scope]);
   if (err) return <Notice tone="error">{err}</Notice>;
   if (!items) return <Loading variant="inline" label="Loading…" />;
@@ -114,8 +184,17 @@ function TicketList({ scope, onOpen }: { scope: 'mine' | 'all'; onOpen: (id: str
   return (
     <div className={styles.listWrap}>
       <div className={styles.filterRow}>
-        <SectionTabs<'active' | 'resolved' | 'all'> variant="segmented" label="Filter" value={filter} onChange={setFilter}
-          tabs={[{ id: 'active', label: 'Active', badge: waiting }, { id: 'resolved', label: 'Resolved' }, { id: 'all', label: 'All' }]} />
+        <SectionTabs<'active' | 'resolved' | 'all'>
+          variant="segmented"
+          label="Filter"
+          value={filter}
+          onChange={setFilter}
+          tabs={[
+            { id: 'active', label: 'Active', badge: waiting },
+            { id: 'resolved', label: 'Resolved' },
+            { id: 'all', label: 'All' },
+          ]}
+        />
       </div>
       {shown.length === 0 ? (
         <div className={styles.empty}>
@@ -132,7 +211,8 @@ function TicketList({ scope, onOpen }: { scope: 'mine' | 'all'; onOpen: (id: str
                   <span className={styles.rowMain}>
                     <span className={styles.rowSubject}>{t.subject}</span>
                     <span className={styles.rowMeta}>
-                      {scope === 'all' && <>{t.user_name} · </>}{catLabel(t.category)} · {formatPacificDateTime(t.updated_at)}
+                      {scope === 'all' && <>{t.user_name} · </>}
+                      {catLabel(t.category)} · {formatPacificDateTime(t.updated_at)}
                       {scope === 'all' && t.assignee_name && <> · {t.assignee_name}</>}
                     </span>
                   </span>
@@ -163,7 +243,10 @@ function useAttachments(userId: string) {
     try {
       const out: { path: string; preview: string }[] = [];
       for (const f of picked) {
-        if (!ALLOWED_IMAGE_TYPES.includes(f.type)) { setErr('Screenshots need to be PNG, JPG, WebP or GIF.'); continue; }
+        if (!ALLOWED_IMAGE_TYPES.includes(f.type)) {
+          setErr('Screenshots need to be PNG, JPG, WebP or GIF.');
+          continue;
+        }
         const url = await uploadImageToStorage('help-attachments', f, { pathPrefix: userId, maxDimension: 1800 });
         const parsed = parseStorageUrl(url);
         if (parsed) out.push({ path: parsed.path, preview: URL.createObjectURL(f) });
@@ -171,7 +254,9 @@ function useAttachments(userId: string) {
       setPaths((p) => [...p, ...out]);
     } catch {
       setErr('Couldn’t upload that image. Try a smaller one.');
-    } finally { setUploading(false); }
+    } finally {
+      setUploading(false);
+    }
   }
   return { paths, uploading, err, add, remove: (i: number) => setPaths((p) => p.filter((_, j) => j !== i)), clear: () => setPaths([]) };
 }
@@ -184,7 +269,9 @@ function AttachmentPicker({ att }: { att: ReturnType<typeof useAttachments> }) {
         <span key={a.path} className={styles.thumb}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={a.preview} alt="Attached screenshot" />
-          <button type="button" aria-label="Remove screenshot" onClick={() => att.remove(i)}><X size={12} strokeWidth={2} aria-hidden="true" /></button>
+          <button type="button" aria-label="Remove screenshot" onClick={() => att.remove(i)}>
+            <X size={12} strokeWidth={2} aria-hidden="true" />
+          </button>
         </span>
       ))}
       {att.paths.length < MAX_ATTACHMENTS && (
@@ -192,7 +279,16 @@ function AttachmentPicker({ att }: { att: ReturnType<typeof useAttachments> }) {
           <ImagePlus size={15} strokeWidth={1.75} aria-hidden="true" /> {att.uploading ? 'Uploading…' : 'Add Screenshot'}
         </Button>
       )}
-      {picking && <PictureDialog title="Add screenshots" multiple accept={ALLOWED_IMAGE_TYPES.join(',')} hint={`Up to ${MAX_ATTACHMENTS} pictures`} onUse={(f) => att.add(f)} onClose={() => setPicking(false)} />}
+      {picking && (
+        <PictureDialog
+          title="Add screenshots"
+          multiple
+          accept={ALLOWED_IMAGE_TYPES.join(',')}
+          hint={`Up to ${MAX_ATTACHMENTS} pictures`}
+          onUse={(f) => att.add(f)}
+          onClose={() => setPicking(false)}
+        />
+      )}
       {att.err && <span className={styles.attachErr}>{att.err}</span>}
     </div>
   );
@@ -214,13 +310,28 @@ function RoleRequestForm({ initial, onCreated }: { initial: RequestableRole; onC
   const [note, setNote] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  useEffect(() => { createClient().from('divisions').select('name').order('name').then(({ data }) => { const n = (data ?? []).map((d) => d.name as string); setDivisions(n); setDivision((cur) => cur || n[0] || ''); }); }, []);
+  useEffect(() => {
+    createClient()
+      .from('divisions')
+      .select('name')
+      .order('name')
+      .then(({ data }) => {
+        const n = (data ?? []).map((d) => d.name as string);
+        setDivisions(n);
+        setDivision((cur) => cur || n[0] || '');
+      });
+  }, []);
   async function submit(e: React.FormEvent) {
-    e.preventDefault(); setError(''); setBusy(true);
+    e.preventDefault();
+    setError('');
+    setBusy(true);
     const msg = roleRequestBody({ role, division, vouch, note });
     const { ok, data } = await api<{ id: string }>('/api/help', { method: 'POST', body: JSON.stringify({ category: 'account', ...msg, page: window.location.pathname }) });
     setBusy(false);
-    if (!ok) { setError(data.error ?? 'Failed to send.'); return; }
+    if (!ok) {
+      setError(data.error ?? 'Failed to send.');
+      return;
+    }
     showToast('Sent. An admin will review it and you’ll get a notification.');
     onCreated(data.id);
   }
@@ -228,12 +339,24 @@ function RoleRequestForm({ initial, onCreated }: { initial: RequestableRole; onC
     <form className={styles.card} onSubmit={submit}>
       <label className={styles.field}>
         <span className={styles.label}>Role you need</span>
-        <Select value={role} onChange={(e) => setRole(e.target.value as RequestableRole)}>{REQUESTABLE_ROLES.map((r) => <option key={r.id} value={r.id}>{r.label}</option>)}</Select>
+        <Select value={role} onChange={(e) => setRole(e.target.value as RequestableRole)}>
+          {REQUESTABLE_ROLES.map((r) => (
+            <option key={r.id} value={r.id}>
+              {r.label}
+            </option>
+          ))}
+        </Select>
       </label>
       {role === 'division' && (
         <label className={styles.field}>
           <span className={styles.label}>Division</span>
-          <Select value={division} onChange={(e) => setDivision(e.target.value)}>{divisions.map((d) => <option key={d} value={d}>{d}</option>)}</Select>
+          <Select value={division} onChange={(e) => setDivision(e.target.value)}>
+            {divisions.map((d) => (
+              <option key={d} value={d}>
+                {d}
+              </option>
+            ))}
+          </Select>
         </label>
       )}
       <label className={styles.field}>
@@ -241,11 +364,17 @@ function RoleRequestForm({ initial, onCreated }: { initial: RequestableRole; onC
         <Input value={vouch} maxLength={80} onChange={(e) => setVouch(e.target.value)} placeholder="An exec or lead you work with" required />
       </label>
       <label className={styles.field}>
-        <span className={styles.label}>Anything else <span className={styles.optional}>optional</span></span>
+        <span className={styles.label}>
+          Anything else <span className={styles.optional}>optional</span>
+        </span>
         <Textarea value={note} maxLength={500} rows={3} onChange={(e) => setNote(e.target.value)} />
       </label>
       {error && <Notice tone="error">{error}</Notice>}
-      <div><Button type="submit" loading={busy} disabled={!vouch.trim() || (role === 'division' && !division)}><Send size={15} strokeWidth={1.75} aria-hidden="true" /> Send request</Button></div>
+      <div>
+        <Button type="submit" loading={busy} disabled={!vouch.trim() || (role === 'division' && !division)}>
+          <Send size={15} strokeWidth={1.75} aria-hidden="true" /> Send request
+        </Button>
+      </div>
     </form>
   );
 }
@@ -265,7 +394,12 @@ function FreeTicket({ userId, onCreated }: { userId: string; onCreated: (id: str
   const draftValue = { category, subject, body };
   const draft = useDraft('help-new', draftValue, (v) => !v.subject.trim() && (!v.body.trim() || v.body === HELP_TEMPLATES[v.category]));
   useEffect(() => {
-    try { const s = sessionStorage.getItem('tg_help_from'); if (s) setFrom(SECTION_NAMES[s] ?? s); } catch { /* ignore */ }
+    try {
+      const s = sessionStorage.getItem('tg_help_from');
+      if (s) setFrom(SECTION_NAMES[s] ?? s);
+    } catch {
+      /* ignore */
+    }
   }, []);
 
   async function submit(e: React.FormEvent) {
@@ -274,10 +408,20 @@ function FreeTicket({ userId, onCreated }: { userId: string; onCreated: (id: str
     setBusy(true);
     const { ok, data } = await api<{ id: string }>('/api/help', {
       method: 'POST',
-      body: JSON.stringify({ category, subject, body, attachments: att.paths.map((a) => a.path), page: `${from} (${window.location.pathname}${window.location.search})`, viewport: `${window.innerWidth}×${window.innerHeight}` }),
+      body: JSON.stringify({
+        category,
+        subject,
+        body,
+        attachments: att.paths.map((a) => a.path),
+        page: `${from} (${window.location.pathname}${window.location.search})`,
+        viewport: `${window.innerWidth}×${window.innerHeight}`,
+      }),
     });
     setBusy(false);
-    if (!ok) { setError(data.error ?? 'Failed to send.'); return; }
+    if (!ok) {
+      setError(data.error ?? 'Failed to send.');
+      return;
+    }
     draft.clear();
     showToast('Sent. We’ll reply here and you’ll get a notification.');
     onCreated(data.id);
@@ -285,16 +429,37 @@ function FreeTicket({ userId, onCreated }: { userId: string; onCreated: (id: str
 
   return (
     <form className={styles.card} onSubmit={submit}>
-      {draft.offer && <DraftBanner at={draft.offer.at} what="message" onContinue={() => { const d = draft.accept(); if (d) { setCategory(d.category); setSubject(d.subject); setBody(d.body); } }} onDiscard={draft.discard} />}
+      {draft.offer && (
+        <DraftBanner
+          at={draft.offer.at}
+          what="message"
+          onContinue={() => {
+            const d = draft.accept();
+            if (d) {
+              setCategory(d.category);
+              setSubject(d.subject);
+              setBody(d.body);
+            }
+          }}
+          onDiscard={draft.discard}
+        />
+      )}
       <label className={styles.field}>
         <span className={styles.label}>What’s this about?</span>
-        <Select value={category} onChange={(e) => {
-          const next = e.target.value as HelpCategory;
-          // Swap the starter text for the new category, but never throw away what the person has already typed.
-          if (!body.trim() || body === HELP_TEMPLATES[category]) setBody(HELP_TEMPLATES[next]);
-          setCategory(next);
-        }}>
-          {HELP_CATEGORIES.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
+        <Select
+          value={category}
+          onChange={(e) => {
+            const next = e.target.value as HelpCategory;
+            // Swap the starter text for the new category, but never throw away what the person has already typed.
+            if (!body.trim() || body === HELP_TEMPLATES[category]) setBody(HELP_TEMPLATES[next]);
+            setCategory(next);
+          }}
+        >
+          {HELP_CATEGORIES.map((c) => (
+            <option key={c.id} value={c.id}>
+              {c.label}
+            </option>
+          ))}
         </Select>
       </label>
       <label className={styles.field}>
@@ -303,16 +468,31 @@ function FreeTicket({ userId, onCreated }: { userId: string; onCreated: (id: str
       </label>
       <label className={styles.field}>
         <span className={styles.label}>Details</span>
-        <Textarea value={body} maxLength={MAX_BODY} rows={6} onChange={(e) => setBody(e.target.value)} placeholder="Tell us what you were trying to do and what happened." required />
-        <span className={styles.count}>{body.length}/{MAX_BODY}</span>
+        <Textarea
+          value={body}
+          maxLength={MAX_BODY}
+          rows={6}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Tell us what you were trying to do and what happened."
+          required
+        />
+        <span className={styles.count}>
+          {body.length}/{MAX_BODY}
+        </span>
       </label>
       <div className={styles.field}>
-        <span className={styles.label}>Screenshots <span className={styles.optional}>optional, up to {MAX_ATTACHMENTS}</span></span>
+        <span className={styles.label}>
+          Screenshots <span className={styles.optional}>optional, up to {MAX_ATTACHMENTS}</span>
+        </span>
         <AttachmentPicker att={att} />
       </div>
       <p className={styles.autoNote}>We’ll include the page you were on ({from}) and your browser so we can reproduce it. Only exec and admins can see this.</p>
       {error && <Notice tone="error">{error}</Notice>}
-      <div><Button type="submit" loading={busy} disabled={att.uploading}><Send size={15} strokeWidth={1.75} aria-hidden="true" /> Send</Button></div>
+      <div>
+        <Button type="submit" loading={busy} disabled={att.uploading}>
+          <Send size={15} strokeWidth={1.75} aria-hidden="true" /> Send
+        </Button>
+      </div>
     </form>
   );
 }
@@ -328,65 +508,125 @@ function Thread({ id, userId, onBack }: { id: string; userId: string; onBack: ()
 
   const load = useCallback(async () => {
     const { ok, data } = await api<Detail>(`/api/help/${id}`);
-    if (ok) setD(data); else setErr(data.error ?? 'Failed to load.');
+    if (ok) setD(data);
+    else setErr(data.error ?? 'Failed to load.');
   }, [id]);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
   useEffect(() => {
     if (!d?.isStaff) return;
-    api<{ replies: { id: string; title: string; body: string }[] }>('/api/help/canned').then(({ ok, data }) => { if (ok) setCanned(data.replies); });
+    api<{ replies: { id: string; title: string; body: string }[] }>('/api/help/canned').then(({ ok, data }) => {
+      if (ok) setCanned(data.replies);
+    });
   }, [d?.isStaff]);
-  useEffect(() => { endRef.current?.scrollIntoView({ block: 'nearest' }); }, [d?.messages.length]);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ block: 'nearest' });
+  }, [d?.messages.length]);
 
   async function send(e: React.FormEvent) {
     e.preventDefault();
     if (!reply.trim() && att.paths.length === 0) return;
-    setBusy(true); setErr('');
+    setBusy(true);
+    setErr('');
     const { ok, data } = await api(`/api/help/${id}/reply`, { method: 'POST', body: JSON.stringify({ body: reply, attachments: att.paths.map((a) => a.path) }) });
     setBusy(false);
-    if (!ok) { setErr(data.error ?? 'Failed to send.'); return; }
-    setReply(''); att.clear();
+    if (!ok) {
+      setErr(data.error ?? 'Failed to send.');
+      return;
+    }
+    setReply('');
+    att.clear();
     await load();
   }
   async function patch(body: Record<string, unknown>) {
     const { ok, data } = await api(`/api/help/${id}`, { method: 'PATCH', body: JSON.stringify(body) });
-    if (!ok) { setErr(data.error ?? 'Failed to update.'); return; }
+    if (!ok) {
+      setErr(data.error ?? 'Failed to update.');
+      return;
+    }
     await load();
   }
 
-  if (err && !d) return <><Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /> Back</Button><Notice tone="error">{err}</Notice></>;
+  if (err && !d)
+    return (
+      <>
+        <Button variant="ghost" size="sm" onClick={onBack}>
+          <ArrowLeft size={15} aria-hidden="true" /> Back
+        </Button>
+        <Notice tone="error">{err}</Notice>
+      </>
+    );
   if (!d) return <Loading variant="inline" label="Loading…" />;
   const t = d.ticket;
   const mine = t.user_id === userId;
   return (
     <div className={styles.thread}>
       <div className={styles.threadHead}>
-        <Button variant="ghost" size="sm" onClick={onBack}><ArrowLeft size={15} strokeWidth={1.75} aria-hidden="true" /> Back</Button>
+        <Button variant="ghost" size="sm" onClick={onBack}>
+          <ArrowLeft size={15} strokeWidth={1.75} aria-hidden="true" /> Back
+        </Button>
         <Pill status={t.status} />
       </div>
       <div className={styles.threadTitle}>
         <h2>{t.subject}</h2>
-        <p className={styles.rowMeta}>{catLabel(t.category)} · opened {formatPacificDateTime(t.created_at)}{d.isStaff && !mine && <> by <strong>{t.user_name}</strong></>}{t.assignee_name && <> · handled by {t.assignee_name}</>}</p>
-        {d.isStaff && t.category === 'doc' && t.page?.startsWith('/portal/docs') && <p><PortalLink href={t.page} className={styles.docLink}>Open the doc</PortalLink></p>}
+        <p className={styles.rowMeta}>
+          {catLabel(t.category)} · opened {formatPacificDateTime(t.created_at)}
+          {d.isStaff && !mine && (
+            <>
+              {' '}
+              by <strong>{t.user_name}</strong>
+            </>
+          )}
+          {t.assignee_name && <> · handled by {t.assignee_name}</>}
+        </p>
+        {d.isStaff && t.category === 'doc' && t.page?.startsWith('/portal/docs') && (
+          <p>
+            <PortalLink href={t.page} className={styles.docLink}>
+              Open the doc
+            </PortalLink>
+          </p>
+        )}
         {d.isStaff && (t.page || t.user_agent) && <p className={styles.tech}>{[t.page, t.user_agent].filter(Boolean).join(' · ')}</p>}
       </div>
 
       {d.isStaff && (
         <div className={styles.staffBar}>
-          {t.assigned_to !== userId && <Button variant="secondary" size="sm" onClick={() => patch({ assigned_to: userId })}><UserCheck size={15} strokeWidth={1.75} aria-hidden="true" /> Take this one</Button>}
-          {t.status !== 'resolved'
-            ? <Button variant="secondary" size="sm" onClick={() => patch({ status: 'resolved' })}><CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> Mark resolved</Button>
-            : <Button variant="secondary" size="sm" onClick={() => patch({ status: 'open' })}><RotateCcw size={15} strokeWidth={1.75} aria-hidden="true" /> Reopen</Button>}
+          {t.assigned_to !== userId && (
+            <Button variant="secondary" size="sm" onClick={() => patch({ assigned_to: userId })}>
+              <UserCheck size={15} strokeWidth={1.75} aria-hidden="true" /> Take this one
+            </Button>
+          )}
+          {t.status !== 'resolved' ? (
+            <Button variant="secondary" size="sm" onClick={() => patch({ status: 'resolved' })}>
+              <CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> Mark resolved
+            </Button>
+          ) : (
+            <Button variant="secondary" size="sm" onClick={() => patch({ status: 'open' })}>
+              <RotateCcw size={15} strokeWidth={1.75} aria-hidden="true" /> Reopen
+            </Button>
+          )}
         </div>
       )}
-      {d.roleGrant && t.status !== 'resolved' && <RoleApprove ticketId={id} grant={d.roleGrant} who={t.user_name} asked={parseRoleRequest(t.subject, d.messages[0]?.body ?? '')} onDone={load} />}
+      {d.roleGrant && t.status !== 'resolved' && (
+        <RoleApprove ticketId={id} grant={d.roleGrant} who={t.user_name} asked={parseRoleRequest(t.subject, d.messages[0]?.body ?? '')} onDone={load} />
+      )}
       {!d.isStaff && t.status !== 'resolved' && (
-        <div className={styles.staffBar}><Button variant="secondary" size="sm" onClick={() => patch({ status: 'resolved' })}><CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> Mark as solved</Button></div>
+        <div className={styles.staffBar}>
+          <Button variant="secondary" size="sm" onClick={() => patch({ status: 'resolved' })}>
+            <CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> Mark as solved
+          </Button>
+        </div>
       )}
 
       <ol className={styles.msgs}>
         {d.messages.map((m) => (
           <li key={m.id} className={`${styles.msg} ${m.author_id === userId ? styles.msgMine : ''} ${m.from_staff ? styles.msgStaff : ''}`}>
-            <div className={styles.msgHead}><strong>{m.author_id === userId ? 'You' : m.author_name}</strong>{m.from_staff && <span className={styles.staffTag}>Exec team</span>}<span>{formatPacificDateTime(m.created_at)}</span></div>
+            <div className={styles.msgHead}>
+              <strong>{m.author_id === userId ? 'You' : m.author_name}</strong>
+              {m.from_staff && <span className={styles.staffTag}>Exec team</span>}
+              <span>{formatPacificDateTime(m.created_at)}</span>
+            </div>
             <p className={styles.msgBody}>{m.body}</p>
             {m.attachments.length > 0 && (
               <div className={styles.shots}>
@@ -406,20 +646,39 @@ function Thread({ id, userId, onBack }: { id: string; userId: string; onBack: ()
       {t.status === 'resolved' && <p className={styles.muted}>This ticket is resolved. Replying will reopen it.</p>}
       <form className={styles.replyForm} onSubmit={send}>
         {d.isStaff && !mine && canned.length > 0 && (
-          <Select value="" onChange={(e) => {
-            const r = canned.find((c) => c.id === e.target.value);
-            if (!r) return;
-            const text = r.body.replace(/\{name\}/g, (t.user_name || 'there').split(/\s+/)[0]);
-            setReply((cur) => (cur.trim() ? `${cur.trimEnd()}\n\n${text}` : text));
-          }} aria-label="Insert a saved reply">
+          <Select
+            value=""
+            onChange={(e) => {
+              const r = canned.find((c) => c.id === e.target.value);
+              if (!r) return;
+              const text = r.body.replace(/\{name\}/g, (t.user_name || 'there').split(/\s+/)[0]);
+              setReply((cur) => (cur.trim() ? `${cur.trimEnd()}\n\n${text}` : text));
+            }}
+            aria-label="Insert a saved reply"
+          >
             <option value="">Insert a saved reply…</option>
-            {canned.map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+            {canned.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.title}
+              </option>
+            ))}
           </Select>
         )}
-        <Textarea value={reply} maxLength={MAX_BODY} rows={3} onChange={(e) => setReply(e.target.value)} placeholder={d.isStaff && !mine ? 'Write a reply…' : 'Add more details or reply…'} aria-label="Reply" />
+        <Textarea
+          value={reply}
+          maxLength={MAX_BODY}
+          rows={3}
+          onChange={(e) => setReply(e.target.value)}
+          placeholder={d.isStaff && !mine ? 'Write a reply…' : 'Add more details or reply…'}
+          aria-label="Reply"
+        />
         <AttachmentPicker att={att} />
         {err && <Notice tone="error">{err}</Notice>}
-        <div><Button type="submit" loading={busy} disabled={att.uploading || (!reply.trim() && att.paths.length === 0)}><Send size={15} strokeWidth={1.75} aria-hidden="true" /> Send reply</Button></div>
+        <div>
+          <Button type="submit" loading={busy} disabled={att.uploading || (!reply.trim() && att.paths.length === 0)}>
+            <Send size={15} strokeWidth={1.75} aria-hidden="true" /> Send reply
+          </Button>
+        </div>
       </form>
     </div>
   );
@@ -432,14 +691,20 @@ function CannedReplies() {
   const [error, setError] = useState('');
   const load = useCallback(async () => {
     const { ok, data } = await api<{ replies: { id: string; title: string; body: string }[] }>('/api/help/canned');
-    if (ok) setItems(data.replies); else setError(data.error ?? 'Failed to load.');
+    if (ok) setItems(data.replies);
+    else setError(data.error ?? 'Failed to load.');
   }, []);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
   async function save() {
     if (!editing) return;
     setError('');
     const { ok, data } = await api('/api/help/canned', { method: 'POST', body: JSON.stringify(editing) });
-    if (!ok) { setError(data.error ?? 'Failed to save.'); return; }
+    if (!ok) {
+      setError(data.error ?? 'Failed to save.');
+      return;
+    }
     setEditing(null);
     await load();
   }
@@ -455,44 +720,99 @@ function CannedReplies() {
       <ul className={styles.list}>
         {items.map((r) => (
           <li key={r.id} className={styles.cannedRow}>
-            <span className={styles.rowMain}><span className={styles.rowSubject}>{r.title}</span><span className={styles.rowMeta}>{r.body}</span></span>
-            <Button size="sm" variant="secondary" onClick={() => setEditing(r)}>Edit</Button>
-            <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>Delete</Button>
+            <span className={styles.rowMain}>
+              <span className={styles.rowSubject}>{r.title}</span>
+              <span className={styles.rowMeta}>{r.body}</span>
+            </span>
+            <Button size="sm" variant="secondary" onClick={() => setEditing(r)}>
+              Edit
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => remove(r.id)}>
+              Delete
+            </Button>
           </li>
         ))}
       </ul>
       {editing ? (
         <div className={styles.card}>
-          <label className={styles.field}><span className={styles.label}>Title</span><Input value={editing.title} maxLength={60} onChange={(e) => setEditing({ ...editing, title: e.target.value })} /></label>
-          <label className={styles.field}><span className={styles.label}>Reply</span><Textarea value={editing.body} maxLength={MAX_BODY} rows={5} onChange={(e) => setEditing({ ...editing, body: e.target.value })} /></label>
-          <div className={styles.staffBar}><Button onClick={save} disabled={!editing.title.trim() || !editing.body.trim()}>Save reply</Button><Button variant="ghost" onClick={() => setEditing(null)}>Cancel</Button></div>
+          <label className={styles.field}>
+            <span className={styles.label}>Title</span>
+            <Input value={editing.title} maxLength={60} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
+          </label>
+          <label className={styles.field}>
+            <span className={styles.label}>Reply</span>
+            <Textarea value={editing.body} maxLength={MAX_BODY} rows={5} onChange={(e) => setEditing({ ...editing, body: e.target.value })} />
+          </label>
+          <div className={styles.staffBar}>
+            <Button onClick={save} disabled={!editing.title.trim() || !editing.body.trim()}>
+              Save reply
+            </Button>
+            <Button variant="ghost" onClick={() => setEditing(null)}>
+              Cancel
+            </Button>
+          </div>
         </div>
-      ) : <div><Button variant="secondary" onClick={() => setEditing({ title: '', body: '' })}>+ New saved reply</Button></div>}
+      ) : (
+        <div>
+          <Button variant="secondary" onClick={() => setEditing({ title: '', body: '' })}>
+            + New saved reply
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
 // Admins only, on a role request: pick the role and approve. It gives the role, replies on the ticket, tells the person and resolves it.
-function RoleApprove({ ticketId, grant, who, asked, onDone }: { ticketId: string; grant: { have: { role: string; division_id: string | null }[]; divisions: { id: string; name: string }[] }; who: string; asked: { role: RequestableRole | null; division: string | null }; onDone: () => Promise<void> }) {
+function RoleApprove({
+  ticketId,
+  grant,
+  who,
+  asked,
+  onDone,
+}: {
+  ticketId: string;
+  grant: { have: { role: string; division_id: string | null }[]; divisions: { id: string; name: string }[] };
+  who: string;
+  asked: { role: RequestableRole | null; division: string | null };
+  onDone: () => Promise<void>;
+}) {
   const [role, setRole] = useState<RequestableRole>(asked.role ?? 'officer');
   const [division, setDivision] = useState(grant.divisions.find((d) => d.name === asked.division)?.id ?? grant.divisions[0]?.id ?? '');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
   const current = grant.have.map((r) => r.role).join(', ') || 'no roles yet';
   async function approve() {
-    setBusy(true); setErr('');
+    setBusy(true);
+    setErr('');
     const { ok, data } = await api(`/api/help/${ticketId}/grant-role`, { method: 'POST', body: JSON.stringify({ role, division_id: role === 'division' ? division : null }) });
-    if (!ok) setErr(data.error ?? 'Couldn’t approve that.'); else await onDone();
+    if (!ok) setErr(data.error ?? 'Couldn’t approve that.');
+    else await onDone();
     setBusy(false);
   }
   return (
     <div className={styles.staffBar} role="group" aria-label="Approve this role request">
-      <span className={styles.muted}>Approve for {who} (now: {current}):</span>
+      <span className={styles.muted}>
+        Approve for {who} (now: {current}):
+      </span>
       <Select value={role} onChange={(e) => setRole(e.target.value as typeof role)} aria-label="Role to give">
-        <option value="officer">Officer</option><option value="lead">Lead</option><option value="division">Division lead</option><option value="alumni">Alumni</option>
+        <option value="officer">Officer</option>
+        <option value="lead">Lead</option>
+        <option value="division">Division lead</option>
+        <option value="alumni">Alumni</option>
       </Select>
-      {role === 'division' && <Select value={division} onChange={(e) => setDivision(e.target.value)} aria-label="Division">{grant.divisions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}</Select>}
-      <Button size="sm" loading={busy} disabled={role === 'division' && !division} onClick={approve}><CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> Approve and give role</Button>
+      {role === 'division' && (
+        <Select value={division} onChange={(e) => setDivision(e.target.value)} aria-label="Division">
+          {grant.divisions.map((d) => (
+            <option key={d.id} value={d.id}>
+              {d.name}
+            </option>
+          ))}
+        </Select>
+      )}
+      <Button size="sm" loading={busy} disabled={role === 'division' && !division} onClick={approve}>
+        <CheckCircle2 size={15} strokeWidth={1.75} aria-hidden="true" /> Approve and give role
+      </Button>
       {err && <Notice tone="error">{err}</Notice>}
     </div>
   );

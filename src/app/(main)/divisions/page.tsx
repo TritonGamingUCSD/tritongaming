@@ -31,10 +31,7 @@ export const revalidate = 3600;
 
 export default async function DivisionsPage() {
   const sitePhotos = await getSitePhotos();
-  const [divisions, content] = await Promise.all([
-    getDivisions(),
-    getContentBlock('page.divisions'),
-  ]);
+  const [divisions, content] = await Promise.all([getDivisions(), getContentBlock('page.divisions')]);
 
   return (
     <div className={styles.page}>
@@ -52,13 +49,17 @@ export default async function DivisionsPage() {
                     {logoSrc ? (
                       <LogoPlate src={logoSrc} alt="" className={styles.plate} imgClassName={styles.logo} />
                     ) : (
-                      <span className={styles.logoFallback} aria-hidden="true">{div.name[0]}</span>
+                      <span className={styles.logoFallback} aria-hidden="true">
+                        {div.name[0]}
+                      </span>
                     )}
                   </div>
                   <h2 className={styles.divName}>{div.name}</h2>
                   <p className={styles.divDesc}>{pitch || 'Check the page for what this division is up to.'}</p>
                   <div className={styles.cardFooter}>
-                    <span className={styles.learnMore}>{(content.learn_more as string) || 'Learn more'} <span aria-hidden="true">→</span></span>
+                    <span className={styles.learnMore}>
+                      {(content.learn_more as string) || 'Learn more'} <span aria-hidden="true">→</span>
+                    </span>
                     {div.discord_url && (
                       <a href={div.discord_url} target="_blank" rel="noopener noreferrer" className={styles.discordBtn} aria-label={`Join ${div.name}'s Discord`}>
                         <Image src="/logos/discord.svg" alt="" width={14} height={14} unoptimized /> Discord

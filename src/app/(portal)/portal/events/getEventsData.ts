@@ -3,14 +3,22 @@ import { bucketByMonth } from '@/lib/events/monthBuckets';
 import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/events/checkinForm';
 import type { AppRole } from '@/types/database';
 
-export interface EventTicketStat { title: string; issued: number; checkedIn: number; rate: number; startDate: string; }
+export interface EventTicketStat {
+  title: string;
+  issued: number;
+  checkedIn: number;
+  rate: number;
+  startDate: string;
+}
 
 // The signed-in person's own year and roles — what "Preview AS Form" is built
 // from, so the preview shows exactly what they'd see as an attendee (their
 // year, their affiliation) rather than a made-up sample.
 export async function getFormPreviewViewer(): Promise<{ year: string | null; classOf: number | null; roles: AppRole[] }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { year: null, classOf: null, roles: [] };
   const [{ data: profile }, { data: roleRows }] = await Promise.all([
     supabase.from('profiles').select('year, class_of').eq('id', user.id).maybeSingle(),
@@ -26,7 +34,9 @@ export async function getEventsData() {
   const [{ data: events }, { data: tickets }] = await Promise.all([
     supabase
       .from('events')
-      .select('id, slug, title, start_date, end_date, created_at, location, is_published, requires_ticket, audience, points_value, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override')
+      .select(
+        'id, slug, title, start_date, end_date, created_at, location, is_published, requires_ticket, audience, points_value, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override',
+      )
       .order('start_date', { ascending: false })
       .limit(50),
     supabase.from('tickets').select('event_id, status, created_at'),
@@ -44,15 +54,16 @@ export async function getEventsData() {
   // year and roles) — so it's exactly the prefill they'd get as an attendee.
   const eventsWithTickets = (events ?? []).map((e) => {
     const config = (e.checkin_form_override as CheckinFormConfig | null) ?? null;
-    const checkinFormPreviewUrl = e.requires_checkin_form && config
-      ? buildCheckinFormUrl(config, {
-          eventTitle: e.checkin_form_event_name?.trim() || e.title,
-          year: viewer.year,
-          classOf: viewer.classOf,
-          roles: viewer.roles,
-          foodItem: e.checkin_food_item ?? null,
-        })
-      : null;
+    const checkinFormPreviewUrl =
+      e.requires_checkin_form && config
+        ? buildCheckinFormUrl(config, {
+            eventTitle: e.checkin_form_event_name?.trim() || e.title,
+            year: viewer.year,
+            classOf: viewer.classOf,
+            roles: viewer.roles,
+            foodItem: e.checkin_food_item ?? null,
+          })
+        : null;
     return {
       ...e,
       ticketsIssued: ticketsByEvent.get(e.id)?.issued ?? 0,

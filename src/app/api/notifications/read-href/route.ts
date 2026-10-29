@@ -5,7 +5,9 @@ import { createClient } from '@/lib/supabase/server';
 // (A push carries the address, not the bell entry's id, so the entries are matched by their address.)
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const b = await request.json().catch(() => ({}));
   const href = typeof b.href === 'string' ? b.href.slice(0, 500) : '';

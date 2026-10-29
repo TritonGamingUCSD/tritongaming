@@ -21,10 +21,7 @@ export async function GET() {
   const focusRow = plans.find((p) => p.starts_on <= today && today <= p.ends_on) ?? plans.find((p) => p.starts_on > today) ?? plans[plans.length - 1] ?? null;
 
   const fixes: { sev: 'bad' | 'warn'; text: string; href: string }[] = [];
-  const [{ data: prizes }, totals] = await Promise.all([
-    svc.from('logistics_prizes').select('id, name, quantity, size, stock_level, in_hand').limit(2000),
-    loadPrizeTotals(svc),
-  ]);
+  const [{ data: prizes }, totals] = await Promise.all([svc.from('logistics_prizes').select('id, name, quantity, size, stock_level, in_hand').limit(2000), loadPrizeTotals(svc)]);
   for (const p of prizes ?? []) {
     const t = totals.get(p.id as string) ?? { allocated: 0 };
     const left = prizeLeft(p as { quantity: number; size: string | null; stock_level: string }, t);
@@ -42,22 +39,45 @@ export async function GET() {
       loadPlanPrizes(svc, pid),
     ]);
     const { gives, back } = stepKinds(prizeData.steps);
-    let planned = 0, given = 0, returned = 0, held = 0;
+    let planned = 0,
+      given = 0,
+      returned = 0,
+      held = 0;
     for (const l of prizeData.lines) {
-      if (isLoose(l.prize)) continue;   // free merch is not counted
+      if (isLoose(l.prize)) continue; // free merch is not counted
       const n = lineNumbers(l.quantity, countAt(prizeData.done, l.id, gives), countAt(prizeData.done, l.id, back));
-      planned += n.planned; given += n.given; returned += n.back; held += n.held;
+      planned += n.planned;
+      given += n.given;
+      returned += n.back;
+      held += n.held;
     }
     const withLines = new Set(prizeData.lines.map((l) => l.station_id));
     const bare = (stations.data ?? []).filter((s) => !withLines.has(s.id as string));
     const fresh = (requests.data ?? []).filter((r) => r.status === 'submitted').length;
     const base = `/portal/logistics/${focusRow.slug}`;
     if (fresh) fixes.unshift({ sev: 'warn', text: `${fresh} new ${fresh === 1 ? 'request' : 'requests'} for ${focusRow.name} waiting`, href: `${base}/requests` });
-    if ((slots.count ?? 0) > 0) fixes.unshift({ sev: 'warn', text: `${slots.count} ${slots.count === 1 ? 'device' : 'devices'} for ${focusRow.name} still need an ID`, href: `${base}/devices` });
+    if ((slots.count ?? 0) > 0)
+      fixes.unshift({ sev: 'warn', text: `${slots.count} ${slots.count === 1 ? 'device' : 'devices'} for ${focusRow.name} still need an ID`, href: `${base}/devices` });
     for (const s of bare.slice(0, 6)) fixes.push({ sev: 'warn', text: `${s.name} (${focusRow.name}) has no prizes yet`, href: `${base}/prizing` });
     focus = {
-      id: pid, slug: focusRow.slug as string, name: focusRow.name as string, starts_on: focusRow.starts_on as string, ends_on: focusRow.ends_on as string, daysAway: days(today, focusRow.starts_on as string),
-      stats: { stations: stations.data?.length ?? 0, stationsBare: bare.length, devicesEmpty: slots.count ?? 0, requests: requests.data?.length ?? 0, newRequests: fresh, prizeLines: prizeData.lines.length, planned, given, back: returned, held },
+      id: pid,
+      slug: focusRow.slug as string,
+      name: focusRow.name as string,
+      starts_on: focusRow.starts_on as string,
+      ends_on: focusRow.ends_on as string,
+      daysAway: days(today, focusRow.starts_on as string),
+      stats: {
+        stations: stations.data?.length ?? 0,
+        stationsBare: bare.length,
+        devicesEmpty: slots.count ?? 0,
+        requests: requests.data?.length ?? 0,
+        newRequests: fresh,
+        prizeLines: prizeData.lines.length,
+        planned,
+        given,
+        back: returned,
+        held,
+      },
     };
   }
 
@@ -66,7 +86,10 @@ export async function GET() {
     svc.from('audit_log').select('created_at, actor_name, summary').or('entity_type.ilike.logistics%,entity_type.eq.staffle').order('created_at', { ascending: false }).limit(10),
   ]);
   return NextResponse.json({
-    today, focus, fixes: fixes.slice(0, 14), moreFixes: Math.max(0, fixes.length - 14),
+    today,
+    focus,
+    fixes: fixes.slice(0, 14),
+    moreFixes: Math.max(0, fixes.length - 14),
     staffles: (staffles ?? []).map((s) => ({ slug: s.slug as string, name: s.name as string, state: s.status as string })),
     recent: (audit ?? []).map((a) => ({ at: a.created_at as string, who: (a.actor_name as string | null) ?? null, text: a.summary as string })),
   });

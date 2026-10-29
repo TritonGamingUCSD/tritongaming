@@ -7,7 +7,11 @@ describe('discord emoji paste', () => {
     expect(parseDiscordEmoji('<a:dance:123456789012345678>')).toEqual({ id: '123456789012345678', name: 'dance', animated: true });
   });
   it('reads a copied link, with the name when it has one', () => {
-    expect(parseDiscordEmoji('https://cdn.discordapp.com/emojis/123456789012345678.webp?size=48&name=pog&quality=lossless')).toEqual({ id: '123456789012345678', name: 'pog', animated: false });
+    expect(parseDiscordEmoji('https://cdn.discordapp.com/emojis/123456789012345678.webp?size=48&name=pog&quality=lossless')).toEqual({
+      id: '123456789012345678',
+      name: 'pog',
+      animated: false,
+    });
     expect(parseDiscordEmoji('https://cdn.discordapp.com/emojis/123456789012345678.gif')?.animated).toBe(true);
   });
   it('refuses anything else, so only Discord emoji addresses are ever fetched', () => {
@@ -15,7 +19,9 @@ describe('discord emoji paste', () => {
     expect(parseDiscordEmoji('https://cdn.discordapp.com.evil.com/emojis/123456789012345678.png')).toBeNull();
     expect(parseDiscordEmoji('hello')).toBeNull();
   });
-  it('makes a usable name', () => { expect(emojiNameFrom('Pog-Face!')).toBe('pog_face'); });
+  it('makes a usable name', () => {
+    expect(emojiNameFrom('Pog-Face!')).toBe('pog_face');
+  });
 });
 
 describe('poll and rating questions', () => {
@@ -37,5 +43,8 @@ describe('poll and rating questions', () => {
     expect(tally('rating', null, ['5', '4']).average).toBe(4.5);
     expect(tally('rating', null, []).average).toBeNull();
   });
-  it('treats unknown types as typed', () => { expect(asQuestionType('weird')).toBe('text'); expect(asQuestionType('poll')).toBe('poll'); });
+  it('treats unknown types as typed', () => {
+    expect(asQuestionType('weird')).toBe('text');
+    expect(asQuestionType('poll')).toBe('poll');
+  });
 });

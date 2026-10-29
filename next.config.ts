@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
   // reads section/tab/subtab as query params. Real pages (/portal/events/new, /portal/events/<id>, /portal/admin/stats…)
   // are matched first, since these are fallback rewrites.
   async rewrites() {
-    const sections = SECTION_IDS.join('|');   // every portal section, defined once in src/lib/portal/sections.ts
+    const sections = SECTION_IDS.join('|'); // every portal section, defined once in src/lib/portal/sections.ts
     return {
       // Events and Divisions also have /portal/<section>/<id> record pages; their tab names are matched first so a tab is never mistaken for an id.
       beforeFiles: [
@@ -25,18 +25,21 @@ const nextConfig: NextConfig = {
   },
   // The push service worker must always be fetched fresh and may only load its own code.
   async headers() {
-    return [{
-      // The hero videos never change under the same name (a new version gets a new file name), so browsers may keep them for a year.
-      source: '/videos/:file*',
-      headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
-    }, {
-      source: '/sw.js',
-      headers: [
-        { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
-        { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
-        { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self'" },
-      ],
-    }];
+    return [
+      {
+        // The hero videos never change under the same name (a new version gets a new file name), so browsers may keep them for a year.
+        source: '/videos/:file*',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
+      },
+      {
+        source: '/sw.js',
+        headers: [
+          { key: 'Content-Type', value: 'application/javascript; charset=utf-8' },
+          { key: 'Cache-Control', value: 'no-cache, no-store, must-revalidate' },
+          { key: 'Content-Security-Policy', value: "default-src 'self'; script-src 'self'" },
+        ],
+      },
+    ];
   },
   images: {
     // Uploaded pictures get a new address when replaced, so the optimizer can keep its copy for a month instead of asking Supabase again (egress is the free plan's tightest limit).

@@ -10,7 +10,9 @@ import { strictUser } from '@/lib/supabase/localAuth';
 // itself (admin-only), since this surfaces other admins' actions.
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);

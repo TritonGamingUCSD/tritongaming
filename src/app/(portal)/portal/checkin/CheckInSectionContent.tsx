@@ -9,7 +9,16 @@ import OnlineCheckinPanel from './OnlineCheckinPanel';
 import SelfCheckinPanel from './SelfCheckinPanel';
 import styles from './checkinsection.module.css';
 
-interface Event { id: string; title: string; start_date: string; is_online: boolean; slug?: string | null; self_checkin_mode?: 'off' | 'until_end' | 'forever'; end_date?: string | null; checkin_windows?: { day: string; start: string; end: string }[] | null }
+interface Event {
+  id: string;
+  title: string;
+  start_date: string;
+  is_online: boolean;
+  slug?: string | null;
+  self_checkin_mode?: 'off' | 'until_end' | 'forever';
+  end_date?: string | null;
+  checkin_windows?: { day: string; start: string; end: string }[] | null;
+}
 
 type Tab = 'code' | 'self' | 'online';
 const VALID_TABS: Tab[] = ['code', 'self', 'online'];

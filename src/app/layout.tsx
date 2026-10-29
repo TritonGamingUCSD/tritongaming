@@ -10,22 +10,18 @@ import { ROOT_THEME_SCRIPT } from '@/lib/portal/themeScript';
 import { APPLE_ICON_DATA_URI } from '@/lib/site/appleIcon';
 import './globals.css';
 
-
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
   title: {
     default: 'Triton Gaming',
     template: '%s | Triton Gaming',
   },
-  description:
-    'Triton Gaming: Gaming Org at UC San Diego. Fostering community, creativity, and industry connections.',
+  description: 'Triton Gaming: Gaming Org at UC San Diego. Fostering community, creativity, and industry connections.',
   keywords: ['Triton Gaming', 'UC San Diego', 'gaming', 'collegiate gaming'],
   icons: {
-    icon: [
-      { url: '/icon.png', type: 'image/png' },
-    ],
+    icon: [{ url: '/icon.png', type: 'image/png' }],
     apple: [
-      { url: APPLE_ICON_DATA_URI, sizes: '180x180', type: 'image/png' },   // embedded, not a file: see lib/site/appleIcon.ts
+      { url: APPLE_ICON_DATA_URI, sizes: '180x180', type: 'image/png' }, // embedded, not a file: see lib/site/appleIcon.ts
     ],
   },
   openGraph: {

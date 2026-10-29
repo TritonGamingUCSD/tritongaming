@@ -13,7 +13,10 @@ import { useDragReorder } from '@/lib/ui/useDragReorder';
 import type { AppRole } from '@/types/database';
 import styles from '../admin/admin.module.css';
 
-interface RoleGrant { role: AppRole; division_id: string | null; }
+interface RoleGrant {
+  role: AppRole;
+  division_id: string | null;
+}
 interface User {
   id: string;
   display_name: string | null;
@@ -74,7 +77,7 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
   }
 
   const { view, dragIndex, overIndex, dragHandleProps, dropTargetProps } = useDragReorder(order, (next) => {
-    setOrder(next);   // saved with the Save changes bar, not on every drag
+    setOrder(next); // saved with the Save changes bar, not on every drag
   });
 
   if (order.length === 0) return null;
@@ -83,9 +86,7 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
     <section className={styles.section}>
       <div className={styles.sectionHeader}>
         <h2 className={styles.sectionLabel}>Board Display Order</h2>
-        <span className={styles.sectionHint}>
-          Exec order on the public Team page and TG Members tab. Drag to reorder, then save.
-        </span>
+        <span className={styles.sectionHint}>Exec order on the public Team page and TG Members tab. Drag to reorder, then save.</span>
       </div>
       {error && <Notice tone="error">{error}</Notice>}
       <EditingNow room={dirty ? 'board-order' : null} what="the board order" />
@@ -107,13 +108,23 @@ export default function BoardOrderManager({ users }: { users: User[] }) {
               ) : (
                 <span className={styles.adminAvatarFallback}>{(u.display_name || '?')[0].toUpperCase()}</span>
               )}
-              <span className={styles.boardOrderName}>{u.display_name || 'Unnamed'}{u.gamer_tag ? <small> &quot;{u.gamer_tag}&quot;</small> : null}</span>
+              <span className={styles.boardOrderName}>
+                {u.display_name || 'Unnamed'}
+                {u.gamer_tag ? <small> &quot;{u.gamer_tag}&quot;</small> : null}
+              </span>
             </div>
           );
         })}
       </div>
-      <SaveBar dirty={dirty} saving={saving} onSave={() => void persist(order)}
-        onDiscard={() => { const ids = saved(); setOrder([...initial].sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id))); }} />
+      <SaveBar
+        dirty={dirty}
+        saving={saving}
+        onSave={() => void persist(order)}
+        onDiscard={() => {
+          const ids = saved();
+          setOrder([...initial].sort((a, b) => ids.indexOf(a.id) - ids.indexOf(b.id)));
+        }}
+      />
     </section>
   );
 }

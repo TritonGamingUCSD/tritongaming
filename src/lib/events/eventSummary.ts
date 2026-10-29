@@ -3,7 +3,10 @@ import { PACIFIC_TZ, formatPacificDate, eventDayCount, pacificDaysUntil } from '
 import { parseMajors } from '@/lib/members/majors';
 import { parseGames } from '@/lib/site/games';
 
-export interface Bucket { label: string; count: number }
+export interface Bucket {
+  label: string;
+  count: number;
+}
 
 export interface EventSummary {
   registered: number;
@@ -68,7 +71,10 @@ function claimTimingBuckets(createdAts: string[], startISO: string): Bucket[] {
 // this reads profile_private with the service role.
 export const MIN_RATINGS = 8;
 
-export async function getEventSummary(eventId: string, event: { start_date: string; end_date?: string | null; requires_checkin_form: boolean; ticket_price?: number | null; audience?: string | null }): Promise<EventSummary> {
+export async function getEventSummary(
+  eventId: string,
+  event: { start_date: string; end_date?: string | null; requires_checkin_form: boolean; ticket_price?: number | null; audience?: string | null },
+): Promise<EventSummary> {
   const svc = createServiceClient();
 
   const { data: tickets } = await svc
@@ -82,10 +88,18 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
 
   const [profilesRes, privateRes, divisionsRes, priorRes, pointsRes, feedbackRes, rolesRes] = await Promise.all([
     attendeeIds.length ? svc.from('profiles').select('id, year, college, major, pronouns').in('id', attendeeIds) : Promise.resolve({ data: [] }),
-    attendeeIds.length ? svc.from('profile_private').select('user_id, gender, platforms, favorite_games, division_interests').in('user_id', attendeeIds) : Promise.resolve({ data: [] }),
+    attendeeIds.length
+      ? svc.from('profile_private').select('user_id, gender, platforms, favorite_games, division_interests').in('user_id', attendeeIds)
+      : Promise.resolve({ data: [] }),
     svc.from('divisions').select('id, name'),
     attendeeIds.length
-      ? svc.from('tickets').select('user_id, event:events!inner(start_date)').eq('status', 'used').in('user_id', attendeeIds).neq('event_id', eventId).lt('event.start_date', event.start_date)
+      ? svc
+          .from('tickets')
+          .select('user_id, event:events!inner(start_date)')
+          .eq('status', 'used')
+          .in('user_id', attendeeIds)
+          .neq('event_id', eventId)
+          .lt('event.start_date', event.start_date)
       : Promise.resolve({ data: [] }),
     svc.from('point_transactions').select('amount').eq('event_id', eventId).eq('type', 'event_checkin'),
     svc.from('event_feedback').select('rating, comment').eq('event_id', eventId).order('created_at', { ascending: false }),
@@ -97,12 +111,26 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
   for (const r of (priorRes.data ?? []) as { user_id: string }[]) priorCount.set(r.user_id, (priorCount.get(r.user_id) ?? 0) + 1);
   const repeat: Bucket[] = (() => {
     const b = [0, 0, 0, 0];
-    for (const id of attendeeIds) { const n = (priorCount.get(id) ?? 0) + 1; b[n === 1 ? 0 : n === 2 ? 1 : n <= 4 ? 2 : 3]++; }
-    return [{ label: 'First event', count: b[0] }, { label: '2 events', count: b[1] }, { label: '3 to 4 events', count: b[2] }, { label: '5 or more', count: b[3] }];
+    for (const id of attendeeIds) {
+      const n = (priorCount.get(id) ?? 0) + 1;
+      b[n === 1 ? 0 : n === 2 ? 1 : n <= 4 ? 2 : 3]++;
+    }
+    return [
+      { label: 'First event', count: b[0] },
+      { label: '2 events', count: b[1] },
+      { label: '3 to 4 events', count: b[2] },
+      { label: '5 or more', count: b[3] },
+    ];
   })();
 
   const profiles = (profilesRes.data ?? []) as { id: string; year: string | null; college: string | null; major: string | null; pronouns: string | null }[];
-  const priv = (privateRes.data ?? []) as { user_id: string; gender: string | null; platforms: string[] | null; favorite_games: string | null; division_interests: string[] | null }[];
+  const priv = (privateRes.data ?? []) as {
+    user_id: string;
+    gender: string | null;
+    platforms: string[] | null;
+    favorite_games: string | null;
+    division_interests: string[] | null;
+  }[];
   const divisionName = new Map((divisionsRes.data ?? []).map((d) => [d.id as string, d.name as string]));
   const roleHolders = new Set(((rolesRes.data ?? []) as { user_id: string }[]).map((r) => r.user_id));
   const returningIds = new Set(((priorRes.data ?? []) as { user_id: string }[]).map((r) => r.user_id));
@@ -110,10 +138,9 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
   // Arrival time, Pacific. A one-day event is shown hour by hour across its own hours (one hour either side), with every hour in a row even when nobody arrived in it, so the
   // gaps read as gaps; anyone who checked in outside those hours is counted under one bar at the end. A multi-day event is shown day by day.
   const multiDay = eventDayCount(event.start_date, event.end_date) > 1;
-  const dayCheckins = multiDay
-    ? (await svc.from('ticket_checkins').select('ticket_id, day, checked_in_at').eq('event_id', eventId)).data ?? []
-    : [];
-  const hourOf = (d: Date) => Number(new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', hour12: false }).formatToParts(d).find((p) => p.type === 'hour')?.value) % 24;
+  const dayCheckins = multiDay ? ((await svc.from('ticket_checkins').select('ticket_id, day, checked_in_at').eq('event_id', eventId)).data ?? []) : [];
+  const hourOf = (d: Date) =>
+    Number(new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', hour12: false }).formatToParts(d).find((p) => p.type === 'hour')?.value) % 24;
   const hourLabel = (h: number) => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
   const arrivals: Bucket[] = (() => {
     if (multiDay) {
@@ -123,20 +150,23 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
         const d = new Date(t.checked_in_at);
         const key = d.getTime() - (d.getTime() % 86400000);
         const cur = days.get(key) ?? { label: formatPacificDate(d, { weekday: true }), count: 0 };
-        cur.count++; days.set(key, cur);
+        cur.count++;
+        days.set(key, cur);
       }
       return [...days.entries()].sort((x, y) => x[0] - y[0]).map(([, v]) => v);
     }
     const startH = hourOf(new Date(event.start_date));
     const endDate = event.end_date ? new Date(event.end_date) : new Date(new Date(event.start_date).getTime() + 2 * 3600e3);
     const endH = Math.min(23, hourOf(endDate) + (endDate.getMinutes() > 0 ? 1 : 0));
-    const first = Math.max(0, startH - 1), last = Math.min(23, Math.max(endH, startH + 1) + 1);
+    const first = Math.max(0, startH - 1),
+      last = Math.min(23, Math.max(endH, startH + 1) + 1);
     const counts = new Map<number, number>();
     let outside = 0;
     for (const t of attended) {
       if (!t.checked_in_at) continue;
       const h = hourOf(new Date(t.checked_in_at));
-      if (h < first || h > last) outside++; else counts.set(h, (counts.get(h) ?? 0) + 1);
+      if (h < first || h > last) outside++;
+      else counts.set(h, (counts.get(h) ?? 0) + 1);
     }
     const rows: Bucket[] = [];
     for (let h = first; h <= last; h++) rows.push({ label: hourLabel(h), count: counts.get(h) ?? 0 });
@@ -169,18 +199,43 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
     arrivals,
     gender: tally(attendeeIds.map((id) => privById.get(id)?.gender)),
     year: tally(attendeeIds.map((id) => profileById.get(id)?.year)),
-    college: tally(attendeeIds.map((id) => profileById.get(id)?.college), { top: 8 }),
+    college: tally(
+      attendeeIds.map((id) => profileById.get(id)?.college),
+      { top: 8 },
+    ),
     // Majors are cleaned up (abbreviations, typos) and double majors count toward each major.
-    major: tally(parsed.flatMap((p) => (p.majors.length ? p.majors : [null])), { top: 10 }),
+    major: tally(
+      parsed.flatMap((p) => (p.majors.length ? p.majors : [null])),
+      { top: 10 },
+    ),
     // A double major across two fields counts toward both, like majors do, so a field's share is the share of attendees with at least one major in it.
     field: tally(parsed.flatMap((p) => (p.fields.length ? p.fields : [null]))),
     doubleMajors: parsed.filter((p) => p.majors.length > 1).length,
     pronouns: tally(attendeeIds.map((id) => profileById.get(id)?.pronouns)),
-    platforms: tally(attendeeIds.flatMap((id) => privById.get(id)?.platforms ?? []), { top: 8 }),
-    games: tally(attendeeIds.flatMap((id) => parseGames(privById.get(id)?.favorite_games)), { top: 10 }),
-    claimTiming: claimTimingBuckets(active.map((t) => t.created_at as string), event.start_date),
-    sources: tally(active.map((t) => (t.source as string | null) ?? null), { top: 8, blank: 'Not tracked' }),
-    allDays: multiDay ? (() => { const n = new Map<string, number>(); for (const r of dayCheckins as { ticket_id: string }[]) n.set(r.ticket_id, (n.get(r.ticket_id) ?? 0) + 1); const total = eventDayCount(event.start_date, event.end_date); return [...n.values()].filter((c) => c >= total).length; })() : null,
+    platforms: tally(
+      attendeeIds.flatMap((id) => privById.get(id)?.platforms ?? []),
+      { top: 8 },
+    ),
+    games: tally(
+      attendeeIds.flatMap((id) => parseGames(privById.get(id)?.favorite_games)),
+      { top: 10 },
+    ),
+    claimTiming: claimTimingBuckets(
+      active.map((t) => t.created_at as string),
+      event.start_date,
+    ),
+    sources: tally(
+      active.map((t) => (t.source as string | null) ?? null),
+      { top: 8, blank: 'Not tracked' },
+    ),
+    allDays: multiDay
+      ? (() => {
+          const n = new Map<string, number>();
+          for (const r of dayCheckins as { ticket_id: string }[]) n.set(r.ticket_id, (n.get(r.ticket_id) ?? 0) + 1);
+          const total = eventDayCount(event.start_date, event.end_date);
+          return [...n.values()].filter((c) => c >= total).length;
+        })()
+      : null,
     feedback: {
       count: fb.length,
       // Too few ratings say little and look odd in a sponsor report, so reports only show the average from MIN_RATINGS responses.

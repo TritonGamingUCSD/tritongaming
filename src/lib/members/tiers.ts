@@ -42,10 +42,6 @@ export function nextTier(lifetimePoints: number, tiers: Tier[]): Tier | null {
 // RLS policy allows any authenticated read). Always sorted by threshold
 // ascending, which getTier/nextTier and every tier-list UI both depend on.
 export async function fetchTiers(supabase: SupabaseClient): Promise<Tier[]> {
-  const { data } = await supabase
-    .from('tier_definitions')
-    .select('name, min_points, color')
-    .eq('system', 'member')
-    .order('min_points');
+  const { data } = await supabase.from('tier_definitions').select('name, min_points, color').eq('system', 'member').order('min_points');
   return (data ?? []).map((t) => ({ name: t.name, min: t.min_points, color: t.color }));
 }

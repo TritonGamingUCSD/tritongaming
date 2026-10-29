@@ -4,18 +4,46 @@ import { SECTIONS } from '@/lib/portal/sections';
 
 // Sections and actions the portal search can jump to. Filtered by what the person can actually open, so the
 // search never offers something that would just say "no access".
-export interface PortalCommand { id: string; label: string; hint: string; href: string; kind: 'Go to' | 'Do'; keywords: string[] }
+export interface PortalCommand {
+  id: string;
+  label: string;
+  hint: string;
+  href: string;
+  kind: 'Go to' | 'Do';
+  keywords: string[];
+}
 
-interface Def extends PortalCommand { cap?: Capability | Capability[]; test?: (roles: RoleGrant[]) => boolean }
+interface Def extends PortalCommand {
+  cap?: Capability | Capability[];
+  test?: (roles: RoleGrant[]) => boolean;
+}
 
-const S = (id: string, label: string, hint: string, section: string, keywords: string[], cap?: Def['cap'], test?: Def['test']): Def =>
-  ({ id: `go-${id}`, label, hint, href: `/portal/${section}`, kind: 'Go to', keywords, cap, test });
-const A = (id: string, label: string, hint: string, href: string, keywords: string[], cap?: Def['cap'], test?: Def['test']): Def =>
-  ({ id: `do-${id}`, label, hint, href, kind: 'Do', keywords, cap, test });
+const S = (id: string, label: string, hint: string, section: string, keywords: string[], cap?: Def['cap'], test?: Def['test']): Def => ({
+  id: `go-${id}`,
+  label,
+  hint,
+  href: `/portal/${section}`,
+  kind: 'Go to',
+  keywords,
+  cap,
+  test,
+});
+const A = (id: string, label: string, hint: string, href: string, keywords: string[], cap?: Def['cap'], test?: Def['test']): Def => ({
+  id: `do-${id}`,
+  label,
+  hint,
+  href,
+  kind: 'Do',
+  keywords,
+  cap,
+  test,
+});
 
 // The "Go to" entries come from the sections' own definitions (lib/portal/sections.ts); only a section with a special rule for who sees it is listed here.
 const SEE_IF: Record<string, Def['test']> = { points: (r) => isRewardsEligible(r) || hasCapability(r, 'manage_rewards_shop') };
-const SECTION_DEFS: Def[] = SECTIONS.filter((s) => s.search).map((s) => S(s.search!.id ?? s.id, s.label, s.search!.hint, s.id, s.search!.keywords, s.search!.caps as Capability[] | undefined, SEE_IF[s.id]));
+const SECTION_DEFS: Def[] = SECTIONS.filter((s) => s.search).map((s) =>
+  S(s.search!.id ?? s.id, s.label, s.search!.hint, s.id, s.search!.keywords, s.search!.caps as Capability[] | undefined, SEE_IF[s.id]),
+);
 
 const DEFS: Def[] = [
   { id: 'go-home', label: 'Dashboard', hint: 'Your home screen', href: '/portal', kind: 'Go to', keywords: ['home', 'overview'] },
@@ -27,15 +55,36 @@ const DEFS: Def[] = [
   A('security', 'Login & security', 'Linked Google accounts, sign out', '/portal/profile/security', ['google', 'password', 'sign out', 'logout', 'account']),
   A('meeting-checkin', 'Check in to a meeting', 'Type the code from the screen', '/portal/meetings/mine', ['code', 'attend', 'present'], 'attend_meetings'),
   A('meeting-history', 'My meetings and history', 'Coming up and what you attended', '/portal/meetings/mine', ['upcoming', 'attended', 'attendance'], 'attend_meetings'),
-  A('meeting-plan', 'Plan a meeting', 'Schedule one-off or weekly meetings', '/portal/meetings/host', ['schedule', 'create', 'new', 'weekly', 'repeat', 'run', 'show code'], 'host_meetings'),
+  A(
+    'meeting-plan',
+    'Plan a meeting',
+    'Schedule one-off or weekly meetings',
+    '/portal/meetings/host',
+    ['schedule', 'create', 'new', 'weekly', 'repeat', 'run', 'show code'],
+    'host_meetings',
+  ),
   A('teams', 'Teams', 'Saved teams of people to invite in one go', '/portal/members/team', ['team', 'group', 'groups', 'people', 'hr team'], 'host_meetings'),
-  A('attendance', 'Meeting attendance results', 'Turnout, rates and follow-ups', '/portal/meetings/tools/attendance', ['hr', 'export', 'csv', 'absent', 'results'], ['host_meetings', 'view_attendance_reports']),
+  A(
+    'attendance',
+    'Meeting attendance results',
+    'Turnout, rates and follow-ups',
+    '/portal/meetings/tools/attendance',
+    ['hr', 'export', 'csv', 'absent', 'results'],
+    ['host_meetings', 'view_attendance_reports'],
+  ),
   A('event-new', 'Create a public event', 'New event with tickets and flyer', '/portal/events/new', ['new', 'add', 'flyer', 'tickets'], 'manage_events'),
   A('scan', 'Enter a ticket code', 'Check a ticket in by its code', '/portal/checkin', ['code', 'ticket', 'redeem'], 'checkin'),
   A('help-inbox', 'Help inbox', 'Answer questions from members', '/portal/help/inbox', ['tickets', 'support', 'reply'], 'manage_help'),
   A('access', 'Give someone access', 'Hand one permission to a person or group', '/portal/admin/access', ['permission', 'hr', 'grant', 'capability'], 'view_admin_dashboard'),
   A('roles', 'Manage roles', 'Change who holds which role', '/portal/admin/members', ['member', 'promote', 'exec', 'officer', 'recruit'], 'manage_roles'),
-  A('board-order', 'Team page order', 'Put exec in the order they show on the Team page', '/portal/members/display-order', ['display', 'order', 'board', 'exec', 'sort'], 'manage_board_order'),
+  A(
+    'board-order',
+    'Team page order',
+    'Put exec in the order they show on the Team page',
+    '/portal/members/display-order',
+    ['display', 'order', 'board', 'exec', 'sort'],
+    'manage_board_order',
+  ),
   A('audit', 'Audit log', 'Who changed what', '/portal/admin/audit-log', ['history', 'log'], 'view_admin_dashboard'),
   A('links', 'Short links', 'Manage /go links', '/portal/admin/short-links', ['url', 'redirect', 'linktree'], 'view_admin_dashboard'),
 ];
@@ -53,7 +102,11 @@ export function commandsFor(roles: RoleGrant[]): PortalCommand[] {
 export function matchCommands(list: PortalCommand[], query: string, limit = 7): PortalCommand[] {
   const tokens = query.toLowerCase().split(/\s+/).filter(Boolean);
   if (tokens.length === 0) return [];
-  const starts = (text: string, t: string) => text.toLowerCase().split(/[\s/&-]+/).some((w) => w.startsWith(t));
+  const starts = (text: string, t: string) =>
+    text
+      .toLowerCase()
+      .split(/[\s/&-]+/)
+      .some((w) => w.startsWith(t));
   const scored = list.flatMap((c) => {
     let score = 0;
     for (const t of tokens) {
@@ -64,5 +117,8 @@ export function matchCommands(list: PortalCommand[], query: string, limit = 7): 
     }
     return [{ c, score: score + (c.kind === 'Do' ? 0.1 : 0) }];
   });
-  return scored.sort((a, b) => b.score - a.score).slice(0, limit).map((x) => x.c);
+  return scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((x) => x.c);
 }

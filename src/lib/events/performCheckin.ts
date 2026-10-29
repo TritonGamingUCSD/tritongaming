@@ -20,14 +20,21 @@ import { isMultiDayEvent, pacificDayKey, currentDayInfo } from '@/lib/events/che
 export async function performCheckin(
   serviceClient: SupabaseClient,
   ticket: { id: string; user_id: string; event_id?: string },
-  event: { title: string | null; start_date: string; end_date: string | null; points_value: number; requires_checkin_form?: boolean | null; checkin_windows?: CheckinDayWindow[] | null },
+  event: {
+    title: string | null;
+    start_date: string;
+    end_date: string | null;
+    points_value: number;
+    requires_checkin_form?: boolean | null;
+    checkin_windows?: CheckinDayWindow[] | null;
+  },
   checkedInBy: string,
   // Manual check-in by an exec/admin (api/checkin/manual) passes true: it's a
   // correction made by someone who can already reverse points, so it works
   // after the event has ended too — e.g. fixing a missed check-in the next
   // day. The scanner and online self-check-in never set this; they stay
   // bound to the event's window.
-  opts: { ignoreWindow?: boolean } = {}
+  opts: { ignoreWindow?: boolean } = {},
 ): Promise<{ error?: string; firstCheckin?: boolean; day?: { day: number; total: number } | null }> {
   if (!opts.ignoreWindow && !isCheckinWindowOpen(event)) {
     return { error: 'This event has already ended — the ticket is no longer valid for check-in.' };
@@ -51,22 +58,22 @@ export async function performCheckin(
   const recordDay = async () => {
     if (!eventId) return null;
     const { error: dayError } = await serviceClient.from('ticket_checkins').insert({
-      ticket_id: ticket.id, event_id: eventId, day: pacificDayKey(now), checked_in_at: now.toISOString(), checked_in_by: checkedInBy,
+      ticket_id: ticket.id,
+      event_id: eventId,
+      day: pacificDayKey(now),
+      checked_in_at: now.toISOString(),
+      checked_in_by: checkedInBy,
     });
     return dayError;
   };
   // First check-in flips the ticket to used (guarded against a near-simultaneous second scan).
-  const flip = () => serviceClient
-    .from('tickets')
-    .update({ status: 'used', checked_in_at: now.toISOString(), checked_in_by: checkedInBy })
-    .eq('id', ticket.id)
-    .eq('status', 'active')
-    .select('id');
+  const flip = () =>
+    serviceClient.from('tickets').update({ status: 'used', checked_in_at: now.toISOString(), checked_in_by: checkedInBy }).eq('id', ticket.id).eq('status', 'active').select('id');
   let dayError: Awaited<ReturnType<typeof recordDay>>, flipResult: Awaited<ReturnType<typeof flip>>;
   if (multiDay) {
     // A day that was already recorded means "already checked in today", decided before anything else changes.
     dayError = await recordDay();
-    if (dayError?.code === '23505') return { error: "Already checked in for today." };
+    if (dayError?.code === '23505') return { error: 'Already checked in for today.' };
     flipResult = await flip();
   } else {
     // One day: the two writes do not depend on each other, so they go together (one round trip less for the person waiting at the door).
@@ -84,13 +91,15 @@ export async function performCheckin(
 
   // Later days of a multi-day event: attendance only — points are earned once, on the first check-in.
   if (multiDay && !firstCheckin) {
-    await createNotificationsAfterResponse(serviceClient, [{
-      user_id: ticket.user_id,
-      type: 'ticket_checked_in',
-      title: day ? `Checked in — Day ${day.day} of ${day.total}` : "You're checked in!",
-      body: event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
-      href: '/portal/tickets',
-    }]);
+    await createNotificationsAfterResponse(serviceClient, [
+      {
+        user_id: ticket.user_id,
+        type: 'ticket_checked_in',
+        title: day ? `Checked in — Day ${day.day} of ${day.total}` : "You're checked in!",
+        body: event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
+        href: '/portal/tickets',
+      },
+    ]);
     return { firstCheckin: false, day };
   }
 
@@ -101,18 +110,20 @@ export async function performCheckin(
   if (pointsError) console.error('[performCheckin] failed to award points:', pointsError);
 
   // The bell row and the push to their devices follow after the answer is sent: nobody scanning is waiting for them.
-  await createNotificationsAfterResponse(serviceClient, [{
-    user_id: ticket.user_id,
-    type: 'ticket_checked_in',
-    title: event.requires_checkin_form ? 'Scanned in — one more step' : "You're checked in!",
-    body: [
-      event.requires_checkin_form
-        ? 'Open My Tickets and fill out your AS Form to finish checking in.'
-        : event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
-      pointsAwarded && event.points_value > 0 ? `+${event.points_value} points earned.` : null,
-    ].filter(Boolean).join(' '),
-    href: '/portal/tickets',
-  }]);
+  await createNotificationsAfterResponse(serviceClient, [
+    {
+      user_id: ticket.user_id,
+      type: 'ticket_checked_in',
+      title: event.requires_checkin_form ? 'Scanned in — one more step' : "You're checked in!",
+      body: [
+        event.requires_checkin_form ? 'Open My Tickets and fill out your AS Form to finish checking in.' : event.title ? `Enjoy ${event.title}.` : 'Enjoy the event.',
+        pointsAwarded && event.points_value > 0 ? `+${event.points_value} points earned.` : null,
+      ]
+        .filter(Boolean)
+        .join(' '),
+      href: '/portal/tickets',
+    },
+  ]);
 
   return { firstCheckin: true, day };
 }

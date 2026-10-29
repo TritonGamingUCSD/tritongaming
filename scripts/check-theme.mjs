@@ -6,7 +6,10 @@ import path from 'node:path';
 
 const ROOTS = ['src/app/(portal)', 'src/components/portal', 'src/components/ui'];
 const BAD = [
-  [/(?<![-\w])(?:color|fill|stroke|caret-color|border(?:-[a-z]+)*-color|outline-color):\s*(?:#fff\b|#ffffff\b|white\b|#f2f1f0\b|var\(--white\)|rgba\(\s*(?:255\s*,\s*255\s*,\s*255|242\s*,\s*241\s*,\s*240)\s*,)/i, 'light text/line colour'],
+  [
+    /(?<![-\w])(?:color|fill|stroke|caret-color|border(?:-[a-z]+)*-color|outline-color):\s*(?:#fff\b|#ffffff\b|white\b|#f2f1f0\b|var\(--white\)|rgba\(\s*(?:255\s*,\s*255\s*,\s*255|242\s*,\s*241\s*,\s*240)\s*,)/i,
+    'light text/line colour',
+  ],
   [/(?<![-\w])(?:background(?:-color)?|border(?:-[a-z]+)?):[^;{}]*rgba\(\s*(?:255\s*,\s*255\s*,\s*255|242\s*,\s*241\s*,\s*240)\s*,/i, 'light translucent surface'],
   [/(?<![-\w])color:\s*(?:#000\b|#000000\b|black\b|#011941\b|var\(--navy[a-z-]*\)|var\(--black\))/i, 'dark text colour'],
   [/(?<![-\w])background(?:-color)?:\s*rgba\(\s*0\s*,\s*0\s*,\s*0\s*,/i, 'black overlay (muddy on light)'],
@@ -28,7 +31,12 @@ for (const root of ROOTS) {
     if (/^\/\*\s*theme-ok-file/.test(text)) continue;
     text.split('\n').forEach((line, i) => {
       if (/theme-ok/.test(line)) return;
-      for (const [re, why] of BAD) if (re.test(line)) { count++; console.log(`${file}:${i + 1}  ${why}\n    ${line.trim().slice(0, 150)}`); break; }
+      for (const [re, why] of BAD)
+        if (re.test(line)) {
+          count++;
+          console.log(`${file}:${i + 1}  ${why}\n    ${line.trim().slice(0, 150)}`);
+          break;
+        }
     });
   }
 }

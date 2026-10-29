@@ -7,9 +7,16 @@ import { getExpectedPeople, occurrenceTimes, seriesRunsOn, type MeetingRow, type
 const clock = (iso: string) => formatPacificTime(iso);
 
 interface Item {
-  key: string; kind: 'meeting'; title: string; starts_at: string; location: string | null;
-  audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; href: string;
-  skip: Set<string>;   // people who shouldn't get it (excused from the meeting, said they can't go)
+  key: string;
+  kind: 'meeting';
+  title: string;
+  starts_at: string;
+  location: string | null;
+  audience: string[] | null;
+  invitees: string[] | null;
+  group_ids: string[] | null;
+  href: string;
+  skip: Set<string>; // people who shouldn't get it (excused from the meeting, said they can't go)
 }
 
 // "Today at 5:00 PM" reminders for the meetings happening today that haven't started yet, sent to
@@ -19,14 +26,37 @@ export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new 
   const today = pacificDayKey(now);
   const until = withinMinutes ? now.getTime() + withinMinutes * 60_000 : Infinity;
   const [{ data: seriesData }, { data: meetingRows }] = await Promise.all([
-    svc.from('meeting_series').select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, created_by, created_at, ends_on').eq('active', true),
+    svc
+      .from('meeting_series')
+      .select('id, title, weekday, start_time, end_time, location, active, doc_url, audience, invitees, group_ids, created_by, created_at, ends_on')
+      .eq('active', true),
     svc.from('meetings').select('*').eq('meeting_date', today).eq('cancelled', false),
   ]);
   const items: Item[] = [];
   const rows = (meetingRows ?? []) as MeetingRow[];
-  const { data: absences } = rows.length ? await svc.from('meeting_absences').select('meeting_id, user_id, excused').in('meeting_id', rows.map((r) => r.id)).eq('excused', true) : { data: [] as { meeting_id: string; user_id: string }[] };
+  const { data: absences } = rows.length
+    ? await svc
+        .from('meeting_absences')
+        .select('meeting_id, user_id, excused')
+        .in(
+          'meeting_id',
+          rows.map((r) => r.id),
+        )
+        .eq('excused', true)
+    : { data: [] as { meeting_id: string; user_id: string }[] };
   for (const r of rows) {
-    items.push({ key: `meeting:${r.id}`, kind: 'meeting', title: r.title, starts_at: r.starts_at, location: r.location, audience: r.audience, invitees: r.invitees, group_ids: r.group_ids, href: '/portal/meetings/mine', skip: new Set((absences ?? []).filter((a) => a.meeting_id === r.id).map((a) => a.user_id as string)) });
+    items.push({
+      key: `meeting:${r.id}`,
+      kind: 'meeting',
+      title: r.title,
+      starts_at: r.starts_at,
+      location: r.location,
+      audience: r.audience,
+      invitees: r.invitees,
+      group_ids: r.group_ids,
+      href: '/portal/meetings/mine',
+      skip: new Set((absences ?? []).filter((a) => a.meeting_id === r.id).map((a) => a.user_id as string)),
+    });
   }
   const taken = new Set(rows.filter((r) => r.series_id).map((r) => r.series_id as string));
   const { data: standing } = await svc.from('meeting_series_absences').select('series_id, user_id').eq('excused', true);
@@ -34,27 +64,50 @@ export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new 
     // A repeating meeting with no row for today yet (nobody has opened it): its occurrence is virtual.
     if (taken.has(s.id) || !seriesRunsOn(s, today) || today < pacificDayKey(new Date(s.created_at))) continue;
     const { starts } = occurrenceTimes(today, s.start_time, s.end_time);
-    items.push({ key: `series:${s.id}|${today}`, kind: 'meeting', title: s.title, starts_at: starts.toISOString(), location: s.location, audience: s.audience, invitees: s.invitees, group_ids: s.group_ids, href: '/portal/meetings/mine', skip: new Set((standing ?? []).filter((a) => a.series_id === s.id).map((a) => a.user_id as string)) });
+    items.push({
+      key: `series:${s.id}|${today}`,
+      kind: 'meeting',
+      title: s.title,
+      starts_at: starts.toISOString(),
+      location: s.location,
+      audience: s.audience,
+      invitees: s.invitees,
+      group_ids: s.group_ids,
+      href: '/portal/meetings/mine',
+      skip: new Set((standing ?? []).filter((a) => a.series_id === s.id).map((a) => a.user_id as string)),
+    });
   }
 
-  let sent = 0, counted = 0;
+  let sent = 0,
+    counted = 0;
   for (const it of items) {
     const t = new Date(it.starts_at).getTime();
     if (t <= now.getTime() || t > until) continue;
     counted++;
-    const people = (await getExpectedPeople(svc, { audience: it.audience, invitees: it.invitees, group_ids: it.group_ids })).filter((p) => !it.skip.has(p.id) && (!onlyUsers || onlyUsers.includes(p.id)));
+    const people = (await getExpectedPeople(svc, { audience: it.audience, invitees: it.invitees, group_ids: it.group_ids })).filter(
+      (p) => !it.skip.has(p.id) && (!onlyUsers || onlyUsers.includes(p.id)),
+    );
     if (people.length === 0) continue;
     // Only people who haven't been reminded about this one yet (the insert reports just the new rows).
-    const { data: fresh } = await svc.from('reminders_sent').upsert(people.map((p) => ({ item_key: it.key, user_id: p.id })), { onConflict: 'item_key,user_id', ignoreDuplicates: true }).select('user_id');
+    const { data: fresh } = await svc
+      .from('reminders_sent')
+      .upsert(
+        people.map((p) => ({ item_key: it.key, user_id: p.id })),
+        { onConflict: 'item_key,user_id', ignoreDuplicates: true },
+      )
+      .select('user_id');
     const ids = (fresh ?? []).map((f) => f.user_id as string);
     if (ids.length === 0) continue;
-    sent += await createNotifications(svc, ids.map((user_id) => ({
-      user_id,
-      type: 'meeting_reminder',
-      title: `${it.title} is today at ${clock(it.starts_at)}`,
-      body: it.location ? `Where: ${it.location}` : null,
-      href: it.href,
-    })));
+    sent += await createNotifications(
+      svc,
+      ids.map((user_id) => ({
+        user_id,
+        type: 'meeting_reminder',
+        title: `${it.title} is today at ${clock(it.starts_at)}`,
+        body: it.location ? `Where: ${it.location}` : null,
+        href: it.href,
+      })),
+    );
   }
   return { items: counted, sent };
 }

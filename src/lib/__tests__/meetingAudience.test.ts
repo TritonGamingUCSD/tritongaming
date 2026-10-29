@@ -23,7 +23,7 @@ describe('checking in', () => {
   it('exec and admin get no exception of their own: with the meeting closed to the rest of the team they must be listed too', () => {
     expect(canAttendMeeting({ ...officersOnly, open_to_team: false }, 'e', roles('exec'))).toBe(false);
     expect(canAttendMeeting({ ...officersOnly, open_to_team: false }, 'a', roles('admin'))).toBe(false);
-    expect(canAttendMeeting(officersOnly, 'a', roles('admin'))).toBe(false);   // admin alone is not a team role
+    expect(canAttendMeeting(officersOnly, 'a', roles('admin'))).toBe(false); // admin alone is not a team role
     expect(canAttendMeeting({ audience: ['exec'] }, 'e', roles('exec'))).toBe(true);
   });
   it('someone added by name can check in whatever their role', () => {
@@ -63,11 +63,11 @@ describe('meetings for chosen people only', () => {
 describe('inactive officers', () => {
   const roles = (...r: string[]) => r.map((role) => ({ role }));
   const idle = roles('officer', 'inactive');
-  it('are not pulled in by a meeting\'s roles', () => {
+  it("are not pulled in by a meeting's roles", () => {
     expect(isInactiveMember(idle)).toBe(true);
-    expect(isExpected({ audience: null }, 'x', idle)).toBe(true);                   // they can still SEE it
-    expect(isExpectedActive({ audience: null }, 'x', idle)).toBe(false);            // default everyone
-    expect(isExpectedActive({ audience: ['officer'] }, 'x', idle)).toBe(false);     // an all-officers meeting
+    expect(isExpected({ audience: null }, 'x', idle)).toBe(true); // they can still SEE it
+    expect(isExpectedActive({ audience: null }, 'x', idle)).toBe(false); // default everyone
+    expect(isExpectedActive({ audience: ['officer'] }, 'x', idle)).toBe(false); // an all-officers meeting
     expect(canAttendMeeting({ audience: ['officer'] }, 'x', idle)).toBe(false);
     expect(canAttendMeeting({ audience: ['officer'] }, 'a', roles('officer'))).toBe(true);
   });
@@ -75,7 +75,7 @@ describe('inactive officers', () => {
     const m = { audience: null, invitees: ['x'], extra_ids: ['x'] };
     expect(isExpectedActive(m, 'x', idle)).toBe(true);
     expect(canAttendMeeting(m, 'x', idle)).toBe(true);
-    expect(isExpectedActive(m, 'y', idle)).toBe(false);                             // someone else who was not added
+    expect(isExpectedActive(m, 'y', idle)).toBe(false); // someone else who was not added
   });
 });
 

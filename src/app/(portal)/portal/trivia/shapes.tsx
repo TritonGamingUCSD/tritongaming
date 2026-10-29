@@ -7,7 +7,9 @@ import styles from './trivia.module.css';
 /** The whole-screen game views are drawn straight onto the page body, above the portal's own top bar, bell and bottom bar (which would otherwise sit on top of them on a phone). */
 export function Stage({ children }: { children: ReactNode }) {
   const [on, setOn] = useState(false);
-  useEffect(() => { setOn(true); }, []);
+  useEffect(() => {
+    setOn(true);
+  }, []);
   return on ? createPortal(children, document.body) : null;
 }
 
@@ -32,7 +34,23 @@ export const Tape = () => <span className={styles.tape} aria-hidden="true" />;
 // `delay` holds it back (the podium waits for the steps to rise); `burst` is the short pop on a phone after a right answer instead of a long fall.
 const BITS = Array.from({ length: 34 }, (_, i) => ({ left: `${(i * 37 + 11) % 100}%`, delay: ((i * 53) % 40) / 10, dur: 3.4 + ((i * 29) % 20) / 10, drift: ((i * 17) % 9) - 4 }));
 export function Confetti({ delay = 0, burst = false }: { delay?: number; burst?: boolean }) {
-  return <OnTop><div className={`${styles.confetti} ${burst ? styles.confettiBurst : ''}`} aria-hidden="true">{BITS.slice(0, burst ? 18 : BITS.length).map((b, i) => <i key={i} style={{ left: b.left, animationDelay: `${delay + (burst ? b.delay / 8 : b.delay)}s`, animationDuration: `${burst ? 1.6 + b.dur / 6 : b.dur}s`, ['--drift' as string]: `${b.drift * 3}vw` }} />)}</div></OnTop>;
+  return (
+    <OnTop>
+      <div className={`${styles.confetti} ${burst ? styles.confettiBurst : ''}`} aria-hidden="true">
+        {BITS.slice(0, burst ? 18 : BITS.length).map((b, i) => (
+          <i
+            key={i}
+            style={{
+              left: b.left,
+              animationDelay: `${delay + (burst ? b.delay / 8 : b.delay)}s`,
+              animationDuration: `${burst ? 1.6 + b.dur / 6 : b.dur}s`,
+              ['--drift' as string]: `${b.drift * 3}vw`,
+            }}
+          />
+        ))}
+      </div>
+    </OnTop>
+  );
 }
 
 /** Slow shapes drifting behind the live screens (the four answer shapes, in the site's colours). */
@@ -40,7 +58,18 @@ export function FloatShapes() {
   return (
     <div className={styles.floaters} aria-hidden="true">
       {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-        <svg key={i} className={styles.floater} style={{ left: `${(i * 13 + 4) % 92}%`, animationDelay: `${-i * 3.1}s`, animationDuration: `${22 + (i % 4) * 5}s`, width: `${2.2 + (i % 3)}rem`, height: `${2.2 + (i % 3)}rem` }} viewBox="0 0 24 24">
+        <svg
+          key={i}
+          className={styles.floater}
+          style={{
+            left: `${(i * 13 + 4) % 92}%`,
+            animationDelay: `${-i * 3.1}s`,
+            animationDuration: `${22 + (i % 4) * 5}s`,
+            width: `${2.2 + (i % 3)}rem`,
+            height: `${2.2 + (i % 3)}rem`,
+          }}
+          viewBox="0 0 24 24"
+        >
           {i % 4 === 2 ? <circle cx="12" cy="12" r="10" /> : <path d={['M12 3 22 20H2Z', 'M12 2 22 12 12 22 2 12Z', '', 'M4 4h16v16H4Z'][i % 4]} />}
         </svg>
       ))}
@@ -54,11 +83,20 @@ export function CountUp({ value, ms = 800, from = 0, format = (n: number) => Str
   const first = useRef(true);
   useEffect(() => {
     const calm = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (calm || value === shown && !first.current) { setShown(value); return; }
+    if (calm || (value === shown && !first.current)) {
+      setShown(value);
+      return;
+    }
     first.current = false;
-    const start = performance.now(), base = from;
+    const start = performance.now(),
+      base = from;
     let raf = 0;
-    const tick = (now: number) => { const k = Math.min(1, (now - start) / ms); const e = 1 - Math.pow(1 - k, 3); setShown(Math.round(base + (value - base) * e)); if (k < 1) raf = requestAnimationFrame(tick); };
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - start) / ms);
+      const e = 1 - Math.pow(1 - k, 3);
+      setShown(Math.round(base + (value - base) * e));
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -68,25 +106,35 @@ export function CountUp({ value, ms = 800, from = 0, format = (n: number) => Str
 
 /** The clock as a ring that empties around the seconds left. */
 export function Ring({ left, total, low }: { left: number; total: number; low: boolean }) {
-  const r = 44, c = 2 * Math.PI * r;
+  const r = 44,
+    c = 2 * Math.PI * r;
   const k = Math.max(0, Math.min(1, total ? left / total : 0));
   return (
     <span className={`${styles.ring} ${low ? styles.ringLow : ''}`} aria-hidden="true">
-      <svg viewBox="0 0 100 100"><circle className={styles.ringTrack} cx="50" cy="50" r={r} /><circle className={styles.ringFill} cx="50" cy="50" r={r} strokeDasharray={c} strokeDashoffset={c * (1 - k)} transform="rotate(-90 50 50)" /></svg>
+      <svg viewBox="0 0 100 100">
+        <circle className={styles.ringTrack} cx="50" cy="50" r={r} />
+        <circle className={styles.ringFill} cx="50" cy="50" r={r} strokeDasharray={c} strokeDashoffset={c * (1 - k)} transform="rotate(-90 50 50)" />
+      </svg>
       <b>{Math.ceil(left / 1000)}</b>
     </span>
   );
 }
 
 export const fmtScore = (n: number) => n.toLocaleString('en-US');
-export const ordinal = (n: number) => { const s = ['th', 'st', 'nd', 'rd'], v = n % 100; return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`; };
+export const ordinal = (n: number) => {
+  const s = ['th', 'st', 'nd', 'rd'],
+    v = n % 100;
+  return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
+};
 
 /** The card shown before a question that has a category: the category, big, for a few seconds. The question and its clock come after it. */
 export function CategoryCard({ category, n, total }: { category: string; n: number; total: number }) {
   return (
     <div className={styles.categoryCard} role="status" aria-label={`Category: ${category}`}>
       <Tape />
-      <p className={styles.kicker}>Question {n} of {total}</p>
+      <p className={styles.kicker}>
+        Question {n} of {total}
+      </p>
       <p className={styles.categoryName}>{category}</p>
     </div>
   );
@@ -98,8 +146,14 @@ export function Countdown({ n }: { n: number }) {
   return (
     <div className={styles.countdown} role="status" aria-label={label === 'GO!' ? 'Go' : `Starting in ${label}`}>
       <p className={styles.kicker}>Get ready</p>
-      <span key={label} className={`${styles.countNum} ${label === 'GO!' ? styles.countGo : ''}`}>{label}</span>
-      <div className={styles.countRings} aria-hidden="true"><i /><i /><i /></div>
+      <span key={label} className={`${styles.countNum} ${label === 'GO!' ? styles.countGo : ''}`}>
+        {label}
+      </span>
+      <div className={styles.countRings} aria-hidden="true">
+        <i />
+        <i />
+        <i />
+      </div>
     </div>
   );
 }
@@ -110,7 +164,9 @@ export function ShapeLoader({ label }: { label?: string }) {
     <div className={styles.loader} role="status" aria-label={label ?? 'Loading'}>
       <div className={styles.loaderShapes} aria-hidden="true">
         {[0, 1, 2, 3].map((i) => (
-          <svg key={i} viewBox="0 0 24 24" className={styles.loaderShape} style={{ animationDelay: `${i * 0.14}s` }}>{i === 2 ? <circle cx="12" cy="12" r="10" /> : <path d={['M12 3 22 20H2Z', 'M12 2 22 12 12 22 2 12Z', '', 'M4 4h16v16H4Z'][i]} />}</svg>
+          <svg key={i} viewBox="0 0 24 24" className={styles.loaderShape} style={{ animationDelay: `${i * 0.14}s` }}>
+            {i === 2 ? <circle cx="12" cy="12" r="10" /> : <path d={['M12 3 22 20H2Z', 'M12 2 22 12 12 22 2 12Z', '', 'M4 4h16v16H4Z'][i]} />}
+          </svg>
         ))}
       </div>
       {label && <p className={styles.loaderLabel}>{label}</p>}
@@ -126,7 +182,9 @@ export function Sweep() {
 /** Drawn straight onto the page body, over everything (the game body is zoomed to fit, which would also zoom a full-screen layer inside it). */
 function OnTop({ children }: { children: ReactNode }) {
   const [on, setOn] = useState(false);
-  useEffect(() => { setOn(true); }, []);
+  useEffect(() => {
+    setOn(true);
+  }, []);
   return on ? createPortal(children, document.body) : null;
 }
 
@@ -139,7 +197,8 @@ export function FitBox({ className, children }: { className: string; children: R
   const inner = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const fit = () => {
-      const o = outer.current, i = inner.current;
+      const o = outer.current,
+        i = inner.current;
       if (!o || !i) return;
       const cs = getComputedStyle(o);
       const room = o.clientHeight - parseFloat(cs.paddingTop) - parseFloat(cs.paddingBottom);
@@ -158,11 +217,16 @@ export function FitBox({ className, children }: { className: string; children: R
     if (outer.current) ro.observe(outer.current);
     if (inner.current) ro.observe(inner.current);
     window.addEventListener('resize', fit);
-    return () => { ro.disconnect(); window.removeEventListener('resize', fit); };
+    return () => {
+      ro.disconnect();
+      window.removeEventListener('resize', fit);
+    };
   }, []);
   return (
     <div ref={outer} className={`${className} ${styles.fitOuter}`}>
-      <div ref={inner} className={styles.fitInner}>{children}</div>
+      <div ref={inner} className={styles.fitInner}>
+        {children}
+      </div>
     </div>
   );
 }

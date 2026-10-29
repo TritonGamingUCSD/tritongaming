@@ -17,7 +17,10 @@ export default function SignOutButton() {
 
   return (
     <button className={styles.btn} onClick={handleSignOut}>
-      <span aria-hidden="true" className={styles.icon}><LogOut size={15} strokeWidth={2} /></span> Sign Out
+      <span aria-hidden="true" className={styles.icon}>
+        <LogOut size={15} strokeWidth={2} />
+      </span>{' '}
+      Sign Out
     </button>
   );
 }

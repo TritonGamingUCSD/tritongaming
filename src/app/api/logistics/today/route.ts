@@ -28,7 +28,16 @@ export async function GET() {
     const forClub = applies.filter((a) => a === 'all' || a === 'club').length;
     const forLoaner = applies.filter((a) => a === 'all' || a === 'borrowed').length;
     const total = (devs.count ?? 0) * forClub + (bor.data ?? []).length * forLoaner;
-    out.push({ id: pid, slug: p.slug as string, name: p.name as string, teams: stations.count ?? 0, devices: (devs.count ?? 0) + (bor.data ?? []).length, stepsDone: done.count ?? 0, stepsTotal: total, newRequests: reqs.count ?? 0 });
+    out.push({
+      id: pid,
+      slug: p.slug as string,
+      name: p.name as string,
+      teams: stations.count ?? 0,
+      devices: (devs.count ?? 0) + (bor.data ?? []).length,
+      stepsDone: done.count ?? 0,
+      stepsTotal: total,
+      newRequests: reqs.count ?? 0,
+    });
   }
   return NextResponse.json({ plans: out });
 }

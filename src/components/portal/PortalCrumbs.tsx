@@ -10,11 +10,19 @@ import styles from './PortalHub.module.css';
 // (/portal/<section>/<tab>/<subtab>). Each level before the last is a link back to that level.
 const WORD: Record<string, string> = { qr: 'QR', faq: 'FAQ', tg: 'TG', ucsd: 'UCSD', api: 'API' };
 export function slugLabel(slug: string): string {
-  return decodeURIComponent(slug).split(/[-_\s]+/).filter(Boolean).map((w) => WORD[w.toLowerCase()] ?? w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+  return decodeURIComponent(slug)
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((w) => WORD[w.toLowerCase()] ?? w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
 }
 
 // An open item is part of the address as `<kind>-<id>`; its crumb names the kind, never the id.
-const ITEM_LABEL: [RegExp, string][] = [[/^live-/, 'Live Meeting'], [/^edit-series-/, 'Edit Repeating Meeting'], [/^edit-/, 'Edit Meeting']];
+const ITEM_LABEL: [RegExp, string][] = [
+  [/^live-/, 'Live Meeting'],
+  [/^edit-series-/, 'Edit Repeating Meeting'],
+  [/^edit-/, 'Edit Meeting'],
+];
 export function crumbLabel(slug: string): string {
   const item = ITEM_LABEL.find(([re]) => re.test(slug));
   return item ? item[1] : slugLabel(slug);
@@ -26,13 +34,18 @@ export default function PortalCrumbs({ section, sectionLabel, className }: { sec
   useEffect(() => {
     const read = () => {
       const p = mergedPortalParams(window.location.pathname, window.location.search);
-      setTab(p.get('tab')); setSubtab(p.get('tab') ? p.get('subtab') : null);
+      setTab(p.get('tab'));
+      setSubtab(p.get('tab') ? p.get('subtab') : null);
     };
     read();
     window.addEventListener('tg:portal-nav', read);
     window.addEventListener('popstate', read);
-    const id = window.setInterval(read, 400);   // tabs rewrite the address with replaceState, which fires no event
-    return () => { window.removeEventListener('tg:portal-nav', read); window.removeEventListener('popstate', read); window.clearInterval(id); };
+    const id = window.setInterval(read, 400); // tabs rewrite the address with replaceState, which fires no event
+    return () => {
+      window.removeEventListener('tg:portal-nav', read);
+      window.removeEventListener('popstate', read);
+      window.clearInterval(id);
+    };
   }, [section]);
 
   // The trail starts at the page itself (Documentation › Read), without the menu group in front.
@@ -47,8 +60,21 @@ export default function PortalCrumbs({ section, sectionLabel, className }: { sec
         return (
           <Fragment key={i}>
             {i > 0 && <ChevronRight size={11} strokeWidth={2} aria-hidden="true" className={styles.crumbSep} />}
-            {last ? <span className={styles.crumbHere} aria-current="page">{c.label}</span>
-              : <a className={styles.crumbLink} href={c.href} onClick={(e) => { if (c.href && navigatePortal(c.href, e)) e.preventDefault(); }}>{c.label}</a>}
+            {last ? (
+              <span className={styles.crumbHere} aria-current="page">
+                {c.label}
+              </span>
+            ) : (
+              <a
+                className={styles.crumbLink}
+                href={c.href}
+                onClick={(e) => {
+                  if (c.href && navigatePortal(c.href, e)) e.preventDefault();
+                }}
+              >
+                {c.label}
+              </a>
+            )}
           </Fragment>
         );
       })}

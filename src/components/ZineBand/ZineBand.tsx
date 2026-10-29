@@ -26,7 +26,9 @@ export function ZineBand({
 }) {
   return (
     <section id={id} aria-label={label} className={`${styles.band} ${styles[tone]} ${edge ? styles.edge : ''} ${className}`}>
-      <div className={styles.inner} data-rv-inner>{children}</div>
+      <div className={styles.inner} data-rv-inner>
+        {children}
+      </div>
     </section>
   );
 }
@@ -35,7 +37,14 @@ export function ZineBand({
 function Scribble({ className, hero = false }: { className: string; hero?: boolean }) {
   return (
     <svg className={className} viewBox="0 0 300 14" fill="none" aria-hidden="true" preserveAspectRatio="none">
-      <path d="M2 9 C 40 2, 70 14, 110 7 S 190 3, 230 9 S 280 12, 298 5" stroke="currentColor" strokeWidth="4" strokeLinecap="round" data-draw {...(hero ? { 'data-draw-hero': '' } : {})} />
+      <path
+        d="M2 9 C 40 2, 70 14, 110 7 S 190 3, 230 9 S 280 12, 298 5"
+        stroke="currentColor"
+        strokeWidth="4"
+        strokeLinecap="round"
+        data-draw
+        {...(hero ? { 'data-draw-hero': '' } : {})}
+      />
     </svg>
   );
 }
@@ -48,7 +57,9 @@ export function PageHero({ label, title, sub }: { label?: string; title: string;
       <ZineMotion />
       <div className={styles.heroInner}>
         {label && <p className={styles.heroLabel}>{label}</p>}
-        <h1 className={styles.heroTitle} data-split data-split-hero>{title}</h1>
+        <h1 className={styles.heroTitle} data-split data-split-hero>
+          {title}
+        </h1>
         <Scribble className={styles.heroScribble} hero />
         {sub && <p className={styles.heroSub}>{sub}</p>}
       </div>
@@ -59,8 +70,14 @@ export function PageHero({ label, title, sub }: { label?: string; title: string;
 export function BandHeader({ label, title, sub }: { label?: string; title: string; sub?: string }) {
   return (
     <div className={styles.head} data-rv-head>
-      {label && <p className={styles.headLabel} data-rv-label>{label}</p>}
-      <h2 className={styles.headTitle} data-split>{title}</h2>
+      {label && (
+        <p className={styles.headLabel} data-rv-label>
+          {label}
+        </p>
+      )}
+      <h2 className={styles.headTitle} data-split>
+        {title}
+      </h2>
       <Scribble className={styles.headScribble} />
       {sub && <p className={styles.headSub}>{sub}</p>}
     </div>

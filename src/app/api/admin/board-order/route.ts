@@ -14,7 +14,9 @@ import { strictUser } from '@/lib/supabase/localAuth';
 // needing swap/insert logic to reconcile concurrent edits.
 export async function PUT(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -28,9 +30,7 @@ export async function PUT(request: Request) {
   }
 
   const serviceClient = createServiceClient();
-  const results = await Promise.all(
-    order.map((id: string, index: number) => serviceClient.from('profiles').update({ board_order: index }).eq('id', id))
-  );
+  const results = await Promise.all(order.map((id: string, index: number) => serviceClient.from('profiles').update({ board_order: index }).eq('id', id)));
   const failed = results.find((r) => r.error);
   if (failed?.error) return NextResponse.json({ error: failed.error.message }, { status: 500 });
 

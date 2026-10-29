@@ -1,7 +1,11 @@
 import { formatPacificDateTime, formatPacificTime } from '@/lib/core/timezone';
 // Small fetch helper for the docs routes. Every route answers { error?, code? }: `code` is what tells a conflict apart from a plain failure.
 
-export interface ApiResult<T = Record<string, unknown>> { ok: boolean; status: number; json: T & { error?: string; code?: string } }
+export interface ApiResult<T = Record<string, unknown>> {
+  ok: boolean;
+  status: number;
+  json: T & { error?: string; code?: string };
+}
 
 export async function docsPost<T = Record<string, unknown>>(path: string, body: unknown, opts: { keepalive?: boolean } = {}): Promise<ApiResult<T>> {
   try {

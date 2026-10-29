@@ -4,13 +4,20 @@ import { authorizeTrivia, findQuiz, quizGate, UUID } from '@/lib/trivia/server';
 import { parseStorageUrl } from '@/lib/storage/imageUpload';
 
 export const dynamic = 'force-dynamic';
-export const MAX_IMAGE_BYTES = 250 * 1024;   // the browser makes pictures about 120 KB; this is the most the server takes (the bucket refuses anything over 256 KB too)
+export const MAX_IMAGE_BYTES = 250 * 1024; // the browser makes pictures about 120 KB; this is the most the server takes (the bucket refuses anything over 256 KB too)
 const BUCKET = 'trivia-images';
 
 /** Removes the stored pictures behind these addresses (the ones that are ours); a failure is not worth stopping for, the weekly tidy-up finds any left behind. */
 export async function removeImages(svc: SupabaseClient, urls: (string | null | undefined)[]) {
-  const paths = urls.flatMap((u) => { const p = u ? parseStorageUrl(u) : null; return p && p.bucket === BUCKET ? [p.path] : []; });
-  if (paths.length) await svc.storage.from(BUCKET).remove(paths).catch(() => undefined);
+  const paths = urls.flatMap((u) => {
+    const p = u ? parseStorageUrl(u) : null;
+    return p && p.bucket === BUCKET ? [p.path] : [];
+  });
+  if (paths.length)
+    await svc.storage
+      .from(BUCKET)
+      .remove(paths)
+      .catch(() => undefined);
 }
 
 // A WebP file starts with "RIFF", four size bytes, then "WEBP".
@@ -45,7 +52,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (up.error) return NextResponse.json({ error: 'Couldn’t save the picture. Try again.' }, { status: 500 });
   const url = auth.svc.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
   const { error } = await auth.svc.from('trivia_questions').update({ image: url, updated_at: new Date().toISOString() }).eq('id', qid);
-  if (error) { await removeImages(auth.svc, [url]); return NextResponse.json({ error: 'Couldn’t save the picture. Try again.' }, { status: 500 }); }
+  if (error) {
+    await removeImages(auth.svc, [url]);
+    return NextResponse.json({ error: 'Couldn’t save the picture. Try again.' }, { status: 500 });
+  }
   await removeImages(auth.svc, [q.image as string]);
   return NextResponse.json({ image: url });
 }

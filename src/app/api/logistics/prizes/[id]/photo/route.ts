@@ -7,11 +7,18 @@ import { announce, stockTopic, whoIs } from '@/lib/logistics/live';
 
 export const dynamic = 'force-dynamic';
 const BUCKET = 'prize-photos';
-const MAX_BYTES = 250 * 1024;   // the browser makes it about 120 KB; this is the most the server takes (the bucket refuses over 256 KB too)
+const MAX_BYTES = 250 * 1024; // the browser makes it about 120 KB; this is the most the server takes (the bucket refuses over 256 KB too)
 
 async function removePhotos(svc: SupabaseClient, urls: (string | null | undefined)[]) {
-  const paths = urls.flatMap((u) => { const p = u ? parseStorageUrl(u) : null; return p && p.bucket === BUCKET ? [p.path] : []; });
-  if (paths.length) await svc.storage.from(BUCKET).remove(paths).catch(() => undefined);
+  const paths = urls.flatMap((u) => {
+    const p = u ? parseStorageUrl(u) : null;
+    return p && p.bucket === BUCKET ? [p.path] : [];
+  });
+  if (paths.length)
+    await svc.storage
+      .from(BUCKET)
+      .remove(paths)
+      .catch(() => undefined);
 }
 const isWebp = (b: Uint8Array) => b.length > 12 && String.fromCharCode(...b.slice(0, 4)) === 'RIFF' && String.fromCharCode(...b.slice(8, 12)) === 'WEBP';
 
@@ -33,7 +40,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (up.error) return NextResponse.json({ error: 'Couldn’t save the picture. Try again.' }, { status: 500 });
   const url = auth.svc.storage.from(BUCKET).getPublicUrl(path).data.publicUrl;
   const { error } = await auth.svc.from('logistics_prizes').update({ photo: url, updated_at: new Date().toISOString(), updated_by: auth.user.id }).eq('id', id);
-  if (error) { await removePhotos(auth.svc, [url]); return NextResponse.json({ error: 'Couldn’t save the picture. Try again.' }, { status: 500 }); }
+  if (error) {
+    await removePhotos(auth.svc, [url]);
+    return NextResponse.json({ error: 'Couldn’t save the picture. Try again.' }, { status: 500 });
+  }
   await removePhotos(auth.svc, [prize.photo as string]);
   await announce(stockTopic(), { k: 'prizes' }, await whoIs(auth.svc, auth.user.id));
   return NextResponse.json({ photo: url });

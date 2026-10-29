@@ -15,6 +15,15 @@ export async function GET() {
   const by = new Map((mine ?? []).map((m) => [m.game_id as string, m]));
   const out = ((games ?? []) as unknown as { id: string; code: string; status: string; created_at: string; reveal: Reveal | null; trivia_quizzes: { name: string } | null }[])
     .sort((a, b) => b.created_at.localeCompare(a.created_at))
-    .map((g) => ({ code: g.code, quiz: g.trivia_quizzes?.name ?? '', status: g.status, created_at: g.created_at, score: by.get(g.id)?.score ?? 0, rank: g.status === 'done' ? g.reveal?.results?.[auth.user.id]?.rank ?? null : null, of: g.status === 'done' ? g.reveal?.of ?? null : null, blocked: by.get(g.id)?.status === 'blocked' }));
+    .map((g) => ({
+      code: g.code,
+      quiz: g.trivia_quizzes?.name ?? '',
+      status: g.status,
+      created_at: g.created_at,
+      score: by.get(g.id)?.score ?? 0,
+      rank: g.status === 'done' ? (g.reveal?.results?.[auth.user.id]?.rank ?? null) : null,
+      of: g.status === 'done' ? (g.reveal?.of ?? null) : null,
+      blocked: by.get(g.id)?.status === 'blocked',
+    }));
   return NextResponse.json({ games: out });
 }

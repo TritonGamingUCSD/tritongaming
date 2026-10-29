@@ -26,7 +26,9 @@ export default async function UnsubscribePage({ searchParams }: { searchParams: 
           <>
             <h1 className={styles.title}>That link doesn’t work</h1>
             <p className={styles.text}>It may be cut off or out of date. You can choose which emails you get in your profile.</p>
-            <a className={styles.link} href="/portal/profile">Open email settings</a>
+            <a className={styles.link} href="/portal/profile">
+              Open email settings
+            </a>
           </>
         )}
       </div>

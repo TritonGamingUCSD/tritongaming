@@ -22,7 +22,9 @@ export default function ViewOnlyGuard({ name }: { name: string }) {
       }
       return original(input, init);
     };
-    return () => { window.fetch = original; };
+    return () => {
+      window.fetch = original;
+    };
   }, [name]);
   return null;
 }

@@ -9,7 +9,9 @@ describe('naming a device', () => {
     expect(describeDevice(app)).toBe('iPhone · TG Portal app · iOS 18.6');
   });
   it('names Android with its model, and desktops', () => {
-    expect(describeDevice('Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36')).toBe('Android phone (SM-S918B) · Chrome · Android 14');
+    expect(describeDevice('Mozilla/5.0 (Linux; Android 14; SM-S918B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36')).toBe(
+      'Android phone (SM-S918B) · Chrome · Android 14',
+    );
     expect(describeDevice('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15')).toBe('Mac · Safari');
     expect(describeDevice('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130.0 Safari/537.36 Edg/130.0')).toBe('Windows computer · Edge');
     expect(describeDevice(null)).toBe('Unknown device');

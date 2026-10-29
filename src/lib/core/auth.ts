@@ -11,7 +11,9 @@ import { VIEW_AS_COOKIE, VIEW_USER_COOKIE, isUuid, isViewAsRole, type ViewAsRole
 // The person who is actually signed in (never the one being viewed).
 const getSessionUser = cache(async () => {
   const supabase = await createRealClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   return user;
 });
 
@@ -45,11 +47,7 @@ export async function getProfile(): Promise<Profile | null> {
   const user = viewing ?? (await getSessionUser());
   if (!user) return null;
 
-  const { data } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single();
+  const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single();
 
   return data;
 }
@@ -78,11 +76,7 @@ export async function getMyPrivateProfile(): Promise<MyPrivateProfile> {
   const supabase = viewing ? createServiceClient() : await createClient();
   const user = viewing ?? (await getSessionUser());
   if (!user) return empty;
-  const { data } = await supabase
-    .from('profile_private')
-    .select('gender, platforms, favorite_games, division_interests')
-    .eq('user_id', user.id)
-    .maybeSingle();
+  const { data } = await supabase.from('profile_private').select('gender, platforms, favorite_games, division_interests').eq('user_id', user.id).maybeSingle();
   return {
     gender: data?.gender ?? null,
     platforms: data?.platforms ?? [],
@@ -98,10 +92,7 @@ export const getRealRoles = cache(async (): Promise<RoleGrant[]> => {
   const user = viewing ?? (await getSessionUser());
   if (!user) return [];
 
-  const { data } = await supabase
-    .from('user_roles')
-    .select('role, division_id')
-    .eq('user_id', user.id);
+  const { data } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
 
   return data ?? [];
 });
@@ -124,7 +115,9 @@ export const getUserRoles = cache(async (): Promise<RoleGrant[]> => {
   const preview = real.some((r) => r.role === 'admin') ? (await cookies()).get(VIEW_AS_COOKIE)?.value : undefined;
   if (!isViewAsRole(preview)) {
     // Plus anything granted to this person or their groups (Admin → Access).
-    const { data: { user } } = await (await createClient()).auth.getUser();
+    const {
+      data: { user },
+    } = await (await createClient()).auth.getUser();
     if (!user) return real;
     return withGrantedCapabilities(real, await loadGrantedCapabilities(createServiceClient(), user.id).catch(() => []));
   }
@@ -136,6 +129,3 @@ export const getUserRoles = cache(async (): Promise<RoleGrant[]> => {
   }
   return [{ role: preview, division_id: null }];
 });
-
-
-

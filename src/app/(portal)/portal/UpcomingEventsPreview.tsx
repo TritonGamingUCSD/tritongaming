@@ -26,7 +26,9 @@ export default function UpcomingEventsPreview({ events }: { events: UpcomingEven
         <span className={styles.upcomingPreviewLabel}>
           <CalendarDays size={13} strokeWidth={1.75} aria-hidden="true" /> Upcoming Events
         </span>
-        <Link href="/portal/tickets" className={styles.viewAllTickets}>See all →</Link>
+        <Link href="/portal/tickets" className={styles.viewAllTickets}>
+          See all →
+        </Link>
       </div>
       <div className={styles.upcomingPreviewList}>
         {preview.map((event) => (
@@ -38,7 +40,9 @@ export default function UpcomingEventsPreview({ events }: { events: UpcomingEven
             <div className={styles.upcomingPreviewBody}>
               <div className={styles.upcomingPreviewTitle}>{event.title}</div>
               {event.location && (
-                <div className={styles.upcomingPreviewLoc}><MapPin size={11} strokeWidth={1.75} aria-hidden="true" /> {event.location}</div>
+                <div className={styles.upcomingPreviewLoc}>
+                  <MapPin size={11} strokeWidth={1.75} aria-hidden="true" /> {event.location}
+                </div>
               )}
             </div>
             <ChevronRight size={16} strokeWidth={1.75} aria-hidden="true" className={styles.upcomingPreviewChevron} />

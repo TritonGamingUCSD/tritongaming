@@ -16,7 +16,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (auth.error) return auth.error;
   const { id } = await params;
   const b = await request.json().catch(() => ({}));
-  if (!UUID.test(id) || typeof b.line_id !== 'string' || !UUID.test(b.line_id) || typeof b.step_id !== 'string' || !UUID.test(b.step_id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
+  if (!UUID.test(id) || typeof b.line_id !== 'string' || !UUID.test(b.line_id) || typeof b.step_id !== 'string' || !UUID.test(b.step_id))
+    return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const adding = b.add !== undefined;
   const want = Math.round(Number(adding ? b.add : b.done));
   if (!Number.isFinite(want) || (!adding && want < 0) || (adding && Math.abs(want) > 1000)) return NextResponse.json({ error: 'Type a number, 0 or more.' }, { status: 400 });
@@ -48,7 +49,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     delta = Math.min(want, ceiling) - now;
   }
-  const { data: res, error } = await auth.svc.rpc('logistics_prize_step_add', { p_line: b.line_id, p_step: b.step_id, p_plan: id, p_delta: delta, p_cap: ceiling, p_user: auth.user.id });
+  const { data: res, error } = await auth.svc.rpc('logistics_prize_step_add', {
+    p_line: b.line_id,
+    p_step: b.step_id,
+    p_plan: id,
+    p_delta: delta,
+    p_cap: ceiling,
+    p_user: auth.user.id,
+  });
   const row = (Array.isArray(res) ? res[0] : res) as { old_done: number; new_done: number } | undefined;
   if (error || !row) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });
   const who = await whoIs(auth.svc, auth.user.id);
@@ -56,8 +64,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (step.gives && row.new_done !== row.old_done) {
     const change = row.new_done - row.old_done;
     await bumpStock(auth.svc, line.prize_id as string, -change, who);
-    const { data: st } = await auth.svc.from('logistics_stations').select('name').eq('id', line.station_id as string).maybeSingle();
-    await logPrize(auth.svc, [{ prize_id: line.prize_id as string, kind: 'give', qty: -change, plan_id: id, plan_name: plan.name as string, station: (st?.name as string | undefined) ?? null, actor: auth.user.id }]);
+    const { data: st } = await auth.svc
+      .from('logistics_stations')
+      .select('name')
+      .eq('id', line.station_id as string)
+      .maybeSingle();
+    await logPrize(auth.svc, [
+      {
+        prize_id: line.prize_id as string,
+        kind: 'give',
+        qty: -change,
+        plan_id: id,
+        plan_name: plan.name as string,
+        station: (st?.name as string | undefined) ?? null,
+        actor: auth.user.id,
+      },
+    ]);
   }
   if (row.new_done !== row.old_done) await announce(planTopic(id), { k: 'count', plan: id, line: b.line_id, step: b.step_id, done: row.new_done }, who);
   // No stamp on the plan here: a count is not a change of the plan's makeup, and bumping the stamp would make every phone download the whole plan again.

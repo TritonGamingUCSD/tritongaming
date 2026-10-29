@@ -27,10 +27,15 @@ export const UNSAVED_BLOCKED_EVENT = 'tg:unsaved-blocked';
 let barCount = 0;
 export function registerSaveBar(): () => void {
   barCount += 1;
-  return () => { barCount = Math.max(0, barCount - 1); };
+  return () => {
+    barCount = Math.max(0, barCount - 1);
+  };
 }
 function ask(message: string): boolean {
-  if (barCount > 0) { window.dispatchEvent(new Event(UNSAVED_BLOCKED_EVENT)); return false; }
+  if (barCount > 0) {
+    window.dispatchEvent(new Event(UNSAVED_BLOCKED_EVENT));
+    return false;
+  }
   showToast(message, { tone: 'warn' });
   return false;
 }
@@ -53,7 +58,11 @@ function ask(message: string): boolean {
 // what it was doesn't count as a change.
 export function useUnsavedChanges<T = unknown>(value: T, message: string = DEFAULT_MESSAGE, resetKey: unknown = null) {
   const serialize = (v: unknown) => {
-    try { return JSON.stringify(v); } catch { return String(Math.random()); }
+    try {
+      return JSON.stringify(v);
+    } catch {
+      return String(Math.random());
+    }
   };
   const baseline = useRef<string>(serialize(value));
   const baselineValue = useRef<T>(value);
@@ -96,7 +105,11 @@ export function useUnsavedChanges<T = unknown>(value: T, message: string = DEFAU
       const anchor = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
       if (!anchor || anchor.target === '_blank' || anchor.hasAttribute('download')) return;
       let url: URL;
-      try { url = new URL(anchor.href, window.location.href); } catch { return; }
+      try {
+        url = new URL(anchor.href, window.location.href);
+      } catch {
+        return;
+      }
       if (url.origin !== window.location.origin) return; // a real page load — beforeunload covers it
       if (url.pathname === window.location.pathname && url.search === window.location.search) return; // same page (hash, etc.)
       if (!ask(message)) {
@@ -108,7 +121,11 @@ export function useUnsavedChanges<T = unknown>(value: T, message: string = DEFAU
     // Back and Forward. Where the browser has the Navigation API, the move is cancelled before anything happens: the router and the portal's
     // tab/section listeners never see it, so the page and the edits stay exactly as they are. Elsewhere, keep an extra history entry on top of
     // this page so Back lands on it first and we can ask.
-    type Nav = { addEventListener: (t: string, f: (e: NavEvent) => void) => void; removeEventListener: (t: string, f: (e: NavEvent) => void) => void; traverseTo: (key: string) => void };
+    type Nav = {
+      addEventListener: (t: string, f: (e: NavEvent) => void) => void;
+      removeEventListener: (t: string, f: (e: NavEvent) => void) => void;
+      traverseTo: (key: string) => void;
+    };
     type NavEvent = { navigationType: string; cancelable: boolean; destination: { key: string }; preventDefault: () => void };
     const nav = (window as unknown as { navigation?: Nav }).navigation;
     const guardHref = window.location.href;

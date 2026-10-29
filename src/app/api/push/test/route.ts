@@ -8,7 +8,9 @@ const lastTest = new Map<string, number>();
 // Send myself a test notification (to every device I turned it on for), at most one every 10 seconds.
 export async function POST() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   if (!pushConfigured()) return NextResponse.json({ error: 'Push notifications aren’t set up on this site yet.' }, { status: 503 });
   const now = Date.now();

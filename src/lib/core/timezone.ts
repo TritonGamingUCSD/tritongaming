@@ -56,7 +56,7 @@ export function pacificDaysUntil(iso: string, from: Date = new Date()): number {
 export function formatEventDateRange(startISO: string, endISO?: string | null, opts?: { weekday?: boolean }): string {
   const start = new Date(startISO);
   const end = endISO ? new Date(endISO) : null;
-  const weekday = opts?.weekday ? ({ weekday: 'long' as const }) : {};
+  const weekday = opts?.weekday ? { weekday: 'long' as const } : {};
 
   if (!end) {
     return start.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, ...weekday, month: 'long', day: 'numeric', year: 'numeric' });
@@ -84,9 +84,7 @@ export function formatEventDateRange(startISO: string, endISO?: string | null, o
   // an awkward "2026 (day: 31)" format. Build the same-month case by hand,
   // from the already-Pacific-derived day/year rather than end.getDate() /
   // end.getFullYear() (which would reread it in the local runtime zone).
-  const e = sameMonth
-    ? `${ep.day}, ${ep.year}`
-    : end.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'long', day: 'numeric', year: 'numeric' });
+  const e = sameMonth ? `${ep.day}, ${ep.year}` : end.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'long', day: 'numeric', year: 'numeric' });
 
   return `${s} – ${e}`;
 }
@@ -113,8 +111,12 @@ export function formatEventTimeRange(startISO: string, endISO?: string | null): 
 function pacificPartsOf(date: Date) {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: PACIFIC_TZ,
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
     hour12: false,
   }).formatToParts(date);
   const get = (type: string) => Number(parts.find((p) => p.type === type)?.value);
@@ -177,7 +179,8 @@ export function eventDayProgress(startISO: string, endISO?: string | null, now: 
 // Compact version for tables: "Oct 3, 2026" or "Oct 3 – 5, 2026" / "Oct 30 – Nov 2, 2026".
 export function formatEventDateRangeShort(startISO: string, endISO?: string | null): string {
   const start = new Date(startISO);
-  const fmt = (d: Date, withYear: boolean) => d.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', ...(withYear ? { year: 'numeric' as const } : {}) });
+  const fmt = (d: Date, withYear: boolean) =>
+    d.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric', ...(withYear ? { year: 'numeric' as const } : {}) });
   if (!endISO || eventDayCount(startISO, endISO) < 2) return fmt(start, true);
   const end = new Date(endISO);
   const sp = pacificDateParts(start);
@@ -194,9 +197,12 @@ export function formatPacificDateTime(iso: string | number | Date, opts: { weekd
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: PACIFIC_TZ,
     weekday: opts.weekday ? 'short' : undefined,
-    month: 'short', day: 'numeric',
+    month: 'short',
+    day: 'numeric',
     year: opts.year ? 'numeric' : undefined,
-    hour: 'numeric', minute: '2-digit', hour12: true,
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
   }).formatToParts(new Date(iso));
   const g = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
   const date = `${opts.weekday ? `${g('weekday')}, ` : ''}${g('month')} ${g('day')}${opts.year ? `, ${g('year')}` : ''}`;
@@ -212,7 +218,8 @@ export function formatPacificDate(input: string | number | Date, opts: { weekday
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: day ? 'UTC' : PACIFIC_TZ,
     weekday: opts.weekday ? (opts.long ? 'long' : 'short') : undefined,
-    month: opts.long ? 'long' : 'short', day: 'numeric',
+    month: opts.long ? 'long' : 'short',
+    day: 'numeric',
     year: opts.year ? 'numeric' : undefined,
   }).formatToParts(date);
   const g = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
@@ -221,7 +228,11 @@ export function formatPacificDate(input: string | number | Date, opts: { weekday
 
 export function formatPacificTime(input: string | number | Date, opts: { seconds?: boolean } = {}): string {
   const parts = new Intl.DateTimeFormat('en-US', {
-    timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit', second: opts.seconds ? '2-digit' : undefined, hour12: true,
+    timeZone: PACIFIC_TZ,
+    hour: 'numeric',
+    minute: '2-digit',
+    second: opts.seconds ? '2-digit' : undefined,
+    hour12: true,
   }).formatToParts(new Date(input));
   const g = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
   return `${g('hour')}:${g('minute')}${opts.seconds ? `:${g('second')}` : ''} ${g('dayPeriod').toUpperCase()}`;

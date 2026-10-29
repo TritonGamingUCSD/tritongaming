@@ -22,7 +22,12 @@ export async function POST(request: Request) {
   const auth = await staff();
   if ('error' in auth && auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));
-  const title = String(b.title ?? '').trim().slice(0, 60), body = String(b.body ?? '').trim().slice(0, 2000);
+  const title = String(b.title ?? '')
+      .trim()
+      .slice(0, 60),
+    body = String(b.body ?? '')
+      .trim()
+      .slice(0, 2000);
   if (!title || !body) return NextResponse.json({ error: 'Add a title and the reply text.' }, { status: 400 });
   const { data, error } = b.id
     ? await auth.svc.from('help_canned_replies').update({ title, body }).eq('id', b.id).select('id').single()

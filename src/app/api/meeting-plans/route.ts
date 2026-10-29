@@ -22,7 +22,11 @@ export async function POST(request: Request) {
   if (!aud.ok) return NextResponse.json({ error: 'Pick who the meeting is for.' }, { status: 400 });
   const f = readPlanFields(b, kind);
   if (!f.ok) return NextResponse.json({ error: f.error }, { status: 400 });
-  const { data, error } = await auth.svc.from('meeting_plans').insert({ ...f.v, kind, audience: aud.audience, invitees: aud.invitees, group_ids: aud.group_ids, created_by: auth.user.id }).select('*').single();
+  const { data, error } = await auth.svc
+    .from('meeting_plans')
+    .insert({ ...f.v, kind, audience: aud.audience, invitees: aud.invitees, group_ids: aud.group_ids, created_by: auth.user.id })
+    .select('*')
+    .single();
   if (error || !data) return NextResponse.json({ error: 'Failed to create the plan.' }, { status: 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'meeting plan', entityId: data.id as string, summary: `Started planning "${data.title}"` });
   await notifyPlanAsk(auth.svc, data as PlanRow, { kind: 'new' });

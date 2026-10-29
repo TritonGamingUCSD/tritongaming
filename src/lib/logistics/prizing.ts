@@ -6,22 +6,51 @@ import { slugify } from '@/lib/core/slug';
 // An event is grouped by its stations by default (or any of the others); the stock (no event) by one of the others.
 export type GroupBy = 'station' | 'sponsor' | 'source' | 'size' | 'type' | 'status';
 export const GROUPS: { id: GroupBy; label: string }[] = [
-  { id: 'station', label: 'Station' }, { id: 'sponsor', label: 'Sponsor' }, { id: 'source', label: 'Source' }, { id: 'size', label: 'Size' }, { id: 'type', label: 'Type' }, { id: 'status', label: 'Status' },
+  { id: 'station', label: 'Station' },
+  { id: 'sponsor', label: 'Sponsor' },
+  { id: 'source', label: 'Source' },
+  { id: 'size', label: 'Size' },
+  { id: 'type', label: 'Type' },
+  { id: 'status', label: 'Status' },
 ];
 export const isGroupBy = (v: unknown): v is GroupBy => GROUPS.some((g) => g.id === v);
 
 export interface PrizeIn {
-  id: string; name: string; sponsor_id: string | null; size: string | null; type: string | null; in_hand: boolean; price: number | null; quantity: number; allocated: number; left: number; stock_level?: StockLevel;
+  id: string;
+  name: string;
+  sponsor_id: string | null;
+  size: string | null;
+  type: string | null;
+  in_hand: boolean;
+  price: number | null;
+  quantity: number;
+  allocated: number;
+  left: number;
+  stock_level?: StockLevel;
 }
-export interface LineIn { id: string; station_id: string; prize_id: string; quantity: number }
-export interface StationIn { id: string; name: string; prize_only?: boolean; prize_request_id?: string | null; prize_target_qty?: number | null; prize_target_sizes?: Record<string, number> | null }
+export interface LineIn {
+  id: string;
+  station_id: string;
+  prize_id: string;
+  quantity: number;
+}
+export interface StationIn {
+  id: string;
+  name: string;
+  prize_only?: boolean;
+  prize_request_id?: string | null;
+  prize_target_qty?: number | null;
+  prize_target_sizes?: Record<string, number> | null;
+}
 
 // How many of each prize this event holds (promised, minus what was given out, minus what came back to storage: `held` in lineNumbers) and where. `released` is a line's given out plus back in storage.
 export function eventHolds(lines: LineIn[], released: (line: LineIn) => number) {
   const out = new Map<string, { total: number; remaining: number; lines: LineIn[] }>();
   for (const l of lines) {
     const e = out.get(l.prize_id) ?? { total: 0, remaining: 0, lines: [] };
-    e.total += l.quantity; e.remaining += l.quantity - Math.min(released(l), l.quantity); e.lines.push(l);
+    e.total += l.quantity;
+    e.remaining += l.quantity - Math.min(released(l), l.quantity);
+    e.lines.push(l);
     out.set(l.prize_id, e);
   }
   return out;
@@ -29,9 +58,21 @@ export function eventHolds(lines: LineIn[], released: (line: LineIn) => number) 
 
 // What a prize row is about, for the Status grouping: red things first.
 export type Status = 'over' | 'not-here' | 'assigned' | 'free' | 'out';
-export const STATUS_LABEL: Record<Status, string> = { over: 'Over-promised', 'not-here': 'Not here yet', assigned: 'Assigned to this event', free: 'Not assigned', out: 'Out of stock' };
+export const STATUS_LABEL: Record<Status, string> = {
+  over: 'Over-promised',
+  'not-here': 'Not here yet',
+  assigned: 'Assigned to this event',
+  free: 'Not assigned',
+  out: 'Out of stock',
+};
 // The same states for the stock (no event picked): "assigned" means planned for some event, "free" means not planned yet.
-export const STOCK_STATUS_LABEL: Record<Status, string> = { over: 'Over-promised', 'not-here': 'Not here yet', assigned: 'Planned for events', free: 'Not planned yet', out: 'Out of stock' };
+export const STOCK_STATUS_LABEL: Record<Status, string> = {
+  over: 'Over-promised',
+  'not-here': 'Not here yet',
+  assigned: 'Planned for events',
+  free: 'Not planned yet',
+  out: 'Out of stock',
+};
 export const STATUS_ORDER: Status[] = ['over', 'not-here', 'assigned', 'free', 'out'];
 export function statusOf(p: Pick<PrizeIn, 'left' | 'quantity' | 'in_hand'> & { size?: string | null; stock_level?: StockLevel }, assignedHere: number): Status {
   if (isLoose(p)) return p.stock_level === 'out' ? 'out' : assignedHere > 0 ? 'assigned' : 'free';
@@ -42,11 +83,18 @@ export function statusOf(p: Pick<PrizeIn, 'left' | 'quantity' | 'in_hand'> & { s
   return 'free';
 }
 
-export interface Group<T> { key: string; label: string; rows: T[] }
+export interface Group<T> {
+  key: string;
+  label: string;
+  rows: T[];
+}
 // Groups rows by one thing, keeping the order the keys are first met in unless an order is given. Rows with no value go under `empty`, last.
 export function groupBy<T>(rows: T[], keyOf: (r: T) => string | null, empty: string, order?: string[]): Group<T>[] {
   const map = new Map<string, T[]>();
-  for (const r of rows) { const k = keyOf(r) ?? ''; map.set(k, [...(map.get(k) ?? []), r]); }
+  for (const r of rows) {
+    const k = keyOf(r) ?? '';
+    map.set(k, [...(map.get(k) ?? []), r]);
+  }
   const keys = [...map.keys()];
   const rank = (k: string) => (k === '' ? 1e9 : order && order.includes(k) ? order.indexOf(k) : order ? 1e8 : 0);
   keys.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
@@ -57,9 +105,11 @@ export function groupBy<T>(rows: T[], keyOf: (r: T) => string | null, empty: str
 // The event a prize was received for is shown by its address name (the slug, like division-showcase): the linked event's own slug while it exists, else the name made into one.
 export const eventSlugOf = (p: { from_event?: string | null; from_plan_id?: string | null }, slugByPlan: Map<string, string>): string | null =>
   p.from_plan_id && slugByPlan.get(p.from_plan_id) ? slugByPlan.get(p.from_plan_id)! : p.from_event ? slugify(p.from_event) : null;
-export const fromOf = (p: { from_event?: string | null; from_plan_id?: string | null }, sponsor: string | null, slugByPlan: Map<string, string> = new Map()) => [sponsor ?? 'Club', eventSlugOf(p, slugByPlan)].filter(Boolean).join(' · ');
+export const fromOf = (p: { from_event?: string | null; from_plan_id?: string | null }, sponsor: string | null, slugByPlan: Map<string, string> = new Map()) =>
+  [sponsor ?? 'Club', eventSlugOf(p, slugByPlan)].filter(Boolean).join(' · ');
 
-export const money = (n: number | null | undefined) => (n === null || n === undefined ? '' : `$${n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`);
+export const money = (n: number | null | undefined) =>
+  n === null || n === undefined ? '' : `$${n.toLocaleString('en-US', { minimumFractionDigits: Number.isInteger(n) ? 0 : 2, maximumFractionDigits: 2 })}`;
 export const valueOf = (rows: { quantity: number; price: number | null }[]) => Math.round(rows.reduce((n, r) => n + r.quantity * (r.price ?? 0), 0) * 100) / 100;
 
 // ---- what a station asked for and has --------------------------------------------------------------------------------------------------------------------------------------------------
@@ -67,27 +117,47 @@ export const valueOf = (rows: { quantity: number; price: number | null }[]) => M
 export function haveBySize(lines: { quantity: number; size: string | null }[]) {
   return lines.reduce<Record<string, number>>((m, l) => (l.size ? { ...m, [l.size]: (m[l.size] ?? 0) + l.quantity } : m), {});
 }
-export function stationNeed(station: Pick<StationIn, 'prize_target_qty' | 'prize_target_sizes'>, rawLines: { quantity: number; size: string | null }[]): { need: Record<string, number>; asked: number; has: number } {
+export function stationNeed(
+  station: Pick<StationIn, 'prize_target_qty' | 'prize_target_sizes'>,
+  rawLines: { quantity: number; size: string | null }[],
+): { need: Record<string, number>; asked: number; has: number } {
   const target = station.prize_target_sizes ?? {};
   // Free prizes are loose: a station that has any of them has all it asked for of that size (the count on its line means nothing).
   const freeKey = Object.keys(target).find((z) => isLoose({ size: z }));
   const loose = rawLines.filter((l) => isLoose(l));
-  const lines = freeKey && loose.length ? rawLines.map((l) => (l === loose[0] ? { ...l, quantity: Math.max(l.quantity, (target[freeKey] ?? 0) - loose.slice(1).reduce((n, x) => n + x.quantity, 0)) } : l)) : rawLines;
+  const lines =
+    freeKey && loose.length
+      ? rawLines.map((l) => (l === loose[0] ? { ...l, quantity: Math.max(l.quantity, (target[freeKey] ?? 0) - loose.slice(1).reduce((n, x) => n + x.quantity, 0)) } : l))
+      : rawLines;
   const have = haveBySize(lines);
-  const asked = station.prize_target_qty ?? 0, has = lines.reduce((n, l) => n + l.quantity, 0);
+  const asked = station.prize_target_qty ?? 0,
+    has = lines.reduce((n, l) => n + l.quantity, 0);
   const wantAny = Math.max(0, asked - Object.values(target).reduce((n, x) => n + x, 0));
   const gotAny = has - Object.entries(have).reduce((n, [z, x]) => n + Math.min(x, target[z] ?? 0), 0);
-  const need: Record<string, number> = Object.fromEntries(Object.entries(target).map(([z, n]) => [z, Math.max(0, n - (have[z] ?? 0))]).filter(([, n]) => (n as number) > 0));
+  const need: Record<string, number> = Object.fromEntries(
+    Object.entries(target)
+      .map(([z, n]) => [z, Math.max(0, n - (have[z] ?? 0))])
+      .filter(([, n]) => (n as number) > 0),
+  );
   if (wantAny - gotAny > 0) need[ANY_SIZE] = wantAny - gotAny;
   return { need, asked, has };
 }
 export const needText = (need: Record<string, number>, sizeOrder: string[]) =>
-  [...sizeOrder, ANY_SIZE].filter((z) => need[z]).map((z) => `${need[z]} ${z === ANY_SIZE ? 'of any size' : z}`).join(', ');
+  [...sizeOrder, ANY_SIZE]
+    .filter((z) => need[z])
+    .map((z) => `${need[z]} ${z === ANY_SIZE ? 'of any size' : z}`)
+    .join(', ');
 
 // ---- the "Fix these" strip -------------------------------------------------------------------------------------------------------------------------------------------------------------
-export interface Fix { sev: 'bad' | 'warn'; text: string; focus: { kind: 'prize' | 'station'; id: string } }
+export interface Fix {
+  sev: 'bad' | 'warn';
+  text: string;
+  focus: { kind: 'prize' | 'station'; id: string };
+}
 export function prizingFixes(o: {
-  prizes: (PrizeIn & { assignedHere: number })[]; stations: (StationIn & { lines: number; short: Record<string, number> })[]; sizeOrder: string[];
+  prizes: (PrizeIn & { assignedHere: number })[];
+  stations: (StationIn & { lines: number; short: Record<string, number> })[];
+  sizeOrder: string[];
 }): Fix[] {
   const out: Fix[] = [];
   for (const p of o.prizes) if (p.left < 0) out.push({ sev: 'bad', text: `${p.name}: ${-p.left} more promised than there are`, focus: { kind: 'prize', id: p.id } });
@@ -97,7 +167,15 @@ export function prizingFixes(o: {
     else if (s.lines === 0) out.push({ sev: 'warn', text: `${s.name} has no prizes yet`, focus: { kind: 'station', id: s.id } });
   }
   const notHere = o.prizes.filter((p) => !p.in_hand && p.assignedHere > 0);
-  if (notHere.length) out.push({ sev: 'warn', text: `${notHere.length} ${notHere.length === 1 ? 'prize' : 'prizes'} in this event ${notHere.length === 1 ? 'is' : 'are'} not here yet (${notHere.slice(0, 3).map((p) => p.name).join(', ')}${notHere.length > 3 ? '…' : ''})`, focus: { kind: 'prize', id: notHere[0].id } });
+  if (notHere.length)
+    out.push({
+      sev: 'warn',
+      text: `${notHere.length} ${notHere.length === 1 ? 'prize' : 'prizes'} in this event ${notHere.length === 1 ? 'is' : 'are'} not here yet (${notHere
+        .slice(0, 3)
+        .map((p) => p.name)
+        .join(', ')}${notHere.length > 3 ? '…' : ''})`,
+      focus: { kind: 'prize', id: notHere[0].id },
+    });
   return out;
 }
 
@@ -108,5 +186,8 @@ export function impliedCount(steps: { id: string; leftover: boolean }[], real: (
   if (i < 0) return 0;
   const own = real(stepId);
   if (steps[i].leftover) return own;
-  return steps.slice(i + 1).filter((s) => !s.leftover).reduce((m, s) => Math.max(m, real(s.id)), own);
+  return steps
+    .slice(i + 1)
+    .filter((s) => !s.leftover)
+    .reduce((m, s) => Math.max(m, real(s.id)), own);
 }

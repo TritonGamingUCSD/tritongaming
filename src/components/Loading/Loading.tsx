@@ -13,7 +13,9 @@ export default function Loading({ variant = 'section', label = 'Loading…' }: {
   if (variant === 'inline') {
     return (
       <div className={styles.inline} role="status" aria-live="polite">
-        <span className={styles.bar} aria-hidden="true"><span className={styles.fill} /></span>
+        <span className={styles.bar} aria-hidden="true">
+          <span className={styles.fill} />
+        </span>
         <span className={styles.inlineLabel}>{label}</span>
       </div>
     );
@@ -25,7 +27,9 @@ export default function Loading({ variant = 'section', label = 'Loading…' }: {
         <Image src="/logos/tg_logo.png" alt="" fill sizes={`${size}px`} className={styles.logoBase} loading="eager" fetchPriority="high" />
         <div className={styles.logoShine} />
       </div>
-      <span className={styles.bar} aria-hidden="true"><span className={styles.fill} /></span>
+      <span className={styles.bar} aria-hidden="true">
+        <span className={styles.fill} />
+      </span>
       <p className={styles.label}>{label}</p>
     </div>
   );

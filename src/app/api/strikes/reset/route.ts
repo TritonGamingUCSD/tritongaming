@@ -33,7 +33,10 @@ export async function POST(request: Request) {
   await auth.svc.from('strike_dismissals').delete().in('user_id', ids);
   await auth.svc.from('strikes').delete().in('user_id', ids);
   if (voucherIds.length) await auth.svc.from('strike_vouchers').delete().in('id', voucherIds);
-  await auth.svc.from('strike_cleared').upsert(ids.map((user_id) => ({ user_id, cleared_at: now })), { onConflict: 'user_id' });
+  await auth.svc.from('strike_cleared').upsert(
+    ids.map((user_id) => ({ user_id, cleared_at: now })),
+    { onConflict: 'user_id' },
+  );
   // The audit log names people and reasons, so those lines go too. A bulk reset clears every strike line; a single one only that person's.
   if (one) {
     const gone = [...strikeIds, ...voucherIds];
@@ -47,6 +50,12 @@ export async function POST(request: Request) {
     await recordEvent(auth.svc, { userId: uid, kind: 'strikes_reset', reason, actorId: auth.user.id });
     await notifyPerson(auth.svc, uid, 'Your strikes were reset', 'Open your Profile, under Strikes.');
   }
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'reset', entityType: 'strike reset', entityId: null, summary: one ? 'Reset one person’s strikes' : `Reset strikes for everyone (${ids.length} ${ids.length === 1 ? 'person' : 'people'})` });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'reset',
+    entityType: 'strike reset',
+    entityId: null,
+    summary: one ? 'Reset one person’s strikes' : `Reset strikes for everyone (${ids.length} ${ids.length === 1 ? 'person' : 'people'})`,
+  });
   return NextResponse.json({ ok: true, people: hadActive.length, strikes: strikeIds.length });
 }

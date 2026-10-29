@@ -38,7 +38,9 @@ export async function GET(request: Request) {
         // guaranteed to carry the full identities array. A fresh
         // getUser() call is the same authoritative source every other
         // route in this codebase uses for "who is this, completely".
-        const { data: { user: freshUser } } = await strictUser(supabase);
+        const {
+          data: { user: freshUser },
+        } = await strictUser(supabase);
         const hasUcsdIdentity = (freshUser?.identities ?? []).some((identity) => {
           const email = (identity.identity_data?.email as string | undefined) ?? '';
           return email.toLowerCase().endsWith('@ucsd.edu');
@@ -78,7 +80,9 @@ export async function GET(request: Request) {
   // would be both wrong and confusing. Send them back to wherever they
   // were (next) with the error attached instead; a genuine failed sign-in
   // (no session either way) keeps going to /login as before.
-  const { data: { user: currentUser } } = await supabase.auth.getUser();
+  const {
+    data: { user: currentUser },
+  } = await supabase.auth.getUser();
   const failureTarget = currentUser ? new URL(next, origin) : new URL('/login', origin);
   failureTarget.searchParams.set('error', errorCode);
   if (errorDescription) failureTarget.searchParams.set('error_description', errorDescription);

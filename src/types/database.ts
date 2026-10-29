@@ -301,7 +301,8 @@ export interface Database {
           draft_updated_at: string | null;
           draft_updated_by: string | null;
         };
-        Insert: Omit<Database['public']['Tables']['docs']['Row'], 'id' | 'created_at' | 'updated_at' | DocOptionalColumns> & Partial<Pick<Database['public']['Tables']['docs']['Row'], DocOptionalColumns>>;
+        Insert: Omit<Database['public']['Tables']['docs']['Row'], 'id' | 'created_at' | 'updated_at' | DocOptionalColumns> &
+          Partial<Pick<Database['public']['Tables']['docs']['Row'], DocOptionalColumns>>;
         Update: Partial<Database['public']['Tables']['docs']['Insert']>;
       };
       doc_categories: {
@@ -413,14 +414,33 @@ export type Division = Database['public']['Tables']['divisions']['Row'];
 export type Event = Database['public']['Tables']['events']['Row'];
 export type Ticket = Database['public']['Tables']['tickets']['Row'];
 export type Sponsor = Database['public']['Tables']['sponsors']['Row'];
-type DocOptionalColumns = 'teams' | 'reviewed_at' | 'reviewed_by' | 'icon' | 'cover_url' | 'tags' | 'pinned' | 'published' | 'revision' | 'draft_title' | 'draft_content' | 'draft_updated_at' | 'draft_updated_by';
+type DocOptionalColumns =
+  | 'teams'
+  | 'reviewed_at'
+  | 'reviewed_by'
+  | 'icon'
+  | 'cover_url'
+  | 'tags'
+  | 'pinned'
+  | 'published'
+  | 'revision'
+  | 'draft_title'
+  | 'draft_content'
+  | 'draft_updated_at'
+  | 'draft_updated_by';
 export type Doc = Database['public']['Tables']['docs']['Row'];
 /** A tile on the documentation home that opens a Google Drive file or other address. Not a document. */
-export interface QuickLink { id: string; title: string; url: string; note: string; teams: string[]; order_index: number }
+export interface QuickLink {
+  id: string;
+  title: string;
+  url: string;
+  note: string;
+  teams: string[];
+  order_index: number;
+}
 export type DocCategory = Database['public']['Tables']['doc_categories']['Row'];
 export type Notification = Database['public']['Tables']['notifications']['Row'];
 export type RewardItem = Database['public']['Tables']['reward_items']['Row'];
-
 
 // Display-only ordering for badges/sorting — NOT used for authorization.
 // officer and division intentionally tie: they're peers with different

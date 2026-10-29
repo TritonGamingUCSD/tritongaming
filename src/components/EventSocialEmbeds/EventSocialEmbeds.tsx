@@ -60,7 +60,19 @@ function DiscordCard({ url }: { url: string }) {
 }
 
 // Widgets (Instagram, X, TikTok, YouTube) are heavy, so each one is only mounted once its frame is near the screen.
-function LazyFrame({ index, label, caption, onActive, children }: { index: number; label: string; caption: string; onActive: () => void; children: (width: number) => React.ReactNode }) {
+function LazyFrame({
+  index,
+  label,
+  caption,
+  onActive,
+  children,
+}: {
+  index: number;
+  label: string;
+  caption: string;
+  onActive: () => void;
+  children: (width: number) => React.ReactNode;
+}) {
   const ref = useRef<HTMLElement>(null);
   const slot = useRef<HTMLDivElement>(null);
   const [on, setOn] = useState(false);
@@ -71,10 +83,23 @@ function LazyFrame({ index, label, caption, onActive, children }: { index: numbe
     const el = ref.current;
     if (!el) return;
     const measure = () => setWidth(slot.current?.clientWidth ?? 0);
-    if (typeof IntersectionObserver === 'undefined') { measure(); setOn(true); onActive(); return; }
-    const io = new IntersectionObserver((entries) => {
-      if (entries.some((e) => e.isIntersecting)) { measure(); setOn(true); onActive(); io.disconnect(); }
-    }, { rootMargin: '400px 300px' });
+    if (typeof IntersectionObserver === 'undefined') {
+      measure();
+      setOn(true);
+      onActive();
+      return;
+    }
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          measure();
+          setOn(true);
+          onActive();
+          io.disconnect();
+        }
+      },
+      { rootMargin: '400px 300px' },
+    );
     io.observe(el);
     return () => io.disconnect();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -83,7 +108,9 @@ function LazyFrame({ index, label, caption, onActive, children }: { index: numbe
   return (
     <figure ref={ref} className={`${styles.frame} ${index % 2 ? styles.tiltR : styles.tiltL}`}>
       <span className={styles.label}>{label}</span>
-      <div ref={slot} className={styles.slot}>{on ? <ScrollShield label="Tap to interact">{children(width)}</ScrollShield> : <span className={styles.waiting}>loading…</span>}</div>
+      <div ref={slot} className={styles.slot}>
+        {on ? <ScrollShield label="Tap to interact">{children(width)}</ScrollShield> : <span className={styles.waiting}>loading…</span>}
+      </div>
       <figcaption className={styles.caption}>{caption}</figcaption>
     </figure>
   );
@@ -139,7 +166,12 @@ export default function EventSocialEmbeds({ embeds }: { embeds: SocialEmbed[] })
   const cards = embeds.map((embed, i) => {
     const key = `${embed.url}-${i}`;
     // Discord and link-out cards are already stickers; real embeds get pinned up in a taped paper frame.
-    if (embed.type === 'discord') return <div key={key} className={styles.sticker}>{renderEmbed(embed, key)}</div>;
+    if (embed.type === 'discord')
+      return (
+        <div key={key} className={styles.sticker}>
+          {renderEmbed(embed, key)}
+        </div>
+      );
     return (
       <LazyFrame key={key} index={i} label={LABELS[embed.type] ?? 'Post'} caption={embed.caption?.trim() || CAPTIONS[embed.type] || 'From the feed'} onActive={() => activate(i)}>
         {(width) => renderEmbed(embed, key, width)}
@@ -150,15 +182,23 @@ export default function EventSocialEmbeds({ embeds }: { embeds: SocialEmbed[] })
   return (
     <div className={styles.wrap} ref={wrapRef}>
       {cols === 0 ? (
-        <div className={styles.row} data-count={embeds.length}>{cards}</div>
+        <div className={styles.row} data-count={embeds.length}>
+          {cards}
+        </div>
       ) : (
         <div className={styles.board}>
           {Array.from({ length: cols }, (_, c) => (
-            <div key={c} className={styles.boardCol}>{cards.filter((_, i) => i % cols === c)}</div>
+            <div key={c} className={styles.boardCol}>
+              {cards.filter((_, i) => i % cols === c)}
+            </div>
           ))}
         </div>
       )}
-      {cols === 0 && embeds.length > 1 && <p className={styles.swipeHint} aria-hidden="true">swipe for more →</p>}
+      {cols === 0 && embeds.length > 1 && (
+        <p className={styles.swipeHint} aria-hidden="true">
+          swipe for more →
+        </p>
+      )}
     </div>
   );
 }
@@ -175,14 +215,7 @@ const LABELS: Record<string, string> = { instagram: 'Instagram', twitter: 'X pos
 function renderEmbed(embed: SocialEmbed, key: string, width = 0) {
   switch (embed.type) {
     case 'instagram':
-      return (
-        <blockquote
-          key={key}
-          className={`instagram-media ${styles.instagramEmbed}`}
-          data-instgrm-permalink={embed.url}
-          data-instgrm-version="14"
-        />
-      );
+      return <blockquote key={key} className={`instagram-media ${styles.instagramEmbed}`} data-instgrm-permalink={embed.url} data-instgrm-version="14" />;
     case 'twitter':
       return (
         <blockquote key={key} className={`twitter-tweet ${styles.twitterEmbed}`} data-width={Math.min(550, Math.max(250, Math.floor(width) || 300))} data-dnt="true">

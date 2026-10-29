@@ -43,15 +43,26 @@ export const MAX_SUBJECT = 100;
 export const MAX_BODY = 2000;
 export const MAX_ATTACHMENTS = 3;
 
-
 // The structured role request ("Role wanted: Officer / Division: Esports / Who can vouch: …") and its reading back, so an admin's approve box starts on what was asked.
-export const REQUESTABLE_ROLES = [{ id: 'officer', label: 'Officer' }, { id: 'lead', label: 'Lead' }, { id: 'division', label: 'Division lead' }, {id: 'alumni', label: 'Alumni'}] as const;
+export const REQUESTABLE_ROLES = [
+  { id: 'officer', label: 'Officer' },
+  { id: 'lead', label: 'Lead' },
+  { id: 'division', label: 'Division lead' },
+  { id: 'alumni', label: 'Alumni' },
+] as const;
 export type RequestableRole = (typeof REQUESTABLE_ROLES)[number]['id'];
 export function roleRequestBody(r: { role: RequestableRole; division?: string; vouch: string; note?: string }): { subject: string; body: string } {
   const label = REQUESTABLE_ROLES.find((x) => x.id === r.role)?.label ?? r.role;
   return {
     subject: `Role request: ${label}`,
-    body: [`Role wanted: ${label}`, r.role === 'division' && r.division ? `Division: ${r.division}` : '', `Who can vouch: ${r.vouch.trim()}`, r.note?.trim() ? `Anything else: ${r.note.trim()}` : ''].filter(Boolean).join('\n'),
+    body: [
+      `Role wanted: ${label}`,
+      r.role === 'division' && r.division ? `Division: ${r.division}` : '',
+      `Who can vouch: ${r.vouch.trim()}`,
+      r.note?.trim() ? `Anything else: ${r.note.trim()}` : '',
+    ]
+      .filter(Boolean)
+      .join('\n'),
   };
 }
 export function parseRoleRequest(subject: string, body: string): { role: RequestableRole | null; division: string | null } {

@@ -2,10 +2,24 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { bucketByMonth, cumulative } from '@/lib/events/monthBuckets';
 
-export interface DivisionCount { name: string; count: number; }
-export interface RoleCount { role: string; count: number; }
-export interface EconomyStats { inCirculation: number; totalRedeemed: number; pendingRedemptions: number; }
-export interface TopReward { title: string; count: number; system: 'Rewards'; }
+export interface DivisionCount {
+  name: string;
+  count: number;
+}
+export interface RoleCount {
+  role: string;
+  count: number;
+}
+export interface EconomyStats {
+  inCirculation: number;
+  totalRedeemed: number;
+  pendingRedemptions: number;
+}
+export interface TopReward {
+  title: string;
+  count: number;
+  system: 'Rewards';
+}
 
 // Analytics dashboard data — everything here is built from tables that
 // already exist (events, tickets, profiles, user_roles, divisions), no new
@@ -23,8 +37,7 @@ export async function getStatsData() {
   // are covered by every one of those policies.
   const serviceClient = createServiceClient();
 
-  const [eventsRes, ticketsRes, profilesRes, rolesRes, divisionsRes,
-    memberPointsRes, memberRedemptionsRes] = await Promise.all([
+  const [eventsRes, ticketsRes, profilesRes, rolesRes, divisionsRes, memberPointsRes, memberRedemptionsRes] = await Promise.all([
     supabase.from('events').select('id', { count: 'exact', head: true }),
     supabase.from('tickets').select('status, created_at, checked_in_at'),
     supabase.from('profiles').select('created_at'),
@@ -39,15 +52,10 @@ export async function getStatsData() {
   const roleRows = rolesRes.data ?? [];
   const divisions = divisionsRes.data ?? [];
 
-  function summarizeEconomy(
-    txns: { amount: number; type: string; reversed_at: string | null }[],
-    redemptions: { status: string }[],
-  ): EconomyStats {
+  function summarizeEconomy(txns: { amount: number; type: string; reversed_at: string | null }[], redemptions: { status: string }[]): EconomyStats {
     return {
       inCirculation: txns.reduce((sum, t) => sum + t.amount, 0),
-      totalRedeemed: txns
-        .filter((t) => t.type === 'redemption' && t.reversed_at === null && t.amount < 0)
-        .reduce((sum, t) => sum + Math.abs(t.amount), 0),
+      totalRedeemed: txns.filter((t) => t.type === 'redemption' && t.reversed_at === null && t.amount < 0).reduce((sum, t) => sum + Math.abs(t.amount), 0),
       pendingRedemptions: redemptions.filter((r) => r.status === 'pending').length,
     };
   }
@@ -62,9 +70,7 @@ export async function getStatsData() {
     });
     return [...counts.entries()].map(([title, count]) => ({ title, count, system }));
   }
-  const topRewards: TopReward[] = [
-    ...topRewardsFrom(memberRedemptionsRes.data, 'Rewards'),
-  ].sort((a, b) => b.count - a.count).slice(0, 6);
+  const topRewards: TopReward[] = [...topRewardsFrom(memberRedemptionsRes.data, 'Rewards')].sort((a, b) => b.count - a.count).slice(0, 6);
 
   const memberGrowth = cumulative(bucketByMonth(profiles.map((p) => p.created_at)));
 
@@ -85,9 +91,13 @@ export async function getStatsData() {
   const checkinsByMonth = bucketByMonth(tickets.filter((t) => t.checked_in_at).map((t) => t.checked_in_at as string));
   const months = [...new Set([...ticketsByMonth, ...checkinsByMonth].map((p) => p.month))];
   const monthOrder = (m: string) => new Date(`1 ${m.replace(/ (\d\d)$/, ' 20$1')}`).getTime();
-  const activity = months.sort((a, b) => monthOrder(a) - monthOrder(b)).map((month) => ({
-    month, tickets: ticketsByMonth.find((p) => p.month === month)?.count ?? 0, checkins: checkinsByMonth.find((p) => p.month === month)?.count ?? 0,
-  }));
+  const activity = months
+    .sort((a, b) => monthOrder(a) - monthOrder(b))
+    .map((month) => ({
+      month,
+      tickets: ticketsByMonth.find((p) => p.month === month)?.count ?? 0,
+      checkins: checkinsByMonth.find((p) => p.month === month)?.count ?? 0,
+    }));
   const roleTotals = new Map<string, number>();
   roleRows.forEach((r) => roleTotals.set(r.role, (roleTotals.get(r.role) ?? 0) + 1));
   const roleCounts: RoleCount[] = [...roleTotals.entries()].map(([role, count]) => ({ role, count })).sort((a, b) => b.count - a.count);

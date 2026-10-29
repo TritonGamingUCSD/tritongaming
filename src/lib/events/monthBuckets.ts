@@ -1,6 +1,9 @@
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 
-export interface MonthPoint { month: string; count: number; }
+export interface MonthPoint {
+  month: string;
+  count: number;
+}
 
 const MONTH_FMT = new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: '2-digit' });
 // year/month only, in Pacific — used purely to derive a sortable "YYYY-MM"
@@ -30,15 +33,17 @@ export function bucketByMonth(dates: string[]): MonthPoint[] {
     const key = monthKey(d);
     counts.set(key, (counts.get(key) ?? 0) + 1);
   });
-  return [...counts.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    // Noon UTC, not midnight — a date-time string with no offset is parsed
-    // as *local* time (the server process's own timezone, not necessarily
-    // Pacific), so midnight there could format back to the previous day/
-    // month once MONTH_FMT re-renders it in Pacific. Noon UTC lands in the
-    // early morning of the same calendar day in Pacific (7-8 hours behind),
-    // so it can never cross a month boundary when reformatted.
-    .map(([key, count]) => ({ month: MONTH_FMT.format(new Date(`${key}-01T12:00:00Z`)), count }));
+  return (
+    [...counts.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      // Noon UTC, not midnight — a date-time string with no offset is parsed
+      // as *local* time (the server process's own timezone, not necessarily
+      // Pacific), so midnight there could format back to the previous day/
+      // month once MONTH_FMT re-renders it in Pacific. Noon UTC lands in the
+      // early morning of the same calendar day in Pacific (7-8 hours behind),
+      // so it can never cross a month boundary when reformatted.
+      .map(([key, count]) => ({ month: MONTH_FMT.format(new Date(`${key}-01T12:00:00Z`)), count }))
+  );
 }
 
 export function cumulative(points: MonthPoint[]): MonthPoint[] {

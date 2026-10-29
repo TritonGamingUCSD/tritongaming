@@ -18,7 +18,13 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   if (v.removed_at) return NextResponse.json({ error: 'That voucher was already removed.' }, { status: 400 });
   const reason = cleanReason((await request.json().catch(() => ({}))).reason);
   if (!reason) return NextResponse.json({ error: 'Say why it’s being removed. They’ll see this.' }, { status: 400 });
-  const { data: done } = await auth.svc.from('strike_vouchers').update({ removed_at: new Date().toISOString(), removed_by: auth.user.id, removed_reason: reason }).eq('id', id).is('used_at', null).is('removed_at', null).select('id');
+  const { data: done } = await auth.svc
+    .from('strike_vouchers')
+    .update({ removed_at: new Date().toISOString(), removed_by: auth.user.id, removed_reason: reason })
+    .eq('id', id)
+    .is('used_at', null)
+    .is('removed_at', null)
+    .select('id');
   if (!done?.length) return NextResponse.json({ error: 'That voucher can’t be removed any more.' }, { status: 400 });
   await recordEvent(auth.svc, { userId: v.user_id as string, kind: 'voucher_removed', reason, actorId: auth.user.id, voucherId: id });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'delete', entityType: 'strike voucher', entityId: id, summary: 'Removed an unused strike voucher' });

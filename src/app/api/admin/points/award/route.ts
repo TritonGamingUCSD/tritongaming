@@ -10,7 +10,9 @@ import { strictUser } from '@/lib/supabase/localAuth';
 // all credited the same amount in a single call.
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
@@ -34,7 +36,13 @@ export async function POST(request: Request) {
   });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  await logAudit(serviceClient, { actorId: user.id, action: 'award', entityType: 'points', summary: `${parsedAmount >= 0 ? '+' : ''}${parsedAmount} points awarded to ${ids.length} member${ids.length === 1 ? '' : 's'}: ${String(note).trim()}`, details: { amount: parsedAmount, recipients: ids.length } });
+  await logAudit(serviceClient, {
+    actorId: user.id,
+    action: 'award',
+    entityType: 'points',
+    summary: `${parsedAmount >= 0 ? '+' : ''}${parsedAmount} points awarded to ${ids.length} member${ids.length === 1 ? '' : 's'}: ${String(note).trim()}`,
+    details: { amount: parsedAmount, recipients: ids.length },
+  });
   await notifyPoints(serviceClient, ids, user.id, parsedAmount, String(note).trim());
   return NextResponse.json({ ok: true, count: ids.length });
 }

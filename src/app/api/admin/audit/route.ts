@@ -11,7 +11,9 @@ const PAGE_SIZE = 50;
 // Query: ?type=<entity_type>&action=<action>&from=<iso>&to=<iso>&q=<search>&before=<iso created_at> (and &facets=1 on the first page for the filter lists)
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await strictUser(supabase);
+  const {
+    data: { user },
+  } = await strictUser(supabase);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);

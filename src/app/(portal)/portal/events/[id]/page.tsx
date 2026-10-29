@@ -28,7 +28,9 @@ export default async function EditEventPage({ params }: Params) {
   const [{ data: event }, seedCheckinFormConfig, previewViewer, creditPeople] = await Promise.all([
     supabase
       .from('events')
-      .select('id, title, slug, content, description, location, venue_address, venue_notes, venue_name, venue_lat, venue_lng, schedule, sponsors, start_date, end_date, flyer_url, ticket_price, points_value, is_online, audience, is_published, photo_albums, post_event_info, social_embeds, theme, page_blocks, requires_checkin_form, checkin_food_item, checkin_windows, day_hours, checkin_form_event_name, checkin_form_override')
+      .select(
+        'id, title, slug, content, description, location, venue_address, venue_notes, venue_name, venue_lat, venue_lng, schedule, sponsors, start_date, end_date, flyer_url, ticket_price, points_value, is_online, audience, is_published, photo_albums, post_event_info, social_embeds, theme, page_blocks, requires_checkin_form, checkin_food_item, checkin_windows, day_hours, checkin_form_event_name, checkin_form_override',
+      )
       .eq('id', id)
       .single(),
     getCheckinFormSeed(),

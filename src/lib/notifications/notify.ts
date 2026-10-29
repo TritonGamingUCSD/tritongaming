@@ -2,7 +2,13 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { after } from 'next/server';
 import { pushNotifications } from '@/lib/notifications/webPush';
 
-export interface NotificationInput { user_id: string; type: string; title: string; body?: string | null; href?: string | null }
+export interface NotificationInput {
+  user_id: string;
+  type: string;
+  title: string;
+  body?: string | null;
+  href?: string | null;
+}
 
 // Adds notifications to the bell, and pushes them to the devices of members who turned web push on. One place for every notification the app
 // creates on someone's behalf.
@@ -19,8 +25,17 @@ export async function createNotifications(svc: SupabaseClient, rows: Notificatio
 // The same, but after the response has been sent: for a notification nobody is waiting on (a check-in's "You're checked in"), so the person scanning does not wait for the bell row and the push to devices.
 // The platform keeps the function running until it is done. Outside a request (a script, a test) there is no "after", so it simply waits.
 export async function createNotificationsAfterResponse(svc: SupabaseClient, rows: NotificationInput[]): Promise<void> {
-  try { after(async () => { try { await createNotifications(svc, rows); } catch { /* a notice that cannot be sent never matters to anyone waiting */ } }); }
-  catch { await createNotifications(svc, rows); }
+  try {
+    after(async () => {
+      try {
+        await createNotifications(svc, rows);
+      } catch {
+        /* a notice that cannot be sent never matters to anyone waiting */
+      }
+    });
+  } catch {
+    await createNotifications(svc, rows);
+  }
 }
 
 // Push without adding to the bell, for notifications something else already put there (the database's audit alerts).

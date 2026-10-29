@@ -8,17 +8,40 @@ const KEY = 'tg_attribution_v1';
 const MAX_AGE_MS = 30 * 24 * 3600 * 1000;
 
 const HOST_LABELS: [RegExp, string][] = [
-  [/(^|\.)instagram\.com$|^l\.instagram\.com$/, 'Instagram'], [/(^|\.)discord(app)?\.(com|gg)$|^discord\.gg$/, 'Discord'],
-  [/(^|\.)(twitter|x)\.com$|^t\.co$/, 'Twitter / X'], [/(^|\.)tiktok\.com$/, 'TikTok'], [/(^|\.)twitch\.tv$/, 'Twitch'],
-  [/(^|\.)youtube\.com$|^youtu\.be$/, 'YouTube'], [/(^|\.)(facebook|fb)\.com$|^l\.facebook\.com$/, 'Facebook'],
-  [/(^|\.)reddit\.com$/, 'Reddit'], [/(^|\.)linkedin\.com$|^lnkd\.in$/, 'LinkedIn'], [/(^|\.)google\.[a-z.]+$/, 'Google search'],
+  [/(^|\.)instagram\.com$|^l\.instagram\.com$/, 'Instagram'],
+  [/(^|\.)discord(app)?\.(com|gg)$|^discord\.gg$/, 'Discord'],
+  [/(^|\.)(twitter|x)\.com$|^t\.co$/, 'Twitter / X'],
+  [/(^|\.)tiktok\.com$/, 'TikTok'],
+  [/(^|\.)twitch\.tv$/, 'Twitch'],
+  [/(^|\.)youtube\.com$|^youtu\.be$/, 'YouTube'],
+  [/(^|\.)(facebook|fb)\.com$|^l\.facebook\.com$/, 'Facebook'],
+  [/(^|\.)reddit\.com$/, 'Reddit'],
+  [/(^|\.)linkedin\.com$|^lnkd\.in$/, 'LinkedIn'],
+  [/(^|\.)google\.[a-z.]+$/, 'Google search'],
   [/(^|\.)ucsd\.edu$/, 'UCSD website'],
 ];
 
 const NAME_LABELS: Record<string, string> = {
-  ig: 'Instagram', instagram: 'Instagram', discord: 'Discord', twitter: 'Twitter / X', x: 'Twitter / X', tiktok: 'TikTok',
-  twitch: 'Twitch', youtube: 'YouTube', yt: 'YouTube', facebook: 'Facebook', fb: 'Facebook', reddit: 'Reddit', linkedin: 'LinkedIn',
-  email: 'Email', newsletter: 'Email', qr: 'QR code', flyer: 'Flyer', poster: 'Flyer', friend: 'Friend', google: 'Google search',
+  ig: 'Instagram',
+  instagram: 'Instagram',
+  discord: 'Discord',
+  twitter: 'Twitter / X',
+  x: 'Twitter / X',
+  tiktok: 'TikTok',
+  twitch: 'Twitch',
+  youtube: 'YouTube',
+  yt: 'YouTube',
+  facebook: 'Facebook',
+  fb: 'Facebook',
+  reddit: 'Reddit',
+  linkedin: 'LinkedIn',
+  email: 'Email',
+  newsletter: 'Email',
+  qr: 'QR code',
+  flyer: 'Flyer',
+  poster: 'Flyer',
+  friend: 'Friend',
+  google: 'Google search',
 };
 
 function labelFromName(raw: string): string {

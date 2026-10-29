@@ -43,7 +43,15 @@ export function audienceLabel(m: MeetingAudience & { groupNames?: string[] }): s
   const roles = audienceRoles(m);
   const parts: string[] = [];
   if (roles.length) {
-    parts.push(same(roles, DEFAULT_AUDIENCE) ? (hasExtras(m) ? 'Everyone on the team' : 'Everyone') : AUDIENCE_ROLES.filter((r) => roles.includes(r)).map((r) => AUDIENCE_LABELS[r]).join(', '));
+    parts.push(
+      same(roles, DEFAULT_AUDIENCE)
+        ? hasExtras(m)
+          ? 'Everyone on the team'
+          : 'Everyone'
+        : AUDIENCE_ROLES.filter((r) => roles.includes(r))
+            .map((r) => AUDIENCE_LABELS[r])
+            .join(', '),
+    );
   }
   if (m.group_ids?.length) parts.push(m.groupNames?.length ? m.groupNames.join(' + ') : `${m.group_ids.length} group${m.group_ids.length === 1 ? '' : 's'}`);
   if (m.invitees?.length) parts.push(`${m.invitees.length} added ${m.invitees.length === 1 ? 'person' : 'people'}`);
@@ -97,8 +105,12 @@ function cleanIds(raw: unknown, max: number): string[] | null {
 }
 
 // Validates audience input from a form and returns what to store.
-export function validateAudienceInput(b: { audience?: unknown; invitees?: unknown; group_ids?: unknown; open_to_team?: unknown }):
-  { ok: true; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; open_to_team: boolean } | { ok: false } {
+export function validateAudienceInput(b: {
+  audience?: unknown;
+  invitees?: unknown;
+  group_ids?: unknown;
+  open_to_team?: unknown;
+}): { ok: true; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; open_to_team: boolean } | { ok: false } {
   const invitees = cleanIds(b.invitees, MAX_INVITEES);
   const groups = cleanIds(b.group_ids, MAX_GROUPS);
   if (!invitees || !groups) return { ok: false };
@@ -109,11 +121,11 @@ export function validateAudienceInput(b: { audience?: unknown; invitees?: unknow
     if (!roles.every((r) => (AUDIENCE_ROLES as readonly string[]).includes(r))) return { ok: false };
   }
   const extras = invitees.length > 0 || groups.length > 0;
-  const open = b.open_to_team !== false;   // on unless the host switched it off
-  if (roles.length === 0 && !extras) return { ok: true, audience: null, invitees: null, group_ids: null, open_to_team: open };  // default: everyone
+  const open = b.open_to_team !== false; // on unless the host switched it off
+  if (roles.length === 0 && !extras) return { ok: true, audience: null, invitees: null, group_ids: null, open_to_team: open }; // default: everyone
   // With people/groups chosen, the roles list is explicit (an empty list = no roles, stored as null).
   // Without extras, the default set collapses to null.
-  const storedRoles = roles.length === 0 ? null : (!extras && same(roles, DEFAULT_AUDIENCE) ? null : roles);
+  const storedRoles = roles.length === 0 ? null : !extras && same(roles, DEFAULT_AUDIENCE) ? null : roles;
   return { ok: true, audience: storedRoles, invitees: invitees.length ? invitees : null, group_ids: groups.length ? groups : null, open_to_team: open };
 }
 

@@ -39,7 +39,10 @@ export async function ogImage(url: string | null | undefined, maxSize = 900): Pr
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(6000) });
     if (!res.ok) return '';
-    const png = await sharp(Buffer.from(await res.arrayBuffer())).resize({ width: maxSize, height: maxSize, fit: 'inside', withoutEnlargement: true }).png().toBuffer();
+    const png = await sharp(Buffer.from(await res.arrayBuffer()))
+      .resize({ width: maxSize, height: maxSize, fit: 'inside', withoutEnlargement: true })
+      .png()
+      .toBuffer();
     return `data:image/png;base64,${png.toString('base64')}`;
   } catch {
     return '';

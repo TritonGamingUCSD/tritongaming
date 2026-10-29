@@ -21,7 +21,10 @@ import type { getContentData } from './admin/content/getContentData';
 // `scope` is who is looking (and "viewing as" what), so a changed view never reuses another view's data.
 type Awaited_<T extends (...a: never[]) => Promise<unknown>> = Awaited<ReturnType<T>>;
 
-export function EventsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof EventsSectionContent>, 'events' | 'eventsPerMonth' | 'ticketsPerMonth' | 'eventStats'>) {
+export function EventsLazy({
+  scope,
+  ...rest
+}: { scope: string } & Omit<ComponentProps<typeof EventsSectionContent>, 'events' | 'eventsPerMonth' | 'ticketsPerMonth' | 'eventStats'>) {
   const { data, error, retry } = useSectionData<Awaited_<typeof getEventsData>>('events', scope);
   if (!data) return <SectionLoading error={error} retry={retry} />;
   return <EventsSectionContent {...rest} events={data.events} eventsPerMonth={data.eventsPerMonth} ticketsPerMonth={data.ticketsPerMonth} eventStats={data.eventStats} />;
@@ -33,26 +36,53 @@ export function MembersLazy({ scope, ...rest }: { scope: string } & Omit<Compone
   return <MembersSectionContent {...rest} rows={data.rows} />;
 }
 
-export function DocsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof DocsClient>, 'initialDocs' | 'initialCategories' | 'initialFavorites' | 'initialLinks' | 'teams' | 'myTeamIds'>) {
+export function DocsLazy({
+  scope,
+  ...rest
+}: { scope: string } & Omit<ComponentProps<typeof DocsClient>, 'initialDocs' | 'initialCategories' | 'initialFavorites' | 'initialLinks' | 'teams' | 'myTeamIds'>) {
   const { data, error, retry } = useSectionData<Awaited_<typeof getDocsData>>('docs', scope);
   if (!data) return <SectionLoading error={error} retry={retry} />;
-  return <DocsClient {...rest} initialDocs={data.docs} initialCategories={data.categories} initialFavorites={data.favorites} initialLinks={data.links} teams={data.teams} myTeamIds={data.myTeamIds} />;
+  return (
+    <DocsClient
+      {...rest}
+      initialDocs={data.docs}
+      initialCategories={data.categories}
+      initialFavorites={data.favorites}
+      initialLinks={data.links}
+      teams={data.teams}
+      myTeamIds={data.myTeamIds}
+    />
+  );
 }
 
 export function DivisionsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof DivisionsSectionContent>, 'allDivisions' | 'myDivisions'>) {
-  const { data, error, retry } = useSectionData<{ divisions: ComponentProps<typeof DivisionsSectionContent>['allDivisions'] | null; myDivisions: ComponentProps<typeof DivisionsSectionContent>['myDivisions'] | null }>('divisions', scope);
+  const { data, error, retry } = useSectionData<{
+    divisions: ComponentProps<typeof DivisionsSectionContent>['allDivisions'] | null;
+    myDivisions: ComponentProps<typeof DivisionsSectionContent>['myDivisions'] | null;
+  }>('divisions', scope);
   if (!data) return <SectionLoading error={error} retry={retry} />;
   return <DivisionsSectionContent {...rest} allDivisions={data.divisions ?? undefined} myDivisions={data.myDivisions ?? undefined} />;
 }
 
 export function SiteContentLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof SiteContentSectionContent>, 'contentMap' | 'lastEdited' | 'creditPeople'>) {
-  const { data, error, retry } = useSectionData<{ contentMap: Awaited_<typeof getContentData>['contentMap'] | null; lastEdited: Awaited_<typeof getContentData>['lastEdited'] | null; creditPeople: ComponentProps<typeof SiteContentSectionContent>['creditPeople'] }>('site-content', scope);
+  const { data, error, retry } = useSectionData<{
+    contentMap: Awaited_<typeof getContentData>['contentMap'] | null;
+    lastEdited: Awaited_<typeof getContentData>['lastEdited'] | null;
+    creditPeople: ComponentProps<typeof SiteContentSectionContent>['creditPeople'];
+  }>('site-content', scope);
   if (!data) return <SectionLoading error={error} retry={retry} />;
   return <SiteContentSectionContent {...rest} contentMap={data.contentMap ?? undefined} lastEdited={data.lastEdited ?? undefined} creditPeople={data.creditPeople} />;
 }
 
-export function AdminLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof AdminSectionContent>, keyof Awaited_<typeof getAdminData> | 'statsData' | 'roleHistoryEntries'>) {
-  const { data, error, retry } = useSectionData<{ admin: Omit<Awaited_<typeof getAdminData>, 'stats'> & { stats: { label: string; value: number }[] }; stats: Awaited_<typeof getStatsData>; roleHistoryEntries: ComponentProps<typeof AdminSectionContent>['roleHistoryEntries'] | null }>('admin', scope);
+export function AdminLazy({
+  scope,
+  ...rest
+}: { scope: string } & Omit<ComponentProps<typeof AdminSectionContent>, keyof Awaited_<typeof getAdminData> | 'statsData' | 'roleHistoryEntries'>) {
+  const { data, error, retry } = useSectionData<{
+    admin: Omit<Awaited_<typeof getAdminData>, 'stats'> & { stats: { label: string; value: number }[] };
+    stats: Awaited_<typeof getStatsData>;
+    roleHistoryEntries: ComponentProps<typeof AdminSectionContent>['roleHistoryEntries'] | null;
+  }>('admin', scope);
   if (!data) return <SectionLoading error={error} retry={retry} />;
   const iconProps = { size: 22, strokeWidth: 1.5, 'aria-hidden': true } as const;
   const ICONS: Record<string, typeof Users> = { Members: Users, Events: Calendar, Tickets: Ticket };

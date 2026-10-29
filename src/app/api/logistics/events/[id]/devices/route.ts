@@ -24,7 +24,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const station = await stationOk(auth.svc, id, b.station_id);
   if (station === false) return NextResponse.json({ error: 'That station is gone.' }, { status: 400 });
   const role = b.role === 'backup' ? 'backup' : 'planned';
-  const { error } = await auth.svc.from('logistics_plan_devices').upsert(deviceIds.map((device_id) => ({ plan_id: id, device_id, station_id: station, role, added_by: auth.user.id })), { onConflict: 'plan_id,device_id', ignoreDuplicates: true });
+  const { error } = await auth.svc.from('logistics_plan_devices').upsert(
+    deviceIds.map((device_id) => ({ plan_id: id, device_id, station_id: station, role, added_by: auth.user.id })),
+    { onConflict: 'plan_id,device_id', ignoreDuplicates: true },
+  );
   if (error) return NextResponse.json({ error: 'Couldn’t add them.' }, { status: 500 });
   await touchPlan(auth.svc, id);
   return NextResponse.json({ ok: true, added: deviceIds.length });
@@ -40,7 +43,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const deviceIds = ids(b.device_ids);
   if (!deviceIds.length) return NextResponse.json({ error: 'Pick at least one device.' }, { status: 400 });
   const patch: Record<string, unknown> = {};
-  if ('station_id' in b) { const s = await stationOk(auth.svc, id, b.station_id); if (s === false) return NextResponse.json({ error: 'That station is gone.' }, { status: 400 }); patch.station_id = s; }
+  if ('station_id' in b) {
+    const s = await stationOk(auth.svc, id, b.station_id);
+    if (s === false) return NextResponse.json({ error: 'That station is gone.' }, { status: 400 });
+    patch.station_id = s;
+  }
   if (b.role === 'planned' || b.role === 'backup') patch.role = b.role;
   if (!Object.keys(patch).length) return NextResponse.json({ error: 'Nothing to change.' }, { status: 400 });
   if (await rowsLocked(auth.svc, id, { deviceIds })) return NextResponse.json({ error: LOCKED_MESSAGE }, { status: 409 });

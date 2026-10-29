@@ -14,7 +14,9 @@ import { maskDisplayName } from '@/lib/members/profile';
 // real rank instead of the board silently reordering around them.
 export async function GET() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const serviceClient = createServiceClient();
@@ -45,7 +47,7 @@ export async function GET() {
     .map((p, i) => ({
       rank: i + 1,
       isSelf: p.id === user.id,
-      name: p.leaderboard_anonymous ? maskDisplayName(p.display_name) : (p.display_name || 'A member'),
+      name: p.leaderboard_anonymous ? maskDisplayName(p.display_name) : p.display_name || 'A member',
       tier: getTier(p.lifetime, tiers).name,
       points: p.lifetime,
     }));

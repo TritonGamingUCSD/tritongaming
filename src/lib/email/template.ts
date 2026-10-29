@@ -5,23 +5,29 @@
 // line that is only such a link becomes a yellow button. Everything is escaped first, and only http(s) and mailto links are ever made.
 
 export const LOGO_CID = 'tglogo';
-export const NAVY = '#011941', YELLOW = '#ffc72c', CREAM = '#f3f1ea', SKY = '#0a4c8a', MUTED = '#4b5a78';
+export const NAVY = '#011941',
+  YELLOW = '#ffc72c',
+  CREAM = '#f3f1ea',
+  SKY = '#0a4c8a',
+  MUTED = '#4b5a78';
 export const HEAD = "'Futura','Century Gothic','Trebuchet MS',Arial,sans-serif";
 export const BODY = "'Futura','Century Gothic','Segoe UI',Helvetica,Arial,sans-serif";
 
 export const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-const safeUrl = (u: string) => /^(https?:\/\/|mailto:)[^\s"'<>]+$/i.test(u) ? u : null;
+const safeUrl = (u: string) => (/^(https?:\/\/|mailto:)[^\s"'<>]+$/i.test(u) ? u : null);
 export const siteUrl = () => (typeof process !== 'undefined' && process.env?.NEXT_PUBLIC_SITE_URL) || 'https://tritongaming.org';
 
 const linkStyle = `color:${SKY};text-decoration:underline;`;
 
 /** One piece of a line: [text](url), a bare address, or plain text, all escaped. */
 function inline(line: string): string {
-  let out = '', i = 0;
+  let out = '',
+    i = 0;
   const re = /\[([^\]]{1,120})\]\(([^)\s]+)\)|(https?:\/\/[^\s<]+[^\s<.,;:!?)])/gi;
   for (let m = re.exec(line); m; m = re.exec(line)) {
     out += esc(line.slice(i, m.index));
-    const url = safeUrl(m[2] ?? m[3]), label = m[1] ?? m[3];
+    const url = safeUrl(m[2] ?? m[3]),
+      label = m[1] ?? m[3];
     out += url ? `<a href="${esc(url)}" style="${linkStyle}">${esc(label)}</a>` : esc(m[0]);
     i = m.index + m[0].length;
   }
@@ -32,15 +38,20 @@ export const button = (label: string, url: string) =>
   `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 18px"><tr><td style="background:${YELLOW};border:2px solid ${NAVY};border-bottom-width:5px;border-right-width:5px;border-radius:6px;"><a href="${esc(url)}" style="display:inline-block;padding:11px 22px;font-family:${HEAD};font-size:15px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${NAVY};text-decoration:none;">${esc(label)}</a></td></tr></table>`;
 
 export function blocks(message: string): string {
-  return message.replace(/\r\n/g, '\n').trim().split(/\n{2,}/).map((block) => {
-    const lines = block.split('\n').map((l) => l.trimEnd());
-    const solo = lines.length === 1 && lines[0].match(/^\[([^\]]{1,120})\]\(([^)\s]+)\)$/);
-    if (solo && safeUrl(solo[2])) return button(solo[1], solo[2]);
-    if (lines.every((l) => /^[-*•]\s+/.test(l))) {
-      return `<ul style="margin:0 0 18px;padding:0 0 0 22px;">${lines.map((l) => `<li style="margin:0 0 6px;">${inline(l.replace(/^[-*•]\s+/, ''))}</li>`).join('')}</ul>`;
-    }
-    return `<p style="margin:0 0 16px;">${lines.map(inline).join('<br>')}</p>`;
-  }).join('');
+  return message
+    .replace(/\r\n/g, '\n')
+    .trim()
+    .split(/\n{2,}/)
+    .map((block) => {
+      const lines = block.split('\n').map((l) => l.trimEnd());
+      const solo = lines.length === 1 && lines[0].match(/^\[([^\]]{1,120})\]\(([^)\s]+)\)$/);
+      if (solo && safeUrl(solo[2])) return button(solo[1], solo[2]);
+      if (lines.every((l) => /^[-*•]\s+/.test(l))) {
+        return `<ul style="margin:0 0 18px;padding:0 0 0 22px;">${lines.map((l) => `<li style="margin:0 0 6px;">${inline(l.replace(/^[-*•]\s+/, ''))}</li>`).join('')}</ul>`;
+      }
+      return `<p style="margin:0 0 16px;">${lines.map(inline).join('<br>')}</p>`;
+    })
+    .join('');
 }
 
 /** Plain-text version: the message as written, plus the footer. */

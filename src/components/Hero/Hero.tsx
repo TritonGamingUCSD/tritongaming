@@ -39,11 +39,11 @@ function stripWords(raw: HeroContent['strip_items']): string[] {
 }
 
 export default function Hero({ content = {} }: { content?: HeroContent }) {
-  const badge            = content.badge              || "Gaming Org at UC San Diego";
-  const title            = content.title              || 'We are Triton Gaming';
-  const subtitle         = content.subtitle           || 'Game · Events · Community';
-  const ctaPrimaryText   = content.cta_primary_text   || 'Explore Events';
-  const ctaPrimaryHref   = content.cta_primary_href   || '/events';
+  const badge = content.badge || 'Gaming Org at UC San Diego';
+  const title = content.title || 'We are Triton Gaming';
+  const subtitle = content.subtitle || 'Game · Events · Community';
+  const ctaPrimaryText = content.cta_primary_text || 'Explore Events';
+  const ctaPrimaryHref = content.cta_primary_href || '/events';
   const ctaSecondaryText = content.cta_secondary_text || 'Join Discord';
   const ctaSecondaryHref = content.cta_secondary_href || DISCORD_URL;
   const photoA = content.photo_a || '/images/home/p-cosplay.jpg';
@@ -58,9 +58,15 @@ export default function Hero({ content = {} }: { content?: HeroContent }) {
   const seconds = Math.max(20, Math.round(half.reduce((n, w) => n + w.length + 4, 0) * 0.5));
 
   const button = (href: string, text: string, className: string) =>
-    href.startsWith('http')
-      ? <a href={href} target="_blank" rel="noopener noreferrer" className={className}>{text}</a>
-      : <Link href={href} className={className}>{text}</Link>;
+    href.startsWith('http') ? (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+        {text}
+      </a>
+    ) : (
+      <Link href={href} className={className}>
+        {text}
+      </Link>
+    );
 
   return (
     <section className={styles.hero} aria-label="Hero">
@@ -74,12 +80,16 @@ export default function Hero({ content = {} }: { content?: HeroContent }) {
 
       <div className={styles.inner}>
         <div className={styles.copy}>
-          <span className={styles.kicker} data-hero-in>{badge}</span>
+          <span className={styles.kicker} data-hero-in>
+            {badge}
+          </span>
           <h1 className={styles.title} data-hero-in>
             {lead && <span className={styles.lead}>{lead}</span>}
             <span className={styles.brush}>{brush}</span>
           </h1>
-          <span className={styles.strip} data-hero-in>{subtitle}</span>
+          <span className={styles.strip} data-hero-in>
+            {subtitle}
+          </span>
           <div className={styles.ctaRow} data-hero-in>
             {button(ctaPrimaryHref, ctaPrimaryText, styles.ctaPrimary)}
             {button(ctaSecondaryHref, ctaSecondaryText, styles.ctaSecondary)}
@@ -99,15 +109,21 @@ export default function Hero({ content = {} }: { content?: HeroContent }) {
             {captionB && <figcaption>{captionB}</figcaption>}
             {content.photo_b_credit && <span className={styles.credit}>{content.photo_b_credit}</span>}
           </figure>
-          <svg className={styles.arrow} viewBox="0 0 150 90"><path data-hero-arrow pathLength="100" d="M6 70 C 30 20, 80 10, 128 40 M128 40 L 108 30 M128 40 L 112 58" /></svg>
+          <svg className={styles.arrow} viewBox="0 0 150 90">
+            <path data-hero-arrow pathLength="100" d="M6 70 C 30 20, 80 10, 128 40 M128 40 L 108 30 M128 40 L 112 58" />
+          </svg>
         </div>
       </div>
 
       <div className={styles.tapeBand} aria-hidden="true">
         <div className={styles.tapeTrack} style={{ animationDuration: `${seconds}s` }}>
-          {[0, 1].flatMap((copy) => half.map((w, i) => (
-            <span key={`${copy}-${i}`}>{w} <i>{symbol}</i></span>
-          )))}
+          {[0, 1].flatMap((copy) =>
+            half.map((w, i) => (
+              <span key={`${copy}-${i}`}>
+                {w} <i>{symbol}</i>
+              </span>
+            )),
+          )}
         </div>
       </div>
     </section>

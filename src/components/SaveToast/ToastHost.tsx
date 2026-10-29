@@ -23,11 +23,14 @@ export default function ToastHost() {
   useEffect(() => {
     const pending = takePendingToast();
     if (pending) show(pending);
-     
   }, [pathname]);
 
   useEffect(() => {
-    const onToast = (e: Event) => { const d = (e as CustomEvent<string | { message: string; tone: string }>).detail; if (typeof d === 'string') show(d); else show(d.message, d.tone === 'warn'); };
+    const onToast = (e: Event) => {
+      const d = (e as CustomEvent<string | { message: string; tone: string }>).detail;
+      if (typeof d === 'string') show(d);
+      else show(d.message, d.tone === 'warn');
+    };
     window.addEventListener(TOAST_EVENT, onToast);
     return () => {
       window.removeEventListener(TOAST_EVENT, onToast);

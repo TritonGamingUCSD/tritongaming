@@ -11,9 +11,15 @@ export default function NotFoundPoster() {
         <h1 className={styles.code}>404</h1>
         <p className={styles.line}>This page wandered off. It may have moved, or the link has a typo.</p>
         <div className={styles.actions}>
-          <Link href="/" className={styles.primary}>Back to home</Link>
-          <Link href="/events" className={styles.secondary}>See events</Link>
-          <Link href="/divisions" className={styles.secondary}>Find a division</Link>
+          <Link href="/" className={styles.primary}>
+            Back to home
+          </Link>
+          <Link href="/events" className={styles.secondary}>
+            See events
+          </Link>
+          <Link href="/divisions" className={styles.secondary}>
+            Find a division
+          </Link>
         </div>
       </div>
     </div>

@@ -11,22 +11,35 @@ export const UUID = /^[0-9a-f-]{36}$/i;
 export const GAME_COLUMNS = 'id, quiz_id, code, host_id, status, per_game, plan, current, q_started_at, q_ends_at, reveal, created_at, finished_at';
 
 export interface GameRow {
-  id: string; quiz_id: string; code: string; host_id: string | null; status: GameStatus; per_game: number; plan: PlannedQuestion[];
-  current: number; q_started_at: string | null; q_ends_at: string | null; reveal: Reveal | null; created_at: string; finished_at: string | null;
+  id: string;
+  quiz_id: string;
+  code: string;
+  host_id: string | null;
+  status: GameStatus;
+  per_game: number;
+  plan: PlannedQuestion[];
+  current: number;
+  q_started_at: string | null;
+  q_ends_at: string | null;
+  reveal: Reveal | null;
+  created_at: string;
+  finished_at: string | null;
   trivia_quizzes?: { name: string; slug: string; block_winners: boolean; restricted: boolean; created_by: string | null; open_to_guests: boolean } | null;
 }
 
 // Who may do what: 'host' (officers and above: write quizzes, host games, see every result) or 'play' (anyone signed in).
 export async function authorizeTrivia(mode: 'host' | 'play') {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const svc = createServiceClient();
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
   const canHost = hasCapability(grants, 'host_trivia');
   const isAdmin = (roles ?? []).some((r) => r.role === 'admin');
-  const guest = !!user.is_anonymous;   // a player with no account, signed in anonymously for one game
+  const guest = !!user.is_anonymous; // a player with no account, signed in anonymously for one game
   if (mode === 'host' && !canHost) return { error: NextResponse.json({ error: 'Hosting Trivia is for officers and above.' }, { status: 403 }) };
   return { user, svc, canHost, isAdmin, guest };
 }
@@ -40,7 +53,11 @@ export async function displayName(svc: SupabaseClient, userId: string): Promise<
 export async function loadGame(svc: SupabaseClient, code: string): Promise<GameRow | null>;
 export async function loadGame(svc: SupabaseClient, code: string, only: 'id'): Promise<{ id: string } | null>;
 export async function loadGame(svc: SupabaseClient, code: string, only?: 'id'): Promise<GameRow | { id: string } | null> {
-  const { data, error } = await svc.from('trivia_games').select(only ? 'id' : `${GAME_COLUMNS}, trivia_quizzes(name, slug, block_winners, restricted, created_by, open_to_guests)`).eq('code', code).maybeSingle();
+  const { data, error } = await svc
+    .from('trivia_games')
+    .select(only ? 'id' : `${GAME_COLUMNS}, trivia_quizzes(name, slug, block_winners, restricted, created_by, open_to_guests)`)
+    .eq('code', code)
+    .maybeSingle();
   if (error) throw new Error(`trivia game read failed: ${error.message}`);
   return (data as unknown as GameRow | { id: string } | null) ?? null;
 }
@@ -59,7 +76,9 @@ export async function broadcast(gameId: string, event: string, payload: unknown,
       headers: { 'Content-Type': 'application/json', apikey: key, Authorization: `Bearer ${key}` },
       body: JSON.stringify({ messages: [{ topic: `${host ? 'trivia-host' : 'trivia'}:${gameId}`, event, payload, private: false }] }),
     });
-  } catch { /* the screens catch up on their own */ }
+  } catch {
+    /* the screens catch up on their own */
+  }
 }
 
 // The public picture of a game right now. In a question only the question and its answers (no right one); the reveal and the end carry what was decided.
@@ -75,16 +94,33 @@ export function stateOf(g: GameRow, players: number, answered?: number): PublicS
   const q = g.plan[g.current];
   const shown = (g.status === 'question' || g.status === 'reveal') && q && g.q_started_at && g.q_ends_at;
   return {
-    gameId: g.id, code: g.code, quiz: g.trivia_quizzes?.name ?? '', status: g.status,
-    current: g.current, total: g.plan.length || g.per_game, players,
-    question: shown ? { category: q.category || undefined, text: q.text, choices: q.choices, secs: q.secs, startedAt: Date.parse(g.q_started_at!), endsAt: Date.parse(g.q_ends_at!) } : undefined,
-    answered: g.status === 'question' ? answered ?? 0 : undefined,
-    reveal: g.status === 'reveal' || g.status === 'done' ? g.reveal ?? undefined : undefined,
+    gameId: g.id,
+    code: g.code,
+    quiz: g.trivia_quizzes?.name ?? '',
+    status: g.status,
+    current: g.current,
+    total: g.plan.length || g.per_game,
+    players,
+    question: shown
+      ? { category: q.category || undefined, text: q.text, choices: q.choices, secs: q.secs, startedAt: Date.parse(g.q_started_at!), endsAt: Date.parse(g.q_ends_at!) }
+      : undefined,
+    answered: g.status === 'question' ? (answered ?? 0) : undefined,
+    reveal: g.status === 'reveal' || g.status === 'done' ? (g.reveal ?? undefined) : undefined,
     now: Date.now(),
   };
 }
 
-export interface QuizRec { id: string; slug: string; name: string; per_game: number; block_winners: boolean; restricted: boolean; open_to_guests: boolean; created_by: string | null; created_at: string }
+export interface QuizRec {
+  id: string;
+  slug: string;
+  name: string;
+  per_game: number;
+  block_winners: boolean;
+  restricted: boolean;
+  open_to_guests: boolean;
+  created_by: string | null;
+  created_at: string;
+}
 export const QUIZ_COLUMNS = 'id, slug, name, per_game, block_winners, restricted, open_to_guests, created_by, created_at';
 
 // A quiz by its address (the slug) or its id.

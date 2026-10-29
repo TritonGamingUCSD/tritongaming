@@ -101,17 +101,15 @@ export default function SocialEmbedsField({
       <div className={styles.embedAddRow}>
         <Select className={styles.input} value={draftType} onChange={(e) => setDraftType(e.target.value as SocialEmbed['type'])}>
           {EMBED_TYPES.map((t) => (
-            <option key={t.value} value={t.value}>{t.label}</option>
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
           ))}
         </Select>
-        <input
-          className={styles.input}
-          type="url"
-          value={draftUrl}
-          onChange={(e) => setDraftUrl(e.target.value)}
-          placeholder={draftConfig.placeholder}
-        />
-        <button type="button" className={styles.embedAddBtn} onClick={handleAdd} disabled={!draftUrl.trim()}>Add</button>
+        <input className={styles.input} type="url" value={draftUrl} onChange={(e) => setDraftUrl(e.target.value)} placeholder={draftConfig.placeholder} />
+        <button type="button" className={styles.embedAddBtn} onClick={handleAdd} disabled={!draftUrl.trim()}>
+          Add
+        </button>
       </div>
       <span className={styles.hint}>{hint}</span>
     </div>

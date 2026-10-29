@@ -10,10 +10,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 // list, which only renders a Link when `e.slug` is set), so it's skipped
 // here too rather than listing a URL nothing else points at.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [events, divisions] = await Promise.all([
-    getAllEvents(1000),
-    getDivisions(),
-  ]);
+  const [events, divisions] = await Promise.all([getAllEvents(1000), getDivisions()]);
 
   const staticRoutes: MetadataRoute.Sitemap = [
     { url: `${SITE_URL}/`, changeFrequency: 'weekly', priority: 1 },

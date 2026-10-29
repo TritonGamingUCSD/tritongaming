@@ -24,7 +24,7 @@ export function parseCell(kind: CellKind, raw: string, nullable: boolean): { val
 // Sorting: numbers by value, text by its letters (numbers inside text in order: "TECM 2" before "TECM 10"), empty cells always last.
 export function compareCells(a: CellValue, b: CellValue, dir: 1 | -1): number {
   const empty = (v: CellValue) => v === null || v === '' || v === undefined;
-  if (empty(a) || empty(b)) return empty(a) && empty(b) ? 0 : empty(a) ? 1 : -1;   // empties last whichever way it runs
+  if (empty(a) || empty(b)) return empty(a) && empty(b) ? 0 : empty(a) ? 1 : -1; // empties last whichever way it runs
   if (typeof a === 'number' && typeof b === 'number') return (a - b) * dir;
   if (typeof a === 'boolean' && typeof b === 'boolean') return (Number(a) - Number(b)) * dir;
   return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' }) * dir;
@@ -34,13 +34,31 @@ export function compareCells(a: CellValue, b: CellValue, dir: 1 | -1): number {
 export function matchesFilter(kind: CellKind, value: CellValue, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
-  if (kind === 'bool') { const yes = /^(y|yes|x|true|✓|✔)$/.test(q), no = /^(n|no|false)$/.test(q); return yes ? value === true : no ? value === false : true; }
+  if (kind === 'bool') {
+    const yes = /^(y|yes|x|true|✓|✔)$/.test(q),
+      no = /^(n|no|false)$/.test(q);
+    return yes ? value === true : no ? value === false : true;
+  }
   if ((kind === 'number' || kind === 'money') && /^(>=|<=|>|<|=)?\s*-?\d+(\.\d+)?$/.test(q)) {
     const m = /^(>=|<=|>|<|=)?\s*(-?\d+(?:\.\d+)?)$/.exec(q)!;
-    const n = Number(m[2]), v = typeof value === 'number' ? value : value === null || value === '' ? NaN : Number(value);
+    const n = Number(m[2]),
+      v = typeof value === 'number' ? value : value === null || value === '' ? NaN : Number(value);
     if (Number.isNaN(v)) return false;
-    switch (m[1]) { case '>': return v > n; case '<': return v < n; case '>=': return v >= n; case '<=': return v <= n; default: return v === n; }
+    switch (m[1]) {
+      case '>':
+        return v > n;
+      case '<':
+        return v < n;
+      case '>=':
+        return v >= n;
+      case '<=':
+        return v <= n;
+      default:
+        return v === n;
+    }
   }
   if (q === '-' || q === 'empty') return value === null || value === '' || value === undefined;
-  return String(value ?? '').toLowerCase().includes(q);
+  return String(value ?? '')
+    .toLowerCase()
+    .includes(q);
 }

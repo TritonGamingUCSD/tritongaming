@@ -11,10 +11,17 @@ import styles from './Dialog.module.css';
 // and backdrop-click close it (unless `busy`), body scroll is locked while open.
 // Content goes in as children; <DialogActions> lays out the button row.
 export default function Dialog({
-  title, tone = 'default', busy = false, wide = false, sheet = false, onClose, children, label,
+  title,
+  tone = 'default',
+  busy = false,
+  wide = false,
+  sheet = false,
+  onClose,
+  children,
+  label,
 }: {
   wide?: boolean;
-  sheet?: boolean;   // on a phone it fills the screen, with its buttons pinned to the bottom
+  sheet?: boolean; // on a phone it fills the screen, with its buttons pinned to the bottom
   title: string;
   tone?: 'default' | 'danger';
   busy?: boolean;
@@ -23,25 +30,39 @@ export default function Dialog({
   label?: string;
 }) {
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !busy) onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !busy) onClose();
+    };
     window.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = prev; };
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      document.body.style.overflow = prev;
+    };
   }, [busy, onClose]);
 
   return createPortal(
-    <div className={`${styles.backdrop} ${sheet ? styles.backdropSheet : ''}`} onClick={(e) => { if (e.target === e.currentTarget && !busy) onClose(); }}>
+    <div
+      className={`${styles.backdrop} ${sheet ? styles.backdropSheet : ''}`}
+      onClick={(e) => {
+        if (e.target === e.currentTarget && !busy) onClose();
+      }}
+    >
       <div className={`${styles.sheet} ${wide ? styles.wide : ''} ${sheet ? styles.sheetFull : ''}`} role="alertdialog" aria-modal="true" aria-label={label ?? title}>
         <button type="button" className={styles.close} onClick={onClose} disabled={busy} aria-label="Close">
           <X size={18} strokeWidth={1.75} />
         </button>
-        {tone === 'danger' && <div className={styles.icon}><TriangleAlert size={26} strokeWidth={1.75} aria-hidden="true" /></div>}
+        {tone === 'danger' && (
+          <div className={styles.icon}>
+            <TriangleAlert size={26} strokeWidth={1.75} aria-hidden="true" />
+          </div>
+        )}
         <h2 className={styles.title}>{title}</h2>
         {children}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }
 
@@ -54,7 +75,11 @@ export function DialogActions({ children }: { children: ReactNode }) {
 }
 
 export function DialogCancel({ onClick, disabled, children = 'Cancel' }: { onClick: () => void; disabled?: boolean; children?: ReactNode }) {
-  return <button type="button" className={styles.cancel} onClick={onClick} disabled={disabled}>{children}</button>;
+  return (
+    <button type="button" className={styles.cancel} onClick={onClick} disabled={disabled}>
+      {children}
+    </button>
+  );
 }
 
 export function DialogCheck({ checked, onChange, children }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode }) {
@@ -79,7 +104,11 @@ export function DialogResults({ children }: { children: ReactNode }) {
 }
 
 export function DialogResult({ onClick, children }: { onClick: () => void; children: ReactNode }) {
-  return <button type="button" className={styles.result} onClick={onClick}>{children}</button>;
+  return (
+    <button type="button" className={styles.result} onClick={onClick}>
+      {children}
+    </button>
+  );
 }
 
 export function DialogKicker({ children }: { children: ReactNode }) {
@@ -91,14 +120,20 @@ export function DialogList({ children }: { children: ReactNode }) {
 }
 
 export function DialogDanger({ onClick, disabled, children }: { onClick: () => void; disabled?: boolean; children: ReactNode }) {
-  return <button type="button" className={styles.danger} onClick={onClick} disabled={disabled}>{children}</button>;
+  return (
+    <button type="button" className={styles.danger} onClick={onClick} disabled={disabled}>
+      {children}
+    </button>
+  );
 }
 
 // A checkbox on a tinted card, for the "also do X" choice inside a dialog.
 export function DialogOption({ checked, onChange, children }: { checked: boolean; onChange: (checked: boolean) => void; children: ReactNode }) {
   return (
     <div className={styles.checkBox}>
-      <DialogCheck checked={checked} onChange={onChange}>{children}</DialogCheck>
+      <DialogCheck checked={checked} onChange={onChange}>
+        {children}
+      </DialogCheck>
     </div>
   );
 }

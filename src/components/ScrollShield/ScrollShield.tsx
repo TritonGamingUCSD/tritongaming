@@ -12,13 +12,19 @@ export default function ScrollShield({ children, label = 'Tap to use', className
 
   useEffect(() => {
     if (!on) return;
-    const outside = (e: Event) => { if (!ref.current?.contains(e.target as Node)) setOn(false); };
+    const outside = (e: Event) => {
+      if (!ref.current?.contains(e.target as Node)) setOn(false);
+    };
     const el = ref.current;
     const leave = () => setOn(false);
     document.addEventListener('pointerdown', outside, true);
     document.addEventListener('touchstart', outside, true);
     el?.addEventListener('mouseleave', leave);
-    return () => { document.removeEventListener('pointerdown', outside, true); document.removeEventListener('touchstart', outside, true); el?.removeEventListener('mouseleave', leave); };
+    return () => {
+      document.removeEventListener('pointerdown', outside, true);
+      document.removeEventListener('touchstart', outside, true);
+      el?.removeEventListener('mouseleave', leave);
+    };
   }, [on]);
 
   return (

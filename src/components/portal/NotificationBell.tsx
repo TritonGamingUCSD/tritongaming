@@ -43,7 +43,9 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
   const wrapRef = useRef<HTMLDivElement>(null);
 
   // Web push: keep this device's subscription current (the one-time offer to turn it on is PushAsk, mounted in the portal layout).
-  useEffect(() => { void syncPush(); }, []);
+  useEffect(() => {
+    void syncPush();
+  }, []);
 
   const load = useCallback(async () => {
     try {
@@ -60,7 +62,9 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
     }
   }, []);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
   // Light polling instead of a realtime subscription: a notification arriving a little late is a non-issue. Paused while the tab is hidden.
   // Each check is only the unread number; the list itself is fetched when that number changes (or the bell is opened).
   const lastCount = useRef(-1);
@@ -69,8 +73,13 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
       const res = await fetch('/api/notifications?count=1');
       if (!res.ok) return;
       const { unreadCount: n } = await res.json();
-      if (n !== lastCount.current) { lastCount.current = n; await load(); }
-    } catch { /* keep the last known state */ }
+      if (n !== lastCount.current) {
+        lastCount.current = n;
+        await load();
+      }
+    } catch {
+      /* keep the last known state */
+    }
   }, [load]);
   useVisiblePoll(check, 120_000);
 
@@ -114,12 +123,16 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
           <div className={styles.header}>
             <span className={styles.title}>Notifications</span>
             {unreadCount > 0 && (
-              <button type="button" className={styles.markAllBtn} onClick={markAllRead}>Mark all read</button>
+              <button type="button" className={styles.markAllBtn} onClick={markAllRead}>
+                Mark all read
+              </button>
             )}
           </div>
 
           {!loaded ? (
-            <div className={styles.statusLoading}><Loading variant="inline" label="Loading notifications…" /></div>
+            <div className={styles.statusLoading}>
+              <Loading variant="inline" label="Loading notifications…" />
+            </div>
           ) : notifications.length === 0 ? (
             <div className={styles.status}>
               <Image src="/bytes/byte_tgex25.png" alt="" width={44} height={44} aria-hidden="true" />
@@ -145,7 +158,12 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
                       <Link
                         href={resolveHref(n)!}
                         className={styles.itemLink}
-                        onClick={(e) => { if (isUnread) markRead(n.id); setOpen(false); if (navigatePortal(resolveHref(n)!, e)) e.preventDefault(); else window.dispatchEvent(new Event('tg:portal-nav')); }}
+                        onClick={(e) => {
+                          if (isUnread) markRead(n.id);
+                          setOpen(false);
+                          if (navigatePortal(resolveHref(n)!, e)) e.preventDefault();
+                          else window.dispatchEvent(new Event('tg:portal-nav'));
+                        }}
                       >
                         {body}
                       </Link>

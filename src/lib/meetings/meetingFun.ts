@@ -143,7 +143,12 @@ export const customEmojiId = (e: string) => e.slice(CUSTOM_PREFIX.length);
 export const MAX_EMOJI_BYTES = 4 * 1024 * 1024;
 export const MAX_EMOJI_PICK_BYTES = 30 * 1024 * 1024;
 export const EMOJI_NAME = /^[a-z0-9_]{2,20}$/;
-export interface CustomEmoji { id: string; name: string; url: string; uses?: number }   // uses: taps over the last RECENT_EMOJI_DAYS days (approved ones)
+export interface CustomEmoji {
+  id: string;
+  name: string;
+  url: string;
+  uses?: number;
+} // uses: taps over the last RECENT_EMOJI_DAYS days (approved ones)
 export const RECENT_EMOJI_DAYS = 60;
 
 // ── Question types: typed answer, this-or-that poll, 1 to 5 rating ──────────────────────────────────────────────
@@ -155,7 +160,12 @@ export const RATING_MAX = 5;
 export function cleanOptions(raw: unknown): string[] | null {
   if (!Array.isArray(raw)) return null;
   const out: string[] = [];
-  for (const o of raw) { const t = String(o ?? '').trim().slice(0, MAX_OPTION_LENGTH); if (t && !out.includes(t)) out.push(t); }
+  for (const o of raw) {
+    const t = String(o ?? '')
+      .trim()
+      .slice(0, MAX_OPTION_LENGTH);
+    if (t && !out.includes(t)) out.push(t);
+  }
   return out.length >= 2 && out.length <= 4 ? out : null;
 }
 export const asQuestionType = (t: unknown): QuestionType => (t === 'poll' || t === 'rating' ? t : 'text');
@@ -167,9 +177,13 @@ export function validAnswer(type: QuestionType, options: string[] | null, answer
   return answer.length > 0;
 }
 
-export interface Tally { counts: Record<string, number>; total: number; average: number | null }
+export interface Tally {
+  counts: Record<string, number>;
+  total: number;
+  average: number | null;
+}
 export function tally(type: QuestionType, options: string[] | null, answers: string[]): Tally {
-  const keys = type === 'poll' ? options ?? [] : type === 'rating' ? ['1', '2', '3', '4', '5'] : [];
+  const keys = type === 'poll' ? (options ?? []) : type === 'rating' ? ['1', '2', '3', '4', '5'] : [];
   const counts: Record<string, number> = Object.fromEntries(keys.map((k) => [k, 0]));
   for (const a of answers) if (a in counts) counts[a]++;
   const total = Object.values(counts).reduce((n, c) => n + c, 0);
@@ -247,8 +261,15 @@ export const RATING_IDEAS: string[] = [
   'How creative do you feel today?',
 ];
 export function suggestQuestionOf(type: QuestionType, exclude?: string | null): { question: string; options: string[] | null } {
-  if (type === 'poll') { const pool = POLL_IDEAS.filter((p) => p.q !== exclude); const p = pool[Math.floor(Math.random() * pool.length)]; return { question: p.q, options: p.options }; }
-  if (type === 'rating') { const pool = RATING_IDEAS.filter((q) => q !== exclude); return { question: pool[Math.floor(Math.random() * pool.length)], options: null }; }
+  if (type === 'poll') {
+    const pool = POLL_IDEAS.filter((p) => p.q !== exclude);
+    const p = pool[Math.floor(Math.random() * pool.length)];
+    return { question: p.q, options: p.options };
+  }
+  if (type === 'rating') {
+    const pool = RATING_IDEAS.filter((q) => q !== exclude);
+    return { question: pool[Math.floor(Math.random() * pool.length)], options: null };
+  }
   return { question: suggestQuestion(exclude), options: null };
 }
 
@@ -258,8 +279,17 @@ export function parseDiscordEmoji(raw: string): { id: string; name: string | nul
   const tag = t.match(/^<(a?):([A-Za-z0-9_~-]{2,32}):(\d{15,22})>$/);
   if (tag) return { id: tag[3], name: tag[2], animated: tag[1] === 'a' };
   const link = t.match(/^https?:\/\/(?:cdn|media)\.discordapp\.(?:com|net)\/emojis\/(\d{15,22})\.(png|webp|gif|jpg|jpeg)(?:\?.*)?$/i);
-  if (link) { const q = t.includes('animated=true'); const nm = t.match(/[?&]name=([A-Za-z0-9_~-]{2,32})/); return { id: link[1], name: nm ? nm[1] : null, animated: link[2].toLowerCase() === 'gif' || q }; }
+  if (link) {
+    const q = t.includes('animated=true');
+    const nm = t.match(/[?&]name=([A-Za-z0-9_~-]{2,32})/);
+    return { id: link[1], name: nm ? nm[1] : null, animated: link[2].toLowerCase() === 'gif' || q };
+  }
   if (/^\d{15,22}$/.test(t)) return { id: t, name: null, animated: false };
   return null;
 }
-export const emojiNameFrom = (raw: string) => raw.toLowerCase().replace(/[^a-z0-9_]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 20);
+export const emojiNameFrom = (raw: string) =>
+  raw
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+    .slice(0, 20);

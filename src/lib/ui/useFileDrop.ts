@@ -10,12 +10,27 @@ export function useFileDrop(onFiles: (files: File[]) => void, opts: { disabled?:
   const depth = useRef(0);
   const hasFiles = (e: React.DragEvent) => Array.from(e.dataTransfer?.types ?? []).includes('Files');
   const dropProps = {
-    onDragEnter: (e: React.DragEvent) => { if (opts.disabled || !hasFiles(e)) return; e.preventDefault(); depth.current += 1; setOver(true); },
-    onDragOver: (e: React.DragEvent) => { if (opts.disabled || !hasFiles(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; },
-    onDragLeave: (e: React.DragEvent) => { if (!hasFiles(e)) return; depth.current = Math.max(0, depth.current - 1); if (depth.current === 0) setOver(false); },
+    onDragEnter: (e: React.DragEvent) => {
+      if (opts.disabled || !hasFiles(e)) return;
+      e.preventDefault();
+      depth.current += 1;
+      setOver(true);
+    },
+    onDragOver: (e: React.DragEvent) => {
+      if (opts.disabled || !hasFiles(e)) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'copy';
+    },
+    onDragLeave: (e: React.DragEvent) => {
+      if (!hasFiles(e)) return;
+      depth.current = Math.max(0, depth.current - 1);
+      if (depth.current === 0) setOver(false);
+    },
     onDrop: (e: React.DragEvent) => {
       if (opts.disabled || !hasFiles(e)) return;
-      e.preventDefault(); depth.current = 0; setOver(false);
+      e.preventDefault();
+      depth.current = 0;
+      setOver(false);
       const files = Array.from(e.dataTransfer.files);
       if (files.length) onFiles(files);
     },
@@ -33,5 +48,7 @@ export async function readClipboardPictures(): Promise<{ files: File[]; denied: 
       if (type) files.push(new File([await item.getType(type)], `pasted.${type.split('/')[1] || 'png'}`, { type }));
     }
     return { files, denied: false };
-  } catch { return { files: [], denied: true }; }
+  } catch {
+    return { files: [], denied: true };
+  }
 }

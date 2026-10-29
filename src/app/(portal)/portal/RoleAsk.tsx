@@ -12,8 +12,18 @@ export default function RoleAsk() {
         <p className={styles.meta}>Officers, division leads and exec get extra tools here. Send a request through Help and we will fill in the details for you.</p>
       </div>
       <div className={styles.roleActions}>
-        <Link href="/portal/help/ask?topic=role" className={styles.cta}>Request a role</Link>
-        <p className={styles.roleQuick}>Or start with: {ROLE_ASKS.map((r, i) => <span key={r.id}>{i > 0 && ' · '}<Link href={`/portal/help/ask?topic=role&role=${r.id}`}>{r.label}</Link></span>)}</p>
+        <Link href="/portal/help/ask?topic=role" className={styles.cta}>
+          Request a role
+        </Link>
+        <p className={styles.roleQuick}>
+          Or start with:{' '}
+          {ROLE_ASKS.map((r, i) => (
+            <span key={r.id}>
+              {i > 0 && ' · '}
+              <Link href={`/portal/help/ask?topic=role&role=${r.id}`}>{r.label}</Link>
+            </span>
+          ))}
+        </p>
       </div>
     </section>
   );

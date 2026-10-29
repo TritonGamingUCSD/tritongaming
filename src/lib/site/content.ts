@@ -12,7 +12,9 @@ async function fetchBlocks(keys: string[]): Promise<Record<string, Record<string
   const { data, error } = await createPublicClient().from('site_contents').select('key, content').in('key', keys);
   if (error) throw error;
   const result: Record<string, Record<string, unknown>> = {};
-  data?.forEach((row) => { result[row.key] = row.content as Record<string, unknown>; });
+  data?.forEach((row) => {
+    result[row.key] = row.content as Record<string, unknown>;
+  });
   return result;
 }
 

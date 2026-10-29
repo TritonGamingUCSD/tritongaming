@@ -21,9 +21,10 @@ export async function POST(request: Request) {
   const docs = (data ?? []) as { id: string; title: string; parent_id: string | null; category_id: string | null; order_index: number }[];
   const me = docs.find((d) => d.id === id);
   if (!me) return NextResponse.json({ error: 'This page was deleted by someone else.', code: 'deleted' }, { status: 404 });
-  if (parentId && !docs.some((d) => d.id === parentId)) return NextResponse.json({ error: 'The page you were moving it into was deleted by someone else.', code: 'parent_deleted' }, { status: 404 });
+  if (parentId && !docs.some((d) => d.id === parentId))
+    return NextResponse.json({ error: 'The page you were moving it into was deleted by someone else.', code: 'parent_deleted' }, { status: 404 });
   if ('from_parent_id' in b && !b.force && (b.from_parent_id ? String(b.from_parent_id) : null) !== (me.parent_id ?? null)) {
-    const now = me.parent_id ? docs.find((d) => d.id === me.parent_id)?.title ?? 'another page' : 'the top level';
+    const now = me.parent_id ? (docs.find((d) => d.id === me.parent_id)?.title ?? 'another page') : 'the top level';
     return NextResponse.json({ error: `Someone already moved “${me.title}” to ${now}.`, code: 'moved_elsewhere', parent_id: me.parent_id }, { status: 409 });
   }
   if (!canMoveUnder(docs, id, parentId)) return bad('A page can’t go inside itself or one of its own sub-pages.');

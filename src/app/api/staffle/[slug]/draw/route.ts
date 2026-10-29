@@ -16,21 +16,42 @@ export async function POST(_req: Request, { params }: { params: Promise<{ slug: 
   const row = await loadStaffle(auth.svc, (await params).slug);
   if (!row) return NextResponse.json({ error: 'That Staffle is gone.' }, { status: 404 });
   if (row.status === 'draft') return NextResponse.json({ error: 'Open it first, so people can enter.' }, { status: 409 });
-  if (row.status !== 'open' && row.status !== 'closed') return NextResponse.json({ error: row.status === 'drawn' ? 'It has already been drawn.' : 'That Staffle is over.' }, { status: 409 });
-  const id = row.id as string, seed = randomBytes(12).toString('hex');
+  if (row.status !== 'open' && row.status !== 'closed')
+    return NextResponse.json({ error: row.status === 'drawn' ? 'It has already been drawn.' : 'That Staffle is over.' }, { status: 409 });
+  const id = row.id as string,
+    seed = randomBytes(12).toString('hex');
   const { count: itemCount } = await auth.svc.from('staffle_items').select('id', { count: 'exact', head: true }).eq('staffle_id', id);
   if (!itemCount) return NextResponse.json({ error: 'Pick its prizes first.' }, { status: 409 });
   // Claim the draw first, so two people pressing Draw together cannot draw twice.
-  const { data: locked } = await auth.svc.from('staffles').update({ status: 'drawn', seed, drawn_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq('id', id).in('status', ['open', 'closed']).select('id');
+  const { data: locked } = await auth.svc
+    .from('staffles')
+    .update({ status: 'drawn', seed, drawn_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .in('status', ['open', 'closed'])
+    .select('id');
   if (!locked?.length) return NextResponse.json({ error: 'It has already been drawn.' }, { status: 409 });
   const [{ data: items }, { data: entries }] = await Promise.all([
     auth.svc.from('staffle_items').select('id, winners, prize_id').eq('staffle_id', id).order('sort'),
     auth.svc.from('staffle_entries').select('item_id, user_id').eq('staffle_id', id).limit(30000),
   ]);
-  const { won } = draw((items ?? []).map((i) => ({ id: i.id as string, winners: i.winners as number, entrants: (entries ?? []).filter((e) => e.item_id === i.id).map((e) => e.user_id as string) })), seed);
+  const { won } = draw(
+    (items ?? []).map((i) => ({ id: i.id as string, winners: i.winners as number, entrants: (entries ?? []).filter((e) => e.item_id === i.id).map((e) => e.user_id as string) })),
+    seed,
+  );
   if (won.length) await auth.svc.from('staffle_winners').insert(won.map((w) => ({ staffle_id: id, item_id: w.item_id, user_id: w.user_id, position: w.position })));
-  await tellWinners(auth.svc, row, won.map((w) => ({ user_id: w.user_id, item_id: w.item_id })), (items ?? []) as { id: string; prize_id: string }[]);
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'staffle', entityId: id, summary: `Drew the Staffle “${row.name}”: ${won.length} ${won.length === 1 ? 'winner' : 'winners'}` });
+  await tellWinners(
+    auth.svc,
+    row,
+    won.map((w) => ({ user_id: w.user_id, item_id: w.item_id })),
+    (items ?? []) as { id: string; prize_id: string }[],
+  );
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'update',
+    entityType: 'staffle',
+    entityId: id,
+    summary: `Drew the Staffle “${row.name}”: ${won.length} ${won.length === 1 ? 'winner' : 'winners'}`,
+  });
   const fresh = await loadStaffle(auth.svc, id);
   return NextResponse.json({ staffle: await staffleView(auth.svc, fresh!, auth.user.id, true) });
 }

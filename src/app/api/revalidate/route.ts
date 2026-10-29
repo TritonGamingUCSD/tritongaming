@@ -9,7 +9,9 @@ const ALLOWED: CacheTag[] = ['events', 'board', 'divisions', 'site-content'];
 // it can't change data, only make public pages re-read it.
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json().catch(() => ({}));

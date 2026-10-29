@@ -9,7 +9,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (auth.error) return auth.error;
   const { id } = await params;
   const { answer } = await request.json().catch(() => ({}));
-  const text = String(answer ?? '').trim().slice(0, MAX_ANSWER_LENGTH);
+  const text = String(answer ?? '')
+    .trim()
+    .slice(0, MAX_ANSWER_LENGTH);
   if (!text) return NextResponse.json({ error: 'Type an answer first.' }, { status: 400 });
 
   const { data } = await auth.svc.from('meetings').select('*').eq('id', id).maybeSingle();
@@ -20,7 +22,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: here } = await auth.svc.from('meeting_attendance').select('user_id').eq('meeting_id', id).eq('user_id', auth.user.id).maybeSingle();
   if (!here) return NextResponse.json({ error: 'Check in first to answer.' }, { status: 403 });
 
-  const { error } = await auth.svc.from('meeting_answers').upsert({ meeting_id: id, user_id: auth.user.id, answer: text, updated_at: new Date().toISOString() }, { onConflict: 'meeting_id,user_id' });
+  const { error } = await auth.svc
+    .from('meeting_answers')
+    .upsert({ meeting_id: id, user_id: auth.user.id, answer: text, updated_at: new Date().toISOString() }, { onConflict: 'meeting_id,user_id' });
   if (error) return NextResponse.json({ error: 'Couldn’t save your answer.' }, { status: 500 });
   await notifyMeetingLive(id);
   return NextResponse.json({ ok: true, answer: text });

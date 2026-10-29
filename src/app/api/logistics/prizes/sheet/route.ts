@@ -23,12 +23,29 @@ export async function GET() {
   ]);
   const { gives, back } = stepKinds(steps);
   const counts = new Map<string, Record<string, number>>();
-  for (const d of done.data ?? []) { const m = counts.get(d.line_id as string) ?? {}; m[d.step_id as string] = d.done as number; counts.set(d.line_id as string, m); }
+  for (const d of done.data ?? []) {
+    const m = counts.get(d.line_id as string) ?? {};
+    m[d.step_id as string] = d.done as number;
+    counts.set(d.line_id as string, m);
+  }
   return NextResponse.json({
-    plans, stations: stations.data ?? [], steps,
+    plans,
+    stations: stations.data ?? [],
+    steps,
     lines: (lines.data ?? []).map((l) => {
-      const id = l.id as string, n = lineNumbers(l.quantity as number, countAt(done.data, id, gives), countAt(done.data, id, back));
-      return { id, plan_id: l.plan_id, station_id: l.station_id, prize_id: l.prize_id, quantity: l.quantity, counts: counts.get(id) ?? {}, given: n.given, back: n.back, held: n.held };
+      const id = l.id as string,
+        n = lineNumbers(l.quantity as number, countAt(done.data, id, gives), countAt(done.data, id, back));
+      return {
+        id,
+        plan_id: l.plan_id,
+        station_id: l.station_id,
+        prize_id: l.prize_id,
+        quantity: l.quantity,
+        counts: counts.get(id) ?? {},
+        given: n.given,
+        back: n.back,
+        held: n.held,
+      };
     }),
     canManage: auth.canManage,
   });

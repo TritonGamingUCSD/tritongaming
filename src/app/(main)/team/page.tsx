@@ -30,11 +30,7 @@ export const revalidate = 3600;
 
 export default async function TeamPage() {
   const sitePhotos = await getSitePhotos();
-  const [boardMembers, years, content] = await Promise.all([
-    getBoardMembers(),
-    getTeamYears(),
-    getContentBlock('page.about'),
-  ]);
+  const [boardMembers, years, content] = await Promise.all([getBoardMembers(), getTeamYears(), getContentBlock('page.about')]);
   const label = content.label as string;
   const title = content.title as string;
   const subtitle = content.subtitle as string;

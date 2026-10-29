@@ -24,10 +24,22 @@ const isUrl = (v: unknown): v is string => typeof v === 'string' && /^(https:\/\
 export function newBlock(type: BlockType): PageBlock {
   const id = Math.random().toString(36).slice(2, 10);
   switch (type) {
-    case 'text': return { id, type, markdown: '' };
-    case 'highlights': return { id, type, items: [{ label: '', value: '' }, { label: '', value: '' }, { label: '', value: '' }] };
-    case 'faq': return { id, type, items: [{ q: '', a: '' }] };
-    case 'gallery': return { id, type, items: [{ url: '', caption: '', credit: '' }] };
+    case 'text':
+      return { id, type, markdown: '' };
+    case 'highlights':
+      return {
+        id,
+        type,
+        items: [
+          { label: '', value: '' },
+          { label: '', value: '' },
+          { label: '', value: '' },
+        ],
+      };
+    case 'faq':
+      return { id, type, items: [{ q: '', a: '' }] };
+    case 'gallery':
+      return { id, type, items: [{ url: '', caption: '', credit: '' }] };
   }
 }
 
@@ -44,13 +56,22 @@ export function cleanBlocks(raw: unknown): PageBlock[] {
       const markdown = typeof r.markdown === 'string' ? r.markdown.trim().slice(0, 8000) : '';
       if (markdown) out.push({ id, type: 'text', markdown });
     } else if (r.type === 'highlights') {
-      const rows = items.map((i) => ({ label: str(i.label, 40), value: str(i.value, 60) })).filter((i) => i.value).slice(0, BLOCK_LIMITS.highlights);
+      const rows = items
+        .map((i) => ({ label: str(i.label, 40), value: str(i.value, 60) }))
+        .filter((i) => i.value)
+        .slice(0, BLOCK_LIMITS.highlights);
       if (rows.length) out.push({ id, type: 'highlights', items: rows });
     } else if (r.type === 'faq') {
-      const rows = items.map((i) => ({ q: str(i.q, 200), a: str(i.a, 2000) })).filter((i) => i.q && i.a).slice(0, BLOCK_LIMITS.faq);
+      const rows = items
+        .map((i) => ({ q: str(i.q, 200), a: str(i.a, 2000) }))
+        .filter((i) => i.q && i.a)
+        .slice(0, BLOCK_LIMITS.faq);
       if (rows.length) out.push({ id, type: 'faq', items: rows });
     } else if (r.type === 'gallery') {
-      const rows = items.filter((i) => isUrl(i.url)).map((i) => ({ url: i.url as string, caption: str(i.caption, 120), credit: str(i.credit, 80) })).slice(0, BLOCK_LIMITS.gallery);
+      const rows = items
+        .filter((i) => isUrl(i.url))
+        .map((i) => ({ url: i.url as string, caption: str(i.caption, 120), credit: str(i.credit, 80) }))
+        .slice(0, BLOCK_LIMITS.gallery);
       if (rows.length) out.push({ id, type: 'gallery', items: rows });
     }
   }

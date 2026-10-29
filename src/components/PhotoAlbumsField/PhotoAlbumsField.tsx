@@ -64,20 +64,11 @@ export default function PhotoAlbumsField({
       )}
 
       <div className={styles.addRow}>
-        <input
-          className={styles.input}
-          value={draftTitle}
-          onChange={(e) => setDraftTitle(e.target.value)}
-          placeholder="Album title (e.g. Day 1 Photos)"
-        />
-        <input
-          className={styles.input}
-          type="url"
-          value={draftUrl}
-          onChange={(e) => setDraftUrl(e.target.value)}
-          placeholder="https://photos.google.com/…"
-        />
-        <button type="button" className={styles.addBtn} onClick={handleAdd} disabled={!draftTitle.trim() || !draftUrl.trim()}>Add</button>
+        <input className={styles.input} value={draftTitle} onChange={(e) => setDraftTitle(e.target.value)} placeholder="Album title (e.g. Day 1 Photos)" />
+        <input className={styles.input} type="url" value={draftUrl} onChange={(e) => setDraftUrl(e.target.value)} placeholder="https://photos.google.com/…" />
+        <button type="button" className={styles.addBtn} onClick={handleAdd} disabled={!draftTitle.trim() || !draftUrl.trim()}>
+          Add
+        </button>
       </div>
       <span className={styles.hint}>{hint}</span>
     </div>

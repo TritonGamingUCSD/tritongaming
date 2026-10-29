@@ -9,13 +9,18 @@ export default function TodoCard({ items }: { items: TodoItem[] }) {
   const sorted = [...items.filter((i) => i.tone === 'urgent'), ...items.filter((i) => i.tone !== 'urgent')];
   return (
     <section className={styles.todoCard} aria-label="To do">
-      <h2 className={styles.todoHead}><ClipboardCheck size={16} aria-hidden="true" /> To do <span className={styles.todoCount}>{items.length}</span></h2>
+      <h2 className={styles.todoHead}>
+        <ClipboardCheck size={16} aria-hidden="true" /> To do <span className={styles.todoCount}>{items.length}</span>
+      </h2>
       <ul className={styles.todoList}>
         {sorted.map((t) => (
           <li key={t.id}>
             <Link href={t.href} className={`${styles.todoRow} ${t.tone === 'urgent' ? styles.todoUrgent : ''}`}>
               <span className={styles.todoDot} aria-hidden="true" />
-              <span className={styles.todoText}><strong>{t.text}</strong>{t.detail && <em>{t.detail}</em>}</span>
+              <span className={styles.todoText}>
+                <strong>{t.text}</strong>
+                {t.detail && <em>{t.detail}</em>}
+              </span>
               <ChevronRight size={16} aria-hidden="true" className={styles.todoGo} />
             </Link>
           </li>

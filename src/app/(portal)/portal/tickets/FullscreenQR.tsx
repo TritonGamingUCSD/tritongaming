@@ -13,7 +13,6 @@ import AsFormButton from './AsFormButton';
 import { saveTicketCodes, currentCachedCode, cachedMinutesLeft, clearTicketCodes } from '@/lib/events/ticketCodeCache';
 import styles from './fullscreenqr.module.css';
 
-
 interface Props {
   ticketId: string;
   eventTitle: string;
@@ -162,7 +161,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       if (cached) {
         setError('');
         setQrData(cached.qr_data);
-          setHasFastPass(cached.has_fast_pass);
+        setHasFastPass(cached.has_fast_pass);
         if (cached.code !== lastCodeRef.current) {
           lastCodeRef.current = cached.code;
           setCode(cached.code);
@@ -190,7 +189,9 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       setHasFastPass(cached.has_fast_pass);
     }
     fetchCode();
-    return () => { if (refreshTimeout.current) clearTimeout(refreshTimeout.current); };
+    return () => {
+      if (refreshTimeout.current) clearTimeout(refreshTimeout.current);
+    };
   }, [fetchCode, ticketId]);
 
   // Keep the phone from dimming/locking while the QR is on screen — someone
@@ -204,14 +205,19 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
       try {
         if (!('wakeLock' in navigator) || document.visibilityState !== 'visible') return;
         const l = await navigator.wakeLock.request('screen');
-        if (cancelled) { l.release().catch(() => {}); return; }
+        if (cancelled) {
+          l.release().catch(() => {});
+          return;
+        }
         lock = l;
       } catch {
         // denied (e.g. low battery mode) — not critical
       }
     }
     acquire();
-    const onVisible = () => { if (document.visibilityState === 'visible') acquire(); };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') acquire();
+    };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       cancelled = true;
@@ -253,7 +259,11 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     setCheckedIn(true);
     // A short buzz so someone about to pocket their phone notices the screen
     // changed (Android/most Chromium browsers; iOS ignores it).
-    try { navigator.vibrate?.([220, 90, 220]); } catch { /* unsupported */ }
+    try {
+      navigator.vibrate?.([220, 90, 220]);
+    } catch {
+      /* unsupported */
+    }
     onCheckedInRef.current?.(checkedInAt);
   }
 
@@ -263,23 +273,23 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // need to be torn down and rebuilt whenever the parent passes a new
   // onCheckedIn closure.
   const onCheckedInRef = useRef(onCheckedIn);
-  useEffect(() => { onCheckedInRef.current = onCheckedIn; }, [onCheckedIn]);
+  useEffect(() => {
+    onCheckedInRef.current = onCheckedIn;
+  }, [onCheckedIn]);
 
   useEffect(() => {
     const supabase = createClient();
     const channel = supabase
       .channel(`ticket-checkin-${ticketId}`)
-      .on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'tickets', filter: `id=eq.${ticketId}` },
-        (payload) => {
-          const newRow = payload.new as { status?: string; checked_in_at?: string | null };
-          if (newRow.status === 'used') handleCheckedIn(newRow.checked_in_at ?? new Date().toISOString());
-        }
-      )
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'tickets', filter: `id=eq.${ticketId}` }, (payload) => {
+        const newRow = payload.new as { status?: string; checked_in_at?: string | null };
+        if (newRow.status === 'used') handleCheckedIn(newRow.checked_in_at ?? new Date().toISOString());
+      })
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
+    return () => {
+      supabase.removeChannel(channel);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticketId]);
 
@@ -289,17 +299,21 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // "check-in doesn't show up" is bad enough that this shouldn't depend on
   // Realtime alone. Polls a tiny status endpoint every few seconds; stops
   // once checked in.
-  useVisiblePoll(async () => {
-    if (handledCheckIn.current) return;
-    try {
-      const res = await fetch(`/api/tickets/${ticketId}/status`);
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data.status === 'used' && data.checked_in_today !== false) handleCheckedIn(data.checked_in_at ?? new Date().toISOString());
-    } catch {
-      // ignore — next tick tries again
-    }
-  }, 10_000, !handledCheckIn.current);   // always every 10 s, Realtime or not: a push that says it is connected can still never arrive, and this tiny call is the only other way the screen learns it was scanned (the code on screen no longer asks the server, see fetchCode)
+  useVisiblePoll(
+    async () => {
+      if (handledCheckIn.current) return;
+      try {
+        const res = await fetch(`/api/tickets/${ticketId}/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status === 'used' && data.checked_in_today !== false) handleCheckedIn(data.checked_in_at ?? new Date().toISOString());
+      } catch {
+        // ignore — next tick tries again
+      }
+    },
+    10_000,
+    !handledCheckIn.current,
+  ); // always every 10 s, Realtime or not: a push that says it is connected can still never arrive, and this tiny call is the only other way the screen learns it was scanned (the code on screen no longer asks the server, see fetchCode)
 
   // The authoritative form answer, fetched from the status endpoint the
   // moment check-in lands — the checkinFormUrl prop was baked in when the
@@ -333,7 +347,9 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
         // fall back to the page-load prop below
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [checkedIn, ticketId]);
   const formUrl = resolvedFormUrl ?? checkinFormUrl ?? null;
   // Opening the form is the attendee's whole step (see AsFormButton) —
@@ -366,12 +382,12 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // Prevent body scroll while open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = ''; };
+    return () => {
+      document.body.style.overflow = '';
+    };
   }, []);
 
-  const dateLabel = eventDate
-    ? formatPacificDateTime(eventDate, { weekday: true })
-    : null;
+  const dateLabel = eventDate ? formatPacificDateTime(eventDate, { weekday: true }) : null;
 
   // Portaled straight to <body> instead of rendering in place — this opens
   // from inside PortalHub's section panel, which Framer Motion animates
@@ -386,12 +402,16 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   return createPortal(
     <div className={styles.backdrop} onClick={onBackdrop}>
       <div className={styles.sheet}>
-        <button className={styles.closeBtn} onClick={onClose} aria-label="Close"><X size={18} strokeWidth={1.75} /></button>
+        <button className={styles.closeBtn} onClick={onClose} aria-label="Close">
+          <X size={18} strokeWidth={1.75} />
+        </button>
 
         {/* Which event this ticket is for — shown first and prominently so it
             can't be confused with a different event's ticket. */}
         <div className={styles.eventBlock}>
-          <span className={styles.eventEyebrow}><Ticket size={13} strokeWidth={1.5} aria-hidden="true" /> TICKET FOR</span>
+          <span className={styles.eventEyebrow}>
+            <Ticket size={13} strokeWidth={1.5} aria-hidden="true" /> TICKET FOR
+          </span>
           <div className={styles.eventName}>{eventTitle}</div>
           {(dateLabel || eventLocation) && (
             <div className={styles.eventMeta}>
@@ -401,79 +421,90 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
             </div>
           )}
           {hasFastPass && !checkedIn && (
-            <span className={styles.fastPassBadge}><Zap size={13} strokeWidth={2} aria-hidden="true" /> Fast Pass — skip the line</span>
+            <span className={styles.fastPassBadge}>
+              <Zap size={13} strokeWidth={2} aria-hidden="true" /> Fast Pass — skip the line
+            </span>
           )}
         </div>
 
         {checkedIn ? (
-            <div className={styles.checkedInState}>
-              {stepPending ? (
-                <>
-                  <div className={`${styles.checkedInIcon} ${styles.stepIcon}`} aria-hidden="true"><ClipboardList size={32} strokeWidth={2} /></div>
-                  <div className={styles.stepKicker}>Step 1 of 2 · Scanned</div>
-                  <div className={styles.stepTitle}>One more step —<br />fill out your AS Form</div>
-                  <p className={styles.stepSub}>You&apos;re not fully checked in until the AS Form is done.</p>
-                  {/* The action goes right under the headline, above the time
+          <div className={styles.checkedInState}>
+            {stepPending ? (
+              <>
+                <div className={`${styles.checkedInIcon} ${styles.stepIcon}`} aria-hidden="true">
+                  <ClipboardList size={32} strokeWidth={2} />
+                </div>
+                <div className={styles.stepKicker}>Step 1 of 2 · Scanned</div>
+                <div className={styles.stepTitle}>
+                  One more step —<br />
+                  fill out your AS Form
+                </div>
+                <p className={styles.stepSub}>You&apos;re not fully checked in until the AS Form is done.</p>
+                {/* The action goes right under the headline, above the time
                       and points — on a short phone screen it must be in view. */}
-                  {formUrl && <AsFormButton ticketId={ticketId} url={formUrl} opened={formOpened} onOpened={handleFormOpened} />}
-                </>
-              ) : (
-                <>
-                  <div className={styles.checkedInIcon} aria-hidden="true"><Check size={32} strokeWidth={2} /></div>
-                  <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
-                </>
-              )}
-              {checkedInAt && (
-                <div className={styles.checkedInTime}>
-                  {formatPacificTime(checkedInAt, { seconds: true })}
+                {formUrl && <AsFormButton ticketId={ticketId} url={formUrl} opened={formOpened} onOpened={handleFormOpened} />}
+              </>
+            ) : (
+              <>
+                <div className={styles.checkedInIcon} aria-hidden="true">
+                  <Check size={32} strokeWidth={2} />
                 </div>
-              )}
-              {pointsAwarded > 0 && (
-                <div className={`${styles.pointsEarned} pp-dark`}>
-                  <span className={styles.pointsEarnedNumber}>+{pointsAwarded}</span>
-                  <span className={styles.pointsEarnedLabel}>points earned</span>
-                  {tierInfo?.tier_up && (
-                    <div className={styles.tierUp} style={{ '--tier-color': tierInfo.tier_up.color } as React.CSSProperties}>
-                      <div className={styles.confetti} aria-hidden="true">
-                        {Array.from({ length: 18 }, (_, i) => <span key={i} style={{ '--i': i } as React.CSSProperties} />)}
-                      </div>
-                      <div className={styles.tierUpKicker}>Tier up!</div>
-                      <div className={styles.tierUpName}>{tierInfo.tier_up.to}</div>
-                      <div className={styles.tierUpFrom}>you were {tierInfo.tier_up.from}</div>
+                <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
+              </>
+            )}
+            {checkedInAt && <div className={styles.checkedInTime}>{formatPacificTime(checkedInAt, { seconds: true })}</div>}
+            {pointsAwarded > 0 && (
+              <div className={`${styles.pointsEarned} pp-dark`}>
+                <span className={styles.pointsEarnedNumber}>+{pointsAwarded}</span>
+                <span className={styles.pointsEarnedLabel}>points earned</span>
+                {tierInfo?.tier_up && (
+                  <div className={styles.tierUp} style={{ '--tier-color': tierInfo.tier_up.color } as React.CSSProperties}>
+                    <div className={styles.confetti} aria-hidden="true">
+                      {Array.from({ length: 18 }, (_, i) => (
+                        <span key={i} style={{ '--i': i } as React.CSSProperties} />
+                      ))}
                     </div>
-                  )}
-                  {tierInfo && (
-                    <div className={styles.tierProgress}>
-                      <div className={styles.tierProgressTop}>
-                        <span style={{ color: tierInfo.tier.color }} className={styles.tierProgressName}>{tierInfo.tier.name}</span>
-                        <span className={styles.tierProgressTotal}>{tierInfo.lifetime_points.toLocaleString()} pts</span>
-                      </div>
-                      {tierInfo.next_tier ? (
-                        <>
-                          <div className={styles.tierBar} aria-hidden="true">
-                            <div className={styles.tierBarFill} style={{ width: `${Math.round(tierInfo.next_tier.progress * 100)}%`, background: tierInfo.next_tier.color }} />
-                          </div>
-                          <div className={styles.tierNext}>
-                            <strong>{tierInfo.next_tier.points_needed.toLocaleString()} pts</strong> to reach <span style={{ color: tierInfo.next_tier.color }}>{tierInfo.next_tier.name}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <div className={styles.tierNext}>Top tier reached 🎉</div>
-                      )}
+                    <div className={styles.tierUpKicker}>Tier up!</div>
+                    <div className={styles.tierUpName}>{tierInfo.tier_up.to}</div>
+                    <div className={styles.tierUpFrom}>you were {tierInfo.tier_up.from}</div>
+                  </div>
+                )}
+                {tierInfo && (
+                  <div className={styles.tierProgress}>
+                    <div className={styles.tierProgressTop}>
+                      <span style={{ color: tierInfo.tier.color }} className={styles.tierProgressName}>
+                        {tierInfo.tier.name}
+                      </span>
+                      <span className={styles.tierProgressTotal}>{tierInfo.lifetime_points.toLocaleString()} pts</span>
                     </div>
-                  )}
-                </div>
-              )}
-              {formUrl && !stepPending && (
-                <AsFormButton ticketId={ticketId} url={formUrl} opened={formOpened} onOpened={handleFormOpened} />
-              )}
-              {!formUrl && !stepPending && <p className={styles.hint}>Have a great time — see you inside.</p>}
-            </div>
+                    {tierInfo.next_tier ? (
+                      <>
+                        <div className={styles.tierBar} aria-hidden="true">
+                          <div className={styles.tierBarFill} style={{ width: `${Math.round(tierInfo.next_tier.progress * 100)}%`, background: tierInfo.next_tier.color }} />
+                        </div>
+                        <div className={styles.tierNext}>
+                          <strong>{tierInfo.next_tier.points_needed.toLocaleString()} pts</strong> to reach{' '}
+                          <span style={{ color: tierInfo.next_tier.color }}>{tierInfo.next_tier.name}</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className={styles.tierNext}>Top tier reached 🎉</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+            {formUrl && !stepPending && <AsFormButton ticketId={ticketId} url={formUrl} opened={formOpened} onOpened={handleFormOpened} />}
+            {!formUrl && !stepPending && <p className={styles.hint}>Have a great time — see you inside.</p>}
+          </div>
         ) : (
           <>
             <div className={styles.label}>
               SHOW THIS AT CHECK-IN
-              <span className={styles.liveBadge}><span className={styles.liveDot} />LIVE</span>
+              <span className={styles.liveBadge}>
+                <span className={styles.liveDot} />
+                LIVE
+              </span>
             </div>
 
             <div className={styles.qrWrapper}>
@@ -487,7 +518,9 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                   <circle
                     key={code}
                     className={styles.countdownFill}
-                    cx="50" cy="50" r="48"
+                    cx="50"
+                    cy="50"
+                    r="48"
                     // Always paced to a full rotation cycle (animation-duration),
                     // then seeked forward with a *negative* delay to however much
                     // of that cycle has already elapsed — the standard CSS trick
@@ -514,7 +547,9 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 // fade-in below each time, turning what used to be an
                 // instant, jarring swap into a brief soft crossfade instead.
                 <div key={qrData} className={styles.qrSwap}>
-                  <div className={styles.qrCanvas}><TGcode payload={qrData} label="Your ticket's code, for the portal's Scan button" /></div>
+                  <div className={styles.qrCanvas}>
+                    <TGcode payload={qrData} label="Your ticket's code, for the portal's Scan button" />
+                  </div>
                 </div>
               ) : (
                 // On a slow connection this can sit for a couple seconds
@@ -553,14 +588,13 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
             {error && <div className={styles.codeText}>{error}</div>}
 
             <p className={styles.hint}>
-              This code refreshes automatically, so a screenshot from earlier
-              won&apos;t scan. Just keep this screen open when it&apos;s your turn —
-              check-in reads whatever code is showing at that moment.
+              This code refreshes automatically, so a screenshot from earlier won&apos;t scan. Just keep this screen open when it&apos;s your turn — check-in reads whatever code is
+              showing at that moment.
             </p>
           </>
         )}
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

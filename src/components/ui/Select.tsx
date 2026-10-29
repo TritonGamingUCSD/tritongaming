@@ -12,7 +12,13 @@ import list from './Listbox.module.css';
 // browser and platform. Native selects hand the open list to the OS, which is how Windows ended up
 // with white text on a white list. This one is a real listbox: keyboard (arrows, Home/End, type to
 // jump, Enter/Space, Esc), screen-reader roles, and it flips upward near the bottom of the screen.
-interface Opt { value: string; label: ReactNode; text: string; disabled: boolean; group?: string }
+interface Opt {
+  value: string;
+  label: ReactNode;
+  text: string;
+  disabled: boolean;
+  group?: string;
+}
 
 function textOf(node: ReactNode): string {
   if (node === null || node === undefined || typeof node === 'boolean') return '';
@@ -27,7 +33,10 @@ function collect(children: ReactNode, group?: string): Opt[] {
   Children.forEach(children, (child) => {
     if (!isValidElement(child)) return;
     const el = child as ReactElement<{ value?: string | number; disabled?: boolean; label?: string; children?: ReactNode }>;
-    if (el.type === 'optgroup') { out.push(...collect(el.props.children, el.props.label)); return; }
+    if (el.type === 'optgroup') {
+      out.push(...collect(el.props.children, el.props.label));
+      return;
+    }
     if (el.type === 'option') {
       const text = textOf(el.props.children);
       out.push({ value: el.props.value !== undefined ? String(el.props.value) : text, label: el.props.children, text, disabled: !!el.props.disabled, group });
@@ -87,13 +96,18 @@ export default function Select({ value, defaultValue, onChange, children, classN
 
   function openList() {
     if (disabled) return;
-    const i = Math.max(0, options.findIndex((o) => o.value === current));
+    const i = Math.max(
+      0,
+      options.findIndex((o) => o.value === current),
+    );
     setActive(i);
     place();
     setOpen(true);
   }
 
-  useLayoutEffect(() => { if (open) place(); }, [open, place]);
+  useLayoutEffect(() => {
+    if (open) place();
+  }, [open, place]);
 
   useEffect(() => {
     if (!open) return;
@@ -102,11 +116,17 @@ export default function Select({ value, defaultValue, onChange, children, classN
       if (listEl.current?.contains(t) || trigger.current?.contains(t)) return;
       setOpen(false);
     };
-    const reposition = (e: Event) => { if (!listEl.current?.contains(e.target as Node)) place(); };
+    const reposition = (e: Event) => {
+      if (!listEl.current?.contains(e.target as Node)) place();
+    };
     document.addEventListener('mousedown', close);
     window.addEventListener('scroll', reposition, true);
     window.addEventListener('resize', place);
-    return () => { document.removeEventListener('mousedown', close); window.removeEventListener('scroll', reposition, true); window.removeEventListener('resize', place); };
+    return () => {
+      document.removeEventListener('mousedown', close);
+      window.removeEventListener('scroll', reposition, true);
+      window.removeEventListener('resize', place);
+    };
   }, [open, place]);
 
   // Keep the highlighted option in view as the keyboard moves it.
@@ -123,17 +143,33 @@ export default function Select({ value, defaultValue, onChange, children, classN
   function onKeyDown(e: React.KeyboardEvent) {
     if (disabled) return;
     if (!open) {
-      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) { e.preventDefault(); openList(); }
+      if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) {
+        e.preventDefault();
+        openList();
+      }
       return;
     }
-    if (e.key === 'Escape') { e.preventDefault(); setOpen(false); }
-    else if (e.key === 'Tab') setOpen(false);
-    else if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => step(a, 1)); }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => step(a, -1)); }
-    else if (e.key === 'Home') { e.preventDefault(); setActive(step(-1, 1)); }
-    else if (e.key === 'End') { e.preventDefault(); setActive(step(options.length, -1)); }
-    else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const o = options[active]; if (o && !o.disabled) commit(o.value); }
-    else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      setOpen(false);
+    } else if (e.key === 'Tab') setOpen(false);
+    else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setActive((a) => step(a, 1));
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setActive((a) => step(a, -1));
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      setActive(step(-1, 1));
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      setActive(step(options.length, -1));
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      const o = options[active];
+      if (o && !o.disabled) commit(o.value);
+    } else if (e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
       // Type to jump to the next option starting with what was typed.
       const now = Date.now();
       typed.current = { text: (now - typed.current.at > 700 ? '' : typed.current.text) + e.key.toLowerCase(), at: now };
@@ -169,37 +205,48 @@ export default function Select({ value, defaultValue, onChange, children, classN
         <ChevronDown size={15} strokeWidth={2} className={`${styles.chevron} ${open ? styles.chevronOpen : ''}`} aria-hidden="true" />
       </button>
       {(required || name) && (
-        <input className={styles.hidden} tabIndex={-1} aria-hidden="true" name={name} value={current} required={required} onChange={() => {}} onFocus={() => trigger.current?.focus()} />
+        <input
+          className={styles.hidden}
+          tabIndex={-1}
+          aria-hidden="true"
+          name={name}
+          value={current}
+          required={required}
+          onChange={() => {}}
+          onFocus={() => trigger.current?.focus()}
+        />
       )}
-      {open && pos && createPortal(
-        <div
-          ref={listEl}
-          id={listId}
-          role="listbox"
-          className={list.list}
-          style={{ left: pos.left, width: pos.width, top: pos.top, bottom: pos.bottom, maxHeight: pos.maxHeight }}
-          onMouseDown={(e) => e.preventDefault()}
-        >
-          {options.map((o, i) => (
-            <div key={`${o.value}-${i}`}>
-              {o.group && options[i - 1]?.group !== o.group && <div className={list.group}>{o.group}</div>}
-              <div
-                id={`${listId}-${i}`}
-                data-index={i}
-                role="option"
-                aria-selected={o.value === current}
-                aria-disabled={o.disabled || undefined}
-                className={`${list.row} ${i === active ? list.rowOn : ''} ${o.value === current ? list.rowSel : ''} ${o.disabled ? list.rowOff : ''}`}
-                onMouseEnter={() => !o.disabled && setActive(i)}
-                onClick={() => !o.disabled && commit(o.value)}
-              >
-                <span className={list.rowText}>{o.label}</span>
+      {open &&
+        pos &&
+        createPortal(
+          <div
+            ref={listEl}
+            id={listId}
+            role="listbox"
+            className={list.list}
+            style={{ left: pos.left, width: pos.width, top: pos.top, bottom: pos.bottom, maxHeight: pos.maxHeight }}
+            onMouseDown={(e) => e.preventDefault()}
+          >
+            {options.map((o, i) => (
+              <div key={`${o.value}-${i}`}>
+                {o.group && options[i - 1]?.group !== o.group && <div className={list.group}>{o.group}</div>}
+                <div
+                  id={`${listId}-${i}`}
+                  data-index={i}
+                  role="option"
+                  aria-selected={o.value === current}
+                  aria-disabled={o.disabled || undefined}
+                  className={`${list.row} ${i === active ? list.rowOn : ''} ${o.value === current ? list.rowSel : ''} ${o.disabled ? list.rowOff : ''}`}
+                  onMouseEnter={() => !o.disabled && setActive(i)}
+                  onClick={() => !o.disabled && commit(o.value)}
+                >
+                  <span className={list.rowText}>{o.label}</span>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>,
-        document.body,
-      )}
+            ))}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

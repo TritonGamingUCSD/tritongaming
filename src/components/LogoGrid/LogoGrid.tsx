@@ -25,15 +25,7 @@ export default function LogoGrid({ logos }: LogoGridProps) {
         );
 
         return logo.link ? (
-          <a
-            key={index}
-            href={logo.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.logoItem}
-            style={{ order: logo.order ?? index }}
-            aria-label={logo.name}
-          >
+          <a key={index} href={logo.link} target="_blank" rel="noopener noreferrer" className={styles.logoItem} style={{ order: logo.order ?? index }} aria-label={logo.name}>
             {img}
           </a>
         ) : (

@@ -19,14 +19,44 @@ import TeamYearsPanel from './TeamYearsPanel';
 import styles from './quarters.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 
-interface Quarter { id: string; term: 'fall' | 'winter' | 'spring'; start_year: number; starts_on: string; ends_on: string; name: string; editable: boolean }
-interface Person { id: string; name: string; avatar_url: string | null; role: string; roleLabel: string; title: string | null }
+interface Quarter {
+  id: string;
+  term: 'fall' | 'winter' | 'spring';
+  start_year: number;
+  starts_on: string;
+  ends_on: string;
+  name: string;
+  editable: boolean;
+}
+interface Person {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  role: string;
+  roleLabel: string;
+  title: string | null;
+}
 interface Data {
-  canSetup: boolean; today: string; currentId: string | null; quarters: Quarter[]; allQuarters: Quarter[]; people: Person[];
-  marks: { user_id: string; quarter_id: string; carried: boolean }[]; roster: { quarter_id: string; user_id: string; name: string; tier: string; title: string | null }[];
+  canSetup: boolean;
+  today: string;
+  currentId: string | null;
+  quarters: Quarter[];
+  allQuarters: Quarter[];
+  people: Person[];
+  marks: { user_id: string; quarter_id: string; carried: boolean }[];
+  roster: { quarter_id: string; user_id: string; name: string; tier: string; title: string | null }[];
 }
 // One line in the Active / Inactive lists.
-interface Entry { id: string; name: string; avatar_url: string | null; roleLabel: string; role: string; title: string | null; inactive: boolean; carried: boolean }
+interface Entry {
+  id: string;
+  name: string;
+  avatar_url: string | null;
+  roleLabel: string;
+  role: string;
+  title: string | null;
+  inactive: boolean;
+  carried: boolean;
+}
 
 const short = (d: string) => formatPacificDate(d);
 const yearLabel = (y: number) => `${y}-${String((y + 1) % 100).padStart(2, '0')}`;
@@ -37,8 +67,20 @@ export default function QuarterStatusContent() {
   const [tab, setTab] = useState<'status' | 'years'>('status');
   return (
     <div className={styles.page}>
-      <SectionHeader title="Quarter Status" flush sub={tab === 'status' ? 'Who is sitting out this quarter, and who sat out earlier ones.' : 'Who was exec, a lead or an officer each year.'} />
-      <SectionTabs<'status' | 'years'> label="Quarter status" value={tab} onChange={setTab} tabs={[{ id: 'status', label: 'Status', icon: <CalendarCheck size={15} /> }, { id: 'years', label: 'Years', icon: <GraduationCap size={15} /> }]} />
+      <SectionHeader
+        title="Quarter Status"
+        flush
+        sub={tab === 'status' ? 'Who is sitting out this quarter, and who sat out earlier ones.' : 'Who was exec, a lead or an officer each year.'}
+      />
+      <SectionTabs<'status' | 'years'>
+        label="Quarter status"
+        value={tab}
+        onChange={setTab}
+        tabs={[
+          { id: 'status', label: 'Status', icon: <CalendarCheck size={15} /> },
+          { id: 'years', label: 'Years', icon: <GraduationCap size={15} /> },
+        ]}
+      />
       {tab === 'status' ? <StatusPanel /> : <TeamYearsPanel />}
     </div>
   );
@@ -57,18 +99,26 @@ function StatusPanel() {
     try {
       const r = await fetch('/api/quarters', { cache: 'no-store' });
       const j = await r.json();
-      if (!r.ok) { setError(j.error || 'Couldn’t load this.'); return; }
-      setData(j); setError('');
-    } catch { setError('Couldn’t reach the server.'); }
+      if (!r.ok) {
+        setError(j.error || 'Couldn’t load this.');
+        return;
+      }
+      setData(j);
+      setError('');
+    } catch {
+      setError('Couldn’t reach the server.');
+    }
   }, []);
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   // Newest first, only quarters that have started.
   const quarters = data?.quarters ?? [];
   const selected = quarters.find((x) => x.id === (selectedId ?? data?.currentId)) ?? quarters[0] ?? null;
   const isCurrent = !!selected && selected.id === data?.currentId;
   const editable = !!selected?.editable;
-  const before = selected ? quarters[quarters.findIndex((x) => x.id === selected.id) + 1] ?? null : null;
+  const before = selected ? (quarters[quarters.findIndex((x) => x.id === selected.id) + 1] ?? null) : null;
 
   const marksIn = useMemo(() => {
     const m = new Map<string, { carried: boolean }>();
@@ -84,7 +134,16 @@ function StatusPanel() {
   // The current quarter lists everyone who is an officer or lead right now; an earlier quarter lists who held the title back then.
   const entries = useMemo<Entry[]>(() => {
     if (!data || !selected) return [];
-    const make = (id: string, name: string, avatar: string | null, role: string, title: string | null): Entry => ({ id, name, avatar_url: avatar, role, roleLabel: role === 'lead' ? 'Lead' : 'Officer', title, inactive: marksIn.has(id), carried: !!marksIn.get(id)?.carried });
+    const make = (id: string, name: string, avatar: string | null, role: string, title: string | null): Entry => ({
+      id,
+      name,
+      avatar_url: avatar,
+      role,
+      roleLabel: role === 'lead' ? 'Lead' : 'Officer',
+      title,
+      inactive: marksIn.has(id),
+      carried: !!marksIn.get(id)?.carried,
+    });
     if (isCurrent) return data.people.map((p) => make(p.id, p.name, p.avatar_url, p.role, p.title));
     const byId = new Map(data.people.map((p) => [p.id, p]));
     const seen = new Set<string>();
@@ -103,20 +162,46 @@ function StatusPanel() {
   const pickedActive = activeList.filter((e) => picked.has(e.id)).map((e) => e.id);
   const pickedInactive = inactiveList.filter((e) => picked.has(e.id)).map((e) => e.id);
   const carriedCount = isCurrent ? entries.filter((e) => e.carried).length : 0;
-  function toggle(id: string) { setPicked((x) => { const n = new Set(x); if (n.has(id)) n.delete(id); else n.add(id); return n; }); }
+  function toggle(id: string) {
+    setPicked((x) => {
+      const n = new Set(x);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
 
   async function change(ids: string[], inactive: boolean) {
     if (!data || !selected || ids.length === 0) return;
     const keep = data.marks;
     // Show it straight away; put it back if the server says no.
-    setData({ ...data, marks: inactive ? [...keep.filter((m) => !(ids.includes(m.user_id) && m.quarter_id === selected.id)), ...ids.map((user_id) => ({ user_id, quarter_id: selected.id, carried: false }))] : keep.filter((m) => !(ids.includes(m.user_id) && m.quarter_id === selected.id)) });
-    setBusy(true); setError('');
+    setData({
+      ...data,
+      marks: inactive
+        ? [...keep.filter((m) => !(ids.includes(m.user_id) && m.quarter_id === selected.id)), ...ids.map((user_id) => ({ user_id, quarter_id: selected.id, carried: false }))]
+        : keep.filter((m) => !(ids.includes(m.user_id) && m.quarter_id === selected.id)),
+    });
+    setBusy(true);
+    setError('');
     try {
-      const r = await fetch('/api/quarters/status', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quarter_id: selected.id, user_ids: ids, inactive }) });
-      if (!r.ok) { setData((d) => (d ? { ...d, marks: keep } : d)); setError((await r.json().catch(() => ({}))).error || 'That didn’t work.'); return; }
+      const r = await fetch('/api/quarters/status', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quarter_id: selected.id, user_ids: ids, inactive }),
+      });
+      if (!r.ok) {
+        setData((d) => (d ? { ...d, marks: keep } : d));
+        setError((await r.json().catch(() => ({}))).error || 'That didn’t work.');
+        return;
+      }
       setPicked(new Set());
       await load();
-    } catch { setData((d) => (d ? { ...d, marks: keep } : d)); setError('Couldn’t reach the server.'); } finally { setBusy(false); }
+    } catch {
+      setData((d) => (d ? { ...d, marks: keep } : d));
+      setError('Couldn’t reach the server.');
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (error && !data) return <Notice tone="error">{error}</Notice>;
@@ -124,15 +209,46 @@ function StatusPanel() {
 
   const column = (title: string, list: Entry[], inactive: boolean) => (
     <section className={`${styles.listCol} ${inactive ? styles.listColOff : styles.listColOn}`} aria-label={title}>
-      <h3 className={styles.listHead}>{inactive ? <Moon size={15} aria-hidden="true" /> : <Check size={15} aria-hidden="true" />} {title} <span>{list.length}</span></h3>
+      <h3 className={styles.listHead}>
+        {inactive ? <Moon size={15} aria-hidden="true" /> : <Check size={15} aria-hidden="true" />} {title} <span>{list.length}</span>
+      </h3>
       {list.length === 0 && <p className={styles.empty}>{inactive ? 'Nobody is sitting this quarter out.' : 'Nobody here.'}</p>}
       <ul className={styles.people}>
         {list.map((e) => (
           <li key={e.id} className={styles.personRow}>
             {editable && <input type="checkbox" className={styles.pickBox} checked={picked.has(e.id)} onChange={() => toggle(e.id)} aria-label={`Select ${e.name}`} />}
-            {e.avatar_url ? <Image src={e.avatar_url} alt="" width={32} height={32} unoptimized referrerPolicy="no-referrer" className={styles.avatar} /> : <span className={styles.avatarFallback}>{e.name[0]?.toUpperCase()}</span>}
-            <span className={styles.name}><strong>{e.name}{e.carried && <em className={styles.carriedTag} title={`Copied from ${before?.name ?? 'the last quarter'}`}>carried over</em>}</strong><small><span className={`${styles.role} ${e.role === 'lead' ? styles.roleLead : ''}`}>{e.roleLabel}</span>{e.title ? ` · ${e.title}` : ''}</small></span>
-            {editable && <Button size="sm" variant="secondary" disabled={busy} onClick={() => void change([e.id], !inactive)}>{inactive ? <><Check size={13} aria-hidden="true" /> Make active</> : <><Moon size={13} aria-hidden="true" /> Make inactive</>}</Button>}
+            {e.avatar_url ? (
+              <Image src={e.avatar_url} alt="" width={32} height={32} unoptimized referrerPolicy="no-referrer" className={styles.avatar} />
+            ) : (
+              <span className={styles.avatarFallback}>{e.name[0]?.toUpperCase()}</span>
+            )}
+            <span className={styles.name}>
+              <strong>
+                {e.name}
+                {e.carried && (
+                  <em className={styles.carriedTag} title={`Copied from ${before?.name ?? 'the last quarter'}`}>
+                    carried over
+                  </em>
+                )}
+              </strong>
+              <small>
+                <span className={`${styles.role} ${e.role === 'lead' ? styles.roleLead : ''}`}>{e.roleLabel}</span>
+                {e.title ? ` · ${e.title}` : ''}
+              </small>
+            </span>
+            {editable && (
+              <Button size="sm" variant="secondary" disabled={busy} onClick={() => void change([e.id], !inactive)}>
+                {inactive ? (
+                  <>
+                    <Check size={13} aria-hidden="true" /> Make active
+                  </>
+                ) : (
+                  <>
+                    <Moon size={13} aria-hidden="true" /> Make inactive
+                  </>
+                )}
+              </Button>
+            )}
           </li>
         ))}
       </ul>
@@ -147,43 +263,83 @@ function StatusPanel() {
 
       {quarters.length === 0 ? (
         <p className={styles.empty}>{data.canSetup ? 'Add the quarter dates above. A quarter shows here once it starts.' : 'No quarter has started yet.'}</p>
-      ) : selected && (<>
-        <PhoneFold label="What “inactive” does">
-        <div className={styles.explain} role="note">
-          <Moon size={18} aria-hidden="true" />
-          <div>
-            <strong>What “inactive” does</strong>
-            <p>An inactive officer or lead keeps their title but is sitting the quarter out: they are not expected at meetings (unless someone adds them by name), get no strikes, and have view-only access. Each quarter starts as a copy of the last one, so you only change who is different. Only the current quarter can be changed.</p>
-          </div>
-        </div>
-        </PhoneFold>
+      ) : (
+        selected && (
+          <>
+            <PhoneFold label="What “inactive” does">
+              <div className={styles.explain} role="note">
+                <Moon size={18} aria-hidden="true" />
+                <div>
+                  <strong>What “inactive” does</strong>
+                  <p>
+                    An inactive officer or lead keeps their title but is sitting the quarter out: they are not expected at meetings (unless someone adds them by name), get no
+                    strikes, and have view-only access. Each quarter starts as a copy of the last one, so you only change who is different. Only the current quarter can be changed.
+                  </p>
+                </div>
+              </div>
+            </PhoneFold>
 
-        <SectionTabs<string> label="Quarter" variant="segmented" value={selected.id} onChange={(id) => { setSelectedId(id); setPicked(new Set()); }} tabs={quarters.map((x) => ({ id: x.id, label: x.id === data.currentId ? `${x.name} (now)` : x.name, count: countIn.get(x.id) ?? 0 }))} />
+            <SectionTabs<string>
+              label="Quarter"
+              variant="segmented"
+              value={selected.id}
+              onChange={(id) => {
+                setSelectedId(id);
+                setPicked(new Set());
+              }}
+              tabs={quarters.map((x) => ({ id: x.id, label: x.id === data.currentId ? `${x.name} (now)` : x.name, count: countIn.get(x.id) ?? 0 }))}
+            />
 
-        <p className={styles.range}>{selected.name}: {short(selected.starts_on)} to {short(selected.ends_on)}{!isCurrent && ' · this quarter is over, so it is a record and can’t be changed'}</p>
+            <p className={styles.range}>
+              {selected.name}: {short(selected.starts_on)} to {short(selected.ends_on)}
+              {!isCurrent && ' · this quarter is over, so it is a record and can’t be changed'}
+            </p>
 
-        {carriedCount > 0 && (
-          <Notice tone="info">{carriedCount} {carriedCount === 1 ? 'person was' : 'people were'} copied over from {before?.name ?? 'last quarter'} when this quarter started. Check them, and make anyone who is back active again.</Notice>
-        )}
+            {carriedCount > 0 && (
+              <Notice tone="info">
+                {carriedCount} {carriedCount === 1 ? 'person was' : 'people were'} copied over from {before?.name ?? 'last quarter'} when this quarter started. Check them, and make
+                anyone who is back active again.
+              </Notice>
+            )}
 
-        <div className={styles.bar}>
-          <div className={styles.search}><Search size={14} aria-hidden="true" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a person" aria-label="Find a person" />{q && <button type="button" className={styles.searchClear} onClick={() => setQ('')} aria-label="Clear search"><X size={14} aria-hidden="true" /></button>}</div>
-        </div>
+            <div className={styles.bar}>
+              <div className={styles.search}>
+                <Search size={14} aria-hidden="true" />
+                <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Find a person" aria-label="Find a person" />
+                {q && (
+                  <button type="button" className={styles.searchClear} onClick={() => setQ('')} aria-label="Clear search">
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+            </div>
 
-        {editable && picked.size > 0 && (
-          <div className={styles.bulkBar} role="region" aria-label="Change several people">
-            <strong>{picked.size} selected</strong>
-            {pickedActive.length > 0 && <Button size="sm" loading={busy} onClick={() => void change(pickedActive, true)}><Moon size={14} aria-hidden="true" /> Make {pickedActive.length} inactive</Button>}
-            {pickedInactive.length > 0 && <Button size="sm" variant="secondary" loading={busy} onClick={() => void change(pickedInactive, false)}><Check size={14} aria-hidden="true" /> Make {pickedInactive.length} active</Button>}
-            <button type="button" className={styles.bulkClear} onClick={() => setPicked(new Set())}>Clear</button>
-          </div>
-        )}
+            {editable && picked.size > 0 && (
+              <div className={styles.bulkBar} role="region" aria-label="Change several people">
+                <strong>{picked.size} selected</strong>
+                {pickedActive.length > 0 && (
+                  <Button size="sm" loading={busy} onClick={() => void change(pickedActive, true)}>
+                    <Moon size={14} aria-hidden="true" /> Make {pickedActive.length} inactive
+                  </Button>
+                )}
+                {pickedInactive.length > 0 && (
+                  <Button size="sm" variant="secondary" loading={busy} onClick={() => void change(pickedInactive, false)}>
+                    <Check size={14} aria-hidden="true" /> Make {pickedInactive.length} active
+                  </Button>
+                )}
+                <button type="button" className={styles.bulkClear} onClick={() => setPicked(new Set())}>
+                  Clear
+                </button>
+              </div>
+            )}
 
-        <div className={styles.lists}>
-          {column('Active', activeList, false)}
-          {column('Inactive', inactiveList, true)}
-        </div>
-      </>)}
+            <div className={styles.lists}>
+              {column('Active', activeList, false)}
+              {column('Inactive', inactiveList, true)}
+            </div>
+          </>
+        )
+      )}
     </div>
   );
 }
@@ -199,30 +355,88 @@ function QuarterDates({ data, open, onToggle, onChanged }: { data: Data; open: b
   const [ends, setEnds] = useState('');
 
   async function call(path: string, method: string, body?: unknown, key = path) {
-    setBusy(key); setError('');
+    setBusy(key);
+    setError('');
     try {
       const r = await fetch(path, { method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined });
-      if (!r.ok) { setError((await r.json().catch(() => ({}))).error || 'That didn’t work.'); return false; }
-      await onChanged(); return true;
-    } finally { setBusy(''); }
+      if (!r.ok) {
+        setError((await r.json().catch(() => ({}))).error || 'That didn’t work.');
+        return false;
+      }
+      await onChanged();
+      return true;
+    } finally {
+      setBusy('');
+    }
   }
 
   return (
     <section className={styles.dates}>
-      <button type="button" className={styles.datesHead} onClick={onToggle} aria-expanded={open}><Settings2 size={15} aria-hidden="true" /> Quarter dates <span>{data.allQuarters.length}</span><ChevronDown size={15} aria-hidden="true" className={open ? styles.flip : ''} /></button>
+      <button type="button" className={styles.datesHead} onClick={onToggle} aria-expanded={open}>
+        <Settings2 size={15} aria-hidden="true" /> Quarter dates <span>{data.allQuarters.length}</span>
+        <ChevronDown size={15} aria-hidden="true" className={open ? styles.flip : ''} />
+      </button>
       {open && (
         <div className={styles.datesBody}>
           {error && <Notice tone="error">{error}</Notice>}
           <ul className={styles.qList}>
-            {[...data.allQuarters].sort((a, b) => b.starts_on.localeCompare(a.starts_on)).map((c) => <QuarterRow key={c.id} c={c} now={c.id === data.currentId} busy={busy === c.id} onSave={(s, e) => call(`/api/quarters/${c.id}`, 'PATCH', { starts_on: s, ends_on: e }, c.id)}
-              onDelete={async () => { if (await confirmHold({ title: `Delete ${c.name}?`, message: 'Anyone marked inactive for it is active again, and its record is gone.', confirmLabel: 'Hold to delete' })) await call(`/api/quarters/${c.id}`, 'DELETE', undefined, c.id); }} />)}
+            {[...data.allQuarters]
+              .sort((a, b) => b.starts_on.localeCompare(a.starts_on))
+              .map((c) => (
+                <QuarterRow
+                  key={c.id}
+                  c={c}
+                  now={c.id === data.currentId}
+                  busy={busy === c.id}
+                  onSave={(s, e) => call(`/api/quarters/${c.id}`, 'PATCH', { starts_on: s, ends_on: e }, c.id)}
+                  onDelete={async () => {
+                    if (
+                      await confirmHold({
+                        title: `Delete ${c.name}?`,
+                        message: 'Anyone marked inactive for it is active again, and its record is gone.',
+                        confirmLabel: 'Hold to delete',
+                      })
+                    )
+                      await call(`/api/quarters/${c.id}`, 'DELETE', undefined, c.id);
+                  }}
+                />
+              ))}
           </ul>
-          <form className={styles.addForm} onSubmit={async (e) => { e.preventDefault(); if (await call('/api/quarters', 'POST', { term, start_year: Number(startYear), starts_on: starts, ends_on: ends }, 'add')) { setStarts(''); setEnds(''); } }}>
-            <Field label="Quarter"><Select value={term} onChange={(e) => setTerm(e.target.value)} aria-label="Quarter"><option value="fall">Fall</option><option value="winter">Winter</option><option value="spring">Spring</option></Select></Field>
-            <Field label="Academic year starts in"><Select value={startYear} onChange={(e) => setStartYear(e.target.value)} aria-label="Academic year">{[thisYear - 1, thisYear, thisYear + 1].map((y) => <option key={y} value={y}>{yearLabel(y)}</option>)}</Select></Field>
-            <Field label="Starts"><DateInput value={starts} onChange={(e) => setStarts(e.target.value)} required /></Field>
-            <Field label="Ends"><DateInput value={ends} onChange={(e) => setEnds(e.target.value)} required /></Field>
-            <Button type="submit" size="sm" loading={busy === 'add'} disabled={!starts || !ends}><Plus size={14} aria-hidden="true" /> Add</Button>
+          <form
+            className={styles.addForm}
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (await call('/api/quarters', 'POST', { term, start_year: Number(startYear), starts_on: starts, ends_on: ends }, 'add')) {
+                setStarts('');
+                setEnds('');
+              }
+            }}
+          >
+            <Field label="Quarter">
+              <Select value={term} onChange={(e) => setTerm(e.target.value)} aria-label="Quarter">
+                <option value="fall">Fall</option>
+                <option value="winter">Winter</option>
+                <option value="spring">Spring</option>
+              </Select>
+            </Field>
+            <Field label="Academic year starts in">
+              <Select value={startYear} onChange={(e) => setStartYear(e.target.value)} aria-label="Academic year">
+                {[thisYear - 1, thisYear, thisYear + 1].map((y) => (
+                  <option key={y} value={y}>
+                    {yearLabel(y)}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+            <Field label="Starts">
+              <DateInput value={starts} onChange={(e) => setStarts(e.target.value)} required />
+            </Field>
+            <Field label="Ends">
+              <DateInput value={ends} onChange={(e) => setEnds(e.target.value)} required />
+            </Field>
+            <Button type="submit" size="sm" loading={busy === 'add'} disabled={!starts || !ends}>
+              <Plus size={14} aria-hidden="true" /> Add
+            </Button>
           </form>
         </div>
       )}
@@ -234,15 +448,31 @@ function QuarterRow({ c, now, busy, onSave, onDelete }: { c: Quarter; now: boole
   const [s, setS] = useState(c.starts_on);
   const [e, setE] = useState(c.ends_on);
   const changed = s !== c.starts_on || e !== c.ends_on;
-  useUnsavedChanges(changed ? { s, e } : 'CLEAN');   // stops leaving the page with unsaved dates
+  useUnsavedChanges(changed ? { s, e } : 'CLEAN'); // stops leaving the page with unsaved dates
   return (
     <li className={styles.qRow}>
       <EditingNow room={changed ? `quarter:${c.id}` : null} what={`${c.name}’s dates`} />
-      <strong>{c.name}{now && <em> now</em>}</strong>
-      <span className={styles.dateBox}><DateInput value={s} onChange={(ev) => setS(ev.target.value)} aria-label={`${c.name} starts`} /></span>
+      <strong>
+        {c.name}
+        {now && <em> now</em>}
+      </strong>
+      <span className={styles.dateBox}>
+        <DateInput value={s} onChange={(ev) => setS(ev.target.value)} aria-label={`${c.name} starts`} />
+      </span>
       <span aria-hidden="true">to</span>
-      <span className={styles.dateBox}><DateInput value={e} onChange={(ev) => setE(ev.target.value)} aria-label={`${c.name} ends`} /></span>
-      <SaveBar dirty={changed} saving={busy} message={`Unsaved dates for ${c.name}`} onSave={() => void onSave(s, e)} onDiscard={() => { setS(c.starts_on); setE(c.ends_on); }} />
+      <span className={styles.dateBox}>
+        <DateInput value={e} onChange={(ev) => setE(ev.target.value)} aria-label={`${c.name} ends`} />
+      </span>
+      <SaveBar
+        dirty={changed}
+        saving={busy}
+        message={`Unsaved dates for ${c.name}`}
+        onSave={() => void onSave(s, e)}
+        onDiscard={() => {
+          setS(c.starts_on);
+          setE(c.ends_on);
+        }}
+      />
       <IconButton kind="delete" size="sm" label={`Delete ${c.name}`} onClick={onDelete} />
     </li>
   );

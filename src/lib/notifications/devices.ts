@@ -23,9 +23,21 @@ export function describeDevice(ua: string | null | undefined): string {
 
   // On iPhone and iPad, a site opened from the Home Screen has no "Safari" in its browser string.
   const app = ios && !/Safari\//.test(s);
-  const browser = app ? 'TG Portal app'
-    : /EdgiOS|Edg\//.test(s) ? 'Edge' : /OPR\/|OPiOS/.test(s) ? 'Opera' : /SamsungBrowser/.test(s) ? 'Samsung Internet'
-    : /FxiOS|Firefox\//.test(s) ? 'Firefox' : /CriOS|Chrome\//.test(s) ? 'Chrome' : /Safari\//.test(s) ? 'Safari' : '';
+  const browser = app
+    ? 'TG Portal app'
+    : /EdgiOS|Edg\//.test(s)
+      ? 'Edge'
+      : /OPR\/|OPiOS/.test(s)
+        ? 'Opera'
+        : /SamsungBrowser/.test(s)
+          ? 'Samsung Internet'
+          : /FxiOS|Firefox\//.test(s)
+            ? 'Firefox'
+            : /CriOS|Chrome\//.test(s)
+              ? 'Chrome'
+              : /Safari\//.test(s)
+                ? 'Safari'
+                : '';
   return [device, browser, version].filter(Boolean).join(' · ');
 }
 
@@ -33,5 +45,8 @@ export function describeDevice(ua: string | null | undefined): string {
 export async function endpointFingerprint(endpoint: string): Promise<string> {
   const bytes = new TextEncoder().encode(endpoint);
   const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return [...new Uint8Array(digest)].slice(0, 8).map((b) => b.toString(16).padStart(2, '0')).join('');
+  return [...new Uint8Array(digest)]
+    .slice(0, 8)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }

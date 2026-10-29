@@ -69,7 +69,9 @@ interface DivisionOption {
 export default function RoleManager({ users: initialUsers, divisions }: { users: User[]; divisions: DivisionOption[] }) {
   const [users, setUsers] = useState(initialUsers);
   // After the page data is refreshed (for example after roles were given by pasted emails), show the new list.
-  useEffect(() => { setUsers(initialUsers); }, [initialUsers]);
+  useEffect(() => {
+    setUsers(initialUsers);
+  }, [initialUsers]);
   const [query, setQuery] = useState('');
   const [filterRole, setFilterRole] = useState<AppRole | 'all' | 'none'>('all');
   const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'joined-new' | 'joined-old'>('joined-new');
@@ -78,7 +80,9 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const [draft, setDraft] = useState<RoleGrant[]>([]);
   const [saving, setSaving] = useState(false);
   // Confirmations use the site-wide toast (see lib/toast).
-  const setToast = (msg: string | null) => { if (msg) showToast(msg); };
+  const setToast = (msg: string | null) => {
+    if (msg) showToast(msg);
+  };
   const [saveError, setSaveError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkRole, setBulkRole] = useState<AppRole>('officer');
@@ -111,9 +115,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   const mergeResults = useMemo(() => {
     if (!deleteTarget || mergeQuery.trim().length < 2) return [];
     const q = mergeQuery.trim().toLowerCase();
-    return users
-      .filter((u) => u.id !== deleteTarget.id && (u.display_name || '').toLowerCase().includes(q))
-      .slice(0, 8);
+    return users.filter((u) => u.id !== deleteTarget.id && (u.display_name || '').toLowerCase().includes(q)).slice(0, 8);
   }, [users, mergeQuery, deleteTarget]);
 
   // Confirmed by holding the button (no retyping a name or ticking a box) — see
@@ -136,8 +138,16 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
         return;
       }
       setUsers((prev) => prev.filter((u) => u.id !== deleteTarget.id));
-      setSelectedIds((prev) => { const next = new Set(prev); next.delete(deleteTarget.id); return next; });
-      setToast(mergeMode ? `Merged ${deleteTarget.display_name || 'account'} into ${mergeTarget?.display_name || 'the other account'}` : `Deleted ${deleteTarget.display_name || 'account'}`);
+      setSelectedIds((prev) => {
+        const next = new Set(prev);
+        next.delete(deleteTarget.id);
+        return next;
+      });
+      setToast(
+        mergeMode
+          ? `Merged ${deleteTarget.display_name || 'account'} into ${mergeTarget?.display_name || 'the other account'}`
+          : `Deleted ${deleteTarget.display_name || 'account'}`,
+      );
       setDeleteTarget(null);
     } catch {
       setDeleteError('Network error. Please try again.');
@@ -154,8 +164,9 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
     // email) — so "jane doe", "jane ucsd.edu" or a tag all narrow as expected.
     const tokens = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const list = users.filter((u) => {
-      if (filterRole === 'none') { if (u.user_roles.length > 0) return false; }
-      else if (filterRole !== 'all' && !u.user_roles.some((r) => r.role === filterRole)) return false;
+      if (filterRole === 'none') {
+        if (u.user_roles.length > 0) return false;
+      } else if (filterRole !== 'all' && !u.user_roles.some((r) => r.role === filterRole)) return false;
       if (tokens.length === 0) return true;
       const haystack = [
         u.display_name,
@@ -166,18 +177,15 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
         u.email,
         u.preferred_email,
         ...(u.linkedEmails ?? []).map((e) => e.email),
-      ].filter(Boolean).join(' \n ').toLowerCase();
+      ]
+        .filter(Boolean)
+        .join(' \n ')
+        .toLowerCase();
       return tokens.every((t) => haystack.includes(t));
     });
-    const byName = (a: User, b: User) =>
-      (a.display_name || '\uffff').localeCompare(b.display_name || '\uffff', undefined, { sensitivity: 'base' });
+    const byName = (a: User, b: User) => (a.display_name || '\uffff').localeCompare(b.display_name || '\uffff', undefined, { sensitivity: 'base' });
     const byJoined = (a: User, b: User) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-    return [...list].sort(
-      sortBy === 'name-asc' ? byName
-      : sortBy === 'name-desc' ? (a, b) => -byName(a, b)
-      : sortBy === 'joined-new' ? (a, b) => -byJoined(a, b)
-      : byJoined
-    );
+    return [...list].sort(sortBy === 'name-asc' ? byName : sortBy === 'name-desc' ? (a, b) => -byName(a, b) : sortBy === 'joined-new' ? (a, b) => -byJoined(a, b) : byJoined);
   }, [users, query, filterRole, sortBy]);
 
   const roleCounts = useMemo(() => {
@@ -231,7 +239,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
         setUsers((prev) => prev.map((u) => (u.id === userId ? { ...u, user_roles: [...draft, ...u.user_roles.filter((r) => r.role === 'inactive')] } : u)));
         setEditingId(null);
         setToast(`Updated ${user?.display_name || 'user'}'s roles`);
-        } else {
+      } else {
         setSaveError(data.error || `Failed to save (${res.status}).`);
       }
     } catch {
@@ -244,7 +252,8 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   function toggleSelected(userId: string, checked: boolean) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
-      if (checked) next.add(userId); else next.delete(userId);
+      if (checked) next.add(userId);
+      else next.delete(userId);
       return next;
     });
   }
@@ -280,12 +289,14 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
       const data = await res.json().catch(() => ({}));
       if (res.ok) {
         const resultsByUserId = new Map((data.results ?? []).map((r: { userId: string; roles?: RoleGrant[] }) => [r.userId, r.roles]));
-        setUsers((prev) => prev.map((u) => {
-          const roles = resultsByUserId.get(u.id);
-          return roles ? { ...u, user_roles: roles as RoleGrant[] } : u;
-        }));
+        setUsers((prev) =>
+          prev.map((u) => {
+            const roles = resultsByUserId.get(u.id);
+            return roles ? { ...u, user_roles: roles as RoleGrant[] } : u;
+          }),
+        );
         setToast(`Added ${ROLE_LABELS[bulkRole]} to ${selectedIds.size} user${selectedIds.size === 1 ? '' : 's'}`);
-          setSelectedIds(new Set());
+        setSelectedIds(new Set());
       } else {
         setBulkError(data.error || `Failed to apply (${res.status}).`);
       }
@@ -303,38 +314,28 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
       {/* Controls */}
       <div className={styles.controls}>
         <div className={styles.searchRow}>
-        <div className={styles.searchWrap}>
-          <span className={styles.searchIcon}><Search size={15} strokeWidth={1.5} aria-hidden="true" /></span>
-          <input
-            className={styles.search}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search people…"
-            autoComplete="off"
-          />
-          {query && (
-            <button className={styles.clearSearch} onClick={() => setQuery('')} aria-label="Clear"><X size={14} strokeWidth={1.75} /></button>
-          )}
-        </div>
+          <div className={styles.searchWrap}>
+            <span className={styles.searchIcon}>
+              <Search size={15} strokeWidth={1.5} aria-hidden="true" />
+            </span>
+            <input className={styles.search} value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search people…" autoComplete="off" />
+            {query && (
+              <button className={styles.clearSearch} onClick={() => setQuery('')} aria-label="Clear">
+                <X size={14} strokeWidth={1.75} />
+              </button>
+            )}
+          </div>
 
-        <Select
-          className={styles.sortSelect}
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-          aria-label="Sort members"
-        >
-          <option value="name-asc">Name A–Z</option>
-          <option value="name-desc">Name Z–A</option>
-          <option value="joined-new">Newest joined</option>
-          <option value="joined-old">Oldest joined</option>
-        </Select>
+          <Select className={styles.sortSelect} value={sortBy} onChange={(e) => setSortBy(e.target.value as typeof sortBy)} aria-label="Sort members">
+            <option value="name-asc">Name A–Z</option>
+            <option value="name-desc">Name Z–A</option>
+            <option value="joined-new">Newest joined</option>
+            <option value="joined-old">Oldest joined</option>
+          </Select>
         </div>
 
         <div className={styles.roleFilters}>
-          <button
-            className={`${styles.roleFilter} ${filterRole === 'all' ? styles.roleFilterActive : ''}`}
-            onClick={() => setFilterRole('all')}
-          >
+          <button className={`${styles.roleFilter} ${filterRole === 'all' ? styles.roleFilterActive : ''}`} onClick={() => setFilterRole('all')}>
             All <span className={styles.count}>{roleCounts.all}</span>
           </button>
           <button
@@ -358,28 +359,63 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
       </div>
 
       <p className={styles.resultCount} role="status" aria-live="polite">
-        {filtered.length === users.length ? <><b>{users.length.toLocaleString()}</b> accounts</> : <>Showing <b>{filtered.length.toLocaleString()}</b> of <b>{users.length.toLocaleString()}</b> accounts</>}
+        {filtered.length === users.length ? (
+          <>
+            <b>{users.length.toLocaleString()}</b> accounts
+          </>
+        ) : (
+          <>
+            Showing <b>{filtered.length.toLocaleString()}</b> of <b>{users.length.toLocaleString()}</b> accounts
+          </>
+        )}
       </p>
 
       {selectedIds.size > 0 && (
         <div className={styles.bulkBar}>
           <span className={styles.bulkCount}>{selectedIds.size} selected</span>
-          <Select className={styles.bulkSelect} value={bulkRole} onChange={(e) => { setBulkRole(e.target.value as AppRole); setBulkError(null); }}>
+          <Select
+            className={styles.bulkSelect}
+            value={bulkRole}
+            onChange={(e) => {
+              setBulkRole(e.target.value as AppRole);
+              setBulkError(null);
+            }}
+          >
             {ASSIGNABLE_ROLES.map((r) => (
-              <option key={r} value={r}>Add {ROLE_LABELS[r]}</option>
+              <option key={r} value={r}>
+                Add {ROLE_LABELS[r]}
+              </option>
             ))}
           </Select>
           {bulkRole === 'division' && (
             <Select className={styles.bulkSelect} value={bulkDivisionId} onChange={(e) => setBulkDivisionId(e.target.value)}>
               <option value="">Choose division…</option>
               {divisions.map((d) => (
-                <option key={d.id} value={d.id}>{d.name}</option>
+                <option key={d.id} value={d.id}>
+                  {d.name}
+                </option>
               ))}
             </Select>
           )}
-          <Button size="sm" onClick={applyBulkRole} loading={bulkApplying}>{bulkApplying ? 'Applying…' : `Apply to ${selectedIds.size}`}</Button>
-          <Button size="sm" variant="ghost" onClick={() => { setSelectedIds(new Set()); setBulkError(null); }} disabled={bulkApplying}>Clear</Button>
-          {bulkError && <Notice tone="error" compact>{bulkError}</Notice>}
+          <Button size="sm" onClick={applyBulkRole} loading={bulkApplying}>
+            {bulkApplying ? 'Applying…' : `Apply to ${selectedIds.size}`}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => {
+              setSelectedIds(new Set());
+              setBulkError(null);
+            }}
+            disabled={bulkApplying}
+          >
+            Clear
+          </Button>
+          {bulkError && (
+            <Notice tone="error" compact>
+              {bulkError}
+            </Notice>
+          )}
         </div>
       )}
 
@@ -434,9 +470,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                       </span>
                     </div>
                     {user.linkedEmails && user.linkedEmails.length > 0 ? (
-                      <div className={styles.userEmail}>
-                        {user.linkedEmails.map((e) => e.email).join(' · ')}
-                      </div>
+                      <div className={styles.userEmail}>{user.linkedEmails.map((e) => e.email).join(' · ')}</div>
                     ) : (
                       user.email && <div className={styles.userEmail}>{user.email}</div>
                     )}
@@ -459,14 +493,16 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                           {/* A user can lead more than one division at once now — name it
                               on the badge itself, otherwise two "Division Lead" badges in a
                               row look like a duplicate/bug rather than two real grants. */}
-                          {r.role === 'division' && r.division_id
-                            ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}`
-                            : ROLE_LABELS[r.role]}
+                          {r.role === 'division' && r.division_id ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}` : ROLE_LABELS[r.role]}
                         </span>
                       ))
                     )}
-                    <Button size="sm" variant="secondary" onClick={() => setDetailId(user.id)}>Details</Button>
-                    <Button size="sm" variant="secondary" onClick={() => startEditing(user)}><Pencil size={13} aria-hidden="true" /> Edit roles</Button>
+                    <Button size="sm" variant="secondary" onClick={() => setDetailId(user.id)}>
+                      Details
+                    </Button>
+                    <Button size="sm" variant="secondary" onClick={() => startEditing(user)}>
+                      <Pencil size={13} aria-hidden="true" /> Edit roles
+                    </Button>
                     <IconButton kind="delete" label={`Delete ${user.display_name || 'user'}'s account`} onClick={() => openDeleteModal(user)} />
                   </div>
                 ) : (
@@ -478,11 +514,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                           can lead more than one division at once. */}
                       {ASSIGNABLE_ROLES.filter((r) => r !== 'division').map((r) => (
                         <label key={r} className={styles.checkboxLabel}>
-                          <input
-                            type="checkbox"
-                            checked={draft.some((d) => d.role === r)}
-                            onChange={(e) => toggleDraftRole(r, e.target.checked)}
-                          />
+                          <input type="checkbox" checked={draft.some((d) => d.role === r)} onChange={(e) => toggleDraftRole(r, e.target.checked)} />
                           <span style={{ color: roleInk(ROLE_COLORS[r]) }}>{ROLE_LABELS[r]}</span>
                         </label>
                       ))}
@@ -506,7 +538,17 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                     </div>
                     {saveError && <Notice tone="error">{saveError}</Notice>}
                     <div className={styles.editActions}>
-                      <Button size="sm" variant="ghost" onClick={() => { setEditingId(null); setSaveError(null); }} disabled={saving}>{rolesDirty ? 'Close without saving' : 'Close'}</Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => {
+                          setEditingId(null);
+                          setSaveError(null);
+                        }}
+                        disabled={saving}
+                      >
+                        {rolesDirty ? 'Close without saving' : 'Close'}
+                      </Button>
                     </div>
                   </div>
                 )}
@@ -526,11 +568,17 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
           onClose={closeDeleteModal}
         >
           <DialogText>
-            This permanently removes their profile, tickets, points, redemptions, and role
-            history. <strong>This cannot be undone.</strong>
+            This permanently removes their profile, tickets, points, redemptions, and role history. <strong>This cannot be undone.</strong>
           </DialogText>
 
-          <DialogCheck checked={mergeMode} onChange={(checked) => { setMergeMode(checked); setMergeTarget(null); setMergeQuery(''); }}>
+          <DialogCheck
+            checked={mergeMode}
+            onChange={(checked) => {
+              setMergeMode(checked);
+              setMergeTarget(null);
+              setMergeQuery('');
+            }}
+          >
             Merge their data into another account instead of deleting it
           </DialogCheck>
 
@@ -539,12 +587,21 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
               <DialogInput
                 placeholder="Search the account to merge into…"
                 value={mergeTarget ? mergeTarget.display_name || 'Unnamed' : mergeQuery}
-                onChange={(e) => { setMergeTarget(null); setMergeQuery(e.target.value); }}
+                onChange={(e) => {
+                  setMergeTarget(null);
+                  setMergeQuery(e.target.value);
+                }}
               />
               {mergeResults.length > 0 && !mergeTarget && (
                 <DialogResults>
                   {mergeResults.map((u) => (
-                    <DialogResult key={u.id} onClick={() => { setMergeTarget(u); setMergeQuery(''); }}>
+                    <DialogResult
+                      key={u.id}
+                      onClick={() => {
+                        setMergeTarget(u);
+                        setMergeQuery('');
+                      }}
+                    >
                       {u.display_name || 'Unnamed'}
                     </DialogResult>
                   ))}
@@ -553,14 +610,13 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
             </DialogSearch>
           )}
 
-          {deleteError && <Notice tone="error" onLight>{deleteError}</Notice>}
+          {deleteError && (
+            <Notice tone="error" onLight>
+              {deleteError}
+            </Notice>
+          )}
 
-          <HoldButton
-            label={mergeMode ? 'Hold to merge & delete' : 'Hold to delete account'}
-            onConfirm={handleConfirmDelete}
-            disabled={!canConfirmDelete}
-            busy={deleting}
-          />
+          <HoldButton label={mergeMode ? 'Hold to merge & delete' : 'Hold to delete account'} onConfirm={handleConfirmDelete} disabled={!canConfirmDelete} busy={deleting} />
           <DialogCancel onClick={closeDeleteModal} disabled={deleting} />
         </Dialog>
       )}

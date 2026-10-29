@@ -8,13 +8,21 @@
 const KEY = 'tg-toast';
 export const TOAST_EVENT = 'tg:toast';
 
-interface Stored { message: string; at: number; shown: boolean }
+interface Stored {
+  message: string;
+  at: number;
+  shown: boolean;
+}
 
 export function showToast(message: string, opts: { nextPage?: boolean; tone?: 'ok' | 'warn' } = {}) {
   if (typeof window === 'undefined') return;
   const stored: Stored = { message, at: Date.now(), shown: !opts.nextPage };
-  try { sessionStorage.setItem(KEY, JSON.stringify(stored)); } catch { /* private mode etc. */ }
-  if (!opts.nextPage) window.dispatchEvent(new CustomEvent(TOAST_EVENT, { detail: opts.tone === 'warn' ? { message, tone: 'warn' } : message }));   // a plain string is a saved message
+  try {
+    sessionStorage.setItem(KEY, JSON.stringify(stored));
+  } catch {
+    /* private mode etc. */
+  }
+  if (!opts.nextPage) window.dispatchEvent(new CustomEvent(TOAST_EVENT, { detail: opts.tone === 'warn' ? { message, tone: 'warn' } : message })); // a plain string is a saved message
 }
 
 // Called by ToastHost on mount: a message left for this page by a save that navigated.

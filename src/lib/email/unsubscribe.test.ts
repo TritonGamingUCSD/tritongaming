@@ -1,7 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { unsubscribeToken, unsubscribeUrl, verifyUnsubscribeToken } from './unsubscribe';
 
-beforeAll(() => { process.env.EMAIL_LINK_SECRET = 'test-secret'; });
+beforeAll(() => {
+  process.env.EMAIL_LINK_SECRET = 'test-secret';
+});
 
 describe('opt-out link', () => {
   const user = '11111111-2222-3333-4444-555555555555';

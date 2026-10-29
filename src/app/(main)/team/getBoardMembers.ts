@@ -77,9 +77,7 @@ export function getBoardMembers(): Promise<BoardMember[]> {
 async function fetchBoardMembers(): Promise<BoardMember[]> {
   const supabase = createPublicClient();
 
-  const { data, error } = await supabase
-    .from('profiles')
-    .select(`
+  const { data, error } = await supabase.from('profiles').select(`
       id, display_name, avatar_url, custom_avatar_url, org_title, bio, major, minor, year, college, gamer_tag, pronouns, show_on_board, social_links, portfolio_links, game_ids, board_visibility, board_order, board_email,
       user_roles!user_roles_user_id_fkey(role)
     `);
@@ -88,8 +86,7 @@ async function fetchBoardMembers(): Promise<BoardMember[]> {
 
   const rows = (data as unknown as BoardProfileRow[]).filter((row) => {
     const roles = (row.user_roles ?? []).map((r) => r.role);
-    return roles.includes('exec') || roles.includes('lead') || roles.includes('officer')
-      || (roles.includes('alumni') && row.show_on_board);
+    return roles.includes('exec') || roles.includes('lead') || roles.includes('officer') || (roles.includes('alumni') && row.show_on_board);
   });
 
   // Emails live in auth.users, not public.profiles — only reachable via the
@@ -106,20 +103,27 @@ async function fetchBoardMembers(): Promise<BoardMember[]> {
   if (wantsEmail.length > 0) {
     const serviceClient = createServiceClient();
     const picked = wantsEmail.filter((row) => row.board_email);
-    const linked = picked.length ? await fetchLinkedEmails(serviceClient, picked.map((r) => r.id)) : new Map();
-    await Promise.all(wantsEmail.map(async (row) => {
-      try {
-        if (row.board_email && (linked.get(row.id) ?? []).some((e: { email: string }) => e.email === row.board_email)) {
-          emailById.set(row.id, row.board_email);
-          return;
+    const linked = picked.length
+      ? await fetchLinkedEmails(
+          serviceClient,
+          picked.map((r) => r.id),
+        )
+      : new Map();
+    await Promise.all(
+      wantsEmail.map(async (row) => {
+        try {
+          if (row.board_email && (linked.get(row.id) ?? []).some((e: { email: string }) => e.email === row.board_email)) {
+            emailById.set(row.id, row.board_email);
+            return;
+          }
+          const { data, error: authError } = await serviceClient.auth.admin.getUserById(row.id);
+          if (authError) throw authError;
+          emailById.set(row.id, data.user?.email ?? null);
+        } catch (err) {
+          console.error(`[about] failed to load email for board member ${row.id}:`, err);
         }
-        const { data, error: authError } = await serviceClient.auth.admin.getUserById(row.id);
-        if (authError) throw authError;
-        emailById.set(row.id, data.user?.email ?? null);
-      } catch (err) {
-        console.error(`[about] failed to load email for board member ${row.id}:`, err);
-      }
-    }));
+      }),
+    );
   }
 
   const members: BoardMember[] = rows.map((row) => {

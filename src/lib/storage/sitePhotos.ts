@@ -8,7 +8,12 @@ export const SITE_PHOTOS = {
   inside: { src: '/images/inside_tg.jpg', alt: 'Officers running an event on stage', credit: 'Justin Lu', creditUrl: 'https://www.instagram.com/justinzlu/' },
   community: { src: '/images/community_tg.jpg', alt: 'Members playing mahjong at a social', credit: 'Justin Lu', creditUrl: 'https://www.instagram.com/justinzlu/' },
   events: { src: '/images/events_tg.JPG', alt: 'A hall full of gaming PCs at a TG event', credit: 'Mina Yang', creditUrl: 'https://www.instagram.com/tritongamingsd' },
-  stage: { src: '/images/what_is_triton_gaming_justinlu.jpg', alt: 'Officers and members at a Triton Gaming event', credit: 'Justin Lu', creditUrl: 'https://www.instagram.com/justinzlu/' },
+  stage: {
+    src: '/images/what_is_triton_gaming_justinlu.jpg',
+    alt: 'Officers and members at a Triton Gaming event',
+    credit: 'Justin Lu',
+    creditUrl: 'https://www.instagram.com/justinzlu/',
+  },
 } satisfies Record<string, SitePhoto>;
 
 const DEFAULTS: SitePhoto[] = [SITE_PHOTOS.inside, SITE_PHOTOS.community, SITE_PHOTOS.events, SITE_PHOTOS.stage];

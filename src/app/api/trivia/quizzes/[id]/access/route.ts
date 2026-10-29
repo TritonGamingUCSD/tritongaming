@@ -10,7 +10,8 @@ async function manager(id: string) {
   if (auth.error) return { error: auth.error };
   const quiz = await findQuiz(auth.svc, id);
   if (!quiz) return { error: NextResponse.json({ error: 'That quiz is gone.' }, { status: 404 }) };
-  if (!auth.isAdmin && quiz.created_by !== auth.user.id) return { error: NextResponse.json({ error: 'Only the quiz’s creator or an Admin can change who it is shared with.' }, { status: 403 }) };
+  if (!auth.isAdmin && quiz.created_by !== auth.user.id)
+    return { error: NextResponse.json({ error: 'Only the quiz’s creator or an Admin can change who it is shared with.' }, { status: 403 }) };
   return { auth, quiz };
 }
 
@@ -25,7 +26,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const have = (access.data ?? []).map((a) => a.user_id as string);
   const ids = [...new Set([...(roles.data ?? []).map((r) => r.user_id as string), ...have, ...(quiz.created_by ? [quiz.created_by] : [])])];
   const names = new Map<string, string>();
-  if (ids.length) for (const p of (await auth.svc.from('profiles').select('id, display_name').in('id', ids).limit(5000)).data ?? []) names.set(p.id as string, (p.display_name as string | null)?.trim() || 'Member');
+  if (ids.length)
+    for (const p of (await auth.svc.from('profiles').select('id, display_name').in('id', ids).limit(5000)).data ?? [])
+      names.set(p.id as string, (p.display_name as string | null)?.trim() || 'Member');
   const people = ids.map((id) => ({ id, name: names.get(id) ?? 'Member' })).sort((a, b) => a.name.localeCompare(b.name));
   return NextResponse.json({ people, members: have, creator: quiz.created_by });
 }

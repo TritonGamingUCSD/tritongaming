@@ -6,7 +6,9 @@ export const dynamic = 'force-dynamic';
 // returns to the check-in. Kept as a short, plain route so the QR code stays simple and scans fast.
 export async function GET(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const clean = decodeURIComponent(slug).replace(/[^A-Za-z0-9_-]/g, '').slice(0, 120);
+  const clean = decodeURIComponent(slug)
+    .replace(/[^A-Za-z0-9_-]/g, '')
+    .slice(0, 120);
   const res = NextResponse.redirect(new URL(`/portal/in/${clean}`, request.url), 307);
   res.headers.set('Cache-Control', 'no-store');
   res.headers.set('X-Robots-Tag', 'noindex');

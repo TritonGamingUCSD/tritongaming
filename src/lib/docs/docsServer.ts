@@ -9,7 +9,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 // 'manage_docs' = lead, exec, admin (write); 'view_docs' = everyone who can read the docs. The routes use the service client, so this is the real boundary.
 export async function authorizeDocs(capability: 'manage_docs' | 'view_docs') {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const svc = createServiceClient();
@@ -23,7 +25,8 @@ export async function authorizeDocs(capability: 'manage_docs' | 'view_docs') {
 export const UUID = /^[0-9a-f-]{36}$/i;
 export const MAX_DOC_CHARS = 200_000;
 export const bad = (error: string, status = 400) => NextResponse.json({ error }, { status });
-export const DOC_COLUMNS = 'id, slug, title, category_id, parent_id, order_index, content, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, pin_order, published, revision, teams, reviewed_at, reviewed_by';
+export const DOC_COLUMNS =
+  'id, slug, title, category_id, parent_id, order_index, content, created_by, updated_by, created_at, updated_at, icon, cover_url, tags, pinned, pin_order, published, revision, teams, reviewed_at, reviewed_by';
 export const DRAFT_COLUMNS = 'draft_title, draft_content, draft_updated_at, draft_updated_by';
 
 export const EDITING_WINDOW_MS = 60_000;
@@ -37,8 +40,16 @@ export async function namesOf(svc: SupabaseClient, ids: (string | null | undefin
 // Who (other than `me`) has these docs open in the editor right now: doc id -> names.
 export async function editingNow(svc: SupabaseClient, docIds: string[], me: string): Promise<Map<string, string[]>> {
   if (!docIds.length) return new Map();
-  const { data } = await svc.from('doc_editing').select('doc_id, user_id').in('doc_id', docIds).neq('user_id', me).gte('last_seen', new Date(Date.now() - EDITING_WINDOW_MS).toISOString());
-  const names = await namesOf(svc, (data ?? []).map((r) => r.user_id as string));
+  const { data } = await svc
+    .from('doc_editing')
+    .select('doc_id, user_id')
+    .in('doc_id', docIds)
+    .neq('user_id', me)
+    .gte('last_seen', new Date(Date.now() - EDITING_WINDOW_MS).toISOString());
+  const names = await namesOf(
+    svc,
+    (data ?? []).map((r) => r.user_id as string),
+  );
   const out = new Map<string, string[]>();
   for (const r of data ?? []) out.set(r.doc_id as string, [...(out.get(r.doc_id as string) ?? []), names.get(r.user_id as string) ?? 'Someone']);
   return out;

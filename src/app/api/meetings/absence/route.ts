@@ -26,9 +26,13 @@ export async function GET(request: Request) {
   // An occurrence nobody has opened yet still carries its series' standing absences (from a weekly plan).
   const { data: abs } = found.meeting
     ? await auth.svc.from('meeting_absences').select('user_id, reason, excused').eq('meeting_id', found.meeting.id)
-    : found.series ? await auth.svc.from('meeting_series_absences').select('user_id, reason, excused').eq('series_id', found.series.id) : { data: [] as { user_id: string; reason: string | null; excused: boolean }[] };
+    : found.series
+      ? await auth.svc.from('meeting_series_absences').select('user_id, reason, excused').eq('series_id', found.series.id)
+      : { data: [] as { user_id: string; reason: string | null; excused: boolean }[] };
   const seriesId = found.meeting?.series_id ?? found.series?.id ?? null;
-  const { data: standingRows } = seriesId ? await auth.svc.from('meeting_series_absences').select('user_id, plan_id').eq('series_id', seriesId) : { data: [] as { user_id: string; plan_id: string | null }[] };
+  const { data: standingRows } = seriesId
+    ? await auth.svc.from('meeting_series_absences').select('user_id, plan_id').eq('series_id', seriesId)
+    : { data: [] as { user_id: string; plan_id: string | null }[] };
   const everyWeek = new Map((standingRows ?? []).map((r) => [r.user_id as string, r.plan_id as string | null]));
   const name = new Map(expected.map((p) => [p.id, p.name]));
   const missing = (abs ?? []).map((a) => a.user_id as string).filter((id) => !name.has(id));
@@ -38,7 +42,14 @@ export async function GET(request: Request) {
   }
   return NextResponse.json({
     people: expected.map((p) => ({ id: p.id, name: p.name })),
-    absences: (abs ?? []).map((a) => ({ user_id: a.user_id, name: name.get(a.user_id as string) ?? 'Unnamed', reason: a.reason, excused: a.excused, every_week: everyWeek.has(a.user_id as string), from_plan: !!everyWeek.get(a.user_id as string) })),
+    absences: (abs ?? []).map((a) => ({
+      user_id: a.user_id,
+      name: name.get(a.user_id as string) ?? 'Unnamed',
+      reason: a.reason,
+      excused: a.excused,
+      every_week: everyWeek.has(a.user_id as string),
+      from_plan: !!everyWeek.get(a.user_id as string),
+    })),
     repeating: !!seriesId,
   });
 }
@@ -52,18 +63,30 @@ export async function POST(request: Request) {
   if ('error' in found) return found.error;
   const m = found.meeting;
   if (!m) return NextResponse.json({ error: 'Meeting not found.' }, { status: 404 });
-  const reason = String(b.reason ?? '').trim().slice(0, 140) || null;
+  const reason =
+    String(b.reason ?? '')
+      .trim()
+      .slice(0, 140) || null;
   const excused = b.excused !== false;
   // Someone marked absent can't also be recorded as present (or have an answer on file).
   await auth.svc.from('meeting_attendance').delete().eq('meeting_id', m.id).eq('user_id', b.user_id);
   await auth.svc.from('meeting_answers').delete().eq('meeting_id', m.id).eq('user_id', b.user_id);
-  const { error } = await auth.svc.from('meeting_absences').upsert({ meeting_id: m.id, user_id: b.user_id, reason, excused, marked_by: auth.user.id }, { onConflict: 'meeting_id,user_id' });
+  const { error } = await auth.svc
+    .from('meeting_absences')
+    .upsert({ meeting_id: m.id, user_id: b.user_id, reason, excused, marked_by: auth.user.id }, { onConflict: 'meeting_id,user_id' });
   if (error) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });
   if (b.repeat === true) {
     if (!m.series_id) return NextResponse.json({ error: 'Only a repeating meeting can be excused every week.' }, { status: 400 });
     await markEveryWeek(auth.svc, m.series_id, String(b.user_id), reason, excused, auth.user.id);
   }
-  await logAudit(auth.svc, { actorId: auth.user.id, action: 'mark absent', entityType: 'meeting attendance', entityId: m.id, summary: `Marked someone ${excused ? 'excused' : 'absent'} ahead of ${m.title} (${m.meeting_date})${reason ? `: ${reason}` : ''}`, details: { user_id: b.user_id } });
+  await logAudit(auth.svc, {
+    actorId: auth.user.id,
+    action: 'mark absent',
+    entityType: 'meeting attendance',
+    entityId: m.id,
+    summary: `Marked someone ${excused ? 'excused' : 'absent'} ahead of ${m.title} (${m.meeting_date})${reason ? `: ${reason}` : ''}`,
+    details: { user_id: b.user_id },
+  });
   await notifyMeetingLive(m.id);
   return NextResponse.json({ ok: true, meeting_id: m.id });
 }

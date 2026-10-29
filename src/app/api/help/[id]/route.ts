@@ -23,21 +23,33 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const ids = [...new Set([t.user_id, t.assigned_to, ...messages.map((m) => m.author_id)].filter((x): x is string => !!x))];
   const { data: people } = await auth.svc.from('profiles').select('id, display_name').in('id', ids);
   const names = new Map((people ?? []).map((p) => [p.id as string, (p.display_name as string | null) || 'Unnamed']));
-  const signed = await signAttachments(auth.svc, messages.flatMap((m) => m.attachments));
+  const signed = await signAttachments(
+    auth.svc,
+    messages.flatMap((m) => m.attachments),
+  );
   const urlOf = new Map(signed.map((s) => [s.path, s.url]));
   const staffAuthors = new Set((await auth.svc.from('user_roles').select('user_id').in('role', ['exec', 'admin']).in('user_id', ids)).data?.map((r) => r.user_id as string) ?? []);
   // Admins see an "Approve this role" box on a role request: the roles a request can ask for, the person's current ones, and the divisions to pick from.
   const asksRole = auth.canGrantRoles && t.user_id !== auth.user.id && /^role (or access )?request/i.test(t.subject);
-  const [{ data: have }, { data: divs }] = asksRole ? await Promise.all([
-    auth.svc.from('user_roles').select('role, division_id').eq('user_id', t.user_id),
-    auth.svc.from('divisions').select('id, name').order('name'),
-  ]) : [{ data: null }, { data: null }];
+  const [{ data: have }, { data: divs }] = asksRole
+    ? await Promise.all([auth.svc.from('user_roles').select('role, division_id').eq('user_id', t.user_id), auth.svc.from('divisions').select('id, name').order('name')])
+    : [{ data: null }, { data: null }];
   return NextResponse.json({
     isStaff: auth.isStaff,
     roleGrant: asksRole ? { have: have ?? [], divisions: divs ?? [] } : null,
-    ticket: { ...t, user_agent: auth.isStaff ? t.user_agent : null, page: auth.isStaff ? t.page : null, user_name: names.get(t.user_id) ?? 'Unnamed', assignee_name: t.assigned_to ? names.get(t.assigned_to) ?? null : null },
+    ticket: {
+      ...t,
+      user_agent: auth.isStaff ? t.user_agent : null,
+      page: auth.isStaff ? t.page : null,
+      user_name: names.get(t.user_id) ?? 'Unnamed',
+      assignee_name: t.assigned_to ? (names.get(t.assigned_to) ?? null) : null,
+    },
     messages: messages.map((m) => ({
-      id: m.id, body: m.body, created_at: m.created_at, author_id: m.author_id, author_name: names.get(m.author_id) ?? 'Unnamed',
+      id: m.id,
+      body: m.body,
+      created_at: m.created_at,
+      author_id: m.author_id,
+      author_name: names.get(m.author_id) ?? 'Unnamed',
       from_staff: m.author_id !== t.user_id && staffAuthors.has(m.author_id),
       attachments: m.attachments.map((p) => urlOf.get(p)).filter((u): u is string => !!u),
     })),
@@ -79,10 +91,21 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       const { data: who } = to ? await auth.svc.from('profiles').select('display_name').eq('id', to).maybeSingle() : { data: null };
       parts.push(to ? `assigned it to ${(who?.display_name as string | null) ?? 'someone'}` : 'unassigned it');
     }
-    await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'help ticket', entityId: id, summary: `Help ticket "${t.subject.slice(0, 80)}": ${parts.join(' and ')}`, details: { status: patch.status ?? null, assigned_to: 'assigned_to' in patch ? patch.assigned_to : undefined } });
+    await logAudit(auth.svc, {
+      actorId: auth.user.id,
+      action: 'update',
+      entityType: 'help ticket',
+      entityId: id,
+      summary: `Help ticket "${t.subject.slice(0, 80)}": ${parts.join(' and ')}`,
+      details: { status: patch.status ?? null, assigned_to: 'assigned_to' in patch ? patch.assigned_to : undefined },
+    });
   }
   if (auth.isStaff && patch.status === 'resolved' && t.user_id !== auth.user.id) {
-    await notify(auth.svc, [t.user_id], { title: `Resolved: ${t.subject}`, body: 'Your help ticket was marked resolved. Reply on it if you still need help.', href: `/portal/help?ticket=${id}` });
+    await notify(auth.svc, [t.user_id], {
+      title: `Resolved: ${t.subject}`,
+      body: 'Your help ticket was marked resolved. Reply on it if you still need help.',
+      href: `/portal/help?ticket=${id}`,
+    });
   }
   return NextResponse.json({ ok: true });
 }

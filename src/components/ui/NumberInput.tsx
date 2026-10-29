@@ -13,15 +13,20 @@ export default function NumberInput({ className = '', disabled, ...rest }: Omit<
   function bump(dir: 1 | -1) {
     const el = ref.current;
     if (!el || disabled) return;
-    if (dir > 0) el.stepUp(); else el.stepDown();
-    el.dispatchEvent(new Event('input', { bubbles: true }));   // lets React's onChange see the new value
+    if (dir > 0) el.stepUp();
+    else el.stepDown();
+    el.dispatchEvent(new Event('input', { bubbles: true })); // lets React's onChange see the new value
   }
   return (
     <span className={styles.wrap}>
       <input ref={ref} type="number" inputMode="decimal" disabled={disabled} className={`${styles.input} ${className}`} {...rest} />
       <span className={styles.steppers}>
-        <button type="button" tabIndex={-1} className={styles.step} onClick={() => bump(1)} disabled={disabled} aria-label="Increase"><ChevronUp size={12} strokeWidth={2.5} aria-hidden="true" /></button>
-        <button type="button" tabIndex={-1} className={styles.step} onClick={() => bump(-1)} disabled={disabled} aria-label="Decrease"><ChevronDown size={12} strokeWidth={2.5} aria-hidden="true" /></button>
+        <button type="button" tabIndex={-1} className={styles.step} onClick={() => bump(1)} disabled={disabled} aria-label="Increase">
+          <ChevronUp size={12} strokeWidth={2.5} aria-hidden="true" />
+        </button>
+        <button type="button" tabIndex={-1} className={styles.step} onClick={() => bump(-1)} disabled={disabled} aria-label="Decrease">
+          <ChevronDown size={12} strokeWidth={2.5} aria-hidden="true" />
+        </button>
       </span>
     </span>
   );

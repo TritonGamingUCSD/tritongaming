@@ -15,7 +15,9 @@ import { canCheckInNow } from '@/lib/events/checkinDays';
 // code in here.
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { event_id, code } = await request.json();
@@ -27,12 +29,7 @@ export async function POST(request: Request) {
 
   // The real anti-sharing gate: entering a leaked/shared code does nothing
   // for someone who never actually registered for this specific event.
-  const { data: ticket } = await serviceClient
-    .from('tickets')
-    .select('id, user_id, status, event_id')
-    .eq('event_id', event_id)
-    .eq('user_id', user.id)
-    .maybeSingle();
+  const { data: ticket } = await serviceClient.from('tickets').select('id, user_id, status, event_id').eq('event_id', event_id).eq('user_id', user.id).maybeSingle();
 
   if (!ticket) {
     return NextResponse.json({ error: "You don't have a ticket for this event." }, { status: 403 });
@@ -48,9 +45,7 @@ export async function POST(request: Request) {
 
   const normalizedCode = String(code).trim();
   const windowIndex = currentEventCodeWindow();
-  const valid =
-    rotatingCode(event.checkin_secret, windowIndex) === normalizedCode ||
-    rotatingCode(event.checkin_secret, windowIndex - 1) === normalizedCode;
+  const valid = rotatingCode(event.checkin_secret, windowIndex) === normalizedCode || rotatingCode(event.checkin_secret, windowIndex - 1) === normalizedCode;
 
   if (!valid) {
     return NextResponse.json({ error: 'That code is incorrect or has expired — ask for the current one.' }, { status: 400 });
@@ -63,11 +58,18 @@ export async function POST(request: Request) {
   const { error: checkinError } = await performCheckin(
     serviceClient,
     ticket,
-    { title: event.title, points_value: event.points_value, start_date: event.start_date, end_date: event.end_date, requires_checkin_form: event.requires_checkin_form, checkin_windows: event.checkin_windows },
-    user.id
+    {
+      title: event.title,
+      points_value: event.points_value,
+      start_date: event.start_date,
+      end_date: event.end_date,
+      requires_checkin_form: event.requires_checkin_form,
+      checkin_windows: event.checkin_windows,
+    },
+    user.id,
   );
   if (checkinError) {
-    const status = (checkinError.includes('already ended') || checkinError.startsWith('Check-in for today') || checkinError.startsWith('Already')) ? 409 : 500;
+    const status = checkinError.includes('already ended') || checkinError.startsWith('Check-in for today') || checkinError.startsWith('Already') ? 409 : 500;
     return NextResponse.json({ error: checkinError }, { status });
   }
 

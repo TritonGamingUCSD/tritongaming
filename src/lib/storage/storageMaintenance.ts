@@ -11,7 +11,13 @@ import { logAudit } from '@/lib/notifications/audit';
 const MIN_AGE_MS = 24 * 60 * 60 * 1000;
 const IMAGE_EXT = /\.(jpe?g|png|webp)$/i;
 
-export interface MaintenanceResult { deletedFiles: number; deletedBytes: number; compressedFiles: number; savedBytes: number; failed: number }
+export interface MaintenanceResult {
+  deletedFiles: number;
+  deletedBytes: number;
+  compressedFiles: number;
+  savedBytes: number;
+  failed: number;
+}
 
 // Buckets the tidy-up deletes from. What is "in use" comes from storage_referenced_paths(), which reads every text/jsonb column in
 // the database, so anything a page, event theme, doc or profile still links to is kept.
@@ -20,7 +26,15 @@ export const SWEPT_BUCKETS = MANAGED_BUCKETS.map((b) => b.bucket);
 export async function findUnused(svc: SupabaseClient, minAgeMs = MIN_AGE_MS): Promise<{ bucket: string; path: string; size: number }[]> {
   const { data, error } = await svc.rpc('storage_referenced_paths');
   if (error || !Array.isArray(data)) throw new Error('Could not read which files are in use, so nothing was deleted.');
-  const referenced = new Set<string>((data as string[]).map((p) => { try { return decodeURIComponent(p); } catch { return p; } }));
+  const referenced = new Set<string>(
+    (data as string[]).map((p) => {
+      try {
+        return decodeURIComponent(p);
+      } catch {
+        return p;
+      }
+    }),
+  );
   const cutoff = Date.now() - minAgeMs;
   const out: { bucket: string; path: string; size: number }[] = [];
   for (const bucket of SWEPT_BUCKETS) {
@@ -39,7 +53,10 @@ export async function sweepUnused(svc: SupabaseClient): Promise<Pick<Maintenance
     if (mine.length === 0) continue;
     const { error } = await svc.storage.from(bucket).remove(mine.map((u) => u.path));
     if (error) out.failed += mine.length;
-    else { out.deletedFiles += mine.length; out.deletedBytes += mine.reduce((n, u) => n + u.size, 0); }
+    else {
+      out.deletedFiles += mine.length;
+      out.deletedBytes += mine.reduce((n, u) => n + u.size, 0);
+    }
   }
   return out;
 }
@@ -51,13 +68,22 @@ export async function compressStored(svc: SupabaseClient): Promise<Pick<Maintena
     for (const o of (await listAllObjects(svc, bucket)).filter((x) => IMAGE_EXT.test(x.path))) {
       try {
         const { data: blob, error } = await svc.storage.from(bucket).download(o.path);
-        if (error || !blob) { out.failed++; continue; }
+        if (error || !blob) {
+          out.failed++;
+          continue;
+        }
         const smaller = await optimizeImage(bucket, Buffer.from(await blob.arrayBuffer()));
         if (!smaller) continue;
         const { error: upErr } = await svc.storage.from(bucket).upload(o.path, smaller.bytes, { contentType: smaller.mime, upsert: true, cacheControl: '31536000' });
-        if (upErr) { out.failed++; continue; }
-        out.compressedFiles++; out.savedBytes += o.size - smaller.bytes.length;
-      } catch { out.failed++; }
+        if (upErr) {
+          out.failed++;
+          continue;
+        }
+        out.compressedFiles++;
+        out.savedBytes += o.size - smaller.bytes.length;
+      } catch {
+        out.failed++;
+      }
     }
   }
   return out;
@@ -70,7 +96,12 @@ export async function runStorageMaintenance(svc: SupabaseClient): Promise<Mainte
   const swept = await sweepUnused(svc);
   const packed = await compressStored(svc);
   if (swept.deletedFiles > 0 || packed.compressedFiles > 0) {
-    await logAudit(svc, { actorId: null, action: 'update', entityType: 'storage', summary: `Storage tidy-up: deleted ${swept.deletedFiles} unused file${swept.deletedFiles === 1 ? '' : 's'} (${mb(swept.deletedBytes)}), compressed ${packed.compressedFiles} picture${packed.compressedFiles === 1 ? '' : 's'} (${mb(packed.savedBytes)} saved)` });
+    await logAudit(svc, {
+      actorId: null,
+      action: 'update',
+      entityType: 'storage',
+      summary: `Storage tidy-up: deleted ${swept.deletedFiles} unused file${swept.deletedFiles === 1 ? '' : 's'} (${mb(swept.deletedBytes)}), compressed ${packed.compressedFiles} picture${packed.compressedFiles === 1 ? '' : 's'} (${mb(packed.savedBytes)} saved)`,
+    });
   }
   return { ...swept, ...packed, failed: swept.failed + packed.failed };
 }

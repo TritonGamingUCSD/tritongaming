@@ -35,7 +35,7 @@ export default async function PortalLayout({ children }: { children: React.React
   // Anything required still blank on this person's profile — surfaced as a
   // banner on every portal page, not only when a ticket claim bounces them.
   const [roles, gender, viewAs, viewing] = await Promise.all([getUserRoles(), getMyGender(), getViewAs(), getViewingUser()]);
-  const viewingName = viewing ? (profile.display_name || profile.google_first_name || viewing.email || 'this person') : null;
+  const viewingName = viewing ? profile.display_name || profile.google_first_name || viewing.email || 'this person' : null;
   const isUcsdMember = isVerifiedMember(roles);
   const missingProfileFields = getMissingProfileFields({ ...profile, gender }, isUcsdMember, { requireOrgTitle: requiresOrgTitle(roles) });
   // Only the officer title missing -> send them straight to the Officer Card tab.
@@ -44,8 +44,16 @@ export default async function PortalLayout({ children }: { children: React.React
   return (
     <div className={`${styles.layout} ${styles.fontScope} ${portalSans.variable} ${jbMono.variable}`} data-portal-layout>
       <main className={styles.main} data-ptr-page>
-        {viewAs && <div className={styles.bannerSlot}><ViewAsBanner active={viewAs} /></div>}
-        {viewingName && <div className={styles.bannerSlot}><ViewingUserBanner name={viewingName} /></div>}
+        {viewAs && (
+          <div className={styles.bannerSlot}>
+            <ViewAsBanner active={viewAs} />
+          </div>
+        )}
+        {viewingName && (
+          <div className={styles.bannerSlot}>
+            <ViewingUserBanner name={viewingName} />
+          </div>
+        )}
         <SessionGuard />
         {viewingName && <ViewOnlyGuard name={viewingName} />}
         <div className={styles.content}>
@@ -63,13 +71,25 @@ export default async function PortalLayout({ children }: { children: React.React
           reachable on /portal itself, which is the one page PortalTopbar
           (the other persistent portal chrome) deliberately hides on. */}
       <div data-print-hide style={{ display: 'contents' }}>
-        <div className={styles.fixedBell} style={{ display: 'contents' }}><HideOnPaths paths={CHECKIN_PATHS}><NotificationBell /></HideOnPaths></div>
+        <div className={styles.fixedBell} style={{ display: 'contents' }}>
+          <HideOnPaths paths={CHECKIN_PATHS}>
+            <NotificationBell />
+          </HideOnPaths>
+        </div>
         {/* Phones: the light/dark switch sits right beside the bell (desktop has it in the top bar). */}
-        <HideOnPaths paths={CHECKIN_PATHS}><div className={styles.fixedTheme}><PortalThemeToggle /></div></HideOnPaths>
+        <HideOnPaths paths={CHECKIN_PATHS}>
+          <div className={styles.fixedTheme}>
+            <PortalThemeToggle />
+          </div>
+        </HideOnPaths>
         <PullToRefresh />
         <ConnectivityBanner />
-        <HideOnPaths paths={CHECKIN_PATHS}><PushAsk /></HideOnPaths>
-        <HideOnPaths paths={CHECKIN_PATHS}><InstallAsk /></HideOnPaths>
+        <HideOnPaths paths={CHECKIN_PATHS}>
+          <PushAsk />
+        </HideOnPaths>
+        <HideOnPaths paths={CHECKIN_PATHS}>
+          <InstallAsk />
+        </HideOnPaths>
         <AttributionCapture />
       </div>
     </div>

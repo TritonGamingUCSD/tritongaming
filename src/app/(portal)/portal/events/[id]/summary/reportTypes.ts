@@ -1,7 +1,11 @@
 import type { EventSummary } from '@/lib/events/eventSummary';
 import type { EventSponsor, ReportMetric } from '@/types/database';
 
-export interface ReportPhoto { url: string; caption: string; credit: string }
+export interface ReportPhoto {
+  url: string;
+  caption: string;
+  credit: string;
+}
 
 // What the report needs, as plain data: the page builds it on the server and the PDF maker (in the browser) draws it.
 export interface ReportData {

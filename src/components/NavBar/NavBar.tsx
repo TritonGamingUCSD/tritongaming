@@ -14,16 +14,15 @@ import { DISCORD_URL } from '@/lib/site/links';
 const NAV_HINT_KEY = 'tg_nav_portal_hint';
 
 const NAV_LINKS = [
-  { href: '/our-story',     label: 'Our Story' },
-  { href: '/team',          label: 'Team' },
-  { href: '/events',        label: 'Events' },
-  { href: '/divisions',     label: 'Divisions' },
-  { href: '/media',         label: 'Media' },
-  { href: '/sponsors',      label: 'Sponsors' },
-  { href: '/membership',    label: 'Membership' },
-  { href: '/get-involved',  label: 'Get Involved' },
+  { href: '/our-story', label: 'Our Story' },
+  { href: '/team', label: 'Team' },
+  { href: '/events', label: 'Events' },
+  { href: '/divisions', label: 'Divisions' },
+  { href: '/media', label: 'Media' },
+  { href: '/sponsors', label: 'Sponsors' },
+  { href: '/membership', label: 'Membership' },
+  { href: '/get-involved', label: 'Get Involved' },
 ];
-
 
 // `announcement` is the (server-rendered) announcement pill; it sits in the same row as the logo and the Portal / Menu stickers.
 export default function NavBar({ announcement }: { announcement?: React.ReactNode }) {
@@ -52,37 +51,54 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
   }, [pathname]);
 
   useEffect(() => {
-    try { const raw = localStorage.getItem(NAV_HINT_KEY); if (raw) setHint(JSON.parse(raw)); } catch { /* no storage: no hint */ }
+    try {
+      const raw = localStorage.getItem(NAV_HINT_KEY);
+      if (raw) setHint(JSON.parse(raw));
+    } catch {
+      /* no storage: no hint */
+    }
   }, []);
 
   useEffect(() => {
     const supabase = createClient();
 
     async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (user) {
-        const { data } = await supabase
-          .from('profiles')
-          .select('id, display_name, avatar_url, custom_avatar_url')
-          .eq('id', user.id)
-          .single();
+        const { data } = await supabase.from('profiles').select('id, display_name, avatar_url, custom_avatar_url').eq('id', user.id).single();
         setProfile(data as Profile | null);
         try {
           const p = data as Profile | null;
           if (p) localStorage.setItem(NAV_HINT_KEY, JSON.stringify({ avatar: resolveAvatarUrl(p), letter: (p.display_name || 'U')[0].toUpperCase() }));
-        } catch { /* ignore */ }
+        } catch {
+          /* ignore */
+        }
       } else {
-        try { localStorage.removeItem(NAV_HINT_KEY); setHint(null); } catch { /* ignore */ }
+        try {
+          localStorage.removeItem(NAV_HINT_KEY);
+          setHint(null);
+        } catch {
+          /* ignore */
+        }
       }
       setAuthLoading(false);
     }
 
     loadProfile();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         setProfile(null);
-        try { localStorage.removeItem(NAV_HINT_KEY); setHint(null); } catch { /* ignore */ }
+        try {
+          localStorage.removeItem(NAV_HINT_KEY);
+          setHint(null);
+        } catch {
+          /* ignore */
+        }
         setAuthLoading(false);
       } else {
         loadProfile();
@@ -129,23 +145,36 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
     const focusables = () => Array.from(menu?.querySelectorAll<HTMLElement>('a[href], button:not([disabled])') ?? []);
     focusables()[0]?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setOpen(false); return; }
+      if (e.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
       if (e.key !== 'Tab') return;
       const f = focusables();
       if (f.length === 0) return;
-      const first = f[0], last = f[f.length - 1];
-      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
-      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      const first = f[0],
+        last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     const toggle = toggleRef.current;
-    return () => { document.body.style.overflow = ''; document.removeEventListener('keydown', onKey); toggle?.focus(); };
+    return () => {
+      document.body.style.overflow = '';
+      document.removeEventListener('keydown', onKey);
+      toggle?.focus();
+    };
   }, [open]);
 
   // The Portal button is always there. While the login is still being checked (a slow connection can make that take a while) it already goes to /portal, which sends someone who
   // is not signed in on to the login page by itself, so it works from the first moment.
-  const navAvatarUrl = profile ? resolveAvatarUrl(profile) : authLoading ? hint?.avatar ?? null : null;
-  const showLetter = profile ? (profile.display_name || 'U')[0].toUpperCase() : authLoading ? hint?.letter ?? null : null;
+  const navAvatarUrl = profile ? resolveAvatarUrl(profile) : authLoading ? (hint?.avatar ?? null) : null;
+  const showLetter = profile ? (profile.display_name || 'U')[0].toUpperCase() : authLoading ? (hint?.letter ?? null) : null;
   const portalHref = profile || authLoading ? '/portal' : loginHref;
 
   return (
@@ -167,15 +196,12 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
             ) : null}
             <span>Portal</span>
           </Link>
-          <button
-            ref={toggleRef}
-            type="button"
-            className={styles.menuBtn}
-            onClick={() => setOpen((v) => !v)}
-            aria-expanded={open}
-            aria-controls="poster-menu"
-          >
-            <span className={styles.bars} aria-hidden="true"><i /><i /><i /></span>
+          <button ref={toggleRef} type="button" className={styles.menuBtn} onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="poster-menu">
+            <span className={styles.bars} aria-hidden="true">
+              <i />
+              <i />
+              <i />
+            </span>
             <span>{open ? 'Close' : 'Menu'}</span>
           </button>
         </div>
@@ -196,8 +222,14 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
         <nav className={styles.menuInner} aria-label="Main navigation">
           <ul className={styles.links} role="list">
             <li style={{ '--i': 0 } as React.CSSProperties}>
-              <Link href="/" className={`${styles.link} ${pathname === '/' ? styles.linkOn : ''}`} onClick={() => setOpen(false)} aria-current={pathname === '/' ? 'page' : undefined}>
-                <span className={styles.num}>01</span><span className={styles.word}>Home</span>
+              <Link
+                href="/"
+                className={`${styles.link} ${pathname === '/' ? styles.linkOn : ''}`}
+                onClick={() => setOpen(false)}
+                aria-current={pathname === '/' ? 'page' : undefined}
+              >
+                <span className={styles.num}>01</span>
+                <span className={styles.word}>Home</span>
                 {pathname === '/' && <span className={styles.here}>you are here</span>}
               </Link>
             </li>

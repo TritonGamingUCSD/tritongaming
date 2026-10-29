@@ -14,7 +14,9 @@ import { MAX_PASTED_EMAILS, parseEmails, planByEmail } from '@/lib/members/roleB
 // applied the first time someone signs in or links that address (see applyPendingGrants). Admin only, like every role change.
 export async function POST(request: Request) {
   const userClient = await createClient();
-  const { data: { user } } = await strictUser(userClient);
+  const {
+    data: { user },
+  } = await strictUser(userClient);
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const { data: callerRoles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);
   if (!hasCapability(callerRoles ?? [], 'manage_roles')) return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
@@ -35,21 +37,41 @@ export async function POST(request: Request) {
   // Give the role to everyone matched who does not have it. The current roles are read again here, never trusted from the check.
   const given: string[] = [];
   const failed: string[] = [];
-  await Promise.all(plan.matched.filter((m) => !m.hasRole).map(async (m) => {
-    const { data: current } = await svc.from('user_roles').select('role, division_id').eq('user_id', m.userId);
-    const next = withRole((current ?? []) as RoleRow[], role, divisionId);
-    if (!next) return;
-    const { error } = await svc.rpc('admin_set_user_roles', { _user_id: m.userId, _roles: next, _granted_by: user.id });
-    (error ? failed : given).push(m.email);
-  }));
+  await Promise.all(
+    plan.matched
+      .filter((m) => !m.hasRole)
+      .map(async (m) => {
+        const { data: current } = await svc.from('user_roles').select('role, division_id').eq('user_id', m.userId);
+        const next = withRole((current ?? []) as RoleRow[], role, divisionId);
+        if (!next) return;
+        const { error } = await svc.rpc('admin_set_user_roles', { _user_id: m.userId, _roles: next, _granted_by: user.id });
+        (error ? failed : given).push(m.email);
+      }),
+  );
 
   // Addresses with no account yet wait for their first sign-in.
   let queued = 0;
   for (const email of plan.notFound) {
     const { error } = await svc.from('pending_role_grants').insert({ email, role, division_id: divisionId, created_by: user.id });
-    if (!error) queued++;   // a duplicate (two pastes at once) is simply already waiting
+    if (!error) queued++; // a duplicate (two pastes at once) is simply already waiting
   }
 
-  await logAudit(svc, { actorId: user.id, action: 'update', entityType: 'roles', summary: `Added ${role} to ${given.length} account${given.length === 1 ? '' : 's'} from a pasted email list${queued ? ` and queued ${queued} address${queued === 1 ? '' : 'es'} for first sign-in` : ''}`, details: { role, divisionId, given: given.length, queued, alreadyHad: plan.matched.filter((m) => m.hasRole).length, ambiguous: plan.ambiguous.length, failed: failed.length } });
-  return NextResponse.json({ ok: true, applied: true, total: emails.length, given: given.length, queued, alreadyHad: plan.matched.filter((m) => m.hasRole).length, alreadyQueued: plan.alreadyQueued.length, ambiguous: plan.ambiguous, failed });
+  await logAudit(svc, {
+    actorId: user.id,
+    action: 'update',
+    entityType: 'roles',
+    summary: `Added ${role} to ${given.length} account${given.length === 1 ? '' : 's'} from a pasted email list${queued ? ` and queued ${queued} address${queued === 1 ? '' : 'es'} for first sign-in` : ''}`,
+    details: { role, divisionId, given: given.length, queued, alreadyHad: plan.matched.filter((m) => m.hasRole).length, ambiguous: plan.ambiguous.length, failed: failed.length },
+  });
+  return NextResponse.json({
+    ok: true,
+    applied: true,
+    total: emails.length,
+    given: given.length,
+    queued,
+    alreadyHad: plan.matched.filter((m) => m.hasRole).length,
+    alreadyQueued: plan.alreadyQueued.length,
+    ambiguous: plan.ambiguous,
+    failed,
+  });
 }

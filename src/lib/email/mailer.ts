@@ -15,10 +15,16 @@ export const emailFrom = () => process.env.GMAIL_USER ?? '';
 let transport: Transporter | null = null;
 function getTransport() {
   transport ??= nodemailer.createTransport({
-    host: 'smtp.gmail.com', port: 465, secure: true,
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: { user: process.env.GMAIL_USER, pass: process.env.GMAIL_APP_PASSWORD },
-    pool: true, maxConnections: 2, maxMessages: 50,
-    connectionTimeout: 10_000, greetingTimeout: 10_000, socketTimeout: 20_000,
+    pool: true,
+    maxConnections: 2,
+    maxMessages: 50,
+    connectionTimeout: 10_000,
+    greetingTimeout: 10_000,
+    socketTimeout: 20_000,
   });
   return transport;
 }
@@ -26,14 +32,20 @@ function getTransport() {
 /** Logs in to the mail server without sending anything: tells whether the saved details work. */
 export async function verifyEmail(): Promise<{ ok: boolean; error?: string }> {
   if (!emailConfigured()) return { ok: false, error: 'Email isn’t set up yet (GMAIL_USER and GMAIL_APP_PASSWORD).' };
-  try { await getTransport().verify(); return { ok: true }; } catch (e) { return { ok: false, error: friendly(e) }; }
+  try {
+    await getTransport().verify();
+    return { ok: true };
+  } catch (e) {
+    return { ok: false, error: friendly(e) };
+  }
 }
 
 // The logo travels inside every email (an inline attachment the HTML points at as cid:tglogo), so it shows without the recipient's mail app reaching our site.
 const LOGO = Buffer.from(APPLE_ICON_DATA_URI.replace(/^data:image\/png;base64,/, ''), 'base64');
 
 function friendly(e: unknown): string {
-  const code = (e as { code?: string; responseCode?: number }).code, rc = (e as { responseCode?: number }).responseCode;
+  const code = (e as { code?: string; responseCode?: number }).code,
+    rc = (e as { responseCode?: number }).responseCode;
   if (code === 'EAUTH' || rc === 535) return 'Gmail refused the login. Check GMAIL_USER and that GMAIL_APP_PASSWORD is a Google app password (not the normal password).';
   if (code === 'ETIMEDOUT' || code === 'ECONNECTION' || code === 'ESOCKET') return 'Couldn’t reach Gmail. Try again in a moment.';
   if (rc === 550 || rc === 553) return 'Gmail refused that address.';
@@ -41,7 +53,11 @@ function friendly(e: unknown): string {
   return 'Gmail couldn’t send it.';
 }
 
-export interface BlastResult { to: string; ok: boolean; error?: string }
+export interface BlastResult {
+  to: string;
+  ok: boolean;
+  error?: string;
+}
 
 /** Sends `subject` and `message` (plain text; blank lines make paragraphs) to each address on its own. Returns one result per valid address; never throws. */
 export async function sendBlast(recipientsText: string, subject: string, message: string): Promise<{ results: BlastResult[]; bad: string[]; error?: string }> {
@@ -53,9 +69,18 @@ export async function sendBlast(recipientsText: string, subject: string, message
   const results: BlastResult[] = [];
   for (const to of valid) {
     try {
-      await t.sendMail({ from: `Triton Gaming <${emailFrom()}>`, to, subject, text: emailText(message), html: emailHtml({ subject, message }), attachments: [{ filename: 'tg-logo.png', content: LOGO, cid: LOGO_CID, contentType: 'image/png', contentDisposition: 'inline' }] });
+      await t.sendMail({
+        from: `Triton Gaming <${emailFrom()}>`,
+        to,
+        subject,
+        text: emailText(message),
+        html: emailHtml({ subject, message }),
+        attachments: [{ filename: 'tg-logo.png', content: LOGO, cid: LOGO_CID, contentType: 'image/png', contentDisposition: 'inline' }],
+      });
       results.push({ to, ok: true });
-    } catch (e) { results.push({ to, ok: false, error: friendly(e) }); }
+    } catch (e) {
+      results.push({ to, ok: false, error: friendly(e) });
+    }
   }
   return { results, bad };
 }
@@ -63,16 +88,27 @@ export async function sendBlast(recipientsText: string, subject: string, message
 /** One message to one person with the exact html and text it is given (an event email, built elsewhere). `unsubscribeUrl` adds the one-click opt-out headers mail apps show as "Unsubscribe". Never throws. */
 export async function sendOne(o: { to: string; subject: string; text: string; html: string; sender?: SenderId; unsubscribeUrl?: string }): Promise<BlastResult> {
   if (!emailConfigured()) return { to: o.to, ok: false, error: 'Email isn’t set up yet (GMAIL_USER and GMAIL_APP_PASSWORD).' };
-  if (process.env.EMAIL_DRY_RUN === '1') return { to: o.to, ok: true };   // a test server sends nothing (the check scripts use it)
+  if (process.env.EMAIL_DRY_RUN === '1') return { to: o.to, ok: true }; // a test server sends nothing (the check scripts use it)
   try {
-    const sender = o.sender ?? 'general', from = senderAddress(sender), replyTo = senderReplyTo(sender);
+    const sender = o.sender ?? 'general',
+      from = senderAddress(sender),
+      replyTo = senderReplyTo(sender);
     await getTransport().sendMail({
-      from: `${SENDERS[sender].name} <${from}>`, replyTo, to: o.to, subject: o.subject, text: o.text, html: o.html,
+      from: `${SENDERS[sender].name} <${from}>`,
+      replyTo,
+      to: o.to,
+      subject: o.subject,
+      text: o.text,
+      html: o.html,
       // A message id on the club's own domain (not the server's machine name), a mailto opt-out beside the link, and the one-click header: all things mail providers look for in real mail.
       messageId: `<${randomUUID()}@${from.split('@')[1] || 'tritongaming.org'}>`,
-      ...(o.unsubscribeUrl ? { headers: { 'List-Unsubscribe': `<${o.unsubscribeUrl}>, <mailto:${replyTo}?subject=Unsubscribe>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } } : {}),
+      ...(o.unsubscribeUrl
+        ? { headers: { 'List-Unsubscribe': `<${o.unsubscribeUrl}>, <mailto:${replyTo}?subject=Unsubscribe>`, 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' } }
+        : {}),
       attachments: [{ filename: 'tg-logo.png', content: LOGO, contentType: 'image/png', cid: LOGO_CID }],
     });
     return { to: o.to, ok: true };
-  } catch (e) { return { to: o.to, ok: false, error: friendly(e) }; }
+  } catch (e) {
+    return { to: o.to, ok: false, error: friendly(e) };
+  }
 }

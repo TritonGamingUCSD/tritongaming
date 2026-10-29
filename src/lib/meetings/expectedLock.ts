@@ -19,14 +19,25 @@ export async function lockedExpected(svc: SupabaseClient, meetings: LockInput[])
   if (locked.size) {
     const lockedIds = [...locked];
     for (let i = 0; i < lockedIds.length; i += 200) {
-      const { data } = await svc.from('meeting_expected').select('meeting_id, user_id').in('meeting_id', lockedIds.slice(i, i + 200)).limit(50000);
-      for (const r of data ?? []) { const s = out.get(r.meeting_id as string) ?? new Set<string>(); s.add(r.user_id as string); out.set(r.meeting_id as string, s); }
+      const { data } = await svc
+        .from('meeting_expected')
+        .select('meeting_id, user_id')
+        .in('meeting_id', lockedIds.slice(i, i + 200))
+        .limit(50000);
+      for (const r of data ?? []) {
+        const s = out.get(r.meeting_id as string) ?? new Set<string>();
+        s.add(r.user_id as string);
+        out.set(r.meeting_id as string, s);
+      }
     }
     for (const id of lockedIds) if (!out.has(id)) out.set(id, new Set());
   }
   const todo = over.filter((m) => !locked.has(m.id));
   if (!todo.length) return out;
-  const { data: grants } = await svc.from('user_roles').select('user_id, role, created_at').in('role', [...AUDIENCE_ROLES, 'inactive', 'alumni']);
+  const { data: grants } = await svc
+    .from('user_roles')
+    .select('user_id, role, created_at')
+    .in('role', [...AUDIENCE_ROLES, 'inactive', 'alumni']);
   const rolesOf = new Map<string, { role: string; created_at: string }[]>();
   for (const g of grants ?? []) rolesOf.set(g.user_id as string, [...(rolesOf.get(g.user_id as string) ?? []), { role: g.role as string, created_at: g.created_at as string }]);
   for (const m of todo) {

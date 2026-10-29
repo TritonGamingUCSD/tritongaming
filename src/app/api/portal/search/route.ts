@@ -24,7 +24,9 @@ const LIMIT_PER_CATEGORY = 5;
 // view_docs in src/lib/capabilities.ts).
 export async function GET(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { searchParams } = new URL(request.url);
@@ -43,14 +45,20 @@ export async function GET(request: Request) {
   // Everything a person can open, each gated like its own page and read with their own session (so row-level rules apply too).
   const [membersRes, eventsRes, docsRes, divisionsRes, shopRes, myTicketsRes, helpRes, linksRes, quickRes] = await Promise.all([
     can('view_members')
-      ? supabase.from('profiles').select('id, display_name, google_first_name, google_last_name, gamer_tag').or(`display_name.ilike.${like},google_first_name.ilike.${like},google_last_name.ilike.${like},gamer_tag.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
+      ? supabase
+          .from('profiles')
+          .select('id, display_name, google_first_name, google_last_name, gamer_tag')
+          .or(`display_name.ilike.${like},google_first_name.ilike.${like},google_last_name.ilike.${like},gamer_tag.ilike.${like}`)
+          .limit(LIMIT_PER_CATEGORY)
       : none,
     can('view_events')
-      ? supabase.from('events').select('id, title, description, slug, start_date').or(`title.ilike.${like},description.ilike.${like},location.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
+      ? supabase
+          .from('events')
+          .select('id, title, description, slug, start_date')
+          .or(`title.ilike.${like},description.ilike.${like},location.ilike.${like}`)
+          .limit(LIMIT_PER_CATEGORY)
       : none,
-    can('view_docs')
-      ? supabase.from('docs').select('id, title, content, tags, category_id, parent_id, order_index').limit(600)
-      : none,
+    can('view_docs') ? supabase.from('docs').select('id, title, content, tags, category_id, parent_id, order_index').limit(600) : none,
     can('view_division_members') || can('manage_division')
       ? supabase.from('divisions').select('id, name, slug, description').or(`name.ilike.${like},description.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : none,
@@ -63,9 +71,7 @@ export async function GET(request: Request) {
       ? supabase.from('short_links').select('id, slug, destination').or(`slug.ilike.${like},destination.ilike.${like},note.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
       : none,
     // Quick links on the docs home (their table is read by the server only, so the service client; the same view_docs rule as the docs).
-    can('view_docs')
-      ? createServiceClient().from('quick_links').select('id, title, url, note').or(`title.ilike.${like},note.ilike.${like}`).limit(LIMIT_PER_CATEGORY)
-      : none,
+    can('view_docs') ? createServiceClient().from('quick_links').select('id, title, url, note').or(`title.ilike.${like},note.ilike.${like}`).limit(LIMIT_PER_CATEGORY) : none,
   ]);
 
   // Meetings meant for this person (invited by role, name or group, or planned by them), including weekly ones nobody has opened yet.
@@ -73,10 +79,12 @@ export async function GET(request: Request) {
   const needle = q.toLowerCase();
   // "meeting" or "meetings" lists the meetings meant for this person, not only ones with that word in the title.
   const askingForMeetings = /^meetings?$/.test(needle);
-  const meetingItems = (can('attend_meetings') || can('view_attendance_reports') || can('host_meetings'))
-    ? (await collectBusyItems(createServiceClient(), user, roles, dayKey(-60), dayKey(120)).catch(() => []))
-        .filter((i) => i.kind === 'meeting' && (askingForMeetings || i.title.toLowerCase().includes(needle) || (i.location ?? '').toLowerCase().includes(needle)))
-    : [];
+  const meetingItems =
+    can('attend_meetings') || can('view_attendance_reports') || can('host_meetings')
+      ? (await collectBusyItems(createServiceClient(), user, roles, dayKey(-60), dayKey(120)).catch(() => [])).filter(
+          (i) => i.kind === 'meeting' && (askingForMeetings || i.title.toLowerCase().includes(needle) || (i.location ?? '').toLowerCase().includes(needle)),
+        )
+      : [];
   const todayKey = dayKey(0);
   const byTitle = new Map<string, (typeof meetingItems)[number]>();
   for (const i of meetingItems.sort((a, b) => a.date.localeCompare(b.date))) {
@@ -85,28 +93,54 @@ export async function GET(request: Request) {
     if (!cur || (cur.date < todayKey && (i.date >= todayKey || i.date > cur.date))) byTitle.set(i.title, i);
   }
   const day = (iso: string) => formatPacificDate(iso, { year: true });
-  const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
+  const one = <T>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? (v[0] ?? null) : (v ?? null));
   const members: SearchResult[] = (membersRes.data ?? []).map((m) => ({
-    id: m.id, title: staffName(m, { tag: true }) || 'Anonymous', subtitle: '', href: `/portal/members?id=${m.id}`,
+    id: m.id,
+    title: staffName(m, { tag: true }) || 'Anonymous',
+    subtitle: '',
+    href: `/portal/members?id=${m.id}`,
   }));
   const events: SearchResult[] = (eventsRes.data ?? []).map((e) => ({
-    id: e.id, title: e.title, subtitle: day(e.start_date), href: `/portal/events/list?q=${encodeURIComponent(e.title)}`,
+    id: e.id,
+    title: e.title,
+    subtitle: day(e.start_date),
+    href: `/portal/events/list?q=${encodeURIComponent(e.title)}`,
   }));
   // Docs: every word must appear (title, tags or text), titles and tags rank first, and each result shows the line around the match and its category.
-  const docRows = ((docsRes.data ?? []) as { id: string; title: string; content: string; tags: string[] | null; category_id: string | null; parent_id: string | null; order_index: number }[]).map((d) => ({ ...d, tags: d.tags ?? [] }));
+  const docRows = (
+    (docsRes.data ?? []) as { id: string; title: string; content: string; tags: string[] | null; category_id: string | null; parent_id: string | null; order_index: number }[]
+  ).map((d) => ({ ...d, tags: d.tags ?? [] }));
   const catIds = [...new Set(docRows.map((d) => d.category_id).filter((x): x is string => !!x))];
-  const { data: catRows } = can('view_docs') && catIds.length ? await supabase.from('doc_categories').select('id, name').in('id', catIds) : { data: [] as { id: string; name: string }[] };
+  const { data: catRows } =
+    can('view_docs') && catIds.length ? await supabase.from('doc_categories').select('id, name').in('id', catIds) : { data: [] as { id: string; name: string }[] };
   const catName = new Map((catRows ?? []).map((c) => [c.id as string, c.name as string]));
-  const docs: SearchResult[] = searchDocs(docRows, q).slice(0, docsOnly ? 12 : LIMIT_PER_CATEGORY).map((h) => {
-    const top = [...ancestors(docRows, h.doc.id), h.doc][0];
-    const where = (top.category_id && catName.get(top.category_id)) || 'Docs';
-    return { id: h.doc.id, title: h.doc.title, subtitle: [where, h.snippet].filter(Boolean).join(' · '), href: `/portal/docs?id=${h.doc.id}` };
-  });
-  const divisions: SearchResult[] = (divisionsRes.data ?? []).map((d) => ({ id: d.id, title: d.name, subtitle: 'Division', href: `/portal/division-members?q=${encodeURIComponent(d.name)}` }));
-  const meetings: SearchResult[] = [...byTitle.values()].slice(0, LIMIT_PER_CATEGORY).map((m) => ({ id: m.key ?? m.title, title: m.title, subtitle: `${m.repeats ? 'Repeats · ' : ''}${m.date >= todayKey ? 'next' : 'last'} ${day(m.start)}`, href: m.href ?? '/portal/meetings' }));
+  const docs: SearchResult[] = searchDocs(docRows, q)
+    .slice(0, docsOnly ? 12 : LIMIT_PER_CATEGORY)
+    .map((h) => {
+      const top = [...ancestors(docRows, h.doc.id), h.doc][0];
+      const where = (top.category_id && catName.get(top.category_id)) || 'Docs';
+      return { id: h.doc.id, title: h.doc.title, subtitle: [where, h.snippet].filter(Boolean).join(' · '), href: `/portal/docs?id=${h.doc.id}` };
+    });
+  const divisions: SearchResult[] = (divisionsRes.data ?? []).map((d) => ({
+    id: d.id,
+    title: d.name,
+    subtitle: 'Division',
+    href: `/portal/division-members?q=${encodeURIComponent(d.name)}`,
+  }));
+  const meetings: SearchResult[] = [...byTitle.values()].slice(0, LIMIT_PER_CATEGORY).map((m) => ({
+    id: m.key ?? m.title,
+    title: m.title,
+    subtitle: `${m.repeats ? 'Repeats · ' : ''}${m.date >= todayKey ? 'next' : 'last'} ${day(m.start)}`,
+    href: m.href ?? '/portal/meetings',
+  }));
   const shop: SearchResult[] = (shopRes.data ?? []).map((r) => ({ id: r.id, title: r.title, subtitle: `${r.point_cost} pts`, href: '/portal/points/shop' }));
-  const tickets: SearchResult[] = (myTicketsRes.data ?? []).map((t) => { const ev = one(t.event as { title: string; start_date: string } | { title: string; start_date: string }[] | null); return { id: t.id, title: ev?.title ?? 'Ticket', subtitle: ev ? `Your ticket · ${day(ev.start_date)}` : 'Your ticket', href: '/portal/tickets' }; });
-  const help: SearchResult[] = (helpRes.data ?? []).filter((h) => h.user_id === user.id || can('manage_help')).map((h) => ({ id: h.id, title: h.subject, subtitle: `Help · ${h.status}`, href: `/portal/help/${h.user_id === user.id ? 'mine' : 'inbox'}?ticket=${h.id}` }));
+  const tickets: SearchResult[] = (myTicketsRes.data ?? []).map((t) => {
+    const ev = one(t.event as { title: string; start_date: string } | { title: string; start_date: string }[] | null);
+    return { id: t.id, title: ev?.title ?? 'Ticket', subtitle: ev ? `Your ticket · ${day(ev.start_date)}` : 'Your ticket', href: '/portal/tickets' };
+  });
+  const help: SearchResult[] = (helpRes.data ?? [])
+    .filter((h) => h.user_id === user.id || can('manage_help'))
+    .map((h) => ({ id: h.id, title: h.subject, subtitle: `Help · ${h.status}`, href: `/portal/help/${h.user_id === user.id ? 'mine' : 'inbox'}?ticket=${h.id}` }));
   const links: SearchResult[] = (linksRes.data ?? []).map((l) => ({ id: l.id, title: `/go/${l.slug}`, subtitle: l.destination, href: '/portal/admin/short-links' }));
 
   const quick: SearchResult[] = (quickRes.data ?? []).map((l) => ({ id: l.id, title: l.title, subtitle: `Quick link · ${l.note || l.url}`, href: '/portal/docs' }));

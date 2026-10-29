@@ -10,7 +10,25 @@ import { Bell, ShieldCheck, User, Users, Lock, X as XIcon, Globe, EyeOff, Gradua
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { canSetOrgTitle, requiresOrgTitle, type RoleGrant } from '@/lib/portal/capabilities';
-import { hasBasicProfileInfo, getMissingProfileFields, GENDER_OPTIONS, PRONOUN_OPTIONS, PLATFORM_OPTIONS, MAX_PORTFOLIO_LINKS, MAX_GAME_IDS, GAME_ID_PRESETS, OTHER_GAME, cleanGameIds, type GameId, normalizePortfolioUrl, resolveAvatarUrl, SOCIAL_PLATFORMS, yearChoiceOptions, yearChoiceOf, yearLabelOfChoice } from '@/lib/members/profile';
+import {
+  hasBasicProfileInfo,
+  getMissingProfileFields,
+  GENDER_OPTIONS,
+  PRONOUN_OPTIONS,
+  PLATFORM_OPTIONS,
+  MAX_PORTFOLIO_LINKS,
+  MAX_GAME_IDS,
+  GAME_ID_PRESETS,
+  OTHER_GAME,
+  cleanGameIds,
+  type GameId,
+  normalizePortfolioUrl,
+  resolveAvatarUrl,
+  SOCIAL_PLATFORMS,
+  yearChoiceOptions,
+  yearChoiceOf,
+  yearLabelOfChoice,
+} from '@/lib/members/profile';
 import type { MyPrivateProfile } from '@/lib/core/auth';
 import { deleteIfReplaced, deleteStorageUrl } from '@/lib/storage/imageUpload';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
@@ -32,7 +50,24 @@ import SectionHeader from '@/components/ui/SectionHeader';
 
 type Tab = 'info' | 'school' | 'card' | 'notifications' | 'strikes' | 'security';
 
-export default function ProfileClient({ profile, privateInfo, email, linkedEmails, roles, isUcsd, divisions }: { profile: Profile; privateInfo: MyPrivateProfile; email: string | null; linkedEmails: string[]; roles: RoleGrant[]; isUcsd: boolean; divisions: { id: string; name: string }[]; initialTab?: string }) {
+export default function ProfileClient({
+  profile,
+  privateInfo,
+  email,
+  linkedEmails,
+  roles,
+  isUcsd,
+  divisions,
+}: {
+  profile: Profile;
+  privateInfo: MyPrivateProfile;
+  email: string | null;
+  linkedEmails: string[];
+  roles: RoleGrant[];
+  isUcsd: boolean;
+  divisions: { id: string; name: string }[];
+  initialTab?: string;
+}) {
   const canEditOrgTitle = canSetOrgTitle(roles);
   // exec/lead/officer appear on the public About page board automatically;
   // alumni is the only role that still needs to opt in themselves (division
@@ -74,7 +109,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
     favorite_games: privateInfo.favorite_games,
     division_interests: privateInfo.division_interests,
     portfolio_links: (profile.portfolio_links ?? []) as { label: string; url: string }[],
-    game_ids: ((profile.game_ids ?? []) as GameId[]),
+    game_ids: (profile.game_ids ?? []) as GameId[],
     gamer_tag: profile.gamer_tag || '',
     pronouns: profile.pronouns || '',
     custom_avatar_url: profile.custom_avatar_url || '',
@@ -86,7 +121,13 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
     board_visibility: {
       // Everything here defaults off — publishing any of this is an
       // explicit opt-in. See isVisible().
-      bio: false, year_major: false, socials: false, portfolio: false, game_ids: false, pronouns: false, email: false,
+      bio: false,
+      year_major: false,
+      socials: false,
+      portfolio: false,
+      game_ids: false,
+      pronouns: false,
+      email: false,
       ...profile.board_visibility,
     },
   });
@@ -130,7 +171,7 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
     const cleanedSocialLinks = Object.fromEntries(
       Object.entries(form.social_links)
         .map(([key, url]) => [key, url.trim()])
-        .filter(([, url]) => url)
+        .filter(([, url]) => url),
     );
 
     const supabase = createClient();
@@ -152,16 +193,14 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
       cleanedPortfolio.push({ label: link.label.trim() || new URL(url).hostname.replace(/^www\./, ''), url });
     }
 
-    const { error: privateErr } = await supabase
-      .from('profile_private')
-      .upsert({
-        user_id: profile.id,
-        gender: (genderValue || null) as typeof GENDER_OPTIONS[number] | null,
-        platforms,
-        favorite_games: favorite_games.trim() || null,
-        division_interests,
-        updated_at: new Date().toISOString(),
-      });
+    const { error: privateErr } = await supabase.from('profile_private').upsert({
+      user_id: profile.id,
+      gender: (genderValue || null) as (typeof GENDER_OPTIONS)[number] | null,
+      platforms,
+      favorite_games: favorite_games.trim() || null,
+      division_interests,
+      updated_at: new Date().toISOString(),
+    });
     if (privateErr) {
       setSaving(false);
       setError('Failed to save. Please try again.');
@@ -224,7 +263,13 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
   const boardEmail = (form.board_email && linkedEmails.includes(form.board_email) ? form.board_email : email) ?? null;
   // The card as visitors would see it, built from the unsaved form — handed to
   // the same card/panel components the Team page renders.
-  const previewTier: BoardTier = roles.some((r) => r.role === 'exec') ? 'exec' : roles.some((r) => r.role === 'lead') ? 'lead' : roles.some((r) => r.role === 'officer') ? 'officer' : 'alumni';
+  const previewTier: BoardTier = roles.some((r) => r.role === 'exec')
+    ? 'exec'
+    : roles.some((r) => r.role === 'lead')
+      ? 'lead'
+      : roles.some((r) => r.role === 'officer')
+        ? 'officer'
+        : 'alumni';
   const previewMember: BoardMember = {
     id: profile.id,
     display_name: form.display_name.trim() || null,
@@ -239,7 +284,11 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
     gamer_tag: form.gamer_tag.trim() || null,
     pronouns: form.pronouns.trim() || null,
     email: boardEmail,
-    social_links: Object.fromEntries(Object.entries(form.social_links).map(([k, v]) => [k, v.trim()]).filter(([, v]) => v)),
+    social_links: Object.fromEntries(
+      Object.entries(form.social_links)
+        .map(([k, v]) => [k, v.trim()])
+        .filter(([, v]) => v),
+    ),
     portfolio_links: form.portfolio_links.flatMap((l) => {
       const url = normalizePortfolioUrl(l.url);
       return url ? [{ label: l.label.trim() || new URL(url).hostname.replace(/^www\./, ''), url }] : [];
@@ -256,10 +305,28 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
 
       {promptedForTicket && (
         <Notice tone="warning" className={styles.pageNotice}>
-          {isUcsd
-            ? <>Almost there. Fill in <strong>both sections</strong>: <button type="button" className={styles.noticeLink} onClick={() => setTab('info')}>About Me</button> (name, gender, pronouns) and <button type="button" className={styles.noticeLink} onClick={() => setTab('school')}>School</button> (year, college, major), then save.</>
-            : <>Almost there. Fill in <button type="button" className={styles.noticeLink} onClick={() => setTab('info')}>About Me</button> (name, gender, pronouns), then save.</>}
-          {' '}You only need to do this once.
+          {isUcsd ? (
+            <>
+              Almost there. Fill in <strong>both sections</strong>:{' '}
+              <button type="button" className={styles.noticeLink} onClick={() => setTab('info')}>
+                About Me
+              </button>{' '}
+              (name, gender, pronouns) and{' '}
+              <button type="button" className={styles.noticeLink} onClick={() => setTab('school')}>
+                School
+              </button>{' '}
+              (year, college, major), then save.
+            </>
+          ) : (
+            <>
+              Almost there. Fill in{' '}
+              <button type="button" className={styles.noticeLink} onClick={() => setTab('info')}>
+                About Me
+              </button>{' '}
+              (name, gender, pronouns), then save.
+            </>
+          )}{' '}
+          You only need to do this once.
         </Notice>
       )}
 
@@ -284,491 +351,569 @@ export default function ProfileClient({ profile, privateInfo, email, linkedEmail
         ]}
       />
 
-      <div className={`${styles.layout} ${tab === 'card' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' || tab === 'notifications' || tab === 'strikes' || tab === 'school' ? styles.layoutSingle : ''}`}>
+      <div
+        className={`${styles.layout} ${tab === 'card' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' || tab === 'notifications' || tab === 'strikes' || tab === 'school' ? styles.layoutSingle : ''}`}
+      >
         {tab !== 'security' && tab !== 'notifications' && tab !== 'strikes' && tab !== 'school' && (
-        <div className={styles.avatarSection}>
-          {tab === 'card' && isBoardEligible ? (
-            <p className={styles.pictureNote}>Your picture is edited on the About Me tab — the preview below uses it.</p>
-          ) : (
-          <div className={styles.avatarUpload}>
-            <AvatarEditor
-              value={form.custom_avatar_url}
-              onChange={(url) => {
-                // A picture that was uploaded but never saved, then swapped or removed, is just
-                // clutter in storage — delete it right away. The saved one is only removed
-                // once the new choice is actually saved (see handleSave).
-                const prev = form.custom_avatar_url.trim();
-                if (prev && prev !== url && prev !== savedAvatar.current) deleteStorageUrl(prev);
-                setForm((f) => ({ ...f, custom_avatar_url: url }));
-              }}
-              bucket="avatars"
-              pathPrefix={profile.id}
-              fallback={resolveAvatarUrl({ avatar_url: profile.avatar_url, custom_avatar_url: null }) ?? undefined}
-              initial={(form.display_name || '?')[0].toUpperCase()}
-            />
-          </div>
-          )}
+          <div className={styles.avatarSection}>
+            {tab === 'card' && isBoardEligible ? (
+              <p className={styles.pictureNote}>Your picture is edited on the About Me tab — the preview below uses it.</p>
+            ) : (
+              <div className={styles.avatarUpload}>
+                <AvatarEditor
+                  value={form.custom_avatar_url}
+                  onChange={(url) => {
+                    // A picture that was uploaded but never saved, then swapped or removed, is just
+                    // clutter in storage — delete it right away. The saved one is only removed
+                    // once the new choice is actually saved (see handleSave).
+                    const prev = form.custom_avatar_url.trim();
+                    if (prev && prev !== url && prev !== savedAvatar.current) deleteStorageUrl(prev);
+                    setForm((f) => ({ ...f, custom_avatar_url: url }));
+                  }}
+                  bucket="avatars"
+                  pathPrefix={profile.id}
+                  fallback={resolveAvatarUrl({ avatar_url: profile.avatar_url, custom_avatar_url: null }) ?? undefined}
+                  initial={(form.display_name || '?')[0].toUpperCase()}
+                />
+              </div>
+            )}
 
-          {tab === 'card' && isBoardEligible && (
-            <div className={styles.previewWrap}>
-              <span className={styles.previewHeading}><Globe size={13} strokeWidth={2} aria-hidden="true" /> Live preview · public Team page</span>
-              <p className={styles.previewNote}>This is how visitors see your card. The public site is always dark, so the preview stays dark in light mode too.</p>
-              <div className={styles.previewFrame}><BoardCardPreview member={previewMember} /></div>
-            </div>
-          )}
-        </div>
+            {tab === 'card' && isBoardEligible && (
+              <div className={styles.previewWrap}>
+                <span className={styles.previewHeading}>
+                  <Globe size={13} strokeWidth={2} aria-hidden="true" /> Live preview · public Team page
+                </span>
+                <p className={styles.previewNote}>This is how visitors see your card. The public site is always dark, so the preview stays dark in light mode too.</p>
+                <div className={styles.previewFrame}>
+                  <BoardCardPreview member={previewMember} />
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         <div className={styles.formCol}>
+          {(tab === 'info' || tab === 'school' || tab === 'card') && (
+            <form id="profile-form" className={styles.form} onSubmit={handleSave} data-sub={tab} noValidate>
+              {(tab === 'info' || tab === 'school') && (
+                <>
+                  <section className={styles.requiredGroup} aria-label="Required information">
+                    <h2 className={styles.groupHeading}>
+                      <span className={styles.required}>*</span> Required
+                    </h2>
+                    <p className={styles.requiredLegend}>
+                      {isUcsd ? 'Name, pronouns, gender, class, college, and major' : 'Name, pronouns, and gender'} — everything here except your gamer tag.
+                    </p>
 
-        {(tab === 'info' || tab === 'school' || tab === 'card') && (
-        <form id="profile-form" className={styles.form} onSubmit={handleSave} data-sub={tab} noValidate>
-          {(tab === 'info' || tab === 'school') && (
-          <>
-          <section className={styles.requiredGroup} aria-label="Required information">
-            <h2 className={styles.groupHeading}><span className={styles.required}>*</span> Required</h2>
-            <p className={styles.requiredLegend}>
-              {isUcsd ? 'Name, pronouns, gender, class, college, and major' : 'Name, pronouns, and gender'} — everything here except your gamer tag.
-            </p>
-
-            <div className={styles.fieldRow}>
-              <label className={styles.fieldGroup}>
-                <span className={styles.label}>Name <span className={styles.required}>*</span></span>
-                <input
-                  className={styles.input}
-                  value={form.display_name}
-                  onChange={(e) => setForm((f) => ({ ...f, display_name: e.target.value }))}
-                  maxLength={60}
-                  required
-                />
-              </label>
-              <label className={styles.fieldGroup}>
-                <span className={styles.label}>Pronouns <span className={styles.required}>*</span></span>
-                <Select
-                  className={styles.input}
-                  value={pronounsOther ? 'Other' : form.pronouns}
-                  onChange={(e) => {
-                    if (e.target.value === 'Other') {
-                      setPronounsOther(true);
-                      setForm((f) => ({ ...f, pronouns: (PRONOUN_OPTIONS as readonly string[]).includes(f.pronouns) ? '' : f.pronouns }));
-                    } else {
-                      setPronounsOther(false);
-                      setForm((f) => ({ ...f, pronouns: e.target.value }));
-                    }
-                  }}
-                  required={!pronounsOther}
-                >
-                  <option value="">Select pronouns</option>
-                  {PRONOUN_OPTIONS.map((p) => <option key={p}>{p}</option>)}
-                  <option value="Other">Other…</option>
-                </Select>
-                {pronounsOther && (
-                  <input
-                    className={styles.input}
-                    value={form.pronouns}
-                    onChange={(e) => setForm((f) => ({ ...f, pronouns: e.target.value }))}
-                    maxLength={30}
-                    placeholder="Type your pronouns"
-                    aria-label="Your pronouns"
-                    required
-                    autoFocus
-                  />
-                )}
-              </label>
-            </div>
-
-            <div className={styles.fieldRow}>
-              <label className={styles.fieldGroup}>
-                <span className={styles.label}>Gender <span className={styles.required}>*</span></span>
-                <Select
-                  className={styles.input}
-                  value={form.gender}
-                  onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
-                  required
-                >
-                  <option value="">Select gender</option>
-                  {GENDER_OPTIONS.map((g) => <option key={g}>{g}</option>)}
-                </Select>
-                <span className={styles.charCount} style={{ textAlign: 'left' }}>Private — only used for the club&apos;s attendance statistics.</span>
-              </label>
-            </div>
-
-            <div className={styles.subGroup} data-school>
-              <span className={styles.subGroupLabel}>
-                UCSD students {!isUcsd && <span className={styles.optionalTag}>not needed if you&apos;re not a UCSD student</span>}
-              </span>
-              <div className={styles.fieldRow}>
-              <label className={styles.fieldGroup}>
-                <span className={styles.label}>Class of {isUcsd && <span className={styles.required}>*</span>}</span>
-                <Select
-                  className={styles.input}
-                  value={form.year}
-                  onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))}
-                  required={isUcsd}
-                >
-                  <option value="">Select your class</option>
-                  {yearChoiceOptions().map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </Select>
-                <span className={styles.charCount} style={{ textAlign: 'left' }}>Your graduation year — your year (3rd Year, etc.) updates itself every fall.</span>
-              </label>
-              <label className={styles.fieldGroup}>
-                <span className={styles.label}>College {isUcsd && <span className={styles.required}>*</span>}</span>
-                <Select
-                  className={styles.input}
-                  value={form.college}
-                  onChange={(e) => setForm((f) => ({ ...f, college: e.target.value }))}
-                  required={isUcsd}
-                >
-                  <option value="">Select college</option>
-                  <option>Revelle</option>
-                  <option>John Muir</option>
-                  <option>Thurgood Marshall</option>
-                  <option>Earl Warren</option>
-                  <option>Eleanor Roosevelt</option>
-                  <option>Sixth</option>
-                  <option>Seventh</option>
-                  <option>Eighth</option>
-                  <option>N/A</option>
-                </Select>
-              </label>
-              </div>
-              <div className={styles.fieldRow}>
-              <div className={styles.fieldGroup}>
-                <span className={styles.label}>Major {isUcsd && <span className={styles.required}>*</span>}</span>
-                <MajorPicker value={form.major} onChange={(v) => setForm((f) => ({ ...f, major: v }))} required={isUcsd} />
-              </div>
-              </div>
-              <div className={styles.fieldRow}>
-              <div className={styles.fieldGroup}>
-                <span className={styles.label}>Minor <span className={styles.optionalTag}>optional</span></span>
-                <MajorPicker value={form.minor} onChange={(v) => setForm((f) => ({ ...f, minor: v }))} noun="minor" />
-              </div>
-              </div>
-            </div>
-          </section>
-
-          <section className={styles.optionalGroup} aria-label="Optional information">
-            <div className={styles.optionalHeader}>
-              <h2 className={styles.groupHeading}>Optional</h2>
-              <span className={styles.optionalPill}>You can skip all of this</span>
-            </div>
-            <label className={styles.fieldGroup}>
-              <span className={styles.label}>Gamer Tag <span className={styles.optionalTag}>optional</span></span>
-              <input
-                className={styles.input}
-                value={form.gamer_tag}
-                onChange={(e) => setForm((f) => ({ ...f, gamer_tag: e.target.value }))}
-                maxLength={40}
-                placeholder="Your in-game name"
-              />
-            </label>
-
-          <div className={styles.fieldGroup}>
-            <span className={styles.label}>Gaming &amp; Interests <span className={styles.optionalTag}>optional</span></span>
-            <p className={styles.socialHint}>Private — only used to help the club plan events and divisions, never shown to other members.</p>
-
-            <span className={styles.subLabel}>Where do you play?</span>
-            <div className={styles.visibilityGrid}>
-              {PLATFORM_OPTIONS.map((p) => (
-                <label key={p} className={styles.checkboxField}>
-                  <input
-                    type="checkbox"
-                    checked={form.platforms.includes(p)}
-                    onChange={(e) => setForm((f) => ({ ...f, platforms: e.target.checked ? [...f.platforms, p] : f.platforms.filter((x) => x !== p) }))}
-                  />
-                  <span>{p}</span>
-                </label>
-              ))}
-            </div>
-
-            <div className={styles.fieldGroup}>
-              <span className={styles.subLabel}>Favorite games</span>
-              <GamePicker value={form.favorite_games} onChange={(v) => setForm((f) => ({ ...f, favorite_games: v }))} />
-            </div>
-
-            {divisions.length > 0 && (
-              <>
-                <span className={styles.subLabel}>Divisions you&apos;re interested in</span>
-                <div className={styles.visibilityGrid}>
-                  {divisions.map((d) => (
-                    <label key={d.id} className={styles.checkboxField}>
-                      <input
-                        type="checkbox"
-                        checked={form.division_interests.includes(d.id)}
-                        onChange={(e) => setForm((f) => ({ ...f, division_interests: e.target.checked ? [...f.division_interests, d.id] : f.division_interests.filter((x) => x !== d.id) }))}
-                      />
-                      <span>{d.name}</span>
-                    </label>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-          </section>
-          </>
-          )}
-
-          {tab === 'card' && showBoardTab && (
-          <>
-          <div className={styles.fieldStack}>
-            <div className={styles.formSplitCol}>
-              {canEditOrgTitle && (
-                <label className={styles.fieldGroup}>
-                  <span className={styles.label}>Title in the Org <span className={styles.required}>*</span></span>
-                  <input
-                    className={styles.input}
-                    value={form.org_title}
-                    onChange={(e) => setForm((f) => ({ ...f, org_title: e.target.value }))}
-                    maxLength={60}
-                    placeholder="e.g. Marketing Lead"
-                    required
-                  />
-                  <span className={styles.charCount} style={{ textAlign: 'left' }}>Required — this is the title shown on your public officer card.</span>
-                </label>
-              )}
-
-              {canOptIntoBoard && (
-                <label className={styles.checkboxField}>
-                  <input
-                    type="checkbox"
-                    checked={form.show_on_board}
-                    onChange={(e) => setForm((f) => ({ ...f, show_on_board: e.target.checked }))}
-                  />
-                  <span>Show me on the public Team page</span>
-                </label>
-              )}
-            </div>
-            {showBoardTab && (
-              <label className={styles.fieldGroup}>
-                <span className={styles.label}>Bio <span className={styles.optionalTag}>optional</span></span>
-                <textarea
-                  className={`${styles.input} ${styles.textarea}`}
-                  value={form.bio}
-                  onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-                  maxLength={280}
-                  rows={3}
-                  placeholder="Tell the community a bit about yourself..."
-                />
-                <span className={styles.charCount}>{form.bio.length}/280</span>
-              </label>
-            )}
-            <div className={styles.fieldGroup}>
-              <span className={styles.label}>Social Links</span>
-              <p className={styles.socialHint}>Just your handle, not the full link — optional, shown on your {isRecruitOnly ? 'TG Members card' : 'officer card if you&apos;re on it'}.</p>
-              <div className={styles.socialGrid}>
-                {SOCIAL_PLATFORMS.map((p) => (
-                  <label key={p.key} className={styles.socialField}>
-                    <Image src={p.logo} alt="" width={18} height={18} unoptimized className={styles.socialIcon} />
-                    <input
-                      className={styles.input}
-                      value={form.social_links[p.key] ?? ''}
-                      onChange={(e) => setForm((f) => ({
-                        ...f,
-                        social_links: { ...f.social_links, [p.key]: e.target.value },
-                      }))}
-                      placeholder={p.placeholder}
-                      aria-label={p.label}
-                    />
-                  </label>
-                ))}
-              </div>
-
-              <span className={`${styles.label} ${styles.portfolioLabel}`}>Portfolio Links</span>
-              <p className={styles.socialHint}>Your portfolio, GitHub, personal site, art page — optional, up to {MAX_PORTFOLIO_LINKS}. {isRecruitOnly ? 'Shown on your TG Members card.' : 'Shown on your officer card if you turn it on below.'}</p>
-              <div className={styles.portfolioList}>
-                {form.portfolio_links.map((link, i) => (
-                  <div key={i} className={styles.portfolioRow}>
-                    <input
-                      className={styles.input}
-                      value={link.label}
-                      maxLength={30}
-                      placeholder="Label (e.g. Portfolio)"
-                      aria-label="Link label"
-                      onChange={(e) => setForm((f) => ({ ...f, portfolio_links: f.portfolio_links.map((l, j) => (j === i ? { ...l, label: e.target.value } : l)) }))}
-                    />
-                    <input
-                      className={styles.input}
-                      value={link.url}
-                      maxLength={200}
-                      placeholder="yoursite.com"
-                      aria-label="Link address"
-                      onChange={(e) => setForm((f) => ({ ...f, portfolio_links: f.portfolio_links.map((l, j) => (j === i ? { ...l, url: e.target.value } : l)) }))}
-                    />
-                    <button
-                      type="button"
-                      className={styles.portfolioRemove}
-                      aria-label="Remove link"
-                      onClick={() => setForm((f) => ({ ...f, portfolio_links: f.portfolio_links.filter((_, j) => j !== i) }))}
-                    >
-                      <XIcon size={14} strokeWidth={1.75} aria-hidden="true" />
-                    </button>
-                  </div>
-                ))}
-                {form.portfolio_links.length < MAX_PORTFOLIO_LINKS && (
-                  <button
-                    type="button"
-                    className={styles.portfolioAdd}
-                    onClick={() => setForm((f) => ({ ...f, portfolio_links: [...f.portfolio_links, { label: '', url: '' }] }))}
-                  >
-                    + Add a link
-                  </button>
-                )}
-              </div>
-
-              <span className={`${styles.label} ${styles.portfolioLabel}`}>Game IDs</span>
-              <p className={styles.socialHint}>Steam, Riot ID, Genshin UID and so on — optional, up to {MAX_GAME_IDS}. Teammates can click one to copy it. {isRecruitOnly ? 'Shown on your TG Members card.' : 'Shown on your officer card if you turn it on below.'}</p>
-              <div className={styles.portfolioList}>
-                {form.game_ids.map((g, i) => {
-                  const preset = GAME_ID_PRESETS.find((p) => p.game === g.game);
-                  const custom = !preset && g.game !== '';
-                  const update = (patch: Partial<GameId>) => setForm((f) => ({ ...f, game_ids: f.game_ids.map((x, j) => (j === i ? { ...x, ...patch } : x)) }));
-                  return (
-                    <div key={i} className={styles.portfolioList}>
-                      <div className={styles.portfolioRow}>
-                        <Select className={styles.input} value={preset ? g.game : custom ? OTHER_GAME : ''} aria-label="Game or platform" onChange={(e) => update({ game: e.target.value })}>
-                          <option value="">Pick a game</option>
-                          {GAME_ID_PRESETS.map((p) => <option key={p.game} value={p.game}>{p.game}</option>)}
-                          <option value={OTHER_GAME}>Other…</option>
-                        </Select>
+                    <div className={styles.fieldRow}>
+                      <label className={styles.fieldGroup}>
+                        <span className={styles.label}>
+                          Name <span className={styles.required}>*</span>
+                        </span>
                         <input
                           className={styles.input}
-                          value={g.id}
+                          value={form.display_name}
+                          onChange={(e) => setForm((f) => ({ ...f, display_name: e.target.value }))}
                           maxLength={60}
-                          placeholder={preset?.placeholder ?? 'Your ID'}
-                          aria-label="Game ID"
-                          onChange={(e) => update({ id: e.target.value })}
+                          required
                         />
-                        <button type="button" className={styles.portfolioRemove} aria-label="Remove game ID" onClick={() => setForm((f) => ({ ...f, game_ids: f.game_ids.filter((_, j) => j !== i) }))}>
-                          <XIcon size={14} strokeWidth={1.75} aria-hidden="true" />
-                        </button>
-                      </div>
-                      {custom && (
-                        <input
+                      </label>
+                      <label className={styles.fieldGroup}>
+                        <span className={styles.label}>
+                          Pronouns <span className={styles.required}>*</span>
+                        </span>
+                        <Select
                           className={styles.input}
-                          value={g.game === OTHER_GAME ? '' : g.game}
-                          maxLength={30}
-                          placeholder="Game or platform name"
-                          aria-label="Game name"
-                          autoFocus={g.game === OTHER_GAME}
-                          onChange={(e) => update({ game: e.target.value || OTHER_GAME })}
-                        />
+                          value={pronounsOther ? 'Other' : form.pronouns}
+                          onChange={(e) => {
+                            if (e.target.value === 'Other') {
+                              setPronounsOther(true);
+                              setForm((f) => ({ ...f, pronouns: (PRONOUN_OPTIONS as readonly string[]).includes(f.pronouns) ? '' : f.pronouns }));
+                            } else {
+                              setPronounsOther(false);
+                              setForm((f) => ({ ...f, pronouns: e.target.value }));
+                            }
+                          }}
+                          required={!pronounsOther}
+                        >
+                          <option value="">Select pronouns</option>
+                          {PRONOUN_OPTIONS.map((p) => (
+                            <option key={p}>{p}</option>
+                          ))}
+                          <option value="Other">Other…</option>
+                        </Select>
+                        {pronounsOther && (
+                          <input
+                            className={styles.input}
+                            value={form.pronouns}
+                            onChange={(e) => setForm((f) => ({ ...f, pronouns: e.target.value }))}
+                            maxLength={30}
+                            placeholder="Type your pronouns"
+                            aria-label="Your pronouns"
+                            required
+                            autoFocus
+                          />
+                        )}
+                      </label>
+                    </div>
+
+                    <div className={styles.fieldRow}>
+                      <label className={styles.fieldGroup}>
+                        <span className={styles.label}>
+                          Gender <span className={styles.required}>*</span>
+                        </span>
+                        <Select className={styles.input} value={form.gender} onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))} required>
+                          <option value="">Select gender</option>
+                          {GENDER_OPTIONS.map((g) => (
+                            <option key={g}>{g}</option>
+                          ))}
+                        </Select>
+                        <span className={styles.charCount} style={{ textAlign: 'left' }}>
+                          Private — only used for the club&apos;s attendance statistics.
+                        </span>
+                      </label>
+                    </div>
+
+                    <div className={styles.subGroup} data-school>
+                      <span className={styles.subGroupLabel}>
+                        UCSD students {!isUcsd && <span className={styles.optionalTag}>not needed if you&apos;re not a UCSD student</span>}
+                      </span>
+                      <div className={styles.fieldRow}>
+                        <label className={styles.fieldGroup}>
+                          <span className={styles.label}>Class of {isUcsd && <span className={styles.required}>*</span>}</span>
+                          <Select className={styles.input} value={form.year} onChange={(e) => setForm((f) => ({ ...f, year: e.target.value }))} required={isUcsd}>
+                            <option value="">Select your class</option>
+                            {yearChoiceOptions().map((o) => (
+                              <option key={o.value} value={o.value}>
+                                {o.label}
+                              </option>
+                            ))}
+                          </Select>
+                          <span className={styles.charCount} style={{ textAlign: 'left' }}>
+                            Your graduation year — your year (3rd Year, etc.) updates itself every fall.
+                          </span>
+                        </label>
+                        <label className={styles.fieldGroup}>
+                          <span className={styles.label}>College {isUcsd && <span className={styles.required}>*</span>}</span>
+                          <Select className={styles.input} value={form.college} onChange={(e) => setForm((f) => ({ ...f, college: e.target.value }))} required={isUcsd}>
+                            <option value="">Select college</option>
+                            <option>Revelle</option>
+                            <option>John Muir</option>
+                            <option>Thurgood Marshall</option>
+                            <option>Earl Warren</option>
+                            <option>Eleanor Roosevelt</option>
+                            <option>Sixth</option>
+                            <option>Seventh</option>
+                            <option>Eighth</option>
+                            <option>N/A</option>
+                          </Select>
+                        </label>
+                      </div>
+                      <div className={styles.fieldRow}>
+                        <div className={styles.fieldGroup}>
+                          <span className={styles.label}>Major {isUcsd && <span className={styles.required}>*</span>}</span>
+                          <MajorPicker value={form.major} onChange={(v) => setForm((f) => ({ ...f, major: v }))} required={isUcsd} />
+                        </div>
+                      </div>
+                      <div className={styles.fieldRow}>
+                        <div className={styles.fieldGroup}>
+                          <span className={styles.label}>
+                            Minor <span className={styles.optionalTag}>optional</span>
+                          </span>
+                          <MajorPicker value={form.minor} onChange={(v) => setForm((f) => ({ ...f, minor: v }))} noun="minor" />
+                        </div>
+                      </div>
+                    </div>
+                  </section>
+
+                  <section className={styles.optionalGroup} aria-label="Optional information">
+                    <div className={styles.optionalHeader}>
+                      <h2 className={styles.groupHeading}>Optional</h2>
+                      <span className={styles.optionalPill}>You can skip all of this</span>
+                    </div>
+                    <label className={styles.fieldGroup}>
+                      <span className={styles.label}>
+                        Gamer Tag <span className={styles.optionalTag}>optional</span>
+                      </span>
+                      <input
+                        className={styles.input}
+                        value={form.gamer_tag}
+                        onChange={(e) => setForm((f) => ({ ...f, gamer_tag: e.target.value }))}
+                        maxLength={40}
+                        placeholder="Your in-game name"
+                      />
+                    </label>
+
+                    <div className={styles.fieldGroup}>
+                      <span className={styles.label}>
+                        Gaming &amp; Interests <span className={styles.optionalTag}>optional</span>
+                      </span>
+                      <p className={styles.socialHint}>Private — only used to help the club plan events and divisions, never shown to other members.</p>
+
+                      <span className={styles.subLabel}>Where do you play?</span>
+                      <div className={styles.visibilityGrid}>
+                        {PLATFORM_OPTIONS.map((p) => (
+                          <label key={p} className={styles.checkboxField}>
+                            <input
+                              type="checkbox"
+                              checked={form.platforms.includes(p)}
+                              onChange={(e) => setForm((f) => ({ ...f, platforms: e.target.checked ? [...f.platforms, p] : f.platforms.filter((x) => x !== p) }))}
+                            />
+                            <span>{p}</span>
+                          </label>
+                        ))}
+                      </div>
+
+                      <div className={styles.fieldGroup}>
+                        <span className={styles.subLabel}>Favorite games</span>
+                        <GamePicker value={form.favorite_games} onChange={(v) => setForm((f) => ({ ...f, favorite_games: v }))} />
+                      </div>
+
+                      {divisions.length > 0 && (
+                        <>
+                          <span className={styles.subLabel}>Divisions you&apos;re interested in</span>
+                          <div className={styles.visibilityGrid}>
+                            {divisions.map((d) => (
+                              <label key={d.id} className={styles.checkboxField}>
+                                <input
+                                  type="checkbox"
+                                  checked={form.division_interests.includes(d.id)}
+                                  onChange={(e) =>
+                                    setForm((f) => ({
+                                      ...f,
+                                      division_interests: e.target.checked ? [...f.division_interests, d.id] : f.division_interests.filter((x) => x !== d.id),
+                                    }))
+                                  }
+                                />
+                                <span>{d.name}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </>
                       )}
                     </div>
-                  );
-                })}
-                {form.game_ids.length < MAX_GAME_IDS && (
-                  <button type="button" className={styles.portfolioAdd} onClick={() => setForm((f) => ({ ...f, game_ids: [...f.game_ids, { game: '', id: '' }] }))}>
-                    + Add a game ID
-                  </button>
-                )}
-              </div>
-            </div>
+                  </section>
+                </>
+              )}
 
-          </div>
+              {tab === 'card' && showBoardTab && (
+                <>
+                  <div className={styles.fieldStack}>
+                    <div className={styles.formSplitCol}>
+                      {canEditOrgTitle && (
+                        <label className={styles.fieldGroup}>
+                          <span className={styles.label}>
+                            Title in the Org <span className={styles.required}>*</span>
+                          </span>
+                          <input
+                            className={styles.input}
+                            value={form.org_title}
+                            onChange={(e) => setForm((f) => ({ ...f, org_title: e.target.value }))}
+                            maxLength={60}
+                            placeholder="e.g. Marketing Lead"
+                            required
+                          />
+                          <span className={styles.charCount} style={{ textAlign: 'left' }}>
+                            Required — this is the title shown on your public officer card.
+                          </span>
+                        </label>
+                      )}
 
-          {isBoardEligible && (() => {
-            // What each item currently is — read from the live form (see
-            // officerCard above), so it updates as they type.
-            const rows = [
-              { key: 'bio', label: 'Bio', current: officerCard.bioText },
-              { key: 'pronouns', label: 'Pronouns', current: officerCard.pronounText },
-              { key: 'year_major', label: 'Year, major, minor & college', current: officerCard.yearMajorText },
-              { key: 'socials', label: 'Discord & social links', current: officerCard.socials.map((p) => p.label).join(', ') },
-              { key: 'portfolio', label: 'Portfolio links', current: officerCard.portfolioNames.join(', ') },
-              { key: 'game_ids', label: 'Game IDs', current: officerCard.gameIdNames.join(', ') },
-              { key: 'email', label: 'Email address', current: boardEmail ?? '' },
-            ] as const;
-            const vis = form.board_visibility;
-            return (
-              <section className={styles.publicGroup} aria-label="What is shown on the public Team page">
-                <div className={styles.publicHeader}>
-                  <Globe size={18} strokeWidth={1.75} aria-hidden="true" />
-                  <h2 className={styles.publicTitle}>Public Team page — what to show</h2>
-                  <a href="/team" target="_blank" rel="noopener noreferrer" className={styles.publicLink}>View Team page ↗</a>
-                </div>
-                <Notice tone="info">
-                  <strong>Anyone on the internet can see this</strong>, including people who aren&apos;t logged in.
-                  Checked items appear on your public card; unchecked items stay hidden from the public.
-                </Notice>
-                <p className={styles.socialHint}>
-                  Always public: your name, picture, title and gamer tag. Inside the portal (TG Members), officers can always see everything you&apos;ve filled in — these choices only change the public page.
-                </p>
-                <div className={styles.visibilityList}>
-                  {rows.map(({ key, label, current }) => (
-                    <label key={key} className={`${styles.visibilityRow} ${vis[key] ? styles.visibilityRowPublic : ''}`}>
-                      <input
-                        type="checkbox"
-                        checked={vis[key]}
-                        onChange={(e) => setForm((f) => ({ ...f, board_visibility: { ...f.board_visibility, [key]: e.target.checked } }))}
-                      />
-                      <span className={styles.visibilityText}>
-                        <span className={styles.visibilityName}>{label}</span>
-                        <span className={current ? styles.currentValue : styles.currentEmpty}>
-                          {current || 'Not set yet — fill it in on the Basic Info / links above'}
+                      {canOptIntoBoard && (
+                        <label className={styles.checkboxField}>
+                          <input type="checkbox" checked={form.show_on_board} onChange={(e) => setForm((f) => ({ ...f, show_on_board: e.target.checked }))} />
+                          <span>Show me on the public Team page</span>
+                        </label>
+                      )}
+                    </div>
+                    {showBoardTab && (
+                      <label className={styles.fieldGroup}>
+                        <span className={styles.label}>
+                          Bio <span className={styles.optionalTag}>optional</span>
                         </span>
-                      </span>
-                      {vis[key]
-                        ? <span className={`${styles.visBadge} ${styles.visBadgePublic}`}><Globe size={12} strokeWidth={2} aria-hidden="true" /> Public</span>
-                        : <span className={`${styles.visBadge} ${styles.visBadgeHidden}`}><EyeOff size={12} strokeWidth={2} aria-hidden="true" /> Hidden</span>}
-                    </label>
-                  ))}
-                </div>
+                        <textarea
+                          className={`${styles.input} ${styles.textarea}`}
+                          value={form.bio}
+                          onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
+                          maxLength={280}
+                          rows={3}
+                          placeholder="Tell the community a bit about yourself..."
+                        />
+                        <span className={styles.charCount}>{form.bio.length}/280</span>
+                      </label>
+                    )}
+                    <div className={styles.fieldGroup}>
+                      <span className={styles.label}>Social Links</span>
+                      <p className={styles.socialHint}>
+                        Just your handle, not the full link — optional, shown on your {isRecruitOnly ? 'TG Members card' : 'officer card if you&apos;re on it'}.
+                      </p>
+                      <div className={styles.socialGrid}>
+                        {SOCIAL_PLATFORMS.map((p) => (
+                          <label key={p.key} className={styles.socialField}>
+                            <Image src={p.logo} alt="" width={18} height={18} unoptimized className={styles.socialIcon} />
+                            <input
+                              className={styles.input}
+                              value={form.social_links[p.key] ?? ''}
+                              onChange={(e) =>
+                                setForm((f) => ({
+                                  ...f,
+                                  social_links: { ...f.social_links, [p.key]: e.target.value },
+                                }))
+                              }
+                              placeholder={p.placeholder}
+                              aria-label={p.label}
+                            />
+                          </label>
+                        ))}
+                      </div>
 
-                {linkedEmails.length > 1 && (
-                  <label className={styles.fieldGroup}>
-                    <span className={styles.label}>Email shown on your card</span>
-                    <Select
-                      className={styles.input}
-                      value={form.board_email && linkedEmails.includes(form.board_email) ? form.board_email : ''}
-                      onChange={(e) => setForm((f) => ({ ...f, board_email: e.target.value }))}
-                    >
-                      <option value="">{email ? `${email} (sign-in email)` : 'Sign-in email'}</option>
-                      {linkedEmails.filter((e) => e !== email).map((e) => <option key={e} value={e}>{e}</option>)}
-                    </Select>
-                    <span className={styles.charCount} style={{ textAlign: 'left' }}>Only used if &ldquo;Email address&rdquo; above is checked. You can pick any email linked to your account.</span>
-                  </label>
-                )}
+                      <span className={`${styles.label} ${styles.portfolioLabel}`}>Portfolio Links</span>
+                      <p className={styles.socialHint}>
+                        Your portfolio, GitHub, personal site, art page — optional, up to {MAX_PORTFOLIO_LINKS}.{' '}
+                        {isRecruitOnly ? 'Shown on your TG Members card.' : 'Shown on your officer card if you turn it on below.'}
+                      </p>
+                      <div className={styles.portfolioList}>
+                        {form.portfolio_links.map((link, i) => (
+                          <div key={i} className={styles.portfolioRow}>
+                            <input
+                              className={styles.input}
+                              value={link.label}
+                              maxLength={30}
+                              placeholder="Label (e.g. Portfolio)"
+                              aria-label="Link label"
+                              onChange={(e) => setForm((f) => ({ ...f, portfolio_links: f.portfolio_links.map((l, j) => (j === i ? { ...l, label: e.target.value } : l)) }))}
+                            />
+                            <input
+                              className={styles.input}
+                              value={link.url}
+                              maxLength={200}
+                              placeholder="yoursite.com"
+                              aria-label="Link address"
+                              onChange={(e) => setForm((f) => ({ ...f, portfolio_links: f.portfolio_links.map((l, j) => (j === i ? { ...l, url: e.target.value } : l)) }))}
+                            />
+                            <button
+                              type="button"
+                              className={styles.portfolioRemove}
+                              aria-label="Remove link"
+                              onClick={() => setForm((f) => ({ ...f, portfolio_links: f.portfolio_links.filter((_, j) => j !== i) }))}
+                            >
+                              <XIcon size={14} strokeWidth={1.75} aria-hidden="true" />
+                            </button>
+                          </div>
+                        ))}
+                        {form.portfolio_links.length < MAX_PORTFOLIO_LINKS && (
+                          <button
+                            type="button"
+                            className={styles.portfolioAdd}
+                            onClick={() => setForm((f) => ({ ...f, portfolio_links: [...f.portfolio_links, { label: '', url: '' }] }))}
+                          >
+                            + Add a link
+                          </button>
+                        )}
+                      </div>
 
-                {!officerCard.onTeamPage && <p className={styles.socialHint}>You&apos;re not on the public Team page yet — turn on &ldquo;Show me on the public Team page&rdquo; above to appear.</p>}
-              </section>
-            );
-          })()}
-          </>
+                      <span className={`${styles.label} ${styles.portfolioLabel}`}>Game IDs</span>
+                      <p className={styles.socialHint}>
+                        Steam, Riot ID, Genshin UID and so on — optional, up to {MAX_GAME_IDS}. Teammates can click one to copy it.{' '}
+                        {isRecruitOnly ? 'Shown on your TG Members card.' : 'Shown on your officer card if you turn it on below.'}
+                      </p>
+                      <div className={styles.portfolioList}>
+                        {form.game_ids.map((g, i) => {
+                          const preset = GAME_ID_PRESETS.find((p) => p.game === g.game);
+                          const custom = !preset && g.game !== '';
+                          const update = (patch: Partial<GameId>) => setForm((f) => ({ ...f, game_ids: f.game_ids.map((x, j) => (j === i ? { ...x, ...patch } : x)) }));
+                          return (
+                            <div key={i} className={styles.portfolioList}>
+                              <div className={styles.portfolioRow}>
+                                <Select
+                                  className={styles.input}
+                                  value={preset ? g.game : custom ? OTHER_GAME : ''}
+                                  aria-label="Game or platform"
+                                  onChange={(e) => update({ game: e.target.value })}
+                                >
+                                  <option value="">Pick a game</option>
+                                  {GAME_ID_PRESETS.map((p) => (
+                                    <option key={p.game} value={p.game}>
+                                      {p.game}
+                                    </option>
+                                  ))}
+                                  <option value={OTHER_GAME}>Other…</option>
+                                </Select>
+                                <input
+                                  className={styles.input}
+                                  value={g.id}
+                                  maxLength={60}
+                                  placeholder={preset?.placeholder ?? 'Your ID'}
+                                  aria-label="Game ID"
+                                  onChange={(e) => update({ id: e.target.value })}
+                                />
+                                <button
+                                  type="button"
+                                  className={styles.portfolioRemove}
+                                  aria-label="Remove game ID"
+                                  onClick={() => setForm((f) => ({ ...f, game_ids: f.game_ids.filter((_, j) => j !== i) }))}
+                                >
+                                  <XIcon size={14} strokeWidth={1.75} aria-hidden="true" />
+                                </button>
+                              </div>
+                              {custom && (
+                                <input
+                                  className={styles.input}
+                                  value={g.game === OTHER_GAME ? '' : g.game}
+                                  maxLength={30}
+                                  placeholder="Game or platform name"
+                                  aria-label="Game name"
+                                  autoFocus={g.game === OTHER_GAME}
+                                  onChange={(e) => update({ game: e.target.value || OTHER_GAME })}
+                                />
+                              )}
+                            </div>
+                          );
+                        })}
+                        {form.game_ids.length < MAX_GAME_IDS && (
+                          <button type="button" className={styles.portfolioAdd} onClick={() => setForm((f) => ({ ...f, game_ids: [...f.game_ids, { game: '', id: '' }] }))}>
+                            + Add a game ID
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {isBoardEligible &&
+                    (() => {
+                      // What each item currently is — read from the live form (see
+                      // officerCard above), so it updates as they type.
+                      const rows = [
+                        { key: 'bio', label: 'Bio', current: officerCard.bioText },
+                        { key: 'pronouns', label: 'Pronouns', current: officerCard.pronounText },
+                        { key: 'year_major', label: 'Year, major, minor & college', current: officerCard.yearMajorText },
+                        { key: 'socials', label: 'Discord & social links', current: officerCard.socials.map((p) => p.label).join(', ') },
+                        { key: 'portfolio', label: 'Portfolio links', current: officerCard.portfolioNames.join(', ') },
+                        { key: 'game_ids', label: 'Game IDs', current: officerCard.gameIdNames.join(', ') },
+                        { key: 'email', label: 'Email address', current: boardEmail ?? '' },
+                      ] as const;
+                      const vis = form.board_visibility;
+                      return (
+                        <section className={styles.publicGroup} aria-label="What is shown on the public Team page">
+                          <div className={styles.publicHeader}>
+                            <Globe size={18} strokeWidth={1.75} aria-hidden="true" />
+                            <h2 className={styles.publicTitle}>Public Team page — what to show</h2>
+                            <a href="/team" target="_blank" rel="noopener noreferrer" className={styles.publicLink}>
+                              View Team page ↗
+                            </a>
+                          </div>
+                          <Notice tone="info">
+                            <strong>Anyone on the internet can see this</strong>, including people who aren&apos;t logged in. Checked items appear on your public card; unchecked
+                            items stay hidden from the public.
+                          </Notice>
+                          <p className={styles.socialHint}>
+                            Always public: your name, picture, title and gamer tag. Inside the portal (TG Members), officers can always see everything you&apos;ve filled in — these
+                            choices only change the public page.
+                          </p>
+                          <div className={styles.visibilityList}>
+                            {rows.map(({ key, label, current }) => (
+                              <label key={key} className={`${styles.visibilityRow} ${vis[key] ? styles.visibilityRowPublic : ''}`}>
+                                <input
+                                  type="checkbox"
+                                  checked={vis[key]}
+                                  onChange={(e) => setForm((f) => ({ ...f, board_visibility: { ...f.board_visibility, [key]: e.target.checked } }))}
+                                />
+                                <span className={styles.visibilityText}>
+                                  <span className={styles.visibilityName}>{label}</span>
+                                  <span className={current ? styles.currentValue : styles.currentEmpty}>
+                                    {current || 'Not set yet — fill it in on the Basic Info / links above'}
+                                  </span>
+                                </span>
+                                {vis[key] ? (
+                                  <span className={`${styles.visBadge} ${styles.visBadgePublic}`}>
+                                    <Globe size={12} strokeWidth={2} aria-hidden="true" /> Public
+                                  </span>
+                                ) : (
+                                  <span className={`${styles.visBadge} ${styles.visBadgeHidden}`}>
+                                    <EyeOff size={12} strokeWidth={2} aria-hidden="true" /> Hidden
+                                  </span>
+                                )}
+                              </label>
+                            ))}
+                          </div>
+
+                          {linkedEmails.length > 1 && (
+                            <label className={styles.fieldGroup}>
+                              <span className={styles.label}>Email shown on your card</span>
+                              <Select
+                                className={styles.input}
+                                value={form.board_email && linkedEmails.includes(form.board_email) ? form.board_email : ''}
+                                onChange={(e) => setForm((f) => ({ ...f, board_email: e.target.value }))}
+                              >
+                                <option value="">{email ? `${email} (sign-in email)` : 'Sign-in email'}</option>
+                                {linkedEmails
+                                  .filter((e) => e !== email)
+                                  .map((e) => (
+                                    <option key={e} value={e}>
+                                      {e}
+                                    </option>
+                                  ))}
+                              </Select>
+                              <span className={styles.charCount} style={{ textAlign: 'left' }}>
+                                Only used if &ldquo;Email address&rdquo; above is checked. You can pick any email linked to your account.
+                              </span>
+                            </label>
+                          )}
+
+                          {!officerCard.onTeamPage && (
+                            <p className={styles.socialHint}>
+                              You&apos;re not on the public Team page yet — turn on &ldquo;Show me on the public Team page&rdquo; above to appear.
+                            </p>
+                          )}
+                        </section>
+                      );
+                    })()}
+                </>
+              )}
+
+              {error && <Notice tone="error">{error}</Notice>}
+
+              <SaveBar
+                dirty={dirty}
+                saving={saving}
+                formId="profile-form"
+                onDiscard={() => {
+                  const f = savedForm();
+                  setForm(f);
+                  setPronounsOther(!!f.pronouns.trim() && !(PRONOUN_OPTIONS as readonly string[]).includes(f.pronouns.trim()));
+                  setError('');
+                }}
+              />
+            </form>
           )}
 
-          {error && <Notice tone="error">{error}</Notice>}
-
-          <SaveBar dirty={dirty} saving={saving} formId="profile-form" onDiscard={() => { const f = savedForm(); setForm(f); setPronounsOther(!!f.pronouns.trim() && !(PRONOUN_OPTIONS as readonly string[]).includes(f.pronouns.trim())); setError(''); }} />
-        </form>
-        )}
-
-        {tab === 'notifications' && (
-          <div className={styles.securityTab}>
-            <PushSettings />
-            <EmailSettings />
-          </div>
-        )}
-
-        {tab === 'strikes' && showStrikesTab && (
-          <div className={styles.securityTab}>
-            <MyStrikes />
-          </div>
-        )}
-
-        {tab === 'security' && (
-          <div className={styles.securityTab}>
-            <LinkGoogleSection />
-            <div className={styles.signOutSection}>
-              <div className={styles.signOutText}>
-                <h2 className={styles.backupLoginTitle}>Sign out</h2>
-                <p className={styles.backupLoginHint}>End your session on this device.</p>
-              </div>
-              <button className={styles.signOutBtn} onClick={handleSignOut}>
-                Sign Out
-              </button>
+          {tab === 'notifications' && (
+            <div className={styles.securityTab}>
+              <PushSettings />
+              <EmailSettings />
             </div>
-          </div>
-        )}
+          )}
+
+          {tab === 'strikes' && showStrikesTab && (
+            <div className={styles.securityTab}>
+              <MyStrikes />
+            </div>
+          )}
+
+          {tab === 'security' && (
+            <div className={styles.securityTab}>
+              <LinkGoogleSection />
+              <div className={styles.signOutSection}>
+                <div className={styles.signOutText}>
+                  <h2 className={styles.backupLoginTitle}>Sign out</h2>
+                  <p className={styles.backupLoginHint}>End your session on this device.</p>
+                </div>
+                <button className={styles.signOutBtn} onClick={handleSignOut}>
+                  Sign Out
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

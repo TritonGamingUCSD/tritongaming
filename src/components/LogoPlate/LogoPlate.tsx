@@ -33,33 +33,47 @@ export default function LogoPlate({ src, alt, className = '', imgClassName = '' 
         const x2 = c2.getContext('2d', { willReadFrequently: true });
         if (x2 && img.naturalWidth && img.naturalHeight) {
           const sc = N / Math.max(img.naturalWidth, img.naturalHeight);
-          const dw = img.naturalWidth * sc, dh = img.naturalHeight * sc;
+          const dw = img.naturalWidth * sc,
+            dh = img.naturalHeight * sc;
           x2.drawImage(img, (N - dw) / 2, (N - dh) / 2, dw, dh);
           const px = x2.getImageData(0, 0, N, N).data;
-          let minX = N, minY = N, maxX = -1, maxY = -1;
-          for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
-            if (px[(y * N + x) * 4 + 3] < 40) continue;
-            if (x < minX) minX = x; if (x > maxX) maxX = x; if (y < minY) minY = y; if (y > maxY) maxY = y;
-          }
+          let minX = N,
+            minY = N,
+            maxX = -1,
+            maxY = -1;
+          for (let y = 0; y < N; y++)
+            for (let x = 0; x < N; x++) {
+              if (px[(y * N + x) * 4 + 3] < 40) continue;
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
           if (maxX >= 0) {
-            const w = maxX - minX + 1, h = maxY - minY + 1;
+            const w = maxX - minX + 1,
+              h = maxY - minY + 1;
             const s = Math.min(1.9, (0.96 * N) / Math.max(w, h));
             if (!cancelled && s > 1.08) setZoom({ s, x: ((N / 2 - (minX + maxX + 1) / 2) / N) * 100 * s, y: ((N / 2 - (minY + maxY + 1) / 2) / N) * 100 * s });
           }
         }
-        let sum = 0, n = 0;
+        let sum = 0,
+          n = 0;
         for (let i = 0; i < d.length; i += 4) {
-          if (d[i + 3] < 40) continue;                       // see-through pixel
+          if (d[i + 3] < 40) continue; // see-through pixel
           sum += (0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2]) / 255;
           n++;
         }
         // A logo with a solid background of its own is its own plate; only judge logos that are mostly see-through.
         const transparent = 1 - n / (24 * 24);
         if (!cancelled && n > 0 && transparent > 0.25) setTone(sum / n > 0.62 ? 'dark' : 'paper');
-      } catch { /* cross-origin pixels blocked: keep the paper plate */ }
+      } catch {
+        /* cross-origin pixels blocked: keep the paper plate */
+      }
     };
     img.src = src;
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [src]);
 
   return (

@@ -17,9 +17,17 @@ export default async function PreviewLayout({ children }: { children: React.Reac
 
   return (
     <>
-      <NavBar announcement={<Suspense fallback={null}><AnnouncementBanner /></Suspense>} />
+      <NavBar
+        announcement={
+          <Suspense fallback={null}>
+            <AnnouncementBanner />
+          </Suspense>
+        }
+      />
       <main>{children}</main>
-      <Suspense fallback={null}><Footer /></Suspense>
+      <Suspense fallback={null}>
+        <Footer />
+      </Suspense>
       <PreviewBridge />
     </>
   );

@@ -11,9 +11,15 @@ export function useSettled(): boolean {
     const fonts: Promise<unknown> = document.fonts?.ready ?? Promise.resolve();
     const timeout = new Promise<void>((resolve) => setTimeout(resolve, 4000));
     void Promise.race([Promise.all([loaded, fonts]), timeout]).then(() => {
-      requestAnimationFrame(() => requestAnimationFrame(() => { if (!off) setSettled(true); }));
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+          if (!off) setSettled(true);
+        }),
+      );
     });
-    return () => { off = true; };
+    return () => {
+      off = true;
+    };
   }, []);
   return settled;
 }

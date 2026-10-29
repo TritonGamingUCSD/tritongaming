@@ -6,7 +6,7 @@ export const DEFAULT_SECS = 40;
 export const MAX_POINTS = 1000;
 /** A question with a category opens on a category card this long (the question and its clock start after it). */
 export const CARD_MS = 3000;
-export const AUTO_NEXT_SECS = 6;   // how long an answer stays on the host screen before the game moves on by itself (to the next question, or the results)
+export const AUTO_NEXT_SECS = 6; // how long an answer stays on the host screen before the game moves on by itself (to the next question, or the results)
 /** The first question of a game is preceded by a 3-2-1-GO countdown this long (then its category card, if it has one). */
 export const COUNTDOWN_MS = 4000;
 // A tap that reaches the server this long after the clock ran out still counts (phones and networks lag a little).
@@ -22,7 +22,10 @@ export function makeCode(rng: Rng = Math.random): string {
 }
 /** What a person typed (spaces, a dash, a pasted link) as a join code, or null when it can't be one. Codes of games made before the codes were digits only (they had letters) still read. */
 export function cleanCode(raw: string): string | null {
-  const t = raw.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const t = raw
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '');
   const code = t.length > 6 ? t.slice(-6) : t;
   return /^[A-Z0-9]{6}$/.test(code) ? code : null;
 }
@@ -37,16 +40,36 @@ export function pointsFor(ok: boolean, ms: number, secs: number): number {
 
 export function shuffle<T>(list: readonly T[], rng: Rng = Math.random): T[] {
   const a = [...list];
-  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(rng() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
   return a;
 }
 
-export interface PoolQuestion { id: string; text: string; choices: string[]; correct: number; category?: string; image?: string }
-export interface PlannedQuestion { id: string; text: string; choices: string[]; correct: number; secs: number; category?: string; image?: string }   // choices as shown (shuffled); correct is a position in them
+export interface PoolQuestion {
+  id: string;
+  text: string;
+  choices: string[];
+  correct: number;
+  category?: string;
+  image?: string;
+}
+export interface PlannedQuestion {
+  id: string;
+  text: string;
+  choices: string[];
+  correct: number;
+  secs: number;
+  category?: string;
+  image?: string;
+} // choices as shown (shuffled); correct is a position in them
 
 /** A question can be asked once it has a category, text, four answers, and a right one that is filled in. */
 export function isAskable(q: { text: string; choices: string[]; correct: number; category?: string }): boolean {
-  return (q.category ?? '').trim() !== '' && q.text.trim() !== '' && q.choices.length === CHOICES && q.choices.every((c) => c.trim() !== '') && q.correct >= 0 && q.correct < CHOICES;
+  return (
+    (q.category ?? '').trim() !== '' && q.text.trim() !== '' && q.choices.length === CHOICES && q.choices.every((c) => c.trim() !== '') && q.correct >= 0 && q.correct < CHOICES
+  );
 }
 
 /**
@@ -55,29 +78,66 @@ export function isAskable(q: { text: string; choices: string[]; correct: number;
  */
 export function drawGame(pool: PoolQuestion[], used: ReadonlySet<string>, count: number, rng: Rng = Math.random): PlannedQuestion[] {
   const ready = pool.filter(isAskable);
-  const fresh = shuffle(ready.filter((q) => !used.has(q.id)), rng);
-  const repeats = shuffle(ready.filter((q) => used.has(q.id)), rng);
+  const fresh = shuffle(
+    ready.filter((q) => !used.has(q.id)),
+    rng,
+  );
+  const repeats = shuffle(
+    ready.filter((q) => used.has(q.id)),
+    rng,
+  );
   return [...fresh, ...repeats].slice(0, Math.max(0, count)).map((q) => {
-    const order = shuffle(q.choices.map((_, i) => i), rng);
-    return { id: q.id, text: q.text.trim(), choices: order.map((i) => q.choices[i].trim()), correct: order.indexOf(q.correct), secs: suggestSecs(q), category: (q.category ?? '').trim(), image: q.image || undefined };
+    const order = shuffle(
+      q.choices.map((_, i) => i),
+      rng,
+    );
+    return {
+      id: q.id,
+      text: q.text.trim(),
+      choices: order.map((i) => q.choices[i].trim()),
+      correct: order.indexOf(q.correct),
+      secs: suggestSecs(q),
+      category: (q.category ?? '').trim(),
+      image: q.image || undefined,
+    };
   });
 }
 
-export interface Standing { user_id: string; name: string; score: number; time_ms: number; rank: number }
+export interface Standing {
+  user_id: string;
+  name: string;
+  score: number;
+  time_ms: number;
+  rank: number;
+}
 /** Highest score first; equal scores are split by the shorter total time on right answers. Players still tied share a rank. */
 export function standings(players: { user_id: string; name: string; score: number; time_ms: number }[]): Standing[] {
   const sorted = [...players].sort((a, b) => b.score - a.score || a.time_ms - b.time_ms || a.name.localeCompare(b.name) || a.user_id.localeCompare(b.user_id));
-  return sorted.map((p, i) => {
-    const prev = sorted[i - 1];
-    const tied = prev && prev.score === p.score && prev.time_ms === p.time_ms;
-    return { ...p, rank: tied ? 0 : i + 1 };
-  }).reduce<Standing[]>((out, p) => { out.push({ ...p, rank: p.rank || out[out.length - 1].rank }); return out; }, []);
+  return sorted
+    .map((p, i) => {
+      const prev = sorted[i - 1];
+      const tied = prev && prev.score === p.score && prev.time_ms === p.time_ms;
+      return { ...p, rank: tied ? 0 : i + 1 };
+    })
+    .reduce<Standing[]>((out, p) => {
+      out.push({ ...p, rank: p.rank || out[out.length - 1].rank });
+      return out;
+    }, []);
 }
 
 /** Totals from the answers given so far, for the players still in the game. */
-export function totals(players: { user_id: string; name: string }[], answers: { user_id: string; points: number; ms: number; ok: boolean }[]): { user_id: string; name: string; score: number; time_ms: number }[] {
+export function totals(
+  players: { user_id: string; name: string }[],
+  answers: { user_id: string; points: number; ms: number; ok: boolean }[],
+): { user_id: string; name: string; score: number; time_ms: number }[] {
   const by = new Map(players.map((p) => [p.user_id, { ...p, score: 0, time_ms: 0 }]));
-  for (const a of answers) { const t = by.get(a.user_id); if (t) { t.score += a.points; if (a.ok) t.time_ms += a.ms; } }
+  for (const a of answers) {
+    const t = by.get(a.user_id);
+    if (t) {
+      t.score += a.points;
+      if (a.ok) t.time_ms += a.ms;
+    }
+  }
   return [...by.values()];
 }
 
@@ -96,7 +156,12 @@ export function suggestSecs(q: { text: string; choices: string[] }): number {
   return Math.max(40, Math.min(120, Math.ceil((30 + words) / 5) * 5));
 }
 
-export interface BulkQuestion { text: string; choices: string[]; correct: number; category: string }
+export interface BulkQuestion {
+  text: string;
+  choices: string[];
+  correct: number;
+  category: string;
+}
 
 /**
  * Questions pasted as text: the question, then its answers on lines starting with A. B. C. D. (A) or A: , the right one marked with a * in front or behind it (or "(correct)" after it), or an "Answer: B" line after them.
@@ -112,7 +177,11 @@ export function parseBulk(input: string): { questions: BulkQuestion[]; problems:
   const finish = () => {
     if (!cur) return;
     n++;
-    const text = cur.text.join(' ').replace(/^\s*(?:q(?:uestion)?\s*)?\d+\s*[.):]\s*/i, '').replace(/^\s*q\s*[.):]\s*/i, '').trim();
+    const text = cur.text
+      .join(' ')
+      .replace(/^\s*(?:q(?:uestion)?\s*)?\d+\s*[.):]\s*/i, '')
+      .replace(/^\s*q\s*[.):]\s*/i, '')
+      .trim();
     const label = `Question ${n}${text ? ` (“${text.slice(0, 40)}${text.length > 40 ? '…' : ''}”)` : ''}`;
     const right = cur.correct >= 0 ? cur.correct : cur.answer;
     if (!text) problems.push(`${label}: no question text.`);
@@ -127,26 +196,38 @@ export function parseBulk(input: string): { questions: BulkQuestion[]; problems:
     if (!line) continue;
     const cat = /^category\s*[:=-]\s*(.*)$/i.exec(line);
     if (cat) {
-      if (cur && cur.choices.length) finish();   // a category line after the answers belongs to the next question
-      sticky = cat[1].trim();   // it holds for every question after it, until the next Category line
+      if (cur && cur.choices.length) finish(); // a category line after the answers belongs to the next question
+      sticky = cat[1].trim(); // it holds for every question after it, until the next Category line
       if (!cur) cur = { text: [], choices: [], correct: -1, answer: -1, category: sticky };
       cur.category = sticky;
       continue;
     }
     const ans = /^(?:answer|ans|correct|right)\s*[:=-]\s*\(?([A-Da-d])\)?\b/i.exec(line);
-    if (ans && cur && cur.choices.length) { cur.answer = 'ABCD'.indexOf(ans[1].toUpperCase()); continue; }
+    if (ans && cur && cur.choices.length) {
+      cur.answer = 'ABCD'.indexOf(ans[1].toUpperCase());
+      continue;
+    }
     const opt = /^(\*?)\s*\(?([A-Da-d])\s*(?:[.):]|\])\s*(.*)$/.exec(line);
     if (opt && cur && cur.choices.length < CHOICES && 'ABCD'.indexOf(opt[2].toUpperCase()) === cur.choices.length) {
       let body = opt[3].trim();
       let mark = opt[1] === '*';
-      if (/\s*\*$/.test(body)) { mark = true; body = body.replace(/\s*\*+$/, ''); }
-      if (/\s*[(\[]\s*(?:correct|right|answer)\s*[)\]]$/i.test(body)) { mark = true; body = body.replace(/\s*[(\[]\s*(?:correct|right|answer)\s*[)\]]$/i, ''); }
-      if (/\s*✓$/.test(body)) { mark = true; body = body.replace(/\s*✓$/, ''); }
+      if (/\s*\*$/.test(body)) {
+        mark = true;
+        body = body.replace(/\s*\*+$/, '');
+      }
+      if (/\s*[(\[]\s*(?:correct|right|answer)\s*[)\]]$/i.test(body)) {
+        mark = true;
+        body = body.replace(/\s*[(\[]\s*(?:correct|right|answer)\s*[)\]]$/i, '');
+      }
+      if (/\s*✓$/.test(body)) {
+        mark = true;
+        body = body.replace(/\s*✓$/, '');
+      }
       if (mark && cur.correct < 0) cur.correct = cur.choices.length;
       cur.choices.push(body.trim());
       continue;
     }
-    if (cur && cur.choices.length) finish();   // a line of text after the answers starts the next question
+    if (cur && cur.choices.length) finish(); // a line of text after the answers starts the next question
     if (!cur) cur = { text: [], choices: [], correct: -1, answer: -1, category: sticky };
     cur.text.push(line);
   }
@@ -157,16 +238,29 @@ export function parseBulk(input: string): { questions: BulkQuestion[]; problems:
 /** Rows of a CSV file (quoted fields, doubled quotes and line breaks inside quotes understood). */
 export function parseCsv(input: string): string[][] {
   const rows: string[][] = [];
-  let row: string[] = [], field = '', quoted = false;
+  let row: string[] = [],
+    field = '',
+    quoted = false;
   const text = input.replace(/^\uFEFF/, '');
   for (let i = 0; i < text.length; i++) {
     const ch = text[i];
     if (quoted) {
-      if (ch === '"' && text[i + 1] === '"') { field += '"'; i++; } else if (ch === '"') quoted = false; else field += ch;
+      if (ch === '"' && text[i + 1] === '"') {
+        field += '"';
+        i++;
+      } else if (ch === '"') quoted = false;
+      else field += ch;
     } else if (ch === '"') quoted = true;
-    else if (ch === ',') { row.push(field); field = ''; }
-    else if (ch === '\n' || ch === '\r') { if (ch === '\r' && text[i + 1] === '\n') i++; row.push(field); field = ''; if (row.some((c) => c.trim())) rows.push(row); row = []; }
-    else field += ch;
+    else if (ch === ',') {
+      row.push(field);
+      field = '';
+    } else if (ch === '\n' || ch === '\r') {
+      if (ch === '\r' && text[i + 1] === '\n') i++;
+      row.push(field);
+      field = '';
+      if (row.some((c) => c.trim())) rows.push(row);
+      row = [];
+    } else field += ch;
   }
   row.push(field);
   if (row.some((c) => c.trim())) rows.push(row);
@@ -176,12 +270,12 @@ export function parseCsv(input: string): string[][] {
 /** A CSV with the columns category, question, A, B, C, D, answer (a letter, or the text of the right answer), as the text `parseBulk` reads. A header row is skipped. */
 export function csvToBulk(input: string): string {
   return parseCsv(input)
-    .filter((r, i) => !(i === 0 && /^(category|q(uestion)?)$/i.test(r[0].trim())))   // a header row is skipped
+    .filter((r, i) => !(i === 0 && /^(category|q(uestion)?)$/i.test(r[0].trim()))) // a header row is skipped
     .map((r) => {
       const [category = '', text = '', ...rest] = r.map((c) => c.trim());
       const choices = rest.slice(0, CHOICES);
       const ans = (rest[CHOICES] ?? '').trim();
-      const letter = /^[A-Da-d]$/.test(ans) ? ans.toUpperCase() : 'ABCD'[choices.findIndex((c) => c.toLowerCase() === ans.toLowerCase() && ans !== '')] ?? '';
+      const letter = /^[A-Da-d]$/.test(ans) ? ans.toUpperCase() : ('ABCD'[choices.findIndex((c) => c.toLowerCase() === ans.toLowerCase() && ans !== '')] ?? '');
       return [`Category: ${category}`, text, ...choices.map((c, i) => `${'ABCD'[i]}. ${c}`), letter ? `Answer: ${letter}` : ''].filter(Boolean).join('\n');
     })
     .join('\n\n');
@@ -200,15 +294,23 @@ export function endStats(plan: { text: string }[], list: { user_id: string; name
   for (const [id, who] of name) {
     const had = new Set(mine.filter((a) => a.user_id === id && a.ok).map((a) => a.q_index));
     let run = 0;
-    for (let i = 0; i < asked; i++) { run = had.has(i) ? run + 1 : 0; if (run >= 2 && (!best || run > best.n)) best = { name: who, n: run }; }
+    for (let i = 0; i < asked; i++) {
+      run = had.has(i) ? run + 1 : 0;
+      if (run >= 2 && (!best || run > best.n)) best = { name: who, n: run };
+    }
   }
   if (best) stats.streak = best;
-  const perQ = Array.from({ length: asked }, (_, q) => { const here = mine.filter((a) => a.q_index === q); return { q, n: here.length, pct: here.length ? Math.round((here.filter((a) => a.ok).length / here.length) * 100) : 0 }; }).filter((x) => x.n >= 3);
+  const perQ = Array.from({ length: asked }, (_, q) => {
+    const here = mine.filter((a) => a.q_index === q);
+    return { q, n: here.length, pct: here.length ? Math.round((here.filter((a) => a.ok).length / here.length) * 100) : 0 };
+  }).filter((x) => x.n >= 3);
   if (perQ.length >= 2) {
     const hard = perQ.reduce((m, x) => (x.pct < m.pct ? x : m));
     const easy = perQ.reduce((m, x) => (x.pct > m.pct ? x : m));
-    if (hard.q !== easy.q) { stats.hardest = { q: hard.q + 1, text: plan[hard.q]?.text ?? '', pct: hard.pct }; stats.easiest = { q: easy.q + 1, text: plan[easy.q]?.text ?? '', pct: easy.pct }; }
+    if (hard.q !== easy.q) {
+      stats.hardest = { q: hard.q + 1, text: plan[hard.q]?.text ?? '', pct: hard.pct };
+      stats.easiest = { q: easy.q + 1, text: plan[easy.q]?.text ?? '', pct: easy.pct };
+    }
   }
   return stats;
 }
-

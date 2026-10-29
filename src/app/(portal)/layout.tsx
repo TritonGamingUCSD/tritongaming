@@ -17,11 +17,19 @@ export const metadata: Metadata = {
 export default async function PortalGroupLayout({ children }: { children: React.ReactNode }) {
   // The light/dark choice is settled before first paint by the root layout's script, and by PortalThemeInit when arriving without a full load (lib/portal/themeScript.ts).
   const [profile, viewing] = await Promise.all([getProfile().catch(() => null), getViewingUser().catch(() => null)]);
-  const content = profile ? <PortalIdentityProvider id={profile.id} name={profile.display_name || profile.google_first_name || 'Someone'} track={!viewing}>{children}</PortalIdentityProvider> : children;
+  const content = profile ? (
+    <PortalIdentityProvider id={profile.id} name={profile.display_name || profile.google_first_name || 'Someone'} track={!viewing}>
+      {children}
+    </PortalIdentityProvider>
+  ) : (
+    children
+  );
   return (
     <>
       <PortalThemeInit />
-      <div className="pp-root" style={{ display: 'contents' }}>{content}</div>
+      <div className="pp-root" style={{ display: 'contents' }}>
+        {content}
+      </div>
     </>
   );
 }

@@ -5,7 +5,9 @@ import { getTier, fetchTiers } from '@/lib/members/tiers';
 
 export async function POST(request: Request) {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { reward_id } = await request.json();

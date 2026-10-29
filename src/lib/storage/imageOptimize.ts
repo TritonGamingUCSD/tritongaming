@@ -1,7 +1,15 @@
 import sharp from 'sharp';
 
 // Longest edge each bucket needs for how its pictures are shown. Nothing is ever enlarged.
-export const MAX_EDGE: Record<string, number> = { avatars: 512, 'division-logos': 600, 'event-flyers': 1600, 'doc-attachments': 2400, 'site-content': 2000, 'help-attachments': 1800, 'custom-emojis': 128 };
+export const MAX_EDGE: Record<string, number> = {
+  avatars: 512,
+  'division-logos': 600,
+  'event-flyers': 1600,
+  'doc-attachments': 2400,
+  'site-content': 2000,
+  'help-attachments': 1800,
+  'custom-emojis': 128,
+};
 const DEFAULT_EDGE = 2000;
 // Files this small are left alone (re-encoding them only loses quality), and a rewrite has to save at least 10%.
 const SKIP_UNDER_BYTES = 120 * 1024;
