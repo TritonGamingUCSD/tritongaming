@@ -210,13 +210,6 @@
   border: 1px solid rgba(var(--pp-ink-rgb), 0.06);
 }
 
-.qrFailedText {
-  padding: 0 1.5rem;
-  text-align: center;
-  font-size: 0.8rem;
-  line-height: 1.4;
-  color: rgba(var(--pp-ink-rgb), 0.8);
-}
 
 .eventName {
   font-size: 1.15rem;

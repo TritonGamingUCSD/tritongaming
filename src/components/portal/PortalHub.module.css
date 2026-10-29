@@ -281,16 +281,6 @@
 
 /* "More" sheet: grouped tiles instead of a plain list */
 .moreSheetScroll { padding-bottom: calc(6.2rem + env(safe-area-inset-bottom, 0px)); }
-.sheetTile {
-  display: flex; flex-direction: column; align-items: center; gap: 0.45rem;
-  padding: 0.8rem 0.4rem; border-radius: 1rem; cursor: pointer;
-  background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); /* theme-ok */
-  color: var(--white); font-family: var(--font-futura-medium); font-size: 0.74rem; text-align: center; /* theme-ok */
-}
-.sheetTileIcon {
-  position: relative; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 0.8rem;
-  color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
-}
 
 /* ═══ Desktop sidebar ═══════════════════════════════════
    A sticky card: who you are, search, grouped navigation, then the footer
@@ -749,7 +739,6 @@
 @media (min-width: 900px) { .launcher { display: none; } }
 
 /* Phone tiles: one dense, color-coded grid (no group headings, no empty rows). */
-@media (max-width: 340px) { .tileGrid { grid-template-columns: repeat(3, 1fr); } }
 .launcher { margin: 0.5rem 0; }
 
 /* Labels clip their overflow (for the ellipsis), which also clipped the tails of p, q, g and y: give the text room below the baseline. */
@@ -905,7 +894,6 @@
 @media (max-width: 899px) {
   .moreSheetScroll { padding-bottom: calc(5.2rem + env(safe-area-inset-bottom, 0px)); }
 }
-@media (min-width: 900px) { .sheetTheme { display: none; } }
 
 /* Sidebar footer tiles (Help, Back to Site, Sign out): the outlined tile and its hard shadow need room, so the rows are a little taller and never clip them. */
 @media (min-width: 900px) {

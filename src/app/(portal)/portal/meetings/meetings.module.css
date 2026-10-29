@@ -215,7 +215,6 @@
 }
 @media (prefers-reduced-motion: reduce) { .floater { animation-duration: 0.01s; } .reactPop { animation: none; } }
 .presenting .bigCode { font-size: clamp(4rem, 17vw, 11rem); }
-@media (max-width: 480px) { .reactBtn { width: var(--btn-h); height: var(--btn-h); font-size: 1.35rem; } .reactBtns { gap: 0.35rem; } }
 
 /* Audience */
 .audience { display: flex; flex-direction: column; gap: 0.6rem; }
