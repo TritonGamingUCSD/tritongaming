@@ -75,7 +75,6 @@
 /* ── Phone ── */
 /* ═══ Redesign additions ═══ */
 .muted { margin: 0; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.88); }
-.errorText { margin: 0; font-size: 0.85rem; color: var(--pp-bad); }
 .linkBtn { background: none; border: 0; padding: 0; font: inherit; color: var(--p-accent-text); text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .linkBtn:hover { color: var(--pp-ink); }
 .iconBtn { display: inline-grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 0.5rem; border: 0; background: none; color: rgba(var(--pp-ink-rgb), 0.92); cursor: pointer; }

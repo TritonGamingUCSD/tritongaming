@@ -48,5 +48,4 @@
 .recent li:first-child { border-top: 0; }
 .recent span { min-width: 0; overflow-wrap: anywhere; }
 .recent small { flex: none; color: rgba(var(--pp-ink-rgb), 0.75); white-space: nowrap; }
-.err { color: var(--pp-bad); }
 @media (max-width: 899px) { .home { grid-template-columns: 1fr; } .twoCols { grid-template-columns: 1fr; } .recent li { flex-direction: column; gap: 0.1rem; } }

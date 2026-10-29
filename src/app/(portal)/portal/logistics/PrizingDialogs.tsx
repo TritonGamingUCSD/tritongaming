@@ -8,7 +8,7 @@ import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
 import PictureDialog from '@/components/ui/PictureDialog';
 import { compressImage } from '@/lib/ui/compressImage';
-import { Field, Input } from '@/components/ui/Field';
+import { Field, Input, DateInput } from '@/components/ui/Field';
 import { ImagePlus, Minus, Pencil, Plus } from 'lucide-react';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { Combo } from './Combo';
@@ -138,7 +138,7 @@ export function PrizeEditor({ prizes, api, data, prize: given, tab: first = 'edi
         <details className={pz.edMore}>
           <summary>More details</summary>
           <div className={pz.edRow}>
-            <label className={pz.edInline}><span>Expires</span><input type="date" value={f.expires_on} onChange={(e) => set('expires_on', e.target.value)} disabled={readOnly} /></label>
+            <label className={pz.edInline}><span>Expires</span><DateInput value={f.expires_on} onChange={(e) => set('expires_on', e.target.value)} disabled={readOnly} /></label>
           </div>
           <label className={pz.edInline}><span>Notes</span><textarea rows={2} value={f.notes} onChange={(e) => set('notes', e.target.value)} disabled={readOnly} maxLength={2000} placeholder="anything else worth knowing" /></label>
         </details>

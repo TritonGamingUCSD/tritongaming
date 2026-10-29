@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import IconButton from '@/components/ui/IconButton';
 import { useState } from 'react';
 import Image from 'next/image';
@@ -62,7 +63,7 @@ export default function AvatarEditor({ value, onChange, fallback, bucket, pathPr
       </div>
 
       <p className={styles.hint}>Click the circle to upload, drop or paste a picture.</p>
-      {error && <p className={styles.error}>{error}</p>}
+      {error && <Notice tone="error">{error}</Notice>}
 
       {picking && (
         <PictureDialog title="Profile picture" aspect={1} round current={src || undefined} accept={ALLOWED_IMAGE_TYPES.join(',')} hint="PNG, JPG, WebP or GIF, under 8 MB"

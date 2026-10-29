@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { showToast } from './toast';
 
-const DEFAULT_MESSAGE = 'You have changes that haven’t been saved. Leave without saving?';
+const DEFAULT_MESSAGE = 'You have changes that haven’t been saved. Save or discard them before leaving.';
 
 // Set while some form on screen has unsaved edits. Navigation that doesn't go
 // through a link or the browser (button handlers that call router.replace, like
@@ -21,7 +22,7 @@ export function confirmDiscardUnsaved(): boolean {
 }
 
 // When a SaveBar is on screen, leaving is not a question: the page just refuses and the bar shakes red until they save or discard.
-// Without a bar the old confirm dialog is used.
+// Without a bar the page refuses the same way and says so in a message (no browser confirm box anywhere).
 export const UNSAVED_BLOCKED_EVENT = 'tg:unsaved-blocked';
 let barCount = 0;
 export function registerSaveBar(): () => void {
@@ -30,7 +31,8 @@ export function registerSaveBar(): () => void {
 }
 function ask(message: string): boolean {
   if (barCount > 0) { window.dispatchEvent(new Event(UNSAVED_BLOCKED_EVENT)); return false; }
-  return window.confirm(message);
+  showToast(message, { tone: 'warn' });
+  return false;
 }
 
 // Warns before someone loses edits they haven't saved, anywhere a form holds

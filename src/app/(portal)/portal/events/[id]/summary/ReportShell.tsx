@@ -1,10 +1,9 @@
 'use client';
 
-import Select from '@/components/ui/Select';
 import { useMemo, useState } from 'react';
 import { FileDown, Plus, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { Input } from '@/components/ui/Field';
+import { Input, Select } from '@/components/ui/Field';
 import { createClient } from '@/lib/supabase/client';
 import type { ReportMetric } from '@/types/database';
 import type { ReportChoices, ReportData } from './reportTypes';

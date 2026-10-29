@@ -1,6 +1,6 @@
 'use client';
 
-import { formatPacificDate } from '@/lib/core/timezone';
+import { formatDayRange } from '@/lib/core/timezone';
 import { useEffect, useState } from 'react';
 import { RowMenu } from './RowMenu';
 import { confirmHold } from '@/lib/ui/confirmHold';
@@ -11,7 +11,7 @@ import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Loading from '@/components/Loading/Loading';
-import { Field, Input, Textarea } from '@/components/ui/Field';
+import { Field, Input, Textarea, DateInput } from '@/components/ui/Field';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { routeParams, type Route } from './logisticsRoute';
 import { useUrlNav } from '@/lib/portal/usePortalTabSync';
@@ -22,10 +22,7 @@ import type { Catalog, LogisticsApi } from './useLogistics';
 import { Plus } from 'lucide-react';
 import styles from './logistics.module.css';
 
-const range = (a: string, b: string) => {
-  const f = (d: string) => formatPacificDate(d);
-  return a === b ? f(a) : `${f(a)} to ${f(b)}`;
-};
+const range = (a: string, b: string) => formatDayRange(a, b);
 
 // Events: the list, and one plan per event (/portal/logistics/<name>/requests, …). The name is made when the plan is created and never changes, so a copied link keeps working after a
 // rename; for a portal event it is the event's own slug. An old address with the long ID inside still opens the plan and is tidied to the name.
@@ -169,7 +166,7 @@ function CreateDialog({ events, onCreate, onClose }: { events: (past: boolean) =
             {!list ? <Loading variant="inline" label="Loading events…" /> : list.length === 0 ? <p className={styles.muted}>{past ? 'No past events.' : 'No upcoming events. Switch to a Logistics-only event, or show past events.'}</p> : (
               <ul className={styles.eventPick} role="listbox" aria-label="Events">
                 {list.map((ev) => (
-                  <li key={ev.id}><button type="button" role="option" aria-selected={ev.id === eventId} className={`${styles.eventOpt} ${ev.id === eventId ? styles.eventOptOn : ''}`} onClick={() => { setEventId(ev.id); setName(ev.title); }}><b>{ev.title}</b><span>{ev.starts_on ? (ev.ends_on && ev.ends_on !== ev.starts_on ? `${ev.starts_on} to ${ev.ends_on}` : ev.starts_on) : ''}</span></button></li>
+                  <li key={ev.id}><button type="button" role="option" aria-selected={ev.id === eventId} className={`${styles.eventOpt} ${ev.id === eventId ? styles.eventOptOn : ''}`} onClick={() => { setEventId(ev.id); setName(ev.title); }}><b>{ev.title}</b><span>{ev.starts_on ? formatDayRange(ev.starts_on, ev.ends_on ?? ev.starts_on) : ''}</span></button></li>
                 ))}
               </ul>
             )}
@@ -179,8 +176,8 @@ function CreateDialog({ events, onCreate, onClose }: { events: (past: boolean) =
           <>
             <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} placeholder="Practice night" autoFocus /></Field>
             <div className={styles.row2}>
-              <Field label="First day"><Input type="date" value={starts} onChange={(e) => { setStarts(e.target.value); if (!ends || ends < e.target.value) setEnds(e.target.value); }} /></Field>
-              <Field label="Last day"><Input type="date" value={ends} min={starts} onChange={(e) => setEnds(e.target.value)} /></Field>
+              <Field label="First day"><DateInput value={starts} onChange={(e) => { setStarts(e.target.value); if (!ends || ends < e.target.value) setEnds(e.target.value); }} /></Field>
+              <Field label="Last day"><DateInput value={ends} min={starts} onChange={(e) => setEnds(e.target.value)} /></Field>
             </div>
           </>
         )}

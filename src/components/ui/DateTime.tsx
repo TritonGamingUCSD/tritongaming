@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
@@ -23,7 +24,7 @@ const parseDate = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(v);
 const parseTime = (v: string) => { const m = /(\d{2}):(\d{2})$/.exec(v); return m ? { h: +m[1], min: +m[2] } : null; };
 const keyOf = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
 const todayKey = () => { const n = new Date(); return keyOf(n.getFullYear(), n.getMonth(), n.getDate()); };
-const fmtDate = (v: string) => { const p = parseDate(v); return p ? new Date(p.y, p.m, p.d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : ''; };
+const fmtDate = (v: string) => { const p = parseDate(v); return p ? formatPacificDate(new Date(Date.UTC(p.y, p.m, p.d, 12)).toISOString().slice(0, 10), { weekday: true, year: true }) : ''; };
 const fmtTime = (v: string) => { const t = parseTime(v); if (!t) return ''; return `${((t.h + 11) % 12) + 1}:${pad(t.min)} ${t.h < 12 ? 'AM' : 'PM'}`; };
 
 function Calendar({ value, min, max, onPick }: { value: string; min?: string; max?: string; onPick: (key: string) => void }) {

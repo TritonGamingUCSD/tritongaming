@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import { useEffect, useState } from 'react';
 import { History, X } from 'lucide-react';
@@ -33,7 +34,7 @@ export default function VersionHistory({ versions, error, open, onOpen, onClose 
         <h2><History size={16} aria-hidden="true" /> Version History</h2>
         <button type="button" className={styles.iconBtn} onClick={onClose} aria-label="Close history"><X size={16} aria-hidden="true" /></button>
       </header>
-      {error && <p className={styles.errorText}>{error}</p>}
+      {error && <Notice tone="error">{error}</Notice>}
       {!versions && !error && <Loading variant="inline" label="Loading…" />}
       {versions && versions.length === 0 && <p className={styles.muted}>Nothing published yet.</p>}
       {versions && versions.length > 0 && (

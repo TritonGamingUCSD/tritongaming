@@ -1,5 +1,6 @@
 'use client';
 
+import Notice from '@/components/ui/Notice';
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, ArrowRight, CalendarDays, CircleAlert, Gift, History, Package, Table2, Trophy } from 'lucide-react';
 import Link from '@/components/portal/PortalLink';
@@ -55,7 +56,7 @@ export default function LogisticsHome({ data, go }: { data: Catalog; go: (r: Rou
   }, [data.devices]);
   const others = (list.plans ?? []).filter((p) => p.status === 'draft' && p.id !== ov?.focus?.id).sort((a, b) => a.starts_on.localeCompare(b.starts_on)).slice(0, 5);
 
-  if (!ov) return <div className={styles.home}>{error ? <p className={styles.err}>{error}</p> : <Loading variant="inline" label="Loading the overview…" />}</div>;
+  if (!ov) return <div className={styles.home}>{error ? <Notice tone="error">{error}</Notice> : <Loading variant="inline" label="Loading the overview…" />}</div>;
   const f = ov.focus, ended = !!f && f.daysAway < 0 && ov.today > f.ends_on;
   const base = f ? `/portal/logistics/${f.slug}` : '/portal/logistics';
   const left = f ? Math.max(0, f.stats.held) : 0;

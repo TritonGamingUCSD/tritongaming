@@ -1,6 +1,6 @@
 'use client';
 
-import { formatPacificDate, formatPacificTime } from '@/lib/core/timezone';
+import { formatDayRange, formatPacificTime } from '@/lib/core/timezone';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowLeftRight, Camera, Minus, Plus, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -44,10 +44,7 @@ type Target = Pick<Row, 'id' | 'kind' | 'itemKind' | 'tag' | 'type' | 'kit'>;
 const time = (iso: string) => formatPacificTime(iso);
 const whereOf = (d: Slim) => (d.kind === 'club' ? [d.shelf, d.tier].filter(Boolean).join(' · ') || 'No place set' : d.kind === 'slot' ? 'Counted: take from stock' : `${d.kind === 'sponsor' ? 'From' : 'From officer'} ${d.owner ?? 'its owner'}`);
 const bodyOf = (r: Pick<Row, 'id' | 'kind'>) => (r.kind === 'club' ? { device_id: r.id } : r.kind === 'slot' ? { slot_id: r.id } : { borrowed_id: r.id });
-const range = (a: string, b: string) => {
-  const f = (d: string) => formatPacificDate(d, { year: true });
-  return a === b ? f(a) : `${f(a)} to ${f(b)}`;
-};
+const range = (a: string, b: string) => formatDayRange(a, b, { year: true });
 
 export default function PlanView({ id, data, catalog, page, day, group, embedded, accordion = false, headMenu, onOpenPrizing, onOpenDevices, openOnly, onOpenOnly, onPage, onBack }: { group: DeviceGroup; embedded?: boolean; accordion?: boolean; headMenu?: React.ReactNode; onOpenDevices?: () => void; onOpenPrizing: () => void; openOnly: boolean; onOpenOnly: (v: boolean) => void; id: string; data: Catalog; catalog: LogisticsApi; page: EventPage; day: boolean; onPage: (p: EventPage, day?: boolean) => void; onBack: () => void }) {
   const plan = usePlan(id, true);

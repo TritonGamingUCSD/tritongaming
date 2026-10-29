@@ -226,3 +226,9 @@ export function formatPacificTime(input: string | number | Date, opts: { seconds
   const g = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
   return `${g('hour')}:${g('minute')}${opts.seconds ? `:${g('second')}` : ''} ${g('dayPeriod').toUpperCase()}`;
 }
+
+// Two calendar days (no time) as one range: "Oct 31" or "Oct 30 to Nov 2" (with the year when asked).
+export function formatDayRange(from: string, to: string, opts: { year?: boolean } = {}): string {
+  const f = (d: string) => formatPacificDate(d, opts);
+  return !to || from === to ? f(from) : `${f(from)} to ${f(to)}`;
+}

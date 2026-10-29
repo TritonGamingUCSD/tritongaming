@@ -31,7 +31,6 @@
 @media (hover: none) { .overlay { opacity: 0; } .dragging .overlay, .avatar:disabled .overlay { opacity: 1; } }
 
 .hint { margin: 0; font-size: 0.72rem; line-height: 1.45; color: rgba(var(--pp-ink-rgb), 0.88); }
-.error { margin: 0; font-size: 0.78rem; color: var(--pp-bad); }
 
 .holder { position: relative; width: 144px; height: 144px; }
 .remove {

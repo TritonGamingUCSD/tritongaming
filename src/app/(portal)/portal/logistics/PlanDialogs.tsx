@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
-import { Field, Input, Textarea } from '@/components/ui/Field';
+import { Field, Input, Textarea, DateInput } from '@/components/ui/Field';
 import type { PlanApi, Station } from './usePlans';
 import styles from './logistics.module.css';
 
@@ -45,8 +45,8 @@ export function EditPlanDialog({ plan: p, onSave, onClose }: { plan: { name: str
       <div className={styles.form}>
         <Field label="Name"><Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} /></Field>
         <div className={styles.row2}>
-          <Field label="First day"><Input type="date" value={starts} onChange={(e) => { setStarts(e.target.value); if (e.target.value > ends) setEnds(e.target.value); }} /></Field>
-          <Field label="Last day"><Input type="date" value={ends} min={starts} onChange={(e) => setEnds(e.target.value)} /></Field>
+          <Field label="First day"><DateInput value={starts} onChange={(e) => { setStarts(e.target.value); if (e.target.value > ends) setEnds(e.target.value); }} /></Field>
+          <Field label="Last day"><DateInput value={ends} min={starts} onChange={(e) => setEnds(e.target.value)} /></Field>
         </div>
         <Field label="Notes"><Textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} maxLength={2000} /></Field>
       </div>
