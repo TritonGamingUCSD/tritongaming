@@ -550,13 +550,22 @@ function StockLine({ row, ctx }: { row: Row; ctx: PrizingCtx }) {
           </>
         )}
       </div>
-      <div className={pz.num} data-label="Planned" title={p.used_at.length ? `Planned or used at ${p.used_at.join(', ')}` : 'Not planned for any event'}>
+      <div
+        className={pz.num}
+        data-label="Planned"
+        title={p.used_at.length ? `Put on a station at ${p.used_at.join(', ')} (a closed event no longer counts as planned)` : 'Not planned for any event'}
+      >
         {isLoose(p) ? (
           <span>–</span>
         ) : (
           <button type="button" className={pz.numLink} onClick={() => ctx.where(p)} aria-label={`${p.allocated} planned. Where did ${p.name} go?`}>
             {p.allocated}
           </button>
+        )}
+        {!isLoose(p) && p.staffle > 0 && (
+          <small className={pz.staffleHold} title="Held back by a Staffle for its raffle">
+            +{p.staffle} Staffle
+          </small>
         )}
       </div>
       <div className={pz.num} data-label="Left">

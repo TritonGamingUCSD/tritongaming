@@ -522,7 +522,7 @@ export default function PrizingPage({ api, data, slug, sheet, go }: { api: Logis
     const labels = hasEvent ? STATUS_LABEL : STOCK_STATUS_LABEL; // with no event there is nothing "assigned to this event"
     return groupBy(
       visibleRows,
-      (r) => labels[statusOf(r.p, hasEvent ? r.here : r.p.allocated)],
+      (r) => labels[statusOf(r.p, hasEvent ? r.here : r.p.allocated + r.p.staffle)],
       'Other',
       STATUS_ORDER.map((s) => labels[s]),
     );

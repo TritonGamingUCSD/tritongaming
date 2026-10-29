@@ -268,7 +268,14 @@ export function PrizeEditor({
                       {prize ? (
                         <>
                           {' '}
-                          · <b>{prize.allocated}</b> planned · <b>{Math.max(0, Number.isFinite(quantity) ? quantity - prize.allocated : prize.left)}</b> left
+                          · <b>{prize.allocated}</b> planned
+                          {prize.staffle > 0 && (
+                            <>
+                              {' '}
+                              · <b>{prize.staffle}</b> in a Staffle
+                            </>
+                          )}{' '}
+                          · <b>{Math.max(0, Number.isFinite(quantity) ? quantity - prize.allocated - prize.staffle : prize.left)}</b> left
                         </>
                       ) : (
                         ''
@@ -439,6 +446,7 @@ interface Breakdown {
   loose: boolean;
   quantity: number;
   planned: number;
+  staffle?: number;
   left: number;
   added: number;
   corrected: number;
@@ -495,6 +503,12 @@ function BreakdownBody({ prize, canEdit, prizes }: { prize: PrizeRow; canEdit: b
               <small>Planned</small>
               <b>{b.planned}</b>
             </div>
+            {!!b.staffle && (
+              <div>
+                <small>In a Staffle</small>
+                <b>{b.staffle}</b>
+              </div>
+            )}
             <div>
               <small>Left</small>
               <b>{b.left}</b>
@@ -691,7 +705,7 @@ function HistoryBody({ prize, from }: { prize: PrizeRow; from: string }) {
         {prize.used_at.length ? ` · used at ${prize.used_at.join(', ')}` : ''}
       </p>
       <p className={styles.muted}>
-        {prize.quantity} on hand · {prize.allocated} promised to open events · {prize.left} left to promise.
+        {prize.quantity} on hand · {prize.allocated} promised to open events{prize.staffle > 0 ? ` · ${prize.staffle} held by a Staffle` : ''} · {prize.left} left to promise.
       </p>
       {error && <Notice tone="error">{error}</Notice>}
       {!log && !error && <p className={styles.muted}>Loading…</p>}

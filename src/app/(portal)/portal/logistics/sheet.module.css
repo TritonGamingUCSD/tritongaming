@@ -36,6 +36,12 @@
 .grid .first { position: sticky; z-index: 2; background: var(--pp-card); box-shadow: 2px 0 0 rgba(var(--pp-ink-rgb), 0.25); }
 .grid thead .first { z-index: 7; background: color-mix(in srgb, var(--pp-ink) 9%, var(--pp-card)); }
 .filterRow .first { background: var(--pp-card); }
+.cell.canEdit { background: color-mix(in srgb, var(--pp-info) 11%, var(--pp-card)); cursor: cell; }
+.cell.canEdit:hover { box-shadow: inset 0 0 0 1px var(--pp-info); }
+.cell.ro { background: color-mix(in srgb, var(--pp-ink) 3%, var(--pp-card)); }
+.penHead { display: inline-block; margin-right: 0.3rem; vertical-align: -1px; color: var(--pp-info); }
+.legend { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+.swatch { display: inline-block; width: 18px; height: 12px; border-radius: 3px; border: 1px solid var(--pp-info); background: color-mix(in srgb, var(--pp-info) 11%, var(--pp-card)); }
 .num { font-size: 0.7rem; color: rgba(var(--pp-ink-rgb), 0.55); }
 .chev { display: grid; place-items: center; width: 100%; height: 34px; border: 0; background: none; color: var(--pp-ink); cursor: pointer; }
 

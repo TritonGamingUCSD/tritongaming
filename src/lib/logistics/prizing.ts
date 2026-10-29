@@ -25,6 +25,7 @@ export interface PrizeIn {
   price: number | null;
   quantity: number;
   allocated: number;
+  staffle?: number;
   left: number;
   stock_level?: StockLevel;
 }

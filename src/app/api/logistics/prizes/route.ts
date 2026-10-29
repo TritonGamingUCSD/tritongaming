@@ -34,6 +34,7 @@ export async function GET() {
         ...p,
         price: p.price === null ? null : Number(p.price),
         allocated: t.allocated,
+        staffle: t.staffle ?? 0,
         left: prizeLeft(p as { quantity: number }, t),
         used_at: usedAt.get(p.id as string) ?? [],
       };
@@ -77,6 +78,7 @@ export async function POST(request: Request) {
         ...data,
         price: data.price === null ? null : Number(data.price),
         allocated: 0,
+        staffle: 0,
         left: prizeLeft(data as { quantity: number; size: string | null; stock_level: string }, { allocated: 0 }),
         used_at: [],
       },

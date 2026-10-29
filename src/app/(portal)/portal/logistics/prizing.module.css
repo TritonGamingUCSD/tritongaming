@@ -268,3 +268,4 @@
 /* The Cards | Sheet switch and the sheet: laptop and tablet only. */
 .sheetSwitch { display: none; }
 @media (min-width: 720px) { .sheetSwitch { display: flex; } }
+.staffleHold { display: block; font-size: 0.7rem; color: rgba(var(--pp-ink-rgb), 0.75); }

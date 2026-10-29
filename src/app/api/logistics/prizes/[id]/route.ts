@@ -62,7 +62,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (Object.keys(r.value).some((k) => k !== 'quantity')) await announce(stockTopic(), { k: 'prizes' }, who); // details changed: the list is read again
   const t = (await loadPrizeTotals(auth.svc, [b.id])).get(b.id) ?? { allocated: 0 };
   return NextResponse.json({
-    prize: { ...data, price: data.price === null ? null : Number(data.price), allocated: t.allocated, left: prizeLeft(data as { quantity: number }, t) },
+    prize: { ...data, price: data.price === null ? null : Number(data.price), allocated: t.allocated, staffle: t.staffle ?? 0, left: prizeLeft(data as { quantity: number }, t) },
   });
 }
 

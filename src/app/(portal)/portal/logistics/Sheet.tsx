@@ -2,7 +2,7 @@
 
 import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ChevronDown, ChevronRight, Columns3, Maximize2, Minimize2, Plus, Trash2, X } from 'lucide-react';
+import { ChevronDown, ChevronRight, Columns3, Pencil, Maximize2, Minimize2, Plus, Trash2, X } from 'lucide-react';
 import { compareCells, matchesFilter, parseCell, type CellKind, type CellValue } from '@/lib/logistics/sheetMath';
 import { showToast } from '@/lib/ui/toast';
 import { flagCodec, useAddressState, useKeptScroll, useSessionState, type Codec } from '@/lib/portal/usePageState';
@@ -184,6 +184,7 @@ export default function Sheet<T>({
   const gutter = 44;
   const tableW = gutter + shown.reduce((n, c) => n + c.width, 0) + (onDelete && canEdit ? 52 : 0);
 
+  const editableCol = (c: SheetCol<T>) => canEdit && c.kind !== 'readonly' && !!c.set; // a column whose cells can be changed
   const editableCell = (r: T | null, c: SheetCol<T>) => canEdit && c.kind !== 'readonly' && !!c.set && (r === null || !c.editable || c.editable(r));
   const choices = (c: SheetCol<T>, r: T | null) => (typeof c.options === 'function' ? (r ? c.options(r) : []) : (c.options ?? []));
 
@@ -532,6 +533,11 @@ export default function Sheet<T>({
         <button type="button" className={styles.fullBtn} onClick={() => setFull(!full)} aria-pressed={full}>
           {full ? <Minimize2 size={15} aria-hidden="true" /> : <Maximize2 size={15} aria-hidden="true" />} {full ? 'Exit Full Screen' : 'Full Screen'}
         </button>
+        {canEdit && (
+          <span className={styles.legend}>
+            <i className={styles.swatch} aria-hidden="true" /> Tinted cells can be edited
+          </span>
+        )}
         <span className={styles.hintLine}>Click a cell, then type or press Enter to edit. Arrows and Tab move. Ctrl+Z undoes.</span>
       </div>
       <div
@@ -574,7 +580,8 @@ export default function Sheet<T>({
                   style={ci === 0 ? { left: gutter } : undefined}
                   aria-sort={sort?.col === c.id ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}
                 >
-                  <button type="button" onClick={() => clickSort(c)} title={c.title ?? `Sort by ${c.label}`}>
+                  <button type="button" onClick={() => clickSort(c)} title={`${c.title ?? `Sort by ${c.label}`}${editableCol(c) ? ' Its cells can be edited.' : ''}`}>
+                    {editableCol(c) && <Pencil size={11} className={styles.penHead} aria-hidden="true" />}
                     {c.label}
                     {c.required ? ' *' : ''}
                     {sort?.col === c.id ? (sort.dir === 1 ? ' ▲' : ' ▼') : ''}

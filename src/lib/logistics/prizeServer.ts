@@ -44,7 +44,7 @@ export const stepKinds = (steps: PrizeStepDef[]) => ({
 export async function loadPrizeTotals(svc: SupabaseClient, only?: string[]): Promise<Map<string, PrizeTotals>> {
   const totals = new Map<string, PrizeTotals>();
   // A Staffle holds back the prizes it is raffling (until they are claimed or it ends).
-  for (const [id, n] of await loadStaffleHolds(svc, only)) totals.set(id, { allocated: n });
+  for (const [id, n] of await loadStaffleHolds(svc, only)) totals.set(id, { allocated: 0, staffle: n });
   const { data: open } = await svc.from('logistics_plans').select('id').eq('status', 'draft').limit(500);
   const planIds = (open ?? []).map((p) => p.id as string);
   if (!planIds.length) return totals;
@@ -161,7 +161,7 @@ export async function loadPlanPrizes(svc: SupabaseClient, planId: string): Promi
             price: p.price === null ? null : Number(p.price),
             quantity: p.quantity as number,
             quantity_is_estimate: !!p.quantity_is_estimate,
-            left: (p.quantity as number) - t.allocated,
+            left: (p.quantity as number) - t.allocated - (t.staffle ?? 0),
           },
         },
       ];

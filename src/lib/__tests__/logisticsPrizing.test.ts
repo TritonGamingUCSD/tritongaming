@@ -148,3 +148,11 @@ describe('impliedCount', () => {
     expect(impliedCount(steps, counts({ given: 3 }), 'back')).toBe(0);
   });
 });
+
+describe('Staffle holds are counted apart from events', () => {
+  it('left is on hand minus what open events hold minus what a Staffle holds', () => {
+    expect(prizeLeft({ quantity: 4 }, { allocated: 0, staffle: 1 })).toBe(3);
+    expect(prizeLeft({ quantity: 4 }, { allocated: 2, staffle: 1 })).toBe(1);
+    expect(prizeLeft({ quantity: 4 }, { allocated: 2 })).toBe(2);
+  });
+});

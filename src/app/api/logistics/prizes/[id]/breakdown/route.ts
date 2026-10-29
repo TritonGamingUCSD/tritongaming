@@ -59,6 +59,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     loose: isLoose(prize as { size: string | null }),
     quantity: prize.quantity as number,
     planned: t.allocated,
+    staffle: t.staffle ?? 0,
     left: prizeLeft(prize as { quantity: number; size: string | null; stock_level: string }, t),
     added,
     corrected,

@@ -311,8 +311,18 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
       width: 92,
       kind: 'readonly',
       align: 'right',
-      title: 'What open events hold back: promised, minus given out, minus back in storage.',
+      title: 'What open events hold back: promised, minus given out, minus back in storage. A closed event holds nothing.',
       get: (p) => (isLoose(p) ? null : p.allocated || null),
+    },
+    {
+      id: 'staffle',
+      label: 'Staffle',
+      group: 'All open events',
+      width: 80,
+      kind: 'readonly',
+      align: 'right',
+      title: 'What a Staffle is holding back for its raffle (until its prizes are claimed or it ends). Counted apart from the events.',
+      get: (p) => (isLoose(p) ? null : p.staffle || null),
     },
     {
       id: 'left',
@@ -321,7 +331,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
       width: 80,
       kind: 'readonly',
       align: 'right',
-      title: 'In stock minus planned: what is free to promise.',
+      title: 'In stock minus planned minus Staffle: what is free to promise.',
       get: (p) => (isLoose(p) ? null : p.left),
     },
     {
@@ -409,7 +419,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
         add={add}
         noun="prize"
         expand={detail}
-        rowTone={(p) => (p.left < 0 && !isLoose(p) ? 'bad' : !p.in_hand && p.allocated > 0 ? 'warn' : undefined)}
+        rowTone={(p) => (p.left < 0 && !isLoose(p) ? 'bad' : !p.in_hand && p.allocated + p.staffle > 0 ? 'warn' : undefined)}
         onDelete={
           can
             ? async (p) => {

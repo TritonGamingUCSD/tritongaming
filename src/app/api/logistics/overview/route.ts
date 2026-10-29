@@ -21,12 +21,17 @@ export async function GET() {
   const focusRow = plans.find((p) => p.starts_on <= today && today <= p.ends_on) ?? plans.find((p) => p.starts_on > today) ?? plans[plans.length - 1] ?? null;
 
   const fixes: { sev: 'bad' | 'warn'; text: string; href: string }[] = [];
+  // An event that is over but not closed still holds its prizes (they count as planned until it is closed), so say so.
+  for (const p of plans)
+    if ((p.ends_on as string) < today)
+      fixes.push({ sev: 'warn', text: `${p.name} is over but still open, so its prizes still count as planned. Close it when it is done.`, href: `/portal/logistics/${p.slug}` });
   const [{ data: prizes }, totals] = await Promise.all([svc.from('logistics_prizes').select('id, name, quantity, size, stock_level, in_hand').limit(2000), loadPrizeTotals(svc)]);
   for (const p of prizes ?? []) {
     const t = totals.get(p.id as string) ?? { allocated: 0 };
     const left = prizeLeft(p as { quantity: number; size: string | null; stock_level: string }, t);
     if (left < 0) fixes.push({ sev: 'bad', text: `${p.name}: ${-left} more promised than there are`, href: '/portal/logistics/prizing?view=sheet' });
-    else if (!p.in_hand && t.allocated > 0) fixes.push({ sev: 'warn', text: `${p.name} is planned but not here yet`, href: '/portal/logistics/prizing?view=sheet' });
+    else if (!p.in_hand && t.allocated + (t.staffle ?? 0) > 0)
+      fixes.push({ sev: 'warn', text: `${p.name} is planned but not here yet`, href: '/portal/logistics/prizing?view=sheet' });
   }
 
   let focus: null | { id: string; slug: string; name: string; starts_on: string; ends_on: string; daysAway: number; stats: Record<string, number> } = null;

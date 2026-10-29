@@ -25,6 +25,7 @@ export interface PrizeRow {
   expires_on: string | null;
   notes: string | null;
   allocated: number;
+  staffle: number;
   left: number;
   used_at: string[]; // used_at: the events it has been put on a station of
 }
@@ -67,7 +68,9 @@ export function usePrizes() {
       if (!r.ok) {
         if (r.body?.code === 'changed' && id) {
           gen++;
-          put((kept?.rows ?? []).map((x) => (x.id === id ? { ...x, quantity: r.body!.current ?? x.quantity, left: (r.body!.current ?? x.quantity) - x.allocated } : x)));
+          put(
+            (kept?.rows ?? []).map((x) => (x.id === id ? { ...x, quantity: r.body!.current ?? x.quantity, left: (r.body!.current ?? x.quantity) - x.allocated - x.staffle } : x)),
+          );
           showToast(`${r.error} It shows ${r.body.current ?? 0} now.`);
           return null;
         }
@@ -110,7 +113,7 @@ export function usePrizes() {
     (id: string, qty: number) => {
       if (kept) {
         gen++;
-        put(kept.rows.map((x) => (x.id === id ? { ...x, quantity: qty, left: qty - x.allocated } : x)));
+        put(kept.rows.map((x) => (x.id === id ? { ...x, quantity: qty, left: qty - x.allocated - x.staffle } : x)));
       }
     },
     [put],

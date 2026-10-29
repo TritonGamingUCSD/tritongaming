@@ -37,9 +37,10 @@ export interface Prize {
 // again. Left is what is free to promise and can go below zero: that is an over-allocation.
 export interface PrizeTotals {
   allocated: number;
+  staffle?: number; // what Staffles are holding back for their raffles (counted apart from the events)
 }
 export const prizeLeft = (p: Pick<Prize, 'quantity'> & { size?: string | null; stock_level?: string | null }, t: PrizeTotals) =>
-  isLoose(p) ? (p.stock_level === 'out' ? 0 : LOOSE_LEFT) : p.quantity - t.allocated;
+  isLoose(p) ? (p.stock_level === 'out' ? 0 : LOOSE_LEFT) : p.quantity - t.allocated - (t.staffle ?? 0);
 
 // One prize line (a prize promised to a station) in four numbers, worked out here and nowhere else:
 //   planned  how many were promised

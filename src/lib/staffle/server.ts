@@ -45,7 +45,10 @@ export async function notEnough(svc: SupabaseClient, items: { prize_id: string; 
   if (prizes?.length !== new Set(ids).size) return 'One of those prizes is gone.';
   for (const p of prizes) {
     const t = totals.get(p.id as string) ?? { allocated: 0 };
-    const left = prizeLeft(p as { quantity: number; size: string | null; stock_level: string }, { allocated: Math.max(0, t.allocated - (own.get(p.id as string) ?? 0)) });
+    const left = prizeLeft(p as { quantity: number; size: string | null; stock_level: string }, {
+      allocated: t.allocated,
+      staffle: Math.max(0, (t.staffle ?? 0) - (own.get(p.id as string) ?? 0)),
+    });
     const want = items.find((i) => i.prize_id === p.id)!.winners;
     if (want > left) return `Only ${Math.max(0, left)} left of ${p.name} to raffle. That is not enough for ${want} winners.`;
   }
