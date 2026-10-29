@@ -66,7 +66,7 @@
 
 /* What belongs to a row, opened under it (the chevron). It stays in view while the table is scrolled sideways. */
 .grid .detailRow td { overflow: visible; height: auto; padding: 0; background: color-mix(in srgb, var(--pp-ink) 4%, var(--pp-card)); border-right: 0; }
-.detail { position: sticky; left: 0; padding: 0.6rem 0.8rem 0.8rem 3.4rem; box-sizing: content-box; max-width: calc(var(--vw) - 5rem); overflow-x: auto; }
+.detail { position: sticky; left: 0; padding: 0.6rem 0.8rem 0.8rem 3.4rem; box-sizing: content-box; max-width: max(20rem, calc(var(--vw) - 5rem)); overflow-x: auto; }
 
 @media (pointer: coarse) { .grid th, .grid td { height: 40px; } .chev { height: 40px; } }
 

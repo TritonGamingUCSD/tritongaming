@@ -153,14 +153,20 @@ export default function Sheet<T>({
       /* not remembered */
     }
   };
+  // The table's own width, kept current. The box can be replaced (it is, when the sheet goes full screen or finishes loading), so this checks on every render which box is on screen and watches that one.
+  const watched = useRef<{ el: HTMLDivElement | null; ro: ResizeObserver | null }>({ el: null, ro: null });
   useEffect(() => {
     const el = scroll.current;
+    if (el === watched.current.el) return;
+    watched.current.ro?.disconnect();
+    watched.current = { el, ro: null };
     if (!el) return;
     const ro = new ResizeObserver(() => setVw(el.clientWidth));
     ro.observe(el);
+    watched.current.ro = ro;
     setVw(el.clientWidth);
-    return () => ro.disconnect();
-  }, []);
+  });
+  useEffect(() => () => watched.current.ro?.disconnect(), []);
 
   const shown = useMemo(() => cols.filter((c) => !hidden.has(c.id)), [cols, hidden]);
   const view = useMemo(() => {
