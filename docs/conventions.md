@@ -42,6 +42,7 @@ npm run type-check     # tsc --noEmit
 npm run lint           # ESLint (Next rules)
 npm test               # Vitest
 npm run check:theme    # theme tokens
+npm run check:format   # Prettier (printWidth 180, single quotes); npm run format fixes. CSS and Markdown are left as written.
 ```
 
 `npm run lint` has no errors; the React-compiler style rules (`set-state-in-effect`, `refs`, `purity`) are warnings on purpose. Unused imports and variables are errors; prefix an intentionally unused name with `_`.

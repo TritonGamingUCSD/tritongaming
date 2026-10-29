@@ -7,6 +7,7 @@ npm run type-check     # TypeScript
 npm run lint           # ESLint
 npm test               # Vitest unit tests (src/**/*.test.ts)
 npm run check:theme    # theme tokens (no one-theme colors)
+npm run check:format   # Prettier: every source file is formatted (npm run format fixes them)
 ```
 
 Unit tests cover pure logic (rules, time math, text parsing). When you add a route, move the decision-making into a pure function in `src/lib` and test that, so the route stays thin.
