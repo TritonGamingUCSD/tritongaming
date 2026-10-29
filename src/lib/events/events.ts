@@ -14,7 +14,7 @@ const DEFAULT_LIMIT = 50;
 // Public event lists/pages are cached briefly and shared between visitors
 // (tag 'events', also invalidated when staff save an event). Fetchers throw on
 // error so failures aren't cached; callers catch outside the cache.
-const EVENTS_REVALIDATE_SECONDS = 900;
+const EVENTS_REVALIDATE_SECONDS = 3600;
 function cachedEvents<T>(keyParts: (string | number)[], fn: () => Promise<T>): Promise<T> {
   return unstable_cache(fn, ['events', ...keyParts.map(String)], { revalidate: EVENTS_REVALIDATE_SECONDS, tags: ['events'] })();
 }

@@ -26,7 +26,7 @@ export const metadata: Metadata = {
 
 // Served from the CDN cache and refreshed in the background — data comes from
 // the cached fetchers in lib/ (revalidated on save), not per-request queries.
-export const revalidate = 900;
+export const revalidate = 3600;
 
 export default async function EventsPage() {
   const [upcoming, previous, blocks] = await Promise.all([getUpcomingEvents(), getPreviousEvents(), getContentBlocks(['page.events', 'layout.events'])]);
