@@ -23,6 +23,8 @@ import {
 import { uploadImageToStorage } from '@/lib/storage/imageUpload';
 import { uploadFileToStorage, MAX_FILE_BYTES } from '@/lib/storage/fileUpload';
 import { showToast } from '@/lib/ui/toast';
+import PictureDialog from '@/components/ui/PictureDialog';
+import FileDialog from '@/components/ui/FileDialog';
 import styles from './docEditor.module.css';
 
 export type CalloutKind = 'note' | 'tip' | 'warning';
@@ -139,8 +141,7 @@ function ColorMenu({ kind, active, onPick }: { kind: 'text' | 'highlight'; activ
 
 // The visual editor: click-to-format, with a "/" menu for blocks. The text it saves is Markdown, so every doc stays plain, portable text.
 const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdown: string) => void; disabled?: boolean; placeholder?: string; linkTitles?: string[] }>(function DocEditor({ value, onChange, disabled, placeholder, linkTitles = [] }, ref) {
-  const fileRef = useRef<HTMLInputElement>(null);
-  const anyFileRef = useRef<HTMLInputElement>(null);
+  const [picker, setPicker] = useState<'image' | 'file' | null>(null);   // which file dialog is open
   const [uploading, setUploading] = useState(false);
   const [view, setViewState] = useState<DocView>('live');
   const [insertOpen, setInsertOpen] = useState(false);
@@ -295,8 +296,8 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
     { id: 'tip', label: 'Tip box', hint: 'A helpful shortcut', run: (e) => e.chain().focus().wrapIn('blockquote', { kind: 'tip' }).run() },
     { id: 'warning', label: 'Warning box', hint: 'Something to be careful about', run: (e) => e.chain().focus().wrapIn('blockquote', { kind: 'warning' }).run() },
     { id: 'table', label: 'Table', hint: '3 columns, 3 rows', run: (e) => e.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
-    { id: 'image', label: 'Image', hint: 'Upload a picture', run: () => fileRef.current?.click() },
-    { id: 'file', label: 'File', hint: 'Attach a file right here', run: () => anyFileRef.current?.click() },
+    { id: 'image', label: 'Image', hint: 'Upload a picture', run: () => setPicker('image') },
+    { id: 'file', label: 'File', hint: 'Attach a file right here', run: () => setPicker('file') },
     { id: 'code', label: 'Code block', hint: 'Fixed-width text', run: (e) => e.chain().focus().toggleCodeBlock().run() },
     { id: 'divider', label: 'Divider', hint: 'A line between parts', run: (e) => e.chain().focus().setHorizontalRule().run() },
   ];
@@ -397,8 +398,8 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
 
   return (
     <div className={styles.shell}>
-      <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadImage(f); e.target.value = ''; }} />
-      <input ref={anyFileRef} type="file" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadRef.current(f); e.target.value = ''; }} />
+      {picker === 'image' && <PictureDialog title="Insert Image" onUse={(files) => uploadImage(files[0])} onClose={() => setPicker(null)} />}
+      {picker === 'file' && <FileDialog title="Attach File" hint="Up to 20 MB" check={(f) => (f.size > MAX_FILE_BYTES ? 'That file is over 20 MB.' : null)} onUse={(f) => (f.type.startsWith('image/') ? uploadImage(f) : uploadOther(f))} onClose={() => setPicker(null)} />}
       <div className={styles.viewBar}>
         <div className={styles.viewSeg} role="group" aria-label="Editor view">
           <button type="button" aria-pressed={view === 'live'} className={`${styles.viewTab} ${view === 'live' ? styles.viewTabOn : ''}`} onClick={() => switchView('live')}><Pencil size={14} aria-hidden="true" /> Write</button>
@@ -433,8 +434,8 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
           {insertOpen && (
             <div className={styles.insertPop} role="menu" aria-label="Insert">
               {([
-                { label: 'Image', icon: <ImageIcon size={15} aria-hidden="true" />, run: () => fileRef.current?.click() },
-                { label: 'File', icon: <Paperclip size={15} aria-hidden="true" />, run: () => anyFileRef.current?.click() },
+                { label: 'Image', icon: <ImageIcon size={15} aria-hidden="true" />, run: () => setPicker('image') },
+                { label: 'File', icon: <Paperclip size={15} aria-hidden="true" />, run: () => setPicker('file') },
                 { label: 'Table', icon: <Table2 size={15} aria-hidden="true" />, run: () => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run() },
                 { label: 'Note box', icon: <Info size={15} aria-hidden="true" />, run: () => setCallout('note') },
                 { label: 'Tip box', icon: <Lightbulb size={15} aria-hidden="true" />, run: () => setCallout('tip') },
@@ -474,8 +475,8 @@ const DocEditor = forwardRef<DocEditorHandle, { value: string; onChange: (markdo
       {view === 'source' && (
         <div className={styles.canvas}>
           <div className={styles.sourceTools}>
-            <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()}><ImageIcon size={14} aria-hidden="true" /> {uploading ? 'Uploading…' : 'Insert image'}</button>
-            <button type="button" disabled={uploading} onClick={() => anyFileRef.current?.click()}><Paperclip size={14} aria-hidden="true" /> Attach file</button>
+            <button type="button" disabled={uploading} onClick={() => setPicker('image')}><ImageIcon size={14} aria-hidden="true" /> {uploading ? 'Uploading…' : 'Insert image'}</button>
+            <button type="button" disabled={uploading} onClick={() => setPicker('file')}><Paperclip size={14} aria-hidden="true" /> Attach file</button>
             <span>Pictures and files can also be pasted or dropped here.</span>
           </div>
           <textarea ref={srcRef} className={styles.sourceBox} value={source} spellCheck={false} aria-label="Markdown source"

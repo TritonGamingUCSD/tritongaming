@@ -1,6 +1,7 @@
 'use client';
 
-import { useMemo, useRef, useState } from 'react';
+import FileDialog from '@/components/ui/FileDialog';
+import { useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
@@ -30,10 +31,10 @@ export function BulkAdd({ slug, onClose, onAdded }: { slug: string; onClose: () 
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const file = useRef<HTMLInputElement>(null);
+  const [choosing, setChoosing] = useState(false);
   const parsed = useMemo(() => parseBulk(text), [text]);
   // A CSV file (from Excel or Sheets: File, Save As, CSV) is turned into the same text, so it can be looked over and fixed before adding.
-  const pick = async (f: File | undefined) => { if (f) setText(csvToBulk(await f.text())); if (file.current) file.current.value = ''; };
+  const pick = async (f: File) => { setText(csvToBulk(await f.text())); };
   const add = async () => {
     setBusy(true); setError('');
     const added: QuestionRow[] = [];
@@ -47,8 +48,9 @@ export function BulkAdd({ slug, onClose, onAdded }: { slug: string; onClose: () 
   };
   return (
     <Dialog title="Paste Questions" wide busy={busy} onClose={onClose}>
+      {choosing && <FileDialog title="Choose A CSV File" accept=".csv,text/csv" hint="A CSV saved from Excel or Sheets" onUse={pick} onClose={() => setChoosing(false)} />}
       <p className={styles.muted}>One question after another: the question, then its four answers starting with A. B. C. D. Put a * by the right one, or add an “Answer: B” line after the answers. A line like “Category: Gaming” before each question gives it its category (required).</p>
-      <div><input ref={file} type="file" accept=".csv,text/csv" hidden onChange={(e) => void pick(e.target.files?.[0])} /><Button variant="secondary" size="sm" onClick={() => file.current?.click()}>Or Choose A CSV File</Button> <span className={styles.muted}>Columns: category, question, A, B, C, D, answer (a letter or the answer’s text)</span></div>
+      <div><Button variant="secondary" size="sm" onClick={() => setChoosing(true)}>Or Choose A CSV File</Button> <span className={styles.muted}>Columns: category, question, A, B, C, D, answer (a letter or the answer’s text)</span></div>
       <Textarea rows={12} value={text} placeholder={EXAMPLE} aria-label="Questions to add" onChange={(e) => setText(e.target.value)} />
       {text.trim() && (
         <div className={styles.bulkResult} aria-live="polite">

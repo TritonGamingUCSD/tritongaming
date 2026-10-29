@@ -1,8 +1,8 @@
 'use client';
 
-import { useFileDrop } from '@/lib/ui/useFileDrop';
+import FileDialog from '@/components/ui/FileDialog';
 import Button from '@/components/ui/Button';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { Plus, X, Upload } from 'lucide-react';
 import Select from '@/components/ui/Select';
 import ArtRow from './ArtRow';
@@ -30,9 +30,7 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
     const { [oldUrl]: moved, ...rest } = credits;
     return { ...rest, [newUrl]: moved };
   };
-  const [fontError, setFontError] = useState('');
-  const [fontBusy, setFontBusy] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [choosing, setChoosing] = useState(false);
   const own = theme.custom_fonts ?? [];
   const setFont = (k: 'display' | 'heading' | 'accent' | 'body', v: string) => onChange({ ...theme, fonts: { ...theme.fonts, [k]: v } });
 
@@ -55,23 +53,13 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
     );
   };
 
-  const addFontFile = async (file: File | undefined) => {
-    if (!file) return;
-    setFontError(''); setFontBusy(true);
-    try {
-      const url = await uploadFontFile('event-flyers', file);
-      const base = file.name.replace(/\.[^.]+$/, '').replace(/[^A-Za-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
-      let name = base.length >= 2 ? base : 'Custom font';
-      while (own.some((f) => f.name === name)) name = `${name} 2`.slice(0, 40);
-      set({ custom_fonts: [...own, { name, url }] });
-    } catch (e) {
-      setFontError(e instanceof Error ? e.message : 'Could not upload that font.');
-    } finally {
-      setFontBusy(false);
-      if (fileRef.current) fileRef.current.value = '';
-    }
+  const addFontFile = async (file: File) => {
+    const url = await uploadFontFile('event-flyers', file);   // a refusal is shown in the dialog
+    const base = file.name.replace(/\.[^.]+$/, '').replace(/[^A-Za-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 40);
+    let name = base.length >= 2 ? base : 'Custom font';
+    while (own.some((f) => f.name === name)) name = `${name} 2`.slice(0, 40);
+    set({ custom_fonts: [...own, { name, url }] });
   };
-  const { over: fontOver, dropProps: fontDrop } = useFileDrop((files) => { void addFontFile(files[0]); });
   const renameFont = (i: number, name: string) => {
     const old = own[i].name;
     const fonts = Object.fromEntries(Object.entries(theme.fonts).map(([k, v]) => [k, v === old ? name : v]));
@@ -111,7 +99,7 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
         {fontPicker('body', 'Body font', 'Running text.')}
       </div>
 
-      <div className={styles.field} data-dropping={fontOver || undefined} {...fontDrop}>
+      <div className={styles.field}>
         <span className={`${styles.label} ${styles.cap}`}>Your own fonts (up to {MAX_CUSTOM_FONTS})</span>
         <span className={styles.hint}>For fonts that are not on Google Fonts. Upload the web font file ({FONT_FILE_TYPES.map((t) => `.${t}`).join(', ')}, up to 3 MB) of a font you have a licence to use on the web. It then appears in the pickers above.</span>
         {own.map((f, i) => (
@@ -125,11 +113,10 @@ export default function EventThemePanel({ theme, onChange, people = [] }: { them
         ))}
         {own.length < MAX_CUSTOM_FONTS && (
           <>
-            <input ref={fileRef} type="file" accept={FONT_FILE_TYPES.map((t) => `.${t}`).join(',')} hidden onChange={(e) => addFontFile(e.target.files?.[0])} />
-            <Button size="sm" variant="secondary" onClick={() => fileRef.current?.click()} disabled={fontBusy}><Upload size={14} aria-hidden="true" /> {fontBusy ? 'Uploading…' : 'Upload or drop a font'}</Button>
+            <Button size="sm" variant="secondary" onClick={() => setChoosing(true)}><Upload size={14} aria-hidden="true" /> Upload A Font</Button>
+            {choosing && <FileDialog title="Upload A Font" accept={FONT_FILE_TYPES.map((t) => `.${t}`).join(',')} hint={`${FONT_FILE_TYPES.join(', ').toUpperCase()} font file`} onUse={addFontFile} onClose={() => setChoosing(false)} />}
           </>
         )}
-        {fontError && <span className={styles.hint} role="alert" style={{ color: '#fca5a5' }}>{fontError}</span>}
       </div>
 
 
