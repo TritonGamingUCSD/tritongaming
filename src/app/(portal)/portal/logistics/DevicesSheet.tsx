@@ -35,6 +35,8 @@ interface SheetData {
   plans: SheetPlan[];
   stations: SheetStation[];
   items: SheetItem[];
+  steps: { id: string; name: string }[];
+  done: { plan_id: string; device_id: string; step_id: string }[];
   canManage: boolean;
 }
 const COND_OF = Object.fromEntries(CONDITIONS.map((c) => [c.label, c.id])) as Record<string, Device['condition']>;
@@ -107,6 +109,21 @@ export default function DevicesSheet({ api, data }: { api: LogisticsApi; data: C
     await load();
     return true;
   };
+  const doneSet = useMemo(() => new Set((sheet?.done ?? []).map((x) => `${x.plan_id}:${x.device_id}:${x.step_id}`)), [sheet]);
+  // Tick or clear one step for one device; the ticks on screen change at once (no reload of the whole sheet).
+  const tick = async (plan: string, device: string, step: string, on: boolean): Promise<boolean> => {
+    const r = await call(`/api/logistics/events/${plan}/steps`, on ? 'POST' : 'DELETE', { device_id: device, step_id: step });
+    if (!r.ok) {
+      showToast(r.error);
+      return false;
+    }
+    setSheet((cur) => {
+      if (!cur) return cur;
+      const rest = cur.done.filter((x) => !(x.plan_id === plan && x.device_id === device && x.step_id === step));
+      return { ...cur, done: on ? [...rest, { plan_id: plan, device_id: device, step_id: step }] : rest };
+    });
+    return true;
+  };
   const eventCols = (pl: SheetPlan): SheetCol<Device>[] => {
     const st = (sheet?.stations ?? []).filter((s) => s.plan_id === pl.id);
     return [
@@ -155,6 +172,19 @@ export default function DevicesSheet({ api, data }: { api: LogisticsApi; data: C
             ? planAction(`/api/logistics/events/${pl.id}/devices`, 'PATCH', { device_ids: [d.id], role: v === 'Backup' ? 'backup' : 'planned' })
             : false,
       },
+      // Every event-day step, a tick for each (the crew ticks them on the day; they can be set or cleared here too). Folded away until the event's header is opened.
+      ...(sheet?.steps ?? []).map((st): SheetCol<Device> => ({
+        id: `x:${pl.id}:${st.id}`,
+        label: st.name,
+        group: pl.name,
+        detail: true,
+        width: 96,
+        kind: 'bool',
+        title: `Ticked when “${st.name}” is done for this device in this event.`,
+        get: (d) => doneSet.has(`${pl.id}:${d.id}:${st.id}`),
+        editable: (d) => itemOf.has(`${pl.id}:${d.id}`),
+        set: (d, v) => tick(pl.id, d.id, st.id, v === true),
+      })),
     ];
   };
 

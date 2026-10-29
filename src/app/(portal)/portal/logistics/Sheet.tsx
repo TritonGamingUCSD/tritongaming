@@ -32,9 +32,12 @@ export interface SheetCol<T> {
   nullable?: boolean;
   required?: boolean;
   defaultHidden?: boolean;
+  pin?: boolean; // kept in view at the left while scrolling sideways (set on the leading columns; with none set the first column is kept)
+  detail?: boolean; // shown only while its group is unfolded (the group's header folds and opens it)
   photo?: (r: T) => void; // a picture cell: pressing it opens the picture dialog
 }
 export interface SheetAdd {
+  primary?: string; // the column where the new row's name is typed (the first column when not given)
   required: string[];
   create: (draft: Record<string, CellValue>) => Promise<boolean>;
   label: string;
@@ -42,6 +45,7 @@ export interface SheetAdd {
 
 type Active = { row: number; col: number } | null; // row === view.length is the add row
 const keyOf = (id: string) => `tg-sheet-${id}`;
+const groupsCodec: Codec<string[]> = { parse: (raw) => (raw ? raw.split('~').filter(Boolean) : []), format: (v) => (v.length ? v.join('~') : null) };
 
 export default function Sheet<T>({
   id,
@@ -99,6 +103,7 @@ export default function Sheet<T>({
     }),
     [cols],
   );
+  const [unfolded, setUnfolded] = useAddressState('sg', groupsCodec); // the groups that are unfolded, in the address so a link keeps them
   const [sort, setSort] = useAddressState('ss', sortCodec);
   const [filters, setFilters] = useAddressState('sf', filterCodec);
   const [hidden, setHidden] = useState<Set<string>>(() => new Set(cols.filter((c) => c.defaultHidden).map((c) => c.id)));
@@ -140,7 +145,11 @@ export default function Sheet<T>({
   useEffect(() => {
     try {
       const j = JSON.parse(localStorage.getItem(keyOf(id)) ?? 'null');
-      if (j && Array.isArray(j.hidden)) setHidden(new Set(j.hidden as string[]));
+      if (j && Array.isArray(j.hidden)) {
+        const known = new Set<string>(Array.isArray(j.known) ? (j.known as string[]) : []);
+        // a column added since this was saved starts hidden when it is hidden by default
+        setHidden(new Set([...(j.hidden as string[]), ...cols.filter((c) => c.defaultHidden && !known.has(c.id)).map((c) => c.id)]));
+      }
     } catch {
       /* nothing remembered */
     }
@@ -148,7 +157,7 @@ export default function Sheet<T>({
   const setHiddenSaved = (next: Set<string>) => {
     setHidden(next);
     try {
-      localStorage.setItem(keyOf(id), JSON.stringify({ hidden: [...next] }));
+      localStorage.setItem(keyOf(id), JSON.stringify({ hidden: [...next], known: cols.map((c) => c.id) }));
     } catch {
       /* not remembered */
     }
@@ -168,7 +177,13 @@ export default function Sheet<T>({
   });
   useEffect(() => () => watched.current.ro?.disconnect(), []);
 
-  const shown = useMemo(() => cols.filter((c) => !hidden.has(c.id)), [cols, hidden]);
+  const shown = useMemo(() => cols.filter((c) => !hidden.has(c.id) && (!c.detail || unfolded.includes(c.group ?? ''))), [cols, hidden, unfolded]);
+  const detailCount = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const c of cols) if (c.detail && c.group) m.set(c.group, (m.get(c.group) ?? 0) + 1);
+    return m;
+  }, [cols]);
+  const toggleGroup = (g: string) => setUnfolded((cur) => (cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g]));
   const view = useMemo(() => {
     let out = rows.filter((r) => shown.every((c) => matchesFilter(c.kind, c.get(r), filters[c.id] ?? '')));
     if (sort) {
@@ -182,6 +197,16 @@ export default function Sheet<T>({
   const total = view.length + (addRow ? 1 : 0);
   const onScrollSave = useKeptScroll(scroll, `tg-sheet-scroll-${id}`, view.length > 0, full); // back where it was scrolled to, also when full screen draws the table again
   const gutter = 44;
+  // The pinned columns stay at the left, one after another: the leading columns marked `pin`, or just the first.
+  const pinN = (() => {
+    let n = 0;
+    while (n < shown.length && shown[n].pin) n++;
+    return n || 1;
+  })();
+  const pinLeft = (ci: number) => gutter + shown.slice(0, ci).reduce((n, c) => n + c.width, 0);
+  const pinClass = (ci: number) => (ci < pinN ? `${styles.first} ${ci === pinN - 1 ? styles.lastPin : ''}` : '');
+  const pinStyle = (ci: number) => (ci < pinN ? { left: pinLeft(ci) } : undefined);
+  const primaryCol = Math.max(0, add?.primary ? shown.findIndex((c) => c.id === add.primary) : 0);
   const tableW = gutter + shown.reduce((n, c) => n + c.width, 0) + (onDelete && canEdit ? 52 : 0);
 
   const editableCol = (c: SheetCol<T>) => canEdit && c.kind !== 'readonly' && !!c.set; // a column whose cells can be changed
@@ -458,8 +483,8 @@ export default function Sheet<T>({
       <td
         key={c.id}
         data-cell={`${ri}:${ci}`}
-        className={`${styles.cell} ${ci === 0 ? styles.first : ''} ${isActive ? styles.active : ''} ${c.align === 'right' ? styles.right : ''} ${can ? styles.canEdit : styles.ro} ${flash === k && k ? styles.refused : ''}`}
-        style={ci === 0 ? { left: gutter } : undefined}
+        className={`${styles.cell} ${pinClass(ci)} ${isActive ? styles.active : ''} ${c.align === 'right' ? styles.right : ''} ${can ? styles.canEdit : styles.ro} ${flash === k && k ? styles.refused : ''}`}
+        style={pinStyle(ci)}
         onMouseDown={() => {
           if (!isEditing) setActive({ row: ri, col: ci });
         }}
@@ -510,21 +535,23 @@ export default function Sheet<T>({
             <Columns3 size={15} aria-hidden="true" /> Columns
           </summary>
           <div className={styles.colList}>
-            {cols.map((c) => (
-              <label key={c.id}>
-                <input
-                  type="checkbox"
-                  checked={!hidden.has(c.id)}
-                  onChange={() => {
-                    const n = new Set(hidden);
-                    if (n.has(c.id)) n.delete(c.id);
-                    else n.add(c.id);
-                    setHiddenSaved(n);
-                  }}
-                />{' '}
-                {c.label}
-              </label>
-            ))}
+            {cols
+              .filter((c) => !c.detail)
+              .map((c) => (
+                <label key={c.id}>
+                  <input
+                    type="checkbox"
+                    checked={!hidden.has(c.id)}
+                    onChange={() => {
+                      const n = new Set(hidden);
+                      if (n.has(c.id)) n.delete(c.id);
+                      else n.add(c.id);
+                      setHiddenSaved(n);
+                    }}
+                  />{' '}
+                  {c.label}
+                </label>
+              ))}
             <button type="button" className={styles.link} onClick={() => setHiddenSaved(new Set())}>
               Show All
             </button>
@@ -565,7 +592,21 @@ export default function Sheet<T>({
                 <th className={styles.corner} />
                 {groups.map((g, i) => (
                   <th key={i} colSpan={g.span} className={g.label ? styles.groupHead : ''}>
-                    {g.label}
+                    {g.label && detailCount.has(g.label) ? (
+                      <button
+                        type="button"
+                        className={styles.groupFold}
+                        aria-expanded={unfolded.includes(g.label)}
+                        title={unfolded.includes(g.label) ? 'Fold the steps away' : 'Show every step of this event'}
+                        onClick={() => toggleGroup(g.label)}
+                      >
+                        {unfolded.includes(g.label) ? <ChevronDown size={13} aria-hidden="true" /> : <ChevronRight size={13} aria-hidden="true" />}
+                        {g.label}
+                        <small>{unfolded.includes(g.label) ? 'Fold' : `+${detailCount.get(g.label)} steps`}</small>
+                      </button>
+                    ) : (
+                      g.label
+                    )}
                   </th>
                 ))}
                 {onDelete && canEdit && <th />}
@@ -576,8 +617,8 @@ export default function Sheet<T>({
               {shown.map((c, ci) => (
                 <th
                   key={c.id}
-                  className={`${ci === 0 ? styles.first : ''} ${c.align === 'right' ? styles.right : ''}`}
-                  style={ci === 0 ? { left: gutter } : undefined}
+                  className={`${pinClass(ci)} ${c.align === 'right' ? styles.right : ''}`}
+                  style={pinStyle(ci)}
                   aria-sort={sort?.col === c.id ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}
                 >
                   <button type="button" onClick={() => clickSort(c)} title={`${c.title ?? `Sort by ${c.label}`}${editableCol(c) ? ' Its cells can be edited.' : ''}`}>
@@ -593,7 +634,7 @@ export default function Sheet<T>({
             <tr className={`${styles.filterRow} ${hasGroups ? styles.afterGroup : ''}`}>
               <th className={styles.corner} />
               {shown.map((c, ci) => (
-                <th key={c.id} className={ci === 0 ? styles.first : ''} style={ci === 0 ? { left: gutter } : undefined}>
+                <th key={c.id} className={pinClass(ci)} style={pinStyle(ci)}>
                   {c.kind !== 'photo' && (
                     <input
                       value={filters[c.id] ?? ''}
@@ -678,15 +719,15 @@ export default function Sheet<T>({
                   <Plus size={14} aria-hidden="true" />
                 </td>
                 {shown.map((c, ci) =>
-                  ci === 0 && draftRow[c.id] === undefined && !(active?.row === view.length && active.col === 0 && editing) ? (
+                  ci === primaryCol && draftRow[c.id] === undefined && !(active?.row === view.length && active.col === primaryCol && editing) ? (
                     <td
                       key={c.id}
-                      data-cell={`${view.length}:0`}
-                      className={`${styles.cell} ${styles.first} ${styles.canEdit} ${active?.row === view.length && active.col === 0 ? styles.active : ''}`}
-                      style={{ left: gutter }}
-                      onMouseDown={() => setActive({ row: view.length, col: 0 })}
+                      data-cell={`${view.length}:${primaryCol}`}
+                      className={`${styles.cell} ${pinClass(ci)} ${styles.canEdit} ${active?.row === view.length && active.col === primaryCol ? styles.active : ''}`}
+                      style={pinStyle(ci)}
+                      onMouseDown={() => setActive({ row: view.length, col: primaryCol })}
                       onDoubleClick={() => {
-                        setActive({ row: view.length, col: 0 });
+                        setActive({ row: view.length, col: primaryCol });
                         setTimeout(() => startEdit(), 0);
                       }}
                       role="gridcell"

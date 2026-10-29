@@ -157,7 +157,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
         id: `p:${pl.id}`,
         label: 'Planned',
         group: g,
-        width: 92,
+        width: 108,
         kind: 'number',
         align: 'right',
         title: 'How many are promised in this event. Open the row to see the stations.',
@@ -187,7 +187,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
         id: `g:${pl.id}`,
         label: 'Given Out',
         group: g,
-        width: 92,
+        width: 108,
         kind: 'number',
         align: 'right',
         get: (p) => total(p, (l) => l.given) || null,
@@ -213,27 +213,48 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
         },
         nullable: true,
       },
+      {
+        id: `st:${pl.id}`,
+        label: 'Station',
+        group: g,
+        detail: true,
+        width: 160,
+        kind: 'readonly',
+        title: 'Where this prize is in the event. Open the row to move it or add it to another station.',
+        get: (p) =>
+          (linesOf.get(p.id) ?? [])
+            .filter((l) => l.plan_id === pl.id)
+            .map((l) => stationsHere.find((x) => x.id === l.station_id)?.name ?? '')
+            .filter(Boolean)
+            .join(', '),
+      },
+      // Every other step of the event day, one count each (the Given Out and Back columns above are the two steps that move stock).
+      ...steps
+        .filter((st) => st !== givesStep && st !== backStep)
+        .map((st): SheetCol<PrizeRow> => ({
+          id: `t:${pl.id}:${st.id}`,
+          label: st.name,
+          group: g,
+          detail: true,
+          width: 104,
+          kind: 'number',
+          align: 'right',
+          title: `How many were counted at “${st.name}” in this event.`,
+          get: (p) => total(p, (l) => l.counts[st.id] ?? 0) || null,
+          editable: (p) => !many(p) && !!one(p),
+          set: (p, v) => {
+            const l = one(p);
+            return l ? setCount(l, st, Number(v ?? 0)) : false;
+          },
+          nullable: true,
+        })),
     ];
   };
 
   const cols: SheetCol<PrizeRow>[] = [
-    { id: 'name', label: 'Prize', width: 230, kind: 'text', required: true, get: (p) => p.name, set: (p, v) => save(p, { name: String(v ?? '') })() },
-    {
-      id: 'photo',
-      label: 'Picture',
-      width: 74,
-      kind: 'photo',
-      get: (p) => p.photo || null,
-      photo: (p) => setPhotoFor(p),
-      display: (p) =>
-        p.photo /* eslint-disable-next-line @next/next/no-img-element */ ? (
-          <img src={p.photo} alt="" className={sh.pic} loading="lazy" />
-        ) : (
-          <Gift size={16} aria-hidden="true" style={{ opacity: 0.45 }} />
-        ),
-    },
     {
       id: 'sponsor',
+      pin: true,
       label: 'Sponsor',
       width: 150,
       kind: 'select',
@@ -247,6 +268,21 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
         const id = sponsorId.get(name.toLowerCase());
         return id ? save(p, { sponsor_id: id })() : false;
       },
+    },
+    { id: 'name', label: 'Prize', pin: true, width: 230, kind: 'text', required: true, get: (p) => p.name, set: (p, v) => save(p, { name: String(v ?? '') })() },
+    {
+      id: 'photo',
+      label: 'Picture',
+      width: 74,
+      kind: 'photo',
+      get: (p) => p.photo || null,
+      photo: (p) => setPhotoFor(p),
+      display: (p) =>
+        p.photo /* eslint-disable-next-line @next/next/no-img-element */ ? (
+          <img src={p.photo} alt="" className={sh.pic} loading="lazy" />
+        ) : (
+          <Gift size={16} aria-hidden="true" style={{ opacity: 0.45 }} />
+        ),
     },
     {
       id: 'type',
@@ -283,7 +319,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
     {
       id: 'qty',
       label: 'In Stock',
-      width: 92,
+      width: 108,
       kind: 'number',
       align: 'right',
       required: false,
@@ -308,7 +344,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
       id: 'planned',
       label: 'Planned',
       group: 'All open events',
-      width: 92,
+      width: 108,
       kind: 'readonly',
       align: 'right',
       title: 'What open events hold back: promised, minus given out, minus back in storage. A closed event holds nothing.',
@@ -338,7 +374,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
       id: 'tgiven',
       label: 'Given Out',
       group: 'All open events',
-      width: 92,
+      width: 108,
       kind: 'readonly',
       align: 'right',
       get: (p) => (linesOf.get(p.id) ?? []).reduce((n, l) => n + l.given, 0) || null,
@@ -393,6 +429,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
   const add = can
     ? {
         label: 'Add a prize: type its name…',
+        primary: 'name',
         required: ['name'],
         create: async (d: Record<string, CellValue>) => (await prizes.save(null, { name: String(d.name ?? '') })) !== null,
       }

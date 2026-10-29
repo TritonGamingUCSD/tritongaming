@@ -20,6 +20,9 @@
 .grid thead th { position: sticky; z-index: 5; background: color-mix(in srgb, var(--pp-ink) 9%, var(--pp-card)); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.35); }
 .groupRow th { top: 0; height: 26px; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0 0.5rem; }
 .groupHead { background: color-mix(in srgb, var(--yellow) 30%, var(--pp-card)) !important; }
+.groupFold { display: inline-flex; align-items: center; gap: 0.3rem; width: 100%; height: 100%; padding: 0; border: 0; background: none; color: inherit; font: inherit; letter-spacing: inherit; text-transform: inherit; text-align: left; cursor: pointer; }
+.groupFold small { margin-left: auto; padding: 0 0.4rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); font-size: 0.62rem; letter-spacing: 0.04em; }
+.groupFold:hover small { border-color: var(--pp-ink); }
 .headRow th { top: 0; height: 36px; }
 .headRow.afterGroup th { top: 26px; }
 .filterRow th { top: 36px; height: 32px; background: var(--pp-card); }
@@ -33,7 +36,8 @@
 .corner, .gutter { position: sticky; left: 0; z-index: 6; width: 44px; text-align: center; }
 .gutter { z-index: 3; background: color-mix(in srgb, var(--pp-ink) 6%, var(--pp-card)); }
 .grid thead .corner { z-index: 8; }
-.grid .first { position: sticky; z-index: 2; background: var(--pp-card); box-shadow: 2px 0 0 rgba(var(--pp-ink-rgb), 0.25); }
+.grid .first { position: sticky; z-index: 2; background: var(--pp-card); }
+.grid .lastPin { box-shadow: 2px 0 0 rgba(var(--pp-ink-rgb), 0.25); }
 .grid thead .first { z-index: 7; background: color-mix(in srgb, var(--pp-ink) 9%, var(--pp-card)); }
 .filterRow .first { background: var(--pp-card); }
 .cell.canEdit { background: color-mix(in srgb, var(--pp-info) 11%, var(--pp-card)); cursor: cell; }
