@@ -13,6 +13,9 @@
 .search input { padding-left: 2.3rem; }
 .filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.5rem; }
 .toolbarRow { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.inlineAdd { display: flex; align-items: center; gap: 0.5rem; margin-left: auto; }
+.inlineAdd input { width: min(16rem, 46vw); }
+.inlineAdd .addBtn { margin-left: 0; }
 .count { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.78); }
 .addBtn { margin-left: auto; }
 .pill { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; padding: 0 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
