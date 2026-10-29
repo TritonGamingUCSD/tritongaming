@@ -112,9 +112,13 @@ function makeInk(payload: string, format: Format, dark: boolean, tone: boolean, 
 }
 
 export function paint(payload: string, o: Shot, format: Format = 'v2'): { img: Uint8ClampedArray; size: number } {
+  return paintInk(makeInk(payload, format, !!o.dark, !!o.tone, !!o.mono), o);
+}
+
+/** The camera itself, for any drawing: `ink` gives the grey at a point in code units (the Bytecode's test uses it with its own drawing). */
+export function paintInk(ink: (x: number, y: number) => number, o: Shot): { img: Uint8ClampedArray; size: number } {
   const size = o.size ?? Math.round(o.px * 2.6);
   const ss = o.ss ?? 3;
-  const ink = makeInk(payload, format, !!o.dark, !!o.tone, !!o.mono);
   const cs = Math.cos(o.rot),
     sn = Math.sin(o.rot),
     c = size / 2;

@@ -1,0 +1,17 @@
+.code { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; border-radius: 12%; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
+/* Byte's own colours, as in the mascot's drawing (a plum line, greens, a yellow scarf, a pink cheek). They stay the same in the light and dark themes: the code is a sticker with its
+   own pale plate, so the reader gets the same contrast either way. */
+.plate { fill: #fbf7e6; } /* theme-ok */
+.c2 { fill: #585868; stroke: #585868; stroke-width: 0.004; } /* theme-ok */
+.c3 { fill: #88a898; stroke: #88a898; stroke-width: 0.004; } /* theme-ok */
+.c4 { fill: #d8e8a8; stroke: #d8e8a8; stroke-width: 0.004; } /* theme-ok */
+.c5 { fill: #f8e848; stroke: #f8e848; stroke-width: 0.004; } /* theme-ok */
+.c6 { fill: #f89898; stroke: #f89898; stroke-width: 0.004; } /* theme-ok */
+.c7 { fill: #b8b4bc; opacity: 0.55; } /* theme-ok */
+.ink { fill: #483848; } /* theme-ok */
+.line { fill: none; stroke: #483848; stroke-linecap: round; stroke-linejoin: round; } /* theme-ok */
+.pale { fill: #d8e8a8; } /* theme-ok */
+.sclera { fill: #f1f2cf; stroke: #483848; stroke-width: 0.014; } /* theme-ok */
+.ringMark { fill: none; stroke: #483848; } /* theme-ok */
+.glowA { stop-color: #b8e0b0; stop-opacity: 0.6; } /* theme-ok */
+.glowB { stop-color: #b8e0b0; stop-opacity: 0; } /* theme-ok */

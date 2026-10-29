@@ -83,7 +83,7 @@ export function findFinders(bin: Uint8Array, w: number, h: number): Finder[] {
 }
 
 /** Pairs of ring marks that could be the top-left and top-right ones (similar size, the right distance apart), best first. */
-export function pickPairs(all: Finder[]): [Finder, Finder][] {
+export function pickPairs(all: Finder[], span = SPAN, unit = U): [Finder, Finder][] {
   // The marks are the biggest things that look like a 1:1:3:1:1 pattern; the many small look-alikes that fine detail makes in a big picture are left out.
   const umax = Math.max(0, ...all.map((k) => k.u));
   const f = all.length > 8 ? all.filter((k) => k.u >= umax * 0.6) : all; // (only when there are a lot of them)
@@ -94,7 +94,7 @@ export function pickPairs(all: Finder[]): [Finder, Finder][] {
         B = f[b],
         um = (A.u + B.u) / 2;
       if (Math.max(A.u, B.u) > um * 1.25 || Math.min(A.u, B.u) < um * 0.8) continue;
-      const units = Math.hypot(B.x - A.x, B.y - A.y) / um / (SPAN / U);
+      const units = Math.hypot(B.x - A.x, B.y - A.y) / um / (span / unit);
       if (units < 0.75 || units > 1.3) continue;
       out.push({ pair: [A, B], score: Math.abs(units - 1) });
     }
@@ -213,7 +213,7 @@ export function homography(src: { x: number; y: number }[], dst: { x: number; y:
 }
 
 /** Black-or-white by comparing each pixel with the average around it, so a plate of any brightness, in any light, against any background, reads the same. */
-export function binarize(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, darkMarks: boolean): Uint8Array {
+export function binarize(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, darkMarks: boolean, bias = 10): Uint8Array {
   const integral = new Float64Array((w + 1) * (h + 1));
   for (let y = 0; y < h; y++) {
     let row = 0;
@@ -233,7 +233,7 @@ export function binarize(gray: Uint8ClampedArray | Uint8Array, w: number, h: num
       const sum = integral[y1 * (w + 1) + x1] - integral[y0 * (w + 1) + x1] - integral[y1 * (w + 1) + x0] + integral[y0 * (w + 1) + x0];
       const mean = sum / ((x1 - x0) * (y1 - y0));
       const g = gray[y * w + x];
-      bin[y * w + x] = (darkMarks ? g < mean - 10 : g > mean + 10) ? 1 : 0;
+      bin[y * w + x] = (darkMarks ? g < mean - bias : g > mean + bias) ? 1 : 0;
     }
   }
   return bin;
