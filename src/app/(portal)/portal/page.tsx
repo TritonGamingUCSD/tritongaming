@@ -12,6 +12,7 @@ import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/site/content-blocks';
 import { PACIFIC_TZ, pacificDaysUntil } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
+import { sectionLabel } from '@/lib/portal/sections';
 import { getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
 import type { HubSection } from '@/components/portal/PortalHub';
 import SignOutButton from '@/components/portal/SignOutButton';
@@ -199,7 +200,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
 
   const sections: HubSection[] = [
     {
-      id: 'tickets', icon: <Ticket size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'My Tickets',
+      id: 'tickets', icon: <Ticket size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('tickets'),
       description: 'View and show your event tickets',
       badge: activeTicketCount || undefined,
       // A ticket for something today or tomorrow is what you'll want in your thumb's reach.
@@ -210,13 +211,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
       content: <TicketsSectionContent tickets={ticketsData.tickets} upcomingEvents={ticketsData.upcomingEvents} isUcsd={ticketsData.isUcsd} canEarnPoints={ticketsData.canEarnPoints} activity={ticketsData.tickets} />,
     },
     {
-      id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Profile', railHidden: true,  // opened from your name at the top of the sidebar
+      id: 'profile', icon: <User size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('profile'), railHidden: true,  // opened from your name at the top of the sidebar
       description: 'Update your info and preferences',
       group: 'Overview' as const,
       content: <ProfileClient profile={profile} privateInfo={myGender} email={authUser?.email ?? null} linkedEmails={linkedEmails} roles={roles} isUcsd={isVerifiedMember(roles)} divisions={divisions} initialTab={requestedTab} />,
     },
     {
-      id: 'help', icon: <CircleHelp size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Help', railHidden: true,  // a button in the sidebar footer
+      id: 'help', icon: <CircleHelp size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('help'), railHidden: true,  // a button in the sidebar footer
       description: canHandleHelp ? 'Answer questions and problems from members' : 'Ask a question or report a problem',
       badge: helpWaiting || undefined,
       // Staff get Help on the bar while members are waiting on a reply.
@@ -225,7 +226,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       content: <HelpSectionContent isStaff={canHandleHelp} userId={profile.id} />,
     },
     ...((canUseRewards && pointsData) || runsRewards ? [{
-      id: 'points', icon: <Award size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Rewards',
+      id: 'points', icon: <Award size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('points'),
       description: 'Earn points for showing up, spend them on perks',
       // Members of the team have their own work to surface; Rewards is for attendees.
       homeExclude: runsRewards || roles.some((r) => ['recruit', 'officer', 'lead', 'exec', 'admin'].includes(r.role)),
@@ -247,7 +248,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       ),
     }] : []),
     ...(canViewEvents ? [{
-      id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Events',
+      id: 'events', icon: <Calendar size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('events'),
       description: canManageEvents ? 'Create and manage events' : 'Browse upcoming and past events',
       // Browsing and managing events is a desk job: on a phone the bar keeps Tickets and Meetings (it is still in More).
       dockExclude: true,
@@ -264,7 +265,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       ),
     }] : []),
     ...(canCheckin && checkinData ? [{
-      id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Check-In',
+      id: 'checkin', icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('checkin'),
       description: 'Enter a ticket or meeting code, show the event QR, or reveal the online code',
       // The scan button in the middle of the phone's bar does the scanning now, so this page never takes a slot of its own.
       // Not suggested on the dashboard unless an event is actually happening today.
@@ -274,7 +275,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       content: <CheckInSectionContent events={checkinData.events} canControlSelfCheckin={canControlSelfCheckin} initialTab={requestedTab} />,
     }] : []),
     ...(canAttendMeetings || canViewAttendanceReports ? [{
-      id: 'meetings', icon: <CalendarCheck size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Meetings',
+      id: 'meetings', icon: <CalendarCheck size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('meetings'),
       description: !canAttendMeetings ? 'Attendance results' : canManageMeetings ? 'Schedule meetings, run check-in, export attendance' : canHostMeetings ? 'Plan your meetings, run check-in, see results' : 'Check in to meetings and see your history',
       // While a meeting is on (or about to start) this is the thing to have under your thumb.
       dockBoost: (meetingNow ? 100 : 0) + (canManageMeetings ? 10 : 0),
@@ -284,14 +285,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
     }] : []),
     // Exec, HR and admins get the tracker. Nobody else (leads included) has any part in it.
     ...(canManageStrikes ? [{
-      id: 'strikes', icon: <ShieldAlert size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Strikes',
+      id: 'strikes', icon: <ShieldAlert size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('strikes'),
       description: 'Private strike tracker',
       group: 'Team' as const,
       content: <StrikesSectionContent />,
     }] : []),
     // Exec and admins mark officers and leads inactive for a quarter (admins also set the quarter dates, inside the same page).
     ...(canManageQuarters ? [{
-      id: 'quarters', icon: <CalendarRange size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Quarter status',
+      id: 'quarters', icon: <CalendarRange size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('quarters'),
       description: 'Who is active each quarter',
       group: 'Team' as const,
       content: <QuarterStatusContent />,
@@ -299,7 +300,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     // Equipment, prizes and event setups. Every officer and above can look; only people with the Logistics permission (exec, admin, or granted in Admin → Access) can change things.
     // Entirely separate from check-in.
     ...(canViewLogistics ? [{
-      id: 'logistics', icon: <Package size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Event Logistics',
+      id: 'logistics', icon: <Package size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('logistics'),
       description: canManageLogistics ? 'Equipment catalog and event setups' : 'Find equipment and see event setups',
       dockBoost: logisticsToday ? 100 : 0, dockLabel: 'Logistics',
       group: 'Team' as const,
@@ -307,7 +308,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     }] : []),
     // A raffle among staff for prizes from Prizing: everyone who can see Event Logistics can look and enter; the logistics team makes them, draws and marks prizes picked up.
     ...(canManageLogistics || hasCapability(roles, 'view_logistics') ? [{
-      id: 'staffle', icon: <Trophy size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Staffle',
+      id: 'staffle', icon: <Trophy size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('staffle'),
       description: canManageLogistics ? 'Staff raffles: make one, draw it live' : 'Enter the staff raffle for prizes',
       homeExclude: true, dockExclude: true,
       group: 'Team' as const,
@@ -315,14 +316,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
     }] : []),
     // Quiz games for events. Everyone signed in can play; officers and above write quizzes, host games and see results.
     {
-      id: 'trivia', icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Trivia',
+      id: 'trivia', icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('trivia'),
       description: hasCapability(roles, 'host_trivia') ? 'Write quizzes and host games' : 'Join a quiz game',
       homeExclude: true, dockExclude: true,
       group: 'Events' as const,
       content: <TriviaSectionContent canHost={hasCapability(roles, 'host_trivia')} />,
     },
     ...(canViewMembers ? [{
-      id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'TG Members',
+      id: 'members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('members'),
       description: 'Browse everyone in the org',
       // Not rows.length — that counts every profile including plain
       // verified-student accounts who never joined anything, which the
@@ -334,7 +335,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       content: <MembersLazy scope={scope} canViewAsPerson={canViewAsPerson} selfId={profile.id} canOrder={hasCapability(roles, 'manage_board_order')} teams={canHostMeetings || canManageMeetings ? { userId: profile.id, canManageAll: canManageMeetings, canEdit: true } : roles.some((r) => r.role === 'officer' || r.role === 'recruit') ? { userId: profile.id, canManageAll: false, canEdit: false } : undefined} />,
     }] : []),
     ...(canViewDocs && docsSummary ? [{
-      id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Documentation',
+      id: 'docs', icon: <BookOpen size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('docs'),
       homeExclude: true, dockExclude: true,
       group: 'Resources' as const,
       description: 'How-to guides for officers, leads, and execs',
@@ -349,7 +350,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     // stats) — grouping a widely-usable tool in with that mislabeled who
     // it's actually for.
     ...(canGenerateQr ? [{
-      id: 'qrcode', icon: <QrCode size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'QR Studio',
+      id: 'qrcode', icon: <QrCode size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('qrcode'),
       description: 'Design branded QR codes',
       group: 'Resources' as const,
       content: <QRStudioClient divisions={divisions.filter((d) => d.logo_url).map((d) => ({ id: d.id, name: d.name, logo: divisionLogoSrc(d.logo_url) ?? '' })).filter((d) => d.logo)} />,
@@ -365,7 +366,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     // stats, AND content editing). See SiteContentSectionContent for the
     // tabbed layout, matching AdminSectionContent's own tab bar.
     ...(canManageDivisions || isDivisionLead ? [{
-      id: 'divisions', icon: <LayoutGrid size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Divisions',
+      id: 'divisions', icon: <LayoutGrid size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('divisions'),
       description: canManageDivisions ? 'Manage the divisions directory and their pages' : 'Edit your division’s page',
       group: 'Team' as const,
       content: (
@@ -377,13 +378,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
       ),
     }] : []),
     ...(canSeeDivisionMembers ? [{
-      id: 'division-members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Division Members',
+      id: 'division-members', icon: <Users size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('division-members'),
       description: 'Who leads each division',
       group: 'Team' as const,
       content: <DivisionMembersLazy scope={scope} />,
     }] : []),
     ...(canEditContent ? [{
-      id: 'site-content', icon: <Pencil size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Site Content',
+      id: 'site-content', icon: <Pencil size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('site-content'),
       description: 'Page banners, text and images on the public site',
       group: 'Admin' as const,
       content: (
@@ -395,7 +396,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       ),
     }] : []),
     ...(canViewAdmin ? [{
-      id: 'admin', icon: <Shield size={28} strokeWidth={1.5} aria-hidden="true" />, label: 'Admin',
+      id: 'admin', icon: <Shield size={28} strokeWidth={1.5} aria-hidden="true" />, label: sectionLabel('admin'),
       description: 'Stats, roles, analytics, and audit history',
       group: 'Admin' as const,
       content: (

@@ -3,7 +3,7 @@
 import Loading from '@/components/Loading/Loading';
 import { Input, Select } from '@/components/ui/Field';
 import { ArrowLeft, ArrowDown, ArrowUp } from 'lucide-react';
-import { useLiveParams, usePortalParams } from '@/lib/portal/usePortalParams';
+import { textCodec, useAddressState, wordCodec, type Codec } from '@/lib/portal/usePageState';
 import Notice from '@/components/ui/Notice';
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
@@ -54,6 +54,9 @@ const STATUS_LABEL: Record<string, string> = {
 const STATUS_ORDER = ['active', 'used', 'cancelled', 'expired'];
 type SortKey = 'registered' | 'name' | 'checkin' | 'status';
 type GroupKey = 'none' | 'status' | 'form';
+const sortWords = wordCodec<SortKey>(['registered', 'name', 'checkin', 'status'], 'registered');
+const groupWords = wordCodec<GroupKey>(['none', 'status', 'form'], 'none');
+const descCodec: Codec<boolean> = { parse: (r) => r === 'desc', format: (v) => (v ? 'desc' : null) };
 const SORTS: { key: SortKey; label: string }[] = [{ key: 'registered', label: 'Registered' }, { key: 'name', label: 'Name' }, { key: 'checkin', label: 'Checked-in time' }, { key: 'status', label: 'Status' }];
 const GROUP_STATUS: Record<string, string> = { active: 'Not Checked In Yet', used: 'Checked In', cancelled: 'Cancelled', expired: 'Expired' };
 const userOf = (t: TicketRow) => (Array.isArray(t.user) ? t.user[0] : t.user);
@@ -61,16 +64,11 @@ const userOf = (t: TicketRow) => (Array.isArray(t.user) ? t.user[0] : t.user);
 // One event's tickets, as its own page in Events (/portal/events/check-ins/<event>): search, sort, group, and the manual check-in and undo for whoever can manage points.
 // `eventKey` is the event's slug (or its id when it has none). Search, sort and group are in the address, so a copied link reopens the same view.
 export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }: { eventKey: string; onBack: () => void; canManagePoints: boolean }) {
-    const setParams = usePortalParams();
-  const first = useLiveParams();
-  const [query, setQueryState] = useState(() => first.get('q') ?? '');
-  const [sort, setSortState] = useState<SortKey>(() => (SORTS.some((x) => x.key === first.get('sort')) ? (first.get('sort') as SortKey) : 'registered'));
-  const [desc, setDescState] = useState(() => first.get('dir') === 'desc');
-  const [group, setGroupState] = useState<GroupKey>(() => (first.get('view') === 'status' || first.get('view') === 'form' ? (first.get('view') as GroupKey) : 'none'));
-  const setQuery = (v: string) => { setQueryState(v); setParams({ q: v || null }); };
-  const setSort = (v: SortKey) => { setSortState(v); setParams({ sort: v === 'registered' ? null : v }); };
-  const setDesc = (v: boolean) => { setDescState(v); setParams({ dir: v ? 'desc' : null }); };
-  const setGroup = (v: GroupKey) => { setGroupState(v); setParams({ view: v === 'none' ? null : v }); };
+    // The search, sort and group are in the address (lib/portal/usePageState), so a refresh or a shared link brings them back.
+  const [query, setQuery] = useAddressState('q', textCodec);
+  const [sort, setSort] = useAddressState('sort', sortWords);
+  const [desc, setDesc] = useAddressState('dir', descCodec);
+  const [group, setGroup] = useAddressState('view', groupWords);
   const [event, setEvent] = useState<EventInfo | null>(null);
   const [tickets, setTickets] = useState<TicketRow[] | null>(null);
   const [error, setError] = useState('');

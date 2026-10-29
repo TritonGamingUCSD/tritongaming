@@ -11,7 +11,7 @@
 .modeSeg [role="tab"] { min-height: 32px; }
 .search { flex: 1 1 14rem; min-width: 12rem; position: relative; }
 .topEnd { display: flex; align-items: center; gap: 0.4rem; margin-left: auto; }
-.gear { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 6px; border: 2px solid rgba(var(--pp-ink-rgb), 0.25); background: transparent; color: var(--pp-ink); cursor: pointer; }
+.gear { display: grid; place-items: center; width: var(--btn-h); height: var(--btn-h); border-radius: 6px; border: 2px solid rgba(var(--pp-ink-rgb), 0.25); background: transparent; color: var(--pp-ink); cursor: pointer; }
 .gear:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 
 .stats { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; align-items: center; font-size: 0.84rem; color: rgba(var(--pp-ink-rgb), 0.78); }
@@ -20,7 +20,7 @@
 
 .steps { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; }
 .stepsLabel { font-size: 0.76rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.6); margin-right: 0.2rem; }
-.stepChip { min-height: 32px; padding: 0 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.82rem; cursor: pointer; }
+.stepChip { min-height: var(--btn-h-sm); padding: 0 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.82rem; cursor: pointer; }
 .stepChip:hover { background: rgba(var(--pp-ink-rgb), 0.06); }
 .stepOn { background: var(--pp-ink); color: var(--pp-paper); border-color: var(--pp-ink); }
 
@@ -168,7 +168,7 @@
 
 /* Who else is here and what they just did: a pill floating in the corner */
 .livePill { position: fixed; right: 1rem; bottom: 1rem; z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem; max-width: calc(100vw - 2rem); }
-.liveBtn { display: inline-flex; align-items: center; gap: 0.5rem; max-width: 100%; min-height: 44px; padding: 0.3rem 0.9rem 0.3rem 0.7rem; border-radius: 999px; border: 2px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.84rem; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28); }   /* theme-ok */
+.liveBtn { display: inline-flex; align-items: center; gap: 0.5rem; max-width: 100%; min-height: var(--btn-h); padding: 0.3rem 0.9rem 0.3rem 0.7rem; border-radius: 999px; border: 2px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.84rem; cursor: pointer; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28); }   /* theme-ok */
 .liveBtn:hover { background: rgba(var(--pp-ink-rgb), 0.06); }
 .liveAvatars { display: inline-flex; }
 .liveAvatars .avatar + .avatar { margin-left: -0.35rem; }

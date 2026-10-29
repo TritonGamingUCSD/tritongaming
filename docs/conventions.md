@@ -61,3 +61,8 @@ Put shared logic in the right `src/lib/<topic>/` folder (see [code-map.md](code-
 ## Git
 
 Do not commit generated or secret files (`.env.local`). Migrations are committed with the code that needs them.
+
+## Adding things without touching many places
+- **A portal section:** one entry in `src/lib/portal/sections.ts` (address word, name, first tab, search entry) and one block in `app/(portal)/portal/page.tsx` (who may open it, icon, content). The addresses, the `next.config.ts` rewrites, the sidebar order and names, each section's first tab and the search all read the list; `sections.test.ts` fails if a place is left behind, and `npm run docs:sync` rewrites the sections table in `docs/code-map.md`.
+- **A view choice that must survive a refresh** (a sort, a filter, a grouping, full screen, an open row, a scroll position): ask for it from `lib/portal/usePageState.ts` (`useAddressState` for the address, `useSessionState` for the tab, `useKeptScroll`), never write address, storage or refresh code in the screen. The portal's refresh (`PortalHub`) restores the address and the scroll itself.
+

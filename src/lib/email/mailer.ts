@@ -60,9 +60,6 @@ export async function sendBlast(recipientsText: string, subject: string, message
   return { results, bad };
 }
 
-/** Where replies go: EMAIL_REPLY_TO if it is set, else the sending address. One place to change when the club has a monitored inbox. */
-export const emailReplyTo = () => process.env.EMAIL_REPLY_TO || emailFrom();
-
 /** One message to one person with the exact html and text it is given (an event email, built elsewhere). `unsubscribeUrl` adds the one-click opt-out headers mail apps show as "Unsubscribe". Never throws. */
 export async function sendOne(o: { to: string; subject: string; text: string; html: string; sender?: SenderId; unsubscribeUrl?: string }): Promise<BlastResult> {
   if (!emailConfigured()) return { to: o.to, ok: false, error: 'Email isn’t set up yet (GMAIL_USER and GMAIL_APP_PASSWORD).' };

@@ -42,3 +42,5 @@ Typecheck, unit tests and the `test:logistics-*` scripts cannot see layout. Afte
 ## Layout audits (scratch scripts, not in the repo)
 
 For a layout change, drive the screens in a browser at 390 (phone), 820 and 1180 (tablet, with touch) and 1440 (laptop) and check: the page never widens sideways, opening any menu, dropdown or toggle leaves the page size alone and the popup on screen (compare popups present before and after the click, so static off-screen elements are not counted), opening a number or text box moves nothing, and tap targets on touch are comfortable. Use a throwaway `ZZ` event and delete it afterwards.
+
+`src/lib/__tests__/sections.test.ts` checks that every portal section is defined once and that everything which reads the list (addresses, rewrites, hub, search, docs table) stays in step; after changing `sections.ts` run `npm run docs:sync`.

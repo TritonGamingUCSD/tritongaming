@@ -59,8 +59,6 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .form { display: flex; flex-direction: column; gap: 0.9rem; }
 .fCard { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.9rem 1rem; border-radius: 12px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: rgba(var(--pp-ink-rgb), 0.04); }
 .fCard h4 { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1rem; color: var(--pp-ink); }
-.fRow { display: flex; flex-wrap: wrap; gap: 0.7rem 1rem; }
-.fRow > * { flex: 1 1 14rem; min-width: 0; }
 .prizesBar { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; font-size: 0.9rem; }
 .fNote { margin: 0; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.75); }
 .fItems { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.4rem; }
@@ -76,7 +74,6 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .fLine > span { flex: 0 0 8rem; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.75); }
 .fChips { flex: 1 1 14rem; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; min-width: 0; }
 .fChip { min-height: 34px; padding: 0 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.84rem; cursor: pointer; }
-.fChipIn { background: var(--pp-ink); color: var(--pp-paper); border-color: var(--pp-ink); font-weight: 700; }
 .fChipOut { background: color-mix(in srgb, var(--pp-bad) 22%, var(--pp-card)); border-color: var(--pp-bad); font-weight: 700; }
 .fPerson { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.3rem 0.2rem 0.7rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); font-size: 0.84rem; }
 .fPerson button { display: grid; place-items: center; width: 22px; height: 22px; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; }

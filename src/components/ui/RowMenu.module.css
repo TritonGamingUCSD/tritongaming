@@ -3,9 +3,9 @@
 .menu summary { display: inline-flex; align-items: center; min-height: 32px; padding: 0 0.9rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); font-size: 0.86rem; cursor: pointer; list-style: none; color: var(--pp-ink); }
 .menu summary::-webkit-details-marker { display: none; }
 .menuList { position: absolute; right: 0; top: calc(100% + 4px); z-index: 8; min-width: 13rem; display: flex; flex-direction: column; padding: 0.3rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18); }
-.menuList button, .menuList a { text-align: left; min-height: 36px; padding: 0 0.7rem; border: none; border-radius: 6px; background: none; color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
+.menuList button, .menuList a { text-align: left; min-height: var(--btn-h); padding: 0 0.7rem; border: none; border-radius: 6px; background: none; color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
 .menuList button:hover, .menuList a:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .menuDanger { color: var(--pp-bad) !important; }
 .menuList a { display: flex; align-items: center; text-decoration: none; }
 .phoneOnly { display: none; }
-@media (max-width: 640px) { .phoneOnly { display: block; } .menu summary { justify-content: center; min-width: 44px; min-height: 44px; padding: 0 0.5rem; } .menuList button, .menuList a { min-height: 44px; } }
+@media (max-width: 640px) { .phoneOnly { display: block; } .menu summary { justify-content: center; min-width: var(--btn-h); min-height: var(--btn-h); padding: 0 0.5rem; } .menuList button, .menuList a { min-height: var(--btn-h); } }

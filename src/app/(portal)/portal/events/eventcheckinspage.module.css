@@ -69,5 +69,5 @@
   .toolbar { grid-template-columns: 1fr 36px; }
   .toolbar > :first-child { grid-column: 1 / -1; }
   .toolbar > :last-child { grid-column: 1 / -1; }
-  .uncheckBtn, .checkInBtn { min-height: 40px; padding: 0.4rem 0.8rem; font-size: 0.78rem; }
+  .uncheckBtn, .checkInBtn { min-height: var(--btn-h); padding: 0.4rem 0.8rem; font-size: 0.78rem; }
 }

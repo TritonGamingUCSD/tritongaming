@@ -92,6 +92,35 @@ Also: `requests.ts` / `requestServer.ts` / `requestRows.ts` (what a request turn
 
 **Logistics API** (`app/api/logistics`, resource-oriented; every route checks `view_logistics` / `manage_logistics`): `GET /` (lists, devices, sponsors, who is looking) · `/devices`, `/devices/<id>` · `/options`, `/options/<id>` · `/sponsors`, `/sponsors/<id>` · `/prizes`, `/prizes/<id>`, `/prizes/<id>/history`, `/prizes/<id>/breakdown` (where did they go), `/prizes/<id>/photo`, `/prizes/past-events` · `/events`, `/events/<id>`, `/events/<id>/version` · `/events/<id>/stations`, `/stations/<sid>`, `/stations/<sid>/prizes`, `/stations/<sid>/prizes/<pid>` · `/events/<id>/counts` (prize counters) · `/events/<id>/devices`, `/steps` (device steps), `/swap`, `/slots`, `/pick` · `/events/<id>/loaners`, `/loaners/<lid>` · `/events/<id>/requests`, `/requests/<rid>` · `/people`, `/today`. Errors are `{ error }`, plus `code`, `current` and `by` when two people clash.
 
+## Portal sections (one definition)
+
+Every portal section is defined once in `src/lib/portal/sections.ts` (its address word, name, first tab and search entry); the addresses, the `next.config.ts` rewrites, the sidebar order and names, each section's first tab and the search's "Go to" entries all read it. **To add a section:** add one entry there and one block in `app/(portal)/portal/page.tsx` (who may open it, its icon and content). The table below is made from the list by `npm run docs:sync`.
+
+<!-- sections:start (made by npm run docs:sync from src/lib/portal/sections.ts; do not edit by hand) -->
+| Address | Name | First tab | In the search |
+| --- | --- | --- | --- |
+| `/portal/tickets` | My Tickets | tickets | Your event tickets and history |
+| `/portal/points` | Rewards | mine | Points and the shop |
+| `/portal/activity` | Activity | - | an address only (no page of its own) |
+| `/portal/profile` | Profile | info | Your info and preferences |
+| `/portal/events` | Events | list | Create and manage events (needs view_events) |
+| `/portal/checkin` | Check-In | tickets | Enter a ticket code, the event QR, the online code (needs checkin) |
+| `/portal/members` | TG Members | members | Everyone in the org (needs view_members) |
+| `/portal/meetings` | Meetings | mine | Check in, history and results (needs attend_meetings or view_attendance_reports) |
+| `/portal/logistics` | Event Logistics | home | Equipment catalog, prizes and event setups (needs view_logistics or manage_logistics) |
+| `/portal/staffle` | Staffle | - | Enter the staff raffle and see who won (needs view_logistics or manage_logistics) |
+| `/portal/quarters` | Quarter status | - | Who is active or inactive each quarter (needs manage_quarters) |
+| `/portal/strikes` | Strikes | - | Private strike tracker (HR and exec) (needs manage_strikes) |
+| `/portal/trivia` | Trivia | - | Join a quiz game, or write and host one |
+| `/portal/divisions` | Divisions | - | Edit the divisions directory and pages (needs manage_divisions_directory or manage_division) |
+| `/portal/division-members` | Division Members | - | Who leads each division (needs view_division_members) |
+| `/portal/docs` | Documentation | - | How-to guides (needs view_docs) |
+| `/portal/qrcode` | QR Studio | - | Design branded QR codes (needs generate_qr_codes) |
+| `/portal/help` | Help | - | Ask a question or report a problem |
+| `/portal/admin` | Admin | overview | Stats, roles, analytics and audit history (needs view_admin_dashboard) |
+| `/portal/site-content` | Site Content | - | Edit the public website (needs manage_site_content) |
+<!-- sections:end -->
+
 **Staffle API** (`app/api/staffle`; looking and entering need `view_logistics`, the rest `manage_logistics`): `GET/POST /` (list, make) · `/<slug>` (GET one, PATCH edit, open, close or end, DELETE) · `/<slug>/entries` (enter or leave an item) · `/<slug>/draw` · `/<slug>/redraw` (pass a winner over or draw again for an item) · `/<slug>/winners/<wid>` (mark picked up). Logic in `lib/staffle` (`rules.ts` who may enter, `draw.ts` the seeded draw, `server.ts` state and notifications, `holds.ts` what it holds back from stock, `detail.ts` the page's data); screens in `app/(portal)/portal/staffle`.
 `sheetMath.ts` (the Sheet view's cell reading, sort and filter logic), `constants.ts` (conditions, borrowed kinds, list kinds, the starting kit per device type), `devices.ts` (reading a device from the browser, the ID matching rule, the history lines for a change), `plans.ts` (which steps apply to which device, picking devices and bundles, what to look at before the day, progress; pure and tested), `planServer.ts` (loading a plan, finding what was typed, overlap with other events), `auth.ts` (`authorizeLogistics('view' | 'manage')`). Routes: `app/api/logistics` (one bootstrap GET, devices, options, sponsors, people, and `plans` with its stations, devices, borrowed, pick, swap, steps and version). Pages: `app/(portal)/portal/logistics` (`LogisticsSectionContent`, `EquipmentTab`, `DeviceDialog`, `logisticsRoute.ts` (the addresses), `PrizesTab` (the storage prizes), `PrizingTab` / `PrizeGrid` (an event's prize allocation grid) / `PlanPrizes` (the day counts), `SponsorPrizingTab`, `RequestsTab`, `Panel` (the in-page form shell used instead of dialogs), `BorrowedTab` (sponsor loaners and officer loaners), `usePrizes`, `PlansTab` (the list and the address), `PlanView` (the one sheet: plan and event day), `PlanSheet` (its lines and step boxes), `planRows` (rows, lines, sets), `PickDialog`, `BorrowedDialog`, `SwapDialog`, `SponsorsTab`, `ToolsTab`, `Combo` for the add-while-picking dropdown, `useLogistics` / `usePlans` for the in-memory data).
 

@@ -3,8 +3,6 @@ import type { EndStats } from './types';
 
 export const CHOICES = 4;
 export const DEFAULT_SECS = 40;
-export const MIN_SECS = 5;
-export const MAX_SECS = 120;
 export const MAX_POINTS = 1000;
 /** A question with a category opens on a category card this long (the question and its clock start after it). */
 export const CARD_MS = 3000;

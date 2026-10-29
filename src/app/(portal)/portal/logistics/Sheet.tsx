@@ -5,7 +5,7 @@ import { createPortal } from 'react-dom';
 import { ChevronDown, ChevronRight, Columns3, Maximize2, Minimize2, Plus, Trash2, X } from 'lucide-react';
 import { compareCells, matchesFilter, parseCell, type CellKind, type CellValue } from '@/lib/logistics/sheetMath';
 import { showToast } from '@/lib/ui/toast';
-import { useLiveParams, usePortalParams } from '@/lib/portal/usePortalParams';
+import { flagCodec, useAddressState, useKeptScroll, useSessionState, type Codec } from '@/lib/portal/usePageState';
 import { recordEdit } from './undo';
 import styles from './sheet.module.css';
 
@@ -35,34 +35,33 @@ export default function Sheet<T>({ id, rows, rowKey, cols, canEdit, add, onDelet
   id: string; rows: T[]; rowKey: (r: T) => string; cols: SheetCol<T>[]; canEdit: boolean; add?: SheetAdd; onDelete?: (r: T) => Promise<boolean | void>; deleteLabel?: (r: T) => string;
   expand?: (r: T) => ReactNode; noun: string; rowTone?: (r: T) => 'bad' | 'warn' | undefined;
 }) {
-  // The view (sort, filters, full screen) is in the address, so a link or a refresh brings back the same view; the rows opened and where it was scrolled to are kept for this tab (session storage).
-  const live = useLiveParams(), setAddr = usePortalParams();
-  const [sort, setSortState] = useState<{ col: string; dir: 1 | -1 } | null>(() => { const m = /^(.+):(asc|desc)$/.exec(live.get('ss') ?? ''); return m && cols.some((c) => c.id === m[1]) ? { col: m[1], dir: m[2] === 'asc' ? 1 : -1 } : null; });
-  const [filters, setFiltersState] = useState<Record<string, string>>(() => {
-    const out: Record<string, string> = {};
-    for (const part of (live.get('sf') ?? '').split('|').filter(Boolean)) { const i = part.indexOf('~'); const id = part.slice(0, i), q = part.slice(i + 1); if (i > 0 && cols.some((c) => c.id === id) && q) out[id] = q; }
-    return out;
-  });
-  const setSort = (v: typeof sort | ((s: typeof sort) => typeof sort)) => setSortState((cur) => { const next = typeof v === 'function' ? v(cur) : v; setAddr({ ss: next ? `${next.col}:${next.dir === 1 ? 'asc' : 'desc'}` : null }); return next; });
-  const setFilters = (v: Record<string, string> | ((f: Record<string, string>) => Record<string, string>)) => setFiltersState((cur) => { const next = typeof v === 'function' ? v(cur) : v; setAddr({ sf: Object.entries(next).filter(([, q]) => q.trim()).map(([id, q]) => `${id}~${q}`).join('|') || null }); return next; });
+  // The view (sort, filters, full screen) is in the address and the rows opened and the scroll are kept for the tab: all through lib/portal/usePageState, so a refresh or a shared link brings them back.
+  const sortCodec = useMemo<Codec<{ col: string; dir: 1 | -1 } | null>>(() => ({
+    parse: (raw) => { const m = /^(.+):(asc|desc)$/.exec(raw ?? ''); return m && cols.some((c) => c.id === m[1]) ? { col: m[1], dir: m[2] === 'asc' ? 1 : -1 } : null; },
+    format: (v) => (v ? `${v.col}:${v.dir === 1 ? 'asc' : 'desc'}` : null),
+  }), [cols]);
+  const filterCodec = useMemo<Codec<Record<string, string>>>(() => ({
+    parse: (raw) => { const out: Record<string, string> = {}; for (const part of (raw ?? '').split('|').filter(Boolean)) { const i = part.indexOf('~'), id2 = part.slice(0, i), q = part.slice(i + 1); if (i > 0 && cols.some((c) => c.id === id2) && q) out[id2] = q; } return out; },
+    format: (v) => Object.entries(v).filter(([, q]) => q.trim()).map(([id2, q]) => `${id2}~${q}`).join('|') || null,
+  }), [cols]);
+  const [sort, setSort] = useAddressState('ss', sortCodec);
+  const [filters, setFilters] = useAddressState('sf', filterCodec);
   const [hidden, setHidden] = useState<Set<string>>(() => new Set(cols.filter((c) => c.defaultHidden).map((c) => c.id)));
   const [active, setActive] = useState<Active>(null);
   type Edit = { draft: string; all?: boolean };   // `all`: it was opened on what the cell already holds, so the text starts selected (typing over it replaces it)
   const [editing, setEditingState] = useState<Edit | null>(null);
   const editRef = useRef<Edit | null>(null);   // the same, readable at once: a blur that follows Enter must not save a second time
   const setEditing = (v: Edit | null) => { editRef.current = v; setEditingState(v); };
-  const openKey = `tg-sheet-open-${id}`, scrollKey = `tg-sheet-scroll-${id}`;
-  const [open, setOpenState] = useState<Set<string>>(() => { try { return new Set(JSON.parse(sessionStorage.getItem(openKey) ?? '[]') as string[]); } catch { return new Set(); } });
-  const setOpen = (fn: (o: Set<string>) => Set<string>) => setOpenState((o) => { const n = fn(o); try { sessionStorage.setItem(openKey, JSON.stringify([...n])); } catch { /* not remembered */ } return n; });
+  const [openList, setOpenList] = useSessionState<string[]>(`tg-sheet-open-${id}`, []);
+  const open = useMemo(() => new Set(openList), [openList]);
+  const setOpen = (fn: (o: Set<string>) => Set<string>) => setOpenList((cur) => [...fn(new Set(cur))]);
   const [flash, setFlash] = useState<string>('');   // "rowKey:colId" of a cell the server refused
   const [confirming, setConfirming] = useState('');   // the row whose delete is waiting for a second click
   const [draftRow, setDraftRow] = useState<Record<string, CellValue>>({});
   const scroll = useRef<HTMLDivElement>(null);
   const [vw, setVw] = useState(900);
   // Full screen: the sheet fills the whole window (the portal's menus step aside), in the address as &full so a link opens it that way; Esc leaves.
-  const params = useLiveParams(), setParams = usePortalParams();
-  const [full, setFullState] = useState(() => params.get('full') === '1');
-  const setFull = (v: boolean) => { setFullState(v); setParams({ full: v ? '1' : null }); };
+  const [full, setFull] = useAddressState('full', flagCodec);
   useEffect(() => {
     if (!full) return;
     const prev = document.body.style.overflow; document.body.style.overflow = 'hidden';
@@ -90,16 +89,8 @@ export default function Sheet<T>({ id, rows, rowKey, cols, canEdit, add, onDelet
   }, [rows, shown, filters, sort, cols]);
   const filtering = Object.values(filters).some((v) => v.trim());
   const addRow = !!add && canEdit;
-  const restored = useRef(false);
-  useEffect(() => { restored.current = false; }, [full]);   // full screen draws the table again: it is put back where it was
-  useEffect(() => {   // back to where it was scrolled to (once the rows are there)
-    if (restored.current || view.length === 0 || !scroll.current) return;
-    restored.current = true;
-    try { const j = JSON.parse(sessionStorage.getItem(scrollKey) ?? 'null'); if (j) window.requestAnimationFrame(() => { scroll.current?.scrollTo(j.x ?? 0, j.y ?? 0); }); } catch { /* none */ }
-  }, [view.length, scrollKey, full]);
-  const savedAt = useRef(0);
-  const onScrollSave = () => { const now = Date.now(); if (now - savedAt.current < 200) return; savedAt.current = now; try { sessionStorage.setItem(scrollKey, JSON.stringify({ x: scroll.current?.scrollLeft ?? 0, y: scroll.current?.scrollTop ?? 0 })); } catch { /* not remembered */ } };
   const total = view.length + (addRow ? 1 : 0);
+  const onScrollSave = useKeptScroll(scroll, `tg-sheet-scroll-${id}`, view.length > 0, full);   // back where it was scrolled to, also when full screen draws the table again
   const gutter = 44;
   const tableW = gutter + shown.reduce((n, c) => n + c.width, 0) + (onDelete && canEdit ? 52 : 0);
 

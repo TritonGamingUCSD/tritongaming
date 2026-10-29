@@ -87,6 +87,6 @@
 }
 
 @media (pointer: coarse), (max-width: 1024px) {
-  .cta { min-height: 36px; }
+  .cta { min-height: var(--btn-h); }
   .dismiss { width: 36px; height: 36px; }
 }

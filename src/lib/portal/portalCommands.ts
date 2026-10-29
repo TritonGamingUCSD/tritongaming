@@ -1,5 +1,6 @@
 import { hasCapability, isRewardsEligible, type RoleGrant } from '@/lib/portal/capabilities';
 import type { Capability } from '@/types/database';
+import { SECTIONS } from '@/lib/portal/sections';
 
 // Sections and actions the portal search can jump to. Filtered by what the person can actually open, so the
 // search never offers something that would just say "no access".
@@ -12,27 +13,13 @@ const S = (id: string, label: string, hint: string, section: string, keywords: s
 const A = (id: string, label: string, hint: string, href: string, keywords: string[], cap?: Def['cap'], test?: Def['test']): Def =>
   ({ id: `do-${id}`, label, hint, href, kind: 'Do', keywords, cap, test });
 
+// The "Go to" entries come from the sections' own definitions (lib/portal/sections.ts); only a section with a special rule for who sees it is listed here.
+const SEE_IF: Record<string, Def['test']> = { points: (r) => isRewardsEligible(r) || hasCapability(r, 'manage_rewards_shop') };
+const SECTION_DEFS: Def[] = SECTIONS.filter((s) => s.search).map((s) => S(s.search!.id ?? s.id, s.label, s.search!.hint, s.id, s.search!.keywords, s.search!.caps as Capability[] | undefined, SEE_IF[s.id]));
+
 const DEFS: Def[] = [
   { id: 'go-home', label: 'Dashboard', hint: 'Your home screen', href: '/portal', kind: 'Go to', keywords: ['home', 'overview'] },
-  S('tickets', 'My Tickets', 'Your event tickets and history', 'tickets', ['qr', 'ticket', 'history', 'activity', 'registered']),
-  S('points', 'Rewards', 'Points and the shop', 'points', ['points', 'shop', 'perks', 'redeem'], undefined, (r) => isRewardsEligible(r) || hasCapability(r, 'manage_rewards_shop')),
-  S('events', 'Events', 'Create and manage events', 'events', ['event', 'manage'], 'view_events'),
-  S('checkin', 'Check-In', 'Enter a ticket code, the event QR, the online code', 'checkin', ['scan', 'scanner', 'qr'], 'checkin'),
-  S('members', 'TG Members', 'Everyone in the org', 'members', ['people', 'directory', 'roster', 'team'], 'view_members'),
-  S('meetings', 'Meetings', 'Check in, history and results', 'meetings', ['meeting', 'attendance'], ['attend_meetings', 'view_attendance_reports']),
-  S('strikes', 'Strikes', 'Private strike tracker (HR and exec)', 'strikes', ['strike', 'strikes', 'voucher', 'hr', 'attendance'], ['manage_strikes']),
-  S('logistics', 'Event Logistics', 'Equipment catalog, prizes and event setups', 'logistics', ['equipment', 'devices', 'gear', 'inventory', 'prizes', 'shelf', 'setup', 'tech'], ['view_logistics', 'manage_logistics']),
-  S('staffle', 'Staffle', 'Enter the staff raffle and see who won', 'staffle', ['raffle', 'lottery', 'draw', 'win', 'prizes', 'giveaway'], ['view_logistics', 'manage_logistics']),
-  S('trivia', 'Trivia', 'Join a quiz game, or write and host one', 'trivia', ['quiz', 'kahoot', 'game', 'questions', 'play', 'join'], undefined),
-  S('quarters', 'Quarter status', 'Who is active or inactive each quarter', 'quarters', ['quarter', 'inactive', 'active', 'officer', 'term', 'year'], ['manage_quarters']),
-  S('divisions', 'Divisions', 'Edit the divisions directory and pages', 'divisions', ['division', 'edit'], ['manage_divisions_directory', 'manage_division']),
-  S('division-members', 'Division Members', 'Who leads each division', 'division-members', ['leads', 'division'], 'view_division_members'),
-  S('docs', 'Documentation', 'How-to guides', 'docs', ['guide', 'help', 'how to', 'docs'], 'view_docs'),
-  S('qr', 'QR Studio', 'Design branded QR codes', 'qrcode', ['qr', 'code', 'generator'], 'generate_qr_codes'),
-  S('profile', 'Profile', 'Your info and preferences', 'profile', ['account', 'settings', 'me', 'name', 'picture', 'avatar']),
-  S('help', 'Help', 'Ask a question or report a problem', 'help', ['support', 'question', 'bug', 'problem', 'ticket']),
-  S('admin', 'Admin', 'Stats, roles, analytics and audit history', 'admin', ['roles', 'stats', 'audit', 'system'], 'view_admin_dashboard'),
-  S('site-content', 'Site Content', 'Edit the public website', 'site-content', ['website', 'cms', 'banners', 'text', 'images'], 'manage_site_content'),
+  ...SECTION_DEFS,
 
   A('help-new', 'Ask for help', 'Open a help ticket', '/portal/help/ask', ['support', 'question', 'bug', 'problem', 'report', 'ticket']),
   A('profile-edit', 'Edit my profile', 'Name, major, games, picture', '/portal/profile', ['update', 'change', 'name', 'major', 'college']),

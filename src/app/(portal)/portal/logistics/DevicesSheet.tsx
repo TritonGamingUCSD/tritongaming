@@ -41,7 +41,7 @@ export default function DevicesSheet({ api, data }: { api: LogisticsApi; data: C
   }, []);
   useEffect(() => {
     void load();
-    const id = window.setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 30000);
+    const id = window.setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 90000);
     return () => window.clearInterval(id);
   }, [load]);
 

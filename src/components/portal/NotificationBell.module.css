@@ -14,8 +14,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+  width: var(--btn-h);
+  height: var(--btn-h);
   border-radius: 50%;
   background: var(--pp-chrome-2);
   backdrop-filter: blur(10px) saturate(160%);

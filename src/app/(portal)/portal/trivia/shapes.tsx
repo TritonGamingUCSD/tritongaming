@@ -24,7 +24,6 @@ export const ansClass = (i: number) => [styles.ans0, styles.ans1, styles.ans2, s
 export const LETTERS = ['A', 'B', 'C', 'D'];
 
 /** The letter on a tile (A to D), as a small paper square. */
-export const Letter = ({ i }: { i: number }) => <span className={styles.ansLetter} aria-hidden="true">{LETTERS[i]}</span>;
 
 /** A strip of tape across the top of a paper card, like on the website. */
 export const Tape = () => <span className={styles.tape} aria-hidden="true" />;

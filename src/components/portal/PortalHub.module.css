@@ -287,13 +287,10 @@
   background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); /* theme-ok */
   color: var(--white); font-family: var(--font-futura-medium); font-size: 0.74rem; text-align: center; /* theme-ok */
 }
-.sheetTile:active { background: color-mix(in srgb, var(--accent) 14%, transparent); }
-.sheetTileActive { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
 .sheetTileIcon {
   position: relative; display: grid; place-items: center; width: 42px; height: 42px; border-radius: 0.8rem;
   color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent);
 }
-.sheetTileLabel { line-height: 1.2; }
 
 /* ═══ Desktop sidebar ═══════════════════════════════════
    A sticky card: who you are, search, grouped navigation, then the footer
@@ -487,8 +484,6 @@
 /* ═══ Mobile: same language as desktop ═══
    Home = the color-coded group cards (one column); an opened section gets a slim sticky bar —
    round back button, a tinted icon tile in the group color, the title. ═══ */
-.panelIconTile > svg { width: 100%; height: 100%; }
-.panelIconTile { display: grid; place-items: center; box-sizing: border-box; width: 36px; height: 36px; padding: 8px; flex-shrink: 0; border-radius: 0.7rem; color: var(--accent, var(--p-accent)); background: color-mix(in srgb, var(--accent, var(--p-accent)) 15%, transparent); border: 1px solid color-mix(in srgb, var(--accent, var(--p-accent)) 30%, transparent); }
 @media (max-width: 899px) {
   .panel { background: none; border: none; border-radius: 0; box-shadow: none; padding: 0 0 1rem; min-height: 0; }
   .panelHeader {
@@ -551,7 +546,7 @@
 
 /* Mobile "More" sheet: bigger, full-size touch targets with icons back. */
 .sheetFooter { gap: 0.6rem; padding: 0.5rem 0.9rem 0.9rem; }
-.sheetFooter a, .sheetFooter button { min-height: 48px; padding: 0.7rem 0.8rem; font-size: 0.82rem; letter-spacing: 0.05em; border-radius: 0.8rem; overflow: visible; text-overflow: clip; }
+.sheetFooter a, .sheetFooter button { min-height: var(--btn-h); padding: 0.7rem 0.8rem; font-size: 0.82rem; letter-spacing: 0.05em; border-radius: 0.8rem; overflow: visible; text-overflow: clip; }
 .sheetFooter a span, .sheetFooter button span { display: inline-flex; align-items: center; }
 
 
@@ -750,18 +745,12 @@
 
 /* Phone home: the launcher under the cards. */
 .launcher { display: flex; flex-direction: column; gap: 0.35rem; margin: 0.25rem 0 0.5rem; }
-.launcher .sheetTile { padding: 0.85rem 0.4rem; min-height: 96px; justify-content: center; }
 @media (max-width: 340px) {  }
 @media (min-width: 900px) { .launcher { display: none; } }
 
 /* Phone tiles: one dense, color-coded grid (no group headings, no empty rows). */
-.tileGrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.45rem; }
-.tileGrid .sheetTile { padding: 0.6rem 0.2rem 0.5rem; gap: 0.35rem; min-height: 0; border-radius: 0.9rem; font-size: 0.68rem; justify-content: flex-start; }
-.tileGrid .sheetTileIcon { width: 36px; height: 36px; border-radius: 0.7rem; }
-.tileGrid .sheetTileLabel { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.4em; word-break: break-word; }
 @media (max-width: 340px) { .tileGrid { grid-template-columns: repeat(3, 1fr); } }
 .launcher { margin: 0.5rem 0; }
-.launcher .sheetTile { min-height: 0; }
 
 /* Labels clip their overflow (for the ellipsis), which also clipped the tails of p, q, g and y: give the text room below the baseline. */
 .railLabel, .railName { line-height: 1.45; padding-block: 0.08em; }
@@ -893,7 +882,6 @@
     content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 7px;
     background: repeating-linear-gradient(-60deg, var(--pp-chrome-accent) 0 9px, transparent 9px 16px);
   }
-  .panelHeader .panelIconTile { display: none; }
   .panelHeader .panelTitle {
     display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0.15rem 0.6rem; min-width: 0; flex: 1; color: var(--pp-chrome-fg);
     font-family: var(--font-renegare); font-size: 1.05rem; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.1;
@@ -916,7 +904,6 @@
 /* The phone's bottom bar is GlassDock (components/portal/GlassDock.tsx): a floating liquid-glass capsule, so the More sheet and the page leave room for it. The theme switch lives in the More sheet. */
 @media (max-width: 899px) {
   .moreSheetScroll { padding-bottom: calc(5.2rem + env(safe-area-inset-bottom, 0px)); }
-  .sheetTheme { padding: 0.2rem 0.9rem 0.6rem; }
 }
 @media (min-width: 900px) { .sheetTheme { display: none; } }
 

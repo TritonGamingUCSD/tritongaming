@@ -38,7 +38,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
   }, []);
   useEffect(() => {
     void load();
-    const id = window.setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 30000);   // what others change shows up
+    const id = window.setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 90000);   // what others change shows up
     return () => window.clearInterval(id);
   }, [load]);
   const refresh = useCallback(async () => { await Promise.all([load(), prizes.reload()]); }, [load, prizes]);

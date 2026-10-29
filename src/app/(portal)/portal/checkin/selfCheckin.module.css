@@ -1,7 +1,6 @@
 .panel { display: flex; flex-direction: column; gap: 0.9rem; max-width: 560px; }
 .hint { font-size: 0.85rem; line-height: 1.5; color: rgba(var(--pp-ink-rgb), 0.88); }
 .sub { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.85); margin-top: 0.15rem; }
-.switchRow { composes: card from '../../../../components/ui/Surface.module.css'; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.9rem 1rem; flex-wrap: wrap; }
 .qrCard { composes: card from '../../../../components/ui/Surface.module.css'; display: flex; flex-direction: column; align-items: center; gap: 0.8rem; padding: 1.1rem; }
 .qrOff .qrBox { opacity: 0.35; }
 .qrBox { background: #ffffff; padding: 0.6rem; border-radius: 0.8rem; line-height: 0; } /* theme-ok: a QR code must stay dark on white to scan */
@@ -18,7 +17,7 @@
 .fullWarn { font-size: 0.9rem; color: #b45309; font-weight: 700; } /* theme-ok: same */
 .modeCard { composes: card from '../../../../components/ui/Surface.module.css'; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 1rem; }
 .modes { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.modeBtn { flex: 1 1 8rem; min-height: 44px; padding: 0.5rem 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 0.7rem; background: transparent; color: var(--pp-ink); font-family: var(--font-futura-medium); font-size: 0.85rem; cursor: pointer; }
+.modeBtn { flex: 1 1 8rem; min-height: var(--btn-h); padding: 0.5rem 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 0.7rem; background: transparent; color: var(--pp-ink); font-family: var(--font-futura-medium); font-size: 0.85rem; cursor: pointer; }
 .modeBtn:disabled { cursor: default; opacity: 0.75; }
 .modeBtn:not(:disabled):hover { background: rgba(var(--pp-ink-rgb), 0.06); }
 .modeOn { background: var(--yellow); border-color: var(--pp-ink); color: #111c33; font-family: var(--font-futura-heavy); opacity: 1 !important; }

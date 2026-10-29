@@ -1,3 +1,7 @@
+/* One button size per device: laptop and tablet share the compact size, a phone gets a slightly taller one. Every button, icon button and row action reads these. */
+:root { --btn-h: 34px; --btn-h-sm: 28px; }
+@media (max-width: 640px) { :root { --btn-h: 40px; --btn-h-sm: 34px; } }
+
 /* Native form controls inside the portal, drawn by us instead of the browser so they look the same everywhere and follow the
    light/dark theme. Wrapped in :where() so any component's own class wins over these baseline rules. */
 
@@ -86,8 +90,6 @@
 /* Touch screens: small controls get a finger-sized target (checkboxes in long lists, filter chips, tabs, links in cards). */
 @media (pointer: coarse) {
   .pp-root input[type="checkbox"] { width: 24px; height: 24px; }
-  .pp-root [role="tab"] { min-height: 40px; }
-  .pp-root button[class*="roleFilter"] { min-height: 38px; padding-inline: 0.8rem; }
   .pp-root [class*="catCardLink"] { padding-block: 0.6rem; }
   .pp-root [class*="catCardMore"] { padding-block: 0.6rem; }
 }

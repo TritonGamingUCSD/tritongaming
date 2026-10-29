@@ -2,6 +2,7 @@
 
 import { useCallback, useRef } from 'react';
 import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
+import { MAIN_TABS } from '@/lib/portal/sections';
 
 // Write half of deep-linking for a section's tabs: call the returned function when a tab (or sub-tab)
 // is picked so the address reads /portal/<section>/<tab>/<subtab> and a copied link reopens exactly there.
@@ -9,9 +10,7 @@ import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 //
 // A section's first tab is the section itself: /portal/<section> with no tab, so the main page keeps the short address.
 // Sections whose first tab depends on the person pass a function that says which one it is.
-const MAIN_TAB: Record<string, string> = {
-  tickets: 'tickets', admin: 'overview', profile: 'info', events: 'list', checkin: 'tickets', points: 'mine', meetings: 'mine', members: 'members', logistics: 'home',
-};
+const MAIN_TAB = MAIN_TABS;   // defined with each section in sections.ts
 
 export function usePortalTabSync(sectionId: string, firstTab?: () => string | undefined) {
   const setParams = usePortalParams();

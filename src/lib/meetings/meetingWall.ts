@@ -4,7 +4,6 @@
 
 export const WALL_VISIBLE = 80;
 export const WALL_LIFE_MS = 90_000;
-export const WALL_FADE_MS = 8_000;                  // the last stretch of a sticker's life, fading out
 export const WALL_STRIP = { left: [3, 20], right: [80, 97] } as const;   // percent across the screen
 export const WALL_Y = [6, 94] as const;             // percent down the screen
 

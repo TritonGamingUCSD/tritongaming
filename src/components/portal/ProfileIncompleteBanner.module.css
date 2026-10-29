@@ -34,4 +34,4 @@
 }   /* clears the three round buttons (site, theme, bell) at the top right */
 
 /* A thumb-sized button on touch screens and phones */
-@media (pointer: coarse), (max-width: 1024px) { .btn { display: inline-flex; align-items: center; min-height: 36px; } }
+@media (pointer: coarse), (max-width: 1024px) { .btn { display: inline-flex; align-items: center; min-height: var(--btn-h); } }

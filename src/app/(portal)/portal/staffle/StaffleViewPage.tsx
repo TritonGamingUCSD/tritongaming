@@ -24,7 +24,7 @@ export default function StaffleViewPage({ slug, canManage, onBack, onDraw, onGon
     const r = await call<{ staffle: StaffleView }>(`/api/staffle/${slug}`);
     if (r.ok) { setS(r.data.staffle); setError(''); } else setError(r.error);
   }, [slug]);
-  useEffect(() => { void load(); const t = window.setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 20000); return () => window.clearInterval(t); }, [load]);   // counts follow what others enter
+  useEffect(() => { void load(); const t = window.setInterval(() => { if (document.visibilityState === 'visible') void load(); }, 60000); return () => window.clearInterval(t); }, [load]);   // counts follow what others enter
   const act = async (key: string, url: string, method: string, body?: unknown) => {
     setBusy(key); setError('');
     const r = await call<{ staffle: StaffleView }>(url, method, body);

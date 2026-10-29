@@ -34,7 +34,7 @@
 .home > .tiles { order: 1; margin-top: -0.4rem; }
 .home > :not(header):not(.tiles) { order: 2; }
 .foot { display: flex; justify-content: center; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding-top: 0.75rem; font-size: 0.85rem; color: var(--pp-ink); }
-.foot > *, .foot a, .foot button { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 40px; }
+.foot > *, .foot a, .foot button { display: inline-flex; align-items: center; gap: 0.4rem; min-height: var(--btn-h); }
 .foot a:not([class*='Help']) { color: var(--pp-ink); text-decoration: none; padding-inline: 0.5rem; }
 .foot a:not([class*='Help']):hover { text-decoration: underline; }
 .foot [class*='railFooterHelp'] { order: -1; }

@@ -127,12 +127,6 @@ export function cleanTags(raw: unknown): string[] {
   }
   return out.slice(0, MAX_TAGS);
 }
-export const allTags = <T extends TreeDoc>(docs: T[]): { tag: string; count: number }[] => {
-  const n = new Map<string, number>();
-  for (const d of docs) for (const t of d.tags ?? []) n.set(t, (n.get(t) ?? 0) + 1);
-  return [...n.entries()].map(([tag, count]) => ({ tag, count })).sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag));
-};
-
 export const STALE_DAYS = 180;
 // "Updated today", "Updated 3 weeks ago"; stale = not touched for about six months, so readers know to double-check it.
 export function ageLabel(iso: string, now: number = Date.now()): { label: string; stale: boolean } {

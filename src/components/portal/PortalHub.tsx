@@ -9,6 +9,7 @@ import Image from 'next/image';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { mergedPortalParams, portalHref } from '@/lib/portal/portalPath';
 import { REFRESH_EVENT, REFRESHED_EVENT } from '@/lib/ui/refreshPortal';
+import { SECTION_IDS, sectionLabel } from '@/lib/portal/sections';
 import PortalRefresh from './PortalRefresh';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
@@ -54,8 +55,8 @@ function smallIcon(icon: ReactNode, size = 21) {
 const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Team', 'Resources', 'Admin'] as const;
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
-const SECTION_LABELS: Record<string, string> = { tickets: 'My Tickets', profile: 'Profile', points: 'Rewards', events: 'Events', checkin: 'Check-In', members: 'TG Members', meetings: 'Meetings', staffle: 'Staffle', trivia: 'Trivia', strikes: 'Strikes', divisions: 'Divisions', 'division-members': 'Division Members', docs: 'Documentation', qrcode: 'QR Studio', admin: 'Admin', 'site-content': 'Site Content' };
-const SECTION_ORDER = ['tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings', 'logistics', 'staffle', 'quarters', 'strikes', 'trivia', 'divisions', 'division-members', 'docs', 'qrcode', 'help', 'admin', 'site-content'];
+// The order and the names of the sections are defined once, in lib/portal/sections.ts.
+const SECTION_ORDER = SECTION_IDS;
 // Accent color per group — tints the heading dot, icon tiles and hover state.
 // The Dashboard is soft white, so it does not read as part of the blue "Yours" or "Events" groups.
 const DASHBOARD_ACCENT = '#e5e7eb';
@@ -288,7 +289,7 @@ export default function PortalHub({ sections: sectionsProp, identity, railFooter
   // A link to a page this person's roles don't include (a UCSD student or someone with no role following a shared
   // link, say) used to just land on home with no explanation. Point them to Help, which explains how to get the role.
   const lockedSection = requestedSection && !validRequested && SECTION_ORDER.includes(requestedSection) && requestedSection !== 'help'
-    ? SECTION_LABELS[requestedSection] ?? null
+    ? sectionLabel(requestedSection)
     : null;
   const [lockedDismissed, setLockedDismissed] = useState(false);
   const lockedNotice = lockedSection && !lockedDismissed ? (

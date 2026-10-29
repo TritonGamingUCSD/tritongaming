@@ -147,14 +147,14 @@
 .dayTop { position: sticky; top: 0; z-index: 6; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.5rem 0 0.7rem; background: var(--pp-paper); }
 .dayBar { display: flex; align-items: center; gap: 0.5rem; }
 .dayTitle { flex: 1; min-width: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.1rem; color: var(--pp-ink); overflow-wrap: anywhere; }
-.stepChip { position: relative; overflow: hidden; display: inline-flex; align-items: baseline; gap: 0.45rem; min-height: 44px; padding: 0.4rem 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
+.stepChip { position: relative; overflow: hidden; display: inline-flex; align-items: baseline; gap: 0.45rem; min-height: var(--btn-h); padding: 0.4rem 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
 .stepChip small { font-variant-numeric: tabular-nums; color: rgba(var(--pp-ink-rgb), 0.75); }
 .stepChip i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--pp-ok); }
 .dayForm { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .dayInput { flex: 1; min-width: 0; min-height: 40px; padding: 0.4rem 0.8rem; border-radius: 8px; border: 2px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); font-family: var(--font-futura-heavy); font-size: 1.05rem; letter-spacing: 0.03em; }
 .dayInput:focus { outline: none; box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.6); }
 .dayInput::placeholder { font-family: var(--font-futura-medium); font-size: 0.92rem; letter-spacing: 0; color: rgba(var(--pp-ink-rgb), 0.5); }
-.dayForm button { min-height: 40px; }
+.dayForm button { min-height: var(--btn-h); }
 .result { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem 0.9rem; border-radius: 8px; border: 2px solid; color: var(--pp-ink); background: var(--pp-card); }
 .linkBtn { min-height: 32px; }
 
@@ -331,7 +331,6 @@
 .dTools .iconBtn { order: 1; }
 
 /* ---- Prizes ---- */
-.prizeHead { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
 
 .prizeGrid { display: flex; flex-direction: column; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); overflow: hidden; }
 .prizeRow { display: grid; grid-template-columns: var(--cols); align-items: center; column-gap: 0.8rem; padding: 0.5rem 0.8rem; font-size: 0.86rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
@@ -362,7 +361,6 @@
 }
 
 /* ---- The prize allocation grid (a sheet: prize details pinned on the left, a column per pool) ---- */
-.mNum { text-align: right !important; white-space: nowrap; }
 .leftOk { background: color-mix(in srgb, var(--pp-ok) 22%, var(--pp-card)) !important; }
 .leftZero { background: color-mix(in srgb, var(--pp-warn) 26%, var(--pp-card)) !important; }
 .leftBad { background: color-mix(in srgb, var(--pp-bad) 28%, var(--pp-card)) !important; color: var(--pp-bad); }
@@ -539,7 +537,6 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 
 /* Every table and table-like row: text sits on the left edge and is centered vertically (the step boxes keep their own centering). */
 .grid th, .grid td, .overview th, .overview td { text-align: left; vertical-align: middle; }
-.mNum { text-align: left !important; }
 .dayRow, .dayRowHead, .prizeRow, .prizeHeadRow, .reqRow, .borrowRow, .sponsorRow, .freeGroup { align-items: center; text-align: left; }
 .prizeTools, .cellNum { text-align: left; }
 .dTools, .prizeTools { justify-content: flex-start; }
@@ -563,10 +560,10 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .prizeRow > :first-child, .reqRow > :first-child { font-size: 0.98rem; }
   .prizeRow > span[data-label]::before, .borrowRow > span[data-label]::before, .sponsorRow > span[data-label]::before, .reqRow > span[data-label]::before { content: attr(data-label); display: block; margin-bottom: 0.15rem; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.6); }
   .prizeRow > .prizeTools, .reqRow > .prizeTools, .sponsorRow > .prizeTools { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-start; padding-top: 0.6rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
-  .iconBtn { width: 40px; height: 40px; }
+  .iconBtn { width: var(--btn-h); height: var(--btn-h); }
   .reqRow > span[data-label="Notes"], .reqRow > span[data-label="Devices"], .reqRow > span[data-label="Prizes"], .borrowRow > span[data-label="Installed games"] { grid-column: 1 / -1; }
   .cell { min-height: 44px; }
-  .linkBtn, .missBtn, .pill { min-height: 44px; }
+  .linkBtn, .missBtn, .pill { min-height: var(--btn-h); }
 }
 
 /* Event day, laptop: a device ID and its type stay on one line (a long type is cut with "…", its full name is in the tooltip), and a set shows only its row with the "+" in front; the parts open under it. */
@@ -585,7 +582,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 
 /* Undo bar (and the "waiting to send" note when offline): fixed at the bottom, clear of the phone's edge. */
 .undoBar { position: fixed; left: 50%; bottom: calc(1rem + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 40; display: flex; align-items: center; gap: 0.9rem; max-width: calc(100vw - 2rem); padding: 0.6rem 0.8rem 0.6rem 1rem; border-radius: 10px; background: var(--pp-ink); color: var(--pp-card); font-size: 0.86rem; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3); }
-.undoBtn { min-height: 40px; padding: 0 0.9rem; border-radius: 999px; border: 1px solid currentColor; background: none; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
+.undoBtn { min-height: var(--btn-h); padding: 0 0.9rem; border-radius: 999px; border: 1px solid currentColor; background: none; color: inherit; font: inherit; font-weight: 700; cursor: pointer; }
 .undoBtn:hover { background: color-mix(in srgb, currentColor 16%, transparent); }
 
 @media (min-width: 900px) {
@@ -680,7 +677,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 /* Phone: the line above a list (filter pill, count, Add) is compact so the three share a row where they can. */
 @media (max-width: 640px) {
   .toolbarRow { gap: 0.4rem 0.6rem; }
-  .toolbarRow .addBtn { min-height: 40px; padding: 0 0.85rem; font-size: 0.86rem; }
+  .toolbarRow .addBtn { min-height: var(--btn-h); padding: 0 0.85rem; font-size: 0.86rem; }
   .filters { gap: 0.4rem; }
 }
 @media (max-width: 640px) { .page { gap: 0.6rem; } }
@@ -766,11 +763,11 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .filters { display: flex; flex-wrap: nowrap; gap: 0.4rem; overflow-x: auto; scrollbar-width: none; }
   .filters::-webkit-scrollbar { display: none; }
   .filters > * { flex: 0 0 9rem; min-width: 0; }
-  .filters button, .filters [role="combobox"] { min-height: 36px; padding-block: 0.25rem; font-size: 0.86rem; }
+  .filters button, .filters [role="combobox"] { min-height: var(--btn-h); padding-block: 0.25rem; font-size: 0.86rem; }
   .toolbarRow { flex-wrap: nowrap; gap: 0.5rem; }
   .toolbarRow .count { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.74rem; }
   .toolbarRow .pill { flex: none; }
-  .addBtn { min-height: 36px; padding: 0 0.8rem; font-size: 0.74rem; flex: none; }
+  .addBtn { min-height: var(--btn-h); padding: 0 0.8rem; font-size: 0.74rem; flex: none; }
 }
 
 /* A row's ··· button is 32px inside a list (the 44px tap size would make every one-line row two lines tall). */

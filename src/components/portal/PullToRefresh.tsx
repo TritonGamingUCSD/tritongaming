@@ -6,8 +6,8 @@ import { refreshPortal, REFRESHED_EVENT } from '@/lib/ui/refreshPortal';
 import { confirmDiscardUnsaved, hasUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import styles from './PullToRefresh.module.css';
 
-const TRIGGER = 64;          // how far the bubble has to be pulled (px, after the resistance) before letting go refreshes
-const MAX = 96;              // the furthest the bubble can ever travel: the pull gets heavier and heavier towards it
+const TRIGGER = 80;          // how far the bubble has to be pulled (px, after the resistance) before letting go refreshes
+const MAX = 110;             // the furthest the bubble can ever travel: the pull gets heavier and heavier towards it
 const HOLD = 56;             // where the bubble waits while the page refreshes
 const BUBBLE = 44;          // the bubble's height
 const SETTLE_MS = 150;       // once the new data is in, a moment for the page to redraw before it slides back
@@ -16,7 +16,7 @@ const GIVE_UP_MS = 8000;     // never spins for ever if the answer is lost
 const AWAY_MS = 90_000;      // coming back to the app after this long refreshes it by itself
 
 // The finger's distance becomes the bubble's: 1:1 at first, then heavier (rubber band), never past MAX.
-const resist = (dy: number) => MAX * (1 - Math.exp(-dy / (MAX * 0.9)));
+const resist = (dy: number) => MAX * (1 - Math.exp(-dy / (MAX * 1.1)));
 
 // An app added to the home screen has no reload: this gives it the pull-down at the top of a page (only there; phone browsers have their own); on a desktop (any browser) the same happens by scrolling up once more at the top, and refreshes quietly when the app is opened again after a while
 // (never while a form has unsaved changes). Both use the portal's refresh (lib/ui/refreshPortal.ts), which keeps the same page open.

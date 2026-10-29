@@ -38,7 +38,6 @@
 .liveCount strong { font-size: 1.5rem; color: var(--pp-ink); }
 .presentBtn { position: absolute; top: 0.7rem; right: 0.7rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.37); background: rgba(var(--pp-ink-rgb), 0.06); color: rgba(var(--pp-ink-rgb), 0.92); font-size: 0.74rem; cursor: pointer; }
 .presentBtn:hover { color: var(--p-accent-text); border-color: rgba(125, 180, 234, 0.5); }
-.presentHint { font-size: 1rem; color: rgba(var(--pp-ink-rgb), 0.89); }
 .presenting { position: fixed; inset: 0; z-index: 3000; justify-content: center; border-radius: 0; border: none; background: var(--pp-card); }
 .presenting .bigCode { font-size: clamp(4rem, 22vw, 13rem); }
 .presenting .liveCount { font-size: 1.4rem; }
@@ -105,7 +104,6 @@
 .historyRow .personName { flex: 1 1 160px; white-space: normal; }
 .historyRow .docBtn { padding: 0.3rem 0.7rem; font-size: 0.78rem; border-radius: 999px; }
 .missed { opacity: 0.8; }   /* dimmed, but not so far that its text fails contrast */
-.dateChip { min-width: 74px; font-size: 0.78rem; color: var(--p-accent-text); }
 
 .meetingList { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; margin: 0; padding: 0; }
 .meetingCard {
@@ -217,7 +215,7 @@
 }
 @media (prefers-reduced-motion: reduce) { .floater { animation-duration: 0.01s; } .reactPop { animation: none; } }
 .presenting .bigCode { font-size: clamp(4rem, 17vw, 11rem); }
-@media (max-width: 480px) { .reactBtn { width: 44px; height: 44px; font-size: 1.35rem; } .reactBtns { gap: 0.35rem; } }
+@media (max-width: 480px) { .reactBtn { width: var(--btn-h); height: var(--btn-h); font-size: 1.35rem; } .reactBtns { gap: 0.35rem; } }
 
 /* Audience */
 .audience { display: flex; flex-direction: column; gap: 0.6rem; }
@@ -379,8 +377,6 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 
 
 .metaAway { color: var(--pp-warn); }
-.advanceAbsences { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 0 0.2rem; margin-top: 0.4rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.20); }
-.advanceAbsences h4 { display: inline-flex; align-items: center; gap: 0.35rem; margin: 0; }
 .absentList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
 .absentList li { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6rem; border-radius: 0.6rem; background: rgba(251, 191, 36, 0.07); border: 1px solid rgba(251, 191, 36, 0.25); }
 .absentForm { display: grid; grid-template-columns: minmax(150px, 1fr) minmax(150px, 1.3fr) auto auto; gap: 0.5rem; align-items: center; }
@@ -485,8 +481,6 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .emojiForm { display: flex; flex-direction: column; gap: 0.5rem; }
 .emojiRow { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .emojiRow > :first-child { flex: 1 1 12rem; min-width: 0; }
-.filePick { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.8rem; max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 0.6rem; border: 1px dashed rgba(var(--pp-ink-rgb), 0.48); color: rgba(var(--pp-ink-rgb), 0.97); font-size: 0.85rem; cursor: pointer; }
-.filePick:hover { border-color: rgba(125, 180, 234, 0.6); }
 .emojiGrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr)); gap: 0.6rem; }
 .emojiUses { font-size: 0.7rem; color: rgba(var(--pp-ink-rgb), 0.8); }
 .emojiTile { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0.7rem 0.5rem; border-radius: 0.8rem; background: rgba(var(--pp-ink-rgb), 0.04); font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.97); text-align: center; overflow-wrap: anywhere; }
@@ -566,8 +560,6 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .idleTag { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; padding: 0.1rem 0.55rem; border-radius: 999px; background: #94a3b8; color: #0b1426; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
 
 /* A team's full member list, shown when "Show all" is pressed */
-.teamPeople { list-style: none; margin: 0.2rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.3rem; }
-.teamPeople li { padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.8rem; background: rgba(var(--pp-ink-rgb), 0.08); }
 .linkBtn { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--p-accent-text); font: inherit; font-size: 0.8rem; font-weight: 600; text-decoration: underline; cursor: pointer; }
 
 /* ── Teams: by team / by person, with one-click add and remove ── */
@@ -650,7 +642,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 @media (max-width: 560px) { .seriesDetail::before { content: none; } }
 
 /* One main button per meeting; the rest are behind the ⋯ button. */
-.moreBtn { flex: none !important; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 0.6rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.32); background: transparent; color: var(--pp-ink); cursor: pointer; }
+.moreBtn { flex: none !important; display: grid; place-items: center; width: var(--btn-h); height: var(--btn-h); border-radius: 0.6rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.32); background: transparent; color: var(--pp-ink); cursor: pointer; }
 .moreBtn:hover { border-color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.06); }
 .moreMenu { display: flex; flex-direction: column; padding: 0.2rem; }
 .moreMenu button { display: flex; align-items: center; gap: 0.55rem; padding: 0.65rem 0.7rem; border: 0; border-radius: 0.5rem; background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.88rem; text-align: left; cursor: pointer; min-height: 44px; }
@@ -769,12 +761,10 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .scanRow { display: flex; align-items: center; justify-content: center; gap: 0.5rem; }   /* one small row: zoom, light, and whatever the caller adds */
 .scanTool { display: inline-grid; place-items: center; min-width: 2.4rem; height: 2.4rem; padding: 0 0.7rem; border: 0; border-radius: 999px; background: rgba(0, 0, 0, 0.45); color: rgba(255, 255, 255, 0.92); font-size: 0.85rem; font-weight: 600; cursor: pointer; }   /* theme-ok */
 .scanTool:hover { background: rgba(0, 0, 0, 0.6); }   /* theme-ok */
-.scanZoom { position: absolute; left: 50%; bottom: 7.5rem; transform: translateX(-50%); padding: 0.2rem 0.7rem; border-radius: 999px; background: rgba(0, 0, 0, 0.55); color: #fff; font-size: 0.85rem; font-weight: 600; pointer-events: none; }   /* theme-ok */
 .scanBottom { transition: opacity 0.3s ease 0.1s, transform 0.3s ease 0.1s; position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; flex-direction: column; justify-content: center; gap: 0.7rem; padding: 2.5rem 1rem calc(1rem + env(safe-area-inset-bottom, 0px)); background: linear-gradient(transparent, rgba(0, 0, 0, 0.65)); text-align: center; }   /* theme-ok */
 .scanHint { margin: 0; font-size: 0.95rem; color: rgba(255, 255, 255, 0.92); }   /* theme-ok */
 .scanLight { composes: scanTool; width: 2.4rem; padding: 0; }
 .scanLightOn, .scanLightOn:hover { background: #ffc72c; color: #011941; }   /* theme-ok */   /* on: a solid yellow button with a filled bolt, easy to see; off: the same bolt as an outline */
-.scanError { margin: auto 1.2rem; padding: 0.9rem; border-radius: 0.7rem; background: rgba(185, 28, 28, 0.85); color: #fff; font-size: 0.95rem; text-align: center; }   /* theme-ok */
 
 /* The host's check-in frame: the typed code and its QR side by side in one ring (the ring fills as people check in), the QR in the code's own colour. */
 .duo { display: flex; align-items: stretch; justify-content: center; gap: 1.2rem; padding: 1rem 1.4rem; max-width: 100%; background: var(--pp-card); border-radius: 1.4rem; }   /* the same colour as the TGcode's own plate, so the code sits on a matching ground in both themes */
@@ -868,7 +858,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .playTab { padding: 0.3rem 1.1rem; border-radius: 999px; border: 0; background: transparent; font: inherit; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.85); cursor: pointer; transition: background 0.15s, color 0.15s; }
 .playTabOn { background: var(--pp-card); color: var(--pp-ink); box-shadow: 0 1px 3px rgba(var(--pp-ink-rgb), 0.18); }
 .tray { display: flex; gap: 0.3rem; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; padding: 0.2rem 0.2rem 0.35rem; scrollbar-width: thin; mask-image: linear-gradient(90deg, #000 calc(100% - 1.4rem), transparent); }   /* one row you swipe along, the most used first */
-.trayBtn { flex: none; scroll-snap-align: start; display: inline-grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 1px solid transparent; background: rgba(var(--pp-ink-rgb), 0.05); cursor: pointer; transition: transform 0.12s, background 0.12s, border-color 0.12s; }
+.trayBtn { flex: none; scroll-snap-align: start; display: inline-grid; place-items: center; width: var(--btn-h); height: var(--btn-h); border-radius: 50%; border: 1px solid transparent; background: rgba(var(--pp-ink-rgb), 0.05); cursor: pointer; transition: transform 0.12s, background 0.12s, border-color 0.12s; }
 .trayBtn:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
 .trayBtn:active { transform: scale(0.88); }
 .trayOn { border-color: var(--p-accent); background: rgba(var(--pp-ink-rgb), 0.1); }

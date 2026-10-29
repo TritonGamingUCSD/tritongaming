@@ -32,7 +32,8 @@
     "test:tickets-load": "node scripts/checks/tickets-load.mjs",
     "test:event-emails": "node scripts/checks/event-emails.mjs",
     "check:theme": "node scripts/check-theme.mjs",
-    "docs:roles": "node scripts/roles-doc.mjs"
+    "docs:roles": "node scripts/roles-doc.mjs",
+    "docs:sync": "node --no-warnings scripts/sync-docs.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",

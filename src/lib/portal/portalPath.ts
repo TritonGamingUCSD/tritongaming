@@ -1,11 +1,10 @@
+import { SECTION_IDS } from '@/lib/portal/sections';
+
 // The portal's address: /portal/<section>/<tab>/<subtab>/<detail> (the last is used where a record has pages of its own, like a Logistics event's tabs). Everything else (an open doc, a search, a filter) stays in the
 // query string. next.config.ts rewrites these paths to the hub's /portal?section=…&tab=…&subtab=… on a fresh load, so the
 // server page keeps reading the old params; in the browser the address is updated with the history API (no refetch).
 
-export const PORTAL_SECTION_IDS = [
-  'tickets', 'points', 'activity', 'profile', 'events', 'checkin', 'members', 'meetings',
-  'strikes', 'quarters', 'logistics', 'staffle', 'trivia', 'divisions', 'division-members', 'docs', 'qrcode', 'help', 'admin', 'site-content',
-] as const;
+export const PORTAL_SECTION_IDS: readonly string[] = SECTION_IDS;   // defined once in sections.ts
 
 const SECTIONS = new Set<string>(PORTAL_SECTION_IDS);
 const PATH_KEYS = ['section', 'tab', 'subtab', 'detail'] as const;

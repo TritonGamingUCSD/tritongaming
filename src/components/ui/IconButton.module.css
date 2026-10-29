@@ -3,12 +3,11 @@
   border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink);
   transition: background 0.12s, border-color 0.12s, transform 0.1s;
 }
-.md { width: 34px; height: 34px; }
-.sm { width: 28px; height: 28px; border-radius: 5px; }
+.md { width: var(--btn-h); height: var(--btn-h); }
+.sm { width: var(--btn-h-sm); height: var(--btn-h-sm); border-radius: 5px; }
 .btn:hover:not(:disabled), .active { background: rgba(125, 180, 234, 0.35); border-color: var(--pp-ink); }
 .btn:focus-visible { outline: 3px solid rgba(125, 180, 234, 0.95); outline-offset: 2px; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .danger { color: var(--pp-bad); border-color: rgba(var(--pp-ink-rgb), 0.45); }
 .danger:hover:not(:disabled) { background: rgba(185, 28, 28, 0.14); border-color: var(--pp-bad); color: var(--pp-bad); }
 
-@media (pointer: coarse) { .sm { width: 38px; height: 38px; } .md { width: 42px; height: 42px; } }
