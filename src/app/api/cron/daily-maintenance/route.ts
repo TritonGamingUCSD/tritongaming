@@ -11,7 +11,7 @@ import { runStorageMaintenance } from '@/lib/storage/storageMaintenance';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 300;
+export const maxDuration = 60;   // the most the free (Hobby) plan allows
 
 // The one scheduled job for housekeeping (see vercel.json; the free Vercel plan allows two jobs, each at most once a day), called with
 // `Authorization: Bearer $CRON_SECRET`. Every day: delete old notifications (audit alerts after 14 days, routine ones soon after they are read, the rest after 30 to 90 days) and role grants that waited for a first sign-in for 90 days without being used, start a new quarter's
