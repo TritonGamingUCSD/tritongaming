@@ -56,6 +56,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
         text: q.text,
         choices: q.choices,
         correct: q.correct,
+        also: q.also ?? [],
         counts: q.choices.map((_, pos) => rows.filter((r) => r.q_index === i && r.pos === pos).length),
       })),
     };

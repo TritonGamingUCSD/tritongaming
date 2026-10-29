@@ -64,14 +64,14 @@ async function push(svc: SupabaseClient, g: GameRow) {
 export async function startGame(svc: SupabaseClient, g: GameRow, count: number): Promise<GameRow | { error: string; status: number }> {
   if (g.status !== 'lobby') return { error: 'That game already started.', status: 409 };
   const [pool, used, inCount] = await Promise.all([
-    svc.from('trivia_questions').select('id, text, choices, correct, category, image').eq('quiz_id', g.quiz_id).order('sort').limit(1000),
+    svc.from('trivia_questions').select('*').eq('quiz_id', g.quiz_id).order('sort').limit(1000),
     svc.from('trivia_games').select('plan').eq('quiz_id', g.quiz_id).neq('id', g.id).limit(500),
     svc.from('trivia_players').select('user_id', { count: 'exact', head: true }).eq('game_id', g.id).eq('status', 'in'),
   ]);
   if (!inCount.count) return { error: 'Nobody has joined yet.', status: 409 };
   const usedIds = new Set<string>();
   for (const r of used.data ?? []) for (const q of (r.plan ?? []) as { id: string }[]) usedIds.add(q.id);
-  const rows = (pool.data ?? []) as PoolQuestion[];
+  const rows = ((pool.data ?? []) as (PoolQuestion & { also_correct?: number[] })[]).map((r) => ({ ...r, also: r.also_correct ?? [] })) as PoolQuestion[]; // `also_correct` is the stored column, `also` what a game's plan calls it
   const ready = rows.filter(isAskable).length;
   if (!ready) return { error: 'This quiz has no finished questions yet: each needs text, four answers and a right answer.', status: 409 };
   const plan = drawGame(rows, usedIds, Math.min(Math.max(1, count), ready));
@@ -98,7 +98,14 @@ export async function revealQuestion(svc: SupabaseClient, g: GameRow): Promise<G
     for (let i = g.current; i >= 0 && answers.some((x) => x.q_index === i && x.user_id === p.user_id && x.ok); i--) streak++;
     results[p.user_id] = { pos: a?.pos ?? null, ok: !!a?.ok, pts: a?.points ?? 0, rank: p.rank, score: p.score, streak };
   }
-  const reveal: Reveal = { correct: q.correct, counts, top: list.slice(0, 5).map((p) => ({ name: p.name, score: p.score, rank: p.rank })), results, of: list.length };
+  const reveal: Reveal = {
+    correct: q.correct,
+    ...(q.also?.length ? { also: q.also } : {}),
+    counts,
+    top: list.slice(0, 5).map((p) => ({ name: p.name, score: p.score, rank: p.rank })),
+    results,
+    of: list.length,
+  };
   const next = await save(svc, closed, 'reveal', { reveal });
   if (!next) return { error: 'That question was already revealed.', status: 409 };
   await setPlayerTotals(svc, g.id, list);

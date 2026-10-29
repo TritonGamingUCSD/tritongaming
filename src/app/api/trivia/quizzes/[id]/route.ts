@@ -18,7 +18,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   }
   const { data } = await auth.svc
     .from('trivia_questions')
-    .select('id, sort, category, image, text, choices, correct')
+    .select('*') // all of it, so this works before the "several right answers" column exists
     .eq('quiz_id', quiz.id)
     .order('sort')
     .order('created_at')

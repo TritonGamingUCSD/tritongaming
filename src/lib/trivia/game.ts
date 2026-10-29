@@ -52,6 +52,7 @@ export interface PoolQuestion {
   text: string;
   choices: string[];
   correct: number;
+  also?: number[]; // the other right answers (a question can have several)
   category?: string;
   image?: string;
 }
@@ -60,10 +61,14 @@ export interface PlannedQuestion {
   text: string;
   choices: string[];
   correct: number;
+  also?: number[];
   secs: number;
   category?: string;
   image?: string;
-} // choices as shown (shuffled); correct is a position in them
+} // choices as shown (shuffled); correct (and also) are positions in them
+
+/** Is this pick one of the question's right answers? */
+export const isRightPick = (q: { correct: number; also?: number[] }, pos: number): boolean => pos === q.correct || !!q.also?.includes(pos);
 
 /** A question can be asked once it has a category, text, four answers, and a right one that is filled in. */
 export function isAskable(q: { text: string; choices: string[]; correct: number; category?: string }): boolean {
@@ -96,6 +101,7 @@ export function drawGame(pool: PoolQuestion[], used: ReadonlySet<string>, count:
       text: q.text.trim(),
       choices: order.map((i) => q.choices[i].trim()),
       correct: order.indexOf(q.correct),
+      ...((q.also ?? []).length ? { also: (q.also ?? []).map((i) => order.indexOf(i)).filter((i) => i >= 0 && i !== order.indexOf(q.correct)) } : {}),
       secs: suggestSecs(q),
       category: (q.category ?? '').trim(),
       image: q.image || undefined,
@@ -160,6 +166,7 @@ export interface BulkQuestion {
   text: string;
   choices: string[];
   correct: number;
+  also: number[]; // other right answers, when more than one is marked
   category: string;
 }
 
@@ -170,7 +177,7 @@ export interface BulkQuestion {
 export function parseBulk(input: string): { questions: BulkQuestion[]; problems: string[] } {
   const questions: BulkQuestion[] = [];
   const problems: string[] = [];
-  type Draft = { text: string[]; choices: string[]; correct: number; answer: number; category: string };
+  type Draft = { text: string[]; choices: string[]; marks: number[]; answers: number[]; category: string };
   let cur: Draft | null = null;
   let n = 0;
   let sticky = '';
@@ -183,12 +190,13 @@ export function parseBulk(input: string): { questions: BulkQuestion[]; problems:
       .replace(/^\s*q\s*[.):]\s*/i, '')
       .trim();
     const label = `Question ${n}${text ? ` (“${text.slice(0, 40)}${text.length > 40 ? '…' : ''}”)` : ''}`;
-    const right = cur.correct >= 0 ? cur.correct : cur.answer;
+    const rights = [...new Set(cur.marks.length ? cur.marks : cur.answers)].sort((a, b) => a - b);
+    const right = rights.length ? rights[0] : -1;
     if (!text) problems.push(`${label}: no question text.`);
     else if (!cur.category.trim()) problems.push(`${label}: no category. Put a “Category: Gaming” line before the question (or fill the category column).`);
     else if (cur.choices.length !== CHOICES) problems.push(`${label}: needs four answers (A to D), found ${cur.choices.length}.`);
     else if (right < 0) problems.push(`${label}: no right answer marked. Put a * by it or add an "Answer: B" line.`);
-    else questions.push({ text: text.slice(0, 300), choices: cur.choices.map((c) => c.slice(0, 120)), correct: right, category: cur.category.slice(0, 40) });
+    else questions.push({ text: text.slice(0, 300), choices: cur.choices.map((c) => c.slice(0, 120)), correct: right, also: rights.slice(1), category: cur.category.slice(0, 40) });
     cur = null;
   };
   for (const raw of input.split(/\r?\n/)) {
@@ -198,13 +206,15 @@ export function parseBulk(input: string): { questions: BulkQuestion[]; problems:
     if (cat) {
       if (cur && cur.choices.length) finish(); // a category line after the answers belongs to the next question
       sticky = cat[1].trim(); // it holds for every question after it, until the next Category line
-      if (!cur) cur = { text: [], choices: [], correct: -1, answer: -1, category: sticky };
+      if (!cur) cur = { text: [], choices: [], marks: [], answers: [], category: sticky };
       cur.category = sticky;
       continue;
     }
-    const ans = /^(?:answer|ans|correct|right)\s*[:=-]\s*\(?([A-Da-d])\)?\b/i.exec(line);
-    if (ans && cur && cur.choices.length) {
-      cur.answer = 'ABCD'.indexOf(ans[1].toUpperCase());
+    // "Answer: B", or several right ones: "Answer: A, C" / "Answers: A and C"
+    const ans = /^(?:answers?|ans|correct|right)\s*[:=-]\s*(.+)$/i.exec(line);
+    const letters = ans ? (ans[1].match(/\b[A-Da-d]\b/g) ?? []) : [];
+    if (ans && cur && cur.choices.length && letters.length && /^[\s,;&+/()]*$/.test(ans[1].replace(/\b[A-Da-d]\b/g, '').replace(/\band\b/gi, ''))) {
+      cur.answers = letters.map((l) => 'ABCD'.indexOf(l.toUpperCase()));
       continue;
     }
     const opt = /^(\*?)\s*\(?([A-Da-d])\s*(?:[.):]|\])\s*(.*)$/.exec(line);
@@ -223,12 +233,12 @@ export function parseBulk(input: string): { questions: BulkQuestion[]; problems:
         mark = true;
         body = body.replace(/\s*✓$/, '');
       }
-      if (mark && cur.correct < 0) cur.correct = cur.choices.length;
+      if (mark) cur.marks.push(cur.choices.length);
       cur.choices.push(body.trim());
       continue;
     }
     if (cur && cur.choices.length) finish(); // a line of text after the answers starts the next question
-    if (!cur) cur = { text: [], choices: [], correct: -1, answer: -1, category: sticky };
+    if (!cur) cur = { text: [], choices: [], marks: [], answers: [], category: sticky };
     cur.text.push(line);
   }
   finish();
@@ -275,8 +285,16 @@ export function csvToBulk(input: string): string {
       const [category = '', text = '', ...rest] = r.map((c) => c.trim());
       const choices = rest.slice(0, CHOICES);
       const ans = (rest[CHOICES] ?? '').trim();
-      const letter = /^[A-Da-d]$/.test(ans) ? ans.toUpperCase() : ('ABCD'[choices.findIndex((c) => c.toLowerCase() === ans.toLowerCase() && ans !== '')] ?? '');
-      return [`Category: ${category}`, text, ...choices.map((c, i) => `${'ABCD'[i]}. ${c}`), letter ? `Answer: ${letter}` : ''].filter(Boolean).join('\n');
+      // the right answer(s): a letter, the answer's own words, or several of them (A, C / A and C / A|C)
+      const one = (t: string) => (/^[A-Da-d]$/.test(t) ? t.toUpperCase() : ('ABCD'[choices.findIndex((c) => c.toLowerCase() === t.toLowerCase() && t !== '')] ?? ''));
+      const whole = one(ans);
+      const letters = whole
+        ? [whole]
+        : ans
+            .split(/\s*(?:,|;|\/|\||&|\+|\band\b)\s*/i)
+            .map((t) => one(t.trim()))
+            .filter(Boolean);
+      return [`Category: ${category}`, text, ...choices.map((c, i) => `${'ABCD'[i]}. ${c}`), letters.length ? `Answer: ${letters.join(', ')}` : ''].filter(Boolean).join('\n');
     })
     .join('\n\n');
 }

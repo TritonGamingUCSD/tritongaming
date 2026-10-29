@@ -16,7 +16,7 @@ export function QuestionDialog({ slug, categories, onClose, onAdded }: { slug: s
   const [category, setCategory] = useState('');
   const [text, setText] = useState('');
   const [choices, setChoices] = useState(['', '', '', '']);
-  const [correct, setCorrect] = useState<number | null>(null);
+  const [correct, setCorrect] = useState<number[]>([]); // every right answer (one or more), as positions
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const [picture, setPicture] = useState<Blob | null>(null); // optional: the shrunk file, sent once the question exists
@@ -26,16 +26,22 @@ export function QuestionDialog({ slug, categories, onClose, onAdded }: { slug: s
     ...(category.trim() ? [] : ['the category']),
     ...(text.trim() ? [] : ['the question']),
     ...choices.flatMap((c, i) => (c.trim() ? [] : [`answer ${LETTERS[i]}`])),
-    ...(correct === null ? ['which answer is right'] : []),
+    ...(correct.length ? [] : ['which answer is right']),
   ];
   const save = async (another: boolean) => {
-    if (missing.length || correct === null) {
+    if (missing.length || !correct.length) {
       setProblem(`Still needed: ${missing.join(', ')}.`);
       return;
     }
     setBusy(true);
     setProblem('');
-    const r = await call<{ questions: QuestionRow[] }>('POST', `/api/trivia/quizzes/${slug}/questions`, { category, text, choices, correct });
+    const r = await call<{ questions: QuestionRow[] }>('POST', `/api/trivia/quizzes/${slug}/questions`, {
+      category,
+      text,
+      choices,
+      correct: correct[0],
+      ...(correct.length > 1 ? { also_correct: correct.slice(1) } : {}),
+    });
     setBusy(false);
     if (!r.ok) {
       setProblem(r.error);
@@ -58,7 +64,7 @@ export function QuestionDialog({ slug, categories, onClose, onAdded }: { slug: s
     if (another) {
       setText('');
       setChoices(['', '', '', '']);
-      setCorrect(null);
+      setCorrect([]);
       setPicture(null);
       setPreview('');
       setRound((n) => n + 1);
@@ -81,11 +87,16 @@ export function QuestionDialog({ slug, categories, onClose, onAdded }: { slug: s
         </Field>
         <fieldset className={styles.answerSet}>
           <legend>
-            Answers <span className={styles.muted}>(tick the round button beside the right one)</span>
+            Answers <span className={styles.muted}>(tick the box beside every right answer; one is enough)</span>
           </legend>
           {choices.map((c, i) => (
-            <label key={i} className={`${styles.answerRow} ${correct === i ? styles.answerRowRight : ''}`}>
-              <input type="radio" name="right-answer" checked={correct === i} onChange={() => setCorrect(i)} aria-label={`Answer ${LETTERS[i]} is the right one`} />
+            <label key={i} className={`${styles.answerRow} ${correct.includes(i) ? styles.answerRowRight : ''}`}>
+              <input
+                type="checkbox"
+                checked={correct.includes(i)}
+                onChange={() => setCorrect((l) => (l.includes(i) ? l.filter((x) => x !== i) : [...l, i].sort((a, b) => a - b)))}
+                aria-label={`Answer ${LETTERS[i]} is a right one`}
+              />
               <b>{LETTERS[i]}</b>
               <Input
                 value={c}
@@ -94,7 +105,7 @@ export function QuestionDialog({ slug, categories, onClose, onAdded }: { slug: s
                 aria-label={`Answer ${LETTERS[i]}`}
                 onChange={(e) => setChoices((l) => l.map((x, j) => (j === i ? e.target.value : x)))}
               />
-              {correct === i && <span className={styles.rightTag}>Right answer</span>}
+              {correct.includes(i) && <span className={styles.rightTag}>Right answer</span>}
             </label>
           ))}
         </fieldset>

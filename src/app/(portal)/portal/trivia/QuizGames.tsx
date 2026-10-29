@@ -24,7 +24,7 @@ interface GameItem {
 }
 interface Results {
   standings: { id: string; name: string; score: number; time_ms: number }[];
-  questions: { text: string; choices: string[]; correct: number; counts: number[] }[];
+  questions: { text: string; choices: string[]; correct: number; also?: number[]; counts: number[] }[];
 }
 
 const when = (iso: string) => formatPacificDateTime(iso);
@@ -229,16 +229,18 @@ export function GameResults({ code, onBack }: { code: string; onBack: () => void
           <div className={styles.list}>
             {res.questions.map((q, n) => {
               const total = q.counts.reduce((a, b) => a + b, 0);
-              const pct = total ? Math.round((q.counts[q.correct] / total) * 100) : 0;
+              const rightIdx = [q.correct, ...(q.also ?? [])];
+              const rightN = rightIdx.reduce((n, i) => n + (q.counts[i] ?? 0), 0);
+              const pct = total ? Math.round((rightN / total) * 100) : 0;
               return (
                 <div key={n} className={styles.item} style={{ alignItems: 'flex-start' }}>
                   <span className={styles.rankNum}>{n + 1}</span>
                   <div className={styles.itemMain}>
                     <b>{q.text}</b>
-                    <span className={styles.muted}>{total ? `${pct}% got it right (${q.counts[q.correct]} of ${total})` : 'Nobody answered'}</span>
+                    <span className={styles.muted}>{total ? `${pct}% got it right (${rightN} of ${total})` : 'Nobody answered'}</span>
                     <div className={styles.cardMeta}>
                       {q.choices.map((c, i) => (
-                        <span key={i} className={`${styles.badge} ${i === q.correct ? styles.good : styles.neutral}`}>
+                        <span key={i} className={`${styles.badge} ${rightIdx.includes(i) ? styles.good : styles.neutral}`}>
                           {LETTERS[i]}. {c} · {q.counts[i]}
                         </span>
                       ))}

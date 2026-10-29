@@ -240,3 +240,37 @@ describe('the end screen facts', () => {
     expect(endStats(plan, list, [ans('a', 0, false), ans('b', 0, false), ans('c', 0, false)]).hardest).toBeUndefined();
   });
 });
+
+describe('several right answers', () => {
+  it('keeps every right answer right after the answers are shuffled', () => {
+    for (let s = 1; s < 30; s++) {
+      const [asked] = drawGame([q('m', { correct: 0, also: [2] })], new Set(), 1, seeded(s));
+      const right = [asked.correct, ...(asked.also ?? [])].map((i) => asked.choices[i]).sort();
+      expect(right).toEqual(['a', 'c']);
+      expect(asked.also).not.toContain(asked.correct);
+    }
+  });
+  it('a question with one right answer has no list of others', () => {
+    expect(drawGame([q('one')], new Set(), 1, seeded(2))[0].also).toBeUndefined();
+  });
+  it('reads two starred answers as two right ones', () => {
+    const r = parseBulk('Category: Space\nWhich are planets?\nA. Mars *\nB. Moon\nC. Venus *\nD. Sun');
+    expect(r.problems).toEqual([]);
+    expect(r.questions[0]).toMatchObject({ correct: 0, also: [2] });
+  });
+  it('reads "Answer: A, C" and "Answers: A and C"', () => {
+    for (const line of ['Answer: A, C', 'Answers: A and C', 'Answer: (A) & (C)']) {
+      const r = parseBulk(`Category: Space\nWhich are planets?\nA. Mars\nB. Moon\nC. Venus\nD. Sun\n${line}`);
+      expect(r.questions[0], line).toMatchObject({ correct: 0, also: [2] });
+    }
+  });
+  it('a single right answer still reads as before', () => {
+    const r = parseBulk('Category: Space\nBiggest planet?\nA. Mars\nB. Venus\nC. Jupiter\nD. Earth\nAnswer: C');
+    expect(r.questions[0]).toMatchObject({ correct: 2, also: [] });
+  });
+  it('turns a CSV answer column with several right answers into an Answer line', () => {
+    const text = csvToBulk('Space,Which are planets?,Mars,Moon,Venus,Sun,"A, C"');
+    expect(text).toContain('Answer: A, C');
+    expect(parseBulk(text).questions[0]).toMatchObject({ correct: 0, also: [2] });
+  });
+});

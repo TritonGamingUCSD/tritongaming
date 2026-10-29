@@ -58,7 +58,9 @@ function exportCsv(name: string, rows: QuestionRow[]) {
   const cell = (v: string) => `"${v.replace(/"/g, '""')}"`;
   const lines = [
     ['category', 'question', 'A', 'B', 'C', 'D', 'answer'].join(','),
-    ...rows.map((q) => [q.category ?? '', q.text, ...[0, 1, 2, 3].map((i) => q.choices[i] ?? ''), LETTERS[q.correct]].map(cell).join(',')),
+    ...rows.map((q) =>
+      [q.category ?? '', q.text, ...[0, 1, 2, 3].map((i) => q.choices[i] ?? ''), [q.correct, ...(q.also_correct ?? [])].map((i) => LETTERS[i]).join(', ')].map(cell).join(','),
+    ),
   ];
   const url = URL.createObjectURL(new Blob([`﻿${lines.join('\r\n')}\r\n`], { type: 'text/csv;charset=utf-8' }));
   const a = Object.assign(document.createElement('a'), {
@@ -229,17 +231,22 @@ export default function QuizEditor({
           />
         </span>
         {[0, 1, 2, 3].map((i) => {
-          const right = q.correct === i;
+          const rights = [q.correct, ...(q.also_correct ?? [])];
+          const right = rights.includes(i);
           return (
             <span key={i} data-label={`Answer ${LETTERS[i]}`} className={`${styles.ansCell} ${right ? styles.ansCellRight : ''}`}>
               <input
-                type="radio"
-                name={`right-${q.id}`}
+                type="checkbox"
                 checked={right}
                 disabled={!editing}
-                aria-label={`Answer ${LETTERS[i]} is the right one for “${q.text.slice(0, 40) || 'a blank question'}”`}
-                title={right ? 'The right answer' : editing ? 'Make this the right answer' : 'Press Edit Questions to change it'}
-                onChange={() => void patch(q.id, { correct: i })}
+                aria-label={`Answer ${LETTERS[i]} is a right one for “${q.text.slice(0, 40) || 'a blank question'}”`}
+                title={editing ? (right ? 'A right answer (untick to remove it)' : 'Also a right answer') : 'Press Edit Questions to change it'}
+                onChange={() => {
+                  const next = (right ? rights.filter((x) => x !== i) : [...rights, i]).sort((a, b) => a - b);
+                  if (!next.length) return; // a question always keeps at least one right answer
+                  const also = next.slice(1);
+                  void patch(q.id, { correct: next[0], ...(also.length || rights.length > 1 ? { also_correct: also } : {}) });
+                }}
               />
               <span className={styles.ansCellText}>
                 <TextCell

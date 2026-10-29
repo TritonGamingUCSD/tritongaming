@@ -198,7 +198,8 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
     ); // the host closed the question; the answer is being counted
   if (state.status === 'reveal') {
     const r = mineResult;
-    const right = state.reveal?.correct ?? -1;
+    const rights = state.reveal?.correct === undefined ? [] : [state.reveal.correct, ...(state.reveal.also ?? [])]; // a question can have several right answers
+    const isRight = (i: number) => rights.includes(i);
     return frame(
       title,
       <>
@@ -225,9 +226,15 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
                 </span>
               </p>
             )}
-            {!r?.ok && right >= 0 && (
+            {!r?.ok && rights.length > 0 && (
               <p className={styles.mid}>
-                The answer was <b>{q.choices[right]}</b>
+                {rights.length > 1 ? 'The answers were ' : 'The answer was '}
+                {rights.map((i, k) => (
+                  <span key={i}>
+                    {k > 0 ? ', ' : ''}
+                    <b>{q.choices[i]}</b>
+                  </span>
+                ))}
               </p>
             )}
             {r?.ok && (r.streak ?? 0) >= 2 && <p className={styles.streak}>{r.streak} in a row</p>}
@@ -244,20 +251,20 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
         )}
         <div className={styles.recap} aria-label="Your answer and the right answer">
           {q.choices.map((c, i) => (
-            <div key={i} className={`${styles.recapRow} ${i === right ? styles.recapRight : ''} ${r?.pos === i && i !== right ? styles.recapWrong : ''}`}>
+            <div key={i} className={`${styles.recapRow} ${isRight(i) ? styles.recapRight : ''} ${r?.pos === i && !isRight(i) ? styles.recapWrong : ''}`}>
               <Shape i={i} solid />
               <span>{c}</span>
-              {i === right && (
+              {isRight(i) && (
                 <span className={styles.recapTag}>
                   <Check size={14} aria-hidden="true" /> Right answer
                 </span>
               )}
-              {r?.pos === i && i !== right && (
+              {r?.pos === i && !isRight(i) && (
                 <span className={styles.recapTag}>
                   <X size={14} aria-hidden="true" /> Your answer
                 </span>
               )}
-              {r?.pos === i && i === right && <span className={styles.recapTag}>You got it</span>}
+              {r?.pos === i && isRight(i) && <span className={styles.recapTag}>You got it</span>}
             </div>
           ))}
         </div>

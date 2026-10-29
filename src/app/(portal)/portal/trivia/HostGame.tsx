@@ -461,7 +461,7 @@ export default function HostGame({
       {!counting && !carding && (
         <div className={`${styles.answers} ${rv ? styles.answersRevealed : ''}`}>
           {q.choices.map((c, i) => {
-            const isRight = rv?.correct === i;
+            const isRight = rv?.correct === i || !!rv?.also?.includes(i);
             return (
               <div key={i} className={`${styles.ans} ${ansClass(i)} ${rv && !isRight ? styles.dimmed : ''} ${rv && isRight ? styles.right : ''}`}>
                 <Shape i={i} solid />

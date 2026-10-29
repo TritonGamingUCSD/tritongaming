@@ -4,7 +4,7 @@ import { removeImages } from '../image/route';
 import { CHOICES, DEFAULT_SECS, suggestSecs } from '@/lib/trivia/game';
 
 export const dynamic = 'force-dynamic';
-const COLS = 'id, sort, category, image, text, choices, correct';
+const COLS = '*'; // everything, so this keeps working before the "several right answers" column exists (see supabase/migrations/20261029100000)
 const MAX_QUESTIONS = 1000;
 
 // What a client may set on a question, checked; anything not given is left alone. The time is not one of them: it is worked out from the wording.
@@ -26,6 +26,15 @@ function clean(b: Record<string, unknown>): { patch: Record<string, unknown> } |
     const n = Math.round(Number(b.correct));
     if (!Number.isFinite(n) || n < 0 || n >= CHOICES) return { error: 'The right answer is one of the four.' };
     patch.correct = n;
+  }
+  // The other right answers (a question can have several): the positions of the extra ones, apart from the main right answer. `also` is what a pasted list gives.
+  const also = b.also_correct !== undefined ? b.also_correct : b.also;
+  if (also !== undefined) {
+    if (!Array.isArray(also)) return { error: 'The other right answers are a list of positions.' };
+    const picks = [...new Set((also as unknown[]).map((n) => Math.round(Number(n))))]
+      .filter((n) => Number.isFinite(n) && n >= 0 && n < CHOICES && n !== patch.correct)
+      .sort((x, y) => x - y);
+    if (picks.length || b.also_correct !== undefined) patch.also_correct = picks; // an empty list is only written when it was asked for (it clears them)
   }
   return { patch };
 }

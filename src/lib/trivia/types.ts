@@ -31,6 +31,7 @@ export interface PlayerResult {
 export interface Reveal {
   final?: boolean;
   correct?: number; // the right position (reveal only)
+  also?: number[]; // the other right positions, when a question has several (reveal only)
   counts?: number[]; // how many chose each position (reveal only)
   top: Placing[]; // top 5 after a question, top 3 at the end
   results: Record<string, PlayerResult>; // by user id: how each person did (the last question; at the end, the final rank and score)
@@ -83,4 +84,5 @@ export interface QuestionRow {
   text: string;
   choices: string[];
   correct: number;
+  also_correct?: number[]; // the other right answers, when there is more than one
 }
