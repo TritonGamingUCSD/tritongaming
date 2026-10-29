@@ -212,7 +212,7 @@
 .numLink:hover { text-decoration: underline; }
 
 .prizeCell { display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
-.rowPic { flex: none; width: 3rem; height: 3rem; object-fit: cover; border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); }
+.rowPic { flex: none; width: 3rem; height: 3rem; object-fit: contain; border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); }
 
 .tools { display: flex; align-items: center; justify-content: flex-end; gap: 0.4rem; }
 
@@ -222,7 +222,7 @@
 .edPic { position: relative; display: grid; place-items: center; width: 8.5rem; height: 8.5rem; padding: 0; border-radius: 12px; border: 2px dashed rgba(var(--pp-ink-rgb), 0.35); background: rgba(var(--pp-ink-rgb), 0.05); color: rgba(var(--pp-ink-rgb), 0.75); cursor: pointer; overflow: hidden; }
 .edPic:disabled { cursor: default; }
 .edPic:hover:not(:disabled) { border-color: var(--pp-ink); }
-.edPic img { width: 100%; height: 100%; object-fit: cover; }
+.edPic img { width: 100%; height: 100%; object-fit: contain; }
 .edPic span { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; text-align: center; padding: 0.4rem; }
 .edPic small { font-size: 0.74rem; }
 .edPic i { position: absolute; right: 0.4rem; bottom: 0.4rem; display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: var(--pp-ink); color: var(--pp-paper); }

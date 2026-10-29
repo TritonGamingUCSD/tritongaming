@@ -82,7 +82,7 @@
 
 /* The page around a sheet, and what opens under a row. */
 .sheetPage { display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; }
-.pic { width: 28px; height: 28px; object-fit: cover; border-radius: 4px; display: block; }
+.pic { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; display: block; }
 .mini { width: 4.6rem; height: 30px; padding: 0 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 6px; background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.84rem; text-align: right; }
 .mini:focus { outline: 2px solid var(--pp-info); outline-offset: 0; }
 .lines { display: flex; flex-direction: column; gap: 0.6rem; }
