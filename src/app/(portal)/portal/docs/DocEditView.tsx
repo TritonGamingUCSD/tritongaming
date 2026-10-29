@@ -226,7 +226,9 @@ const DocEditView = forwardRef<DocEditViewHandle, Props>(function DocEditView({ 
       if (alive && r.ok) setOthers(r.json.others);
     };
     void beat();
-    const t = setInterval(beat, 20_000);
+    const t = setInterval(() => {
+      if (document.visibilityState === 'visible') void beat(); // a hidden tab doesn't need to say it is still here (the server forgets after 60s)
+    }, 30_000);
     // Leaving is sent after a short delay and cancelled if the editor comes straight back (a re-render), so a late "leaving" can never erase a fresh heartbeat.
     const pendingLeave = leaveTimers.get(doc.id);
     if (pendingLeave) {
