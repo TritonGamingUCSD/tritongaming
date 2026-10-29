@@ -190,15 +190,39 @@ export function formatEventDateRangeShort(startISO: string, endISO?: string | nu
 // fields, because engines disagree on the glue ("Oct 24 at 6:00 PM" vs "Oct 24, 6:00 PM", and a
 // narrow no-break space before PM). That disagreement made server-rendered text differ from what
 // Safari produced on the client, which React reports as a hydration error.
-export function formatPacificDateTime(iso: string | Date, opts: { weekday?: boolean; year?: boolean } = {}): string {
+export function formatPacificDateTime(iso: string | number | Date, opts: { weekday?: boolean; year?: boolean } = {}): string {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: PACIFIC_TZ,
     weekday: opts.weekday ? 'short' : undefined,
     month: 'short', day: 'numeric',
     year: opts.year ? 'numeric' : undefined,
     hour: 'numeric', minute: '2-digit', hour12: true,
-  }).formatToParts(typeof iso === 'string' ? new Date(iso) : iso);
+  }).formatToParts(new Date(iso));
   const g = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
   const date = `${opts.weekday ? `${g('weekday')}, ` : ''}${g('month')} ${g('day')}${opts.year ? `, ${g('year')}` : ''}`;
   return `${date}, ${g('hour')}:${g('minute')} ${g('dayPeriod').toUpperCase()}`;
+}
+
+// The one way to show a date or a time on its own: "Oct 31", "Fri, Oct 31", "Oct 31, 2026", "5:00 PM". A plain calendar day
+// ("2026-10-31", a date with no time) is shown as that same day for everyone; anything with a time is read in Pacific time.
+const CALENDAR_DAY = /^\d{4}-\d{2}-\d{2}$/;
+export function formatPacificDate(input: string | number | Date, opts: { weekday?: boolean; year?: boolean; long?: boolean } = {}): string {
+  const day = typeof input === 'string' && CALENDAR_DAY.test(input);
+  const date = day ? new Date(`${input}T12:00:00Z`) : new Date(input);
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: day ? 'UTC' : PACIFIC_TZ,
+    weekday: opts.weekday ? (opts.long ? 'long' : 'short') : undefined,
+    month: opts.long ? 'long' : 'short', day: 'numeric',
+    year: opts.year ? 'numeric' : undefined,
+  }).formatToParts(date);
+  const g = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
+  return `${opts.weekday ? `${g('weekday')}, ` : ''}${g('month')} ${g('day')}${opts.year ? `, ${g('year')}` : ''}`;
+}
+
+export function formatPacificTime(input: string | number | Date, opts: { seconds?: boolean } = {}): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit', second: opts.seconds ? '2-digit' : undefined, hour12: true,
+  }).formatToParts(new Date(input));
+  const g = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
+  return `${g('hour')}:${g('minute')}${opts.seconds ? `:${g('second')}` : ''} ${g('dayPeriod').toUpperCase()}`;
 }

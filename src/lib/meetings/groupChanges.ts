@@ -3,7 +3,7 @@ import { pacificDayKey } from '@/lib/events/checkinDays';
 import { createNotifications, type NotificationInput } from '@/lib/notifications/notify';
 import { getExpectedPeople } from '@/lib/meetings/meetings';
 import { PLAN_HREF, type PlanRow } from '@/lib/meetings/meetingPlanServer';
-import { formatPacificDateTime } from '@/lib/core/timezone';
+import { formatPacificDateTime, formatPacificDate } from '@/lib/core/timezone';
 import { WEEKDAYS, clockLabel, planDayKeys } from '@/lib/meetings/meetingPlans';
 
 interface Spec { title: string; audience: string[] | null; invitees: string[] | null; group_ids: string[] | null; created_by: string | null }
@@ -40,7 +40,7 @@ export async function notifyGroupAdditions(svc: SupabaseClient, groupId: string,
   }
   for (const p of (plans ?? []) as PlanRow[]) {
     if (planDayKeys(p, today).length === 0) continue;   // every day has passed; nothing to fill out
-    for (const id of await fresh(p)) rows.push({ user_id: id, type: 'meeting_invite', title: `When can you meet? ${p.title}`, body: `${p.answer_by ? `Please answer by ${new Date(`${p.answer_by}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}. ` : ''}Mark the times you can make it.`, href: PLAN_HREF(p.id) });
+    for (const id of await fresh(p)) rows.push({ user_id: id, type: 'meeting_invite', title: `When can you meet? ${p.title}`, body: `${p.answer_by ? `Please answer by ${formatPacificDate(p.answer_by)}. ` : ''}Mark the times you can make it.`, href: PLAN_HREF(p.id) });
   }
   return createNotifications(svc, rows);
 }

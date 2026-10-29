@@ -5,7 +5,7 @@ import { getProfile, getUserRoles } from '@/lib/core/auth';
 import { hasCapability, isRewardsEligible } from '@/lib/portal/capabilities';
 import { createClient } from '@/lib/supabase/server';
 import { openEventsFilter } from '@/lib/events/checkinWindow';
-import { PACIFIC_TZ, formatEventDateRange } from '@/lib/core/timezone';
+import { formatEventDateRange, formatPacificDate } from '@/lib/core/timezone';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import FeedbackForm from './FeedbackForm';
 import styles from './recap.module.css';
@@ -109,7 +109,7 @@ export default async function RecapPage({ params }: { params: Promise<{ eventId:
               {(upcoming ?? []).map((e) => (
                 <li key={e.id}>
                   <Link href={`/events/${e.slug ?? e.id}`} className={styles.link}>{e.title}</Link>
-                  <span className={styles.text}> · {new Date(e.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric' })}</span>
+                  <span className={styles.text}> · {formatPacificDate(e.start_date)}</span>
                 </li>
               ))}
             </ul>

@@ -1,3 +1,4 @@
+import { formatPacificDate } from '@/lib/core/timezone';
 import { to12h, type CheckinDayWindow } from '@/lib/events/checkinWindow';
 
 // The hours of each day of a multi-day event (Pacific time, "17:00" style). They are the event's own hours: shown on the public page, and the event's overall start and
@@ -17,7 +18,7 @@ export function dayHoursComplete(list: DayHours[], days: string[]): boolean {
 
 // "Fri, Oct 10 · 5:00 PM – 9:00 PM"
 export function formatDayHours(w: DayHours): string {
-  const date = new Date(`${w.day}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' });
+  const date = formatPacificDate(w.day, { weekday: true });
   return `${date} · ${to12h(w.start)} – ${to12h(w.end)}`;
 }
 

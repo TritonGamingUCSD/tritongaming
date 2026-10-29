@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDateTime } from '@/lib/core/timezone';
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -14,7 +15,7 @@ import styles from './trivia.module.css';
 interface GameItem { code: string; status: string; created_at: string; quiz: string; quiz_slug: string; questions: number; players: number; winners: { rank: number; name: string }[] }
 interface Results { standings: { id: string; name: string; score: number; time_ms: number }[]; questions: { text: string; choices: string[]; correct: number; counts: number[] }[] }
 
-const when = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' });
+const when = (iso: string) => formatPacificDateTime(iso);
 const STATUS: Record<string, string> = { lobby: 'Waiting for players', question: 'Running', reveal: 'Running', done: 'Finished' };
 
 // One quiz's games: the ones still running (to get back to the host screen) and the finished ones with their top three. Opening one shows the full results (its own page, see GameResults).

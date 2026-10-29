@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate, formatPacificDateTime } from '@/lib/core/timezone';
 import { useEffect, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Button from '@/components/ui/Button';
@@ -23,7 +24,7 @@ import pz from './prizing.module.css';
 // Everything about one prize in one place (the same popup opens from the row's menu, its Planned number, its From line and its History). The number on hand is changed in Details (or set after a recount in Where Did They Go?): it is saved as a correction in the history.
 export type PrizeTab = 'edit' | 'where' | 'history';
 // An event as the prize editor lists it: name, date and address name, so two events with the same name can be told apart.
-const eventLabel = (e: { name: string; slug: string; starts_on: string } | undefined) => (e ? `${e.name} · ${new Date(`${e.starts_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' })} · ${e.slug}` : null);
+const eventLabel = (e: { name: string; slug: string; starts_on: string } | undefined) => (e ? `${e.name} · ${formatPacificDate(e.starts_on, { year: true })} · ${e.slug}` : null);
 export function PrizeEditor({ prizes, api, data, prize: given, tab: first = 'edit', fromText, events, defaultEvent, onClose }: { prizes: PrizesApi; api: LogisticsApi; data: Catalog; prize: PrizeRow | null; tab?: PrizeTab; fromText?: string; events: { id: string; name: string; slug: string; starts_on: string }[]; defaultEvent: { id: string; name: string } | null; onClose: () => void }) {
   const prize = given ? prizes.rows?.find((x) => x.id === given.id) ?? given : null;   // the live row, so a picture just set shows
   const [tab, setTab] = useState<PrizeTab>(given ? first : 'edit');
@@ -157,7 +158,7 @@ export function PrizeEditor({ prizes, api, data, prize: given, tab: first = 'edi
 // ---- a prize's history ---------------------------------------------------------------------------------------------------------------------------------------------------------------
 interface LogEntry { id: string; kind: 'add' | 'correct' | 'assign' | 'give'; qty: number; plan_name: string | null; station: string | null; sponsor: string | null; note: string | null; by: string | null; at: string }
 const KIND: Record<LogEntry['kind'], string> = { add: 'Added', correct: 'Count changed', assign: 'Promised', give: 'Given out' };
-const when = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+const when = (iso: string) => formatPacificDateTime(iso);
 const signed = (n: number) => (n > 0 ? `+${n}` : String(n));
 // ---- where did they go? ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // One prize's count explained: how it got to what it is, what each event did with it, what is still planned, and a box to set the real count (saved as a correction that says by how much it was off).

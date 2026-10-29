@@ -1,7 +1,7 @@
 import Link from '@/components/portal/PortalLink';
 import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
 import { ExternalLink, MapPin, Ticket } from 'lucide-react';
-import { PACIFIC_TZ } from '@/lib/core/timezone';
+import { PACIFIC_TZ, formatPacificTime } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
 import EventCountdown from './EventCountdown';
 import type { HomeActivity, HomeAttention } from '@/lib/portal/homeExtras';
@@ -17,7 +17,7 @@ export interface HomeLink { id: string; title: string; url: string; note: string
 
 const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'long', month: 'long', day: 'numeric' });
 const ago = (iso: string) => { const m = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000)); return m < 1 ? 'now' : m < 60 ? `${m}m` : m < 1440 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}d`; };
-const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
+const time = (iso: string) => formatPacificTime(iso);
 
 // The top of the dashboard: which quarter it is, a welcome by name, and the big search field (it only ever finds what this person can open).
 export function DashboardWelcome({ eyebrow, name, showSearch = true }: { eyebrow: string; name: string; showSearch?: boolean }) {

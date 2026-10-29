@@ -11,7 +11,7 @@ import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
 import { Award, ShoppingBag, Trophy, Settings, Check, Gift, Lock, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
-import { PACIFIC_TZ } from '@/lib/core/timezone';
+import { formatPacificDate } from '@/lib/core/timezone';
 import TGcode from '@/components/TGcode/TGcode';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
@@ -761,7 +761,7 @@ export default function PointsSectionContent({
                         </div>
                         <div className={styles.historyMeta}>
                           {t.note && t.type !== 'event_checkin' ? t.note : TYPE_LABELS[t.type] ?? t.type}
-                          {' · '}{new Date(t.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric' })}
+                          {' · '}{formatPacificDate(t.created_at)}
                         </div>
                       </div>
                       <span className={t.amount >= 0 ? styles.amountPositive : styles.amountNegative}>
@@ -1064,7 +1064,7 @@ export default function PointsSectionContent({
                             <div className={styles.historyType}>{label}</div>
                             <div className={styles.historyMeta}>
                               {t.note && t.type !== 'event_checkin' ? t.note : TYPE_LABELS[t.type] ?? t.type}
-                              {' · '}{new Date(t.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric' })}
+                              {' · '}{formatPacificDate(t.created_at)}
                             </div>
                           </div>
                           <span className={`${styles.targetHistoryAmount} ${t.amount >= 0 ? styles.amountPositive : styles.amountNegative}`}>

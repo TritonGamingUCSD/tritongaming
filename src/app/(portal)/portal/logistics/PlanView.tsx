@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate, formatPacificTime } from '@/lib/core/timezone';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowLeftRight, Camera, Minus, Plus, RefreshCw } from 'lucide-react';
 import dynamic from 'next/dynamic';
@@ -40,11 +41,11 @@ import styles from './logistics.module.css';
 // which team it goes to. The step to type for follows the work. Anything wrong is marked on its own line.
 type Feedback = { tone: 'ok' | 'already' | 'error'; text: string; result?: StepResult; step?: StepDef } | null;
 type Target = Pick<Row, 'id' | 'kind' | 'itemKind' | 'tag' | 'type' | 'kit'>;
-const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+const time = (iso: string) => formatPacificTime(iso);
 const whereOf = (d: Slim) => (d.kind === 'club' ? [d.shelf, d.tier].filter(Boolean).join(' · ') || 'No place set' : d.kind === 'slot' ? 'Counted: take from stock' : `${d.kind === 'sponsor' ? 'From' : 'From officer'} ${d.owner ?? 'its owner'}`);
 const bodyOf = (r: Pick<Row, 'id' | 'kind'>) => (r.kind === 'club' ? { device_id: r.id } : r.kind === 'slot' ? { slot_id: r.id } : { borrowed_id: r.id });
 const range = (a: string, b: string) => {
-  const f = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
+  const f = (d: string) => formatPacificDate(d, { year: true });
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 

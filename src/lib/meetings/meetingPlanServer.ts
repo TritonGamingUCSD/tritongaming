@@ -7,7 +7,7 @@ import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import { pacificDayKey } from '@/lib/events/checkinDays';
 import { createNotifications } from '@/lib/notifications/notify';
 import { staffName } from '@/lib/members/names';
-import { formatPacificDateTime } from '@/lib/core/timezone';
+import { formatPacificDateTime, formatPacificDate } from '@/lib/core/timezone';
 import { getExpectedPeople, loadGroups, occurrenceTimes, weekdayOfKey, type PersonRow } from '@/lib/meetings/meetings';
 import { collectBusyItems } from '@/lib/meetings/busyItems';
 import { addDays } from '@/lib/meetings/meetingPlans';
@@ -175,7 +175,7 @@ export async function notifyPlanAsk(svc: SupabaseClient, plan: PlanRow, opts: { 
     .map((p) => ({
       user_id: p.id, type: 'meeting_invite',
       title: opts.kind === 'new' ? `When can you meet? ${plan.title}` : opts.kind === 'dates' ? `${plan.title}: the dates changed` : `Add your availability for ${plan.title}`,
-      body: `${plan.answer_by ? `Please answer by ${new Date(`${plan.answer_by}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}. ` : ''}Mark the times you can make it.`,
+      body: `${plan.answer_by ? `Please answer by ${formatPacificDate(plan.answer_by)}. ` : ''}Mark the times you can make it.`,
       href: PLAN_HREF(plan.id),
     }));
   return createNotifications(svc, rows);

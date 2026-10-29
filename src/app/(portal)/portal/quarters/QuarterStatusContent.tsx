@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
@@ -27,7 +28,7 @@ interface Data {
 // One line in the Active / Inactive lists.
 interface Entry { id: string; name: string; avatar_url: string | null; roleLabel: string; role: string; title: string | null; inactive: boolean; carried: boolean }
 
-const short = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+const short = (d: string) => formatPacificDate(d);
 const yearLabel = (y: number) => `${y}-${String((y + 1) % 100).padStart(2, '0')}`;
 
 // Quarter status: pick a quarter (back to the first one) and see who is Active and who is Inactive in it. Only the current quarter can be changed; a new

@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/admin';
-import { PACIFIC_TZ, eventDayCount, pacificDaysUntil } from '@/lib/core/timezone';
+import { PACIFIC_TZ, formatPacificDate, eventDayCount, pacificDaysUntil } from '@/lib/core/timezone';
 import { parseMajors } from '@/lib/members/majors';
 import { parseGames } from '@/lib/site/games';
 
@@ -122,7 +122,7 @@ export async function getEventSummary(eventId: string, event: { start_date: stri
         if (!t.checked_in_at) continue;
         const d = new Date(t.checked_in_at);
         const key = d.getTime() - (d.getTime() % 86400000);
-        const cur = days.get(key) ?? { label: d.toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric' }), count: 0 };
+        const cur = days.get(key) ?? { label: formatPacificDate(d, { weekday: true }), count: 0 };
         cur.count++; days.set(key, cur);
       }
       return [...days.entries()].sort((x, y) => x[0] - y[0]).map(([, v]) => v);

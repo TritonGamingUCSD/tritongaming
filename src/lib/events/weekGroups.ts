@@ -1,3 +1,4 @@
+import { formatPacificDate } from '@/lib/core/timezone';
 // Which week a day falls in, for the "coming up" lists: this week, next week, or two weeks out and later.
 // Weeks run Sunday to Saturday in Pacific time (the same as weekly meeting plans).
 const TZ = 'America/Los_Angeles';
@@ -5,7 +6,7 @@ const keyFmt = new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric',
 
 export const pacificKey = (d: Date | string) => keyFmt.format(typeof d === 'string' ? new Date(d) : d);
 const dayNumber = (key: string) => Math.floor(new Date(`${key}T12:00:00Z`).getTime() / 86_400_000);
-const shortDay = (n: number) => new Date(n * 86_400_000 + 43_200_000).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+const shortDay = (n: number) => formatPacificDate(n * 86_400_000 + 43_200_000);
 const thisWeekStart = () => { const t = pacificKey(new Date()); return dayNumber(t) - new Date(`${t}T12:00:00Z`).getUTCDay(); };
 
 export type WeekGroup = 0 | 1 | 2;

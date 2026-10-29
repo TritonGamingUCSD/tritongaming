@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import { Lock, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
@@ -24,7 +25,7 @@ interface Req {
   allocation_locked?: boolean; planned_at: string | null; created_at: string; requester: string; division: string | null; planner: string | null; filled: number; prizesGot?: { qty: number }; rowsTotal: number;
 }
 interface Loaded { me: string; canManage: boolean; divisions: { id: string; name: string }[]; myDivisionIds: string[]; requests: Req[] }
-const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+const day = (iso: string) => formatPacificDate(iso);
 const chip: Record<RequestStatus, string> = { submitted: styles.chipWarn, planned: styles.chipOk, done: styles.chipOk, declined: styles.chipBad };
 
 

@@ -2,7 +2,7 @@
 
 import Link from '@/components/portal/NoPrefetchLink';
 import { ChevronRight, Clock, Ticket } from 'lucide-react';
-import { PACIFIC_TZ, pacificDaysUntil, eventDayProgress } from '@/lib/core/timezone';
+import { pacificDaysUntil, eventDayProgress, formatPacificDate, formatPacificTime } from '@/lib/core/timezone';
 import styles from './dashboard.module.css';
 
 interface TicketInfo {
@@ -20,8 +20,8 @@ export default function DashboardClient({ ticket }: { ticket: TicketInfo }) {
   const progress = eventDayProgress(ev.start_date, ev.end_date);
   const when = progress ? `Day ${progress.day} of ${progress.total}` : daysUntil === 0 ? 'Today' : daysUntil === 1 ? 'Tomorrow' : `In ${daysUntil} days`;
   const live = !!progress || daysUntil === 0;
-  const day = new Date(ev.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric' });
-  const time = new Date(ev.start_date).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' });
+  const day = formatPacificDate(ev.start_date, { weekday: true });
+  const time = formatPacificTime(ev.start_date);
 
   return (
     <Link href="/portal/tickets" className={styles.nextReminder} aria-label={`Next event: ${ev.title}, ${when}. Open your tickets`}>

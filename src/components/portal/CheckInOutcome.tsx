@@ -2,11 +2,11 @@
 
 import { Check, CircleAlert, Gift, TriangleAlert } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import { PACIFIC_TZ } from '@/lib/core/timezone';
+import { formatPacificTime } from '@/lib/core/timezone';
 import type { Outcome } from '@/lib/checkin/anyCode';
 import styles from './CheckInOutcome.module.css';
 
-const clock = (iso?: string) => iso ? new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: PACIFIC_TZ }) : '';
+const clock = (iso?: string) => iso ? formatPacificTime(iso) : '';
 
 // Says exactly what a check-in did, in the same words wherever it happened (the scanner, the code box, the Check-In page).
 // `bare` leaves out the big status icon, for where the scanner's own ring already shows it.

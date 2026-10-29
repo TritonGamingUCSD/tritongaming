@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useState } from 'react';
 import { Bell, BellOff, Send, Share, Smartphone, X } from 'lucide-react';
@@ -77,7 +78,7 @@ export default function PushSettings() {
   if (support === null || s === null) return <Loading variant="inline" label="Loading…" />;
   const list = s.list ?? [];
   const known = list.some((d) => d.fp === hereFp);   // a browser the server no longer lists (removed from another device) counts as off here
-  const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const day = (iso: string) => formatPacificDate(iso);
   return (
     <section className={styles.card} aria-label="Push notifications">
       <div className={styles.head}>

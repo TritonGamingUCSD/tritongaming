@@ -13,7 +13,7 @@ import { Ticket, MapPin, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
 import AsFormButton from './AsFormButton';
-import { PACIFIC_TZ, pacificDaysUntil, formatEventDateRange, eventDayCount, eventDayProgress } from '@/lib/core/timezone';
+import { PACIFIC_TZ, pacificDaysUntil, formatEventDateRange, eventDayCount, eventDayProgress, formatPacificDate, formatPacificTime } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { saveTicketCodes, cachedMinutesLeft } from '@/lib/events/ticketCodeCache';
 import styles from './tickets.module.css';
@@ -468,7 +468,7 @@ function CheckinHours({ windows }: { windows?: { day: string; start: string; end
     <ul className={styles.hoursList} aria-label="Check-in hours">
       {windows.slice().sort((a, b) => a.day.localeCompare(b.day)).map((w) => (
         <li key={w.day} className={w.day === todayKey ? styles.hoursToday : ''}>
-          <span>{new Date(`${w.day}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' })}</span>
+          <span>{formatPacificDate(w.day, { weekday: true })}</span>
           <span>{hoursLabel(w.start)} – {hoursLabel(w.end)}</span>
         </li>
       ))}
@@ -554,7 +554,7 @@ function TicketRow({
         {multiDay && <CheckinHours windows={ev?.checkin_windows} />}
         {ticket.checked_in_at && (
           <div className={styles.checkedInLine}>
-            <Check size={13} strokeWidth={1.75} aria-hidden="true" /> Checked in {new Date(ticket.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })}
+            <Check size={13} strokeWidth={1.75} aria-hidden="true" /> Checked in {formatPacificTime(ticket.checked_in_at)}
           </div>
         )}
         {/* Fallback for the "accidentally dismissed it" / "staff checked me

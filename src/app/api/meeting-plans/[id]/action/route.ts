@@ -1,3 +1,4 @@
+import { formatPacificTime } from '@/lib/core/timezone';
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { answeredUserIds, authorizePlans, decidePlan, notifyPlanAsk, planPeople, reopenPlan, type PlanRow } from '@/lib/meetings/meetingPlanServer';
@@ -19,7 +20,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     // A manual reminder goes to everyone who hasn't answered, so it can only be sent once every 12 hours.
     const NUDGE_GAP_MS = 12 * 3600_000;
     if (plan.nudged_at && Date.now() - new Date(plan.nudged_at).getTime() < NUDGE_GAP_MS) {
-      const at = new Date(new Date(plan.nudged_at).getTime() + NUDGE_GAP_MS).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
+      const at = formatPacificTime(new Date(plan.nudged_at).getTime() + NUDGE_GAP_MS);
       return NextResponse.json({ error: `People were already reminded recently. You can remind them again after ${at}.` }, { status: 429 });
     }
     const { people } = await planPeople(auth.svc, plan);

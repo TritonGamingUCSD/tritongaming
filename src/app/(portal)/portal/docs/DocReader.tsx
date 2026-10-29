@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertTriangle, BadgeCheck, ChevronRight, FileText, BookCheck, Flag, MoreHorizontal, Pencil, Pin, PinOff, Plus, Star, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -47,7 +48,7 @@ export default function DocReader({
   // A review counts as fresh as an edit: a page nobody changed but someone checked is not "stale".
   const freshest = doc.reviewed_at && doc.reviewed_at > doc.updated_at ? doc.reviewed_at : doc.updated_at;
   const stale = ageLabel(freshest).stale;
-  const reviewedOn = doc.reviewed_at ? new Date(doc.reviewed_at).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', year: 'numeric' }) : null;
+  const reviewedOn = doc.reviewed_at ? formatPacificDate(doc.reviewed_at, { year: true }) : null;
   const linkedFrom = useMemo(() => backlinksTo(doc, docs, canEdit), [doc, docs, canEdit]);
   const body = useMemo(() => resolveWikiLinks(doc.content, docs), [doc.content, docs]);
   const toc = useMemo(() => extractToc(body), [body]);

@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificTime } from '@/lib/core/timezone';
 import { useState } from 'react';
 import { Check, Lock, Minus, Plus } from 'lucide-react';
 import { conditionLabel, UNUSABLE } from '@/lib/logistics/constants';
@@ -19,7 +20,7 @@ export interface SheetCtx {
   onSwap: (r: Row) => void; onBorrowed: (r: Row) => void; onInstalled: (rows: Row[]) => void; onEditDevice: (r: Row) => void;
 }
 
-const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+const time = (iso: string) => formatPacificTime(iso);
 export const missingOf = (r: Row) => (r.kind !== 'slot' ? r.games_needed.filter((g) => !r.games.some((x) => x.toLowerCase() === g.toLowerCase())) : []);
 const label = (r: Row) => r.tag ?? r.type;
 

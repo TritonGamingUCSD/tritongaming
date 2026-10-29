@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
 import EditingNow from '@/components/portal/EditingNow';
@@ -22,7 +23,7 @@ interface Data { canEdit: boolean; currentYear: number | null; years: Year[]; ca
 
 const TIER_LABEL: Record<Tier, string> = { exec: 'Exec', lead: 'Leads', officer: 'Officers' };
 const TIERS: Tier[] = ['exec', 'lead', 'officer'];
-const when = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const when = (iso: string) => formatPacificDate(iso, { year: true });
 
 // The yearly records: who was exec, a lead or an officer in each academic year. A year is built from its quarters (active in at least one quarter, at the
 // highest title held), recorded automatically after Spring, and can be corrected here by an admin. Graduates ready to become alumni are below.

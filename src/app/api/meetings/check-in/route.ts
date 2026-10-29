@@ -1,3 +1,4 @@
+import { formatPacificTime } from '@/lib/core/timezone';
 import { NextResponse } from 'next/server';
 import { authorizeMeetings, checkInOpensAt, getTodaysMeetings, isCheckInAccepting, isMeetingOpen, isValidMeetingCode, isValidQrToken } from '@/lib/meetings/meetings';
 import { canAttendMeeting } from '@/lib/meetings/meetingAudience';
@@ -17,7 +18,7 @@ export async function POST(request: Request) {
 
   const mine = (await getTodaysMeetings(auth.svc)).filter((m) => isMeetingOpen(m) && canAttendMeeting(m, auth.user.id, auth.roles));
   const open = mine.filter((m) => isCheckInAccepting(m));
-  const opensMsg = (m: (typeof mine)[number]) => `Check-in for ${m.title} opens at ${new Date(checkInOpensAt(m)).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' })}, 10 minutes before it starts.`;
+  const opensMsg = (m: (typeof mine)[number]) => `Check-in for ${m.title} opens at ${formatPacificTime(checkInOpensAt(m))}, 10 minutes before it starts.`;
   if (open.length === 0) {
     const soonest = [...mine].sort((a, b) => checkInOpensAt(a) - checkInOpensAt(b))[0];
     return NextResponse.json({ error: soonest ? opensMsg(soonest) : 'Check-in isn’t open right now.' }, { status: 409 });

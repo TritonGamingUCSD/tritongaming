@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import Loading from '@/components/Loading/Loading';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -221,7 +222,7 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
         <div>
           <h2 className={styles.detailTitle}>{plan.title}</h2>
           <p className={styles.planMeta}>{rangeLabel(plan)} · {lengthLabel(plan.duration_min)} · {clockLabel(plan.window_start)} to {clockLabel(plan.window_end)}{plan.location ? ` · ${plan.location}` : ''}</p>
-          <p className={styles.planMeta}><Users size={12} aria-hidden="true" /> {audienceLabel({ audience: plan.audience, invitees: plan.invitees, group_ids: plan.group_ids, groupNames: plan.groupNames })}{plan.host_name ? ` · hosted by ${plan.host_name}` : ''}{plan.answer_by ? ` · answer by ${new Date(`${plan.answer_by}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''}</p>
+          <p className={styles.planMeta}><Users size={12} aria-hidden="true" /> {audienceLabel({ audience: plan.audience, invitees: plan.invitees, group_ids: plan.group_ids, groupNames: plan.groupNames })}{plan.host_name ? ` · hosted by ${plan.host_name}` : ''}{plan.answer_by ? ` · answer by ${formatPacificDate(plan.answer_by)}` : ''}</p>
         </div>
         <div className={styles.hostBtns}>
         {plan.canManage && plan.status === 'open' && (<>

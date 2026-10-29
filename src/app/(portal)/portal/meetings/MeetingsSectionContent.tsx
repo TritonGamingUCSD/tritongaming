@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate, formatPacificTime } from '@/lib/core/timezone';
 import PictureDialog from '@/components/ui/PictureDialog';
 import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
@@ -66,7 +67,7 @@ interface Series { ended?: boolean; open_to_team?: boolean | null; ends_on?: str
 
 const TZ = 'America/Los_Angeles';
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-const time = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: TZ, hour: 'numeric', minute: '2-digit' });
+const time = (iso: string) => formatPacificTime(iso);
 const timeRange = (a: string, b: string) => `${time(a)} – ${time(b)}`;
 const dayLabel = (key: string, long = false) => new Date(`${key}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: long ? 'long' : 'short', month: 'short', day: 'numeric' });
 const hhmmLabel = (t: string) => { const [h, m] = t.split(':').map(Number); return `${((h + 11) % 12) + 1}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'AM' : 'PM'}`; };
@@ -1073,7 +1074,7 @@ function MeetingList({ onOpen, view, onView, showForm, onShowForm }: { onOpen: (
                 <Repeat size={16} aria-hidden="true" className={styles.seriesIcon} />
                 <span className={styles.personName}>
                   {s.title}
-                  <em className={styles.seriesDetail}>every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
+                  <em className={styles.seriesDetail}>every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${formatPacificDate(s.ends_on)}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
                   {s.open_to_team === false && !wholeTeamAud(s) && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Private Meeting</span>}
                 </span>
                 <IconButton kind="edit" label={`Edit ${s.title}`} onClick={() => setEditing({ item: null, series: s.id })} />
@@ -1093,7 +1094,7 @@ function MeetingList({ onOpen, view, onView, showForm, onShowForm }: { onOpen: (
                     <Repeat size={16} aria-hidden="true" className={styles.seriesIcon} />
                     <span className={styles.personName}>
                       {s.title}
-                      <em className={styles.seriesDetail}>every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${new Date(`${s.ends_on}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
+                      <em className={styles.seriesDetail}>every {WEEKDAYS[s.weekday]} {hhmmLabel(s.start_time)}–{hhmmLabel(s.end_time)}{s.location ? ` · ${s.location}` : ''}{s.ends_on ? ` · until ${formatPacificDate(s.ends_on)}` : ''} · {audienceLabel(s)}{s.active ? '' : ' · paused'}</em>
                       {s.open_to_team === false && !wholeTeamAud(s) && <span className={`${styles.accessChip} ${styles.accessChipLimited}`} title="Only the people it is for can check in">Private Meeting</span>}
                     </span>
                     <IconButton kind="edit" label={`Extend or edit ${s.title}`} onClick={() => setEditing({ item: null, series: s.id })} />

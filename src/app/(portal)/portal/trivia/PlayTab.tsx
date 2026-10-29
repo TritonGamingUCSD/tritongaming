@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
@@ -11,7 +12,7 @@ import { ordinal } from './shapes';
 import styles from './trivia.module.css';
 
 interface Mine { code: string; quiz: string; status: string; created_at: string; score: number; rank: number | null; of: number | null; blocked: boolean }
-const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' });
+const day = (iso: string) => formatPacificDate(iso, { year: true });
 
 // Join a game with its code, and the games you played. A game's QR code opens this with the code already in the address.
 export default function PlayTab({ onOpen }: { onOpen: (code: string | null) => void }) {

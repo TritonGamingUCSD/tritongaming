@@ -1,3 +1,4 @@
+import { formatPacificDate } from '@/lib/core/timezone';
 import { NextResponse } from 'next/server';
 import { staffName } from '@/lib/members/names';
 import { createClient } from '@/lib/supabase/server';
@@ -83,7 +84,7 @@ export async function GET(request: Request) {
     // keep the next upcoming occurrence of each meeting, or the latest past one when none is ahead
     if (!cur || (cur.date < todayKey && (i.date >= todayKey || i.date > cur.date))) byTitle.set(i.title, i);
   }
-  const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric', year: 'numeric' });
+  const day = (iso: string) => formatPacificDate(iso, { year: true });
   const one = <T,>(v: T | T[] | null | undefined): T | null => (Array.isArray(v) ? v[0] ?? null : v ?? null);
   const members: SearchResult[] = (membersRes.data ?? []).map((m) => ({
     id: m.id, title: staffName(m, { tag: true }) || 'Anonymous', subtitle: '', href: `/portal/members?id=${m.id}`,

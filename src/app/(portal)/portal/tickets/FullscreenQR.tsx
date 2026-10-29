@@ -7,7 +7,7 @@ import { createPortal } from 'react-dom';
 import { Ticket, X, Check, Zap, ClipboardList } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import TGcode from '@/components/TGcode/TGcode';
-import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
+import { formatPacificDateTime, formatPacificTime } from '@/lib/core/timezone';
 import { fetchWithRetry } from '@/lib/ui/fetchWithRetry';
 import AsFormButton from './AsFormButton';
 import { saveTicketCodes, currentCachedCode, cachedMinutesLeft, clearTicketCodes } from '@/lib/events/ticketCodeCache';
@@ -425,7 +425,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
               )}
               {checkedInAt && (
                 <div className={styles.checkedInTime}>
-                  {new Date(checkedInAt).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit', second: '2-digit' })}
+                  {formatPacificTime(checkedInAt, { seconds: true })}
                 </div>
               )}
               {pointsAwarded > 0 && (

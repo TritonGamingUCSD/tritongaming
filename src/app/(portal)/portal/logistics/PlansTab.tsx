@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import { useEffect, useState } from 'react';
 import { RowMenu } from './RowMenu';
 import { confirmHold } from '@/lib/ui/confirmHold';
@@ -22,7 +23,7 @@ import { Plus } from 'lucide-react';
 import styles from './logistics.module.css';
 
 const range = (a: string, b: string) => {
-  const f = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+  const f = (d: string) => formatPacificDate(d);
   return a === b ? f(a) : `${f(a)} to ${f(b)}`;
 };
 

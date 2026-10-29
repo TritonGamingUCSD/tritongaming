@@ -8,7 +8,7 @@ import Button from '@/components/ui/Button';
 import StyledQRCode, { type StyledQRCodeHandle } from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS } from '@/lib/qr/qrCodeStyling';
 import { SELF_CHECKIN_LABELS, cleanSelfCheckinMode, type SelfCheckinMode } from '@/lib/events/selfCheckin';
-import { PACIFIC_TZ } from '@/lib/core/timezone';
+import { formatPacificDateTime } from '@/lib/core/timezone';
 import styles from './selfCheckin.module.css';
 import sectionStyles from './checkinsection.module.css';
 
@@ -39,7 +39,7 @@ export default function SelfCheckinPanel({ events, canControl }: { events: Event
   const on = mode !== 'off';
   const link = origin && event ? `${origin}/in/${event.slug || event.id}` : '';
   const options = useMemo(() => ({ ...DEFAULT_QR_OPTIONS, data: link || 'https://tritongaming.org' }), [link]);
-  const closesAt = event?.end_date ? new Date(event.end_date).toLocaleString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : null;
+  const closesAt = event?.end_date ? formatPacificDateTime(event.end_date, { weekday: true }) : null;
 
   if (!event) return <p className={styles.hint}>No upcoming events.</p>;
 

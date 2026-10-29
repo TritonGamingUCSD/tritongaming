@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate, formatPacificDateTime } from '@/lib/core/timezone';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Mail, Send } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -18,8 +19,8 @@ interface Info {
 const SECONDS = 60;   // the cancel window after pressing Send
 const KINDS = [{ id: 'reminders', label: 'Reminder' }, { id: 'updates', label: 'Update' }] as const;
 type Kind = (typeof KINDS)[number]['id'];
-const when = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-const day = (iso: string) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+const when = (iso: string) => formatPacificDateTime(iso);
+const day = (iso: string) => formatPacificDate(iso, { year: true });
 
 // Event Emails: pick an event, start from a Reminder (or an Update), adjust the subject and add a short note, see the email exactly as it will look, send a test to yourself, and send it
 // to everyone with a ticket. Pressing Send starts a 60-second countdown you can cancel; after it, the emails go out a batch at a time while this page stays open.

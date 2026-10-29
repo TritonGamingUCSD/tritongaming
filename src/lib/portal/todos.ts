@@ -1,3 +1,4 @@
+import { formatPacificDate } from '@/lib/core/timezone';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { pacificDayKey } from '@/lib/events/checkinDays';
 import { loadPlanViews } from '@/lib/meetings/meetingPlanServer';
@@ -32,7 +33,7 @@ export async function loadTodos(
       if (p.status !== 'open') continue;
       const asked = p.people.some((x) => x.id === user.id);
       if (asked && !p.expired && !p.responses[user.id]) {
-        out.push({ id: `plan-fill-${p.id}`, text: `Add your availability to “${p.title}”`, detail: p.answer_by ? `Answer by ${new Date(`${p.answer_by}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })}` : `${p.people.filter((x) => p.responses[x.id]).length} of ${p.people.length} have answered`, href: PLAN_HREF(p.id), tone: p.answer_by && p.answer_by <= today ? 'urgent' : 'normal' });
+        out.push({ id: `plan-fill-${p.id}`, text: `Add your availability to “${p.title}”`, detail: p.answer_by ? `Answer by ${formatPacificDate(p.answer_by)}` : `${p.people.filter((x) => p.responses[x.id]).length} of ${p.people.length} have answered`, href: PLAN_HREF(p.id), tone: p.answer_by && p.answer_by <= today ? 'urgent' : 'normal' });
       }
       if (p.isHost) {
         if (p.expired) out.push({ id: `plan-expired-${p.id}`, text: `Pick new dates for “${p.title}”`, detail: 'Every day of the plan has passed', href: PLAN_HREF(p.id), tone: 'normal' });

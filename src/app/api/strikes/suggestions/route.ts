@@ -1,3 +1,4 @@
+import { formatPacificDate } from '@/lib/core/timezone';
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { authorizeStrikes, cleanReason, notYourOwn, pastMisses, publishStrike, quietTest, suggestions, trackedPeople } from '@/lib/members/strikes';
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
   }
   const rows = chosen.map((x) => ({
     user_id: x.user_id, incident_date: x.date, meeting_id: x.meeting_id, category: 'meeting', created_by: auth.user.id,
-    reason: `Missed ${x.title} on ${new Date(`${x.date}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' })} without an excuse`,
+    reason: `Missed ${x.title} on ${formatPacificDate(x.date)} without an excuse`,
   }));
   const { data, error } = await auth.svc.from('strikes').insert(rows).select('id, user_id');
   if (error || !data) return NextResponse.json({ error: 'Failed to save.' }, { status: 500 });

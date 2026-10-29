@@ -1,9 +1,10 @@
+import { formatPacificTime } from '@/lib/core/timezone';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { pacificDayKey } from '@/lib/events/checkinDays';
 import { createNotifications } from '@/lib/notifications/notify';
 import { getExpectedPeople, occurrenceTimes, seriesRunsOn, type MeetingRow, type SeriesRow } from '@/lib/meetings/meetings';
 
-const clock = (iso: string) => new Date(iso).toLocaleTimeString('en-US', { timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit' });
+const clock = (iso: string) => formatPacificTime(iso);
 
 interface Item {
   key: string; kind: 'meeting'; title: string; starts_at: string; location: string | null;

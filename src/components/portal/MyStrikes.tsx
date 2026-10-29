@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useState } from 'react';
 import { Lock, ShieldCheck, ShieldAlert, Ticket } from 'lucide-react';
@@ -14,7 +15,7 @@ interface Summary { limit: number; active: number; atLimit: boolean; vouchers: n
 
 const CATEGORY: Record<string, string> = { meeting: 'Missed meeting', event_shift: 'Missed event shift', deadline: 'Missed deadline or task', conduct: 'Conduct', other: 'Other' };
 const EVENT: Record<string, string> = { strike_added: 'Strike added', strike_removed: 'Strike taken off', strike_reinstated: 'Strike put back', voucher_given: 'Voucher received', voucher_used: 'Voucher used', voucher_removed: 'Voucher removed', strikes_reset: 'Strikes reset' };
-const day = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
+const day = (d: string) => formatPacificDate(d, { year: true });
 
 // Your own strikes and vouchers, in your Profile. Private: only you and HR can see it. It is calm by default: a plain count, the reasons, and a
 // quiet way to ask HR about one.

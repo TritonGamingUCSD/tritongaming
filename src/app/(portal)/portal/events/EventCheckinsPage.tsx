@@ -11,7 +11,7 @@ import Link from '@/components/portal/NoPrefetchLink';
 import UndoCheckinModal from '@/components/UndoCheckinModal/UndoCheckinModal';
 import { Camera, Gamepad2, Undo2, Check } from 'lucide-react';
 import { resolveAvatarUrl } from '@/lib/members/profile';
-import { PACIFIC_TZ, formatEventDateRange, eventDayCount } from '@/lib/core/timezone';
+import { formatEventDateRange, eventDayCount, formatPacificDate, formatPacificTime } from '@/lib/core/timezone';
 import checkinStyles from './checkins.module.css';
 import styles from './eventcheckinspage.module.css';
 
@@ -256,14 +256,14 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
                         </div>
                       </div>
                       <span className={checkinStyles.date}>
-                        {new Date(t.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', day: 'numeric' })}
+                        {formatPacificDate(t.created_at)}
                       </span>
                       <span className={`${checkinStyles.badge} ${checkinStyles[`status_${t.status}`]}`}>
                         {STATUS_LABEL[t.status]}
                       </span>
                       <span className={checkinStyles.date}>
                         {t.checked_in_at
-                          ? new Date(t.checked_in_at).toLocaleTimeString('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', minute: '2-digit' })
+                          ? formatPacificTime(t.checked_in_at)
                           : '—'}
                         {dayTotal > 1 && !!t.days_attended && <span className={checkinStyles.checkinSub}> · {t.days_attended}/{dayTotal} days</span>}
                       </span>

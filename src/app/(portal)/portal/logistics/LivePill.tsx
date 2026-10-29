@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificTime } from '@/lib/core/timezone';
 import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import type { Person } from './useLiveTeam';
@@ -34,7 +35,7 @@ export default function LivePill({ people, live, feed, describe }: { people: Per
           )}
           {feed.length > 0 && <>
             <div className={pz.liveHead}><b>Recent changes</b></div>
-            <ul className={pz.liveFeed}>{feed.slice(0, 8).map((f) => <li key={f.id}><b>{f.by}</b> {f.text}<small>{new Date(f.at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</small></li>)}</ul>
+            <ul className={pz.liveFeed}>{feed.slice(0, 8).map((f) => <li key={f.id}><b>{f.by}</b> {f.text}<small>{formatPacificTime(f.at)}</small></li>)}</ul>
           </>}
         </div>
       )}

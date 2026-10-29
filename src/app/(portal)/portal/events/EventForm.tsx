@@ -15,7 +15,7 @@ import { ExternalLink, Loader2 } from 'lucide-react';
 import SocialEmbedsField from '@/components/SocialEmbedsField/SocialEmbedsField';
 import PhotoAlbumsField from '@/components/PhotoAlbumsField/PhotoAlbumsField';
 import { buildCheckinFormUrl } from '@/lib/events/checkinForm';
-import { eventDayCount, pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
+import { eventDayCount, pacificDatetimeLocalToUTC, formatPacificDate } from '@/lib/core/timezone';
 import type { SocialEmbed, PhotoAlbumEntry, AppRole, ScheduleItem, EventSponsor } from '@/types/database';
 import EventExtrasEditor from './EventExtrasEditor';
 import PageBlocksEditor from '@/components/PageBlocksEditor/PageBlocksEditor';
@@ -410,7 +410,7 @@ export default function EventForm({
                 return (
                   <div key={day} className={styles.row} style={{ alignItems: 'end', marginBottom: '0.5rem' }}>
                     <div className={styles.field}>
-                      <span className={styles.label}>Day {i + 1} · {new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className={styles.label}>Day {i + 1} · {formatPacificDate(day, { weekday: true })}</span>
                       <TimeInput className={styles.input} value={w.start} onChange={(e) => setW({ start: e.target.value })} aria-label={`Day ${i + 1} starts`} />
                     </div>
                     <div className={styles.field}>
@@ -604,7 +604,7 @@ export default function EventForm({
                 return (
                   <div key={day} className={styles.row} style={{ alignItems: 'end', marginBottom: '0.5rem' }}>
                     <div className={styles.field}>
-                      <span className={styles.label}>Day {i + 1} · {new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'short', month: 'short', day: 'numeric' })}</span>
+                      <span className={styles.label}>Day {i + 1} · {formatPacificDate(day, { weekday: true })}</span>
                       <TimeInput className={styles.input} value={w.start} onChange={(e) => setW({ start: e.target.value })} aria-label={`Day ${i + 1} check-in opens`} />
                     </div>
                     <div className={styles.field}>

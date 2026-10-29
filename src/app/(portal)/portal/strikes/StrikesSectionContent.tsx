@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDate } from '@/lib/core/timezone';
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
@@ -27,7 +28,7 @@ const EVENT_LABEL: Record<string, string> = { strike_added: 'Strike added', stri
 const CATEGORIES: [string, string][] = [['meeting', 'Missed meeting'], ['event_shift', 'Missed event shift'], ['deadline', 'Missed deadline or task'], ['conduct', 'Conduct'], ['other', 'Other']];
 const catLabel = (id: string) => CATEGORIES.find((c) => c[0] === id)?.[1] ?? 'Other';
 const todayKey = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
-const day = (d: string) => new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
+const day = (d: string) => formatPacificDate(d, { year: true });
 
 // The strike tracker. Exec, HR (the "manage strikes" permission) and admins see everyone and add strikes directly. Every action takes a reason the person can read, and nobody changes their own record.
 export default function StrikesSectionContent() {

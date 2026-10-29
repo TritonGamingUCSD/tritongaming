@@ -1,5 +1,6 @@
 'use client';
 
+import { formatPacificDateTime } from '@/lib/core/timezone';
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, TriangleAlert, X } from 'lucide-react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
@@ -18,7 +19,7 @@ type Draft = Pick<Device, 'tag' | 'name' | 'type' | 'shelf' | 'tier' | 'place_no
 const blank = (): Draft => ({ tag: null, name: null, type: '', shelf: null, tier: null, place_note: null, condition: 'not_tested', ports: [], login: null, games: [], kit: [], quantity: null, quantity_is_estimate: true, notes: null });
 const fromDevice = (d: Device): Draft => ({ tag: d.tag, name: d.name, type: d.type, shelf: d.shelf, tier: d.tier, place_note: d.place_note, condition: d.condition, ports: d.ports, login: d.login, games: d.games, kit: d.kit, quantity: d.quantity, quantity_is_estimate: d.quantity_is_estimate, notes: d.notes });
 const kitFor = (type: string): KitLine[] => (DEFAULT_KIT[type] ?? []).map((item) => ({ item, qty: 1, missing: false }));
-const when = (iso: string) => new Date(iso).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+const when = (iso: string) => formatPacificDateTime(iso);
 
 // Add, edit, clone or just look at one device. Officers who can't edit see the same screen read-only (including the login, which every officer may see).
 export default function DeviceDialog({ api, data, device, template, extrasOnly, onClose, onClone }: { extrasOnly?: boolean; api: LogisticsApi; data: Catalog; device: Device | null; template?: Partial<Draft> | null; onClose: () => void; onClone?: (d: Draft) => void }) {
