@@ -1,5 +1,6 @@
 'use client';
 
+import Select from '@/components/ui/Select';
 import { useMemo, useState } from 'react';
 import { FileDown, Plus, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -95,10 +96,10 @@ export default function ReportShell({ children, back, internal, report }: { chil
           {report.sponsors.length > 0 && (
             <div className={styles.editorRow}>
               <label htmlFor="prepared-for">Prepared for</label>
-              <select id="prepared-for" value={sponsorIdx} onChange={(e) => setSponsorIdx(Number(e.target.value))}>
+              <Select id="prepared-for" value={sponsorIdx} onChange={(e) => setSponsorIdx(Number(e.target.value))}>
                 <option value={-1}>No one in particular</option>
                 {report.sponsors.map((sp, i) => <option key={sp.name + i} value={i}>{sp.name}</option>)}
-              </select>
+              </Select>
               <span className={styles.controlsNote}>From this event’s sponsor list. The thank-you at the end names only them; with no one chosen, every sponsor is thanked.</span>
             </div>
           )}

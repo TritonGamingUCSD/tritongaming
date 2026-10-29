@@ -7,6 +7,7 @@ import { compareCells, matchesFilter, parseCell, type CellKind, type CellValue }
 import { showToast } from '@/lib/ui/toast';
 import { flagCodec, useAddressState, useKeptScroll, useSessionState, type Codec } from '@/lib/portal/usePageState';
 import { recordEdit } from './undo';
+import list from '@/components/ui/Listbox.module.css';
 import styles from './sheet.module.css';
 
 // One spreadsheet for a list of things (every prize, every device): a table that scrolls both ways with its header, filter row and first column kept in view, where every cell is edited in place. Click a cell
@@ -325,9 +326,9 @@ function Chooser({ options, draft, onDraft, onPick, onCancel, nullable, canCreat
   const [hi, setHi] = useState(0);
   const [typed, setTyped] = useState(!selectAll);   // the list shows everything until something is typed (opened on the current value, it must not hide the other choices)
   const q = typed ? draft.trim().toLowerCase() : '';
-  const list = useMemo(() => options.filter((o) => !q || o.toLowerCase().includes(q)), [options, q]);
+  const matches = useMemo(() => options.filter((o) => !q || o.toLowerCase().includes(q)), [options, q]);
   const typedNew = canCreate && q && !options.some((o) => o.toLowerCase() === q);
-  const items = [...(nullable ? [''] : []), ...list, ...(typedNew ? [draft.trim()] : [])];
+  const items = [...(nullable ? [''] : []), ...matches, ...(typedNew ? [draft.trim()] : [])];
   useEffect(() => { const r = input.current?.getBoundingClientRect(); if (r) setPos({ left: r.left, top: r.bottom, width: Math.max(r.width, 180), up: window.innerHeight - r.bottom < 220 }); }, []);
   useEffect(() => { const first = items.findIndex((o) => o !== ''); setHi(q && first >= 0 ? first : 0); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [q]);
@@ -343,9 +344,9 @@ function Chooser({ options, draft, onDraft, onPick, onCancel, nullable, canCreat
           else if (e.key === 'Escape') { e.preventDefault(); onCancel(); }
         }} />
       {pos && createPortal(
-        <ul className={styles.chooser} role="listbox" style={{ position: 'fixed', left: pos.left, width: pos.width, ...(pos.up ? { bottom: window.innerHeight - pos.top + 34 } : { top: pos.top + 2 }) }}>
-          {items.map((o, i) => <li key={`${o}-${i}`} role="option" aria-selected={i === hi} className={i === hi ? styles.hi : ''} onMouseDown={(e) => { e.preventDefault(); onPick(o); }}>{o === '' ? <i>None</i> : typedNew && i === items.length - 1 ? <>Add “{o}”</> : o}</li>)}
-          {items.length === 0 && <li className={styles.noMatch}>No match</li>}
+        <ul className={list.list} role="listbox" style={{ position: 'fixed', left: pos.left, width: pos.width, ...(pos.up ? { bottom: window.innerHeight - pos.top + 34 } : { top: pos.top + 2 }) }}>
+          {items.map((o, i) => <li key={`${o}-${i}`} role="option" aria-selected={i === hi} className={`${list.row} ${i === hi ? list.rowOn : ''}`} onMouseDown={(e) => { e.preventDefault(); onPick(o); }}>{o === '' ? <i>None</i> : typedNew && i === items.length - 1 ? <>Add “{o}”</> : o}</li>)}
+          {items.length === 0 && <li className={`${list.row} ${list.none}`}>No match</li>}
         </ul>, document.body)}
     </>
   );

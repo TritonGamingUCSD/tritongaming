@@ -3,8 +3,9 @@
 import { Children, isValidElement, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent, CSSProperties, ReactElement, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { Check, ChevronDown } from 'lucide-react';
+import { ChevronDown } from 'lucide-react';
 import styles from './Select.module.css';
+import list from './Listbox.module.css';
 
 // The one dropdown. A drop-in for a native <select> (same <option>/<optgroup> children, same
 // value/onChange(e.target.value) contract) but drawn by us, so it looks and behaves the same on every
@@ -61,7 +62,7 @@ export default function Select({ value, defaultValue, onChange, children, classN
   const [active, setActive] = useState(0);
   const [pos, setPos] = useState<{ left: number; width: number; top?: number; bottom?: number; maxHeight: number } | null>(null);
   const trigger = useRef<HTMLButtonElement>(null);
-  const list = useRef<HTMLDivElement>(null);
+  const listEl = useRef<HTMLDivElement>(null);
   const typed = useRef({ text: '', at: 0 });
   const listId = useId();
 
@@ -98,10 +99,10 @@ export default function Select({ value, defaultValue, onChange, children, classN
     if (!open) return;
     const close = (e: Event) => {
       const t = e.target as Node;
-      if (list.current?.contains(t) || trigger.current?.contains(t)) return;
+      if (listEl.current?.contains(t) || trigger.current?.contains(t)) return;
       setOpen(false);
     };
-    const reposition = (e: Event) => { if (!list.current?.contains(e.target as Node)) place(); };
+    const reposition = (e: Event) => { if (!listEl.current?.contains(e.target as Node)) place(); };
     document.addEventListener('mousedown', close);
     window.addEventListener('scroll', reposition, true);
     window.addEventListener('resize', place);
@@ -111,7 +112,7 @@ export default function Select({ value, defaultValue, onChange, children, classN
   // Keep the highlighted option in view as the keyboard moves it.
   useEffect(() => {
     if (!open) return;
-    (list.current?.querySelector(`[data-index="${active}"]`) as HTMLElement | null)?.scrollIntoView({ block: 'nearest' });
+    (listEl.current?.querySelector(`[data-index="${active}"]`) as HTMLElement | null)?.scrollIntoView({ block: 'nearest' });
   }, [active, open]);
 
   const step = (from: number, dir: 1 | -1) => {
@@ -172,28 +173,27 @@ export default function Select({ value, defaultValue, onChange, children, classN
       )}
       {open && pos && createPortal(
         <div
-          ref={list}
+          ref={listEl}
           id={listId}
           role="listbox"
-          className={styles.list}
+          className={list.list}
           style={{ left: pos.left, width: pos.width, top: pos.top, bottom: pos.bottom, maxHeight: pos.maxHeight }}
           onMouseDown={(e) => e.preventDefault()}
         >
           {options.map((o, i) => (
             <div key={`${o.value}-${i}`}>
-              {o.group && options[i - 1]?.group !== o.group && <div className={styles.group}>{o.group}</div>}
+              {o.group && options[i - 1]?.group !== o.group && <div className={list.group}>{o.group}</div>}
               <div
                 id={`${listId}-${i}`}
                 data-index={i}
                 role="option"
                 aria-selected={o.value === current}
                 aria-disabled={o.disabled || undefined}
-                className={`${styles.option} ${i === active ? styles.active : ''} ${o.value === current ? styles.selected : ''} ${o.disabled ? styles.disabled : ''}`}
+                className={`${list.row} ${i === active ? list.rowOn : ''} ${o.value === current ? list.rowSel : ''} ${o.disabled ? list.rowOff : ''}`}
                 onMouseEnter={() => !o.disabled && setActive(i)}
                 onClick={() => !o.disabled && commit(o.value)}
               >
-                <span className={styles.optionText}>{o.label}</span>
-                {o.value === current && <Check size={14} strokeWidth={2.5} aria-hidden="true" />}
+                <span className={list.rowText}>{o.label}</span>
               </div>
             </div>
           ))}

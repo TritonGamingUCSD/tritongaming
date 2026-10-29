@@ -1,5 +1,6 @@
 'use client';
 
+import Select from '@/components/ui/Select';
 import { useState, type CSSProperties } from 'react';
 import { ChevronDown, ChevronRight, CircleAlert, Lock, Minus, Plus, TriangleAlert } from 'lucide-react';
 import { RowMenu } from './RowMenu';
@@ -44,9 +45,9 @@ export interface Row { p: PrizeRow; sponsor: string | null; here: number; remain
 function LevelPick({ p, canEdit, ctx }: { p: PrizeRow; canEdit: boolean; ctx: PrizingCtx }) {
   if (!canEdit) return <LevelChip level={p.stock_level} />;
   return (
-    <select className={pz.levelSelect} value={p.stock_level} onChange={(e) => ctx.setLevel(p, e.target.value as StockLevel)} aria-label={`How much ${p.name} is left`}>
+    <Select className={pz.levelSelect} value={p.stock_level} onChange={(e) => ctx.setLevel(p, e.target.value as StockLevel)} aria-label={`How much ${p.name} is left`}>
       {LEVELS.map((l) => <option key={l} value={l}>{LEVEL_LABEL[l]}</option>)}
-    </select>
+    </Select>
   );
 }
 function LevelChip({ level }: { level: StockLevel }) { return <span className={`${pz.levelChip} ${level === 'low' ? pz.levelLow : ''} ${level === 'out' ? pz.levelOut : ''}`}>{LEVEL_LABEL[level]}</span>; }

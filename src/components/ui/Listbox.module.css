@@ -1,0 +1,13 @@
+/* The one drop-down list: Select, Combo (Logistics), the suggestion box and a Sheet's choice cell all draw their open list with these. */
+.list { position: fixed; z-index: 3500; margin: 0; padding: 0.3rem; list-style: none; max-height: 15rem; min-width: 11rem; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; touch-action: pan-y; border-radius: 6px; background: var(--pp-card); border: 2px solid var(--pp-ink); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); scrollbar-width: thin; }   /* theme-ok */
+.group { padding: 0.5rem 0.65rem 0.25rem; font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.87); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.5rem 0.65rem; border-radius: 4px; font-family: var(--font-futura-medium); font-size: 0.88rem; color: var(--pp-ink); cursor: pointer; overflow-wrap: anywhere; }
+.rowText { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hint { margin-left: auto; padding-left: 0.5rem; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.6); text-align: right; }
+.rowOn { background: rgba(125, 180, 234, 0.35); }
+.rowSel { font-weight: 700; }
+.rowSel:not(:has(.rowText))::before, .rowSel .rowText::before { content: '✓ '; }
+.rowSpecial { font-weight: 600; }
+.rowOff { opacity: 0.4; cursor: not-allowed; }
+.none { color: rgba(var(--pp-ink-rgb), 0.6); cursor: default; }
+@media (max-width: 640px) { .row { padding: 0.7rem 0.75rem; font-size: 16px; } }
