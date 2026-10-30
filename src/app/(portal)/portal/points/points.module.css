@@ -495,7 +495,7 @@
 }
 
 .qrHint { font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.87); text-align: center; }
-.qrCanvas { border-radius: 0.75rem; overflow: hidden; }
+.qrCanvas { border-radius: 0.75rem; overflow: hidden; width: min(340px, 72vw); } /* as big as the screen allows: a bigger code is read from farther away */
 
 /* ── My Points, redesigned: one hero panel with the tier ladder, perks and activity below ── */
 .hero { display: grid; gap: 0.8rem; padding: 1.2rem 1.3rem 1.1rem; background: var(--pp-card); border: 2px solid rgba(var(--pp-ink-rgb), 0.7); border-left: 10px solid var(--tier); border-radius: 8px; box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.25); }

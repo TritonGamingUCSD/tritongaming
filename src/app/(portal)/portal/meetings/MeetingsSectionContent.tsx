@@ -387,7 +387,7 @@ const sideSpot = (edge = 5, band = 19) => (Math.random() < 0.5 ? edge + Math.ran
 
 function MeetingQR({ payload, size }: { payload: string; size: number }) {
   return (
-    <div className={styles.qrCanvas} style={{ width: size, height: size }}>
+    <div className={styles.qrCanvas} style={{ width: size, maxWidth: '100%', aspectRatio: '1 / 1' }}>
       <PortalCode payload={payload} />
     </div>
   );
@@ -3342,7 +3342,7 @@ function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) {
           <>
             <span className={styles.duoDivider} aria-hidden="true" />
             <div className={styles.duoQr}>
-              <MeetingQR payload={shown?.qrPayload ?? ''} size={presenting ? 250 : 180} />
+              <MeetingQR payload={shown?.qrPayload ?? ''} size={presenting ? 340 : 180} />
               <small>Or tap Scan in the portal</small>
             </div>
           </>
