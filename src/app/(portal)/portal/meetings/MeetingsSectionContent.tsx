@@ -502,6 +502,7 @@ function CheckInPanel() {
     const o = await checkInWithCode(proof.code);
     setCode('');
     if (o.kind === 'error') setError(o.message);
+    else if (o.kind === 'info') setError(`${o.title}. ${o.message}`);
     else if (o.kind === 'meeting') await load();
     else setOther(o);
     setBusy(false);

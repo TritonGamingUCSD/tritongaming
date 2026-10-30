@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, CircleAlert, Gift, TriangleAlert } from 'lucide-react';
+import { Check, CircleAlert, Gift, Info, TriangleAlert } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { formatPacificTime } from '@/lib/core/timezone';
 import type { Outcome } from '@/lib/checkin/anyCode';
@@ -50,6 +50,22 @@ export default function CheckInOutcome({
         <Button variant="secondary" onClick={onDone} disabled={busy}>
           Cancel
         </Button>
+      </div>
+    );
+  }
+  if (outcome.kind === 'info') {
+    return (
+      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
+        <span className={`${styles.icon} ${styles.info}`}>
+          <Info size={32} aria-hidden="true" />
+        </span>
+        <strong className={styles.title}>{outcome.title}</strong>
+        <span className={styles.detail}>{outcome.message}</span>
+        {!noButton && (
+          <Button variant="secondary" onClick={onDone}>
+            {doneLabel}
+          </Button>
+        )}
       </div>
     );
   }

@@ -30,6 +30,8 @@ export type Outcome =
   | { kind: 'trivia'; code: string }
   /** A ticket for an event that is not the one on right now: staff are asked before the person is checked in. `redo` is what to send again to go ahead. */
   | { kind: 'confirmEvent'; userName: string; eventTitle: string; nowEvent: string; redo: { code?: string; qr_token?: string } }
+  /** Not a mistake, just not for this person (a ticket or a reward pickup opened by someone who is not staff): said calmly, with no error look and nothing to try again. */
+  | { kind: 'info'; title: string; message: string }
   | { kind: 'error'; message: string };
 
 export const TGCODE = /^tg:([mtr])([0-9a-f]{7,8}|[0-9a-f]{12})$/; // the key is 8 hex digits in a TGcode of the current format, 12 in the first one, and 7 in a Bytecode
@@ -152,19 +154,16 @@ export async function checkInWithQr(text: string, can: { tickets: boolean; rewar
       return r.ok ? { kind: 'meeting', title: r.json.title, at: r.json.checked_in_at, already: !!r.json.already } : { kind: 'error', message: r.json.error || 'Check-in failed.' };
     }
     if (ring && ring[1] === 't') {
-      if (!can.tickets) return { kind: 'error', message: 'That is an event ticket. Show it to an officer, who scans it to check you in.' };
+      if (!can.tickets) return { kind: 'info', title: 'This is an event ticket', message: 'Show it to an officer, who scans it to check you in.' };
       const r = await post('/api/tickets/checkin', { qr_token: ring[2] });
       if (r.status === 409 && r.json.code === 'confirm_event') return wrongEvent(r.json, { qr_token: ring[2] });
       return r.ok ? ticketOutcome(r.json) : { kind: 'error', message: r.json.error || 'Check-in failed.' };
     }
     if (ring && ring[1] === 'r') {
       if (!can.rewards)
-        return {
-          kind: 'error',
-          message: can.tickets
-            ? 'That is a reward pickup code, and your role can’t confirm hand-overs. Ask an officer who can.'
-            : 'That is a reward pickup code. Show it to an officer to collect your reward.',
-        };
+        return can.tickets
+          ? { kind: 'error', message: 'That is a reward pickup code, and your role can’t confirm hand-overs. Ask an officer who can.' }
+          : { kind: 'info', title: 'This is a reward pickup code', message: 'Show it to an officer to collect your reward.' };
       const res = await withTimeout((signal) => fetch(`/api/rewards/redemptions/lookup?p=${ring[2]}`, { signal }));
       const j = await res.json().catch(() => ({}));
       if (!res.ok) return { kind: 'error', message: j.error || (res.status === 404 ? 'Reward not found.' : whyNot(res.status)) };

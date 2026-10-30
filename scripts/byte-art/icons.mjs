@@ -1,5 +1,5 @@
-// Draws Byte as the portal's icons from his own artwork (src/lib/qr/byteCode/byteArt.ts): the app icons (a full Byte sticker on the portal's cream), the favicon (his head and gem, tighter, so it
-// reads at 16px), the maskable icon (smaller, inside the safe zone) and the notification badge (a one-colour silhouette: Android uses only the shape). Usage:
+// Draws Byte as the push notification's icons from his own artwork (src/lib/qr/byteCode/byteArt.ts): the notification picture (a full Byte sticker on the portal's cream) and the badge (a one-colour
+// silhouette: Android uses only the shape). (The browser tab icon and the app icons are the TG logo.) Usage:
 //   PLAYWRIGHT=/path/to/playwright/index.js CHROME=/path/to/chrome node scripts/byte-art/icons.mjs        (CHROME only when Playwright has no browser of its own)
 import fs from 'fs';
 import { pathToFileURL } from 'url';
@@ -37,11 +37,7 @@ const page = (w, h, bg, box, content) =>
 
 const jobs = [
   // [file, size, background, viewBox, content]
-  ['public/icons/icon-512.png', 512, CREAM, '-1.12 -1.12 2.24 2.24', body('#ffffff')],
-  ['public/icons/icon-192.png', 192, CREAM, '-1.12 -1.12 2.24 2.24', body('#ffffff')],
-  ['public/icons/apple-touch-icon.png', 180, CREAM, '-1.12 -1.12 2.24 2.24', body('#ffffff')],
-  ['public/icons/maskable-512.png', 512, CREAM, '-1.5 -1.5 3 3', body('#ffffff')],
-  ['src/app/icon.png', 256, 'none', '-0.64 -1.02 1.28 1.28', body('#ffffff')],
+  ['public/icons/byte-notification.png', 192, CREAM, '-1.12 -1.12 2.24 2.24', body('#ffffff')],
   [
     'public/icons/badge-96.png',
     96,

@@ -263,12 +263,13 @@ export default function UniversalScanner({
   } else if (state.kind === 'result') {
     const o = state.outcome;
     const auto = clean(o) && !landing; // (a code's own page keeps its result: it does not hand the camera back by itself)
-    const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'reward' || o.kind === 'choose' || o.kind === 'confirmEvent';
+    const again =
+      o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'info' || o.kind === 'reward' || o.kind === 'choose' || o.kind === 'confirmEvent';
     lock = {
       tone:
         o.kind === 'error'
           ? 'bad'
-          : o.kind === 'choose' || o.kind === 'confirmEvent' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already)
+          : o.kind === 'info' || o.kind === 'choose' || o.kind === 'confirmEvent' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already)
             ? 'warn'
             : 'ok',
     };
@@ -298,7 +299,7 @@ export default function UniversalScanner({
           {auto && <span className={styles.autoBar} style={{ animationDuration: `${AUTO_MS}ms` }} aria-hidden="true" />}
           <CheckInOutcome
             bare={!landing}
-            noButton={auto}
+            noButton={auto || (landing && o.kind === 'info')}
             outcome={o}
             busy={busy}
             doneLabel={again ? 'Scan Next' : 'Done'}
