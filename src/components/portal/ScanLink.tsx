@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
+import CodeIcon from '@/components/portal/CodeIcon';
 import { useTouchDevice } from '@/lib/ui/useTouchDevice';
 import styles from './PortalThemeToggle.module.css';
 
@@ -11,7 +11,7 @@ export default function ScanLink() {
   if (!touch) return null;
   return (
     <Link href="/portal/scan" prefetch={false} className={styles.btn} aria-label="Scan a code" title="Scan a code">
-      <TGcodeIcon size={20} />
+      <CodeIcon size={20} />
     </Link>
   );
 }

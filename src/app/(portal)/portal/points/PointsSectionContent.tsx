@@ -7,7 +7,7 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useEffect, useState } from 'react';
-import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
+import CodeIcon from '@/components/portal/CodeIcon';
 import { Award, ShoppingBag, Trophy, Settings, Check, Gift, Lock, X } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
@@ -922,7 +922,7 @@ export default function PointsSectionContent({
                   const reward = oneOf(r.reward);
                   return (
                     <button key={r.id} type="button" className={styles.pendingCard} onClick={() => setQrFor(r.id)}>
-                      <TGcodeIcon size={20} />
+                      <CodeIcon size={20} />
                       <span>{reward?.title ?? 'Reward'}</span>
                     </button>
                   );

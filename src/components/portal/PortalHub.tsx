@@ -14,7 +14,7 @@ import PortalRefresh from './PortalRefresh';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
 import { Home, MoreHorizontal, ChevronRight, ChevronLeft } from 'lucide-react';
-import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
+import CodeIcon from '@/components/portal/CodeIcon';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
 import PortalThemeToggle from './PortalThemeToggle';
@@ -467,7 +467,7 @@ export default function PortalHub({
     label: 'Scan',
     raised: true,
     ariaLabel: 'Scan a TGcode',
-    icon: <TGcodeIcon size={24} />,
+    icon: <CodeIcon size={24} />,
     onClick: () => {
       setMoreOpen(false);
       setOpeningScan(true);

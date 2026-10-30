@@ -1,5 +1,5 @@
 import Link from '@/components/portal/PortalLink';
-import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
+import CodeIcon from '@/components/portal/CodeIcon';
 import { ExternalLink, MapPin, Ticket } from 'lucide-react';
 import { PACIFIC_TZ, formatPacificTime } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
@@ -109,7 +109,7 @@ export function DashboardBody({
                   <Link href={event.hasTicket && event.ticketId ? `/portal/tickets?qr=${event.ticketId}` : '/portal/tickets'} className={styles.primary}>
                     {event.hasTicket ? (
                       <>
-                        <TGcodeIcon size={16} /> Show My TGcode
+                        <CodeIcon size={16} /> Show My TGcode
                       </>
                     ) : (
                       <>

@@ -5,7 +5,7 @@ import { byteInk } from './testInk';
 import { paintInk, type Shot } from '../tgCode/testCamera';
 
 // The Bytecode under bad conditions, light and dark, by size, for tuning and for reporting. It is slow, so it only runs when asked: BYTE_BENCH=1 npx vitest run src/lib/qr/byteCode/bench.test.ts
-// (writes the table to the file named by BYTE_BENCH_OUT, default byte-bench.txt in the working directory).
+// (BYTE_ONLY=tilt,blur picks conditions, BYTE_SIZES=100,130 the sizes, BYTE_N the pictures per cell; writes the table to the file named by BYTE_BENCH_OUT, default byte-bench.txt in the working directory).
 const run = process.env.BYTE_BENCH ? test : test.skip;
 const P = ['m0123456789ab', 't00ffeeddccbb', 'rabcdefabcdef', 'm000000000000', 'tffffffffffff', 'r1f2e3d4c5b6a', 'm9f8e7d6c5b4a', 't13579bdf0246'];
 const conditions: [string, Partial<Shot>][] = [
@@ -27,6 +27,7 @@ const conditions: [string, Partial<Shot>][] = [
 ];
 const sizes = (process.env.BYTE_SIZES ?? '80,100,130,180,260').split(',').map(Number);
 const N = Number(process.env.BYTE_N ?? 8);
+const only = process.env.BYTE_ONLY?.split(',') ?? null; // run just the conditions whose name contains one of these
 
 run(
   'bytecode under bad conditions',
@@ -39,6 +40,7 @@ run(
         'condition'.padEnd(30) + sizes.map((s) => `r${s}`.padStart(8)).join(''),
       );
       for (const [name, c] of conditions) {
+        if (only && !only.some((o) => name.includes(o))) continue;
         let row = name.padEnd(30);
         for (const px of sizes) {
           let ok = 0;
@@ -46,7 +48,7 @@ run(
             const p = P[i % P.length];
             const img = paintInk(byteInk(p, dark), { px, rot: (i * 0.9) % 6.28, seed: i + 1, dark, ...c } as Shot);
             const got = decodeBytecode(img.img, img.size, img.size);
-            if (got === p.slice(0, 8)) ok++;
+            if (got === p.slice(0, 9)) ok++;
             else if (got) wrongReads++;
           }
           row += `${ok}/${N}`.padStart(8);

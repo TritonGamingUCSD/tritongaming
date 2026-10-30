@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
+import CodeIcon from '@/components/portal/CodeIcon';
 import { Check, CircleAlert, TriangleAlert, X, Zap } from 'lucide-react';
 import jsQR from 'jsqr';
 import { decodeTGcodeAt } from '@/lib/qr/tgCode/decode';
@@ -69,7 +69,7 @@ export default function QrScanner({
   sheet,
   sheetKey,
 }: {
-  onScan: (text: string) => boolean | void;
+  onScan: (text: string, how?: { bytecode: boolean }) => boolean | void; // `how`: which reader took it
   onClose: () => void;
   title?: string;
   note?: string;
@@ -274,7 +274,7 @@ export default function QrScanner({
                   found = f;
                 }
               } else {
-                // then the Bytecode (Byte): the same message in his own lines; its key is 7 digits where the TGcode's is 8
+                // then the Bytecode (Byte): the same message in his own lines (its key is 8 digits too)
                 const byte = byteDecodeRef.current?.(gray, img.width, img.height);
                 if (byte) {
                   const f = { x: ox + byte.spot.x * k, y: oy + byte.spot.y * k, r: byte.spot.r * k };
@@ -297,7 +297,7 @@ export default function QrScanner({
             seen.at = now;
           }
           if (text && !repeat) {
-            if (onScanRef.current(text) === true) {
+            if (onScanRef.current(text, { bytecode: viaByte }) === true) {
               pausedRef.current = true;
               v.pause(); // freeze right away, so the ring lands where the code is in the frozen picture
               setByteScan(viaByte);
@@ -518,7 +518,7 @@ export default function QrScanner({
       </header>
       {error ? (
         <div className={styles.scanProblem}>
-          <TGcodeIcon size={44} />
+          <CodeIcon size={44} />
           <p>{error}</p>
         </div>
       ) : (

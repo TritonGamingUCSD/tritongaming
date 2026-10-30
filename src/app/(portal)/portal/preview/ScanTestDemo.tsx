@@ -9,12 +9,12 @@ import styles from './preview.module.css';
 
 const SAMPLE = 't00ffeeddccbb';
 
-// What the scanner read, in words. A code the portal reads is `tg:` and a kind letter and its key: 7 digits in a Bytecode, 8 in a TGcode.
-function describe(text: string): string {
-  const m = text.match(/^tg:([mtr])([0-9a-f]{7,12})$/);
+// What the scanner read, in words. A code the portal reads is `tg:` and a kind letter and its key (8 digits; 12 in the first TGcode format).
+function describe(text: string, bytecode: boolean): string {
+  const m = text.match(/^tg:([mtr])([0-9a-f]{8,12})$/);
   if (!m) return /^https?:/.test(text) ? `A link: ${text}` : `Something else: ${text}`;
   const what = m[1] === 'm' ? 'a meeting check-in' : m[1] === 't' ? 'a ticket' : 'a reward pickup';
-  const kind = m[2].length === 7 ? 'Bytecode' : m[2].length === 8 ? 'TGcode' : 'TGcode (first format)';
+  const kind = bytecode ? 'Bytecode' : m[2].length === 8 ? 'TGcode' : 'TGcode (first format)';
   return `${kind}: ${what}, key ${m[2]}`;
 }
 
@@ -22,6 +22,7 @@ function describe(text: string): string {
 export default function ScanTestDemo() {
   const [open, setOpen] = useState(false);
   const [got, setGot] = useState<string | null>(null);
+  const [byte, setByte] = useState(false);
   return (
     <div className={styles.stage}>
       <p className={styles.note}>
@@ -48,8 +49,9 @@ export default function ScanTestDemo() {
       {open && (
         <QrScanner
           title="Test Scan: Nothing Is Saved"
-          onScan={(text) => {
+          onScan={(text, how) => {
             setGot(text);
+            setByte(!!how?.bytecode);
             return true;
           }}
           onClose={() => {
@@ -61,7 +63,7 @@ export default function ScanTestDemo() {
           sheet={
             got ? (
               <div className={styles.testSheet}>
-                <strong>Read: {describe(got)}</strong>
+                <strong>Read: {describe(got, byte)}</strong>
                 <span>Dry run: nothing was sent.</span>
                 <Button onClick={() => setGot(null)}>Scan Next</Button>
               </div>

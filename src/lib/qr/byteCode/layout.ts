@@ -9,17 +9,17 @@ export { FINDERS, SPAN };
 //     scarf's edge, the wing feathers…) cut into cells of equal length. A cell is a bar (the line is drawn there) or a gap (it is not: the colour beside it shows through)
 //   • the message is written as bars with a gap of exactly ONE cell between them and no bar shorter than two cells. A block of 10 cells starts with a bar and holds one of 16
 //     patterns of such bars, which is 4 bits; two blocks make a byte. A wrong cell therefore spoils one block and one byte
-//   • 4 bytes of message (what it is, a mark that says it is a Bytecode, and 28 bits of the key the server checks) followed by Reed–Solomon repair bytes, scattered over Byte by a fixed shuffle (its own, so a
+//   • 5 bytes of message (what it is, a mark that says it is a Bytecode, a spare half-byte that is always 0, and 32 bits of the key the server checks) followed by 8 Reed–Solomon repair bytes (they mend 4 wrong bytes, as 9 do), scattered over Byte by a fixed shuffle (its own, so a
 //     Bytecode is never mistaken for a TGcode: the version in the first byte is 3 here, 2 there)
 //   • lines and cells that are not part of the message are drawn as Byte is, so what carries it is only a few pieces of his drawing turned into dashes
 export const PITCH = 0.032; // the length of a cell along a line
 export const LINE_W = 0.026; // how thick his drawn lines are
 export const BLOCK = 10;
-export const NSYM = 9; // repair bytes (the same as the TGcode)
-export const DATA_BYTES = 4; // kind (2 bits), version mark (2 bits) and 28 bits of key
+export const NSYM = 8; // repair bytes: 4 wrong bytes mended, as with the TGcode's 9
+export const DATA_BYTES = 5; // kind (2 bits), version mark (2 bits), a spare half-byte (0) and 32 bits of key
 export const TOTAL_BYTES = DATA_BYTES + NSYM; // 13
 export const NIBBLES = TOTAL_BYTES * 2; // 26 blocks
-export const KEY_HEX = 7; // hex digits of key in a code (28 bits; the TGcode carries 8)
+export const KEY_HEX = 8; // hex digits of key in a code (32 bits, as in the TGcode)
 const VERSION = 3; // the 2-bit mark that says this is a Bytecode
 const CLEAR_LINE = 0.034; // how far a cell on a line stays from any other line
 
@@ -170,11 +170,11 @@ const MASK = (() => {
   return m;
 })();
 
-/** The coded, masked message as half-bytes (null for a payload that is not valid). A payload is what the page hands the drawing: a kind letter and 12 hex digits of key; the code carries the first 7. */
+/** The coded, masked message as half-bytes (null for a payload that is not valid). A payload is what the page hands the drawing: a kind letter and 12 hex digits of key; the code carries the first 8. */
 export function nibblesOf(payload: string): number[] | null {
   if (!PAYLOAD.test(payload)) return null;
-  const data = [(KIND_BYTE[payload[0] as Kind] << 6) | (VERSION << 4) | parseInt(payload[1], 16)];
-  for (let i = 0; i < 3; i++) data.push(parseInt(payload.slice(2 + i * 2, 4 + i * 2), 16));
+  const data = [(KIND_BYTE[payload[0] as Kind] << 6) | (VERSION << 4)];
+  for (let i = 0; i < KEY_HEX / 2; i++) data.push(parseInt(payload.slice(1 + i * 2, 3 + i * 2), 16));
   const code = rsEncode(data, NSYM).map((b, i) => b ^ MASK[i]);
   return code.flatMap((b) => [b >> 4, b & 15]);
 }
@@ -199,12 +199,11 @@ export function payloadFromNibbles(nib: number[], doubtful: number[] = []): stri
   const erase = [...new Set(doubtful.map((b) => b >> 1))];
   const data = rsDecode(bytes, NSYM, erase);
   if (!data || data.length !== DATA_BYTES) return null;
-  if (((data[0] >> 4) & 3) !== VERSION) return null;
+  if (((data[0] >> 4) & 3) !== VERSION || (data[0] & 15) !== 0) return null;
   const kind = KIND_OF[data[0] >> 6];
   if (!kind) return null;
   return (
     kind +
-    (data[0] & 15).toString(16) +
     data
       .slice(1)
       .map((b) => b.toString(16).padStart(2, '0'))
