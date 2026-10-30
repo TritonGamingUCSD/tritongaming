@@ -466,7 +466,7 @@ export default function PortalHub({
     id: 'scan',
     label: 'Scan',
     raised: true,
-    ariaLabel: 'Scan a TGcode',
+    ariaLabel: 'Scan a code',
     icon: <CodeIcon size={24} />,
     onClick: () => {
       setMoreOpen(false);

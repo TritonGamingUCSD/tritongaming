@@ -134,7 +134,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       goTimer.current = window.setTimeout(() => go(target.href), 150);
       return true;
     } // no pause to read: the sheet stays up while the page loads
-    setProblem('That isn’t a TGcode or a portal QR. Try another.');
+    setProblem('That isn’t a TGcode, a Bytecode or a portal QR. Try another.');
     return false;
   }
 
@@ -247,7 +247,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         onScan={onScan}
         onClose={onClose}
         title="Scan"
-        note="Point at a TGcode or event QR. Pinch to zoom."
+        note="Point at a TGcode, a Bytecode or an event QR. Pinch to zoom."
         lock={lock}
         sheet={sheet}
         sheetKey={state.kind === 'result' ? `result-${state.outcome.kind}` : state.kind}

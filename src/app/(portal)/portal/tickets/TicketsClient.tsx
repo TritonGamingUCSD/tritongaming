@@ -9,6 +9,7 @@ import Link from '@/components/portal/NoPrefetchLink';
 import { getAttributionSource } from '@/lib/site/attribution';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import CodeIcon from '@/components/portal/CodeIcon';
+import CodeName from '@/components/portal/CodeName';
 import { Ticket, MapPin, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
@@ -299,7 +300,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       {checkoutResult === 'cancelled' && <Notice tone="warning">Checkout was cancelled — no charge was made.</Notice>}
       {claimed && (
         <Notice tone="success">
-          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your TGcode will be right here in My Tickets when the day comes.{' '}
+          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your <CodeName /> will be right here in My Tickets when the day comes.{' '}
           <button
             type="button"
             onClick={() => setClaimed(null)}
@@ -355,7 +356,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   <span className={styles.showQrIcon}>
                     <CodeIcon size={18} />
                   </span>
-                  Show TGcode
+                  Show <CodeName />
                 </button>
               )}
             </div>
@@ -633,7 +634,7 @@ function TicketRow({
             <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} checkinFormUrl={ticket.checkinFormUrl} onFormComplete={onFormComplete} compact />
           ) : isActionable && onShowQR ? (
             <button className={styles.qrMiniBtn} onClick={onShowQR}>
-              <CodeIcon size={14} /> View TGcode
+              <CodeIcon size={14} /> View <CodeName />
             </button>
           ) : (
             <span className={`${styles.statusBadge} ${styles[`status_${displayStatus}`]}`}>{STATUS_LABEL[displayStatus]}</span>
