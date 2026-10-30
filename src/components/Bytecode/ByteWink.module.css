@@ -1,20 +1,20 @@
 .wink { position: relative; display: block; width: 100%; aspect-ratio: 1 / 1; }
 .wink svg { overflow: visible; }
 /* Byte's own colours (the same as the Bytecode's: a plum line, greens, a yellow scarf, a pink cheek) */
-.c2 { fill: #585868; stroke: #585868; stroke-width: 0.004; } /* theme-ok */
-.c3 { fill: #88a898; stroke: #88a898; stroke-width: 0.004; } /* theme-ok */
-.c4 { fill: #d8e8a8; stroke: #d8e8a8; stroke-width: 0.004; } /* theme-ok */
-.c5 { fill: #f8e848; stroke: #f8e848; stroke-width: 0.004; } /* theme-ok */
-.c6 { fill: #f89898; stroke: #f89898; stroke-width: 0.004; } /* theme-ok */
-.c7 { fill: #b8b4bc; opacity: 0.55; } /* theme-ok */
+.c2 { fill: #585866; stroke: #585866; stroke-width: 0.004; } /* theme-ok */
+.c3 { fill: #8ba699; stroke: #8ba699; stroke-width: 0.004; } /* theme-ok */
+.c4 { fill: #d9e6b0; stroke: #d9e6b0; stroke-width: 0.004; } /* theme-ok */
+.c5 { fill: #f4e65e; stroke: #f4e65e; stroke-width: 0.004; } /* theme-ok */
+.c6 { fill: #ee9c9c; stroke: #ee9c9c; stroke-width: 0.004; } /* theme-ok */
+.c7 { fill: #b8b4bb; opacity: 0.55; } /* theme-ok */
 .ink { fill: #483848; } /* theme-ok */
 .line { fill: none; stroke: #483848; stroke-linecap: round; stroke-linejoin: round; } /* theme-ok */
-.glowA { stop-color: #b8e0b0; stop-opacity: 0.6; } /* theme-ok */
-.glowB { stop-color: #b8e0b0; stop-opacity: 0; } /* theme-ok */
-.spark { fill: #f8e848; stroke: #483848; stroke-width: 0.03; stroke-linejoin: round; } /* theme-ok */
+.glowA { stop-color: #bbddb5; stop-opacity: 0.6; } /* theme-ok */
+.glowB { stop-color: #bbddb5; stop-opacity: 0; } /* theme-ok */
+.spark { fill: #f4e65e; stroke: #483848; stroke-width: 0.03; stroke-linejoin: round; } /* theme-ok */
 .badge { fill: #3f9a5f; stroke: #fbf7e6; stroke-width: 0.1; } /* theme-ok */
 .tick { fill: none; stroke: #fff; stroke-width: 0.2; stroke-linecap: round; stroke-linejoin: round; } /* theme-ok */
-.arc { fill: none; stroke: #d8e8a8; stroke-width: 0.05; stroke-linecap: round; stroke-linejoin: round; } /* theme-ok */
+.arc { fill: none; stroke: #d9e6b0; stroke-width: 0.05; stroke-linecap: round; stroke-linejoin: round; } /* theme-ok */
 
 /* The layers: the body (one big drawing) is only ever moved as a whole by `pop` or `hop`; the eyes, the sparkles and the badge change only their size and opacity, each as a layer of its own,
    so a frame never repaints the big drawing. */
