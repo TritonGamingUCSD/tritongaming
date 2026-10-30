@@ -12,7 +12,7 @@ import { Award, ShoppingBag, Trophy, Settings, Check, Gift, Lock, X } from 'luci
 import { createClient } from '@/lib/supabase/client';
 import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
 import { formatPacificDate } from '@/lib/core/timezone';
-import TGcode from '@/components/TGcode/TGcode';
+import PortalCode from '@/components/portal/PortalCode';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
 import IconButton from '@/components/ui/IconButton';
@@ -1437,7 +1437,7 @@ export default function PointsSectionContent({
           <div className={styles.qrModal} onClick={(e) => e.stopPropagation()}>
             <p className={styles.qrHint}>Show this to an officer at an event</p>
             <div className={styles.qrCanvas}>
-              <TGcode payload={`r${qrFor.replace(/-/g, '').slice(0, 12)}`} />
+              <PortalCode payload={`r${qrFor.replace(/-/g, '').slice(0, 12)}`} />
             </div>
             <Button type="button" onClick={() => setQrFor(null)}>
               Done

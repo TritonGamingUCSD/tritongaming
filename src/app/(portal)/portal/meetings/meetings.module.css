@@ -829,6 +829,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .lock_bad { border-color: #f87171; box-shadow: 0 0 28px rgba(248, 113, 113, 0.7); }   /* theme-ok */
 .scanLockIcon { position: absolute; left: 50%; top: 31%; z-index: 2; display: grid; place-items: center; width: 14vh; max-width: 26vw; aspect-ratio: 1 / 1; transform: translate(-50%, -50%); border-radius: 50%; color: #fff; pointer-events: none; animation: tgScanIcon 0.32s ease-out 0.3s both; }   /* theme-ok */
 .lockIcon_ok { background: #059669; }   /* theme-ok */
+.lockIcon_byte { background: transparent; border-radius: 0; animation: none; }
 .lockIcon_warn { background: #d97706; }   /* theme-ok */
 .lockIcon_bad { background: #dc2626; }   /* theme-ok */
 .scanBottomOff { opacity: 0; transform: translateY(14px); pointer-events: none; visibility: hidden; transition: opacity 0.2s ease, transform 0.2s ease, visibility 0s linear 0.2s; }

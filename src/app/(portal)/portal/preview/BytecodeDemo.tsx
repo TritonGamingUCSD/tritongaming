@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Bytecode from '@/components/Bytecode/Bytecode';
 import TGcode from '@/components/TGcode/TGcode';
 import { PAYLOAD } from '@/lib/qr/byteCode/layout';
+import ThemePair from './ThemePair';
 import styles from './bytecode.module.css';
 
 const SAMPLES = ['t00ffeeddccbb', 'm0123456789ab', 'rabcdefabcdef'];
@@ -23,10 +24,8 @@ function CodePreview({ title, render }: { title: string; render: (payload: strin
         ))}
         <input value={payload} onChange={(e) => setPayload(e.target.value.toLowerCase())} maxLength={13} spellCheck={false} aria-label="Code text" aria-invalid={!valid} />
       </div>
-      <figure className={styles.single}>
-        <div className={styles.box}>{valid ? render(payload) : <p>Not a valid code</p>}</div>
-        <figcaption>{title}</figcaption>
-      </figure>
+      <ThemePair>{valid ? render(payload) : <p>Not a valid code</p>}</ThemePair>
+      <p className={styles.note}>{title}</p>
     </div>
   );
 }

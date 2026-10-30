@@ -9,6 +9,11 @@ import CheckInOutcome from '@/components/portal/CheckInOutcome';
 import type { Outcome } from '@/lib/checkin/anyCode';
 import ticketStyles from '../tickets/fullscreenqr.module.css';
 import BytecodeDemo, { TGcodeDemo } from './BytecodeDemo';
+import ThemePair from './ThemePair';
+import ScanTestDemo from './ScanTestDemo';
+import Bytecode from '@/components/Bytecode/Bytecode';
+import { RING_PATH } from '@/lib/qr/byteCode/byteArt';
+import TGcode from '@/components/TGcode/TGcode';
 import styles from './preview.module.css';
 
 // One preview at a time, chosen by its slug (see catalog.ts). Each one plays with sample data; nothing here talks to the server.
@@ -27,20 +32,45 @@ function ByteWinkDemo() {
   return (
     <div className={styles.stage}>
       <Replay onClick={() => setRun((n) => n + 1)} />
-      <div className={styles.cards}>
-        <figure className={styles.card}>
-          <div className={styles.box}>
-            <ByteWink key={`a${run}`} />
-          </div>
-          <figcaption>On the card</figcaption>
-        </figure>
-        <figure className={`${styles.card} ${styles.dark}`}>
-          <div className={styles.box}>
-            <ByteWink key={`b${run}`} />
-          </div>
-          <figcaption>On a dark screen</figcaption>
-        </figure>
+      <ThemePair>
+        <div className={styles.box}>
+          <ByteWink key={run} />
+        </div>
+      </ThemePair>
+    </div>
+  );
+}
+
+// The ticket screen's countdown ring (see tickets/FullscreenQR.tsx): a circle round the TGcode, a line along his outline round the Bytecode. A 30 second cycle, played from the start.
+function CodeRingDemo() {
+  const [run, setRun] = useState(0);
+  const ring = (square: boolean) => (
+    <div className={ticketStyles.qrWrapper} key={`${square}${run}`}>
+      <svg className={square ? ticketStyles.countdownRingByte : ticketStyles.countdownRing} viewBox={square ? '-1 -1 2 2' : '0 0 100 100'} aria-hidden="true">
+        {square ? (
+          <>
+            <path className={ticketStyles.countdownTrackByte} d={RING_PATH} />
+            <path className={ticketStyles.countdownFillByte} d={RING_PATH} pathLength={100} style={{ animationDuration: '30s' }} />
+          </>
+        ) : (
+          <>
+            <circle className={ticketStyles.countdownTrack} cx="50" cy="50" r="48" />
+            <circle className={ticketStyles.countdownFill} cx="50" cy="50" r="48" style={{ animationDuration: '30s' }} />
+          </>
+        )}
+      </svg>
+      <div className={ticketStyles.qrCanvas} style={{ width: '100%' }}>
+        {square ? <Bytecode payload="t00ffeeddccbb" /> : <TGcode payload="t00ffeeddccbb" />}
       </div>
+    </div>
+  );
+  return (
+    <div className={styles.stage}>
+      <Replay onClick={() => setRun((n) => n + 1)} />
+      <ThemePair>
+        {ring(false)}
+        {ring(true)}
+      </ThemePair>
     </div>
   );
 }
@@ -85,16 +115,16 @@ function CheckInResultsDemo() {
   return (
     <div className={styles.stage}>
       <Replay onClick={() => setRun((n) => n + 1)} />
-      <div className={styles.cards}>
+      <ThemePair>
         {SAMPLES.map(([name, outcome]) => (
-          <figure key={`${name}${run}`} className={styles.card}>
+          <figure key={`${name}${run}`} className={styles.card} style={{ width: '100%' }}>
             <div className={styles.wide}>
               <CheckInOutcome outcome={outcome} onDone={() => {}} noButton />
             </div>
             <figcaption>{name}</figcaption>
           </figure>
         ))}
-      </div>
+      </ThemePair>
     </div>
   );
 }
@@ -185,6 +215,10 @@ export default function PreviewStage({ slug }: { slug: string }) {
       return <BytecodeDemo />;
     case 'tgcode':
       return <TGcodeDemo />;
+    case 'code-ring':
+      return <CodeRingDemo />;
+    case 'scan-test':
+      return <ScanTestDemo />;
     case 'byte-wink':
       return <ByteWinkDemo />;
     case 'scan-opening':

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import TGcodeIcon from '@/components/TGcode/TGcodeIcon';
 import { Check, CircleAlert, TriangleAlert, X, Zap } from 'lucide-react';
@@ -50,8 +50,9 @@ const ringBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement |
   const f = fit(spot, stage);
   return { left: f.x, top: f.y, width: f.r * 2 };
 };
-const iconBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement | null): React.CSSProperties => {
+const iconBox = (spot: { x: number; y: number; r: number }, stage: HTMLElement | null, byte = false): React.CSSProperties => {
   const f = fit(spot, stage);
+  if (byte) return { left: f.x, top: f.y, width: f.r * 2.1, maxWidth: 'none' }; // Byte covers the code he came out of
   const d = Math.min(Math.max(f.r * 0.9, 56), 110);
   return { left: f.x, top: f.y, width: d, maxWidth: 'none' };
 };
@@ -86,6 +87,22 @@ export default function QrScanner({
   const [torch, setTorch] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
+  // The Bytecode's reader and Byte's pop-up are loaded after the camera starts (they are not needed to start scanning, and they carry Byte's drawing).
+  const byteDecodeRef = useRef<((gray: Uint8ClampedArray, w: number, h: number) => { payload: string; spot: { x: number; y: number; r: number } } | null) | null>(null);
+  const [Pop, setPop] = useState<ComponentType<{ className?: string }> | null>(null);
+  const [byteScan, setByteScan] = useState(false); // the code just taken was a Bytecode: Byte pops up on it instead of the check mark
+  useEffect(() => {
+    let alive = true;
+    void import('@/lib/qr/byteCode/decode').then((m) => {
+      if (alive) byteDecodeRef.current = m.decodeBytecodeAt;
+    });
+    void import('@/components/Bytecode/ByteScanPop').then((m) => {
+      if (alive) setPop(() => m.default);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
   const [spot, setSpot] = useState<{ x: number; y: number; r: number } | null>(null); // where on the screen the code was when it was read (stage pixels)   // the first picture is in and the zoom has settled: only then does the camera fade in
   // The result sheet's height follows its content smoothly (a spinner line becoming a result with a button), instead of jumping.
   const sheetBody = useRef<HTMLDivElement>(null);
@@ -201,6 +218,7 @@ export default function QrScanner({
           last = now;
           let text: string | null = null;
           let found: { x: number; y: number; r: number } | null = null; // where it was, in video pixels
+          let viaByte = false;
           // Only what is in (or very near) the circle on the screen is read, not the whole camera picture: another code at the edge of the view, or on a screen across the room, is never picked up by
           // accident. The picture is cropped to a square a little bigger than the circle (so a code that fills the circle still fits), which also gives a small code more pixels to be read from.
           const z = digitalRef.current ? zoomRef.current : 1;
@@ -255,6 +273,17 @@ export default function QrScanner({
                   text = `tg:${ring.payload}`;
                   found = f;
                 }
+              } else {
+                // then the Bytecode (Byte): the same message in his own lines; its key is 7 digits where the TGcode's is 8
+                const byte = byteDecodeRef.current?.(gray, img.width, img.height);
+                if (byte) {
+                  const f = { x: ox + byte.spot.x * k, y: oy + byte.spot.y * k, r: byte.spot.r * k };
+                  if (inCircle(f)) {
+                    text = `tg:${byte.payload}`;
+                    found = f;
+                    viaByte = true;
+                  }
+                }
               }
             }
           }
@@ -271,6 +300,7 @@ export default function QrScanner({
             if (onScanRef.current(text) === true) {
               pausedRef.current = true;
               v.pause(); // freeze right away, so the ring lands where the code is in the frozen picture
+              setByteScan(viaByte);
               setSpot(found ? toStage(found, v, z) : null);
             }
           }
@@ -514,11 +544,11 @@ export default function QrScanner({
               return (
                 <span
                   key={tone}
-                  className={`${styles.scanLockIcon} ${styles[`lockIcon_${tone}`]} ${lock ? '' : styles.scanLockIconOut}`}
-                  style={(lock ? spot : lastSpot.current) ? iconBox((lock ? spot : lastSpot.current)!, frame.current) : undefined}
+                  className={`${styles.scanLockIcon} ${tone === 'ok' && Pop && byteScan ? styles.lockIcon_byte : styles[`lockIcon_${tone}`]} ${lock ? '' : styles.scanLockIconOut}`}
+                  style={(lock ? spot : lastSpot.current) ? iconBox((lock ? spot : lastSpot.current)!, frame.current, tone === 'ok' && !!Pop && byteScan) : undefined}
                   aria-hidden="true"
                 >
-                  {tone === 'ok' ? <Check size={44} strokeWidth={2.75} /> : tone === 'warn' ? <TriangleAlert size={40} /> : <CircleAlert size={42} />}
+                  {tone === 'ok' ? Pop && byteScan ? <Pop /> : <Check size={44} strokeWidth={2.75} /> : tone === 'warn' ? <TriangleAlert size={40} /> : <CircleAlert size={42} />}
                 </span>
               );
             })()}

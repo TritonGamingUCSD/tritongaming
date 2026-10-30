@@ -6,7 +6,10 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { Ticket, X, Check, Zap, ClipboardList } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import TGcode from '@/components/TGcode/TGcode';
+import dynamic from 'next/dynamic';
+import PortalCode from '@/components/portal/PortalCode';
+import { useCodeStyle } from '@/lib/ui/useCodeStyle';
+import { RING_PATH } from '@/lib/qr/byteCode/byteArt';
 import { formatPacificDateTime, formatPacificTime } from '@/lib/core/timezone';
 import { fetchWithRetry } from '@/lib/ui/fetchWithRetry';
 import AsFormButton from './AsFormButton';
@@ -31,12 +34,16 @@ interface Props {
   onFormComplete?: (ticketId: string) => void;
 }
 
+// Byte's wink, for a person whose device shows Bytecodes: loaded only then (it carries his drawing).
+const ByteWink = dynamic(() => import('@/components/Bytecode/ByteWink'), { ssr: false, loading: () => null });
+
 export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, onClose, onCheckedIn, checkinFormUrl, onFormComplete }: Props) {
   const [code, setCode] = useState<string | null>(null);
   const [qrData, setQrData] = useState<string | null>(null);
   const [expiresIn, setExpiresIn] = useState(30);
   const [rotationSeconds, setRotationSeconds] = useState(30);
   const [error, setError] = useState('');
+  const codeStyle = useCodeStyle();
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkedInAt, setCheckedInAt] = useState<string | null>(null);
   // Whether this member currently holds a fulfilled Fast Pass reward (from
@@ -446,9 +453,15 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
               </>
             ) : (
               <>
-                <div className={styles.checkedInIcon} aria-hidden="true">
-                  <Check size={32} strokeWidth={2} />
-                </div>
+                {codeStyle === 'byte' ? (
+                  <div className={styles.checkedInByte}>
+                    <ByteWink label="Byte winks: you are checked in" />
+                  </div>
+                ) : (
+                  <div className={styles.checkedInIcon} aria-hidden="true">
+                    <Check size={32} strokeWidth={2} />
+                  </div>
+                )}
                 <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>
               </>
             )}
@@ -508,39 +521,55 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
             </div>
 
             <div className={styles.qrWrapper}>
-              {code && (
+              {code &&
                 // Circumscribes the badge's own circle rather than sitting as
                 // a separate bar underneath — the ring itself *is* the "time
                 // left" readout, draining smoothly around the thing it's
                 // timing instead of a detached indicator elsewhere on screen.
-                <svg className={styles.countdownRing} viewBox="0 0 100 100" aria-hidden="true">
-                  <circle className={styles.countdownTrack} cx="50" cy="50" r="48" />
-                  <circle
-                    key={code}
-                    className={styles.countdownFill}
-                    cx="50"
-                    cy="50"
-                    r="48"
-                    // Always paced to a full rotation cycle (animation-duration),
-                    // then seeked forward with a *negative* delay to however much
-                    // of that cycle has already elapsed — the standard CSS trick
-                    // for resuming an animation partway through instead of
-                    // replaying it from the start. Opening the ticket mid-window
-                    // (expiresIn < rotationSeconds, e.g. 4s left of a 30s cycle)
-                    // now shows the ring already mostly drained/red, exactly
-                    // matching reality, instead of restarting from full green and
-                    // rushing through the *entire* gold-to-red journey in just
-                    // those 4 seconds — which is what "accelerates and suddenly
-                    // ends" actually was: not a bug in the timer itself, but the
-                    // ring always replaying its whole visual arc regardless of
-                    // how much of the real cycle was left to show it in.
-                    style={{
-                      animationDuration: `${rotationSeconds}s`,
-                      animationDelay: `-${Math.max(0, rotationSeconds - expiresIn)}s`,
-                    }}
-                  />
-                </svg>
-              )}
+                (codeStyle === 'byte' ? (
+                  // A Bytecode is Byte, so its ring is a line that follows his outline (a circle would cut across his ears and wings): the same drain, along a path that starts at the top and goes clockwise.
+                  <svg className={styles.countdownRingByte} viewBox="-1 -1 2 2" aria-hidden="true">
+                    <path className={styles.countdownTrackByte} d={RING_PATH} />
+                    <path
+                      key={code}
+                      className={styles.countdownFillByte}
+                      d={RING_PATH}
+                      pathLength={100}
+                      style={{
+                        animationDuration: `${rotationSeconds}s`,
+                        animationDelay: `-${Math.max(0, rotationSeconds - expiresIn)}s`,
+                      }}
+                    />
+                  </svg>
+                ) : (
+                  <svg className={styles.countdownRing} viewBox="0 0 100 100" aria-hidden="true">
+                    <circle className={styles.countdownTrack} cx="50" cy="50" r="48" />
+                    <circle
+                      key={code}
+                      className={styles.countdownFill}
+                      cx="50"
+                      cy="50"
+                      r="48"
+                      // Always paced to a full rotation cycle (animation-duration),
+                      // then seeked forward with a *negative* delay to however much
+                      // of that cycle has already elapsed — the standard CSS trick
+                      // for resuming an animation partway through instead of
+                      // replaying it from the start. Opening the ticket mid-window
+                      // (expiresIn < rotationSeconds, e.g. 4s left of a 30s cycle)
+                      // now shows the ring already mostly drained/red, exactly
+                      // matching reality, instead of restarting from full green and
+                      // rushing through the *entire* gold-to-red journey in just
+                      // those 4 seconds — which is what "accelerates and suddenly
+                      // ends" actually was: not a bug in the timer itself, but the
+                      // ring always replaying its whole visual arc regardless of
+                      // how much of the real cycle was left to show it in.
+                      style={{
+                        animationDuration: `${rotationSeconds}s`,
+                        animationDelay: `-${Math.max(0, rotationSeconds - expiresIn)}s`,
+                      }}
+                    />
+                  </svg>
+                ))}
               {qrData ? (
                 // Keyed by qrData (not a stable key) specifically so React
                 // remounts this on every refresh — that's what restarts the
@@ -548,7 +577,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 // instant, jarring swap into a brief soft crossfade instead.
                 <div key={qrData} className={styles.qrSwap}>
                   <div className={styles.qrCanvas}>
-                    <TGcode payload={qrData} label="Your ticket's code, for the portal's Scan button" />
+                    <PortalCode payload={qrData} label="Your ticket's code, for the portal's Scan button" />
                   </div>
                 </div>
               ) : (

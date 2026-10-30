@@ -20,3 +20,12 @@
 .sample input { height: var(--btn-h-sm); padding: 0 0.6rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-family: monospace; }
 .sample input[aria-invalid='true'] { border-color: #c0392b; } /* theme-ok */
 .head { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; justify-content: space-between; }
+.themes { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr)); gap: 1rem; align-items: start; }
+.pane { display: grid; gap: 0.8rem; justify-items: center; padding: 1rem; border-radius: 14px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-paper); color: var(--pp-ink); min-width: 0; }
+.pane h3 { margin: 0; justify-self: start; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.7; }
+/* the light side keeps the light colours even when the page around it is dark */
+.paneLight { --pp-ink: #011941; --pp-ink-rgb: 1, 25, 65; --pp-paper: #e9e6df; --pp-paper-2: #dcd8cf; --pp-card: #f3f1ea; --pp-line: rgba(1, 25, 65, 0.22); --p-accent-text: #0a4c8a; --pp-ok: #05674a; --pp-warn: #92400e; --pp-bad: #b91c1c; --pp-info: #1d4ed8; color-scheme: light; --bc-edge: #483848; } /* theme-ok */
+.paneDark { --bc-edge: #fbf7e6; } /* theme-ok */
+.switch { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; align-items: center; justify-content: space-between; padding: 0.9rem 1rem; border-radius: 12px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); color: var(--pp-ink); }
+.switch strong { display: block; margin-bottom: 0.2rem; }
+.testSheet { display: grid; gap: 0.5rem; justify-items: center; text-align: center; padding: 0.4rem 0; color: var(--pp-ink); }

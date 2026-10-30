@@ -513,3 +513,17 @@
 .fastPassBadge { background: #ffc72c; color: #011941; border: 2px solid #011941; border-radius: 4px; box-shadow: 2px 2px 0 #011941; } /* theme-ok */
 .liveBadge { border: 2px solid var(--pp-bad); border-radius: 3px; background: transparent; }
 .eventBlock { padding-inline: 2.6rem; }
+
+/* Byte's wink in place of the check mark, for a person whose device shows Bytecodes */
+.checkedInByte { width: min(46vw, 11rem); margin: 0 auto 0.4rem; }
+
+/* The ring round a Bytecode: a line that follows Byte's outline (in the code's own units, laid exactly over it), draining along a path of length 100 */
+.countdownRingByte { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.countdownTrackByte { fill: none; stroke: rgba(var(--pp-ink-rgb), 0.1); stroke-width: 0.035; stroke-linejoin: round; }
+.countdownFillByte { fill: none; stroke-width: 0.035; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 0; animation-name: ringDrainSquare; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes ringDrainSquare {
+  0%   { stroke-dashoffset: 0;  stroke: var(--p-accent); }
+  55%  { stroke-dashoffset: 55; stroke: #f59e0b; }
+  80%  { stroke-dashoffset: 80; stroke: #f97316; }
+  100% { stroke-dashoffset: 100; stroke: #dc2626; }
+}

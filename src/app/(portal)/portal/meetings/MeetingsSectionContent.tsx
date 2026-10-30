@@ -89,7 +89,7 @@ import Dialog from '@/components/ui/Dialog';
 import CheckInOutcome from '@/components/portal/CheckInOutcome';
 import { checkInWithCode, resolveChoice, confirmEventCheckIn, type Outcome } from '@/lib/checkin/anyCode';
 import Link from 'next/link';
-import TGcode from '@/components/TGcode/TGcode';
+import PortalCode from '@/components/portal/PortalCode';
 
 type WallItem = { id: string; emoji: string; x: number; y: number; at: number }; // a sticker on the wall (screen position in percent; `at` when it was placed)
 type Tab = 'mine' | 'planning' | 'host' | 'attendance' | 'emojis';
@@ -388,7 +388,7 @@ const sideSpot = (edge = 5, band = 19) => (Math.random() < 0.5 ? edge + Math.ran
 function MeetingQR({ payload, size }: { payload: string; size: number }) {
   return (
     <div className={styles.qrCanvas} style={{ width: size, height: size }}>
-      <TGcode payload={payload} />
+      <PortalCode payload={payload} />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
-import { getProfile } from '@/lib/core/auth';
+import { getProfile, getUserRoles } from '@/lib/core/auth';
+import { hasCapability } from '@/lib/portal/capabilities';
 import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
 import { PREVIEWS } from '../catalog';
 import PreviewStage from '../PreviewStage';
@@ -21,7 +22,8 @@ export default async function PreviewPage({ params }: Params) {
   const { animation } = await params;
   const preview = PREVIEWS.find((p) => p.slug === animation);
   if (!preview) notFound();
-  const profile = await getProfile();
+  const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
+  if (!hasCapability(roles, 'view_admin_dashboard')) notFound();
   if (!profile) redirect(`/login?next=${encodeURIComponent(`/portal/preview/${animation}`)}`);
   return (
     <div className={styles.page}>

@@ -1,5 +1,5 @@
 // Everything the preview pages show. A preview is a page at /portal/preview/<slug> that plays one screen or animation with sample data (nothing is saved, nobody is notified).
-// It is not linked from any menu: anyone signed in can open /portal/preview to find them all. To add one: a line here and a case in PreviewStage.tsx.
+// It is not linked from any menu, and only Admins can open /portal/preview to find them all (anyone else gets the page for an address that does not exist). To add one: a line here and a case in PreviewStage.tsx.
 export interface Preview {
   slug: string;
   title: string;
@@ -16,6 +16,13 @@ export const PREVIEWS: Preview[] = [
     about: 'The short wink after a good scan: Byte pops up, both his eyes close into happy ^ eyes and a check mark pops out.',
     group: 'Scanning',
   },
+  {
+    slug: 'code-ring',
+    title: 'Code Countdown Ring',
+    about: 'The ring that drains round a ticket’s code before it changes: a circle round the TGcode, a line along Byte’s outline round the Bytecode.',
+    group: 'Codes',
+  },
+  { slug: 'scan-test', title: 'Test Scan', about: 'The real camera and reader as a dry run: it says what it read and plays the animation, and sends nothing.', group: 'Scanning' },
   { slug: 'scan-opening', title: 'Scan Opening', about: 'The black screen that shows the moment the Scan button is pressed, until the camera is ready.', group: 'Scanning' },
   { slug: 'check-in-results', title: 'Check-In Results', about: 'What the scanner shows after a scan: meeting, ticket, reward and the questions it can ask.', group: 'Scanning' },
   {
