@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { notFound } from 'next/navigation';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { validateSlug } from '@/lib/site/shortLinks';
 
@@ -18,10 +19,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   } catch {
     /* a malformed escape is just not a link */
   }
-  if (!slug) return notFoundPage();
+  if (!slug) return notFoundPage(request);
 
   const { data } = await createServiceClient().rpc('resolve_short_link', { p_slug: slug });
-  if (typeof data !== 'string' || !data) return notFoundPage();
+  if (typeof data !== 'string' || !data) return notFoundPage(request);
 
   // Internal destinations get a tag so "where did they come from" can credit this short link.
   const target = data.startsWith('/') ? new URL(`${data}${data.includes('?') ? '&' : '?'}utm_source=${encodeURIComponent(slug)}&utm_medium=shortlink`, request.url) : data;
@@ -33,16 +34,25 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   return res;
 }
 
-// A small, self-contained page (no site layout to load), in the site's colours.
-function notFoundPage() {
-  const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><title>Link not found · Triton Gaming</title>
-<style>
-:root{color-scheme:light dark;--bg:#f2f1f0;--ink:#011941;--card:#fff}
-@media (prefers-color-scheme:dark){:root{--bg:#080d1a;--ink:#f2f1f0;--card:#121a30}}
-*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:1rem;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,sans-serif}
-main{max-width:26rem;text-align:center;background:var(--card);border:2px solid var(--ink);border-radius:12px;box-shadow:5px 5px 0 var(--ink);padding:2rem 1.5rem}
-h1{margin:0 0 .5rem;font-size:1.5rem}p{margin:0 0 1.25rem;line-height:1.5}
-a{display:inline-block;padding:.65rem 1.1rem;border:2px solid #011941;border-radius:999px;background:#ffc72c;color:#011941;font-weight:700;text-decoration:none;box-shadow:3px 3px 0 #011941}
-</style></head><body><main><h1>This link doesn’t go anywhere</h1><p>It may have been turned off, or typed a little differently.</p><a href="/">Go to Triton Gaming</a></main></body></html>`;
-  return new Response(html, { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
+// An address that is no short link shows the site's own 404 page (the one for any address that matches nothing), at the address that was typed. A route cannot render a page, so this asks
+// for that page once (any address that matches no page will do: /_/not/found) and serves its HTML, without its scripts, for a while, so a bot trying a thousand addresses costs one render, not a thousand.
+let poster: { html: string; at: number } | null = null;
+async function notFoundPage(request: Request) {
+  if (!poster || Date.now() - poster.at > 10 * 60_000) {
+    try {
+      const res = await fetch(new URL('/_/not/found', request.url), { cache: 'no-store' });
+      // The page is plain HTML and CSS that Next streams in: only the few tiny scripts that swap the finished page in for the loading screen are kept ($RB, $RC and the like). The rest belong to the
+      // other address and would only try to correct the one in the bar (a reload loop).
+      const html = (await res.text())
+        .replace(/<script\b[^>]*>([\s\S]*?)<\/script>/gi, (all, body: string) =>
+          /^\s*(\$RB=|\$RC\(|\$RC=|\$RX\(|\$RR\(|\$RT=|requestAnimationFrame\(function\(\)\{\$RT)/.test(body) ? all : '',
+        )
+        .replace(/<link\b[^>]*\b(?:as="script"|rel="modulepreload")[^>]*>/gi, '');
+      poster = res.status === 404 ? { html, at: Date.now() } : null;
+    } catch {
+      poster = null;
+    }
+  }
+  if (!poster) notFound(); // (the page could not be fetched: a plain 404)
+  return new Response(poster.html, { status: 404, headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex' } });
 }

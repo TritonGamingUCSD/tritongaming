@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { getProfile, getUserRoles } from '@/lib/core/auth';
 import { hasCapability } from '@/lib/portal/capabilities';
-import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
 import { PREVIEWS } from '../catalog';
 import PreviewStage from '../PreviewStage';
 import styles from '../preview.module.css';
@@ -32,7 +31,6 @@ export default async function PreviewPage({ params }: Params) {
       </Link>
       <div className={styles.head}>
         <h1>{preview.title}</h1>
-        <PortalThemeToggle labelled />
       </div>
       <p className={styles.note}>{preview.about}</p>
       <PreviewStage slug={preview.slug} />
