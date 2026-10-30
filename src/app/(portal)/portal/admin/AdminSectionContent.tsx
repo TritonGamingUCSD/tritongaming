@@ -13,6 +13,7 @@ import RoleManager from './RoleManager';
 import PasteEmailsDialog from './PasteEmailsDialog';
 import Button from '@/components/ui/Button';
 import AccessPanel from './AccessPanel';
+import SettingsPanel from './SettingsPanel';
 import EmailBlastPanel from './EmailBlastPanel';
 import SystemStats from './SystemStats';
 import AdminOverviewPanels from './AdminOverviewPanels';
@@ -36,14 +37,14 @@ interface Props {
   initialTab?: string;
 }
 
-type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system' | 'email';
-const VALID_TABS: Tab[] = ['overview', 'members', 'access', 'analytics', 'audit-log', 'short-links', 'system', 'email'];
+type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system' | 'settings' | 'email';
+const VALID_TABS: Tab[] = ['overview', 'members', 'access', 'analytics', 'audit-log', 'short-links', 'system', 'settings', 'email'];
 type Group = 'overview' | 'people' | 'insights' | 'system';
 const GROUPS: Record<Group, { label: string; icon: ReactNode; views: Tab[] }> = {
   overview: { label: 'Overview', icon: <LayoutDashboard />, views: ['overview'] },
   people: { label: 'People', icon: <UsersIcon />, views: ['members', 'access'] },
   insights: { label: 'Insights', icon: <BarChart3 />, views: ['analytics', 'audit-log'] },
-  system: { label: 'System', icon: <Server />, views: ['system', 'short-links', 'email'] },
+  system: { label: 'System', icon: <Server />, views: ['system', 'settings', 'short-links', 'email'] },
 };
 const VIEW_LABELS: Record<Tab, string> = {
   overview: 'Overview',
@@ -53,6 +54,7 @@ const VIEW_LABELS: Record<Tab, string> = {
   'audit-log': 'Audit Log',
   'short-links': 'Short Links',
   system: 'System Health',
+  settings: 'Settings',
   email: 'Email (Test)',
 };
 const groupOf = (t: Tab): Group => (Object.keys(GROUPS) as Group[]).find((g) => GROUPS[g].views.includes(t)) ?? 'overview';
@@ -243,6 +245,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       )}
 
       {tab === 'system' && isAdmin && <SystemStats />}
+      {tab === 'settings' && isAdmin && <SettingsPanel />}
 
       {tab === 'email' && isAdmin && <EmailBlastPanel />}
 

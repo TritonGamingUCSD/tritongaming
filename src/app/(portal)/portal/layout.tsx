@@ -16,6 +16,11 @@ import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBann
 import PushAsk from '@/components/portal/PushAsk';
 import InstallAsk from '@/components/portal/InstallAsk';
 import HideOnPaths from '@/components/portal/HideOnPaths';
+import PortalBanner from '@/components/portal/PortalBanner';
+import SiteSettingsProvider from '@/components/portal/SiteSettingsProvider';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { pacificDayKey } from '@/lib/events/checkinDays';
+import { bannerShown, loadSiteSettings } from '@/lib/portal/siteSettings';
 
 const CHECKIN_PATHS = ['/portal/in/', '/portal/finish-profile'];
 import styles from './portal.module.css';
@@ -34,7 +39,7 @@ export default async function PortalLayout({ children }: { children: React.React
 
   // Anything required still blank on this person's profile — surfaced as a
   // banner on every portal page, not only when a ticket claim bounces them.
-  const [roles, gender, viewAs, viewing] = await Promise.all([getUserRoles(), getMyGender(), getViewAs(), getViewingUser()]);
+  const [roles, gender, viewAs, viewing, siteSettings] = await Promise.all([getUserRoles(), getMyGender(), getViewAs(), getViewingUser(), loadSiteSettings(createServiceClient())]);
   const viewingName = viewing ? profile.display_name || profile.google_first_name || viewing.email || 'this person' : null;
   const isUcsdMember = isVerifiedMember(roles);
   const missingProfileFields = getMissingProfileFields({ ...profile, gender }, isUcsdMember, { requireOrgTitle: requiresOrgTitle(roles) });
@@ -42,56 +47,59 @@ export default async function PortalLayout({ children }: { children: React.React
   const missingOnlyOfficerTab = missingProfileFields.length > 0 && getMissingProfileFields({ ...profile, gender }, isUcsdMember).length === 0;
 
   return (
-    <div className={`${styles.layout} ${styles.fontScope} ${portalSans.variable} ${jbMono.variable}`} data-portal-layout>
-      <main className={styles.main} data-ptr-page>
-        {viewAs && (
-          <div className={styles.bannerSlot}>
-            <ViewAsBanner active={viewAs} />
+    <SiteSettingsProvider value={siteSettings}>
+      <div className={`${styles.layout} ${styles.fontScope} ${portalSans.variable} ${jbMono.variable}`} data-portal-layout>
+        <main className={styles.main} data-ptr-page>
+          {viewAs && (
+            <div className={styles.bannerSlot}>
+              <ViewAsBanner active={viewAs} />
+            </div>
+          )}
+          {viewingName && (
+            <div className={styles.bannerSlot}>
+              <ViewingUserBanner name={viewingName} />
+            </div>
+          )}
+          <SessionGuard />
+          {viewingName && <ViewOnlyGuard name={viewingName} />}
+          <div className={styles.content}>
+            <div data-print-hide className={styles.bannerSlot} style={{ display: 'contents' }}>
+              {bannerShown(siteSettings, pacificDayKey()) && <PortalBanner text={siteSettings.banner.text} />}
+              <Suspense fallback={null}>
+                <HideOnPaths paths={CHECKIN_PATHS}>
+                  <ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} />
+                </HideOnPaths>
+              </Suspense>
+            </div>
+            {children}
           </div>
-        )}
-        {viewingName && (
-          <div className={styles.bannerSlot}>
-            <ViewingUserBanner name={viewingName} />
-          </div>
-        )}
-        <SessionGuard />
-        {viewingName && <ViewOnlyGuard name={viewingName} />}
-        <div className={styles.content}>
-          <div data-print-hide className={styles.bannerSlot} style={{ display: 'contents' }}>
-            <Suspense fallback={null}>
-              <HideOnPaths paths={CHECKIN_PATHS}>
-                <ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} />
-              </HideOnPaths>
-            </Suspense>
-          </div>
-          {children}
-        </div>
-      </main>
-      {/* Fixed to the viewport, not slotted into .content — needs to stay
+        </main>
+        {/* Fixed to the viewport, not slotted into .content — needs to stay
           reachable on /portal itself, which is the one page PortalTopbar
           (the other persistent portal chrome) deliberately hides on. */}
-      <div data-print-hide style={{ display: 'contents' }}>
-        <div className={styles.fixedBell} style={{ display: 'contents' }}>
-          <HideOnPaths paths={CHECKIN_PATHS}>
-            <NotificationBell />
-          </HideOnPaths>
-        </div>
-        {/* Phones: the light/dark switch sits right beside the bell (desktop has it in the top bar). */}
-        <HideOnPaths paths={CHECKIN_PATHS}>
-          <div className={styles.fixedTheme}>
-            <PortalThemeToggle />
+        <div data-print-hide style={{ display: 'contents' }}>
+          <div className={styles.fixedBell} style={{ display: 'contents' }}>
+            <HideOnPaths paths={CHECKIN_PATHS}>
+              <NotificationBell />
+            </HideOnPaths>
           </div>
-        </HideOnPaths>
-        <PullToRefresh />
-        <ConnectivityBanner />
-        <HideOnPaths paths={CHECKIN_PATHS}>
-          <PushAsk />
-        </HideOnPaths>
-        <HideOnPaths paths={CHECKIN_PATHS}>
-          <InstallAsk />
-        </HideOnPaths>
-        <AttributionCapture />
+          {/* Phones: the light/dark switch sits right beside the bell (desktop has it in the top bar). */}
+          <HideOnPaths paths={CHECKIN_PATHS}>
+            <div className={styles.fixedTheme}>
+              <PortalThemeToggle />
+            </div>
+          </HideOnPaths>
+          <PullToRefresh />
+          <ConnectivityBanner />
+          <HideOnPaths paths={CHECKIN_PATHS}>
+            <PushAsk />
+          </HideOnPaths>
+          <HideOnPaths paths={CHECKIN_PATHS}>
+            <InstallAsk />
+          </HideOnPaths>
+          <AttributionCapture />
+        </div>
       </div>
-    </div>
+    </SiteSettingsProvider>
   );
 }

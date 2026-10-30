@@ -86,6 +86,14 @@ const DEFS: Def[] = [
     'manage_board_order',
   ),
   A('audit', 'Audit log', 'Who changed what', '/portal/admin/audit-log', ['history', 'log'], 'view_admin_dashboard'),
+  A(
+    'settings',
+    'Site settings',
+    'The code everyone shows, the portal banner',
+    '/portal/admin/settings',
+    ['banner', 'bytecode', 'tgcode', 'code style', 'notice'],
+    'view_admin_dashboard',
+  ),
   A('links', 'Short links', 'Manage /go links', '/portal/admin/short-links', ['url', 'redirect', 'linktree'], 'view_admin_dashboard'),
 ];
 

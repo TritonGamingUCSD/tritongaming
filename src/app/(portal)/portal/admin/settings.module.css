@@ -1,0 +1,13 @@
+.wrap { display: grid; gap: 1rem; max-width: 46rem; }
+.intro { margin: 0; color: rgba(var(--pp-ink-rgb), 0.75); }
+.card { display: grid; gap: 0.8rem; padding: 1rem 1.1rem; border-radius: 12px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); color: var(--pp-ink); }
+.card h2 { margin: 0; font-size: 1.05rem; }
+.about { margin: 0; color: rgba(var(--pp-ink-rgb), 0.75); font-size: 0.92rem; }
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 0.6rem; }
+.choice { display: flex; align-items: flex-start; gap: 0.6rem; padding: 0.7rem 0.8rem; border-radius: 10px; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); cursor: pointer; }
+.choice.on { border-color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.06); }
+.choice span { display: grid; gap: 0.15rem; }
+.choice small { color: rgba(var(--pp-ink-rgb), 0.7); }
+.toggle { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
+.actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.state { color: rgba(var(--pp-ink-rgb), 0.7); font-size: 0.88rem; }
