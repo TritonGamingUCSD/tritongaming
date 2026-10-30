@@ -2,7 +2,7 @@ import Link from 'next/link';
 import ByteMini from '@/components/Bytecode/ByteMini';
 import styles from './NotFoundPoster.module.css';
 
-// A lost-page poster: a taped note with a big 404 and three ways back. Used by the site-wide not-found and the public pages' own.
+// A lost-page poster: a taped note with a big 404 and three ways back (home, events, the portal). Used by the site-wide not-found and the public pages' own.
 export default function NotFoundPoster() {
   return (
     <div className={styles.page}>
@@ -21,8 +21,8 @@ export default function NotFoundPoster() {
           <Link href="/events" className={styles.secondary}>
             See events
           </Link>
-          <Link href="/divisions" className={styles.secondary}>
-            Find a division
+          <Link href="/portal" className={styles.secondary}>
+            Go to portal
           </Link>
         </div>
       </div>
