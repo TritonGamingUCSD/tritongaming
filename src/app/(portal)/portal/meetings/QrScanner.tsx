@@ -6,7 +6,6 @@ import CodeIcon from '@/components/portal/CodeIcon';
 import { Check, CircleAlert, TriangleAlert, X, Zap } from 'lucide-react';
 import { scanArea, inScanCircle, around } from '@/lib/qr/scanArea';
 import ByteMini from '@/components/Bytecode/ByteMini';
-import { useCodeStyle } from '@/lib/ui/useCodeStyle';
 import type { FrameGeo, FrameRead } from '@/lib/qr/scanFrame';
 import styles from './meetings.module.css';
 
@@ -83,7 +82,6 @@ export default function QrScanner({
   const [ready, setReady] = useState(false);
   // Byte's pop-up is loaded after the camera starts (it is not needed to start scanning, and it carries Byte's drawing).
   const [Pop, setPop] = useState<ComponentType<{ className?: string; tilt?: number }> | null>(null);
-  const pullStyle = useCodeStyle() === 'byte'; // on a device that shows Bytecodes the scanner is pulled up by Byte
   const [byteScan, setByteScan] = useState(false); // the code just taken was a Bytecode: Byte pops up on it instead of the check mark
   const [byteTilt, setByteTilt] = useState(0); // and how far it was turned from upright, in degrees: Byte grows out at that angle and turns upright as he jumps
   useEffect(() => {
@@ -508,12 +506,10 @@ export default function QrScanner({
   if (!mounted) return null;
   // Portaled to the page itself: the portal's panels are animated with a transform, which would otherwise shrink a "fixed" overlay to the panel.
   return createPortal(
-    <div className={`${styles.scanScreen} ${pullStyle ? styles.scanPull : ''}`} role="dialog" aria-modal="true" aria-label={title}>
-      {pullStyle && (
-        <span className={styles.pullByte} aria-hidden="true">
-          <ByteMini pose="awake" />
-        </span>
-      )}
+    <div className={`${styles.scanScreen} ${styles.scanPull}`} role="dialog" aria-modal="true" aria-label={title}>
+      <span className={styles.pullByte} aria-hidden="true">
+        <ByteMini pose="awake" />
+      </span>
       <header className={styles.scanTop}>
         <span className={styles.scanTitle}>{title}</span>
         <button type="button" className={styles.scanClose} onClick={onClose} aria-label="Close scanner">

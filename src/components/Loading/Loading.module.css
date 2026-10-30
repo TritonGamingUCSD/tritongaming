@@ -3,24 +3,11 @@
 .page { min-height: 60vh; width: 100%; }
 .section { padding: 3rem 1rem; width: 100%; min-height: 220px; }
 
-.logoBox { position: relative; }
 .float { animation: hover 2.6s ease-in-out infinite; }
-.byteBox { position: relative; } /* Byte in place of the logo (a device that shows Bytecodes): the same gentle hover */
 @keyframes hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
-/* A dim copy of the logo is always visible, so the shape reads as a logo and not a half-loaded image. */
-.logoBase { display: block; width: 100%; height: 100%; object-fit: contain; opacity: 0.7; filter: drop-shadow(0 0 14px rgba(255, 199, 44, 0.25)); }
-
-/* The same logo used as a mask, so the gold sweep is clipped to the diamond. */
-.logoShine {
-  position: absolute; inset: 0;
-  -webkit-mask-image: url('/logos/tg_logo.png'); mask-image: url('/logos/tg_logo.png');
-  -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: center; mask-position: center;
-  background: linear-gradient(100deg, transparent 35%, rgba(255, 255, 255, 0.9) 48%, rgba(255, 199, 44, 1) 52%, transparent 65%);
-  background-size: 300% 100%;
-  animation: sweep 1.8s ease-in-out infinite;
-}
-@keyframes sweep { 0% { background-position: 150% 0; } 100% { background-position: -150% 0; } }
+/* Byte: his outline follows the text colour (so he fits the portal in light or dark and the public site's navy) */
+.byteBox { position: relative; --bc-edge: currentColor; }
 
 /* The progress bar: a gold segment sliding across a quiet track. */
 .bar { position: relative; display: block; width: min(220px, 60vw); height: 5px; border-radius: 999px; overflow: hidden; background: color-mix(in srgb, currentColor 18%, transparent); }
@@ -35,7 +22,6 @@
 
 @media (prefers-reduced-motion: reduce) {
   .float { animation: none; }
-  .logoShine { animation-duration: 3.2s; }
   .fill { animation-duration: 3s; }
 }
 
