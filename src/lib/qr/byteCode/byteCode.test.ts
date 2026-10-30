@@ -241,7 +241,7 @@ describe('reading', () => {
 });
 
 describe('reading under random conditions', () => {
-  test('reads about three quarters of 120 random pictures, and never reads the wrong thing', () => {
+  test('reads about four fifths of 120 random pictures, and never reads the wrong thing', () => {
     const rnd = lcg(7);
     let ok = 0,
       wrong = 0;
@@ -267,8 +267,8 @@ describe('reading under random conditions', () => {
     }
     console.log(`BYTECODE random ${ok}/${trials}, wrong ${wrong}`);
     expect(wrong).toBe(0); // the one thing that must never happen
-    // Measured 92 of 120 (77%) with this mix of conditions (the TGcode reads 90%+ of its own, kinder, mix): about 95% of the light pictures but only about half of the dark ones when they are also
-    // tilted or noisy. The bar is set a little under what it reaches today so a real loss shows, and is to be raised as the dark reading improves.
-    expect(ok / trials).toBeGreaterThanOrEqual(0.7);
+    // Measured 97 of 120 (81%) with this mix of conditions (the TGcode reads 90%+ of its own, kinder, mix). Tilt reads in light now (the gem is looked for where the scarf and wings say it is, and
+    // the map is nudged until the cells fit the patterns); blur and noise on a small or dark code are what is left. The bar is set a little under what it reaches today so a real loss shows.
+    expect(ok / trials).toBeGreaterThanOrEqual(0.76);
   }, 600000);
 });

@@ -49,7 +49,10 @@ run(
             const img = paintInk(byteInk(p, dark), { px, rot: (i * 0.9) % 6.28, seed: i + 1, dark, ...c } as Shot);
             const got = decodeBytecode(img.img, img.size, img.size);
             if (got === p.slice(0, 9)) ok++;
-            else if (got) wrongReads++;
+            else if (got) {
+              wrongReads++;
+              lines.push(`WRONG: ${dark ? 'dark' : 'light'} ${name} r${px} picture ${i}: read ${got}, drawn ${p.slice(0, 9)}`);
+            }
           }
           row += `${ok}/${N}`.padStart(8);
         }

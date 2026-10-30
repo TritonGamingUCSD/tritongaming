@@ -9,15 +9,16 @@ export { FINDERS, SPAN };
 //     scarf's edge, the wing feathers…) cut into cells of equal length. A cell is a bar (the line is drawn there) or a gap (it is not: the colour beside it shows through)
 //   • the message is written as bars with a gap of exactly ONE cell between them and no bar shorter than two cells. A block of 10 cells starts with a bar and holds one of 16
 //     patterns of such bars, which is 4 bits; two blocks make a byte. A wrong cell therefore spoils one block and one byte
-//   • 5 bytes of message (what it is, a mark that says it is a Bytecode, a spare half-byte that is always 0, and 32 bits of the key the server checks) followed by 8 Reed–Solomon repair bytes (they mend 4 wrong bytes, as 9 do), scattered over Byte by a fixed shuffle (its own, so a
+//   • 5 bytes of message (what it is, a mark that says it is a Bytecode, a spare half-byte that is always 0, and 32 bits of the key the server checks) followed by 10 Reed–Solomon repair bytes (4 wrong bytes are mended, as with the TGcode's 9; the rest is kept as proof that what was mended is right), scattered over Byte by a fixed shuffle (its own, so a
 //     Bytecode is never mistaken for a TGcode: the version in the first byte is 3 here, 2 there)
 //   • lines and cells that are not part of the message are drawn as Byte is, so what carries it is only a few pieces of his drawing turned into dashes
 export const PITCH = 0.032; // the length of a cell along a line
 export const LINE_W = 0.026; // how thick his drawn lines are
 export const BLOCK = 10;
-export const NSYM = 8; // repair bytes: 4 wrong bytes mended, as with the TGcode's 9
+export const NSYM = 10; // repair bytes: 4 wrong bytes mended, and 2 more kept unspent as the check (the TGcode has 9)
+const SPARE = 2;
 export const DATA_BYTES = 5; // kind (2 bits), version mark (2 bits), a spare half-byte (0) and 32 bits of key
-export const TOTAL_BYTES = DATA_BYTES + NSYM; // 13
+export const TOTAL_BYTES = DATA_BYTES + NSYM; // 15
 export const NIBBLES = TOTAL_BYTES * 2; // 26 blocks
 export const KEY_HEX = 8; // hex digits of key in a code (32 bits, as in the TGcode)
 const VERSION = 3; // the 2-bit mark that says this is a Bytecode
@@ -199,6 +200,12 @@ export function payloadFromNibbles(nib: number[], doubtful: number[] = []): stri
   const erase = [...new Set(doubtful.map((b) => b >> 1))];
   const data = rsDecode(bytes, NSYM, erase);
   if (!data || data.length !== DATA_BYTES) return null;
+  // The repair must leave some of its bytes unspent: each known-bad byte (erased) costs one, each wrong byte it found by itself costs two, and the rest is what proves the answer right.
+  // (A repair that spends everything agrees with any picture.)
+  const again = rsEncode(data, NSYM);
+  let wrong = 0;
+  for (let i = 0; i < TOTAL_BYTES; i++) if (!erase.includes(i) && again[i] !== bytes[i]) wrong++;
+  if (erase.length + 2 * wrong > NSYM - SPARE) return null;
   if (((data[0] >> 4) & 3) !== VERSION || (data[0] & 15) !== 0) return null;
   const kind = KIND_OF[data[0] >> 6];
   if (!kind) return null;

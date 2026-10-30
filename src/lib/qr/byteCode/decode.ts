@@ -1,5 +1,6 @@
 import { BLOCKS, BLOCK, RINGS, PATTERN_COUNT, patternCells, cellCenter, dashGrid, payloadFromNibbles, FINDERS } from './layout';
 import { LOCATORS } from './marks';
+import { STROKES } from './byteArt';
 import { type Finder, binarize } from '../tgCode/find';
 import { eyePairs } from './eyes';
 
@@ -42,6 +43,89 @@ function affineMap(L: Finder, R: Finder, d: { x: number; y: number }, got: { x: 
 }
 
 type Pt = { x: number; y: number };
+
+/** Points along Byte's fixed inner lines (the ones no message is written on, so they are the same in every Bytecode), with the direction across each, in code units. */
+const FIXED: { x: number; y: number; nx: number; ny: number }[] = [];
+for (const st of STROKES) {
+  if (st.ok || st.halo) continue;
+  let len = 0;
+  for (let i = 1; i < st.pts.length; i++) len += Math.hypot(st.pts[i][0] - st.pts[i - 1][0], st.pts[i][1] - st.pts[i - 1][1]);
+  if (len < 0.25) continue;
+  let next = 0,
+    run = 0;
+  for (let i = 1; i < st.pts.length; i++) {
+    const [x0, y0] = st.pts[i - 1],
+      [x1, y1] = st.pts[i];
+    const seg = Math.hypot(x1 - x0, y1 - y0);
+    while (next <= run + seg && seg > 0) {
+      const t = (next - run) / seg;
+      FIXED.push({ x: x0 + (x1 - x0) * t, y: y0 + (y1 - y0) * t, nx: -(y1 - y0) / seg, ny: (x1 - x0) / seg });
+      next += 0.035;
+    }
+    run += seg;
+  }
+}
+
+/** Bilinear grey at a picture point, or -1 outside. */
+const greyAt = (gray: Uint8ClampedArray | Uint8Array, w: number, h: number, x: number, y: number) => {
+  if (x < 1 || y < 1 || x >= w - 2 || y >= h - 2) return -1;
+  const x0 = Math.floor(x),
+    y0 = Math.floor(y),
+    fx = x - x0,
+    fy = y - y0;
+  return gray[y0 * w + x0] * (1 - fx) * (1 - fy) + gray[y0 * w + x0 + 1] * fx * (1 - fy) + gray[(y0 + 1) * w + x0] * (1 - fx) * fy + gray[(y0 + 1) * w + x0 + 1] * fx * fy;
+};
+
+/** Sharpens a map with Byte's fixed lines. Where the map puts each of those lines, the picture is searched a pixel or two across it for the darkest place (his lines are the darkest thing
+ *  beside them), and the map is fitted again to where they really are, together with the points it was fitted to before. A few rounds, narrower each time; the result is kept only if
+ *  his lines come out darker under it than under the map it started from. */
+function refine(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, map: Mapper, code: Pt[], image: Pt[], scale: number): Mapper {
+  const darkness = (m: Mapper) => {
+    let sum = 0,
+      n = 0;
+    for (const f of FIXED) {
+      const q = m(f.x, f.y),
+        g = greyAt(gray, w, h, q.x, q.y);
+      if (g >= 0) {
+        sum += g;
+        n++;
+      }
+    }
+    return n ? sum / n : Infinity;
+  };
+  let cur = map;
+  for (const reach of [Math.max(1.6, scale * 0.028), Math.max(1.1, scale * 0.016), Math.max(0.8, scale * 0.009)]) {
+    const src: Pt[] = [...code],
+      dst: Pt[] = [...image];
+    const steps = Math.round(reach / 0.4);
+    for (const f of FIXED) {
+      const q = cur(f.x, f.y),
+        a = cur(f.x + f.nx * 0.01, f.y + f.ny * 0.01);
+      const ax = a.x - q.x,
+        ay = a.y - q.y,
+        al = Math.hypot(ax, ay);
+      if (al < 1e-9) continue;
+      const ux = ax / al,
+        uy = ay / al;
+      const prof: number[] = [];
+      for (let k = -steps; k <= steps; k++) prof.push(greyAt(gray, w, h, q.x + ux * k * 0.4, q.y + uy * k * 0.4));
+      if (prof.some((g) => g < 0)) continue;
+      let best = 1;
+      for (let k = 1; k < prof.length - 1; k++) if (prof[k - 1] + prof[k] + prof[k + 1] < prof[best - 1] + prof[best] + prof[best + 1]) best = k;
+      if (best <= 1 || best >= prof.length - 2) continue; // at the edge of the search: not a line found, a slope
+      const dip = Math.min(prof[0], prof[prof.length - 1]) - prof[best];
+      if (dip < 12) continue;
+      const t = (best - steps) * 0.4;
+      src.push({ x: f.x, y: f.y });
+      dst.push({ x: q.x + ux * t, y: q.y + uy * t });
+    }
+    if (src.length < code.length + 40) break;
+    const next = fitHomography(src, dst);
+    if (!next) break;
+    cur = next;
+  }
+  return darkness(cur) < darkness(map) - 0.5 ? cur : map;
+}
 
 /** One way the picture could be laid over the code: the grey level at the middle of every cell of every block, the levels of the marks and of the plate, and the map. They come
  *  likeliest first (a tilted code can have its bottom dots mistaken, so a few ways are tried until one of them reads). */
@@ -125,16 +209,75 @@ function* hypotheses(
     }
     return values;
   };
+  // How well the cells fit the allowed patterns under a map: the mean over the blocks of the score of the best-fitting pattern. A map that is right makes every block fit one of the 16
+  // patterns closely (7 or more); a wrong one fits none of them (below about 6.3).
+  const quality = (values: number[][]) => {
+    const own = stretchLevels(values, { ink: mark, bare: plate });
+    const { scores } = readBlocks(evidence(values, own));
+    return scores.reduce((t, sc) => t + Math.max(...sc), 0) / scores.length;
+  };
+  // A map that nearly fits is nudged: the picture positions of four spread points are moved a fraction of a pixel at a time, one coordinate after another, and a move is kept when the
+  // cells then fit the patterns better. That undoes the few pixels of error that the shapes' middles leave, which is more than a thin line allows.
+  const tune = (map: Mapper, start: number): { map: Mapper; values: number[][] } | null => {
+    const C: Pt[] = [
+      { x: -0.8, y: -0.8 },
+      { x: 0.8, y: -0.8 },
+      { x: 0.8, y: 0.8 },
+      { x: -0.8, y: 0.8 },
+    ];
+    const at = C.map((c) => map(c.x, c.y));
+    const build = (pts: Pt[]) => fitHomography(C, pts);
+    let best = start,
+      bestMap = map,
+      bestValues: number[][] | null = null;
+    const k = Math.max(1, scale / 130);
+    for (const step of [0.9 * k, 0.45 * k, 0.22 * k])
+      for (let sweep = 0; sweep < 2; sweep++) {
+        let moved = false;
+        for (let i = 0; i < 8; i++)
+          for (const dir of [1, -1]) {
+            const pts = at.map((p) => ({ ...p }));
+            if (i % 2) pts[i >> 1].y += dir * step;
+            else pts[i >> 1].x += dir * step;
+            const m = build(pts);
+            const v = m && valuesFor(m);
+            if (!m || !v) continue;
+            const q = quality(v);
+            if (q > best + 1e-3) {
+              best = q;
+              bestMap = m;
+              bestValues = v;
+              at[i >> 1] = pts[i >> 1];
+              moved = true;
+              break;
+            }
+          }
+        if (!moved) break;
+      }
+    return bestValues ? { map: bestMap, values: bestValues } : null;
+  };
+  function* emit(m: Mapper): Generator<{ values: number[][]; mark: number; plate: number; map: Mapper }> {
+    const v = valuesFor(m);
+    if (!v) return;
+    yield { values: v, mark, plate, map: m };
+    const q = quality(v);
+    if (q < 6.4) return; // nothing like a fit: not worth nudging
+    const t = tune(m, q);
+    if (t) yield { values: t.values, mark, plate, map: t.map };
+  }
+  // Each map comes sharpened by his fixed lines first, then as it was (the sharpening is only kept when it helps, but a try without it costs little).
+  const variants = (map: Mapper, code: Pt[], image: Pt[]): Mapper[] => {
+    const sharp = refine(gray, w, h, map, code, image, scale);
+    return sharp === map ? [map] : [sharp, map];
+  };
   if (!straighten) {
-    const v = valuesFor(similar);
-    if (v) yield { values: v, mark, plate, map: similar };
+    for (const m of variants(similar, [FINDERS.tl, FINDERS.tr], [L, R])) yield* emit(m);
     return;
   }
 
   // The two other locators are Byte's yellow scarf and a facet of his yellow gem: each is a closed shape with a dark outline, so the light pixels joined to the pixel where the eyes say it
   // should be are the shape, and their middle is the locator. The shape must have about the size it should have at this scale (a shape that leaks out of a gap in its outline is too big).
-  const find = (m: { x: number; y: number; area: number; rmax: number }): (Pt & { pix: number[] }) | null => {
-    const near = similar(m.x, m.y);
+  const find = (m: { x: number; y: number; area: number; rmax: number }, near: Pt): (Pt & { pix: number[] }) | null => {
     const want = m.area * scale * scale,
       reach = Math.max(4, m.rmax * scale * 0.5);
     let start = -1,
@@ -180,7 +323,23 @@ function* hypotheses(
     }
     return n < want * 0.45 ? null : { x: sx / n, y: sy / n, pix: [...seen] };
   };
-  const found = LOCATORS.map(find);
+  let found = LOCATORS.map((m) => find(m, similar(m.x, m.y)));
+  // On a tilted picture the turn-and-scale guess is off by a few pixels, enough for the small gem to be taken for the facet beside it. So the big shapes (scarf, wings) are fitted first,
+  // and every shape is looked for again where that better fit says it is.
+  const bigs = [1, 2, 3].filter((i) => found[i]);
+  const guess: Mapper | null =
+    bigs.length >= 2
+      ? fitHomography([FINDERS.tl, FINDERS.tr, ...bigs.map((i) => LOCATORS[i])], [L, R, ...bigs.map((i) => found[i]!)])
+      : bigs.length === 1
+        ? affineMap(L, R, LOCATORS[bigs[0]], found[bigs[0]]!)
+        : null;
+  if (guess) {
+    const again = LOCATORS.map((m) => {
+      const p = guess(m.x, m.y);
+      return find(m, p);
+    });
+    found = found.map((f, i) => (i === 0 ? again[0] : (again[i] ?? f)));
+  }
   const have = LOCATORS.map((_, i) => i).filter((i) => found[i]);
   if (have.length >= 2) {
     // The middle of a shape in a tilted picture is not quite where the middle of the real shape is (a far part looks smaller), which matters for a big shape like a wing. So the fit is
@@ -215,14 +374,12 @@ function* hypotheses(
       });
     }
     const proj = fitHomography(code, image);
-    const v = proj && valuesFor(proj);
-    if (proj && v) yield { values: v, mark, plate, map: proj };
+    if (proj) for (const m of variants(proj, code, image)) yield* emit(m);
   }
   // Then with one of them only (a thumb over the others): three points still fix most of a tilt.
   for (const i of have) {
-    const m = affineMap(L, R, LOCATORS[i], found[i]!);
-    const v = m && valuesFor(m);
-    if (m && v) yield { values: v, mark, plate, map: m };
+    const am = affineMap(L, R, LOCATORS[i], found[i]!);
+    if (am) for (const m of variants(am, [FINDERS.tl, FINDERS.tr, LOCATORS[i]], [L, R, found[i]!])) yield* emit(m);
   }
 }
 
@@ -408,3 +565,5 @@ export function decodeBytecodeAt(gray: Uint8ClampedArray | Uint8Array, w: number
 
 /** Looks for a Bytecode in a grey picture and returns what it says, or null. */
 export const decodeBytecode = (gray: Uint8ClampedArray | Uint8Array, w: number, h: number): string | null => decodeBytecodeAt(gray, w, h)?.payload ?? null;
+
+export const __debug = { hypotheses, stretchLevels, evidence, readBlocks };
