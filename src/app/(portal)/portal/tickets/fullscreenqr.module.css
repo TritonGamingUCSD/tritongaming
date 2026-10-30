@@ -531,3 +531,7 @@
   80%  { transform: scaleX(0.2);  background: #f97316; }
   100% { transform: scaleX(0);    background: #dc2626; }
 }
+
+/* Byte growing out of the live code the moment it is scanned (a tap skips it): he sits over the code, which fades back behind him */
+.popOver { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.qrPopping .qrSwap { opacity: 0.12; transition: opacity 0.2s ease; }

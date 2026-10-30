@@ -35,6 +35,7 @@ interface Props {
 
 // Byte's wink, for a person whose device shows Bytecodes: loaded only then (it carries his drawing).
 const ByteWink = dynamic(() => import('@/components/Bytecode/ByteWink'), { ssr: false, loading: () => null });
+const ByteScanPop = dynamic(() => import('@/components/Bytecode/ByteScanPop'), { ssr: false, loading: () => null });
 
 export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, onClose, onCheckedIn, checkinFormUrl, onFormComplete }: Props) {
   const [code, setCode] = useState<string | null>(null);
@@ -44,6 +45,17 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   const [error, setError] = useState('');
   const codeStyle = useCodeStyle();
   const [checkedIn, setCheckedIn] = useState(false);
+  // The moment a Bytecode is scanned, Byte grows out of the code on this screen (as he does on the scanner's), winks and pops for about a second before the checked-in view appears; a tap skips it.
+  const [popping, setPopping] = useState(false);
+  const codeStyleRef = useRef(codeStyle);
+  codeStyleRef.current = codeStyle;
+  const popTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (popTimer.current) clearTimeout(popTimer.current);
+    },
+    [],
+  );
   const [checkedInAt, setCheckedInAt] = useState<string | null>(null);
   // Whether this member currently holds a fulfilled Fast Pass reward (from
   // either shop — see grants_fast_pass in api/tickets/[id]/qr) — a
@@ -263,6 +275,10 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
     clearTicketCodes(ticketId);
     setCheckedInAt(checkedInAt);
     setCheckedIn(true);
+    if (codeStyleRef.current === 'byte') {
+      setPopping(true);
+      popTimer.current = setTimeout(() => setPopping(false), 1150);
+    }
     // A short buzz so someone about to pocket their phone notices the screen
     // changed (Android/most Chromium browsers; iOS ignores it).
     try {
@@ -433,7 +449,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
           )}
         </div>
 
-        {checkedIn ? (
+        {checkedIn && !popping ? (
           <div className={styles.checkedInState}>
             {stepPending ? (
               <>
@@ -519,7 +535,21 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
               </span>
             </div>
 
-            <div className={styles.qrWrapper}>
+            <div className={`${styles.qrWrapper} ${popping ? styles.qrPopping : ''}`}>
+              {popping && (
+                <div
+                  className={styles.popOver}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="Skip"
+                  onClick={() => setPopping(false)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') setPopping(false);
+                  }}
+                >
+                  <ByteScanPop />
+                </div>
+              )}
               {code &&
                 // Circumscribes the badge's own circle rather than sitting as
                 // a separate bar underneath — the ring itself *is* the "time
