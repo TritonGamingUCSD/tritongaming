@@ -19,9 +19,10 @@ export const PREVIEWS: Preview[] = [
   {
     slug: 'code-ring',
     title: 'Code Countdown Ring',
-    about: 'The ring that drains round a ticket’s code before it changes: a circle round the TGcode, a line along Byte’s outline round the Bytecode.',
+    about: 'The time left on a ticket’s code: a ring that drains round the TGcode, a line that shortens under the Bytecode.',
     group: 'Codes',
   },
+  { slug: 'byte-poses', title: 'Byte Poses', about: 'The small Byte used for loading, empty lists and the 404 page: awake and blinking, asleep, lost, happy.', group: 'Site' },
   { slug: 'scan-test', title: 'Test Scan', about: 'The real camera and reader as a dry run: it says what it read and plays the animation, and sends nothing.', group: 'Scanning' },
   { slug: 'scan-opening', title: 'Scan Opening', about: 'The black screen that shows the moment the Scan button is pressed, until the camera is ready.', group: 'Scanning' },
   { slug: 'check-in-results', title: 'Check-In Results', about: 'What the scanner shows after a scan: meeting, ticket, reward and the questions it can ask.', group: 'Scanning' },

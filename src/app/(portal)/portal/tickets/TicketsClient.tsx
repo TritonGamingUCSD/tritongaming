@@ -10,6 +10,7 @@ import { getAttributionSource } from '@/lib/site/attribution';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import CodeIcon from '@/components/portal/CodeIcon';
 import CodeName from '@/components/portal/CodeName';
+import EmptyArt from '@/components/portal/EmptyArt';
 import { Ticket, MapPin, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
@@ -448,7 +449,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       {tickets.length === 0 && unregisteredEvents.length === 0 && (
         <div className={styles.empty}>
           <span className={styles.emptyIcon}>
-            <Ticket size={40} strokeWidth={1.25} aria-hidden="true" />
+            <EmptyArt icon={<Ticket size={40} strokeWidth={1.25} aria-hidden="true" />} />
           </span>
           <p className={styles.emptyText}>No tickets yet</p>
           <p className={styles.emptyHint}>Register for events to get your tickets here.</p>

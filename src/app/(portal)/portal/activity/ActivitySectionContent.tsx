@@ -1,3 +1,4 @@
+import EmptyArt from '@/components/portal/EmptyArt';
 import { Ticket, CircleCheck, Calendar } from 'lucide-react';
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import styles from './activity.module.css';
@@ -42,7 +43,7 @@ export default function ActivitySectionContent({ tickets }: { tickets: ActivityT
     return (
       <div className={styles.empty}>
         <span className={styles.emptyIcon}>
-          <Calendar size={40} strokeWidth={1.25} aria-hidden="true" />
+          <EmptyArt icon={<Calendar size={40} strokeWidth={1.25} aria-hidden="true" />} />
         </span>
         <h2 className={styles.emptyTitle}>No activity yet</h2>
         <p className={styles.emptySub}>Grab a ticket to an event and it'll show up here.</p>

@@ -13,6 +13,7 @@ import ThemePair from './ThemePair';
 import ScanTestDemo from './ScanTestDemo';
 import Bytecode from '@/components/Bytecode/Bytecode';
 import TGcode from '@/components/TGcode/TGcode';
+import ByteMini, { type MiniPose } from '@/components/Bytecode/ByteMini';
 import styles from './preview.module.css';
 
 // One preview at a time, chosen by its slug (see catalog.ts). Each one plays with sample data; nothing here talks to the server.
@@ -208,6 +209,32 @@ function SiteAnimationsDemo() {
   );
 }
 
+// The small Byte of the loading screens, the empty lists and the 404 page, in each pose.
+function BytePosesDemo() {
+  const poses: [MiniPose, string][] = [
+    ['awake', 'Loading'],
+    ['sleep', 'Empty list'],
+    ['lost', '404'],
+    ['happy', 'Happy'],
+  ];
+  return (
+    <div className={styles.stage}>
+      <ThemePair>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '1.4rem', padding: '1rem' }}>
+          {poses.map(([pose, what]) => (
+            <div key={pose} style={{ textAlign: 'center' }}>
+              <div style={{ width: 'min(150px, 100%)', margin: '0 auto' }}>
+                <ByteMini pose={pose} />
+              </div>
+              <small>{what}</small>
+            </div>
+          ))}
+        </div>
+      </ThemePair>
+    </div>
+  );
+}
+
 export default function PreviewStage({ slug }: { slug: string }) {
   switch (slug) {
     case 'bytecode':
@@ -218,6 +245,8 @@ export default function PreviewStage({ slug }: { slug: string }) {
       return <CodeRingDemo />;
     case 'scan-test':
       return <ScanTestDemo />;
+    case 'byte-poses':
+      return <BytePosesDemo />;
     case 'byte-wink':
       return <ByteWinkDemo />;
     case 'scan-opening':

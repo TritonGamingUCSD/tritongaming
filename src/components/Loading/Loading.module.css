@@ -5,6 +5,7 @@
 
 .logoBox { position: relative; }
 .float { animation: hover 2.6s ease-in-out infinite; }
+.byteBox { position: relative; } /* Byte in place of the logo (a device that shows Bytecodes): the same gentle hover */
 @keyframes hover { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 
 /* A dim copy of the logo is always visible, so the shape reads as a logo and not a half-loaded image. */

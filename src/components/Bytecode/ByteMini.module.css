@@ -1,0 +1,23 @@
+/* Byte's small drawing. His colours and lines are the Bytecode's own (composed from there), so the two never drift apart. */
+.mini { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; overflow: visible; }
+.c2 { composes: c2 from './Bytecode.module.css'; }
+.c3 { composes: c3 from './Bytecode.module.css'; }
+.c4 { composes: c4 from './Bytecode.module.css'; }
+.c5 { composes: c5 from './Bytecode.module.css'; }
+.c6 { composes: c6 from './Bytecode.module.css'; }
+.c7 { composes: c7 from './Bytecode.module.css'; }
+.line { composes: line from './Bytecode.module.css'; }
+.edge { composes: edge from './Bytecode.module.css'; }
+.eye { fill: none; stroke: #d9e6b0; stroke-linecap: round; } /* theme-ok */
+.eyeRim { fill: none; stroke: #483848; stroke-linecap: round; } /* theme-ok */
+.arc { fill: none; stroke: #483848; stroke-linecap: round; stroke-linejoin: round; } /* theme-ok */
+.dot { fill: var(--bc-edge); }
+.z { fill: none; stroke-width: 0.05; stroke-linecap: round; stroke-linejoin: round; opacity: 0; animation: miniZ 2.7s ease-in-out infinite; }
+.blink { transform-box: fill-box; transform-origin: center; animation: miniBlink 4.2s ease-in-out infinite; }
+.tilt { transform-box: fill-box; transform-origin: 50% 90%; animation: miniTilt 2.4s ease-in-out infinite; }
+.question { transform-box: fill-box; transform-origin: center; animation: miniWobble 1.6s ease-in-out infinite; }
+@keyframes miniBlink { 0%, 90%, 100% { transform: scaleY(1); } 94% { transform: scaleY(0.1); } }
+@keyframes miniZ { 0% { opacity: 0; translate: 0 0.12px; } 25% { opacity: 1; } 100% { opacity: 0; translate: 0.16px -0.34px; } }
+@keyframes miniTilt { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+@keyframes miniWobble { 0%, 100% { transform: rotate(-9deg); } 50% { transform: rotate(9deg); } }
+@media (prefers-reduced-motion: reduce) { .blink, .tilt, .question { animation: none; } .z { animation: none; opacity: 0.8; } }
