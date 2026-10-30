@@ -138,6 +138,7 @@ export default function QrScanner({
     return () => window.clearTimeout(id);
   }, [ready]);
   const seenRef = useRef({ text: '', at: -1e9 }); // the code last seen and when: the same one is not taken again while it stays in view
+  const snapRef = useRef<HTMLCanvasElement | null>(null); // the frozen picture a taken code was found in (laid over the paused video)
   const pausedRef = useRef(false); // a taken scan freezes the picture and stops reading until the caller clears `lock`
   const onScanRef = useRef(onScan);
   onScanRef.current = onScan;
@@ -210,7 +211,10 @@ export default function QrScanner({
         } catch {
           worker = null;
         }
-        let inflight: { id: number; at: number; v: HTMLVideoElement; z: number } | null = null;
+        // The picture a job was cut from, kept whole: the reader answers a moment after the picture was taken (it works in a worker), by which time the live video has moved on a little. A taken
+        // code freezes THIS picture, not whatever the video shows by then, so the ring and Byte land on the code in the frozen picture, not beside it.
+        const shotOfJob = document.createElement('canvas');
+        let inflight: { id: number; at: number; v: HTMLVideoElement; z: number; shot: boolean } | null = null;
         let jobs = 0;
         let local: ((data: Uint8ClampedArray, w: number, h: number, geo: FrameGeo) => FrameRead | null) | null = null;
         const loadLocal = () => {
@@ -222,7 +226,16 @@ export default function QrScanner({
         // What to do with a code that was read: the caller decides what the text is (true = taken, which freezes the picture; anything else = keep looking). The same code is not offered again
         // while it stays in view (after "Scan Next" or "Try Again" the code is usually still in front of the camera): it counts as new only once it has been out of sight for a moment, or
         // another code comes.
-        const finish = (text: string, found: { x: number; y: number; r: number } | null, viaByte: boolean, v: HTMLVideoElement, z: number, now: number, angle = 0) => {
+        const finish = (
+          text: string,
+          found: { x: number; y: number; r: number } | null,
+          viaByte: boolean,
+          v: HTMLVideoElement,
+          z: number,
+          now: number,
+          angle = 0,
+          shot = false,
+        ) => {
           const seen = seenRef.current;
           const repeat = text === seen.text && now - seen.at < 1500;
           seen.text = text;
@@ -230,6 +243,14 @@ export default function QrScanner({
           if (!repeat && onScanRef.current(text, { bytecode: viaByte }) === true) {
             pausedRef.current = true;
             v.pause(); // freeze right away, so the ring lands where the code is in the frozen picture
+            const snap = snapRef.current;
+            if (shot && snap) {
+              snap.width = shotOfJob.width;
+              snap.height = shotOfJob.height;
+              snap.getContext('2d')?.drawImage(shotOfJob, 0, 0);
+              snap.style.transform = v.style.transform; // the same digital zoom as the video has
+              snap.style.display = 'block';
+            }
             setByteScan(viaByte);
             setByteTilt(Math.round((angle * 180) / Math.PI));
             setSpot(found ? toStage(found, v, z) : null);
@@ -241,7 +262,7 @@ export default function QrScanner({
             if (!job || e.data.id !== job.id) return;
             inflight = null;
             const out = e.data.out;
-            if (out && !dead && !pausedRef.current) finish(out.text, out.found, out.viaByte, job.v, job.z, performance.now(), out.angle);
+            if (out && !dead && !pausedRef.current) finish(out.text, out.found, out.viaByte, job.v, job.z, performance.now(), out.angle, job.shot);
           };
           worker.onerror = () => {
             worker?.terminate();
@@ -294,7 +315,16 @@ export default function QrScanner({
           const geo: FrameGeo = { area, k, ox: cx - L / 2, oy: cy - L / 2 };
           if (worker) {
             const id = ++jobs;
-            inflight = { id, at: now, v, z };
+            let shot = false;
+            try {
+              shotOfJob.width = v.videoWidth;
+              shotOfJob.height = v.videoHeight;
+              shotOfJob.getContext('2d')?.drawImage(v, 0, 0);
+              shot = true;
+            } catch {
+              /* the picture could not be kept: the video itself is frozen, as before */
+            }
+            inflight = { id, at: now, v, z, shot };
             worker.postMessage({ id, data: img.data, w: img.width, h: img.height, geo }, [img.data.buffer]);
             return;
           }
@@ -327,6 +357,7 @@ export default function QrScanner({
     setSpot(null);
     seenRef.current.at = performance.now(); // the camera starts again with the same code probably still in front of it: that one does not count as a new scan
     pausedRef.current = false;
+    if (snapRef.current) snapRef.current.style.display = 'none';
     void video.current?.play().catch(() => {});
   }, [lock]);
 
@@ -524,6 +555,7 @@ export default function QrScanner({
       ) : (
         <div ref={frame} className={styles.scanStage}>
           <video ref={video} playsInline muted className={ready ? styles.scanReady : undefined} />
+          <canvas ref={snapRef} className={styles.scanSnap} aria-hidden="true" />
           {!ready && (
             <div className={styles.scanStarting} role="status">
               <span className={styles.scanStartSpin} aria-hidden="true" />
