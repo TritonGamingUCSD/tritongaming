@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 
 import { createPortal } from 'react-dom';
 import CodeIcon from '@/components/portal/CodeIcon';
 import { Check, CircleAlert, TriangleAlert, X, Zap } from 'lucide-react';
-import { scanArea, inScanCircle, around } from '@/lib/qr/scanArea';
+import { scanArea, inView, around } from '@/lib/qr/scanArea';
 import ByteMini from '@/components/Bytecode/ByteMini';
 import type { FrameGeo, FrameRead } from '@/lib/qr/scanFrame';
 import styles from './meetings.module.css';
@@ -281,23 +281,17 @@ export default function QrScanner({
             inflight = null; // (a worker that never answers does not stop the scanner)
           }
           last = now;
-          // Only what is in (or very near) the circle on the screen is read, not the whole camera picture: another code at the edge of the view, or on a screen across the room, is never picked up by
-          // accident. The picture is cropped to a square a little bigger than the circle (so a code that fills the circle still fits), which also gives a small code more pixels to be read from.
+          // Everything on the screen is read (a code may be anywhere in the view; the middle is looked at first, see lib/qr/scanFrame.ts). The picture is the part of the video that is on the screen,
+          // scaled down to at most 960 pixels on its long side.
           const z = digitalRef.current ? zoomRef.current : 1;
           const stageEl = v.parentElement;
-          const area = scanArea(
-            { w: v.videoWidth, h: v.videoHeight },
-            { w: stageEl?.clientWidth ?? v.videoWidth, h: stageEl?.clientHeight ?? v.videoHeight },
-            { w: window.innerWidth, h: window.innerHeight },
-            z,
-          );
-          const { cx, cy, side: L } = area;
+          const area = scanArea({ w: v.videoWidth, h: v.videoHeight }, { w: stageEl?.clientWidth ?? v.videoWidth, h: stageEl?.clientHeight ?? v.videoHeight }, z);
           if (detector && z === 1) {
             try {
               const hit = (await detector.detect(v))[0];
               if (hit) {
                 const f = around(hit.cornerPoints ?? []);
-                if (inScanCircle(area, f)) {
+                if (inView(area, f)) {
                   finish(hit.rawValue, f, false, v, z, now);
                   return;
                 }
@@ -307,12 +301,12 @@ export default function QrScanner({
             }
           }
           if (!ctx) return;
-          canvas.width = Math.min(720, Math.round(L));
-          canvas.height = canvas.width;
-          ctx.drawImage(v, cx - L / 2, cy - L / 2, L, L, 0, 0, canvas.width, canvas.height);
+          const scale = Math.min(1, 960 / Math.max(area.w, area.h));
+          canvas.width = Math.max(1, Math.round(area.w * scale));
+          canvas.height = Math.max(1, Math.round(area.h * scale));
+          ctx.drawImage(v, area.x, area.y, area.w, area.h, 0, 0, canvas.width, canvas.height);
           const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-          const k = L / canvas.width; // the picture it reads is the square in the middle, scaled to fit
-          const geo: FrameGeo = { area, k, ox: cx - L / 2, oy: cy - L / 2 };
+          const geo: FrameGeo = { k: area.w / canvas.width, ox: area.x, oy: area.y };
           if (worker) {
             const id = ++jobs;
             let shot = false;
@@ -562,7 +556,13 @@ export default function QrScanner({
               Starting camera…{slowStart && <small>If your phone asks, allow the camera. Or type the code below.</small>}
             </div>
           )}
-          <div className={styles.scanDim} style={dimStyle()} aria-hidden="true" />
+          <div className={`${styles.scanCorners} ${lock ? styles.scanCornersOff : ''}`} aria-hidden="true">
+            <i />
+            <i />
+            <i />
+            <i />
+          </div>
+          <div className={`${styles.scanDim} ${lock ? '' : styles.scanDimIdle}`} style={dimStyle()} aria-hidden="true" />
           <div className={`${styles.scanDimLock} ${lock ? styles.scanDimOn : ''}`} aria-hidden="true" />
           <div
             className={`${styles.scanTarget} ${lock ? styles[`lock_${lock.tone}`] : styles.scanLive}`}

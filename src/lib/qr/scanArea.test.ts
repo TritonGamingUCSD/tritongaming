@@ -1,66 +1,73 @@
 import { describe, expect, test } from 'vitest';
-import { inScanCircle, scanArea } from './scanArea';
+import { inView, scanArea } from './scanArea';
+import { readFrame } from './scanFrame';
 import { paint } from './tgCode/testCamera';
-import { decodeTGcodeAt } from './tgCode/decode';
 
 // A phone held upright: a 1280×720 camera (turned to 720×1280), shown full screen on a 390×844 page.
 const video = { w: 720, h: 1280 },
-  stage = { w: 390, h: 844 },
-  viewport = { w: 390, h: 844 };
+  stage = { w: 390, h: 844 };
 
 describe('where the Scan page looks', () => {
-  const a = scanArea(video, stage, viewport);
-  test('the circle and the square read are centred, and the square is a little bigger than the circle', () => {
-    expect(a.cx).toBe(360);
-    expect(a.cy).toBe(640);
-    expect(a.side).toBeGreaterThan(a.circle * 2);
-    expect(a.side).toBeLessThan(a.circle * 3.01);
-    expect(a.side).toBeLessThanOrEqual(video.w);
+  test('all of what is on the screen: the picture fills the stage with its middle kept, so the sides are cut', () => {
+    const a = scanArea(video, stage);
+    expect(a.h).toBe(1280); // the full height is on the screen
+    expect(a.w).toBeCloseTo(390 / (844 / 1280), 3); // and the width the stage's shape allows
+    expect(a.x).toBeCloseTo((720 - a.w) / 2, 6);
+    expect(a.y).toBe(0);
   });
-  test('a code in the circle counts; one at the edge of the picture, or far bigger than the circle, does not', () => {
-    expect(inScanCircle(a, { x: 360, y: 640, r: a.circle })).toBe(true);
-    expect(inScanCircle(a, { x: 360 + a.circle * 0.5, y: 640 - a.circle * 0.4, r: a.circle * 0.8 })).toBe(true);
-    expect(inScanCircle(a, { x: 90, y: 200, r: a.circle * 0.5 })).toBe(false); // a code in a corner of the view
-    expect(inScanCircle(a, { x: 360 + a.circle * 1.2, y: 640, r: a.circle * 0.6 })).toBe(false); // outside the circle
-    expect(inScanCircle(a, { x: 360, y: 640, r: a.circle * 2 })).toBe(false); // a code that fills the whole view
-    expect(inScanCircle(a, null)).toBe(true); // no position to judge by: let it through
+  test('digital zoom shows a smaller part, still round the middle', () => {
+    const a = scanArea(video, stage, 2);
+    expect(a.w).toBeCloseTo(scanArea(video, stage).w / 2, 6);
+    expect(a.h).toBeCloseTo(640, 6);
+    expect(a.x + a.w / 2).toBeCloseTo(360, 6);
+    expect(a.y + a.h / 2).toBeCloseTo(640, 6);
   });
-  test('digital zoom shrinks the circle in video pixels but keeps it in the middle', () => {
-    const z2 = scanArea(video, stage, viewport, 2);
-    expect(z2.circle).toBeCloseTo(a.circle / 2, 6);
-    expect(z2.cx).toBe(360);
+  test('a code anywhere on the screen is in view; one in the part the screen cuts off is not', () => {
+    const a = scanArea(video, stage);
+    expect(inView(a, { x: a.x + 10, y: 10 })).toBe(true); // a corner of the view
+    expect(inView(a, { x: 360, y: 640 })).toBe(true);
+    expect(inView(a, { x: a.x - 20, y: 640 })).toBe(false); // off the screen at the side
+    expect(inView(a, null)).toBe(true);
   });
+});
 
-  test('a TGcode held in the circle is read from the cropped square; a second one at the edge of the view is not even in it', () => {
-    // A synthetic picture of the whole camera view: one code in the middle (as held in the circle) and another near a corner.
-    const big = scanArea({ w: 1280, h: 720 }, { w: 1280, h: 720 }, { w: 1280, h: 720 }, 1); // a landscape view: the circle is 52% of the height
-    const inner = paint('m0123456789ab', { px: big.circle * 0.95, rot: 0.4, seed: 2, ss: 2 });
-    const other = paint('t00ffeeddccbb', { px: 70, rot: 1.0, seed: 3, ss: 2 });
-    const W = 1280,
-      H = 720,
-      g = new Uint8ClampedArray(W * H).fill(150);
-    const put = (pic: { img: Uint8ClampedArray; size: number }, ox: number, oy: number) => {
-      for (let y = 0; y < pic.size; y++)
-        for (let x = 0; x < pic.size; x++) {
-          const X = ox + x,
-            Y = oy + y;
-          if (X >= 0 && Y >= 0 && X < W && Y < H) g[Y * W + X] = pic.img[y * pic.size + x];
-        }
-    };
-    put(inner, Math.round(W / 2 - inner.size / 2), Math.round(H / 2 - inner.size / 2));
-    put(other, 40, 30);
-    // The crop the scanner takes: the square of `side` pixels in the middle.
-    const L = Math.round(big.side),
-      x0 = Math.round(W / 2 - L / 2),
-      y0 = Math.round(H / 2 - L / 2);
-    const crop = new Uint8ClampedArray(L * L);
-    for (let y = 0; y < L; y++) for (let x = 0; x < L; x++) crop[y * L + x] = g[(y0 + y) * W + x0 + x];
-    const got = decodeTGcodeAt(crop, L, L);
-    expect(got?.payload).toBe('m01234567');
-    expect(inScanCircle(big, got && { x: x0 + got.spot.x, y: y0 + got.spot.y, r: got.spot.r })).toBe(true);
-    // The code near the corner is outside the square altogether.
-    expect(40 + other.size / 2 < x0).toBe(true);
-    const full = decodeTGcodeAt(g, W, H); // (in the whole picture either could be found)
-    expect(full).not.toBeNull();
+// A grey picture of the whole view with codes placed in it, as the RGBA the scanner reads.
+function view(W: number, H: number, codes: { payload: string; px: number; x: number; y: number; rot: number }[]) {
+  const g = new Uint8ClampedArray(W * H).fill(128);
+  for (const c of codes) {
+    const p = paint(c.payload, { px: c.px, rot: c.rot, seed: 2, ss: 2, size: Math.round(c.px * 2.4) });
+    const x0 = Math.round(c.x - p.size / 2),
+      y0 = Math.round(c.y - p.size / 2);
+    for (let y = 0; y < p.size; y++) for (let x = 0; x < p.size; x++) if (x0 + x >= 0 && x0 + x < W && y0 + y >= 0 && y0 + y < H) g[(y0 + y) * W + x0 + x] = p.img[y * p.size + x];
+  }
+  const rgba = new Uint8ClampedArray(W * H * 4);
+  for (let i = 0; i < g.length; i++) rgba.set([g[i], g[i], g[i], 255], i * 4);
+  return rgba;
+}
+
+describe('reading anywhere in the view', () => {
+  const W = 540,
+    H = 960,
+    geo = { k: 2, ox: 100, oy: 50 };
+  test('a code in a corner of the view is read, and its position comes back in video pixels', () => {
+    const got = readFrame(view(W, H, [{ payload: 'm0123456789ab', px: 90, x: 110, y: 150, rot: 0.4 }]), W, H, geo);
+    expect(got?.text).toBe('tg:m01234567'); // (a code carries the first 8 digits of its key)
+    expect(got!.found.x).toBeCloseTo(100 + 110 * 2, -1); // within ~10 video pixels
+    expect(got!.found.y).toBeCloseTo(50 + 150 * 2, -1);
+  });
+  test('with two codes in view, the one near the middle is read', () => {
+    const got = readFrame(
+      view(W, H, [
+        { payload: 't00ffeeddccbb', px: 85, x: 120, y: 160, rot: 1.0 },
+        { payload: 'r1f2e3d4c5b6a', px: 85, x: 270, y: 480, rot: 0.2 },
+      ]),
+      W,
+      H,
+      geo,
+    );
+    expect(got?.text).toBe('tg:r1f2e3d4c');
+  });
+  test('nothing in view: nothing is read', () => {
+    expect(readFrame(view(W, H, []), W, H, geo)).toBeNull();
   });
 });

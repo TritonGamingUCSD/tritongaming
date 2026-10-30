@@ -8,8 +8,7 @@ export interface Preview {
 }
 
 export const PREVIEWS: Preview[] = [
-  { slug: 'bytecode', title: 'Bytecode', about: 'Byte carrying the portal code’s message in his own lines.', group: 'Codes' },
-  { slug: 'tgcode', title: 'TGcode', about: 'The circular code that tickets, meetings and rewards show today (kept as it is).', group: 'Codes' },
+  { slug: 'codes', title: 'Codes', about: 'The TGcode, the Bytecode and the QR code side by side, light and dark, with one sample you can change.', group: 'Codes' },
   {
     slug: 'byte-wink',
     title: 'Byte Wink',

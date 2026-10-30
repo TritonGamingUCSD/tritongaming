@@ -1,22 +1,21 @@
-// Where on the camera picture the Scan page looks. Only what is in (or very near) the circle drawn on the screen is read, so another code at the edge of the view (or on a screen
-// across the room) is never picked up by accident, and a small code gets more pixels because only a square a little bigger than the circle is looked at.
+// Where on the camera picture the Scan page looks: all of what is on the screen. The picture fills the stage with its middle kept ("cover"), and a digital zoom `z` scales it about the middle, so
+// what a person sees is a rectangle round the middle of the camera's own picture, and a code anywhere in it is read.
 export interface ScanArea {
-  cx: number;
-  cy: number; // the middle of the circle, in video pixels (always the middle of the picture)
-  circle: number; // the circle's radius, in video pixels
-  side: number; // the square that is read (side, video pixels, centred on the middle)
+  x: number;
+  y: number; // the top-left of what is on the screen, in video pixels
+  w: number;
+  h: number; // and its size
 }
 
-/** The circle on the screen is min(72vw, 52vh) wide and centred; the picture fills the stage with its middle kept ("cover") and a digital zoom `z` about the middle. */
-export function scanArea(video: { w: number; h: number }, stage: { w: number; h: number }, viewport: { w: number; h: number }, z = 1): ScanArea {
+export function scanArea(video: { w: number; h: number }, stage: { w: number; h: number }, z = 1): ScanArea {
   const cover = Math.max(stage.w / video.w, stage.h / video.h); // how much bigger the picture is shown than it is
-  const circle = Math.min(0.72 * viewport.w, 0.52 * viewport.h) / 2 / (cover * z);
-  return { cx: video.w / 2, cy: video.h / 2, circle, side: Math.min(video.w / z, video.h / z, 3 * circle) };
+  const w = Math.min(video.w, stage.w / (cover * z)),
+    h = Math.min(video.h, stage.h / (cover * z));
+  return { x: (video.w - w) / 2, y: (video.h - h) / 2, w, h };
 }
 
-/** Whether a code (its middle and radius, video pixels) is where the circle is: its middle within three quarters of the circle's radius from the circle's middle, and not much bigger than it. */
-export const inScanCircle = (a: ScanArea, f: { x: number; y: number; r: number } | null): boolean =>
-  !f || (Math.hypot(f.x - a.cx, f.y - a.cy) <= a.circle * 0.75 && f.r <= a.circle * 1.35);
+/** Whether a code's middle (video pixels) is on the screen. No position to judge by: yes. */
+export const inView = (a: ScanArea, f: { x: number; y: number } | null): boolean => !f || (f.x >= a.x && f.x <= a.x + a.w && f.y >= a.y && f.y <= a.y + a.h);
 
 /** The middle and half-size of the points of a code's outline (video pixels), or null for fewer than three points. */
 export function around(points: { x: number; y: number }[]): { x: number; y: number; r: number } | null {

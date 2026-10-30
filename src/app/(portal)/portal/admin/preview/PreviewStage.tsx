@@ -8,7 +8,7 @@ import ScanOpening from '@/components/portal/ScanOpening';
 import CheckInOutcome from '@/components/portal/CheckInOutcome';
 import type { Outcome } from '@/lib/checkin/anyCode';
 import ticketStyles from '../../tickets/fullscreenqr.module.css';
-import BytecodeDemo, { TGcodeDemo } from './BytecodeDemo';
+import CodesDemo from './CodesDemo';
 import ThemePair from './ThemePair';
 import ScanTestDemo from './ScanTestDemo';
 import Bytecode from '@/components/Bytecode/Bytecode';
@@ -237,10 +237,8 @@ function BytePosesDemo() {
 
 export default function PreviewStage({ slug }: { slug: string }) {
   switch (slug) {
-    case 'bytecode':
-      return <BytecodeDemo />;
-    case 'tgcode':
-      return <TGcodeDemo />;
+    case 'codes':
+      return <CodesDemo />;
     case 'code-ring':
       return <CodeRingDemo />;
     case 'scan-test':
