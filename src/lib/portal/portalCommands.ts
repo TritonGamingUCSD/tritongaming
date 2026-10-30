@@ -94,6 +94,7 @@ const DEFS: Def[] = [
     ['banner', 'bytecode', 'tgcode', 'code style', 'notice'],
     'view_admin_dashboard',
   ),
+  A('previews', 'Previews', 'Every screen and animation, the Test Scan', '/portal/admin/preview', ['animation', 'bytecode', 'scan', 'wink', 'test'], 'view_admin_dashboard'),
   A('links', 'Short links', 'Manage /go links', '/portal/admin/short-links', ['url', 'redirect', 'linktree'], 'view_admin_dashboard'),
 ];
 

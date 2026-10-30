@@ -24,10 +24,10 @@ export default async function PreviewPage({ params }: Params) {
   if (!preview) notFound();
   const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
   if (!hasCapability(roles, 'view_admin_dashboard')) notFound();
-  if (!profile) redirect(`/login?next=${encodeURIComponent(`/portal/preview/${animation}`)}`);
+  if (!profile) redirect(`/login?next=${encodeURIComponent(`/portal/admin/preview/${animation}`)}`);
   return (
     <div className={styles.page}>
-      <Link href="/portal/preview" className={styles.back}>
+      <Link href="/portal/admin/preview" className={styles.back}>
         ← All Previews
       </Link>
       <div className={styles.head}>

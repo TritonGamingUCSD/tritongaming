@@ -1,5 +1,5 @@
-// Everything the preview pages show. A preview is a page at /portal/preview/<slug> that plays one screen or animation with sample data (nothing is saved, nobody is notified).
-// It is not linked from any menu, and only Admins can open /portal/preview to find them all (anyone else gets the page for an address that does not exist). To add one: a line here and a case in PreviewStage.tsx.
+// Everything the preview pages show. A preview is a page at /portal/admin/preview/<slug> that plays one screen or animation with sample data (nothing is saved, nobody is notified).
+// Only Admins see them: the list is Admin › System › Previews (/portal/admin/preview) and a page for anyone else is the one for an address that does not exist. To add one: a line here and a case in PreviewStage.tsx.
 export interface Preview {
   slug: string;
   title: string;

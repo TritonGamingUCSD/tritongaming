@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import Bytecode from '@/components/Bytecode/Bytecode';
 import TGcode from '@/components/TGcode/TGcode';
-import QrScanner from '../meetings/QrScanner';
+import QrScanner from '../../meetings/QrScanner';
 import styles from './preview.module.css';
 
 const SAMPLE = 't00ffeeddccbb';

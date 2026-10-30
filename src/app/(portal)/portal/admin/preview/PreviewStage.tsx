@@ -7,7 +7,7 @@ import ByteWink from '@/components/Bytecode/ByteWink';
 import ScanOpening from '@/components/portal/ScanOpening';
 import CheckInOutcome from '@/components/portal/CheckInOutcome';
 import type { Outcome } from '@/lib/checkin/anyCode';
-import ticketStyles from '../tickets/fullscreenqr.module.css';
+import ticketStyles from '../../tickets/fullscreenqr.module.css';
 import BytecodeDemo, { TGcodeDemo } from './BytecodeDemo';
 import ThemePair from './ThemePair';
 import ScanTestDemo from './ScanTestDemo';
