@@ -4,9 +4,8 @@ import { useEffect, useRef, useState, type ComponentType, type ReactNode } from 
 import { createPortal } from 'react-dom';
 import CodeIcon from '@/components/portal/CodeIcon';
 import { Check, CircleAlert, TriangleAlert, X, Zap } from 'lucide-react';
-import jsQR from 'jsqr';
-import { decodeTGcodeAt } from '@/lib/qr/tgCode/decode';
-import { scanArea, inScanCircle } from '@/lib/qr/scanArea';
+import { scanArea, inScanCircle, around } from '@/lib/qr/scanArea';
+import type { FrameGeo, FrameRead } from '@/lib/qr/scanFrame';
 import styles from './meetings.module.css';
 
 interface Caps {
@@ -20,13 +19,6 @@ type ZoomTrack = MediaStreamTrack & { getCapabilities?: () => Caps; applyConstra
 // text to the caller; nothing is recorded or uploaded.
 // What a scan did, shown on the camera itself: the ring locks and takes the colour of the outcome, and `sheet` (the result) slides up over the frozen picture.
 // Clearing `lock` carries on scanning with the same camera, so "Scan Next" is instant.
-// The middle and half-size of the points of a code's outline (video pixels).
-function around(points: { x: number; y: number }[]): { x: number; y: number; r: number } | null {
-  if (points.length < 3) return null;
-  const x = points.reduce((s, p) => s + p.x, 0) / points.length,
-    y = points.reduce((s, p) => s + p.y, 0) / points.length;
-  return { x, y, r: Math.max(...points.map((p) => Math.hypot(p.x - x, p.y - y))) };
-}
 // Video pixels → where they show on the stage: the picture fills the stage with its middle kept ("cover"), then a digital zoom scales it about the middle.
 function toStage(f: { x: number; y: number; r: number }, v: HTMLVideoElement, z: number): { x: number; y: number; r: number } | null {
   const stage = v.parentElement?.getBoundingClientRect();
@@ -87,15 +79,11 @@ export default function QrScanner({
   const [torch, setTorch] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
-  // The Bytecode's reader and Byte's pop-up are loaded after the camera starts (they are not needed to start scanning, and they carry Byte's drawing).
-  const byteDecodeRef = useRef<((gray: Uint8ClampedArray, w: number, h: number) => { payload: string; spot: { x: number; y: number; r: number } } | null) | null>(null);
+  // Byte's pop-up is loaded after the camera starts (it is not needed to start scanning, and it carries Byte's drawing).
   const [Pop, setPop] = useState<ComponentType<{ className?: string }> | null>(null);
   const [byteScan, setByteScan] = useState(false); // the code just taken was a Bytecode: Byte pops up on it instead of the check mark
   useEffect(() => {
     let alive = true;
-    void import('@/lib/qr/byteCode/decode').then((m) => {
-      if (alive) byteDecodeRef.current = m.decodeBytecodeAt;
-    });
     void import('@/components/Bytecode/ByteScanPop').then((m) => {
       if (alive) setPop(() => m.default);
     });
@@ -175,7 +163,8 @@ export default function QrScanner({
     let stream: MediaStream | null = null,
       raf = 0,
       dead = false,
-      last = 0;
+      last = 0,
+      stopWorker = () => {};
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
     const Detector = (
@@ -211,14 +200,63 @@ export default function QrScanner({
           await new Promise((r) => setTimeout(r, 300)); // the phone's zoom (back to 1×) lands a moment after the first picture
           if (!dead) setReady(true);
         }
+        // The reader runs in a worker where the browser allows one: the page keeps drawing while it works, one picture is out at a time and the next goes as soon as the answer is back. Where a
+        // worker cannot be made (or fails to start) the same reader runs on the page itself, as it used to.
+        let worker: Worker | null = null;
+        try {
+          worker = new Worker(new URL('../../../../lib/qr/scanWorker.ts', import.meta.url));
+        } catch {
+          worker = null;
+        }
+        let inflight: { id: number; at: number; v: HTMLVideoElement; z: number } | null = null;
+        let jobs = 0;
+        let local: ((data: Uint8ClampedArray, w: number, h: number, geo: FrameGeo) => FrameRead | null) | null = null;
+        const loadLocal = () => {
+          void import('@/lib/qr/scanFrame').then((m) => {
+            local = m.readFrame;
+          });
+        };
+        if (!worker) loadLocal();
+        // What to do with a code that was read: the caller decides what the text is (true = taken, which freezes the picture; anything else = keep looking). The same code is not offered again
+        // while it stays in view (after "Scan Next" or "Try Again" the code is usually still in front of the camera): it counts as new only once it has been out of sight for a moment, or
+        // another code comes.
+        const finish = (text: string, found: { x: number; y: number; r: number } | null, viaByte: boolean, v: HTMLVideoElement, z: number, now: number) => {
+          const seen = seenRef.current;
+          const repeat = text === seen.text && now - seen.at < 1500;
+          seen.text = text;
+          seen.at = now;
+          if (!repeat && onScanRef.current(text, { bytecode: viaByte }) === true) {
+            pausedRef.current = true;
+            v.pause(); // freeze right away, so the ring lands where the code is in the frozen picture
+            setByteScan(viaByte);
+            setSpot(found ? toStage(found, v, z) : null);
+          }
+        };
+        if (worker) {
+          worker.onmessage = (e: MessageEvent<{ id: number; out: FrameRead | null }>) => {
+            const job = inflight;
+            if (!job || e.data.id !== job.id) return;
+            inflight = null;
+            const out = e.data.out;
+            if (out && !dead && !pausedRef.current) finish(out.text, out.found, out.viaByte, job.v, job.z, performance.now());
+          };
+          worker.onerror = () => {
+            worker?.terminate();
+            worker = null;
+            inflight = null;
+            loadLocal();
+          };
+        }
+        stopWorker = () => worker?.terminate();
         const tick = async (now: number) => {
           raf = requestAnimationFrame(tick);
           const v = video.current;
-          if (dead || pausedRef.current || zoomBusy.current || !v || v.readyState < 2 || now - last < 140) return; // (not while the zoom is moving: reading is the heavy part, and it would make the pinch stutter)
+          if (dead || pausedRef.current || zoomBusy.current || !v || v.readyState < 2 || now - last < (worker ? 70 : 140)) return; // (not while the zoom is moving: reading is the heavy part, and it would make the pinch stutter)
+          if (worker && inflight) {
+            if (now - inflight.at < 3000) return; // the last picture is still being read
+            inflight = null; // (a worker that never answers does not stop the scanner)
+          }
           last = now;
-          let text: string | null = null;
-          let found: { x: number; y: number; r: number } | null = null; // where it was, in video pixels
-          let viaByte = false;
           // Only what is in (or very near) the circle on the screen is read, not the whole camera picture: another code at the edge of the view, or on a screen across the room, is never picked up by
           // accident. The picture is cropped to a square a little bigger than the circle (so a code that fills the circle still fits), which also gives a small code more pixels to be read from.
           const z = digitalRef.current ? zoomRef.current : 1;
@@ -230,80 +268,35 @@ export default function QrScanner({
             z,
           );
           const { cx, cy, side: L } = area;
-          const inCircle = (f: { x: number; y: number; r: number } | null) => inScanCircle(area, f);
           if (detector && z === 1) {
             try {
               const hit = (await detector.detect(v))[0];
               if (hit) {
                 const f = around(hit.cornerPoints ?? []);
-                if (inCircle(f)) {
-                  text = hit.rawValue;
-                  found = f;
+                if (inScanCircle(area, f)) {
+                  finish(hit.rawValue, f, false, v, z, now);
+                  return;
                 }
               }
             } catch {
               /* fall back below */
             }
           }
-          if (!text && ctx) {
-            canvas.width = Math.min(720, Math.round(L));
-            canvas.height = canvas.width;
-            ctx.drawImage(v, cx - L / 2, cy - L / 2, L, L, 0, 0, canvas.width, canvas.height);
-            const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const k = L / canvas.width,
-              ox = cx - L / 2,
-              oy = cy - L / 2; // the picture it read is the square in the middle, scaled to fit
-            const inVideo = (p: { x: number; y: number }) => ({ x: ox + p.x * k, y: oy + p.y * k });
-            // A QR first (an event's check-in link and the like), then the portal's own TGcode.
-            const q = jsQR(img.data, img.width, img.height, { inversionAttempts: 'attemptBoth' });
-            if (q) {
-              const f = around([q.location.topLeftCorner, q.location.topRightCorner, q.location.bottomRightCorner, q.location.bottomLeftCorner].map(inVideo));
-              if (inCircle(f)) {
-                text = q.data;
-                found = f;
-              }
-            }
-            if (!text) {
-              const gray = new Uint8ClampedArray(img.width * img.height);
-              for (let i = 0, j = 0; i < gray.length; i++, j += 4) gray[i] = (img.data[j] * 77 + img.data[j + 1] * 150 + img.data[j + 2] * 29) >> 8;
-              const ring = decodeTGcodeAt(gray, img.width, img.height);
-              if (ring) {
-                const f = { x: ox + ring.spot.x * k, y: oy + ring.spot.y * k, r: ring.spot.r * k };
-                if (inCircle(f)) {
-                  text = `tg:${ring.payload}`;
-                  found = f;
-                }
-              } else {
-                // then the Bytecode (Byte): the same message in his own lines (its key is 8 digits too)
-                const byte = byteDecodeRef.current?.(gray, img.width, img.height);
-                if (byte) {
-                  const f = { x: ox + byte.spot.x * k, y: oy + byte.spot.y * k, r: byte.spot.r * k };
-                  if (inCircle(f)) {
-                    text = `tg:${byte.payload}`;
-                    found = f;
-                    viaByte = true;
-                  }
-                }
-              }
-            }
+          if (!ctx) return;
+          canvas.width = Math.min(720, Math.round(L));
+          canvas.height = canvas.width;
+          ctx.drawImage(v, cx - L / 2, cy - L / 2, L, L, 0, 0, canvas.width, canvas.height);
+          const img = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const k = L / canvas.width; // the picture it reads is the square in the middle, scaled to fit
+          const geo: FrameGeo = { area, k, ox: cx - L / 2, oy: cy - L / 2 };
+          if (worker) {
+            const id = ++jobs;
+            inflight = { id, at: now, v, z };
+            worker.postMessage({ id, data: img.data, w: img.width, h: img.height, geo }, [img.data.buffer]);
+            return;
           }
-          // The caller decides what the text is: true = taken (freeze the picture), anything else = keep looking. The same text is not offered again for 3 s.
-          // The same code is not offered again while it stays in view (after "Scan Next" or "Try Again" the code is usually still in front of the camera): it counts as new
-          // only once it has been out of sight for a moment, or another code comes.
-          const seen = seenRef.current;
-          const repeat = !!text && text === seen.text && now - seen.at < 1500;
-          if (text) {
-            seen.text = text;
-            seen.at = now;
-          }
-          if (text && !repeat) {
-            if (onScanRef.current(text, { bytecode: viaByte }) === true) {
-              pausedRef.current = true;
-              v.pause(); // freeze right away, so the ring lands where the code is in the frozen picture
-              setByteScan(viaByte);
-              setSpot(found ? toStage(found, v, z) : null);
-            }
-          }
+          const out = local?.(img.data, img.width, img.height, geo);
+          if (out) finish(out.text, out.found, out.viaByte, v, z, now);
         };
         raf = requestAnimationFrame(tick);
       } catch (e) {
@@ -319,6 +312,7 @@ export default function QrScanner({
     })();
     return () => {
       dead = true;
+      stopWorker();
       cancelAnimationFrame(raf);
       stream?.getTracks().forEach((t) => t.stop());
     };

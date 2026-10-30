@@ -17,3 +17,11 @@ export function scanArea(video: { w: number; h: number }, stage: { w: number; h:
 /** Whether a code (its middle and radius, video pixels) is where the circle is: its middle within three quarters of the circle's radius from the circle's middle, and not much bigger than it. */
 export const inScanCircle = (a: ScanArea, f: { x: number; y: number; r: number } | null): boolean =>
   !f || (Math.hypot(f.x - a.cx, f.y - a.cy) <= a.circle * 0.75 && f.r <= a.circle * 1.35);
+
+/** The middle and half-size of the points of a code's outline (video pixels), or null for fewer than three points. */
+export function around(points: { x: number; y: number }[]): { x: number; y: number; r: number } | null {
+  if (points.length < 3) return null;
+  const x = points.reduce((s, p) => s + p.x, 0) / points.length,
+    y = points.reduce((s, p) => s + p.y, 0) / points.length;
+  return { x, y, r: Math.max(...points.map((p) => Math.hypot(p.x - x, p.y - y))) };
+}
