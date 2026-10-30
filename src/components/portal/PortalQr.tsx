@@ -3,14 +3,14 @@
 import { useMemo } from 'react';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
 import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
+import { QR_PRESETS } from '@/lib/qr/qrPresets';
 import { codeLink } from '@/lib/qr/codeLink';
 import styles from './PortalQr.module.css';
 
 // The QR code option of the portal's own codes (see lib/qr/codeLink.ts): the standard Triton Gaming QR design (rounded blue modules, gold corners, the TG logo in the middle: the same as the tickets' and the
 // trivia join code) holding a link to the portal page for the code, so a phone's own camera opens it. It has no background of its own: the light theme draws the standard dark-blue modules, the dark theme the
-// same design in light modules (both are drawn and the page's theme shows one). Only drawn in the browser (the link starts with the address the page is open on).
-const LIGHT: Partial<QRCodeOptions> = { dotsGradientStartColor: '#56789f', cornersSquareColor: '#c46a00', cornersDotColor: '#e08a00' }; // (a little deeper, so it reads on a card that is not white)
-const DARK: Partial<QRCodeOptions> = { dotsGradientStartColor: '#a9cdf2', dotsGradientEndColor: '#ece9e2', dotsColor: '#ece9e2' };
+// portal's Triton Night look (the same as the header's QR button) (both are drawn and the page's theme shows one). Only drawn in the browser (the link starts with the address the page is open on).
+const NIGHT = QR_PRESETS.find((p) => p.id === 'triton-dark')?.style; // (the portal's own dark look, as in the header's QR button)
 
 export default function PortalQr({ payload, label = 'QR code for the portal' }: { payload: string; label?: string }) {
   const [light, dark] = useMemo(() => {
@@ -21,9 +21,10 @@ export default function PortalQr({ payload, label = 'QR code for the portal' }: 
       size: 520,
       margin: 8,
     };
+    // (the light look is the header's QR button's, a little deeper in its pale centre and gold so it reads on a card that is not white)
     return [
-      { ...base, ...LIGHT },
-      { ...base, ...DARK },
+      { ...base, dotsGradientStartColor: '#56789f', cornersSquareColor: '#c46a00', cornersDotColor: '#e08a00' },
+      { ...base, ...NIGHT, transparentBg: true },
     ];
   }, [payload]);
   return (
