@@ -192,6 +192,11 @@
   animation: qrSwapIn 0.45s ease-out;
 }
 
+/* The code fills its wrapper (a picture with no width of its own, like Byte, was left at its default 300px at the wrapper's left edge, off-centre) */
+.qrWrapper > .qrSwap {
+  width: 100%;
+}
+
 @keyframes qrSwapIn {
   from { opacity: 0.25; transform: scale(0.97); }
   to   { opacity: 1; transform: scale(1); }
