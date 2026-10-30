@@ -1,3 +1,13 @@
-/* The QR code option of the portal's codes: the Triton Gaming QR design on its own white, whatever the theme (a QR needs its light margin to be read). */
-.box { width: 100%; aspect-ratio: 1 / 1; background: #fff; border-radius: 0.5rem; overflow: hidden; line-height: 0; }   /* theme-ok */
+/* The QR code option of the portal's codes: no background, the Triton Gaming QR design drawn twice (dark modules for the light theme, light modules for the dark one); the theme shows one. */
+.box { width: 100%; aspect-ratio: 1 / 1; line-height: 0; }
 .box canvas, .box svg { display: block; width: 100%; height: 100%; }
+.light, .dark { width: 100%; height: 100%; }
+.dark { display: none; }
+:global(:root[data-pp-theme='dark']) .light { display: none; }
+:global(:root[data-pp-theme='dark']) .dark { display: block; }
+@media (prefers-color-scheme: dark) {
+  :global(:root:not([data-pp-theme='light'])) .light { display: none; }
+  :global(:root:not([data-pp-theme='light'])) .dark { display: block; }
+}
+:global(.pp-dark) .light { display: none; }
+:global(.pp-dark) .dark { display: block; }
