@@ -80,8 +80,9 @@ export default function QrScanner({
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
   // Byte's pop-up is loaded after the camera starts (it is not needed to start scanning, and it carries Byte's drawing).
-  const [Pop, setPop] = useState<ComponentType<{ className?: string }> | null>(null);
+  const [Pop, setPop] = useState<ComponentType<{ className?: string; tilt?: number }> | null>(null);
   const [byteScan, setByteScan] = useState(false); // the code just taken was a Bytecode: Byte pops up on it instead of the check mark
+  const [byteTilt, setByteTilt] = useState(0); // and how far it was turned from upright, in degrees: Byte grows out at that angle and turns upright as he jumps
   useEffect(() => {
     let alive = true;
     void import('@/components/Bytecode/ByteScanPop').then((m) => {
@@ -220,7 +221,7 @@ export default function QrScanner({
         // What to do with a code that was read: the caller decides what the text is (true = taken, which freezes the picture; anything else = keep looking). The same code is not offered again
         // while it stays in view (after "Scan Next" or "Try Again" the code is usually still in front of the camera): it counts as new only once it has been out of sight for a moment, or
         // another code comes.
-        const finish = (text: string, found: { x: number; y: number; r: number } | null, viaByte: boolean, v: HTMLVideoElement, z: number, now: number) => {
+        const finish = (text: string, found: { x: number; y: number; r: number } | null, viaByte: boolean, v: HTMLVideoElement, z: number, now: number, angle = 0) => {
           const seen = seenRef.current;
           const repeat = text === seen.text && now - seen.at < 1500;
           seen.text = text;
@@ -229,6 +230,7 @@ export default function QrScanner({
             pausedRef.current = true;
             v.pause(); // freeze right away, so the ring lands where the code is in the frozen picture
             setByteScan(viaByte);
+            setByteTilt(Math.round((angle * 180) / Math.PI));
             setSpot(found ? toStage(found, v, z) : null);
           }
         };
@@ -238,7 +240,7 @@ export default function QrScanner({
             if (!job || e.data.id !== job.id) return;
             inflight = null;
             const out = e.data.out;
-            if (out && !dead && !pausedRef.current) finish(out.text, out.found, out.viaByte, job.v, job.z, performance.now());
+            if (out && !dead && !pausedRef.current) finish(out.text, out.found, out.viaByte, job.v, job.z, performance.now(), out.angle);
           };
           worker.onerror = () => {
             worker?.terminate();
@@ -296,7 +298,7 @@ export default function QrScanner({
             return;
           }
           const out = local?.(img.data, img.width, img.height, geo);
-          if (out) finish(out.text, out.found, out.viaByte, v, z, now);
+          if (out) finish(out.text, out.found, out.viaByte, v, z, now, out.angle);
         };
         raf = requestAnimationFrame(tick);
       } catch (e) {
@@ -542,7 +544,17 @@ export default function QrScanner({
                   style={(lock ? spot : lastSpot.current) ? iconBox((lock ? spot : lastSpot.current)!, frame.current, tone === 'ok' && !!Pop && byteScan) : undefined}
                   aria-hidden="true"
                 >
-                  {tone === 'ok' ? Pop && byteScan ? <Pop /> : <Check size={44} strokeWidth={2.75} /> : tone === 'warn' ? <TriangleAlert size={40} /> : <CircleAlert size={42} />}
+                  {tone === 'ok' ? (
+                    Pop && byteScan ? (
+                      <Pop tilt={byteTilt} />
+                    ) : (
+                      <Check size={44} strokeWidth={2.75} />
+                    )
+                  ) : tone === 'warn' ? (
+                    <TriangleAlert size={40} />
+                  ) : (
+                    <CircleAlert size={42} />
+                  )}
                 </span>
               );
             })()}

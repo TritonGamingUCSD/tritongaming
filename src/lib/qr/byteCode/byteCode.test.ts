@@ -258,6 +258,18 @@ describe('reading', () => {
   });
 });
 
+describe('which way up', () => {
+  test('the spot says how far the code is turned from upright', () => {
+    for (const rot of [0, 1.0, 2.5, 4.4, 6.0]) {
+      const pic = shoot(payloads[1], { px: 130, rot, seed: 5, ss: 2 });
+      const got = decodeBytecodeAt(...flat(pic));
+      expect(got?.payload).toBe(key(payloads[1]));
+      const turn = Math.atan2(Math.sin(got!.spot.angle - rot), Math.cos(got!.spot.angle - rot)); // the difference, wrapped
+      expect(Math.abs(turn)).toBeLessThan(0.08);
+    }
+  });
+});
+
 describe('reading under random conditions', () => {
   test('reads about nine in ten of 120 random pictures, and never reads the wrong thing', () => {
     const rnd = lcg(7);

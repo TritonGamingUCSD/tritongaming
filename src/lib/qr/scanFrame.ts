@@ -16,6 +16,7 @@ export interface FrameRead {
   text: string;
   found: { x: number; y: number; r: number }; // where the code is, in video pixels
   viaByte: boolean; // the Bytecode's reader took it
+  angle?: number; // a Bytecode's turn from upright, radians
 }
 
 export function readFrame(data: Uint8ClampedArray, w: number, h: number, geo: FrameGeo): FrameRead | null {
@@ -36,7 +37,7 @@ export function readFrame(data: Uint8ClampedArray, w: number, h: number, geo: Fr
   const byte = decodeBytecodeAt(gray, w, h);
   if (byte) {
     const f = { x: ox + byte.spot.x * k, y: oy + byte.spot.y * k, r: byte.spot.r * k };
-    if (inScanCircle(area, f)) return { text: `tg:${byte.payload}`, found: f, viaByte: true };
+    if (inScanCircle(area, f)) return { text: `tg:${byte.payload}`, found: f, viaByte: true, angle: byte.spot.angle };
   }
   return null;
 }

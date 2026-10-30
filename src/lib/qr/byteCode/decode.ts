@@ -31,6 +31,7 @@ export interface ByteSpot {
   x: number;
   y: number;
   r: number;
+  angle: number; // how far the code is turned from upright (feet down), radians: 0 upright, positive clockwise on the screen
 }
 
 type Mapper = (x: number, y: number) => { x: number; y: number };
@@ -649,7 +650,10 @@ const spotOf = (found: { payload: string; map: Mapper }, k: number): { payload: 
   const c = found.map(0, 0),
     e1 = found.map(1, 0),
     e2 = found.map(0, 1);
-  return { payload: found.payload, spot: { x: c.x / k, y: c.y / k, r: (Math.hypot(e1.x - c.x, e1.y - c.y) + Math.hypot(e2.x - c.x, e2.y - c.y)) / 2 / k } };
+  return {
+    payload: found.payload,
+    spot: { x: c.x / k, y: c.y / k, r: (Math.hypot(e1.x - c.x, e1.y - c.y) + Math.hypot(e2.x - c.x, e2.y - c.y)) / 2 / k, angle: Math.atan2(e1.y - c.y, e1.x - c.x) },
+  };
 };
 
 /** One look at one picture; `eyes.u` is told how many pixels a code unit was at the first pair of eyes found (0 when there was none). */
