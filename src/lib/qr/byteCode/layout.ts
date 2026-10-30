@@ -1,30 +1,27 @@
 import { rsEncode, rsDecode } from '../tgCode/rs';
 import { FINDERS, DOTS, R_SMALL, SPAN, KEEP_OUT_FINDER, KEEP_OUT_DOT } from './marks';
-import { REGIONS, STROKES, DOTS_OF_INK } from './byteArt';
+import { STROKES, DOTS_OF_INK } from './byteArt';
 export { FINDERS, DOTS, R_SMALL, SPAN };
 
 // The Bytecode: the same message as the portal's circular TGcode (what a ticket, a meeting's check-in and a reward pickup show; see lib/qr/tgCode), written into Byte, the Triton
 // Gaming mascot, instead of in rings. Only the portal's Scan button reads it. The rules are the TGcode's, with "stretches" in place of rings:
-//   • a stretch is a run of cells in a line: either a row across one of Byte's flat areas (his pale belly, face and wings), or a stretch of one of his drawn lines (the outline, the
+//   • a stretch is a run of cells along one of his drawn lines (the outline, the sticker border round him, the
 //     scarf's edge, the wing feathers…) cut into cells of equal length. A cell is a bar (the line is drawn there) or a gap (it is not: the colour beside it shows through)
 //   • the message is written as bars with a gap of exactly ONE cell between them and no bar shorter than two cells. A block of 10 cells starts with a bar and holds one of 16
 //     patterns of such bars, which is 4 bits; two blocks make a byte. A wrong cell therefore spoils one block and one byte
-//   • 5 bytes of message (what it is, and 32 bits of the key the server checks) followed by Reed–Solomon repair bytes, scattered over Byte by a fixed shuffle (its own, so a
+//   • 4 bytes of message (what it is, a mark that says it is a Bytecode, and 28 bits of the key the server checks) followed by Reed–Solomon repair bytes, scattered over Byte by a fixed shuffle (its own, so a
 //     Bytecode is never mistaken for a TGcode: the version in the first byte is 3 here, 2 there)
 //   • lines and cells that are not part of the message are drawn as Byte is, so what carries it is only a few pieces of his drawing turned into dashes
 export const PITCH = 0.032; // the length of a cell along a line
-export const ROW_H = 0.034; // the height of a row of cells across a flat area
 export const LINE_W = 0.026; // how thick his drawn lines are
-export const DASH = 0.026; // thickness of a bar across a flat area (the same as his lines)
 export const BLOCK = 10;
-export const NSYM = 9;
-export const DATA_BYTES = 5;
-export const TOTAL_BYTES = DATA_BYTES + NSYM; // 14
-export const NIBBLES = TOTAL_BYTES * 2; // 28 blocks
-export const KEY_HEX = 8;
-const VERSION = 3;
+export const NSYM = 9; // repair bytes (the same as the TGcode)
+export const DATA_BYTES = 4; // kind (2 bits), version mark (2 bits) and 28 bits of key
+export const TOTAL_BYTES = DATA_BYTES + NSYM; // 13
+export const NIBBLES = TOTAL_BYTES * 2; // 26 blocks
+export const KEY_HEX = 7; // hex digits of key in a code (28 bits; the TGcode carries 8)
+const VERSION = 3; // the 2-bit mark that says this is a Bytecode
 const CLEAR_LINE = 0.034; // how far a cell on a line stays from any other line
-const CLEAR_ROW = 0.034; // how far a cell on a flat area stays from any line
 
 export const PAYLOAD = /^[mtr][0-9a-f]{12}$/;
 export type Kind = 'm' | 't' | 'r';
@@ -83,30 +80,6 @@ const clearOfMarks = (p: Pt) => {
   return true;
 };
 
-// The flat areas a row of cells may cross: green, pale and yellow regions (not the dark mask, the pink cheek or the shadow). Region paths are polygons of straight pieces.
-const FLAT: Pt[][][] = REGIONS.filter((r) => r.col === 3 || r.col === 4 || r.col === 5).map((r) =>
-  r.d
-    .split('M')
-    .filter(Boolean)
-    .map((loop) =>
-      loop
-        .replace('Z', '')
-        .split('L')
-        .map((p) => p.trim().split(' ').map(Number) as Pt),
-    ),
-);
-const inLoops = (p: Pt, loops: Pt[][]) => {
-  let inside = false;
-  for (const loop of loops)
-    for (let i = 0, j = loop.length - 1; i < loop.length; j = i++) {
-      const [xi, yi] = loop[i],
-        [xj, yj] = loop[j];
-      if (yi > p[1] !== yj > p[1] && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) inside = !inside;
-    }
-  return inside;
-};
-const onFlat = (p: Pt) => FLAT.some((loops) => inLoops(p, loops));
-
 /** A run of cells in a line. `stroke` is the index of the drawn line it lies along (-1: a row across a flat area) and `s0` the distance along it at which its first cell starts. */
 export interface Stretch {
   cells: Pt[];
@@ -115,21 +88,6 @@ export interface Stretch {
 }
 export const STRETCHES: Stretch[] = [];
 {
-  // rows across the flat areas
-  const XS = Math.round(2 / PITCH);
-  for (let y = -0.95 + ROW_H / 2; y < 0.95; y += ROW_H) {
-    let run: Pt[] = [];
-    const flush = () => {
-      if (run.length >= BLOCK) STRETCHES.push({ cells: run, stroke: -1, s0: 0 });
-      run = [];
-    };
-    for (let i = 0; i < XS; i++) {
-      const p: Pt = [(i - XS / 2 + 0.5) * PITCH, y];
-      if (onFlat(p) && clearOfMarks(p) && clearOfLines(p, -1, CLEAR_ROW)) run.push(p);
-      else flush();
-    }
-    flush();
-  }
   // along the lines that may carry data
   STROKES.forEach((st, index) => {
     if (!st.ok) return;
@@ -213,11 +171,11 @@ const MASK = (() => {
   return m;
 })();
 
-/** The coded, masked message as half-bytes (null for a payload that is not valid). */
+/** The coded, masked message as half-bytes (null for a payload that is not valid). A payload is what the page hands the drawing: a kind letter and 12 hex digits of key; the code carries the first 7. */
 export function nibblesOf(payload: string): number[] | null {
   if (!PAYLOAD.test(payload)) return null;
-  const data = [(VERSION << 4) | KIND_BYTE[payload[0] as Kind]];
-  for (let i = 0; i < KEY_HEX / 2; i++) data.push(parseInt(payload.slice(1 + i * 2, 3 + i * 2), 16));
+  const data = [(KIND_BYTE[payload[0] as Kind] << 6) | (VERSION << 4) | parseInt(payload[1], 16)];
+  for (let i = 0; i < 3; i++) data.push(parseInt(payload.slice(2 + i * 2, 4 + i * 2), 16));
   const code = rsEncode(data, NSYM).map((b, i) => b ^ MASK[i]);
   return code.flatMap((b) => [b >> 4, b & 15]);
 }
@@ -242,11 +200,12 @@ export function payloadFromNibbles(nib: number[], doubtful: number[] = []): stri
   const erase = [...new Set(doubtful.map((b) => b >> 1))];
   const data = rsDecode(bytes, NSYM, erase);
   if (!data || data.length !== DATA_BYTES) return null;
-  if (data[0] >> 4 !== VERSION) return null;
-  const kind = KIND_OF[data[0] & 15];
+  if (((data[0] >> 4) & 3) !== VERSION) return null;
+  const kind = KIND_OF[data[0] >> 6];
   if (!kind) return null;
   return (
     kind +
+    (data[0] & 15).toString(16) +
     data
       .slice(1)
       .map((b) => b.toString(16).padStart(2, '0'))
@@ -256,18 +215,17 @@ export function payloadFromNibbles(nib: number[], doubtful: number[] = []): stri
 
 export const EXT = -0.05; // how far, in cells, a bar is drawn into the gap beside it (negative: short of its cell edge)
 
-/** What to draw for a message, as polylines (each a list of points): `bars` across the flat areas, `lineBars` along the drawn lines, and `solid` the parts of the drawn lines that are
+/** What to draw for a message, as polylines (each a list of points): `lineBars` along the drawn lines, and `solid` the parts of the drawn lines that are
  *  not part of the message (they are drawn as ordinary lines). */
-export function drawing(payload: string): { bars: Pt[][]; lineBars: Pt[][]; solid: Pt[][] } | null {
+export function drawing(payload: string): { lineBars: Pt[][]; solid: Pt[][] } | null {
   const grid = dashGrid(payload);
   if (!grid) return null;
-  const bars: Pt[][] = [],
-    lineBars: Pt[][] = [];
+  const lineBars: Pt[][] = [];
   const spent: [number, number][][] = LINES.map(() => []); // the stretch of each line taken by message blocks
   BLOCKS.forEach((block) => {
     const si = block[0][0];
     const st = STRETCHES[si];
-    if (st.stroke >= 0) spent[st.stroke].push([st.s0 + block[0][1] * PITCH, st.s0 + (block[BLOCK - 1][1] + 1) * PITCH]);
+    spent[st.stroke].push([st.s0 + block[0][1] * PITCH, st.s0 + (block[BLOCK - 1][1] + 1) * PITCH]);
   });
   STRETCHES.forEach((st, si) => {
     const row = grid[si];
@@ -279,19 +237,9 @@ export function drawing(payload: string): { bars: Pt[][]; lineBars: Pt[][]; soli
       }
       let n = 1;
       while (c + n < row.length && row[c + n]) n++;
-      if (st.stroke < 0) {
-        const x0 = st.cells[c][0] - (0.5 - EXT) * PITCH,
-          x1 = st.cells[c + n - 1][0] + (0.5 - EXT) * PITCH,
-          y = st.cells[c][1];
-        bars.push([
-          [x0 + DASH / 2, y],
-          [x1 - DASH / 2, y],
-        ]);
-      } else {
-        const a = st.s0 + (c - EXT) * PITCH + LINE_W / 2,
-          b = st.s0 + (c + n + EXT) * PITCH - LINE_W / 2;
-        lineBars.push(sliceLine(st.stroke, a, b));
-      }
+      const a = st.s0 + (c - EXT) * PITCH + LINE_W / 2,
+        b = st.s0 + (c + n + EXT) * PITCH - LINE_W / 2;
+      lineBars.push(sliceLine(st.stroke, a, b));
       c += n;
     }
   });
@@ -306,5 +254,5 @@ export function drawing(payload: string): { bars: Pt[][]; lineBars: Pt[][]; soli
     }
     if (L.length > from + 1e-6) solid.push(sliceLine(i, from, L.length));
   });
-  return { bars, lineBars, solid };
+  return { lineBars, solid };
 }

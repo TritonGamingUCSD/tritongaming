@@ -238,6 +238,28 @@ function decodeSoft(soft: number[][]): { payload: string; doubt: number } | null
   return null;
 }
 
+/** The dark and the light level of each stretch from the grey levels of its own cells: a two-way split (the means of the darker and the lighter group, found by a few rounds of
+ *  k-means starting from the least and the most). A stretch whose cells are all alike falls back to `base`. */
+function stretchLevels(values: number[][], base: { ink: number; bare: number }): { ink: number; bare: number }[] {
+  const per: number[][] = Array.from({ length: RINGS }, () => []);
+  values.forEach((row, b) => per[BLOCKS[b][0][0]].push(...row));
+  return per.map((v) => {
+    if (v.length < 10) return base;
+    let lo = Math.min(...v),
+      hi = Math.max(...v);
+    if (hi - lo < 20) return base;
+    for (let k = 0; k < 6; k++) {
+      const mid = (lo + hi) / 2;
+      const a = v.filter((x) => x <= mid),
+        c = v.filter((x) => x > mid);
+      if (!a.length || !c.length) break;
+      lo = a.reduce((p, q) => p + q, 0) / a.length;
+      hi = c.reduce((p, q) => p + q, 0) / c.length;
+    }
+    return { ink: lo, bare: hi };
+  });
+}
+
 /** Reads the cells given where the top-left (L) and top-right (R) ring marks are. */
 function readBytecode(
   gray: Uint8ClampedArray | Uint8Array,
@@ -251,12 +273,16 @@ function readBytecode(
   for (const s of hypotheses(gray, w, h, L, R, bin, straighten)) {
     // First with the marks' own levels for every ring; then with levels measured from the cells themselves, ring by ring (blur makes arcs lighter and gaps darker than the marks,
     // and each ring has its own colour, so the middle differs from ring to ring).
+    // Here a stretch lies along a line that has different colours beside it (plate, green, pale), so the first levels come from each stretch's own cells: its dark and light ends.
+    const own = stretchLevels(s.values, { ink: s.mark, bare: s.plate });
+    const hit = decodeSoft(evidence(s.values, own));
+    if (hit) return { payload: hit.payload, map: s.map };
     const first = evidence(
       s.values,
       Array.from({ length: RINGS }, () => ({ ink: s.mark, bare: s.plate })),
     );
-    const hit = decodeSoft(first);
-    if (hit) return { payload: hit.payload, map: s.map };
+    const hit0 = decodeSoft(first);
+    if (hit0) return { payload: hit0.payload, map: s.map };
     const { nibbles } = readBlocks(first);
     const sum = Array.from({ length: RINGS }, () => ({ ink: 0, ni: 0, bare: 0, nb: 0 }));
     nibbles.forEach((n, b) =>

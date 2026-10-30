@@ -7,7 +7,7 @@ import { decodeTGcode } from '../tgCode/decode';
 import { paintInk, paint, type Shot } from '../tgCode/testCamera';
 
 const payloads = ['m0123456789ab', 't00ffeeddccbb', 'rabcdefabcdef', 'm000000000000', 'tffffffffffff', 'r1f2e3d4c5b6a', 'm9f8e7d6c5b4a', 't13579bdf0246'];
-const key = (p: string) => p.slice(0, 9); // what a code carries: the kind and the first 8 hex digits
+const key = (p: string) => p.slice(0, 8); // what a code carries: the kind and the first 7 hex digits
 const flat = (p: { img: Uint8ClampedArray; size: number }): [Uint8ClampedArray, number, number] => [p.img, p.size, p.size];
 
 const shoot = (payload: string, o: Shot) => paintInk(byteInk(payload, o.dark), o);

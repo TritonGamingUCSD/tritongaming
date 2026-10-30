@@ -1,5 +1,5 @@
 // The Bytecode as grey levels for the test camera (not part of the app): Byte's flat colours as greys, his lines and the message's bars in plum, the eyes and paws as drawn.
-import { drawing, LINE_W, DASH } from './layout';
+import { drawing, LINE_W } from './layout';
 import { FINDERS, DOTS, R_SMALL } from './marks';
 import { REGIONS, EYES } from './byteArt';
 
@@ -43,7 +43,6 @@ export function byteInk(payload: string, dark = false): (x: number, y: number) =
   };
   addAll(d.solid, LINE_W);
   addAll(d.lineBars, LINE_W);
-  addAll(d.bars, DASH);
   const hash = new Map<string, Seg[]>();
   for (const s of segs) {
     const x0 = Math.floor((Math.min(s[0], s[2]) - s[4]) / CELL),

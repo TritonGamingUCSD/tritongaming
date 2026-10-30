@@ -311,9 +311,9 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
         // ignore — next tick tries again
       }
     },
-    10_000,
+    3_000,
     !handledCheckIn.current,
-  ); // always every 10 s, Realtime or not: a push that says it is connected can still never arrive, and this tiny call is the only other way the screen learns it was scanned (the code on screen no longer asks the server, see fetchCode)
+  ); // every 3 s while the code is on screen (it was 10), Realtime or not: a push that says it is connected can still never arrive, and this tiny call is the only other way the screen learns it was scanned (the code on screen no longer asks the server, see fetchCode). Only a person holding up a code runs it, and it stops once they are checked in or the tab is hidden
 
   // The authoritative form answer, fetched from the status endpoint the
   // moment check-in lands — the checkinFormUrl prop was baked in when the

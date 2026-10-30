@@ -1,0 +1,22 @@
+.page { display: grid; gap: 1rem; padding: 1.2rem; max-width: 60rem; margin: 0 auto; }
+.page h1, .page h2 { margin: 0; }
+.note { margin: 0; color: rgba(var(--pp-ink-rgb), 0.75); }
+.back { color: var(--p-accent-text); text-decoration: none; font-weight: 600; }
+.group { display: grid; gap: 0.6rem; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 0.7rem; }
+.item { display: grid; gap: 0.2rem; height: 100%; padding: 0.8rem 0.9rem; border-radius: 10px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); color: var(--pp-ink); text-decoration: none; }
+.item span { font-size: 0.88rem; color: rgba(var(--pp-ink-rgb), 0.75); }
+.item:hover { border-color: var(--pp-ink); }
+.bar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.stage { display: grid; gap: 1rem; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem; align-items: start; }
+.card { display: grid; gap: 0.5rem; justify-items: center; padding: 1rem; border-radius: 12px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); color: var(--pp-ink); min-width: 0; }
+.card figcaption { font-weight: 600; font-size: 0.9rem; }
+.box { width: 100%; max-width: 18rem; }
+.wide { width: 100%; max-width: 26rem; }
+.dark { background: #0b1220; color: #fff; } /* theme-ok */
+.swatch { width: 4.5rem; height: 4.5rem; border-radius: 12px; background: var(--yellow, #ffc72c); display: grid; place-items: center; font-weight: 700; color: var(--pp-ink); }
+.shot { display: grid; place-items: center; min-height: 18rem; width: 100%; background: #0a0a0a; border-radius: 10px; } /* theme-ok */
+.sample input { height: var(--btn-h-sm); padding: 0 0.6rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-family: monospace; }
+.sample input[aria-invalid='true'] { border-color: #c0392b; } /* theme-ok */
+.head { display: flex; flex-wrap: wrap; gap: 0.8rem; align-items: center; justify-content: space-between; }

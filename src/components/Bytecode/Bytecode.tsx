@@ -1,4 +1,4 @@
-import { drawing, PAYLOAD, LINE_W, DASH, FINDERS, DOTS, R_SMALL } from '@/lib/qr/byteCode/layout';
+import { drawing, PAYLOAD, LINE_W, FINDERS, DOTS, R_SMALL } from '@/lib/qr/byteCode/layout';
 import { REGIONS, EYES, DOTS_OF_INK } from '@/lib/qr/byteCode/byteArt';
 import styles from './Bytecode.module.css';
 
@@ -38,7 +38,6 @@ export default function Bytecode({
       <g className={styles.line}>
         <path d={art.solid.map(line).join('')} strokeWidth={LINE_W} />
         <path d={art.lineBars.map(line).join('')} strokeWidth={LINE_W} />
-        <path d={art.bars.map(line).join('')} strokeWidth={DASH} />
       </g>
       {[FINDERS.tl, FINDERS.tr].map((c, i) => (
         <circle key={i} cx={c.x} cy={c.y} r={0.2} fill="url(#bytecode-glow)" />

@@ -1,0 +1,29 @@
+.wink { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; overflow: visible; }
+/* Byte's own colours (the same as the Bytecode's: a plum line, greens, a yellow scarf, a pink cheek) */
+.c2 { fill: #585868; stroke: #585868; stroke-width: 0.004; } /* theme-ok */
+.c3 { fill: #88a898; stroke: #88a898; stroke-width: 0.004; } /* theme-ok */
+.c4 { fill: #d8e8a8; stroke: #d8e8a8; stroke-width: 0.004; } /* theme-ok */
+.c5 { fill: #f8e848; stroke: #f8e848; stroke-width: 0.004; } /* theme-ok */
+.c6 { fill: #f89898; stroke: #f89898; stroke-width: 0.004; } /* theme-ok */
+.c7 { fill: #b8b4bc; opacity: 0.55; } /* theme-ok */
+.ink { fill: #483848; } /* theme-ok */
+.line { fill: none; stroke: #483848; stroke-linecap: round; stroke-linejoin: round; } /* theme-ok */
+.glowA { stop-color: #b8e0b0; stop-opacity: 0.6; } /* theme-ok */
+.glowB { stop-color: #b8e0b0; stop-opacity: 0; } /* theme-ok */
+.spark { fill: #f8e848; stroke: #483848; stroke-width: 0.012; stroke-linejoin: round; } /* theme-ok */
+.badge { fill: #3f9a5f; stroke: #fbf7e6; stroke-width: 0.03; } /* theme-ok */
+.tick { fill: none; stroke: #fff; stroke-width: 0.06; stroke-linecap: round; stroke-linejoin: round; } /* theme-ok */
+
+/* The short wink after a good scan (about a second, then it stays as it ends): Byte pops up, hops, both his eyes blink shut and open again as happy ^ eyes, sparkles burst round his head and a check mark pops out. */
+.pop { transform-box: fill-box; transform-origin: 50% 90%; animation: bwPop 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.25) both; }
+.eyeOut { transform-box: fill-box; transform-origin: 50% 50%; animation: bwEyeShut 0.9s ease-in both; }
+.happy { fill: none; stroke: #d8e8a8; stroke-width: 0.05; stroke-linecap: round; stroke-linejoin: round; transform-box: fill-box; transform-origin: 50% 70%; animation: bwHappyIn 0.9s cubic-bezier(0.2, 0.9, 0.3, 1.5) both; } /* theme-ok */
+.s1, .s2, .s3, .s4 { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; animation: bwSpark 0.8s ease-out both; }
+.s1 { animation-delay: 0.3s; } .s2 { animation-delay: 0.38s; } .s3 { animation-delay: 0.46s; } .s4 { animation-delay: 0.54s; }
+.badgeG { transform-box: fill-box; transform-origin: 50% 50%; opacity: 0; animation: bwBadge 0.5s cubic-bezier(0.2, 0.9, 0.3, 1.4) 0.55s both; }
+@keyframes bwPop { 0% { transform: translateY(8%) scale(0.55); opacity: 0; } 35% { transform: translateY(-7%) scale(1.06); opacity: 1; } 55% { transform: translateY(0) scale(0.97); } 75% { transform: translateY(-3%) scale(1.02); } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+@keyframes bwEyeShut { 0%, 38% { transform: scaleY(1); opacity: 1; } 47% { transform: scaleY(0.06); opacity: 1; } 48%, 100% { transform: scaleY(0.06); opacity: 0; } }
+@keyframes bwHappyIn { 0%, 47% { opacity: 0; transform: scale(0.5); } 48% { opacity: 1; transform: scale(0.6); } 62% { transform: scale(1.12); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes bwSpark { 0% { opacity: 0; transform: scale(0.2) rotate(0deg); } 40% { opacity: 1; transform: scale(1.2) rotate(40deg); } 100% { opacity: 0; transform: scale(0.6) rotate(90deg) translateY(-30%); } }
+@keyframes bwBadge { 0% { opacity: 0; transform: scale(0.2); } 100% { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .pop, .eyeOut, .happy, .s1, .s2, .s3, .s4, .badgeG { animation-duration: 0.01s; animation-delay: 0s; } .s1, .s2, .s3, .s4 { animation: none; opacity: 0; } }

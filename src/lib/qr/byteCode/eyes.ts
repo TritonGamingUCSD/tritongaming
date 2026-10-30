@@ -77,9 +77,76 @@ export function findEyes(gray: Uint8ClampedArray | Uint8Array, w: number, h: num
   // The eyes are the palest things on his green head, with a softer glow round them: ask for a lot of contrast first (so the glow is not part of them), then less in a poor light.
   for (const bias of [40, 25, 14]) {
     const found = pairsIn(blobs(binarize(gray, w, h, false, bias), w, h));
-    if (found.length) return found;
+    if (found.length) return found.map(([a, b]) => [refine(gray, w, h, a), refine(gray, w, h, b)] as [Finder, Finder]);
   }
   return [];
+}
+
+/** The middle of an eye found roughly: looked at again with a threshold between its own brightest level and the glow round it (the glow is paler than the surroundings, so a coarse
+ *  threshold takes some of it as part of the eye and pulls the middle off by a few pixels, which is more than a thin line of the code allows). */
+function refine(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, f: Finder): Finder {
+  const reach = Math.max(6, Math.round(f.u * 0.2)); // the eyes are about 0.12 to 0.14 of a unit across the middle (f.u is pixels per unit)
+  const x0 = Math.max(0, Math.round(f.x) - reach),
+    x1 = Math.min(w - 1, Math.round(f.x) + reach),
+    y0 = Math.max(0, Math.round(f.y) - reach),
+    y1 = Math.min(h - 1, Math.round(f.y) + reach);
+  const near: number[] = [],
+    all: number[] = [];
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++) {
+      const g = gray[y * w + x];
+      all.push(g);
+      if (Math.hypot(x - f.x, y - f.y) < reach * 0.35) near.push(g);
+    }
+  if (near.length < 4 || all.length < 16) return f;
+  near.sort((a, b) => a - b);
+  all.sort((a, b) => a - b);
+  const core = near[Math.floor(near.length * 0.85)],
+    bg = all[Math.floor(all.length * 0.3)];
+  if (core - bg < 20) return f;
+  const t = bg + 0.7 * (core - bg);
+  // the pixels above the threshold that are joined to the pixel nearest the old middle
+  let start = -1,
+    best = Infinity;
+  for (let y = y0; y <= y1; y++)
+    for (let x = x0; x <= x1; x++)
+      if (gray[y * w + x] >= t) {
+        const d = Math.hypot(x - f.x, y - f.y);
+        if (d < best) {
+          best = d;
+          start = y * w + x;
+        }
+      }
+  if (start < 0) return f;
+  const seen = new Set<number>([start]),
+    stack = [start];
+  let sx = 0,
+    sy = 0,
+    n = 0;
+  while (stack.length) {
+    const i = stack.pop()!;
+    const x = i % w,
+      y = (i - x) / w;
+    sx += x;
+    sy += y;
+    n++;
+    for (const [dx, dy] of [
+      [1, 0],
+      [-1, 0],
+      [0, 1],
+      [0, -1],
+    ]) {
+      const nx = x + dx,
+        ny = y + dy;
+      if (nx < x0 || nx > x1 || ny < y0 || ny > y1) continue;
+      const j = ny * w + nx;
+      if (!seen.has(j) && gray[j] >= t) {
+        seen.add(j);
+        stack.push(j);
+      }
+    }
+  }
+  return n < 6 ? f : { x: sx / n, y: sy / n, u: f.u };
 }
 
 function pairsIn(all: Blob[]): [Finder, Finder][] {

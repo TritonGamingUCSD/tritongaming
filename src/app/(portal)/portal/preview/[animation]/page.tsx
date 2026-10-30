@@ -1,0 +1,39 @@
+import Link from 'next/link';
+import { notFound, redirect } from 'next/navigation';
+import { getProfile } from '@/lib/core/auth';
+import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
+import { PREVIEWS } from '../catalog';
+import PreviewStage from '../PreviewStage';
+import styles from '../preview.module.css';
+
+export const dynamic = 'force-dynamic';
+
+interface Params {
+  params: Promise<{ animation: string }>;
+}
+
+export async function generateMetadata({ params }: Params) {
+  const { animation } = await params;
+  return { title: `${PREVIEWS.find((p) => p.slug === animation)?.title ?? 'Preview'} Preview` };
+}
+
+export default async function PreviewPage({ params }: Params) {
+  const { animation } = await params;
+  const preview = PREVIEWS.find((p) => p.slug === animation);
+  if (!preview) notFound();
+  const profile = await getProfile();
+  if (!profile) redirect(`/login?next=${encodeURIComponent(`/portal/preview/${animation}`)}`);
+  return (
+    <div className={styles.page}>
+      <Link href="/portal/preview" className={styles.back}>
+        ← All Previews
+      </Link>
+      <div className={styles.head}>
+        <h1>{preview.title}</h1>
+        <PortalThemeToggle labelled />
+      </div>
+      <p className={styles.note}>{preview.about}</p>
+      <PreviewStage slug={preview.slug} />
+    </div>
+  );
+}
