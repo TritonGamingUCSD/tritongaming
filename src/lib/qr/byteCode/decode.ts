@@ -547,19 +547,59 @@ function readBytecode(
   return null;
 }
 
-/** Looks for a Bytecode in a grey picture and returns what it says (`m…`, `t…` or `r…` and the key's hex digits) and where it sits, or null. */
-export function decodeBytecodeAt(gray: Uint8ClampedArray | Uint8Array, w: number, h: number): { payload: string; spot: ByteSpot } | null {
+/** The picture made twice as big in each direction (bilinear), so a small, distant code has cells big enough for the placement and the shape-finding to work as they do on a closer one. */
+function doubled(gray: Uint8ClampedArray | Uint8Array, w: number, h: number): { gray: Uint8ClampedArray; w: number; h: number } {
+  const W = w * 2,
+    H = h * 2;
+  const out = new Uint8ClampedArray(W * H);
+  for (let y = 0; y < H; y++) {
+    const sy = Math.min(h - 1.001, Math.max(0, (y - 0.5) / 2)),
+      y0 = Math.floor(sy),
+      fy = sy - y0;
+    for (let x = 0; x < W; x++) {
+      const sx = Math.min(w - 1.001, Math.max(0, (x - 0.5) / 2)),
+        x0 = Math.floor(sx),
+        fx = sx - x0;
+      const i = y0 * w + x0;
+      out[y * W + x] = gray[i] * (1 - fx) * (1 - fy) + gray[i + 1] * fx * (1 - fy) + gray[i + w] * (1 - fx) * fy + gray[i + w + 1] * fx * fy;
+    }
+  }
+  return { gray: out, w: W, h: H };
+}
+
+const spotOf = (found: { payload: string; map: Mapper }, k: number): { payload: string; spot: ByteSpot } => {
+  const c = found.map(0, 0),
+    e1 = found.map(1, 0),
+    e2 = found.map(0, 1);
+  return { payload: found.payload, spot: { x: c.x / k, y: c.y / k, r: (Math.hypot(e1.x - c.x, e1.y - c.y) + Math.hypot(e2.x - c.x, e2.y - c.y)) / 2 / k } };
+};
+
+/** One look at one picture; `eyes.u` is told how many pixels a code unit was at the first pair of eyes found (0 when there was none). */
+function lookOnce(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, eyes: { u: number }) {
   const bin = binarize(gray, w, h, true); // his dark lines
-  for (const [L, R] of eyePairs(gray, w, h))
+  for (const [L, R] of eyePairs(gray, w, h)) {
+    if (!eyes.u) eyes.u = L.u;
     for (const straighten of [true, false]) {
       const read = readBytecode(gray, w, h, L, R, bin, straighten);
-      if (read) {
-        const c = read.map(0, 0),
-          e1 = read.map(1, 0),
-          e2 = read.map(0, 1);
-        return { payload: read.payload, spot: { x: c.x, y: c.y, r: (Math.hypot(e1.x - c.x, e1.y - c.y) + Math.hypot(e2.x - c.x, e2.y - c.y)) / 2 } };
-      }
+      if (read) return read;
     }
+  }
+  return null;
+}
+
+const SMALL = 105; // pixels per code unit under which the picture is also tried made bigger (a code about 210 px across or less)
+
+/** Looks for a Bytecode in a grey picture and returns what it says (`m…`, `t…` or `r…` and the key's hex digits) and where it sits, or null. A code that is small in the picture (his eyes close
+ *  together) that does not read as it is gets one more try on the picture made twice as big. */
+export function decodeBytecodeAt(gray: Uint8ClampedArray | Uint8Array, w: number, h: number): { payload: string; spot: ByteSpot } | null {
+  const eyes = { u: 0 };
+  const first = lookOnce(gray, w, h, eyes);
+  if (first) return spotOf(first, 1);
+  if (eyes.u && eyes.u < SMALL) {
+    const big = doubled(gray, w, h);
+    const again = lookOnce(big.gray, big.w, big.h, { u: 0 });
+    if (again) return spotOf(again, 2);
+  }
   return null;
 }
 

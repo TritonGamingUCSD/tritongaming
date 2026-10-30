@@ -517,13 +517,12 @@
 /* Byte's wink in place of the check mark, for a person whose device shows Bytecodes */
 .checkedInByte { width: min(46vw, 11rem); margin: 0 auto 0.4rem; }
 
-/* The ring round a Bytecode: a line that follows Byte's outline (in the code's own units, laid exactly over it), draining along a path of length 100 */
-.countdownRingByte { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
-.countdownTrackByte { fill: none; stroke: rgba(var(--pp-ink-rgb), 0.1); stroke-width: 0.035; stroke-linejoin: round; }
-.countdownFillByte { fill: none; stroke-width: 0.035; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 100; stroke-dashoffset: 0; animation-name: ringDrainSquare; animation-timing-function: linear; animation-fill-mode: forwards; }
-@keyframes ringDrainSquare {
-  0%   { stroke-dashoffset: 0;  stroke: var(--p-accent); }
-  55%  { stroke-dashoffset: 55; stroke: #f59e0b; }
-  80%  { stroke-dashoffset: 80; stroke: #f97316; }
-  100% { stroke-dashoffset: 100; stroke: #dc2626; }
+/* The time left for a Bytecode: a line under Byte that shortens from the right (same colours as the ring round a TGcode: accent, amber, orange, red) */
+.byteBar { width: min(260px, 100%); height: 0.38rem; margin: 0.9rem auto 0; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); overflow: hidden; }
+.byteBarFill { width: 100%; height: 100%; border-radius: 999px; transform-origin: left center; animation-name: byteBarDrain; animation-timing-function: linear; animation-fill-mode: forwards; }
+@keyframes byteBarDrain {
+  0%   { transform: scaleX(1);    background: var(--p-accent); }
+  55%  { transform: scaleX(0.45); background: #f59e0b; }
+  80%  { transform: scaleX(0.2);  background: #f97316; }
+  100% { transform: scaleX(0);    background: #dc2626; }
 }

@@ -12,7 +12,6 @@ import BytecodeDemo, { TGcodeDemo } from './BytecodeDemo';
 import ThemePair from './ThemePair';
 import ScanTestDemo from './ScanTestDemo';
 import Bytecode from '@/components/Bytecode/Bytecode';
-import { RING_PATH } from '@/lib/qr/byteCode/byteArt';
 import TGcode from '@/components/TGcode/TGcode';
 import styles from './preview.module.css';
 
@@ -41,27 +40,27 @@ function ByteWinkDemo() {
   );
 }
 
-// The ticket screen's countdown ring (see tickets/FullscreenQR.tsx): a circle round the TGcode, a line along his outline round the Bytecode. A 30 second cycle, played from the start.
+// The ticket screen's time left (see tickets/FullscreenQR.tsx): a ring round the TGcode, a line under the Bytecode. A 30 second cycle, played from the start.
 function CodeRingDemo() {
   const [run, setRun] = useState(0);
-  const ring = (square: boolean) => (
-    <div className={ticketStyles.qrWrapper} key={`${square}${run}`}>
-      <svg className={square ? ticketStyles.countdownRingByte : ticketStyles.countdownRing} viewBox={square ? '-1 -1 2 2' : '0 0 100 100'} aria-hidden="true">
-        {square ? (
-          <>
-            <path className={ticketStyles.countdownTrackByte} d={RING_PATH} />
-            <path className={ticketStyles.countdownFillByte} d={RING_PATH} pathLength={100} style={{ animationDuration: '30s' }} />
-          </>
-        ) : (
-          <>
+  const ring = (byte: boolean) => (
+    <div key={`${byte}${run}`}>
+      <div className={ticketStyles.qrWrapper}>
+        {!byte && (
+          <svg className={ticketStyles.countdownRing} viewBox="0 0 100 100" aria-hidden="true">
             <circle className={ticketStyles.countdownTrack} cx="50" cy="50" r="48" />
             <circle className={ticketStyles.countdownFill} cx="50" cy="50" r="48" style={{ animationDuration: '30s' }} />
-          </>
+          </svg>
         )}
-      </svg>
-      <div className={ticketStyles.qrCanvas} style={{ width: '100%' }}>
-        {square ? <Bytecode payload="t00ffeeddccbb" /> : <TGcode payload="t00ffeeddccbb" />}
+        <div className={ticketStyles.qrCanvas} style={{ width: '100%' }}>
+          {byte ? <Bytecode payload="t00ffeeddccbb" /> : <TGcode payload="t00ffeeddccbb" />}
+        </div>
       </div>
+      {byte && (
+        <div className={ticketStyles.byteBar}>
+          <div className={ticketStyles.byteBarFill} style={{ animationDuration: '30s' }} />
+        </div>
+      )}
     </div>
   );
   return (

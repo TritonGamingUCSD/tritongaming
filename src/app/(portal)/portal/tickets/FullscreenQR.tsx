@@ -9,7 +9,6 @@ import { createClient } from '@/lib/supabase/client';
 import dynamic from 'next/dynamic';
 import PortalCode from '@/components/portal/PortalCode';
 import { useCodeStyle } from '@/lib/ui/useCodeStyle';
-import { RING_PATH } from '@/lib/qr/byteCode/byteArt';
 import { formatPacificDateTime, formatPacificTime } from '@/lib/core/timezone';
 import { fetchWithRetry } from '@/lib/ui/fetchWithRetry';
 import AsFormButton from './AsFormButton';
@@ -526,22 +525,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 // a separate bar underneath — the ring itself *is* the "time
                 // left" readout, draining smoothly around the thing it's
                 // timing instead of a detached indicator elsewhere on screen.
-                (codeStyle === 'byte' ? (
-                  // A Bytecode is Byte, so its ring is a line that follows his outline (a circle would cut across his ears and wings): the same drain, along a path that starts at the top and goes clockwise.
-                  <svg className={styles.countdownRingByte} viewBox="-1 -1 2 2" aria-hidden="true">
-                    <path className={styles.countdownTrackByte} d={RING_PATH} />
-                    <path
-                      key={code}
-                      className={styles.countdownFillByte}
-                      d={RING_PATH}
-                      pathLength={100}
-                      style={{
-                        animationDuration: `${rotationSeconds}s`,
-                        animationDelay: `-${Math.max(0, rotationSeconds - expiresIn)}s`,
-                      }}
-                    />
-                  </svg>
-                ) : (
+                codeStyle !== 'byte' && (
                   <svg className={styles.countdownRing} viewBox="0 0 100 100" aria-hidden="true">
                     <circle className={styles.countdownTrack} cx="50" cy="50" r="48" />
                     <circle
@@ -569,7 +553,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                       }}
                     />
                   </svg>
-                ))}
+                )}
               {qrData ? (
                 // Keyed by qrData (not a stable key) specifically so React
                 // remounts this on every refresh — that's what restarts the
@@ -591,6 +575,19 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 </div>
               )}
             </div>
+            {code && codeStyle === 'byte' && (
+              // A Bytecode's "time left" is a plain line under Byte (a ring round his outline was hard to read): the same drain, left to right, with the same colours.
+              <div className={styles.byteBar} aria-hidden="true">
+                <div
+                  key={code}
+                  className={styles.byteBarFill}
+                  style={{
+                    animationDuration: `${rotationSeconds}s`,
+                    animationDelay: `-${Math.max(0, rotationSeconds - expiresIn)}s`,
+                  }}
+                />
+              </div>
+            )}
 
             {/* Always rendered, even before the first code arrives — this
                 used to only mount once `code` was set, which meant the
