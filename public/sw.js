@@ -9,8 +9,8 @@ self.addEventListener('push', (event) => {
   const title = data.title || 'Triton Gaming';
   event.waitUntil(self.registration.showNotification(title, {
     body: data.body || '',
-    icon: '/icon.png',
-    badge: '/icon.png',
+    icon: '/icons/icon-192.png', // Byte, full colour
+    badge: '/icons/badge-96.png', // Byte's silhouette in one colour (Android shows only the shape)
     tag: data.tag || undefined,
     renotify: !!data.tag,
     data: { url: data.url || '/portal' },
