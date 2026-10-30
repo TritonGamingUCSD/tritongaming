@@ -750,6 +750,12 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 /* The camera scanner: code box and Scan QR sit side by side; the camera frame, a target square, and zoom. */
 .codeActions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.6rem; }
 .scanScreen { position: fixed; inset: 0; z-index: 3000; display: flex; flex-direction: column; background: #000; color: #fff; overscroll-behavior: none; }   /* theme-ok */
+/* On a device that shows Bytecodes the scanner is pulled up from the bottom by Byte, who rides its top edge up and out of the screen (no transform is left behind: a fixed child needs none) */
+.scanPull { animation: scanPullUp 0.6s cubic-bezier(0.22, 0.9, 0.3, 1.04) backwards; }
+.pullByte { position: absolute; top: -72px; left: 50%; width: 84px; margin-left: -42px; z-index: 3; pointer-events: none; transform-origin: 50% 100%; animation: pullTilt 0.6s ease-in-out backwards; --bc-edge: #fbf7e6; }   /* theme-ok */
+@keyframes scanPullUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes pullTilt { 0% { transform: rotate(-14deg); } 45% { transform: rotate(9deg) translateY(-8px); } 100% { transform: rotate(0deg); } }
+@media (prefers-reduced-motion: reduce) { .scanPull, .pullByte { animation: none; } }
 .scanTop { position: absolute; top: 0; left: 0; right: 0; z-index: 2; display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: calc(0.8rem + env(safe-area-inset-top, 0px)) 1rem 0.8rem; background: linear-gradient(rgba(0, 0, 0, 0.6), transparent); font-size: 1.05rem; }   /* theme-ok */
 .scanClose { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, 0.18); color: #fff; cursor: pointer; }   /* theme-ok */
 .scanStage { position: relative; flex: 1; overflow: hidden; touch-action: none; user-select: none; -webkit-user-select: none; }
