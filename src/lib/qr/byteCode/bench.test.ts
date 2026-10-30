@@ -1,8 +1,9 @@
 import { test } from 'vitest';
 import { writeFileSync } from 'fs';
-import { decodeBytecode } from './decode';
+import { decodeBytecode, decodeBytecodeAt } from './decode';
+import { decodeTGcodeAt } from '../tgCode/decode';
 import { byteInk } from './testInk';
-import { paintInk, type Shot } from '../tgCode/testCamera';
+import { paint, paintInk, type Shot } from '../tgCode/testCamera';
 
 // The Bytecode under bad conditions, light and dark, by size, for tuning and for reporting. It is slow, so it only runs when asked: BYTE_BENCH=1 npx vitest run src/lib/qr/byteCode/bench.test.ts
 // (BYTE_ONLY=tilt,blur picks conditions, BYTE_SIZES=100,130 the sizes, BYTE_N the pictures per cell; writes the table to the file named by BYTE_BENCH_OUT, default byte-bench.txt in the working directory).
@@ -61,6 +62,55 @@ run(
     }
     lines.push(`\nwrong reads: ${wrongReads}`);
     writeFileSync(process.env.BYTE_BENCH_OUT ?? 'byte-bench.txt', lines.join('\n'));
+  },
+  3_600_000,
+);
+
+// The phone coming closer to a code: the code's radius in the camera picture grows from small (far) to big (close), read the way the Scan page does it: only the square round the ring is looked at
+// (side 3 × the ring's radius, 144 px on a phone) and a code is taken only when its middle is near the ring's middle and it is not much bigger than the ring (1.35 ×). Compared with the TGcode, light
+// and dark, sharp and with a little blur and noise (what a phone's camera makes of a screen). BYTE_DIST=1 npx vitest run src/lib/qr/byteCode/bench.test.ts -t distance
+const dist = process.env.BYTE_DIST ? test : test.skip;
+dist(
+  'distance sweep',
+  () => {
+    const RING = 144,
+      SIDE = 3 * RING;
+    const area = { cx: SIDE / 2, cy: SIDE / 2, circle: RING, side: SIDE };
+    const radii = [30, 40, 50, 60, 70, 80, 90, 100, 115, 130, 150, 170, 190, 200, 215];
+    const lines: string[] = [];
+    const looks: [string, Partial<Shot>][] = [
+      ['sharp', { noise: 3 }],
+      ['blur 0.7 + noise 6', { blur: 0.7, noise: 6 }],
+    ];
+    for (const [look, c] of looks)
+      for (const dark of [false, true]) {
+        lines.push(
+          `\n== ${look}, ${dark ? 'dark' : 'light'}: codes read of ${N} (the ring takes a code up to radius ${Math.round(RING * 1.35)}) ==`,
+          'code radius'.padEnd(14) + radii.map((r) => String(r).padStart(6)).join(''),
+        );
+        for (const kind of ['Bytecode', 'TGcode']) {
+          let row = kind.padEnd(14);
+          for (const px of radii) {
+            let ok = 0;
+            for (let i = 0; i < N; i++) {
+              const p = P[i % P.length];
+              const shot = { px, rot: (i * 0.9) % 6.28, seed: i + 3, dark, size: SIDE, a: 0.03, b: -0.02, ...c } as Shot;
+              if (kind === 'Bytecode') {
+                const img = paintInk(byteInk(p, dark), shot);
+                const got = decodeBytecodeAt(img.img, img.size, img.size);
+                if (got && got.payload === p.slice(0, 9) && Math.hypot(got.spot.x - area.cx, got.spot.y - area.cy) <= RING * 0.75 && got.spot.r <= RING * 1.35) ok++;
+              } else {
+                const img = paint(p, shot);
+                const got = decodeTGcodeAt(img.img, img.size, img.size);
+                if (got && got.payload === p.slice(0, 9) && Math.hypot(got.spot.x - area.cx, got.spot.y - area.cy) <= RING * 0.75 && got.spot.r <= RING * 1.35) ok++;
+              }
+            }
+            row += `${ok}/${N}`.padStart(6);
+          }
+          lines.push(row);
+        }
+      }
+    writeFileSync((process.env.BYTE_BENCH_OUT ?? 'byte-bench.txt').replace(/\.txt$/, '') + '-distance.txt', lines.join('\n'));
   },
   3_600_000,
 );
