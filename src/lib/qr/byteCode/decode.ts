@@ -1,6 +1,7 @@
-import { BLOCKS, BLOCK, RINGS, PATTERN_COUNT, patternCells, cellCenter, dashGrid, payloadFromNibbles, DOTS, FINDERS, R_SMALL } from './layout';
-import { type Finder, findDots, homography, binarize } from '../tgCode/find';
-import { findEyes } from './eyes';
+import { BLOCKS, BLOCK, RINGS, PATTERN_COUNT, patternCells, cellCenter, dashGrid, payloadFromNibbles, FINDERS } from './layout';
+import { LOCATORS } from './marks';
+import { type Finder, binarize } from '../tgCode/find';
+import { eyePairs } from './eyes';
 
 // Reads a Bytecode out of a camera picture (grey values, width × height). No library: it finds Byte's two eyes (a pale pill and a pale X on his green head), works out where the code
 // sits (position, size, turn and tilt, with the two bottom dots), and looks at the middle of every cell. A cell is not simply called "dash" or "gap": each block of 7
@@ -52,7 +53,7 @@ function* hypotheses(
   R: Finder,
   bin: Uint8Array,
   straighten: boolean,
-): Generator<{ values: number[][]; mark: number; plate: number; map: Mapper }> {
+): Generator<{ values: number[][]; mark: number; plate: number; map: Mapper; strict?: boolean }> {
   // Code units → picture as a turn and a scale fixed by the two marks.
   const vx = FINDERS.tr.x - FINDERS.tl.x,
     vy = FINDERS.tr.y - FINDERS.tl.y,
@@ -130,51 +131,132 @@ function* hypotheses(
     return;
   }
 
-  // The bottom dots are looked for in two pictures: one black-or-white by the marks' own middle level (exact for a small dot, which an average-of-the-neighbourhood threshold eats), and
-  // the locally-adjusted one (which copes with uneven light). Every dot-like blob around where a dot should be is a candidate (a bit of an arc can look like a dot).
-  const mid = (mark + plate) / 2,
-    inkIsDark = mark < plate;
-  const level = new Uint8Array(w * h);
-  for (let i = 0; i < level.length; i++) level[i] = (inkIsDark ? gray[i] < mid : gray[i] > mid) ? 1 : 0;
-  const reach = Math.max(8, 0.5 * scale);
-  const candidates = (code: { x: number; y: number }): Pt[] => {
-    const near = similar(code.x, code.y),
-      out: Pt[] = [];
-    for (const img of [level, bin])
-      for (const c of findDots(img, w, h, near, R_SMALL * scale, reach).slice(0, 6)) if (!out.some((o) => Math.hypot(o.x - c.x, o.y - c.y) < 2.5)) out.push(c);
-    return out;
+  // The two other locators are Byte's yellow scarf and a facet of his yellow gem: each is a closed shape with a dark outline, so the light pixels joined to the pixel where the eyes say it
+  // should be are the shape, and their middle is the locator. The shape must have about the size it should have at this scale (a shape that leaks out of a gap in its outline is too big).
+  const find = (m: { x: number; y: number; area: number; rmax: number }): (Pt & { pix: number[] }) | null => {
+    const near = similar(m.x, m.y);
+    const want = m.area * scale * scale,
+      reach = Math.max(4, m.rmax * scale * 0.5);
+    let start = -1,
+      best = Infinity;
+    for (let y = Math.max(0, Math.floor(near.y - reach)); y <= Math.min(h - 1, Math.ceil(near.y + reach)); y++)
+      for (let x = Math.max(0, Math.floor(near.x - reach)); x <= Math.min(w - 1, Math.ceil(near.x + reach)); x++)
+        if (!bin[y * w + x]) {
+          const d = Math.hypot(x - near.x, y - near.y);
+          if (d < best) {
+            best = d;
+            start = y * w + x;
+          }
+        }
+    if (start < 0) return null;
+    const lim = Math.ceil(m.rmax * scale * 1.7);
+    const seen = new Set<number>([start]),
+      stack = [start];
+    let sx = 0,
+      sy = 0,
+      n = 0;
+    while (stack.length) {
+      const i = stack.pop()!;
+      const x = i % w,
+        y = (i - x) / w;
+      sx += x;
+      sy += y;
+      if (++n > want * 1.9) return null; // it leaks
+      for (const [dx, dy] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ]) {
+        const nx = x + dx,
+          ny = y + dy;
+        if (nx < 0 || ny < 0 || nx >= w || ny >= h || Math.abs(nx - near.x) > lim || Math.abs(ny - near.y) > lim) continue;
+        const j = ny * w + nx;
+        if (!bin[j] && !seen.has(j)) {
+          seen.add(j);
+          stack.push(j);
+        }
+      }
+    }
+    return n < want * 0.45 ? null : { x: sx / n, y: sy / n, pix: [...seen] };
   };
-  const cb = candidates(DOTS.bl),
-    cr = candidates(DOTS.br);
-  // Pairs, likeliest first: each dot's nearest candidate; then the pairs in which each dot is where the other and the two marks say it should be.
-  const disagree = (bl: Pt, br: Pt) => {
-    const m1 = affineMap(L, R, DOTS.bl, bl),
-      m2 = affineMap(L, R, DOTS.br, br);
-    if (!m1 || !m2) return Infinity;
-    const p1 = m1(DOTS.br.x, DOTS.br.y),
-      p2 = m2(DOTS.bl.x, DOTS.bl.y);
-    return Math.hypot(p1.x - br.x, p1.y - br.y) + Math.hypot(p2.x - bl.x, p2.y - bl.y);
-  };
-  const pairs: [Pt, Pt][] = [];
-  if (cb[0] && cr[0]) pairs.push([cb[0], cr[0]]);
-  const rest: [Pt, Pt, number][] = [];
-  for (const x of cb.slice(0, 5)) for (const y of cr.slice(0, 5)) if (!(x === cb[0] && y === cr[0])) rest.push([x, y, disagree(x, y)]);
-  rest.sort((p, q) => p[2] - q[2]);
-  for (const [x, y, d] of rest.slice(0, 4)) if (d < scale * 1.2) pairs.push([x, y]);
-  for (const [bl, br] of pairs) {
-    const proj = homography([FINDERS.tl, FINDERS.tr, DOTS.bl, DOTS.br], [L, R, bl, br]);
+  const found = LOCATORS.map(find);
+  const have = LOCATORS.map((_, i) => i).filter((i) => found[i]);
+  if (have.length >= 2) {
+    // The middle of a shape in a tilted picture is not quite where the middle of the real shape is (a far part looks smaller), which matters for a big shape like a wing. So the fit is
+    // corrected a few times: the shape's pixels are laid back into the code with the current fit, and where their middle falls, against where it should, moves the point the fit uses.
+    const code = [FINDERS.tl, FINDERS.tr, ...have.map((i) => LOCATORS[i])];
+    const image: Pt[] = [L, R, ...have.map((i) => ({ x: found[i]!.x, y: found[i]!.y }))];
+    for (let round = 0; round < 3; round++) {
+      const H = fitHomography(code, image),
+        Hinv = fitHomography(image, code);
+      if (!H || !Hinv) break;
+      have.forEach((i, k) => {
+        const lm = LOCATORS[i],
+          pix = found[i]!.pix;
+        let cx = 0,
+          cy = 0,
+          m = 0;
+        const stride = Math.max(1, Math.floor(pix.length / 400));
+        for (let j = 0; j < pix.length; j += stride) {
+          const q = Hinv(pix[j] % w, Math.floor(pix[j] / w));
+          cx += q.x;
+          cy += q.y;
+          m++;
+        }
+        const e = 0.01,
+          o = H(lm.x, lm.y),
+          jx = H(lm.x + e, lm.y),
+          jy = H(lm.x, lm.y + e);
+        const dx = cx / m - lm.x,
+          dy = cy / m - lm.y;
+        const at = image[2 + k];
+        image[2 + k] = { x: at.x + ((jx.x - o.x) / e) * dx + ((jy.x - o.x) / e) * dy, y: at.y + ((jx.y - o.y) / e) * dx + ((jy.y - o.y) / e) * dy };
+      });
+    }
+    const proj = fitHomography(code, image);
     const v = proj && valuesFor(proj);
     if (proj && v) yield { values: v, mark, plate, map: proj };
   }
-  // Then with one dot only (a smudge, a thumb): three points still fix most of a tilt.
-  for (const [code, pt] of [
-    [DOTS.bl, cb[0]],
-    [DOTS.br, cr[0]],
-  ] as const) {
-    const m = pt && affineMap(L, R, code, pt);
+  // Then with one of them only (a thumb over the others): three points still fix most of a tilt.
+  for (const i of have) {
+    const m = affineMap(L, R, LOCATORS[i], found[i]!);
     const v = m && valuesFor(m);
     if (m && v) yield { values: v, mark, plate, map: m };
   }
+}
+
+/** The projective map that best takes code points to picture points (a least-squares fit through all of them; four or more). */
+function fitHomography(src: Pt[], dst: Pt[]): Mapper | null {
+  const A: number[][] = Array.from({ length: 8 }, () => new Array<number>(9).fill(0));
+  for (let i = 0; i < src.length; i++) {
+    const { x, y } = src[i],
+      { x: u, y: v } = dst[i];
+    for (const [row, rhs] of [
+      [[x, y, 1, 0, 0, 0, -u * x, -u * y], u],
+      [[0, 0, 0, x, y, 1, -v * x, -v * y], v],
+    ] as const)
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) A[r][c] += row[r] * row[c];
+        A[r][8] += row[r] * rhs;
+      }
+  }
+  for (let c = 0; c < 8; c++) {
+    let piv = c;
+    for (let r = c + 1; r < 8; r++) if (Math.abs(A[r][c]) > Math.abs(A[piv][c])) piv = r;
+    if (Math.abs(A[piv][c]) < 1e-12) return null;
+    [A[c], A[piv]] = [A[piv], A[c]];
+    for (let r = 0; r < 8; r++)
+      if (r !== c) {
+        const f = A[r][c] / A[c][c];
+        for (let k = c; k < 9; k++) A[r][k] -= f * A[c][k];
+      }
+  }
+  const hh = A.map((row, i) => row[8] / row[i]);
+  return (x, y) => {
+    const d = hh[6] * x + hh[7] * y + 1;
+    return { x: (hh[0] * x + hh[1] * y + hh[2]) / d, y: (hh[3] * x + hh[4] * y + hh[5]) / d };
+  };
 }
 
 /** Signed evidence per cell (positive: arc), from grey levels and the two reference levels of the ring the block is in. */
@@ -211,7 +293,7 @@ function readBlocks(soft: number[][]): { nibbles: number[]; margin: number[]; sc
 }
 
 /** The message in what was read, or null. The shakiest blocks are given up as unreliable, a few more each time, until the repair succeeds. */
-function decodeSoft(soft: number[][]): { payload: string; doubt: number } | null {
+function decodeSoft(soft: number[][], strict = false): { payload: string; doubt: number } | null {
   const { nibbles, margin } = readBlocks(soft);
   const order = margin
     .map((m, i) => [m, i] as const)
@@ -219,7 +301,8 @@ function decodeSoft(soft: number[][]): { payload: string; doubt: number } | null
     .map(([, i]) => i);
   const shaky = margin.filter((m) => m < 0.8).length;
   if (shaky > 16) return null; // nothing like a clean read: not worth the repair attempts
-  for (const give of [0, 2, 4, 6, 8, 10, 12]) {
+  // (A try with a nudged middle is one of many, so it must pass a harder check: fewer cells given up as doubtful and a closer match with the picture, or one of the tries could read a wrong code by luck.)
+  for (const give of strict ? [0, 2, 4] : [0, 2, 4, 6, 8, 10, 12]) {
     const payload = payloadFromNibbles(nibbles, order.slice(0, give));
     if (!payload) continue;
     // Whatever the repair says must also look like the picture: the cells it implies agree with what was seen.
@@ -233,7 +316,7 @@ function decodeSoft(soft: number[][]): { payload: string; doubt: number } | null
         if (soft[b][k] > 0 === grid[r][s]) same++;
       }),
     );
-    if (same / total >= 0.78) return { payload, doubt: give };
+    if (same / total >= (strict ? 0.9 : 0.78)) return { payload, doubt: give };
   }
   return null;
 }
@@ -256,7 +339,9 @@ function stretchLevels(values: number[][], base: { ink: number; bare: number }):
       lo = a.reduce((p, q) => p + q, 0) / a.length;
       hi = c.reduce((p, q) => p + q, 0) / c.length;
     }
-    return { ink: lo, bare: hi };
+    // Which end is the bar? Most cells of a block are bars (a block is at least seven bars in ten), so the end with more cells is: dark on a pale plate, light on a dark one.
+    const darker = v.filter((x) => x <= (lo + hi) / 2).length;
+    return darker * 2 >= v.length ? { ink: lo, bare: hi } : { ink: hi, bare: lo };
   });
 }
 
@@ -275,13 +360,13 @@ function readBytecode(
     // and each ring has its own colour, so the middle differs from ring to ring).
     // Here a stretch lies along a line that has different colours beside it (plate, green, pale), so the first levels come from each stretch's own cells: its dark and light ends.
     const own = stretchLevels(s.values, { ink: s.mark, bare: s.plate });
-    const hit = decodeSoft(evidence(s.values, own));
+    const hit = decodeSoft(evidence(s.values, own), s.strict);
     if (hit) return { payload: hit.payload, map: s.map };
     const first = evidence(
       s.values,
       Array.from({ length: RINGS }, () => ({ ink: s.mark, bare: s.plate })),
     );
-    const hit0 = decodeSoft(first);
+    const hit0 = decodeSoft(first, s.strict);
     if (hit0) return { payload: hit0.payload, map: s.map };
     const { nibbles } = readBlocks(first);
     const sum = Array.from({ length: RINGS }, () => ({ ink: 0, ni: 0, bare: 0, nb: 0 }));
@@ -299,7 +384,7 @@ function readBytecode(
     );
     const levels = sum.map((t) => ({ ink: t.ni ? t.ink / t.ni : s.mark, bare: t.nb ? t.bare / t.nb : s.plate }));
     if (levels.some((l) => Math.abs(l.ink - l.bare) < 12)) continue;
-    const again = decodeSoft(evidence(s.values, levels));
+    const again = decodeSoft(evidence(s.values, levels), s.strict);
     if (again) return { payload: again.payload, map: s.map };
   }
   return null;
@@ -307,10 +392,8 @@ function readBytecode(
 
 /** Looks for a Bytecode in a grey picture and returns what it says (`m…`, `t…` or `r…` and the key's hex digits) and where it sits, or null. */
 export function decodeBytecodeAt(gray: Uint8ClampedArray | Uint8Array, w: number, h: number): { payload: string; spot: ByteSpot } | null {
-  const pairs = findEyes(gray, w, h);
-  if (!pairs.length) return null;
-  const bin = binarize(gray, w, h, true); // his dark lines and the dots on his feet
-  for (const [L, R] of pairs)
+  const bin = binarize(gray, w, h, true); // his dark lines
+  for (const [L, R] of eyePairs(gray, w, h))
     for (const straighten of [true, false]) {
       const read = readBytecode(gray, w, h, L, R, bin, straighten);
       if (read) {

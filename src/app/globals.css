@@ -187,6 +187,12 @@
   --p-accent-text: #a9cdf2;
 }
 
+/* The Bytecode (components/Bytecode): Byte's outer lines (--bc-edge) are plum on a light card and cream on a dark one. */
+/* (no plate: he sits straight on the card, so there is never a patch of another colour) */
+:root { --bc-edge: #483848; } /* theme-ok */
+:root[data-pp-theme='dark'] { --bc-edge: #fbf7e6; } /* theme-ok */
+@media (prefers-color-scheme: dark) { :root:not([data-pp-theme='light']) { --bc-edge: #fbf7e6; } } /* theme-ok */
+
 /* A "dark island": a surface that is navy in both themes (the phone's bottom bar, More sheet and section header). Everything inside reads the
    dark token set, so tokens like --p-accent-text or --pp-ink stay readable on it even while the page around it is light. */
 .pp-dark {

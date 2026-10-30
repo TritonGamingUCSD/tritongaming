@@ -1,7 +1,7 @@
 import { rsEncode, rsDecode } from '../tgCode/rs';
-import { FINDERS, DOTS, R_SMALL, SPAN, KEEP_OUT_FINDER, KEEP_OUT_DOT } from './marks';
+import { FINDERS, SPAN, KEEP_OUT_FINDER } from './marks';
 import { STROKES, DOTS_OF_INK } from './byteArt';
-export { FINDERS, DOTS, R_SMALL, SPAN };
+export { FINDERS, SPAN };
 
 // The Bytecode: the same message as the portal's circular TGcode (what a ticket, a meeting's check-in and a reward pickup show; see lib/qr/tgCode), written into Byte, the Triton
 // Gaming mascot, instead of in rings. Only the portal's Scan button reads it. The rules are the TGcode's, with "stretches" in place of rings:
@@ -76,7 +76,6 @@ const clearOfLines = (p: Pt, skip: number, clear: number) => {
 };
 const clearOfMarks = (p: Pt) => {
   for (const f of Object.values(FINDERS)) if (Math.hypot(p[0] - f.x, p[1] - f.y) < KEEP_OUT_FINDER) return false;
-  for (const d of Object.values(DOTS)) if (Math.hypot(p[0] - d.x, p[1] - d.y) < KEEP_OUT_DOT) return false;
   return true;
 };
 
@@ -215,9 +214,9 @@ export function payloadFromNibbles(nib: number[], doubtful: number[] = []): stri
 
 export const EXT = -0.05; // how far, in cells, a bar is drawn into the gap beside it (negative: short of its cell edge)
 
-/** What to draw for a message, as polylines (each a list of points): `lineBars` along the drawn lines, and `solid` the parts of the drawn lines that are
- *  not part of the message (they are drawn as ordinary lines). */
-export function drawing(payload: string): { lineBars: Pt[][]; solid: Pt[][] } | null {
+/** What to draw for a message, as polylines (each a list of points). The outer lines (his outline and the sticker border round him) are the ones that may carry the message: `lineBars` are
+ *  their dashes and `edge` what is left of them as ordinary line; `inner` are his other lines, drawn as they are. (They are separate so the outer ones can change colour on a dark screen.) */
+export function drawing(payload: string): { lineBars: Pt[][]; edge: Pt[][]; inner: Pt[][] } | null {
   const grid = dashGrid(payload);
   if (!grid) return null;
   const lineBars: Pt[][] = [];
@@ -244,15 +243,17 @@ export function drawing(payload: string): { lineBars: Pt[][]; solid: Pt[][] } | 
     }
   });
   // the rest of each line, with the message's blocks cut out of it
-  const solid: Pt[][] = [];
+  const edge: Pt[][] = [],
+    inner: Pt[][] = [];
   LINES.forEach((L, i) => {
+    const out = STROKES[i].ok ? edge : inner;
     const cuts = spent[i].sort((p, q) => p[0] - q[0]);
     let from = 0;
     for (const [a, b] of cuts) {
-      if (a > from + 1e-6) solid.push(sliceLine(i, from, a));
+      if (a > from + 1e-6) out.push(sliceLine(i, from, a));
       from = Math.max(from, b);
     }
-    if (L.length > from + 1e-6) solid.push(sliceLine(i, from, L.length));
+    if (L.length > from + 1e-6) out.push(sliceLine(i, from, L.length));
   });
-  return { lineBars, solid };
+  return { lineBars, edge, inner };
 }

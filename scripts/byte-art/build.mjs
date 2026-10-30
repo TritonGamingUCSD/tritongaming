@@ -3,7 +3,7 @@
 import { readFileSync, writeFileSync } from 'fs';
 const art = JSON.parse(readFileSync(process.argv[2], 'utf8'));
 const OUT = process.argv[3];
-const S = 1.9 / 622,
+const S = 1.88 / 654, // the drawing and the border round it fit inside the sticker with a margin
   CX = 352,
   CY = 381;
 const tx = ([x, y]) => [+((x - CX) * S).toFixed(3), +((y - CY) * S).toFixed(3)];
@@ -11,9 +11,11 @@ const colOf = new Map(art.regions.map((r) => [r.id, r.col]));
 colOf.set(-2, 0);
 
 // regions as closed paths
-const regionPath = (id) => {
+const regionPath = (id, keepEyes = false) => {
   const segs = [];
   for (const c of art.chains) {
+    // the shapes round his eyes are drawn whole (no holes where the eyes are): the eyes are laid on top, and in the wink they can go without leaving a gap
+    if (!keepEyes && (eyeIds.has(c.l) || eyeIds.has(c.r))) continue;
     if (c.l === id) segs.push(c.pts);
     else if (c.r === id) segs.push([...c.pts].reverse());
   }
@@ -59,9 +61,28 @@ const shape = (r) => {
   };
 };
 const eyes = { pill: shape(pillReg), x: shape(xReg) };
-const eyeRegions = [pillReg, xReg].map((r) => ({ col: 4, d: regionPath(r.id) }));
+// Byte's other two locators: the big yellow scarf (one closed shape) and the biggest of the four facets of the yellow gem above his head
+const yellow = art.regions.filter((r) => r.col === 5);
+const scarfReg = yellow.reduce((a, b) => (b.n > a.n ? b : a));
+const gemReg = yellow.filter((r) => r.n > 600 && tx([r.cx, r.cy])[1] < -0.6).reduce((a, b) => (b.n > a.n ? b : a));
+const wings = art.regions.filter((r) => r.col === 4 && r.n > 5000 && Math.abs(tx([r.cx, r.cy])[0]) > 0.5).sort((a, b) => a.cx - b.cx);
+const marks = { scarf: shape(scarfReg), gem: shape(gemReg), wingL: shape(wings[0]), wingR: shape(wings[wings.length - 1]) };
+// a box round everything that touches a wing: the wings' lines stay solid too (a wing is a locator, so it has to be a closed shape)
+const boxOf = (id) => {
+  const pts = art.chains.filter((c) => c.l === id || c.r === id).flatMap((c) => c.pts.map(tx));
+  return {
+    x0: Math.min(...pts.map((p) => p[0])) - 0.03,
+    x1: Math.max(...pts.map((p) => p[0])) + 0.03,
+    y0: Math.min(...pts.map((p) => p[1])) - 0.03,
+    y1: Math.max(...pts.map((p) => p[1])) + 0.03,
+  };
+};
+const wingBoxes = [boxOf(wings[0].id), boxOf(wings[wings.length - 1].id)];
+const inWing = (p) => wingBoxes.some((b) => p[0] >= b.x0 && p[0] <= b.x1 && p[1] >= b.y0 && p[1] <= b.y1);
+const gemC = tx([gemReg.cx, gemReg.cy]);
+const eyeRegions = [pillReg, xReg].map((r) => ({ col: 4, d: regionPath(r.id, true) }));
 const regions = art.regions
-  .filter((r) => r.col !== 0 && r.col !== 1 && !eyeIds.has(r.id))
+  .filter((r) => r.col !== 0 && r.col !== 1 && r.col !== 7 && !eyeIds.has(r.id)) // (the traced grey shadow is left out: the components draw a soft one of their own)
   .sort((a, b) => (a.col === 7 ? -1 : b.col === 7 ? 1 : b.n - a.n))
   .map((r) => ({ col: r.col, d: regionPath(r.id) }));
 const dots = art.regions.filter((r) => r.col === 1).map((r) => ({ d: regionPath(r.id), c: tx([r.cx, r.cy]), r: +(Math.sqrt(r.n / Math.PI) * S).toFixed(3) }));
@@ -119,6 +140,10 @@ for (let round = 0; round < 200; round++) {
 const halo = JSON.parse(readFileSync(process.argv[4], 'utf8'));
 const lenOf0 = (pts) => pts.reduce((a, p, i) => (i ? a + Math.hypot(p[0] - pts[i - 1][0], p[1] - pts[i - 1][1]) : 0), 0);
 // lines on the face stay as drawn: a stroke that lies mostly inside the face is not offered to the message
+// the gem's own lines stay solid: his gem is a locator, so it has to be a closed shape
+const nearGem = (p) => Math.hypot(p[0] - gemC[0], p[1] - gemC[1]) < 0.26;
+for (const p of pieces) if (p.ok && p.pts.every(nearGem)) p.ok = false;
+for (const p of pieces) if (p.ok && p.pts.every(inWing)) p.ok = false;
 const inFace = ([x, y]) => x > -0.58 && x < 0.54 && y > -0.52 && y < -0.1;
 for (const p of pieces) if (p.ok && p.pts.filter(inFace).length > p.pts.length * 0.5) p.ok = false;
 for (const h of halo) pieces.push({ pts: h.map(tx), ok: true, halo: true });
@@ -141,6 +166,82 @@ console.log(
     .join(' '),
 );
 
+// The locators are found in a picture by their light inside (the dark lines round them are not part of it), so what the reader expects is the middle and the size of that inside: the region
+// without the band of its lines (half a line's width and a little more on each side), not the region up to the middle of the lines.
+{
+  const CELL = 0.05,
+    band = 0.014;
+  const hash = new Map();
+  const segs = [];
+  for (const p of pieces) for (let i = 1; i < p.pts.length; i++) segs.push([p.pts[i - 1], p.pts[i]]);
+  for (const g of segs) {
+    const x0 = Math.floor((Math.min(g[0][0], g[1][0]) - band) / CELL),
+      x1 = Math.floor((Math.max(g[0][0], g[1][0]) + band) / CELL);
+    const y0 = Math.floor((Math.min(g[0][1], g[1][1]) - band) / CELL),
+      y1 = Math.floor((Math.max(g[0][1], g[1][1]) + band) / CELL);
+    for (let a = x0; a <= x1; a++)
+      for (let b = y0; b <= y1; b++) {
+        const k = a + ',' + b;
+        if (!hash.has(k)) hash.set(k, []);
+        hash.get(k).push(g);
+      }
+  }
+  const nearLine = (x, y) => {
+    for (const [p, q] of hash.get(Math.floor(x / CELL) + ',' + Math.floor(y / CELL)) ?? []) {
+      const vx = q[0] - p[0],
+        vy = q[1] - p[1];
+      const t = Math.max(0, Math.min(1, ((x - p[0]) * vx + (y - p[1]) * vy) / (vx * vx + vy * vy || 1)));
+      if (Math.hypot(x - p[0] - t * vx, y - p[1] - t * vy) < band) return true;
+    }
+    return false;
+  };
+  const inside = (reg) => {
+    const loops = regionPath(reg.id)
+      .split('M')
+      .filter(Boolean)
+      .map((l) =>
+        l
+          .replace('Z', '')
+          .split('L')
+          .map((q) => q.trim().split(' ').map(Number)),
+      );
+    const all = loops.flat();
+    const bx0 = Math.min(...all.map((q) => q[0])),
+      bx1 = Math.max(...all.map((q) => q[0])),
+      by0 = Math.min(...all.map((q) => q[1])),
+      by1 = Math.max(...all.map((q) => q[1]));
+    const inLoops = (x, y) => {
+      let on = false;
+      for (const loop of loops)
+        for (let i = 0, j = loop.length - 1; i < loop.length; j = i++) {
+          const [xi, yi] = loop[i],
+            [xj, yj] = loop[j];
+          if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) on = !on;
+        }
+      return on;
+    };
+    const step = 0.005,
+      pts = [];
+    for (let y = by0; y <= by1; y += step) for (let x = bx0; x <= bx1; x += step) if (inLoops(x, y) && !nearLine(x, y)) pts.push([x, y]);
+    const n = pts.length,
+      cx = pts.reduce((a, q) => a + q[0], 0) / n,
+      cy = pts.reduce((a, q) => a + q[1], 0) / n;
+    return { x: +cx.toFixed(4), y: +cy.toFixed(4), area: +(n * step * step).toFixed(5), rmax: +Math.max(...pts.map((q) => Math.hypot(q[0] - cx, q[1] - cy))).toFixed(4) };
+  };
+  const ids = { scarf: scarfReg, gem: gemReg, wingL: wings[0], wingR: wings[wings.length - 1] };
+  for (const [k, reg] of Object.entries(ids)) marks[k] = { ...marks[k], ...inside(reg) };
+}
+
+// The ring for the ticket's countdown: a smooth line round the whole shape, a little way outside the sticker border, starting at the top and going clockwise (as a path to draw with pathLength 100)
+const ringChains = JSON.parse(readFileSync(process.argv[5], 'utf8')).map((c) => c.map(tx));
+const ring = ringChains.sort((a, b) => lenOf(b) - lenOf(a))[0];
+const area = ring.reduce((a, p, i) => a + (ring[(i + 1) % ring.length][0] - p[0]) * (ring[(i + 1) % ring.length][1] + p[1]), 0); // > 0: clockwise on a screen with y down
+let loop = area > 0 ? ring : [...ring].reverse();
+const top = loop.reduce((bi, p, i) => (p[1] < loop[bi][1] ? i : bi), 0);
+loop = [...loop.slice(top), ...loop.slice(0, top)];
+const thin = loop.filter((_, i) => i % 3 === 0);
+const ringPath = 'M' + thin.map((p) => p.join(' ')).join('L') + 'Z';
+
 const ts = `// Generated by scripts/byte-art/trace.mjs and build.mjs from the Triton Gaming mascot, Byte: the drawing traced into flat-colour regions, the lines between them (strokes), and the
 // little plum dots, in code units (see marks.ts). Do not edit by hand; run the scripts again with a new picture.
 // Colours: 2 mask, 3 green, 4 pale, 5 yellow, 6 pink, 7 shadow. A stroke is \`ok\` when it may carry the message (an outer outline or the sticker border, \`halo\`, round the whole shape).
@@ -154,6 +255,10 @@ ${eyeRegions.map((r) => `  { col: ${r.col}, d: '${r.d}' },`).join('\n')}
 ];
 /** What the reader looks for: the two eyes' middles and their shapes (the pill is long and thin, the X is a cross: low fill, round). */
 export const EYE_SHAPES = ${JSON.stringify(eyes)};
+/** His other locators: the yellow scarf, a facet of the gem and the two wings (middles and sizes). */
+export const MARK_SHAPES = ${JSON.stringify(marks)};
+/** A line round the whole shape for the ticket's countdown ring (starts at the top, clockwise). */
+export const RING_PATH = '${ringPath}';
 /* prettier-ignore */
 export const DOTS_OF_INK: { d: string; x: number; y: number; r: number }[] = [
 ${dots.map((r) => `  { d: '${r.d}', x: ${r.c[0]}, y: ${r.c[1]}, r: ${r.r} },`).join('\n')}

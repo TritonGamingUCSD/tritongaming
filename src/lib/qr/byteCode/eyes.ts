@@ -72,14 +72,18 @@ export function blobs(bin: Uint8Array, w: number, h: number): Blob[] {
 
 const close = (got: number, want: number, tol: number) => Math.abs(got / want - 1) <= tol;
 
-/** Pairs of blobs that could be Byte's pill eye and X eye (best first), as a left and a right mark. */
-export function findEyes(gray: Uint8ClampedArray | Uint8Array, w: number, h: number): [Finder, Finder][] {
-  // The eyes are the palest things on his green head, with a softer glow round them: ask for a lot of contrast first (so the glow is not part of them), then less in a poor light.
-  for (const bias of [40, 25, 14]) {
-    const found = pairsIn(blobs(binarize(gray, w, h, false, bias), w, h));
-    if (found.length) return found.map(([a, b]) => [refine(gray, w, h, a), refine(gray, w, h, b)] as [Finder, Finder]);
+/** Pairs of blobs that could be Byte's pill eye and X eye, as a left and a right mark, best first, one threshold at a time: the eyes are the palest things on his green head, with a softer glow
+ *  round them, so a lot of contrast is asked for first (the glow is then not part of them) and less in a poor light or when the picture is washed out. A pair seen again at a lower threshold is not offered twice. */
+export function* eyePairs(gray: Uint8ClampedArray | Uint8Array, w: number, h: number): Generator<[Finder, Finder]> {
+  const given: [Finder, Finder][] = [];
+  for (const bias of [40, 25, 14, 8]) {
+    for (const [a, b] of pairsIn(blobs(binarize(gray, w, h, false, bias), w, h))) {
+      if (given.some(([p, q]) => Math.hypot(p.x - a.x, p.y - a.y) < 3 && Math.hypot(q.x - b.x, q.y - b.y) < 3)) continue;
+      const pair: [Finder, Finder] = [refine(gray, w, h, a), refine(gray, w, h, b)];
+      given.push([a, b]);
+      yield pair;
+    }
   }
-  return [];
 }
 
 /** The middle of an eye found roughly: looked at again with a threshold between its own brightest level and the glow round it (the glow is paler than the surroundings, so a coarse

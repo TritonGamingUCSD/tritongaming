@@ -1,7 +1,8 @@
-.code { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; border-radius: 12%; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18); }
+/* No plate of its own: Byte sits straight on whatever card he is on (light or dark), so there is never a patch of another colour round him. */
+.code { display: block; width: 100%; height: auto; aspect-ratio: 1 / 1; overflow: visible; }
+/* The outer lines (his outline and the border round him, the ones that carry the message) follow the theme: --bc-edge is plum on a light card and cream on a dark one (see globals.css, and a preview side); his inner lines stay plum. */
 /* Byte's own colours, as in the mascot's drawing (a plum line, greens, a yellow scarf, a pink cheek). They stay the same in the light and dark themes: the code is a sticker with its
    own pale plate, so the reader gets the same contrast either way. */
-.plate { fill: #fbf7e6; } /* theme-ok */
 .c2 { fill: #585868; stroke: #585868; stroke-width: 0.004; } /* theme-ok */
 .c3 { fill: #88a898; stroke: #88a898; stroke-width: 0.004; } /* theme-ok */
 .c4 { fill: #d8e8a8; stroke: #d8e8a8; stroke-width: 0.004; } /* theme-ok */
@@ -15,3 +16,8 @@
 .ringMark { fill: none; stroke: #483848; } /* theme-ok */
 .glowA { stop-color: #b8e0b0; stop-opacity: 0.6; } /* theme-ok */
 .glowB { stop-color: #b8e0b0; stop-opacity: 0; } /* theme-ok */
+.edge { stroke: var(--bc-edge); }
+
+.pad { fill: #ffe3e6; } /* theme-ok */
+.shadowA { stop-color: #483848; stop-opacity: 0.28; } /* theme-ok */
+.shadowB { stop-color: #483848; stop-opacity: 0; } /* theme-ok */

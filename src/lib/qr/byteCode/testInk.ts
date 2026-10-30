@@ -1,6 +1,6 @@
 // The Bytecode as grey levels for the test camera (not part of the app): Byte's flat colours as greys, his lines and the message's bars in plum, the eyes and paws as drawn.
 import { drawing, LINE_W } from './layout';
-import { FINDERS, DOTS, R_SMALL } from './marks';
+import { FINDERS } from './marks';
 import { REGIONS, EYES } from './byteArt';
 
 export const GREY = { plum: 62, plate: 244, 2: 92, 3: 155, 4: 228, 5: 215, 6: 178, 7: 200 } as Record<string | number, number>;
@@ -33,16 +33,19 @@ const raster = new Uint8Array(R * R).fill(GREY.plate);
     }
   }
 }
-type Seg = [number, number, number, number, number]; // x0 y0 x1 y1 half-width
+type Seg = [number, number, number, number, number, number]; // x0 y0 x1 y1 half-width grey
 const CELL = 0.05;
 export function byteInk(payload: string, dark = false): (x: number, y: number) => number {
   const d = drawing(payload)!;
   const segs: Seg[] = [];
-  const addAll = (lines: [number, number][][], w: number) => {
-    for (const l of lines) for (let i = 1; i < l.length; i++) segs.push([l[i - 1][0], l[i - 1][1], l[i][0], l[i][1], w / 2]);
+  const addAll = (lines: [number, number][][], w: number, grey: number) => {
+    for (const l of lines) for (let i = 1; i < l.length; i++) segs.push([l[i - 1][0], l[i - 1][1], l[i][0], l[i][1], w / 2, grey]);
   };
-  addAll(d.solid, LINE_W);
-  addAll(d.lineBars, LINE_W);
+  // on a dark screen the sticker's plate is dark and the outer lines (the edge: his outline, the border round him, and the dashes) are cream; his inner lines stay plum
+  const EDGE = dark ? 242 : GREY.plum;
+  addAll(d.inner, LINE_W, GREY.plum);
+  addAll(d.edge, LINE_W, EDGE);
+  addAll(d.lineBars, LINE_W, EDGE);
   const hash = new Map<string, Seg[]>();
   for (const s of segs) {
     const x0 = Math.floor((Math.min(s[0], s[2]) - s[4]) / CELL),
@@ -57,27 +60,29 @@ export function byteInk(payload: string, dark = false): (x: number, y: number) =
       }
   }
   const onLine = (x: number, y: number) => {
-    for (const [x0, y0, x1, y1, h] of hash.get(Math.floor(x / CELL) + ',' + Math.floor(y / CELL)) ?? []) {
+    let hit = -1;
+    for (const [x0, y0, x1, y1, h, g] of hash.get(Math.floor(x / CELL) + ',' + Math.floor(y / CELL)) ?? []) {
       const vx = x1 - x0,
         vy = y1 - y0;
       const t = Math.max(0, Math.min(1, ((x - x0) * vx + (y - y0) * vy) / (vx * vx + vy * vy || 1)));
-      if (Math.hypot(x - x0 - t * vx, y - y0 - t * vy) <= h) return true;
+      if (Math.hypot(x - x0 - t * vx, y - y0 - t * vy) <= h) {
+        if (g === GREY.plum) return g; // an inner line wins where two meet
+        hit = g;
+      }
     }
-    return false;
+    return hit;
   };
-  const flip = (g: number) => (dark ? 255 - g : g);
+  const flip = (g: number) => g;
+  const plate = dark ? 22 : GREY.plate;
   return (x, y) => {
     if (Math.abs(x) > 1 || Math.abs(y) > 1) return 128;
-    for (const p of Object.values(DOTS)) {
-      const r = Math.hypot(x - p.x, y - p.y);
-      if (r <= R_SMALL) return flip(GREY.plum);
-      if (r <= R_SMALL + 0.02) return flip(GREY[4]);
-    }
-    if (onLine(x, y)) return flip(GREY.plum);
-    const g = raster[Math.min(R - 1, Math.floor(((y + 1) / 2) * R)) * R + Math.min(R - 1, Math.floor(((x + 1) / 2) * R))];
+    const on = onLine(x, y);
+    if (on >= 0) return on;
+    const g0 = raster[Math.min(R - 1, Math.floor(((y + 1) / 2) * R)) * R + Math.min(R - 1, Math.floor(((x + 1) / 2) * R))];
+    const g = g0 === GREY.plate ? plate : g0;
     // the soft green glow round his eyes (over the green and the mask, under the eyes themselves)
     if (g !== GREY[4])
       for (const f of Object.values(FINDERS)) if (Math.hypot(x - f.x, y - f.y) < 0.2) return flip(Math.round(g + (178 - g) * (1 - Math.hypot(x - f.x, y - f.y) / 0.2) * 0.9));
-    return flip(raster[Math.min(R - 1, Math.floor(((y + 1) / 2) * R)) * R + Math.min(R - 1, Math.floor(((x + 1) / 2) * R))]);
+    return flip(g);
   };
 }
