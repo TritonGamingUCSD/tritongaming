@@ -285,7 +285,7 @@ describe('reading under random conditions', () => {
     }
     console.log(`BYTECODE random ${ok}/${trials}, wrong ${wrong}`);
     expect(wrong).toBe(0); // the one thing that must never happen
-    // Measured 116 of 120 (97%) with this mix of conditions (it was 97 of 120 with the whole message on the outline; the TGcode reads 90%+ of its own, kinder, mix). A third of the message is now in
+    // Measured 117 of 120 (97%) with this mix of conditions (it was 97 of 120 with the whole message on the outline; the TGcode reads 90%+ of its own, kinder, mix). A third of the message is now in
     // shade patches on his body, which blur and noise hurt far less than thin dashes, and the dashes left on the outline are longer and bolder. The bar is a little under what it reaches today.
     expect(ok / trials).toBeGreaterThanOrEqual(0.9);
   }, 600000);

@@ -13,8 +13,8 @@ export { FINDERS, SPAN };
 //   • 5 bytes of message (what it is, a mark that says it is a Bytecode, a spare half-byte that is always 0, and 32 bits of the key the server checks) followed by 10 Reed–Solomon repair bytes (4 wrong bytes are mended, as with the TGcode's 9; the rest is kept as proof that what was mended is right), scattered over Byte by a fixed shuffle (its own, so a
 //     Bytecode is never mistaken for a TGcode: the version in the first byte is 3 here, 2 there)
 //   • lines and cells that are not part of the message are drawn as Byte is, so what carries it is only a few pieces of his drawing turned into dashes
-export const PITCH = 0.04; // the length of a cell along a line
-export const LINE_W = 0.034; // how thick the lines that may carry the message are (his outline and the border round him)
+export const PITCH = 0.05; // the length of a cell along a line
+export const LINE_W = 0.04; // how thick the lines that may carry the message are (his outline and the border round him)
 export const INNER_W = 0.026; // how thick his other lines are
 export const BLOCK = 10;
 export const NSYM = 10; // repair bytes: 4 wrong bytes mended, and 2 more kept unspent as the check (the TGcode has 9)
@@ -24,7 +24,7 @@ export const TOTAL_BYTES = DATA_BYTES + NSYM; // 15
 export const NIBBLES = TOTAL_BYTES * 2; // 30 half-bytes in all: some are written along his outline (as dashes), the rest in shade patches on his body
 export const KEY_HEX = 8; // hex digits of key in a code (32 bits, as in the TGcode)
 const VERSION = 3; // the 2-bit mark that says this is a Bytecode
-const CLEAR_LINE = 0.042; // how far a cell on a line stays from any other line
+const CLEAR_LINE = 0.046; // how far a cell on a line stays from any other line
 
 export const PAYLOAD = /^[mtr][0-9a-f]{12}$/;
 export type Kind = 'm' | 't' | 'r';
@@ -148,9 +148,9 @@ STRETCHES.forEach((st, si) => {
 });
 export const BLOCKS_AVAILABLE = ALL_BLOCKS.length;
 
-// The message is written in two places. Four of the 15 bytes are the patches' (each bit is one pair of patches on his body, see patchArt.ts: the left one lighter is 1, the right one lighter is 0); the other
-// 11 are written as dashes along his outline, in blocks of 10 cells. The bytes are spread so that losing one place does not take the whole of any part of the message.
-const PATCH_BYTES = [1, 5, 9, 13];
+// The message is written in two places. Seven of the 15 bytes are the patches' (each bit is one pair of patches on his body, see patchArt.ts: the left one lighter is 1, the right one lighter is 0); the other
+// 8 are written as dashes along his outline, in blocks of 10 cells. The bytes are spread so that losing one place does not take the whole of any part of the message.
+const PATCH_BYTES = [1, 3, 5, 7, 9, 11, 13];
 export const PATCH_NIBBLES = PATCH_BYTES.flatMap((b) => [2 * b, 2 * b + 1]); // which half-bytes (of the 30) the patches carry, in the order of their bits (4 bits each, high bit first)
 export const OUTLINE_NIBBLES = Array.from({ length: NIBBLES }, (_, i) => i).filter((i) => !PATCH_NIBBLES.includes(i)); // and the blocks of dashes
 export const PATCH_COUNT = PATCH_NIBBLES.length * 4; // pairs of patches, one per bit

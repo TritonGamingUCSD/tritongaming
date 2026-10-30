@@ -90,8 +90,8 @@ export function byteInk(payload: string, dark = false): (x: number, y: number) =
     const g0 = raster[Math.min(R - 1, Math.floor(((y + 1) / 2) * R)) * R + Math.min(R - 1, Math.floor(((x + 1) / 2) * R))];
     let g = g0 === GREY.plate ? plate : g0;
     const pm = patchMask[Math.min(R - 1, Math.floor(((y + 1) / 2) * R)) * R + Math.min(R - 1, Math.floor(((x + 1) / 2) * R))];
-    if (pm === 1 && g0 !== GREY.plate) g += (255 - g) * 0.16;
-    else if (pm === 2 && g0 !== GREY.plate) g -= (g - 42) * 0.16;
+    if (pm === 1 && g0 !== GREY.plate) g += (255 - g) * 0.22;
+    else if (pm === 2 && g0 !== GREY.plate) g -= (g - 42) * 0.22;
     // the soft green glow round his eyes (over the green and the mask, under the eyes themselves)
     if (g !== GREY[4])
       for (const f of Object.values(FINDERS)) if (Math.hypot(x - f.x, y - f.y) < 0.2) return flip(Math.round(g + (178 - g) * (1 - Math.hypot(x - f.x, y - f.y) / 0.2) * 0.9));
