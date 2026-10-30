@@ -334,8 +334,8 @@ export function isValidMeetingCode(secret: string, input: string): boolean {
 export const QR_TOKEN_LEN = 12;
 export const currentQrToken = (secret: string): string => qrToken(secret, currentWindow()).slice(0, QR_TOKEN_LEN);
 export function isValidQrToken(secret: string, token: string): boolean {
-  // The code carries the first 8 hex digits of the key (12 in the first format): a code is good if what it carries is the start of the key.
-  return token.length >= 8 && token.length <= QR_TOKEN_LEN && scanWindows().some((w) => qrToken(secret, w).slice(0, token.length) === token);
+  // The code carries the first 8 hex digits of the key (7 in a Bytecode, 12 in the first format): a code is good if what it carries is the start of the key.
+  return token.length >= 7 && token.length <= QR_TOKEN_LEN && scanWindows().some((w) => qrToken(secret, w).slice(0, token.length) === token);
 }
 
 export async function authorizeMeetings(capability: Extract<Capability, 'manage_meetings' | 'attend_meetings' | 'host_meetings' | 'view_attendance_reports'>) {

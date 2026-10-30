@@ -1,6 +1,6 @@
 // One way in for everything a person can check in with. The portal's scanner and its code box both end up here, and what comes back says plainly what was done:
 //   • six typed digits: a meeting's code first, then (for staff) a ticket for an event that can still be checked into, and last a Trivia game's join code (which joins that game)
-//   • a TGcode read by the scanner (`tg:` and `m…`, `t…` or `r…` with 8 (or, in the first format, 12) hex digits):
+//   • a TGcode read by the scanner (`tg:` and `m…`, `t…` or `r…` with 8 (or, in the first format, 12; in a Bytecode, 7) hex digits):
 //       meeting (`m`) checks the person in to that meeting · ticket (`t`) checks that ticket in (staff) · reward pickup (`r`) looks the reward up so staff can confirm it
 // Which of these a person may do is decided by the server; this only asks, in order, and reports.
 
@@ -32,7 +32,7 @@ export type Outcome =
   | { kind: 'confirmEvent'; userName: string; eventTitle: string; nowEvent: string; redo: { code?: string; qr_token?: string } }
   | { kind: 'error'; message: string };
 
-export const TGCODE = /^tg:([mtr])([0-9a-f]{8}|[0-9a-f]{12})$/; // the key is 8 hex digits in a code of the current format, 12 in the first one
+export const TGCODE = /^tg:([mtr])([0-9a-f]{7,8}|[0-9a-f]{12})$/; // the key is 8 hex digits in a TGcode of the current format, 12 in the first one, and 7 in a Bytecode
 
 // A request that never answers (a very bad connection) must not leave the screen waiting for ever: after 8 s it gives up (and, for a check-in, tries once more) and the person is told, with a way to try again.
 const TIMEOUT_MS = 8_000;

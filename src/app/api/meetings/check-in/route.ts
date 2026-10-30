@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}));
   const code = String(body.code ?? '').replace(/\s/g, '');
   const qrToken = typeof body.qr_token === 'string' ? body.qr_token.trim().toLowerCase() : ''; // from the TGcode: `m` + this
-  if (qrToken && !/^([0-9a-f]{8}|[0-9a-f]{12})$/.test(qrToken)) return NextResponse.json({ error: 'That isn’t a meeting code.' }, { status: 400 });
+  if (qrToken && !/^([0-9a-f]{7,8}|[0-9a-f]{12})$/.test(qrToken)) return NextResponse.json({ error: 'That isn’t a meeting code.' }, { status: 400 });
   const preview = body.preview === true; // only say which meeting it is, so the person can confirm
   if (!qrToken && !/^\d{6}$/.test(code)) return NextResponse.json({ error: 'Enter the 6-digit code from the screen.' }, { status: 400 });
 

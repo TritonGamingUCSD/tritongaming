@@ -15,11 +15,11 @@ export async function GET(request: Request) {
   if (!hasCapability(roles ?? [], 'scan_redemptions')) return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
 
   const p = (new URL(request.url).searchParams.get('p') ?? '').toLowerCase();
-  if (!/^([0-9a-f]{8}|[0-9a-f]{12})$/.test(p)) return NextResponse.json({ error: 'That isn’t a reward pickup code.' }, { status: 400 });
-  // The code carries the first 8 hex digits of the id (12 in the first format): every id that starts that way lies between these two.
-  const head = p.length === 8 ? p : `${p.slice(0, 8)}-${p.slice(8, 12)}`;
-  const lo = p.length === 8 ? `${head}-0000-0000-0000-000000000000` : `${head}-0000-0000-000000000000`,
-    hi = p.length === 8 ? `${head}-ffff-ffff-ffff-ffffffffffff` : `${head}-ffff-ffff-ffffffffffff`;
+  if (!/^([0-9a-f]{7,8}|[0-9a-f]{12})$/.test(p)) return NextResponse.json({ error: 'That isn’t a reward pickup code.' }, { status: 400 });
+  // The code carries the first 8 hex digits of the id (7 in a Bytecode, 12 in the first format): every id that starts that way lies between these two.
+  const head = p.length < 12 ? p : `${p.slice(0, 8)}-${p.slice(8, 12)}`;
+  const lo = p.length < 12 ? `${head}${'0'.repeat(8 - p.length)}-0000-0000-0000-000000000000` : `${head}-0000-0000-000000000000`,
+    hi = p.length < 12 ? `${head}${'f'.repeat(8 - p.length)}-ffff-ffff-ffff-ffffffffffff` : `${head}-ffff-ffff-ffffffffffff`;
   const { data } = await createServiceClient()
     .from('reward_redemptions')
     .select('id, status, point_cost, claimed_at, reward:reward_items(title, description), member:profiles!reward_redemptions_user_id_fkey(display_name)')

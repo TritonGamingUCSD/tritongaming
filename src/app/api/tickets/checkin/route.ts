@@ -94,12 +94,12 @@ export async function POST(request: Request) {
   // src/app/api/tickets/[id]/qr/route.ts) purely as a human/scanner-visible
   // hint of which event it's for — it isn't part of the HMAC and carries no
   // authority, so it's simply dropped here before the real check.
-  // Two ways in, kept apart: the six typed digits, or the key from a TGcode (`t` and 8 hex digits, or 12 from a code of the first format, which only the portal's scanner reads).
+  // Two ways in, kept apart: the six typed digits, or the key from a TGcode (`t` and 8 hex digits, 7 from a Bytecode, or 12 from a code of the first format, which only the portal's scanner reads).
   const windowIndex = currentWindow();
   let matches: (t: { id?: string; ticket_code: string }) => boolean;
   if (tgToken) {
     const tok = String(tgToken).trim().toLowerCase();
-    if (!/^([0-9a-f]{8}|[0-9a-f]{12})$/.test(tok)) return NextResponse.json({ error: 'That isn’t a ticket.' }, { status: 400 });
+    if (!/^([0-9a-f]{7,8}|[0-9a-f]{12})$/.test(tok)) return NextResponse.json({ error: 'That isn’t a ticket.' }, { status: 400 });
     const wins = scanWindows(); // about 30 s, not 60 (see rotatingCode)
     matches = (t) => wins.some((w) => qrToken(t.ticket_code, w).slice(0, tok.length) === tok);
   } else {
