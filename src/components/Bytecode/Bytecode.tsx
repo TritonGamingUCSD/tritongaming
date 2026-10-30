@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { drawing, PAYLOAD, LINE_W, FINDERS } from '@/lib/qr/byteCode/layout';
+import { drawing, PAYLOAD, LINE_W, INNER_W, PATCH_H, FINDERS } from '@/lib/qr/byteCode/layout';
 import { REGIONS, EYES, DOTS_OF_INK } from '@/lib/qr/byteCode/byteArt';
 import styles from './Bytecode.module.css';
 
@@ -42,7 +42,21 @@ export default function Bytecode({
       {DOTS_OF_INK.map((r, i) => (
         <path key={i} d={r.d} className={styles.ink} />
       ))}
-      <g className={styles.line} strokeWidth={LINE_W}>
+      {/* the message's shade patches: pairs of small squares on his flat colours, one a little lighter and one a little darker (which is which is a bit) */}
+      <g>
+        {art.patches.map((p, i) => (
+          <rect
+            key={i}
+            x={p.x - PATCH_H}
+            y={p.y - PATCH_H}
+            width={PATCH_H * 2}
+            height={PATCH_H * 2}
+            rx={PATCH_H * 0.35}
+            className={p.light ? styles.patchLight : styles.patchDark}
+          />
+        ))}
+      </g>
+      <g className={styles.line} strokeWidth={INNER_W}>
         <path d={art.inner.map(line).join('')} />
       </g>
       <g className={`${styles.line} ${styles.edge}`} strokeWidth={LINE_W}>

@@ -1,6 +1,7 @@
 import { rsEncode, rsDecode } from '../tgCode/rs';
 import { FINDERS, SPAN, KEEP_OUT_FINDER } from './marks';
 import { STROKES, DOTS_OF_INK } from './byteArt';
+import { PATCH_H, PATCH_SEP, PATCH_PAIRS } from './patchArt';
 export { FINDERS, SPAN };
 
 // The Bytecode: the same message as the portal's circular TGcode (what a ticket, a meeting's check-in and a reward pickup show; see lib/qr/tgCode), written into Byte, the Triton
@@ -12,17 +13,18 @@ export { FINDERS, SPAN };
 //   • 5 bytes of message (what it is, a mark that says it is a Bytecode, a spare half-byte that is always 0, and 32 bits of the key the server checks) followed by 10 Reed–Solomon repair bytes (4 wrong bytes are mended, as with the TGcode's 9; the rest is kept as proof that what was mended is right), scattered over Byte by a fixed shuffle (its own, so a
 //     Bytecode is never mistaken for a TGcode: the version in the first byte is 3 here, 2 there)
 //   • lines and cells that are not part of the message are drawn as Byte is, so what carries it is only a few pieces of his drawing turned into dashes
-export const PITCH = 0.032; // the length of a cell along a line
-export const LINE_W = 0.026; // how thick his drawn lines are
+export const PITCH = 0.04; // the length of a cell along a line
+export const LINE_W = 0.034; // how thick the lines that may carry the message are (his outline and the border round him)
+export const INNER_W = 0.026; // how thick his other lines are
 export const BLOCK = 10;
 export const NSYM = 10; // repair bytes: 4 wrong bytes mended, and 2 more kept unspent as the check (the TGcode has 9)
 const SPARE = 2;
 export const DATA_BYTES = 5; // kind (2 bits), version mark (2 bits), a spare half-byte (0) and 32 bits of key
 export const TOTAL_BYTES = DATA_BYTES + NSYM; // 15
-export const NIBBLES = TOTAL_BYTES * 2; // 26 blocks
+export const NIBBLES = TOTAL_BYTES * 2; // 30 half-bytes in all: some are written along his outline (as dashes), the rest in shade patches on his body
 export const KEY_HEX = 8; // hex digits of key in a code (32 bits, as in the TGcode)
 const VERSION = 3; // the 2-bit mark that says this is a Bytecode
-const CLEAR_LINE = 0.034; // how far a cell on a line stays from any other line
+const CLEAR_LINE = 0.042; // how far a cell on a line stays from any other line
 
 export const PAYLOAD = /^[mtr][0-9a-f]{12}$/;
 export type Kind = 'm' | 't' | 'r';
@@ -145,7 +147,15 @@ STRETCHES.forEach((st, si) => {
   for (let b = 0; b < n; b++) ALL_BLOCKS.push(Array.from({ length: BLOCK }, (_, k) => [si, from + b * BLOCK + k] as Cell));
 });
 export const BLOCKS_AVAILABLE = ALL_BLOCKS.length;
-if (ALL_BLOCKS.length < NIBBLES) throw new Error(`Bytecode layout has room for only ${ALL_BLOCKS.length} blocks`);
+
+// The message is written in two places. Four of the 15 bytes are the patches' (each bit is one pair of patches on his body, see patchArt.ts: the left one lighter is 1, the right one lighter is 0); the other
+// 11 are written as dashes along his outline, in blocks of 10 cells. The bytes are spread so that losing one place does not take the whole of any part of the message.
+const PATCH_BYTES = [1, 5, 9, 13];
+export const PATCH_NIBBLES = PATCH_BYTES.flatMap((b) => [2 * b, 2 * b + 1]); // which half-bytes (of the 30) the patches carry, in the order of their bits (4 bits each, high bit first)
+export const OUTLINE_NIBBLES = Array.from({ length: NIBBLES }, (_, i) => i).filter((i) => !PATCH_NIBBLES.includes(i)); // and the blocks of dashes
+export const PATCH_COUNT = PATCH_NIBBLES.length * 4; // pairs of patches, one per bit
+if (PATCH_PAIRS.length < PATCH_COUNT) throw new Error('Bytecode has too few places for its patches');
+if (ALL_BLOCKS.length < OUTLINE_NIBBLES.length) throw new Error(`Bytecode layout has room for only ${ALL_BLOCKS.length} blocks`);
 {
   // A deterministic shuffle (a seeded Fisher–Yates), so neighbouring blocks hold bytes far apart in the message; blocks beyond what the message needs stay empty.
   let seed = 0x7b17e;
@@ -159,7 +169,7 @@ if (ALL_BLOCKS.length < NIBBLES) throw new Error(`Bytecode layout has room for o
   }
 }
 /** The cells of block i (the i-th half-byte of the coded message), in reading order; blocks beyond what the message needs stay as Byte is drawn. */
-export const BLOCKS: readonly Cell[][] = ALL_BLOCKS.slice(0, NIBBLES);
+export const BLOCKS: readonly Cell[][] = ALL_BLOCKS.slice(0, OUTLINE_NIBBLES.length);
 
 const MASK = (() => {
   const m: number[] = [];
@@ -185,13 +195,23 @@ export function dashGrid(payload: string): boolean[][] | null {
   const nib = nibblesOf(payload);
   if (!nib) return null;
   const grid = STRETCHES.map((st) => new Array<boolean>(st.cells.length).fill(false));
-  nib.forEach((n, i) =>
-    BLOCKS[i].forEach(([r, c], k) => {
-      grid[r][c] = PATTERN_BITS[n][k] === 1;
+  BLOCKS.forEach((block, i) =>
+    block.forEach(([r, c], k) => {
+      grid[r][c] = PATTERN_BITS[nib[OUTLINE_NIBBLES[i]]][k] === 1;
     }),
   );
   return grid;
 }
+
+/** The bits the patches carry, in order (one per pair; null for a payload that is not valid). */
+export function patchBits(payload: string): number[] | null {
+  const nib = nibblesOf(payload);
+  if (!nib) return null;
+  return PATCH_NIBBLES.flatMap((q) => [3, 2, 1, 0].map((k) => (nib[q] >> k) & 1));
+}
+/** Where the pairs of patches are: for pair i, the middle of its left and of its right square (code units), and their half-size. */
+export const PATCH_AT = PATCH_PAIRS.slice(0, PATCH_COUNT).map((p) => ({ left: [p.x - PATCH_SEP / 2, p.y] as Pt, right: [p.x + PATCH_SEP / 2, p.y] as Pt }));
+export { PATCH_H };
 
 /** What the half-bytes say (with the ones the reader doubts listed in `doubtful`, by block number), or null when the repair cannot make the checks come out. */
 export function payloadFromNibbles(nib: number[], doubtful: number[] = []): string | null {
@@ -222,7 +242,7 @@ export const EXT = -0.05; // how far, in cells, a bar is drawn into the gap besi
 
 /** What to draw for a message, as polylines (each a list of points). The outer lines (his outline and the sticker border round him) are the ones that may carry the message: `lineBars` are
  *  their dashes and `edge` what is left of them as ordinary line; `inner` are his other lines, drawn as they are. (They are separate so the outer ones can change colour on a dark screen.) */
-export function drawing(payload: string): { lineBars: Pt[][]; edge: Pt[][]; inner: Pt[][] } | null {
+export function drawing(payload: string): { lineBars: Pt[][]; edge: Pt[][]; inner: Pt[][]; patches: { x: number; y: number; light: boolean }[] } | null {
   const grid = dashGrid(payload);
   if (!grid) return null;
   const lineBars: Pt[][] = [];
@@ -261,5 +281,10 @@ export function drawing(payload: string): { lineBars: Pt[][]; edge: Pt[][]; inne
     }
     if (L.length > from + 1e-6) out.push(sliceLine(i, from, L.length));
   });
-  return { lineBars, edge, inner };
+  const bits = patchBits(payload)!;
+  const patches = PATCH_AT.flatMap((p, i) => [
+    { x: p.left[0], y: p.left[1], light: bits[i] === 1 },
+    { x: p.right[0], y: p.right[1], light: bits[i] === 0 },
+  ]);
+  return { lineBars, edge, inner, patches };
 }

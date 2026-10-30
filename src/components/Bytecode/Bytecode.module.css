@@ -21,3 +21,6 @@
 .pad { fill: #ffe3e6; } /* theme-ok */
 .shadowA { stop-color: #483848; stop-opacity: 0.28; } /* theme-ok */
 .shadowB { stop-color: #483848; stop-opacity: 0; } /* theme-ok */
+/* The shade patches (the message on his body): a little lighter, a little darker than the colour under them. They look the same in the light and dark themes (his colours do). */
+.patchLight { fill: #ffffff; fill-opacity: 0.16; } /* theme-ok */
+.patchDark { fill: #2a1d33; fill-opacity: 0.16; } /* theme-ok */

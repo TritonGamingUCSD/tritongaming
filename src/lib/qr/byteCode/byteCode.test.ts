@@ -1,6 +1,23 @@
 import { describe, expect, test } from 'vitest';
 import { rsDecode, rsEncode } from '../tgCode/rs';
-import { BLOCKS, BLOCK, DATA_BYTES, NIBBLES, NSYM, PATTERN_COUNT, PITCH, STRETCHES, TOTAL_BYTES, dashGrid, drawing, nibblesOf, patternCells, payloadFromNibbles } from './layout';
+import {
+  BLOCKS,
+  BLOCK,
+  DATA_BYTES,
+  NIBBLES,
+  OUTLINE_NIBBLES,
+  PATCH_NIBBLES,
+  NSYM,
+  PATTERN_COUNT,
+  PITCH,
+  STRETCHES,
+  TOTAL_BYTES,
+  dashGrid,
+  drawing,
+  nibblesOf,
+  patternCells,
+  payloadFromNibbles,
+} from './layout';
 import { FINDERS, KEEP_OUT_FINDER } from './marks';
 import { STROKES } from './byteArt';
 import { byteInk } from './testInk';
@@ -57,7 +74,8 @@ describe('repair bytes', () => {
 
 describe('layout', () => {
   test('there is room for every block, and no cell of one is closer to an eye than the reader allows', () => {
-    expect(BLOCKS.length).toBe(NIBBLES);
+    expect(BLOCKS.length).toBe(OUTLINE_NIBBLES.length); // the outline's blocks; the rest of the half-bytes are the patches'
+    expect(OUTLINE_NIBBLES.length + PATCH_NIBBLES.length).toBe(NIBBLES);
     expect(PATTERN_COUNT).toBe(16);
     expect(NIBBLES).toBe(TOTAL_BYTES * 2);
     const seen = new Set<string>();
@@ -241,7 +259,7 @@ describe('reading', () => {
 });
 
 describe('reading under random conditions', () => {
-  test('reads about four fifths of 120 random pictures, and never reads the wrong thing', () => {
+  test('reads about nine in ten of 120 random pictures, and never reads the wrong thing', () => {
     const rnd = lcg(7);
     let ok = 0,
       wrong = 0;
@@ -267,8 +285,8 @@ describe('reading under random conditions', () => {
     }
     console.log(`BYTECODE random ${ok}/${trials}, wrong ${wrong}`);
     expect(wrong).toBe(0); // the one thing that must never happen
-    // Measured 97 of 120 (81%) with this mix of conditions (the TGcode reads 90%+ of its own, kinder, mix). Tilt reads in light now (the gem is looked for where the scarf and wings say it is, and
-    // the map is nudged until the cells fit the patterns); blur and noise on a small or dark code are what is left. The bar is set a little under what it reaches today so a real loss shows.
-    expect(ok / trials).toBeGreaterThanOrEqual(0.76);
+    // Measured 116 of 120 (97%) with this mix of conditions (it was 97 of 120 with the whole message on the outline; the TGcode reads 90%+ of its own, kinder, mix). A third of the message is now in
+    // shade patches on his body, which blur and noise hurt far less than thin dashes, and the dashes left on the outline are longer and bolder. The bar is a little under what it reaches today.
+    expect(ok / trials).toBeGreaterThanOrEqual(0.9);
   }, 600000);
 });

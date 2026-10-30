@@ -1,4 +1,20 @@
-import { BLOCKS, BLOCK, RINGS, PATTERN_COUNT, patternCells, cellCenter, dashGrid, payloadFromNibbles, FINDERS } from './layout';
+import {
+  BLOCKS,
+  BLOCK,
+  RINGS,
+  PATTERN_COUNT,
+  patternCells,
+  cellCenter,
+  dashGrid,
+  payloadFromNibbles,
+  patchBits,
+  FINDERS,
+  NIBBLES,
+  OUTLINE_NIBBLES,
+  PATCH_NIBBLES,
+  PATCH_AT,
+  PATCH_H,
+} from './layout';
 import { LOCATORS } from './marks';
 import { STROKES } from './byteArt';
 import { type Finder, binarize } from '../tgCode/find';
@@ -449,22 +465,78 @@ function readBlocks(soft: number[][]): { nibbles: number[]; margin: number[]; sc
   return { nibbles, margin, scores };
 }
 
-/** The message in what was read, or null. The shakiest blocks are given up as unreliable, a few more each time, until the repair succeeds. */
-function decodeSoft(soft: number[][], strict = false): { payload: string; doubt: number } | null {
-  const { nibbles, margin } = readBlocks(soft);
+/** What the shade patches say: one number per pair (positive: the left square was the lighter, a 1). A pair is read by comparing its two squares' grey levels, so nothing has to be known about
+ *  the colour they lie on or the light; the sizes of the differences are judged against the typical one over all the pairs. Null when the picture shows no such differences at all. */
+function patchEvidence(gray: Uint8ClampedArray | Uint8Array, w: number, h: number, map: Mapper): number[] | null {
+  const square = (c: [number, number]) => {
+    let acc = 0,
+      n = 0;
+    for (const [dx, dy] of [
+      [0, 0],
+      [0.5, 0],
+      [-0.5, 0],
+      [0, 0.5],
+      [0, -0.5],
+    ]) {
+      const p = map(c[0] + dx * PATCH_H, c[1] + dy * PATCH_H);
+      const v = greyAt(gray, w, h, p.x, p.y);
+      if (v >= 0) {
+        acc += v;
+        n++;
+      }
+    }
+    return n ? acc / n : -1;
+  };
+  const diffs = PATCH_AT.map((p) => {
+    const a = square(p.left),
+      b = square(p.right);
+    return a < 0 || b < 0 ? 0 : a - b;
+  });
+  const typical = [...diffs.map(Math.abs)].sort((a, b) => a - b)[Math.floor(diffs.length / 2)];
+  if (typical < 3) return null;
+  return diffs.map((d) => Math.max(-1.5, Math.min(1.5, d / typical)));
+}
+
+/** The message in what was read, or null: the outline's blocks (`soft`) and the patches (`pev`, which may be missing: then those half-bytes are simply unknown). The shakiest half-bytes are
+ *  given up as unreliable, a few more each time, until the repair succeeds. */
+function decodeSoft(soft: number[][], pev: number[] | null, strict = false): { payload: string; doubt: number } | null {
+  const { nibbles: outNib, margin: outMargin } = readBlocks(soft);
+  const nibbles: number[] = new Array(NIBBLES).fill(0),
+    margin: number[] = new Array(NIBBLES).fill(-1); // (an unknown half-byte has the least margin, so it is given up first)
+  outNib.forEach((n, k) => {
+    nibbles[OUTLINE_NIBBLES[k]] = n;
+    margin[OUTLINE_NIBBLES[k]] = outMargin[k];
+  });
+  if (pev)
+    PATCH_NIBBLES.forEach((q, j) => {
+      let best = 0,
+        second = -Infinity;
+      const sc: number[] = [];
+      for (let n = 0; n < PATTERN_COUNT; n++) {
+        let t = 0;
+        for (let k = 0; k < 4; k++) t += ((n >> (3 - k)) & 1 ? 1 : -1) * pev[4 * j + k];
+        sc.push(t);
+        if (t > sc[best]) best = n;
+      }
+      sc.forEach((t, n) => {
+        if (n !== best && t > second) second = t;
+      });
+      nibbles[q] = best;
+      margin[q] = (sc[best] - second) * 2.5; // (a patch half-byte's scores run over a smaller range than a block's)
+    });
   const order = margin
     .map((m, i) => [m, i] as const)
     .sort((a, b) => a[0] - b[0])
     .map(([, i]) => i);
   const shaky = margin.filter((m) => m < 0.8).length;
-  if (shaky > 16) return null; // nothing like a clean read: not worth the repair attempts
-  // (A try with a nudged middle is one of many, so it must pass a harder check: fewer cells given up as doubtful and a closer match with the picture, or one of the tries could read a wrong code by luck.)
+  if (shaky > 18) return null; // nothing like a clean read: not worth the repair attempts
   for (const give of strict ? [0, 2, 4] : [0, 2, 4, 6, 8, 10, 12]) {
     const payload = payloadFromNibbles(nibbles, order.slice(0, give));
     if (!payload) continue;
-    // Whatever the repair says must also look like the picture: the cells it implies agree with what was seen.
+    // Whatever the repair says must also look like the picture: the cells (and the patches) it implies agree with what was seen.
     const grid = dashGrid(payload.padEnd(13, '0'));
-    if (!grid) continue;
+    const bits = patchBits(payload.padEnd(13, '0'));
+    if (!grid || !bits) continue;
     let same = 0,
       total = 0;
     BLOCKS.forEach((block, b) =>
@@ -473,6 +545,11 @@ function decodeSoft(soft: number[][], strict = false): { payload: string; doubt:
         if (soft[b][k] > 0 === grid[r][s]) same++;
       }),
     );
+    if (pev)
+      bits.forEach((bit, i) => {
+        total++;
+        if (pev[i] > 0 === (bit === 1)) same++;
+      });
     if (same / total >= (strict ? 0.9 : 0.78)) return { payload, doubt: give };
   }
   return null;
@@ -517,13 +594,14 @@ function readBytecode(
     // and each ring has its own colour, so the middle differs from ring to ring).
     // Here a stretch lies along a line that has different colours beside it (plate, green, pale), so the first levels come from each stretch's own cells: its dark and light ends.
     const own = stretchLevels(s.values, { ink: s.mark, bare: s.plate });
-    const hit = decodeSoft(evidence(s.values, own), s.strict);
+    const pev = patchEvidence(gray, w, h, s.map);
+    const hit = decodeSoft(evidence(s.values, own), pev, s.strict);
     if (hit) return { payload: hit.payload, map: s.map };
     const first = evidence(
       s.values,
       Array.from({ length: RINGS }, () => ({ ink: s.mark, bare: s.plate })),
     );
-    const hit0 = decodeSoft(first, s.strict);
+    const hit0 = decodeSoft(first, pev, s.strict);
     if (hit0) return { payload: hit0.payload, map: s.map };
     const { nibbles } = readBlocks(first);
     const sum = Array.from({ length: RINGS }, () => ({ ink: 0, ni: 0, bare: 0, nb: 0 }));
@@ -541,7 +619,7 @@ function readBytecode(
     );
     const levels = sum.map((t) => ({ ink: t.ni ? t.ink / t.ni : s.mark, bare: t.nb ? t.bare / t.nb : s.plate }));
     if (levels.some((l) => Math.abs(l.ink - l.bare) < 12)) continue;
-    const again = decodeSoft(evidence(s.values, levels), s.strict);
+    const again = decodeSoft(evidence(s.values, levels), pev, s.strict);
     if (again) return { payload: again.payload, map: s.map };
   }
   return null;

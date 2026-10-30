@@ -1,5 +1,5 @@
 // The Bytecode as grey levels for the test camera (not part of the app): Byte's flat colours as greys, his lines and the message's bars in plum, the eyes and paws as drawn.
-import { drawing, LINE_W } from './layout';
+import { drawing, LINE_W, INNER_W, PATCH_H } from './layout';
 import { FINDERS } from './marks';
 import { REGIONS, EYES } from './byteArt';
 
@@ -43,7 +43,7 @@ export function byteInk(payload: string, dark = false): (x: number, y: number) =
   };
   // on a dark screen the sticker's plate is dark and the outer lines (the edge: his outline, the border round him, and the dashes) are cream; his inner lines stay plum
   const EDGE = dark ? 242 : GREY.plum;
-  addAll(d.inner, LINE_W, GREY.plum);
+  addAll(d.inner, INNER_W, GREY.plum);
   addAll(d.edge, LINE_W, EDGE);
   addAll(d.lineBars, LINE_W, EDGE);
   const hash = new Map<string, Seg[]>();
@@ -73,13 +73,25 @@ export function byteInk(payload: string, dark = false): (x: number, y: number) =
     return hit;
   };
   const flip = (g: number) => g;
+  // the shade patches, as a mask over the same raster (1: a little lighter than what is under it, 2: a little darker)
+  const patchMask = new Uint8Array(R * R);
+  for (const q of d.patches) {
+    const x0 = Math.floor(((q.x - PATCH_H + 1) / 2) * R),
+      x1 = Math.ceil(((q.x + PATCH_H + 1) / 2) * R),
+      y0 = Math.floor(((q.y - PATCH_H + 1) / 2) * R),
+      y1 = Math.ceil(((q.y + PATCH_H + 1) / 2) * R);
+    for (let yy = y0; yy < y1; yy++) for (let xx = x0; xx < x1; xx++) if (xx >= 0 && yy >= 0 && xx < R && yy < R) patchMask[yy * R + xx] = q.light ? 1 : 2;
+  }
   const plate = dark ? 22 : GREY.plate;
   return (x, y) => {
     if (Math.abs(x) > 1 || Math.abs(y) > 1) return 128;
     const on = onLine(x, y);
     if (on >= 0) return on;
     const g0 = raster[Math.min(R - 1, Math.floor(((y + 1) / 2) * R)) * R + Math.min(R - 1, Math.floor(((x + 1) / 2) * R))];
-    const g = g0 === GREY.plate ? plate : g0;
+    let g = g0 === GREY.plate ? plate : g0;
+    const pm = patchMask[Math.min(R - 1, Math.floor(((y + 1) / 2) * R)) * R + Math.min(R - 1, Math.floor(((x + 1) / 2) * R))];
+    if (pm === 1 && g0 !== GREY.plate) g += (255 - g) * 0.16;
+    else if (pm === 2 && g0 !== GREY.plate) g -= (g - 42) * 0.16;
     // the soft green glow round his eyes (over the green and the mask, under the eyes themselves)
     if (g !== GREY[4])
       for (const f of Object.values(FINDERS)) if (Math.hypot(x - f.x, y - f.y) < 0.2) return flip(Math.round(g + (178 - g) * (1 - Math.hypot(x - f.x, y - f.y) / 0.2) * 0.9));
