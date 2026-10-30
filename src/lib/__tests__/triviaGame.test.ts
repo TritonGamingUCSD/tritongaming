@@ -7,6 +7,7 @@ import {
   pointsFor,
   shuffle,
   standings,
+  standingsBefore,
   csvToBulk,
   endStats,
   parseBulk,
@@ -84,6 +85,33 @@ describe('drawing a game', () => {
   });
   it('shuffle keeps every item', () => {
     expect(shuffle([1, 2, 3, 4, 5], seeded(9)).sort()).toEqual([1, 2, 3, 4, 5]);
+  });
+});
+
+describe('standingsBefore', () => {
+  const players = [
+    { user_id: 'a', name: 'A' },
+    { user_id: 'b', name: 'B' },
+    { user_id: 'c', name: 'C' },
+  ];
+  const ans = (user_id: string, q_index: number, points: number) => ({ user_id, q_index, points, ms: 1000, ok: points > 0 });
+  it('leaves the question out: the places and scores everyone had before it', () => {
+    // question 0: A 800, B 600; question 1: C 900, B 100 (C jumps from last to first, A falls to second)
+    const answers = [ans('a', 0, 800), ans('b', 0, 600), ans('c', 1, 900), ans('b', 1, 100)];
+    const before = standingsBefore(players, answers, 1);
+    expect(before.get('a')).toEqual({ rank: 1, score: 800 });
+    expect(before.get('b')).toEqual({ rank: 2, score: 600 });
+    expect(before.get('c')).toEqual({ rank: 3, score: 0 });
+    const after = standings(totals(players, answers));
+    expect(after.map((p) => [p.user_id, p.rank])).toEqual([
+      ['c', 1],
+      ['a', 2],
+      ['b', 3],
+    ]);
+  });
+  it('the first question: everyone stood at zero, tied', () => {
+    const before = standingsBefore(players, [ans('a', 0, 500)], 0);
+    expect([...before.values()].every((p) => p.score === 0 && p.rank === 1)).toBe(true);
   });
 });
 

@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { CARD_MS, COUNTDOWN_MS, drawGame, endStats, isAskable, makeCode, standings, topThree, totals, type PoolQuestion } from './game';
+import { CARD_MS, COUNTDOWN_MS, drawGame, endStats, isAskable, makeCode, standings, standingsBefore, topThree, totals, type PoolQuestion } from './game';
 import { GAME_COLUMNS, broadcast, publicState, stateOf, type GameRow } from './server';
 import type { PlayerResult, Reveal } from './types';
 
@@ -92,17 +92,35 @@ export async function revealQuestion(svc: SupabaseClient, g: GameRow): Promise<G
   const q = g.plan[g.current];
   const counts = q.choices.map((_, pos) => answers.filter((a) => a.q_index === g.current && a.pos === pos).length);
   const results: Record<string, PlayerResult> = {};
+  const before = standingsBefore(list, answers, g.current);
   for (const p of list) {
     const a = answers.find((x) => x.q_index === g.current && x.user_id === p.user_id);
     let streak = 0; // right answers in a row, ending with this question
     for (let i = g.current; i >= 0 && answers.some((x) => x.q_index === i && x.user_id === p.user_id && x.ok); i--) streak++;
-    results[p.user_id] = { pos: a?.pos ?? null, ok: !!a?.ok, pts: a?.points ?? 0, rank: p.rank, score: p.score, streak };
+    results[p.user_id] = {
+      pos: a?.pos ?? null,
+      ok: !!a?.ok,
+      pts: a?.points ?? 0,
+      rank: p.rank,
+      score: p.score,
+      prevRank: before.get(p.user_id)?.rank,
+      prevScore: before.get(p.user_id)?.score,
+      streak,
+    };
   }
   const reveal: Reveal = {
     correct: q.correct,
     ...(q.also?.length ? { also: q.also } : {}),
     counts,
-    top: list.slice(0, 5).map((p) => ({ name: p.name, score: p.score, rank: p.rank })),
+    top: list.slice(0, 5).map((p) => ({
+      id: p.user_id,
+      name: p.name,
+      score: p.score,
+      rank: p.rank,
+      prevRank: before.get(p.user_id)?.rank,
+      prevScore: before.get(p.user_id)?.score,
+      pts: results[p.user_id]?.pts ?? 0,
+    })),
     results,
     of: list.length,
   };

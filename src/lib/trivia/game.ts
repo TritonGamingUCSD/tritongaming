@@ -147,6 +147,21 @@ export function totals(
   return [...by.values()];
 }
 
+/** Where everyone stood before question `q` was counted (the standings with that question's answers left out), by user id: what the scoreboard slides from. */
+export function standingsBefore(
+  players: { user_id: string; name: string }[],
+  answers: { user_id: string; q_index: number; points: number; ms: number; ok: boolean }[],
+  q: number,
+): Map<string, { rank: number; score: number }> {
+  const before = standings(
+    totals(
+      players,
+      answers.filter((a) => a.q_index !== q),
+    ),
+  );
+  return new Map(before.map((p) => [p.user_id, { rank: p.rank, score: p.score }]));
+}
+
 /** The three who can't return to this quiz: first, second and third place. Ties for third are broken by the standings' own order (shorter total time), so it is always exactly three people (fewer if fewer played). */
 export function topThree(list: Standing[]): Standing[] {
   return list.filter((p) => p.score > 0).slice(0, 3);

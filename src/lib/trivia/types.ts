@@ -4,10 +4,14 @@ export type GameStatus = 'lobby' | 'question' | 'reveal' | 'done';
 export type PlayerStatus = 'in' | 'blocked' | 'removed';
 
 export interface Placing {
+  id?: string; // the player (a reveal after a question only: lets the scoreboard follow one person from their old place to the new one)
   name: string;
   score: number;
   rank: number;
   right?: number;
+  prevRank?: number; // where they stood before this question (a reveal after a question only)
+  prevScore?: number;
+  pts?: number; // what this question gave them
 }
 /** What the end screen tells about the game as a whole. Each part is left out when there is nothing to say (no right answers, nobody with a streak). */
 export interface EndStats {
@@ -24,6 +28,8 @@ export interface PlayerResult {
   pts: number;
   rank: number;
   score: number;
+  prevRank?: number; // where they stood before this question
+  prevScore?: number;
   streak?: number;
 }
 

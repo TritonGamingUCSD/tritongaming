@@ -229,7 +229,7 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 .right { animation: winTile 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both, glow 1.8s ease-in-out 0.9s infinite; }
 .dimmed { animation: loseTile 0.5s ease both; }
 .tick { animation: tickPop 0.6s 0.25s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
-.ansBar { transition: width 1s cubic-bezier(0.22, 1, 0.36, 1); }
+.ansBar { transition: width 1s cubic-bezier(0.22, 1, 0.36, 1); transform-origin: left center; animation: growX 1s cubic-bezier(0.22, 1, 0.36, 1) 0.2s both; }
 
 /* A tap on the phone */
 .picked { animation: squish 0.35s ease both; outline: 4px solid var(--paper); outline-offset: 3px; }   /* theme-ok */
@@ -474,3 +474,35 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 
 .barSweep { position: absolute; left: 0; right: 0; bottom: -3px; height: 3px; background: #fff; opacity: 0; transform-origin: left; pointer-events: none; animation: barSweep 0.9s ease-out both; }   /* theme-ok */
 @keyframes barSweep { 0% { transform: scaleX(0); opacity: 0.9; } 70% { transform: scaleX(1); opacity: 0.9; } 100% { transform: scaleX(1); opacity: 0; } }
+
+/* The scoreboard after a question (Scoreboard.tsx): rows are placed by --i (their slot) and slide when it changes; the bar is a scaled layer; points and moves pop out beside the name. */
+.sb { position: relative; width: 100%; max-width: 36rem; margin: 0 auto; height: calc(var(--n) * 3.3rem + (var(--n) - 1) * 0.55rem); }
+.sbRow { position: absolute; left: 0; right: 0; top: 0; height: 3.3rem; display: flex; align-items: center; gap: 0.7rem; padding: 0 0.9rem; overflow: hidden; background: var(--paper); color: var(--ink); border: 2px solid var(--navy); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); font-family: var(--font-futura-heavy); font-size: 1.1rem; transform: translateY(calc(var(--i) * 3.85rem)); transition: transform 1s cubic-bezier(0.34, 1.25, 0.5, 1) var(--d, 0ms); }   /* theme-ok */
+.sbBar { position: absolute; inset: 0; z-index: 0; transform-origin: left center; background: linear-gradient(90deg, rgba(255, 199, 44, 0.3), rgba(255, 199, 44, 0.75)); transition: transform 1.1s cubic-bezier(0.22, 1, 0.36, 1) var(--d, 0ms); }   /* theme-ok */
+.sbRow > :not(.sbBar) { position: relative; z-index: 1; }
+.sbRow .rankNum { border-color: var(--navy); background: var(--paper); color: var(--ink); }   /* theme-ok */
+.sbRow .rankNum1 { background: var(--yellow); }
+.sbRankFlip { animation: sbFlip 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.sbName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sbScore { margin-left: auto; font-family: var(--font-brick); font-weight: 400; font-size: 1.4rem; font-variant-numeric: tabular-nums; }
+.sbPts { flex: none; padding: 0.1rem 0.45rem; background: #1b7a3d; color: #fff; font-family: var(--font-renegare); font-size: 0.78rem; letter-spacing: 0.04em; animation: sbPts 1.8s cubic-bezier(0.22, 1, 0.36, 1) both; }   /* theme-ok */
+.sbMove { flex: none; display: inline-flex; align-items: center; gap: 0.1rem; padding: 0.1rem 0.4rem; font-family: var(--font-renegare); font-size: 0.78rem; opacity: 0; animation: sbMove 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; }
+.sbUp { background: #1b7a3d; color: #fff; }   /* theme-ok */
+.sbDown { background: #b3261e; color: #fff; }   /* theme-ok */
+@keyframes sbFlip { from { transform: scale(0.3) rotate(-40deg); } to { transform: scale(1) rotate(0); } }
+@keyframes sbPts { 0% { opacity: 0; transform: translateY(0.9rem) scale(0.4); } 18% { opacity: 1; transform: translateY(0) scale(1.2); } 30% { transform: scale(1); } 80% { opacity: 1; } 100% { opacity: 0; transform: translateY(-0.4rem); } }
+@keyframes sbMove { from { opacity: 0; transform: translateY(0.6rem) scale(0.3); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .sbRow, .sbBar { transition: none; } .sbRankFlip, .sbPts, .sbMove { animation: none; opacity: 1; } .sbPts { display: none; } }
+
+/* On a phone after a question: how many places you moved, a flame on a streak, and your points drifting up out of the total as it counts */
+.rankMove { margin: 0; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.8rem; font-family: var(--font-renegare); font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; animation: rankMoveIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) 0.9s both; }
+.rankUp { background: #1b7a3d; color: #fff; }   /* theme-ok */
+.rankDown { background: #b3261e; color: #fff; }   /* theme-ok */
+.flame { display: inline-block; animation: flame 0.9s ease-in-out infinite alternate; transform-origin: 50% 90%; }
+.footScore { position: relative; }
+.scoreAdd { position: absolute; right: 0.4rem; top: -0.2rem; font-style: normal; font-family: var(--font-brick); font-size: 1.1rem; color: #1b7a3d; background: var(--paper); padding: 0 0.35rem; animation: scoreAdd 1.6s cubic-bezier(0.22, 1, 0.36, 1) both; }   /* theme-ok */
+.footFlip { display: inline-block; animation: sbFlip 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 1.1s both; }
+@keyframes rankMoveIn { from { opacity: 0; transform: translateY(0.8rem) scale(0.3); } to { opacity: 1; transform: translateY(0) scale(1); } }
+@keyframes flame { from { transform: scale(1) rotate(-6deg); } to { transform: scale(1.25) rotate(6deg); } }
+@keyframes scoreAdd { 0% { opacity: 0; transform: translateY(0.6rem) scale(0.5); } 20% { opacity: 1; transform: translateY(-1.1rem) scale(1.25); } 70% { opacity: 1; transform: translateY(-1.6rem) scale(1); } 100% { opacity: 0; transform: translateY(-2.4rem) scale(0.9); } }
+@media (prefers-reduced-motion: reduce) { .rankMove, .flame, .footFlip { animation: none; } .scoreAdd { display: none; } }

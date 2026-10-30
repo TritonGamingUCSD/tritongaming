@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Check, X } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Check, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { call } from './api';
 import { useCountdown, useGame, useWakeLock } from './useGame';
@@ -237,12 +237,28 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
                 ))}
               </p>
             )}
-            {r?.ok && (r.streak ?? 0) >= 2 && <p className={styles.streak}>{r.streak} in a row</p>}
+            {r?.ok && (r.streak ?? 0) >= 2 && (
+              <p className={styles.streak}>
+                <span className={styles.flame} aria-hidden="true">
+                  🔥
+                </span>{' '}
+                {r.streak} in a row
+              </p>
+            )}
+            {r && r.prevRank !== undefined && r.prevRank !== r.rank && (
+              <p className={`${styles.rankMove} ${r.prevRank > r.rank ? styles.rankUp : styles.rankDown}`}>
+                {r.prevRank > r.rank ? <ArrowUp size={22} aria-hidden="true" /> : <ArrowDown size={22} aria-hidden="true" />}
+                {r.prevRank > r.rank ? 'Up' : 'Down'} {Math.abs(r.prevRank - r.rank)} {Math.abs(r.prevRank - r.rank) === 1 ? 'place' : 'places'}
+              </p>
+            )}
             {r && (
               <div className={styles.phoneFoot}>
-                <span>{ordinal(r.rank)} place</span>
-                <span>
+                <span key={`rank-${r.rank}`} className={r.prevRank !== undefined && r.prevRank !== r.rank ? styles.footFlip : undefined}>
+                  {ordinal(r.rank)} place
+                </span>
+                <span className={styles.footScore}>
                   <CountUp value={r.score} from={Math.max(0, r.score - r.pts)} ms={1100} format={fmtScore} /> points
+                  {r.pts > 0 && <i className={styles.scoreAdd}>+{fmtScore(r.pts)}</i>}
                 </span>
               </div>
             )}

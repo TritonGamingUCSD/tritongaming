@@ -9,6 +9,7 @@ import { call } from './api';
 import { useCountdown, useGame } from './useGame';
 import { AUTO_NEXT_SECS, CARD_MS } from '@/lib/trivia/game';
 import { Stage, CountUp, FloatShapes, Ring, Confetti, Shape, Tape, CategoryCard, Countdown, ShapeLoader, Sweep, FitBox, ansClass, fmtScore } from './shapes';
+import Scoreboard from './Scoreboard';
 import TriviaQr from './TriviaQr';
 import styles from './trivia.module.css';
 
@@ -482,19 +483,7 @@ export default function HostGame({
           })}
         </div>
       )}
-      {rv && rv.top.length > 0 && (
-        <div className={styles.board}>
-          {rv.top.map((p, i) => (
-            <div key={i} className={styles.boardRow}>
-              <span className={`${styles.rankNum} ${p.rank === 1 ? styles.rankNum1 : ''}`}>{p.rank}</span>
-              <span className={styles.boardName}>{p.name}</span>
-              <b>
-                <CountUp value={p.score} ms={1000} format={fmtScore} />
-              </b>
-            </div>
-          ))}
-        </div>
-      )}
+      {rv && rv.top.length > 0 && <Scoreboard key={`board-${state.current}`} rows={rv.top} />}
       <div className={styles.controls}>
         {state.status === 'question' && (counting || carding) ? (
           <span className={styles.mid}> </span>
