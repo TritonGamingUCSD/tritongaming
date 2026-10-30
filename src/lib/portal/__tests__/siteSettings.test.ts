@@ -17,6 +17,7 @@ describe('site settings', () => {
     ]);
     expect(s).toEqual({ codeStyle: 'byte', banner: { on: true, text: 'Check-in is at the Price Center', until: '2026-11-02' } });
     expect(parseSettings([{ key: 'code_style', value: 'bytecode??' }]).codeStyle).toBe('tg');
+    expect(parseSettings([{ key: 'code_style', value: 'qr' }]).codeStyle).toBe('qr');
     expect(parseSettings([{ key: 'banner_until', value: 'tomorrow' }]).banner.until).toBe('');
     expect(parseSettings([{ key: 'banner_text', value: 'x'.repeat(500) }]).banner.text).toHaveLength(BANNER_MAX);
   });

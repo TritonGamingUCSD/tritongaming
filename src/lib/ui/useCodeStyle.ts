@@ -13,7 +13,7 @@ const EVENT = 'tg:code-style';
 const read = (): CodeStyle | null => {
   try {
     const v = window.localStorage.getItem(KEY);
-    return v === 'byte' || v === 'tg' ? v : null;
+    return v === 'byte' || v === 'tg' || v === 'qr' ? v : null;
   } catch {
     return null;
   }

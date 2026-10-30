@@ -555,7 +555,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 // a separate bar underneath — the ring itself *is* the "time
                 // left" readout, draining smoothly around the thing it's
                 // timing instead of a detached indicator elsewhere on screen.
-                codeStyle !== 'byte' && (
+                codeStyle === 'tg' && (
                   <svg className={styles.countdownRing} viewBox="0 0 100 100" aria-hidden="true">
                     <circle className={styles.countdownTrack} cx="50" cy="50" r="48" />
                     <circle
@@ -605,7 +605,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 </div>
               )}
             </div>
-            {code && codeStyle === 'byte' && (
+            {code && codeStyle !== 'tg' && (
               // A Bytecode's "time left" is a plain line under Byte (a ring round his outline was hard to read): the same drain, left to right, with the same colours.
               <div className={styles.byteBar} aria-hidden="true">
                 <div

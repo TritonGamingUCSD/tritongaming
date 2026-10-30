@@ -8,6 +8,7 @@ import CheckInOutcome from './CheckInOutcome';
 import CodeEntry from './CodeEntry';
 import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, confirmEventCheckIn, TGCODE, type Outcome } from '@/lib/checkin/anyCode';
 import { offerToScanHandlers } from '@/lib/portal/scanHandlers';
+import { codeFromLink } from '@/lib/qr/codeLink';
 import styles from './UniversalScanner.module.css';
 
 const MY_MEETING = '/portal/meetings?tab=mine'; // where a checked-in meeting's question and doc are
@@ -22,18 +23,35 @@ type State =
   | { kind: 'scanning' }
   | { kind: 'working'; label: string }
   | { kind: 'opening'; title: string; heading: string; text: string; href: string }
-  | { kind: 'result'; outcome: Outcome };
+  | { kind: 'result'; outcome: Outcome }
+  | { kind: 'leaving'; slug: string; host: string }; // a short link that goes to another website: shown first, opened only when the person says so
 
 // The one camera for the portal (the page behind the middle button of the phone's bottom bar), with the code box always at the bottom. It does what each QR the portal makes is for:
 //   • a meeting's check-in QR → checks you in to that meeting, then tells you which one
 //   • an event's self check-in QR (…/in/<event>) → opens that event's check-in page, which checks you in and shows the result
 //   • (staff) an event ticket → checks it in and shows whose it is; a reward pickup → shows the reward with a Confirm button
-//   • any other page of this portal → opens it
+//   • a code's QR option (a link to /portal/code/<code>) → handled here as the code itself, like a TGcode or a Bytecode
+//   • any other page of this portal or site → opens it; a short link (tritongaming.org/<slug>) is looked up first, and one that leaves the site is shown and asked about before it opens
 // The six-digit box takes a meeting code or (for staff) a ticket's code, whichever it turns out to be.
 // Anything else is refused with a message, and the camera keeps looking.
-export default function UniversalScanner({ onClose, staff = false, redemptions = false }: { onClose: () => void; staff?: boolean; redemptions?: boolean }) {
+export default function UniversalScanner({
+  onClose,
+  staff = false,
+  redemptions = false,
+  initialCode,
+}: {
+  onClose: () => void;
+  staff?: boolean;
+  redemptions?: boolean;
+  initialCode?: string;
+}) {
   const router = useRouter();
-  const [state, setState] = useState<State>({ kind: 'scanning' });
+  const [state, setState] = useState<State>(initialCode ? { kind: 'working', label: 'Checking the code…' } : { kind: 'scanning' });
+  // A code's own page (a phone's camera read the QR code option): the code is checked at once and the result shows as a page; the camera only opens if the person asks for it.
+  const [landing, setLanding] = useState(!!initialCode);
+  const landingRef = useRef(!!initialCode);
+  landingRef.current = landing;
+  const startedRef = useRef(false);
   const [problem, setProblem] = useState('');
   const [said, setSaid] = useState<{ text: string; ok: boolean } | null>(null); // what a page that took the scan (a device on the event day) says about it
   const [busy, setBusy] = useState(false);
@@ -83,11 +101,46 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         };
       if (u.origin === window.location.origin && (u.pathname === '/portal' || u.pathname.startsWith('/portal/')))
         return { href: `${u.pathname}${u.search}`, title: 'Opening The Page', heading: 'Portal page', text: 'Taking you there now.' };
+      const trivia = u.pathname.match(/^\/play\/([0-9]{6})\/?$/); // a Trivia game's join link
+      if (trivia) return { href: `/portal/trivia/play/${trivia[1]}`, title: 'Joining The Game', heading: 'Trivia', text: 'Taking you into the game.' };
+      // any other page of this site (events, divisions, the team page…) opens as it is
+      if (
+        u.pathname.split('/').filter(Boolean).length > 1 ||
+        /^\/(team|events|divisions|media|sponsors|membership|get-involved|our-story|about|privacy|terms)\/?$/.test(u.pathname) ||
+        u.pathname === '/'
+      )
+        return { href: `${u.pathname}${u.search}`, title: 'Opening The Page', heading: 'Triton Gaming', text: 'Taking you there now.' };
     } catch {
       /* not a link */
     }
     return null;
   };
+
+  // tritongaming.org/<slug>: a short link (its destination is looked up first: one that leaves this site is shown and asked about before it opens).
+  const shortSlug = (text: string): string | null => {
+    try {
+      const u = new URL(text.trim());
+      if (u.origin !== window.location.origin && !/(^|\.)tritongaming\.org$/i.test(u.hostname)) return null;
+      return u.pathname.match(/^\/([a-z0-9][a-z0-9_-]{0,47})\/?$/i)?.[1].toLowerCase() ?? null;
+    } catch {
+      return null;
+    }
+  };
+  async function openShort(slug: string) {
+    let peek: { kind?: string; host?: string } = {};
+    try {
+      peek = await (await fetch(`/api/links/peek?slug=${encodeURIComponent(slug)}`, { cache: 'no-store' })).json();
+    } catch {
+      /* no answer: it opens as a link of this site */
+    }
+    if (peek.kind === 'outside' && peek.host) {
+      setState({ kind: 'leaving', slug, host: peek.host });
+      return;
+    }
+    // (opening the short link itself counts the click, then sends the person on)
+    setState({ kind: 'opening', title: 'Opening The Link', heading: 'Triton Gaming', text: 'Taking you there now.', href: `/${slug}` });
+    goTimer.current = window.setTimeout(() => window.location.assign(`/${slug}`), 150);
+  }
 
   function go(href: string) {
     router.push(href);
@@ -105,7 +158,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
     }
     setState({ kind: 'result', outcome });
     window.clearTimeout(autoTimer.current);
-    if (clean(outcome)) autoTimer.current = window.setTimeout(() => setState({ kind: 'scanning' }), AUTO_MS);
+    if (clean(outcome) && !landingRef.current) autoTimer.current = window.setTimeout(() => setState({ kind: 'scanning' }), AUTO_MS);
     if (outcome.kind === 'meeting') {
       window.dispatchEvent(new Event('tg:meetings-changed'));
       // The meeting's question and doc are on My Meetings, under "You're checked in": no prompt, the ring goes green and the page opens by itself.
@@ -115,7 +168,9 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
   }
 
   function onScan(text: string): boolean {
-    const t = text.trim();
+    const raw = text.trim();
+    const linked = codeFromLink(raw, window.location.origin); // the QR code option of a portal code: a link to its page, handled here as the code itself
+    const t = linked ? `tg:${linked}` : raw;
     if (!TGCODE.test(t) && !linkTarget(t) && offerToScanHandlers(t, (message, ok) => setSaid({ text: message, ok }))) {
       setProblem('');
       return false;
@@ -134,7 +189,14 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
       goTimer.current = window.setTimeout(() => go(target.href), 150);
       return true;
     } // no pause to read: the sheet stays up while the page loads
-    setProblem('That isn’t a TGcode, a Bytecode or a portal QR. Try another.');
+    const slug = shortSlug(t);
+    if (slug) {
+      setProblem('');
+      setState({ kind: 'working', label: 'Looking up the link…' });
+      void openShort(slug);
+      return true;
+    }
+    setProblem('That isn’t a TGcode, a Bytecode or a Triton Gaming QR. Try another.');
     return false;
   }
 
@@ -147,8 +209,17 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
 
   const rescan = () => {
     window.clearTimeout(autoTimer.current);
+    setLanding(false); // (from a code's own page the camera opens now)
     setState({ kind: 'scanning' });
   };
+
+  // A code's own page: check the code as soon as it opens (once, even if React runs the effect twice).
+  useEffect(() => {
+    if (!initialCode || startedRef.current) return;
+    startedRef.current = true;
+    void finish(checkInWithQr(`tg:${initialCode}`, can));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // The camera stays on screen the whole time: what a scan did shows on its ring, and the result slides up over the frozen picture.
   let lock: ScanLock | null = null;
@@ -173,9 +244,25 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         {slow && <span className={styles.slow}>The connection is slow. Still trying…</span>}
       </div>
     );
+  } else if (state.kind === 'leaving') {
+    lock = { tone: 'warn' };
+    sheet = (
+      <div className={styles.result}>
+        <strong>Leaving Triton Gaming</strong>
+        <span>This link goes to {state.host}.</span>
+        <div className={styles.leaveActions}>
+          <button type="button" className={styles.leaveOpen} onClick={() => window.location.assign(`/${state.slug}`)}>
+            Open {state.host}
+          </button>
+          <button type="button" className={styles.leaveCancel} onClick={rescan}>
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
   } else if (state.kind === 'result') {
     const o = state.outcome;
-    const auto = clean(o);
+    const auto = clean(o) && !landing; // (a code's own page keeps its result: it does not hand the camera back by itself)
     const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'reward' || o.kind === 'choose' || o.kind === 'confirmEvent';
     lock = {
       tone:
@@ -210,7 +297,7 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         >
           {auto && <span className={styles.autoBar} style={{ animationDuration: `${AUTO_MS}ms` }} aria-hidden="true" />}
           <CheckInOutcome
-            bare
+            bare={!landing}
             noButton={auto}
             outcome={o}
             busy={busy}
@@ -241,13 +328,23 @@ export default function UniversalScanner({ onClose, staff = false, redemptions =
         </div>
       );
   }
+  if (landing && state.kind !== 'scanning') {
+    return (
+      <div className={styles.landing}>
+        <div className={styles.landingCard}>{sheet}</div>
+        <button type="button" className={styles.landingScan} onClick={rescan}>
+          Open The Scanner
+        </button>
+      </div>
+    );
+  }
   return (
     <>
       <QrScanner
         onScan={onScan}
         onClose={onClose}
         title="Scan"
-        note="Point at a TGcode, a Bytecode or an event QR. Pinch to zoom."
+        note="Point at a TGcode, a Bytecode or any Triton Gaming QR. Pinch to zoom."
         lock={lock}
         sheet={sheet}
         sheetKey={state.kind === 'result' ? `result-${state.outcome.kind}` : state.kind}

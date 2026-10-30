@@ -2,7 +2,7 @@
 
 import Button from '@/components/ui/Button';
 import { useSiteSettings } from '@/components/portal/SiteSettingsProvider';
-import { setCodeStyle, useDeviceCodeStyle } from '@/lib/ui/useCodeStyle';
+import { setCodeStyle, useDeviceCodeStyle, type CodeStyle } from '@/lib/ui/useCodeStyle';
 import styles from './preview.module.css';
 
 // Chooses which code THIS device draws for the person's own ticket, meeting code and reward pickup (kept in this browser only; nobody else is affected, and the Scan page reads both). "Follow The Site"
@@ -10,7 +10,7 @@ import styles from './preview.module.css';
 export default function CodeStyleSwitch() {
   const own = useDeviceCodeStyle();
   const site = useSiteSettings().codeStyle;
-  const name = (s: 'tg' | 'byte') => (s === 'byte' ? 'a Bytecode (Byte)' : 'a TGcode');
+  const name = (s: CodeStyle) => (s === 'byte' ? 'a Bytecode (Byte)' : s === 'qr' ? 'a QR code' : 'a TGcode');
   return (
     <section className={styles.switch} aria-label="Code style on this device">
       <div>
@@ -19,7 +19,7 @@ export default function CodeStyleSwitch() {
           {own
             ? `This device shows your own ticket, meeting code and reward pickup as ${name(own)}.`
             : `This device follows the site: everyone's codes are ${name(site)} right now.`}{' '}
-          Your choice applies on this phone or laptop only, and the Scan page reads both.
+          Your choice applies on this phone or laptop only, and the Scan page reads all of them.
         </p>
       </div>
       <div className={styles.bar}>
@@ -31,6 +31,9 @@ export default function CodeStyleSwitch() {
         </Button>
         <Button variant={own === 'byte' ? 'primary' : 'secondary'} onClick={() => setCodeStyle('byte')} aria-pressed={own === 'byte'}>
           Bytecode
+        </Button>
+        <Button variant={own === 'qr' ? 'primary' : 'secondary'} onClick={() => setCodeStyle('qr')} aria-pressed={own === 'qr'}>
+          QR Code
         </Button>
       </div>
     </section>

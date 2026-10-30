@@ -2,7 +2,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 // The settings an Admin can change for the whole site (Admin → System → Settings), kept as text in the `team_settings` key/value table (no table of their own). A setting that was never saved,
 // or that holds something unreadable, is its default. Read by the portal layout on every request (four small rows) and given to the pages through a context.
-export type CodeStyle = 'tg' | 'byte';
+export type CodeStyle = 'tg' | 'byte' | 'qr';
+/** What each code is called. */
+export const CODE_STYLE_NAMES: Record<CodeStyle, string> = { tg: 'TGcode', byte: 'Bytecode', qr: 'QR code' };
 export interface PortalBanner {
   on: boolean;
   text: string;
@@ -24,7 +26,7 @@ export function parseSettings(rows: { key: string; value: string }[] | null | un
   const v = new Map((rows ?? []).map((r) => [r.key, r.value]));
   const until = v.get('banner_until') ?? '';
   return {
-    codeStyle: v.get('code_style') === 'byte' ? 'byte' : 'tg',
+    codeStyle: v.get('code_style') === 'byte' ? 'byte' : v.get('code_style') === 'qr' ? 'qr' : 'tg',
     banner: {
       on: v.get('banner_on') === 'on',
       text: (v.get('banner_text') ?? '').slice(0, BANNER_MAX),

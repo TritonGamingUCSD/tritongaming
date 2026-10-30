@@ -23,3 +23,13 @@
 .autoBar { position: absolute; left: 0; right: 0; top: -0.5rem; height: 3px; border-radius: 3px; background: var(--pp-ok); transform-origin: left center; animation: usBar linear both; }
 @keyframes usBar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
 @media (prefers-reduced-motion: reduce) { .autoBar { animation: none; opacity: 0.5; } }
+
+/* A code's own page (a phone's camera read the QR code option): the result as a plain card on the page, and a button for the camera */
+.landing { display: flex; flex-direction: column; align-items: center; gap: 1rem; max-width: 30rem; margin: 6vh auto 0; padding: 0 1rem; }
+.landingCard { width: 100%; box-sizing: border-box; padding: 1.2rem; background: var(--pp-card); color: var(--pp-ink); border: 1px solid rgba(var(--pp-ink-rgb), 0.18); border-radius: 0.9rem; }
+.landingScan { padding: 0.6rem 1.1rem; border: 2px solid var(--pp-ink); border-radius: 999px; background: transparent; color: var(--pp-ink); font: inherit; font-weight: 700; cursor: pointer; }
+
+/* A short link that leaves the site: where it goes, and a button for each choice */
+.leaveActions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; margin-top: 0.5rem; }
+.leaveOpen { padding: 0.55rem 1.1rem; border: 2px solid var(--pp-ink); border-radius: 999px; background: #ffc72c; color: #011941; font: inherit; font-weight: 700; cursor: pointer; }   /* theme-ok */
+.leaveCancel { padding: 0.55rem 1.1rem; border: 2px solid var(--pp-ink); border-radius: 999px; background: transparent; color: var(--pp-ink); font: inherit; font-weight: 700; cursor: pointer; }

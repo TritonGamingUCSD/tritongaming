@@ -4,7 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { logAudit } from '@/lib/notifications/audit';
 import { strictUser } from '@/lib/supabase/localAuth';
-import { BANNER_MAX, DEFAULT_SETTINGS, loadSiteSettings, type CodeStyle } from '@/lib/portal/siteSettings';
+import { BANNER_MAX, CODE_STYLE_NAMES, DEFAULT_SETTINGS, loadSiteSettings, type CodeStyle } from '@/lib/portal/siteSettings';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +21,7 @@ async function authorize() {
 
 // The site-wide settings (Admin → System → Settings). Admin only; every change is written to the audit log with what it was and what it is now.
 //   GET                                         the settings
-//   POST { setting: 'code_style', value: 'tg' | 'byte' }
+//   POST { setting: 'code_style', value: 'tg' | 'byte' | 'qr' }
 //   POST { setting: 'banner', on: boolean, text: string, until: 'YYYY-MM-DD' | '' }
 //   POST { setting: 'code_style' | 'banner', reset: true }   back to the default
 export async function GET() {
@@ -38,8 +38,8 @@ export async function POST(request: Request) {
   const save = (rows: { key: string; value: string }[]) => auth.svc.from('team_settings').upsert(rows, { onConflict: 'key' });
 
   if (b.setting === 'code_style') {
-    const value: CodeStyle | null = b.reset ? DEFAULT_SETTINGS.codeStyle : b.value === 'tg' || b.value === 'byte' ? b.value : null;
-    if (!value) return NextResponse.json({ error: 'Choose TGcode or Bytecode.' }, { status: 400 });
+    const value: CodeStyle | null = b.reset ? DEFAULT_SETTINGS.codeStyle : b.value === 'tg' || b.value === 'byte' || b.value === 'qr' ? b.value : null;
+    if (!value) return NextResponse.json({ error: 'Choose TGcode, Bytecode or QR code.' }, { status: 400 });
     const { error } = await save([{ key: 'code_style', value }]);
     if (error) return NextResponse.json({ error: 'Could not save. Try again.' }, { status: 500 });
     if (value !== before.codeStyle)
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
         action: 'update',
         entityType: 'site setting',
         entityId: null,
-        summary: `Changed the code everyone shows from ${before.codeStyle === 'byte' ? 'Bytecode' : 'TGcode'} to ${value === 'byte' ? 'Bytecode' : 'TGcode'}`,
+        summary: `Changed the code everyone shows from ${CODE_STYLE_NAMES[before.codeStyle]} to ${CODE_STYLE_NAMES[value]}`,
         details: { setting: 'code_style', from: before.codeStyle, to: value },
       });
     return NextResponse.json({ settings: await loadSiteSettings(auth.svc) });

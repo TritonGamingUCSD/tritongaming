@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { DateInput, Field, Textarea } from '@/components/ui/Field';
 import { showToast } from '@/lib/ui/toast';
-import { BANNER_MAX, DEFAULT_SETTINGS, type CodeStyle, type SiteSettings } from '@/lib/portal/siteSettings';
+import { BANNER_MAX, CODE_STYLE_NAMES, DEFAULT_SETTINGS, type CodeStyle, type SiteSettings } from '@/lib/portal/siteSettings';
 import styles from './settings.module.css';
 
 async function api(init?: { method: 'POST'; body: object }) {
@@ -66,14 +66,15 @@ function CodeStyleCard({ saved, onSaved, onError }: CardProps) {
     <section className={styles.card} aria-labelledby="set-code">
       <h2 id="set-code">Code Everyone Shows</h2>
       <p className={styles.about}>
-        Which code every ticket, meeting check-in and reward pickup is drawn as. The Scan page reads both, so changing this never breaks a phone that still has the other one open.
-        Anyone can try the other one on their own device from Previews.
+        Which code every ticket, meeting check-in and reward pickup is drawn as. The Scan page reads all of them, so changing this never breaks a phone that still has another one
+        open. Anyone can try the other one on their own device from Previews.
       </p>
       <div className={styles.choices} role="radiogroup" aria-label="Code everyone shows">
         {(
           [
             ['tg', 'TGcode', 'The circular code (the default).'],
             ['byte', 'Bytecode', 'Byte, with his wink after a scan. Reads from a larger size than the TGcode.'],
+            ['qr', 'QR code', 'A standard QR code in the Triton Gaming design. A phone’s own camera opens a portal page for it, and the Scan page reads it like the others.'],
           ] as const
         ).map(([id, name, about]) => (
           <label key={id} className={`${styles.choice} ${value === id ? styles.on : ''}`}>
@@ -86,11 +87,7 @@ function CodeStyleCard({ saved, onSaved, onError }: CardProps) {
         ))}
       </div>
       <div className={styles.actions}>
-        <Button
-          onClick={() => send({ setting: 'code_style', value }, `Everyone's codes are now ${value === 'byte' ? 'Bytecodes' : 'TGcodes'}`)}
-          loading={busy}
-          disabled={value === saved.codeStyle}
-        >
+        <Button onClick={() => send({ setting: 'code_style', value }, `Everyone's codes are now ${CODE_STYLE_NAMES[value]}s`)} loading={busy} disabled={value === saved.codeStyle}>
           Save
         </Button>
         <Button
@@ -100,7 +97,7 @@ function CodeStyleCard({ saved, onSaved, onError }: CardProps) {
         >
           Reset To Default
         </Button>
-        <span className={styles.state}>Now: {saved.codeStyle === 'byte' ? 'Bytecode' : 'TGcode'}</span>
+        <span className={styles.state}>Now: {CODE_STYLE_NAMES[saved.codeStyle]}</span>
       </div>
     </section>
   );

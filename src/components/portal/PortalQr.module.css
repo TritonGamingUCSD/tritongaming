@@ -1,0 +1,3 @@
+/* The QR code option of the portal's codes: the Triton Gaming QR design on its own white, whatever the theme (a QR needs its light margin to be read). */
+.box { width: 100%; aspect-ratio: 1 / 1; background: #fff; border-radius: 0.5rem; overflow: hidden; line-height: 0; }   /* theme-ok */
+.box canvas, .box svg { display: block; width: 100%; height: 100%; }
