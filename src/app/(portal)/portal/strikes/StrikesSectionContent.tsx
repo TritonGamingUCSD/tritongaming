@@ -1,6 +1,6 @@
 'use client';
 
-import { formatPacificDate } from '@/lib/core/timezone';
+import { formatPacificDate, pacificToday } from '@/lib/core/timezone';
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
@@ -97,7 +97,6 @@ const CATEGORIES: [string, string][] = [
   ['other', 'Other'],
 ];
 const catLabel = (id: string) => CATEGORIES.find((c) => c[0] === id)?.[1] ?? 'Other';
-const todayKey = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(new Date());
 const day = (d: string) => formatPacificDate(d, { year: true });
 
 // The strike tracker. Exec, HR (the "manage strikes" permission) and admins see everyone and add strikes directly. Every action takes a reason the person can read, and nobody changes their own record.
@@ -739,7 +738,7 @@ function StrikeForm({
   onCancel: () => void;
 }) {
   const [reason, setReason] = useState(initialReason);
-  const [date, setDate] = useState(initialDate ?? todayKey());
+  const [date, setDate] = useState(initialDate ?? pacificToday());
   const [category, setCategory] = useState(initialCategory);
   return (
     <form

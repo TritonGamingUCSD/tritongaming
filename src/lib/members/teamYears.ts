@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { type Quarter, loadQuarters } from '@/lib/members/quarters';
 import { invalidate } from '@/lib/site/revalidate';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 // Who was on the team in each academic year. While a quarter runs, everyone holding an officer, lead or exec title is written to that quarter's roster
 // each day. A year's list is then everyone who was ACTIVE (not marked inactive) in at least one of its quarters, at the highest title they held while

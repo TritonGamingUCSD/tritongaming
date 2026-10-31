@@ -48,6 +48,26 @@ export function pacificDaysUntil(iso: string, from: Date = new Date()): number {
   return Math.round((targetUTC - nowUTC) / 86400_000);
 }
 
+// ── Calendar-day keys ("2026-10-31") ────────────────────────────────────────
+// The Pacific calendar day an instant falls on, as "YYYY-MM-DD".
+export function pacificDayKey(date: Date | string | number = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: PACIFIC_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(date));
+}
+
+// Today's Pacific calendar day.
+export const pacificToday = (now: Date = new Date()): string => pacificDayKey(now);
+
+// A calendar day plus (or minus) whole days. Works on the date alone, anchored at noon UTC, so it never lands on the wrong day around a daylight-saving change
+// (adding n * 24 hours to an instant does: the day the clocks change has 23 or 25 hours).
+export function addDaysKey(key: string, days: number): string {
+  const d = new Date(`${key}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
+}
+
+// Whole days from one calendar day to another (negative when `to` is earlier).
+export const daysBetweenKeys = (from: string, to: string): number => Math.round((Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) / 86_400_000);
+
 // Shared by every event card/detail view (EventCard, the
 // public event detail page) — was previously copy-pasted three times with
 // no explicit timeZone, so the same-day/same-month comparisons it makes were

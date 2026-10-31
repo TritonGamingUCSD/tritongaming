@@ -1,5 +1,5 @@
 import { createServiceClient } from '@/lib/supabase/admin';
-import { PACIFIC_TZ, formatPacificDate, eventDayCount, pacificDaysUntil } from '@/lib/core/timezone';
+import { PACIFIC_TZ, formatPacificDate, eventDayCount, pacificDayKey, pacificDaysUntil } from '@/lib/core/timezone';
 import { parseMajors } from '@/lib/members/majors';
 import { parseGames } from '@/lib/site/games';
 
@@ -141,23 +141,24 @@ export async function getEventSummary(
   const dayCheckins = multiDay ? ((await svc.from('ticket_checkins').select('ticket_id, day, checked_in_at').eq('event_id', eventId)).data ?? []) : [];
   const hourOf = (d: Date) =>
     Number(new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, hour: 'numeric', hour12: false }).formatToParts(d).find((p) => p.type === 'hour')?.value) % 24;
+  const minuteOf = (d: Date) => Number(new Intl.DateTimeFormat('en-US', { timeZone: PACIFIC_TZ, minute: 'numeric' }).format(d));
   const hourLabel = (h: number) => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`;
   const arrivals: Bucket[] = (() => {
     if (multiDay) {
-      const days = new Map<number, { label: string; count: number }>();
+      const days = new Map<string, { label: string; count: number }>();
       for (const t of dayCheckins as { checked_in_at: string | null }[]) {
         if (!t.checked_in_at) continue;
         const d = new Date(t.checked_in_at);
-        const key = d.getTime() - (d.getTime() % 86400000);
+        const key = pacificDayKey(d); // (one bar per Pacific day: cutting at UTC midnight split an evening's arrivals onto the next day)
         const cur = days.get(key) ?? { label: formatPacificDate(d, { weekday: true }), count: 0 };
         cur.count++;
         days.set(key, cur);
       }
-      return [...days.entries()].sort((x, y) => x[0] - y[0]).map(([, v]) => v);
+      return [...days.entries()].sort(([x], [y]) => x.localeCompare(y)).map(([, v]) => v);
     }
     const startH = hourOf(new Date(event.start_date));
     const endDate = event.end_date ? new Date(event.end_date) : new Date(new Date(event.start_date).getTime() + 2 * 3600e3);
-    const endH = Math.min(23, hourOf(endDate) + (endDate.getMinutes() > 0 ? 1 : 0));
+    const endH = Math.min(23, hourOf(endDate) + (minuteOf(endDate) > 0 ? 1 : 0));
     const first = Math.max(0, startH - 1),
       last = Math.min(23, Math.max(endH, startH + 1) + 1);
     const counts = new Map<number, number>();

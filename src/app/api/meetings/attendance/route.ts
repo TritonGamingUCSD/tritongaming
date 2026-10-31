@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { lockedExpected, wasExpected } from '@/lib/meetings/expectedLock';
 import { AUDIENCE_ROLES, audienceRoles } from '@/lib/meetings/meetingAudience';
-import { addDaysKey, attachExtras, authorizeAttendance } from '@/lib/meetings/meetings';
+import { attachExtras, authorizeAttendance } from '@/lib/meetings/meetings';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
 import { staffName } from '@/lib/members/names';
+import { pacificDayKey, addDaysKey } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
 

@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { authorizeMeetings, validateDocUrl, guardSeries, notifyMeetingInvites, occurrenceTimes, type SeriesRow } from '@/lib/meetings/meetings';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { validateAudienceInput } from '@/lib/meetings/meetingAudience';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 // Pause/resume a repeating meeting, or delete it (past meetings and their attendance are kept).
 export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {

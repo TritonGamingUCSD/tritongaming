@@ -3,9 +3,11 @@ import type { Event } from '@/types';
 import { formatEventDateRange, formatEventTimeRange, pacificDaysUntil } from '@/lib/core/timezone';
 import styles from './NextEventTicket.module.css';
 
-function whenLabel(startISO: string): string {
-  const d = pacificDaysUntil(startISO);
-  if (d <= 0) return 'Happening now';
+// "Happening now" only once it has started: an event later today is "Today" (it was labelled as already under way from the morning).
+export function whenLabel(startISO: string, now: Date = new Date()): string {
+  const d = pacificDaysUntil(startISO, now);
+  if (d < 0 || (d === 0 && now.getTime() >= new Date(startISO).getTime())) return 'Happening now';
+  if (d === 0) return 'Today';
   if (d === 1) return 'Tomorrow';
   if (d < 14) return `In ${d} days`;
   return `In ${Math.round(d / 7)} weeks`;

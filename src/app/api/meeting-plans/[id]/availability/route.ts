@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { authorizePlans, busyBlocksFor, planPeople, type PlanRow } from '@/lib/meetings/meetingPlanServer';
 import { cleanSlots, planDayKeys, slotStarts, withoutBusy, type PlanSlots } from '@/lib/meetings/meetingPlans';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
 

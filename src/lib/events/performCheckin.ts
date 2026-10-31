@@ -1,7 +1,8 @@
 import { createNotificationsAfterResponse } from '@/lib/notifications/notify';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { isCheckinWindowOpen, checkinHoursError, type CheckinDayWindow } from '@/lib/events/checkinWindow';
-import { isMultiDayEvent, pacificDayKey, currentDayInfo } from '@/lib/events/checkinDays';
+import { isMultiDayEvent, currentDayInfo } from '@/lib/events/checkinDays';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 // Nothing anywhere else in this app ever moves a ticket's status away from
 // 'active' once it's issued — there's no cron/trigger that expires one when

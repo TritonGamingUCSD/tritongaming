@@ -4,9 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { rotatingCode, qrToken, currentWindow, scanWindows, secondsUntilNextWindow, ROTATION_SECONDS } from '@/lib/events/rotatingCode';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { staffName } from '@/lib/members/names';
-import { pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
+import { pacificDatetimeLocalToUTC, pacificDayKey, addDaysKey } from '@/lib/core/timezone';
 import type { Capability } from '@/types/database';
 import { withGrantedCapabilities } from '@/lib/portal/capabilities';
 import { createNotifications } from '@/lib/notifications/notify';
@@ -153,11 +152,6 @@ export interface ScheduleItem {
   absent: number;
 }
 
-export function addDaysKey(key: string, days: number): string {
-  const d = new Date(`${key}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-}
 export function weekdayOfKey(key: string): number {
   return new Date(`${key}T12:00:00Z`).getUTCDay();
 }

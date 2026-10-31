@@ -1,6 +1,5 @@
-import { formatPacificTime } from '@/lib/core/timezone';
+import { formatPacificTime, pacificDayKey } from '@/lib/core/timezone';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { createNotifications } from '@/lib/notifications/notify';
 import { getExpectedPeople, occurrenceTimes, seriesRunsOn, type MeetingRow, type SeriesRow } from '@/lib/meetings/meetings';
 

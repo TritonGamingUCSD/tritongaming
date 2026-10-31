@@ -1,9 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { createNotifications, type NotificationInput } from '@/lib/notifications/notify';
 import { getExpectedPeople } from '@/lib/meetings/meetings';
 import { PLAN_HREF, type PlanRow } from '@/lib/meetings/meetingPlanServer';
-import { formatPacificDateTime, formatPacificDate } from '@/lib/core/timezone';
+import { formatPacificDateTime, formatPacificDate, pacificDayKey } from '@/lib/core/timezone';
 import { WEEKDAYS, clockLabel, planDayKeys } from '@/lib/meetings/meetingPlans';
 
 interface Spec {

@@ -3,8 +3,8 @@ import type { RoleGrant } from '@/lib/portal/capabilities';
 import { isVerifiedMember, isRewardsEligible } from '@/lib/portal/capabilities';
 import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/events/checkinForm';
 import { openEventsFilter } from '@/lib/events/checkinWindow';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import type TicketsClient from './TicketsClient';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 // Shared by the standalone /portal/tickets route and the portal hub so both
 // render the exact same data through the exact same query.

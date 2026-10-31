@@ -7,7 +7,7 @@ import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { DateInput, Input, Select } from '@/components/ui/Field';
-import { PACIFIC_TZ, formatPacificDateTime, pacificDatetimeLocalToUTC } from '@/lib/core/timezone';
+import { formatPacificDateTime, pacificDatetimeLocalToUTC, pacificToday, addDaysKey } from '@/lib/core/timezone';
 import styles from './audit.module.css';
 
 interface Entry {
@@ -33,8 +33,7 @@ const RANGES: { id: string; label: string }[] = [
 /** The from/to timestamps for a range choice (San Diego days), as ISO strings the server understands. */
 function rangeBounds(range: string, from: string, to: string): { from?: string; to?: string } {
   const day = (offset: number) => {
-    const d = new Date(Date.now() + offset * 86_400_000);
-    return d.toLocaleDateString('en-CA', { timeZone: PACIFIC_TZ });
+    return addDaysKey(pacificToday(), offset);
   };
   if (range === 'today') return { from: pacificDatetimeLocalToUTC(`${day(0)}T00:00`).toISOString() };
   if (range === '7d') return { from: pacificDatetimeLocalToUTC(`${day(-6)}T00:00`).toISOString() };

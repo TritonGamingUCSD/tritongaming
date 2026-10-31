@@ -19,11 +19,11 @@ import HideOnPaths from '@/components/portal/HideOnPaths';
 import PortalBanner from '@/components/portal/PortalBanner';
 import SiteSettingsProvider from '@/components/portal/SiteSettingsProvider';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { bannerShown, loadSiteSettings } from '@/lib/portal/siteSettings';
 
 const CHECKIN_PATHS = ['/portal/in/', '/portal/finish-profile'];
 import styles from './portal.module.css';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 // Portal-only type: Exo 2 for text (made for small UI sizes, has real in-between weights and
 // aligned digits) and JetBrains Mono for codes. Futura Heavy stays for titles. The public site

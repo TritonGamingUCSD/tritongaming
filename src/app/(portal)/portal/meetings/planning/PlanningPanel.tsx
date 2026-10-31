@@ -1,6 +1,6 @@
 'use client';
 
-import { formatPacificDate } from '@/lib/core/timezone';
+import { formatPacificDate, addDaysKey, daysBetweenKeys, pacificToday } from '@/lib/core/timezone';
 import Loading from '@/components/Loading/Loading';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -17,13 +17,11 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { audienceLabel } from '@/lib/meetings/meetingAudience';
 import {
   MAX_RANGE_DAYS,
-  addDays,
   availabilityFor,
   bestTimes,
   evaluateStart,
   clockLabel,
   dayLabel,
-  daysBetween,
   slotStarts,
   toHhmm,
   toMin,
@@ -37,7 +35,6 @@ import styles from './planning.module.css';
 import AvailabilityGrid from './AvailabilityGrid';
 import ResultsGrid, { WhoPanel } from './ResultsGrid';
 
-const pacificToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
 const TIMES = Array.from({ length: 36 }, (_, i) => toHhmm(6 * 60 + i * 30)); // 6:00 AM to 11:30 PM
 const LENGTHS = Array.from({ length: 16 }, (_, i) => (i + 1) * 30);
 const lengthLabel = (min: number) => `${min >= 60 ? `${Math.floor(min / 60)} hr` : ''}${min % 60 ? `${min >= 60 ? ' ' : ''}${min % 60} min` : ''}`;
@@ -178,12 +175,12 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
   const [ws, setWs] = useState(plan?.window_start ?? '09:00');
   const [we, setWe] = useState(plan?.window_end ?? '22:00');
   const [rs, setRs] = useState(plan?.range_start && plan.range_start >= today ? plan.range_start : today);
-  const [re, setRe] = useState(plan?.range_end && plan.range_end >= today ? plan.range_end : addDays(today, 6));
+  const [re, setRe] = useState(plan?.range_end && plan.range_end >= today ? plan.range_end : addDaysKey(today, 6));
   const [answerBy, setAnswerBy] = useState(plan?.answer_by ?? '');
   const [audience, setAudience] = useState<Aud>(plan ? audFrom(plan) : defaultAud());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const rangeTooLong = kind === 'once' && daysBetween(rs, re) > MAX_RANGE_DAYS - 1;
+  const rangeTooLong = kind === 'once' && daysBetweenKeys(rs, re) > MAX_RANGE_DAYS - 1;
   // A new plan autosaves in this browser, so a reload or lost connection does not lose it (editing an existing plan does not need it).
   const draft = useDraft(
     'meeting-plan-new',
@@ -245,7 +242,7 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
               setWs(d.ws);
               setWe(d.we);
               setRs(d.rs >= today ? d.rs : today);
-              setRe(d.re >= today ? d.re : addDays(today, 6));
+              setRe(d.re >= today ? d.re : addDaysKey(today, 6));
               setAnswerBy(d.answerBy);
               setAudience(d.audience);
             }

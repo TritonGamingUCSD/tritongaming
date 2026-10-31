@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability } from '@/lib/portal/capabilities';
-import { pacificDayKey } from '@/lib/events/checkinDays';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 interface Params {
   params: Promise<{ id: string }>;

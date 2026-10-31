@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logAudit } from '@/lib/notifications/audit';
 import { createNotifications } from '@/lib/notifications/notify';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { UUID, authorizeDocs, bad, namesOf } from '@/lib/docs/docsServer';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
 

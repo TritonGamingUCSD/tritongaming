@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createNotifications } from '@/lib/notifications/notify';
-import { formatPacificDateTime } from '@/lib/core/timezone';
+import { formatPacificDateTime, formatPacificTime, pacificDaysUntil } from '@/lib/core/timezone';
 
 const HOUR = 3600_000;
 
@@ -10,6 +10,14 @@ interface TicketRow {
   reminder_24h_sent_at: string | null;
   reminder_1h_sent_at: string | null;
   event: { id: string; title: string; start_date: string; location: string | null; is_online: boolean; slug: string | null; is_published: boolean } | null;
+}
+
+// The headline of a reminder. The day-before one is sent up to 24 hours ahead, so the event may still be later today: the word comes from the Pacific calendar day, never from "less than 24 hours".
+export function reminderTitle(kind: '24h' | '1h', eventTitle: string, startISO: string, now: Date): string {
+  if (kind === '1h') return `${eventTitle} starts within the hour`;
+  const days = pacificDaysUntil(startISO, now);
+  const day = days <= 0 ? 'today' : days === 1 ? 'tomorrow' : `in ${days} days`;
+  return `${eventTitle} is ${day} at ${formatPacificTime(startISO)}`;
 }
 
 // Sends an in-app (bell) notification, with a push, once ~24h and once ~1h before an event starts (no email). Per-ticket sent-timestamps make it safe to run as
@@ -46,7 +54,7 @@ export async function sendEventReminders(svc: SupabaseClient, nowDate: Date = ne
     const ev = ticket.event!;
     const when = formatPacificDateTime(ev.start_date, { weekday: true });
     const where = ev.is_online ? 'Online' : ev.location || '';
-    const title = kind === '1h' ? `${ev.title} starts within the hour` : `${ev.title} is tomorrow`;
+    const title = reminderTitle(kind, ev.title, ev.start_date, nowDate);
     const body = `${when}${where ? ` · ${where}` : ''}. Have your QR code ready.`;
 
     // Claim the ticket first so a concurrent/repeat run can't double-send.

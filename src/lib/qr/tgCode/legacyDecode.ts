@@ -1,5 +1,5 @@
-import { DATA_CELLS, R_OUT, DOTS, FINDERS, R_SMALL, SPAN, U, cellCenter, payloadFromBits } from './legacyLayout';
-import { type Finder, findFinders, pickPairs, findDot, homography, binarize } from './find';
+import { DATA_CELLS, DOTS, FINDERS, R_SMALL, SPAN, U, cellCenter, payloadFromBits } from './legacyLayout';
+import { type Finder, findDot, homography } from './find';
 
 // Reads a TGcode of the first format out of a camera picture (grey values, width × height). No library: it finds the three finder marks the way a QR reader does, works out
 // where the code sits (position, size, turn, and a little tilt from the three marks), reads each cell where the dash would be, and lets the repair bytes

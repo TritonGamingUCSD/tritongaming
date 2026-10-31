@@ -4,7 +4,7 @@ import Notice from '@/components/ui/Notice';
 import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import WeekHead from '@/components/ui/WeekHead';
-import { pacificKey, startsWeekGroup } from '@/lib/events/weekGroups';
+import { startsWeekGroup } from '@/lib/events/weekGroups';
 import Link from '@/components/portal/NoPrefetchLink';
 import { getAttributionSource } from '@/lib/site/attribution';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -15,7 +15,17 @@ import { Ticket, MapPin, Check, X, Timer, Award } from 'lucide-react';
 import FullscreenQR from './FullscreenQR';
 import OnlineCheckinEntry from './OnlineCheckinEntry';
 import AsFormButton from './AsFormButton';
-import { PACIFIC_TZ, pacificDaysUntil, formatEventDateRange, eventDayCount, eventDayProgress, formatPacificDate, formatPacificTime } from '@/lib/core/timezone';
+import {
+  PACIFIC_TZ,
+  pacificDaysUntil,
+  formatEventDateRange,
+  eventDayCount,
+  eventDayProgress,
+  formatPacificDate,
+  formatPacificTime,
+  pacificDayKey,
+  pacificToday,
+} from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { saveTicketCodes, cachedMinutesLeft } from '@/lib/events/ticketCodeCache';
 import styles from './tickets.module.css';
@@ -394,11 +404,11 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
             {unregisteredEvents.map((event, i) => (
               <Fragment key={event.id}>
                 {startsWeekGroup(
-                  unregisteredEvents.map((x) => pacificKey(x.start_date)),
+                  unregisteredEvents.map((x) => pacificDayKey(x.start_date)),
                   i,
                 ) && (
                   <div className={styles.weekBand}>
-                    <WeekHead as="div" date={pacificKey(event.start_date)} />
+                    <WeekHead as="div" date={pacificDayKey(event.start_date)} />
                   </div>
                 )}
                 <div className={styles.eventRow}>
@@ -499,7 +509,7 @@ const hoursLabel = (hhmm: string) => {
 // Each day's check-in hours for a multi-day event (only days the organizers set hours for); today's row is highlighted.
 function CheckinHours({ windows }: { windows?: { day: string; start: string; end: string }[] | null }) {
   if (!windows?.length) return null;
-  const todayKey = new Intl.DateTimeFormat('en-CA', { timeZone: PACIFIC_TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+  const todayKey = pacificToday();
   return (
     <ul className={styles.hoursList} aria-label="Check-in hours">
       {windows

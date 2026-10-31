@@ -4,7 +4,6 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilities';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { attachExtras } from '@/lib/meetings/meetings';
 import { lockedExpected, wasExpected } from '@/lib/meetings/expectedLock';
 import { inactiveIds } from '@/lib/members/quarters';
@@ -14,6 +13,7 @@ import { staffName } from '@/lib/members/names';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { STRIKE_LIMIT, STRIKES_AT_LIMIT, markLabels } from '@/lib/members/strikeLabels';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 // The strike tracker. Private: a person sees only their own, and only exec, HR (the "manage strikes" permission, handed out in Admin → Access) and
 // admins see everyone's. They add strikes directly (no approval); leads can only send them a request. Every action carries a reason that the

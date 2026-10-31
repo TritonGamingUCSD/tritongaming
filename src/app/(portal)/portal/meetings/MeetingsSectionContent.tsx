@@ -1,6 +1,6 @@
 'use client';
 
-import { formatPacificDate, formatPacificTime } from '@/lib/core/timezone';
+import { formatPacificDate, formatPacificTime, pacificToday, addDaysKey } from '@/lib/core/timezone';
 import PictureDialog from '@/components/ui/PictureDialog';
 import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
@@ -213,12 +213,6 @@ const hhmmLabel = (t: string) => {
   return `${((h + 11) % 12) + 1}${m ? `:${String(m).padStart(2, '0')}` : ''} ${h < 12 ? 'AM' : 'PM'}`;
 };
 const pacificHHMM = (iso: string) => new Intl.DateTimeFormat('en-GB', { timeZone: TZ, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date(iso));
-const pacificToday = () => new Intl.DateTimeFormat('en-CA', { timeZone: TZ, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-const shiftKey = (key: string, days: number) => {
-  const d = new Date(`${key}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
-};
 
 // A clock that ticks every 30 seconds, so time-dependent labels stay right without a refresh.
 function useNow(): number {
@@ -1817,7 +1811,7 @@ function MeetingList({
     />
   );
   // What a host should look at: a meeting in the next week with no room or no doc yet.
-  const weekEnd = new Date(new Date(`${todayKey}T12:00:00Z`).getTime() + 7 * 86400e3).toISOString().slice(0, 10);
+  const weekEnd = addDaysKey(todayKey, 7);
   const attention = data.upcoming
     .filter((it) => it.status !== 'cancelled' && it.date <= weekEnd && (!it.location || !it.doc_url))
     .map((it) => ({
@@ -4031,7 +4025,7 @@ function AttendancePanel({ onOpenMeeting, canExport }: { onOpenMeeting?: (id: st
   const [showAllPeople, setShowAllPeople] = useState(false);
 
   const to = pacificToday();
-  const from = shiftKey(to, -(RANGES.find((r) => r.id === range)?.days ?? 90));
+  const from = addDaysKey(to, -(RANGES.find((r) => r.id === range)?.days ?? 90));
   const qs = `from=${from}&to=${to}${title ? `&title=${encodeURIComponent(title)}` : ''}`;
 
   useEffect(() => {

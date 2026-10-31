@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import StyledQRCode from '@/components/StyledQRCode/StyledQRCode';
-import { DEFAULT_QR_OPTIONS, type QRCodeOptions } from '@/lib/qr/qrCodeStyling';
+import { DEFAULT_QR_OPTIONS } from '@/lib/qr/qrCodeStyling';
 import { QR_PRESETS } from '@/lib/qr/qrPresets';
 import { codeLink } from '@/lib/qr/codeLink';
 import styles from './PortalQr.module.css';

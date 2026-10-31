@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { PLAN_COLUMNS, UUID, dayOf, pacificToday } from '@/lib/logistics/planServer';
+import { PLAN_COLUMNS, UUID, dayOf } from '@/lib/logistics/planServer';
 import { planSlug, RESERVED_SLUGS } from '@/lib/logistics/plans';
 import { logAudit } from '@/lib/notifications/audit';
+import { pacificToday } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
 const DATE = /^\d{4}-\d{2}-\d{2}$/;

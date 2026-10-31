@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { isExpected } from '@/lib/meetings/meetingAudience';
+import { pacificDayKey } from '@/lib/core/timezone';
 import {
   attachExtras,
   authorizeMeetings,

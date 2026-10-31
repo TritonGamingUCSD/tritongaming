@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { pacificToday } from '@/lib/logistics/planServer';
+import { pacificToday } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
 

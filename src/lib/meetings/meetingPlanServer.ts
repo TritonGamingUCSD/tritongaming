@@ -4,13 +4,11 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilities';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { createNotifications } from '@/lib/notifications/notify';
 import { staffName } from '@/lib/members/names';
-import { formatPacificDateTime, formatPacificDate } from '@/lib/core/timezone';
+import { formatPacificDateTime, formatPacificDate, pacificDayKey, addDaysKey, daysBetweenKeys } from '@/lib/core/timezone';
 import { getExpectedPeople, loadGroups, occurrenceTimes, weekdayOfKey, type PersonRow } from '@/lib/meetings/meetings';
 import { collectBusyItems } from '@/lib/meetings/busyItems';
-import { addDays } from '@/lib/meetings/meetingPlans';
 import type { BusyBlock } from '@/lib/meetings/meetingPlans';
 import {
   AUTO_ABSENT_REASON,
@@ -20,7 +18,6 @@ import {
   availabilityFor,
   canStartAt,
   clockLabel,
-  daysBetween,
   planDayKeys,
   slotStarts,
   toHhmm,
@@ -212,7 +209,7 @@ export async function busyBlocksFor(
 ): Promise<BusyBlock[]> {
   const today = pacificDayKey();
   const from = plan.kind === 'weekly' ? today : days[0];
-  const to = plan.kind === 'weekly' ? addDays(today, 6) : days[days.length - 1];
+  const to = plan.kind === 'weekly' ? addDaysKey(today, 6) : days[days.length - 1];
   if (!from || !to) return [];
   const items = await collectBusyItems(svc, user, roles as never, from, to).catch(() => []);
   const dayKeys = new Set(days);
@@ -423,7 +420,7 @@ export function readPlanFields(b: Record<string, unknown>, kind: 'once' | 'weekl
     const rs = String(b.range_start ?? ''),
       re = String(b.range_end ?? '');
     if (!DATE.test(rs) || !DATE.test(re) || re < rs) return { ok: false, error: 'Pick the first and last day to choose from.' };
-    if (daysBetween(rs, re) > MAX_RANGE_DAYS - 1) return { ok: false, error: `Plans can span at most ${MAX_RANGE_DAYS} days.` };
+    if (daysBetweenKeys(rs, re) > MAX_RANGE_DAYS - 1) return { ok: false, error: `Plans can span at most ${MAX_RANGE_DAYS} days.` };
     if (re < pacificDayKey()) return { ok: false, error: 'Pick days that haven’t passed.' };
     v.range_start = rs;
     v.range_end = re;

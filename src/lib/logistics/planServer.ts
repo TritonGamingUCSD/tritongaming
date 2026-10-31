@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { announce, planTopic } from '@/lib/logistics/live';
+import { pacificDayKey } from '@/lib/core/timezone';
 import { plansOverlap, type Applies, type StepDef } from '@/lib/logistics/plans';
 
 export const UUID = /^[0-9a-f-]{36}$/i;
@@ -9,9 +10,8 @@ export const SLOT_COLUMNS = 'id, plan_id, station_id, type, games, label, sort, 
 export const BORROWED_COLUMNS =
   'id, plan_id, tag, name, type, owner_kind, sponsor_id, owner_user_id, owner_note, station_id, role, swap_reason, swapped_for_label, kit, notes, games_needed, games, sort, set_id, request_id, request_item';
 
-// Today's date in Pacific time (the club's calendar), as YYYY-MM-DD.
-export const pacificToday = (now = new Date()): string => now.toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
-export const dayOf = (iso: string | null | undefined): string | null => (iso ? new Date(iso).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' }) : null);
+// The Pacific calendar day (YYYY-MM-DD) of a stored time, or null for none.
+export const dayOf = (iso: string | null | undefined): string | null => (iso ? pacificDayKey(iso) : null);
 
 export async function loadSteps(svc: SupabaseClient): Promise<StepDef[]> {
   const { data } = await svc.from('logistics_options').select('id, value, sort, meta').eq('kind', 'step').order('sort').limit(50);

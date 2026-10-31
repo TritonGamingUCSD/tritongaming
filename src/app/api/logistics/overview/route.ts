@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
-import { pacificToday } from '@/lib/logistics/planServer';
 import { countAt, ensureLoose, loadPlanPrizes, loadPrizeTotals, stepKinds } from '@/lib/logistics/prizeServer';
 import { isLoose, lineNumbers, prizeLeft } from '@/lib/logistics/prizes';
+import { pacificToday, daysBetweenKeys } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
 
 // The Logistics overview (every officer can look): the event to look at first (today's, else the next one, else the latest still open) with its numbers, what needs attention, the Staffles that are
 // running and the latest changes. The stock and the devices at a glance are worked out on the screen from the lists it already has.
-const days = (a: string, b: string) => Math.round((Date.parse(`${b}T00:00:00Z`) - Date.parse(`${a}T00:00:00Z`)) / 86400000);
 
 export async function GET() {
   const auth = await authorizeLogistics('view');
@@ -70,7 +69,7 @@ export async function GET() {
       name: focusRow.name as string,
       starts_on: focusRow.starts_on as string,
       ends_on: focusRow.ends_on as string,
-      daysAway: days(today, focusRow.starts_on as string),
+      daysAway: daysBetweenKeys(today, focusRow.starts_on as string),
       stats: {
         stations: stations.data?.length ?? 0,
         stationsBare: bare.length,

@@ -1,6 +1,5 @@
-import { formatPacificDate } from '@/lib/core/timezone';
+import { formatPacificDate, pacificDayKey } from '@/lib/core/timezone';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { loadPlanViews } from '@/lib/meetings/meetingPlanServer';
 
 // Things waiting on this person, shown together at the top of the portal home so nobody has to go looking for them.

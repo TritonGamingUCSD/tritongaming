@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { fetchLinkedEmails, pickDisplayEmails } from '@/lib/members/linkedEmails';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
-import { addDaysKey, attachExtras, authorizeMeetings, loadGroups } from '@/lib/meetings/meetings';
+import { attachExtras, authorizeMeetings, loadGroups } from '@/lib/meetings/meetings';
 import { lockedExpected, wasExpected } from '@/lib/meetings/expectedLock';
 import { AUDIENCE_ROLES, audienceLabel } from '@/lib/meetings/meetingAudience';
 import { staffName } from '@/lib/members/names';
+import { pacificDayKey, addDaysKey } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
 

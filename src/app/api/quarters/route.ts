@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { staffName } from '@/lib/members/names';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { ROLE_DISPLAY_RANK, ROLE_LABELS, type AppRole } from '@/types/database';
 import { TERMS, authorizeQuarters, canBeInactive, currentQuarter, loadQuarters, markableQuarters, quarterName, startedQuarters, syncInactive } from '@/lib/members/quarters';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
 const DATE = /^\d{4}-\d{2}-\d{2}$/;

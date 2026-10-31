@@ -1,4 +1,4 @@
-import { formatPacificDate } from '@/lib/core/timezone';
+import { formatPacificDate, addDaysKey } from '@/lib/core/timezone';
 // Meeting plans ("find a time"): the slot math shared by the portal UI and the API. Client-safe (no server imports).
 //
 // A plan has a grid of 30-minute slots: for a one-time plan, each day of its date range (days that have already passed drop
@@ -25,12 +25,6 @@ export const toMin = (t: string) => {
   return h * 60 + m;
 };
 export const toHhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`;
-export const addDays = (key: string, n: number) => {
-  const d = new Date(`${key}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + n);
-  return d.toISOString().slice(0, 10);
-};
-export const daysBetween = (a: string, b: string) => Math.round((new Date(`${b}T12:00:00Z`).getTime() - new Date(`${a}T12:00:00Z`).getTime()) / 86_400_000);
 export const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 export const dayLabel = (key: string, kind: 'once' | 'weekly') => (kind === 'weekly' ? WEEKDAYS[Number(key)] : formatPacificDate(key, { weekday: true }));
 export const clockLabel = (t: string) => {
@@ -51,7 +45,7 @@ export function planDayKeys(plan: Pick<PlanShape, 'kind' | 'range_start' | 'rang
   if (plan.kind === 'weekly') return ['0', '1', '2', '3', '4', '5', '6'];
   if (!plan.range_start || !plan.range_end) return [];
   const out: string[] = [];
-  for (let d = plan.range_start; d <= plan.range_end && out.length <= MAX_RANGE_DAYS; d = addDays(d, 1)) if (d >= today) out.push(d);
+  for (let d = plan.range_start; d <= plan.range_end && out.length <= MAX_RANGE_DAYS; d = addDaysKey(d, 1)) if (d >= today) out.push(d);
   return out;
 }
 

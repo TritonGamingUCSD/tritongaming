@@ -1,8 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { hasCapability, isTgMember, type RoleGrant } from '@/lib/portal/capabilities';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { isExpected } from '@/lib/meetings/meetingAudience';
-import { addDaysKey, loadGroups, occurrenceTimes, seriesRunsOn, withExtras, type MeetingRow, type SeriesRow } from '@/lib/meetings/meetings';
+import { loadGroups, occurrenceTimes, seriesRunsOn, withExtras, type MeetingRow, type SeriesRow } from '@/lib/meetings/meetings';
+import { pacificDayKey, addDaysKey } from '@/lib/core/timezone';
 
 // What is already on a person's own schedule between two Pacific days (inclusive): the events they have a ticket for and the meetings meant
 // for them or hosted by them (including repeating ones nobody has opened yet). The planning grid uses it to mark times they cannot make, and the

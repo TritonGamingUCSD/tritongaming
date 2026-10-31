@@ -3,7 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/events/checkinForm';
 import type { AppRole } from '@/types/database';
 import { fetchTiers, getTier, nextTier } from '@/lib/members/tiers';
-import { isMultiDayEvent, todaysCheckinAt, currentDayInfo, pacificDayKey } from '@/lib/events/checkinDays';
+import { isMultiDayEvent, todaysCheckinAt, currentDayInfo } from '@/lib/events/checkinDays';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 export const runtime = 'nodejs';
 

@@ -1,4 +1,4 @@
-import { formatPacificDate } from '@/lib/core/timezone';
+import { formatPacificDate, pacificToday, addDaysKey } from '@/lib/core/timezone';
 import { NextResponse } from 'next/server';
 import { staffName } from '@/lib/members/names';
 import { createClient } from '@/lib/supabase/server';
@@ -75,7 +75,7 @@ export async function GET(request: Request) {
   ]);
 
   // Meetings meant for this person (invited by role, name or group, or planned by them), including weekly ones nobody has opened yet.
-  const dayKey = (offset: number) => new Date(Date.now() + offset * 86_400_000).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+  const dayKey = (offset: number) => addDaysKey(pacificToday(), offset);
   const needle = q.toLowerCase();
   // "meeting" or "meetings" lists the meetings meant for this person, not only ones with that word in the title.
   const askingForMeetings = /^meetings?$/.test(needle);

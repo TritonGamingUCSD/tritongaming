@@ -31,7 +31,7 @@ import { hasCapability, isVerifiedMember, isRewardsEligible, isTgMember, require
 import { resolveAvatarUrl, hasBasicProfileInfo, getMissingProfileFields } from '@/lib/members/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/site/content-blocks';
-import { PACIFIC_TZ, pacificDaysUntil } from '@/lib/core/timezone';
+import { PACIFIC_TZ, pacificDaysUntil, pacificToday } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { sectionLabel } from '@/lib/portal/sections';
 import { getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
@@ -144,7 +144,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const logisticsToday =
     hasCapability(roles, 'view_logistics') || canManageLogistics
       ? await (async () => {
-          const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+          const today = pacificToday();
           const { count } = await createServiceClient()
             .from('logistics_plans')
             .select('id', { count: 'exact', head: true })

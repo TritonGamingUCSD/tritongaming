@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { GAME_OPTIONS } from '@/lib/site/games';
 import { OPTION_KINDS, type OptionKind } from '@/lib/logistics/constants';
-import { pacificToday } from '@/lib/logistics/planServer';
 import { whoIs } from '@/lib/logistics/live';
+import { pacificToday } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
 

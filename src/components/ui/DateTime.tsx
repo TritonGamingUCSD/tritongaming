@@ -1,6 +1,6 @@
 'use client';
 
-import { formatPacificDate } from '@/lib/core/timezone';
+import { formatPacificDate, pacificToday } from '@/lib/core/timezone';
 import { useEffect, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { CalendarDays, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
@@ -29,10 +29,7 @@ const parseTime = (v: string) => {
   return m ? { h: +m[1], min: +m[2] } : null;
 };
 const keyOf = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`;
-const todayKey = () => {
-  const n = new Date();
-  return keyOf(n.getFullYear(), n.getMonth(), n.getDate());
-};
+const todayKey = () => pacificToday(); // (the club's calendar: Pacific, whatever the device's clock says)
 const fmtDate = (v: string) => {
   const p = parseDate(v);
   return p ? formatPacificDate(new Date(Date.UTC(p.y, p.m, p.d, 12)).toISOString().slice(0, 10), { weekday: true, year: true }) : '';

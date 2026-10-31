@@ -3,9 +3,9 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
-import { pacificDayKey } from '@/lib/events/checkinDays';
 import { createNotifications } from '@/lib/notifications/notify';
 import { invalidate } from '@/lib/site/revalidate';
+import { pacificDayKey } from '@/lib/core/timezone';
 
 // Quarters and "inactive". An officer or lead can sit a quarter out: they keep their title, but are not expected at meetings, are left out of the strike
 // tracker, and have view-only access. An exec or admin marks them for the current quarter; a new quarter starts as a copy of the last one's list, and only the current quarter can be changed. While a mark is in
