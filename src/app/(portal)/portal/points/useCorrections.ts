@@ -4,7 +4,7 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { useEffect, useState } from 'react';
 import type { PointsMain } from './pointsMain';
 import { useLeaderboard } from './useLeaderboard';
-import type { HistoryTxn, } from './pointsTypes';
+import type { HistoryTxn } from './pointsTypes';
 import { TYPE_LABELS, oneOf } from './pointsTypes';
 
 export function useCorrections(m: PointsMain, leaderboard: ReturnType<typeof useLeaderboard>) {
@@ -90,5 +90,19 @@ export function useCorrections(m: PointsMain, leaderboard: ReturnType<typeof use
     return () => clearTimeout(t);
   }, [adjustQuery, adjustTarget]);
 
-  return { adjustQuery, setAdjustQuery, adjustResults, setAdjustResults, adjustTarget, setAdjustTarget, targetHistory, setTargetHistory, historyError, setHistoryError, reversingId, setReversingId, handleReverse };
+  return {
+    adjustQuery,
+    setAdjustQuery,
+    adjustResults,
+    setAdjustResults,
+    adjustTarget,
+    setAdjustTarget,
+    targetHistory,
+    setTargetHistory,
+    historyError,
+    setHistoryError,
+    reversingId,
+    setReversingId,
+    handleReverse,
+  };
 }

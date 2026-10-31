@@ -1,14 +1,31 @@
 'use client';
 
 import Notice from '@/components/ui/Notice';
-import { Check, Gift, Lock, } from 'lucide-react';
+import { Check, Gift, Lock } from 'lucide-react';
 import { formatPacificDate } from '@/lib/core/timezone';
 import Button from '@/components/ui/Button';
 import styles from './points.module.css';
 import type { PointsCtx } from './pointsCtx';
 import { TYPE_LABELS, oneOf } from './pointsTypes';
 
-export function MyPointsTab({ balance, claimedNote, claimingId, handleClaimUnlock, lifetimeEarned, next, readyToClaimUnlocks, setShowTierLadder, shopError, shopItems, showTierLadder, tab, tier, tiers, transactions, unlocks }: PointsCtx) {
+export function MyPointsTab({
+  balance,
+  claimedNote,
+  claimingId,
+  handleClaimUnlock,
+  lifetimeEarned,
+  next,
+  readyToClaimUnlocks,
+  setShowTierLadder,
+  shopError,
+  shopItems,
+  showTierLadder,
+  tab,
+  tier,
+  tiers,
+  transactions,
+  unlocks,
+}: PointsCtx) {
   return (
     <>
       {tab === 'mine' && (

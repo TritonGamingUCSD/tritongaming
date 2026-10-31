@@ -7,4 +7,10 @@ import type { useAward } from './useAward';
 import type { useTierLadder } from './useTierLadder';
 
 // Everything a Rewards panel can read: the screen's own state and what each part holds.
-export type PointsCtx = PointsMain & ReturnType<typeof useShop> & ReturnType<typeof useLeaderboard> & ReturnType<typeof useRewardItems> & ReturnType<typeof useCorrections> & ReturnType<typeof useAward> & ReturnType<typeof useTierLadder>;
+export type PointsCtx = PointsMain &
+  ReturnType<typeof useShop> &
+  ReturnType<typeof useLeaderboard> &
+  ReturnType<typeof useRewardItems> &
+  ReturnType<typeof useCorrections> &
+  ReturnType<typeof useAward> &
+  ReturnType<typeof useTierLadder>;

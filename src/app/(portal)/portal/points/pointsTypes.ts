@@ -64,7 +64,6 @@ export function oneOf<T>(v: T | T[] | null): T | null {
   return Array.isArray(v) ? (v[0] ?? null) : v;
 }
 
-
 // The Manage tab does four genuinely separate jobs (award points, edit the
 // catalog, correct a member's points, edit the tier ladder) — member
 // reward redemptions are confirmed by staff with the Scan button in the phone's bottom bar,
@@ -78,4 +77,3 @@ export interface TierRow {
   min_points: number;
   color: string;
 }
-

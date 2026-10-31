@@ -6,7 +6,7 @@ import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useEffect, useState } from 'react';
 import type { PointsMain } from './pointsMain';
 import { useRewardItems } from './useRewardItems';
-import type { TierRow, } from './pointsTypes';
+import type { TierRow } from './pointsTypes';
 
 export function useTierLadder(m: PointsMain, rewardItems: ReturnType<typeof useRewardItems>) {
   const { canManageShop, setTiers, manageSubTab } = m;
@@ -131,5 +131,29 @@ export function useTierLadder(m: PointsMain, rewardItems: ReturnType<typeof useR
       setDeletingTierId(null);
     }
   }
-  return { manageTiers, setManageTiers, tierError, setTierError, newTier, setNewTier, creatingTier, setCreatingTier, editingTierId, setEditingTierId, tierEditForm, setTierEditForm, savingTierEdit, setSavingTierEdit, deletingTierId, setDeletingTierId, tierDirty, savedTier, syncTiersState, handleCreateTier, startEditTier, handleSaveTierEdit, handleDeleteTier };
+  return {
+    manageTiers,
+    setManageTiers,
+    tierError,
+    setTierError,
+    newTier,
+    setNewTier,
+    creatingTier,
+    setCreatingTier,
+    editingTierId,
+    setEditingTierId,
+    tierEditForm,
+    setTierEditForm,
+    savingTierEdit,
+    setSavingTierEdit,
+    deletingTierId,
+    setDeletingTierId,
+    tierDirty,
+    savedTier,
+    syncTiersState,
+    handleCreateTier,
+    startEditTier,
+    handleSaveTierEdit,
+    handleDeleteTier,
+  };
 }

@@ -3,10 +3,10 @@
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { useEffect, useState } from 'react';
 import type { PointsMain } from './pointsMain';
-import type { RewardItem, UnlockReward, PendingRedemption, } from './pointsTypes';
+import type { RewardItem, UnlockReward, PendingRedemption } from './pointsTypes';
 
 export function useShop(m: PointsMain) {
-  const { tab, balance, } = m;
+  const { tab, balance } = m;
   // ── Shop / To Claim (same endpoint — one fetch backs both) ────────────
   // "To Claim" used to be its own tab; folded into My Points since tier
   // unlocks are about what you've personally earned, not browsing a shop.
@@ -113,5 +113,28 @@ export function useShop(m: PointsMain) {
     }
   }
 
-  return { shopItems, setShopItems, unlocks, setUnlocks, pending, setPending, shopBalance, setShopBalance, claimingId, setClaimingId, shopError, setShopError, qrFor, setQrFor, claimedNote, setClaimedNote, showTierLadder, setShowTierLadder, readyToClaimUnlocks, unclaimedUnlockCount, handleClaim, handleClaimUnlock };
+  return {
+    shopItems,
+    setShopItems,
+    unlocks,
+    setUnlocks,
+    pending,
+    setPending,
+    shopBalance,
+    setShopBalance,
+    claimingId,
+    setClaimingId,
+    shopError,
+    setShopError,
+    qrFor,
+    setQrFor,
+    claimedNote,
+    setClaimedNote,
+    showTierLadder,
+    setShowTierLadder,
+    readyToClaimUnlocks,
+    unclaimedUnlockCount,
+    handleClaim,
+    handleClaimUnlock,
+  };
 }

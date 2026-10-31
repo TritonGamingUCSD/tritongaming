@@ -4,10 +4,10 @@ import { showToast } from '@/lib/ui/toast';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { useEffect, useState } from 'react';
 import type { PointsMain } from './pointsMain';
-import type { RewardItem, } from './pointsTypes';
+import type { RewardItem } from './pointsTypes';
 
 export function useRewardItems(m: PointsMain) {
-  const { tab, canManageShop, } = m;
+  const { tab, canManageShop } = m;
   // ── Manage shop ──────────────────────────────────────────────────────
   const [manageItems, setManageItems] = useState<RewardItem[] | null>(null);
   const [manageError, setManageError] = useState('');
@@ -175,5 +175,28 @@ export function useRewardItems(m: PointsMain) {
     }
   }
 
-  return { manageItems, setManageItems, manageError, setManageError, newReward, setNewReward, creating, setCreating, editingId, setEditingId, editForm, setEditForm, savingEdit, setSavingEdit, editError, setEditError, rewardDirty, savedReward, handleCreateReward, toggleActive, startEdit, handleSaveEdit };
+  return {
+    manageItems,
+    setManageItems,
+    manageError,
+    setManageError,
+    newReward,
+    setNewReward,
+    creating,
+    setCreating,
+    editingId,
+    setEditingId,
+    editForm,
+    setEditForm,
+    savingEdit,
+    setSavingEdit,
+    editError,
+    setEditError,
+    rewardDirty,
+    savedReward,
+    handleCreateReward,
+    toggleActive,
+    startEdit,
+    handleSaveEdit,
+  };
 }

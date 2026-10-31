@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { PointsMain } from './pointsMain';
-import type { LeaderboardRow, } from './pointsTypes';
+import type { LeaderboardRow } from './pointsTypes';
 
 export function useLeaderboard(m: PointsMain) {
   const { tab, initialAnonymous } = m;

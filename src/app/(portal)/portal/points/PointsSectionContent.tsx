@@ -2,7 +2,7 @@
 
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useState } from 'react';
-import { Award, ShoppingBag, Trophy, Settings, } from 'lucide-react';
+import { Award, ShoppingBag, Trophy, Settings } from 'lucide-react';
 import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
 import PortalCode from '@/components/portal/PortalCode';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
@@ -70,7 +70,23 @@ export default function PointsSectionContent({
   const tier = getTier(lifetimeEarned, tiers);
   const next = nextTier(lifetimeEarned, tiers);
 
-  const main = { tab, balance, lifetimeEarned, initialAnonymous, transactions, canManageShop, canManagePoints, manageOnly, tiers, setTiers, tier, next, manageSubTab, selectTab, selectManageSubTab };
+  const main = {
+    tab,
+    balance,
+    lifetimeEarned,
+    initialAnonymous,
+    transactions,
+    canManageShop,
+    canManagePoints,
+    manageOnly,
+    tiers,
+    setTiers,
+    tier,
+    next,
+    manageSubTab,
+    selectTab,
+    selectManageSubTab,
+  };
   const shopState = useShop(main);
   const leaderboard = useLeaderboard(main);
   const rewardItems = useRewardItems(main);
@@ -120,4 +136,3 @@ export default function PointsSectionContent({
     </div>
   );
 }
-

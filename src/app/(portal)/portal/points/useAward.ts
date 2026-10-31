@@ -73,5 +73,23 @@ export function useAward(m: PointsMain, leaderboard: ReturnType<typeof useLeader
     }
   }
 
-  return { awardQuery, setAwardQuery, awardResults, setAwardResults, awardTargets, setAwardTargets, awardAmount, setAwardAmount, awardNote, setAwardNote, awarding, setAwarding, awardResult, setAwardResult, addAwardTarget, removeAwardTarget, handleAward };
+  return {
+    awardQuery,
+    setAwardQuery,
+    awardResults,
+    setAwardResults,
+    awardTargets,
+    setAwardTargets,
+    awardAmount,
+    setAwardAmount,
+    awardNote,
+    setAwardNote,
+    awarding,
+    setAwarding,
+    awardResult,
+    setAwardResult,
+    addAwardTarget,
+    removeAwardTarget,
+    handleAward,
+  };
 }
