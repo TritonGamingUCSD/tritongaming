@@ -103,6 +103,8 @@ export default function QrScanner({
   if (lock) lastShown.current = { node: sheet ?? null, key: sheetKey, tone: lock.tone };
   const lastSpot = useRef<{ x: number; y: number; r: number } | null>(null);
   if (lock && spot) lastSpot.current = spot;
+  // The ring, the dimming and the icon belong to a code the camera took (its spot is known). A code typed in, or opened from a link, has no spot: only the result sheet shows then, over the live camera.
+  const marked = lock ? !!spot : !!lastSpot.current;
   const [leaving, setLeaving] = useState(false);
   const wasLocked = useRef(false);
   useEffect(() => {
@@ -347,6 +349,7 @@ export default function QrScanner({
   }, [mounted]);
 
   useEffect(() => {
+    if (lock && !pausedRef.current) pausedRef.current = true; // a code typed in (no picture was taken): the live camera still must not read another one under the result
     if (lock || !pausedRef.current) return;
     setSpot(null);
     seenRef.current.at = performance.now(); // the camera starts again with the same code probably still in front of it: that one does not count as a new scan
@@ -562,14 +565,15 @@ export default function QrScanner({
             <i />
             <i />
           </div>
-          <div className={`${styles.scanDim} ${lock ? '' : styles.scanDimIdle}`} style={dimStyle()} aria-hidden="true" />
-          <div className={`${styles.scanDimLock} ${lock ? styles.scanDimOn : ''}`} aria-hidden="true" />
+          <div className={`${styles.scanDim} ${lock && spot ? '' : styles.scanDimIdle}`} style={dimStyle()} aria-hidden="true" />
+          <div className={`${styles.scanDimLock} ${lock && spot ? styles.scanDimOn : ''}`} aria-hidden="true" />
           <div
-            className={`${styles.scanTarget} ${lock ? styles[`lock_${lock.tone}`] : styles.scanLive}`}
+            className={`${styles.scanTarget} ${lock && spot ? styles[`lock_${lock.tone}`] : styles.scanLive}`}
             style={lock && spot ? ringBox(spot, frame.current) : undefined}
             aria-hidden="true"
           />
-          {(lock ? lock.tone : leaving ? lastShown.current.tone : null) &&
+          {marked &&
+            (lock ? lock.tone : leaving ? lastShown.current.tone : null) &&
             (lock ? lock.tone : lastShown.current.tone) !== 'busy' &&
             (() => {
               const tone = (lock ? lock.tone : lastShown.current.tone)!;

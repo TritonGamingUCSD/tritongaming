@@ -29,3 +29,5 @@
 .switch { display: flex; flex-wrap: wrap; gap: 0.8rem 1.2rem; align-items: center; justify-content: space-between; padding: 0.9rem 1rem; border-radius: 12px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); color: var(--pp-ink); }
 .switch strong { display: block; margin-bottom: 0.2rem; }
 .testSheet { display: grid; gap: 0.5rem; justify-items: center; text-align: center; padding: 0.4rem 0; color: var(--pp-ink); }
+.useRow { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; justify-content: space-between; padding-top: 0.6rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
+.useRow span { display: grid; gap: 0.1rem; }

@@ -43,7 +43,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   const [expiresIn, setExpiresIn] = useState(30);
   const [rotationSeconds, setRotationSeconds] = useState(30);
   const [error, setError] = useState('');
-  const codeStyle = useCodeStyle();
+  const codeStyle = useCodeStyle('ticket');
   const [checkedIn, setCheckedIn] = useState(false);
   // The moment a Bytecode is scanned, Byte grows out of the code on this screen (as he does on the scanner's), winks and pops for about a second before the checked-in view appears; a tap skips it.
   const [popping, setPopping] = useState(false);
@@ -591,7 +591,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                 // instant, jarring swap into a brief soft crossfade instead.
                 <div key={qrData} className={styles.qrSwap}>
                   <div className={styles.qrCanvas}>
-                    <PortalCode payload={qrData} label="Your ticket's code, for the portal's Scan button" />
+                    <PortalCode use="ticket" payload={qrData} label="Your ticket's code, for the portal's Scan button" />
                   </div>
                 </div>
               ) : (

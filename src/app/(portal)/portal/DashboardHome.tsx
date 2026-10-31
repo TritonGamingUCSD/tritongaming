@@ -110,7 +110,7 @@ export function DashboardBody({
                   <Link href={event.hasTicket && event.ticketId ? `/portal/tickets?qr=${event.ticketId}` : '/portal/tickets'} className={styles.primary}>
                     {event.hasTicket ? (
                       <>
-                        <CodeIcon size={16} /> Show My <CodeName />
+                        <CodeIcon size={16} use="ticket" /> Show My <CodeName use="ticket" />
                       </>
                     ) : (
                       <>

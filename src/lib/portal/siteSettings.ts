@@ -5,6 +5,11 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 export type CodeStyle = 'tg' | 'byte' | 'qr';
 /** What each code is called. */
 export const CODE_STYLE_NAMES: Record<CodeStyle, string> = { tg: 'TGcode', byte: 'Bytecode', qr: 'QR code' };
+/** The three places that show a code, each of which can have its own style. */
+export type CodeUse = 'ticket' | 'meeting' | 'reward';
+export const CODE_USES: readonly CodeUse[] = ['ticket', 'meeting', 'reward'];
+export const CODE_USE_NAMES: Record<CodeUse, string> = { ticket: 'Event Ticket', meeting: 'Meeting Check-In', reward: 'Reward Pickup' };
+const isStyle = (v: unknown): v is CodeStyle => v === 'tg' || v === 'byte' || v === 'qr';
 export interface PortalBanner {
   on: boolean;
   text: string;
@@ -12,21 +17,25 @@ export interface PortalBanner {
   until: string;
 }
 export interface SiteSettings {
-  /** Which code every ticket, meeting check-in and reward pickup is drawn as. */
+  /** Which code is drawn wherever a use has not chosen its own. */
   codeStyle: CodeStyle;
+  /** A use's own choice; one that is missing follows `codeStyle`. */
+  codeStyles: Partial<Record<CodeUse, CodeStyle>>;
   banner: PortalBanner;
 }
 
-export const DEFAULT_SETTINGS: SiteSettings = { codeStyle: 'tg', banner: { on: false, text: '', until: '' } };
+export const DEFAULT_SETTINGS: SiteSettings = { codeStyle: 'tg', codeStyles: {}, banner: { on: false, text: '', until: '' } };
 export const BANNER_MAX = 160;
-export const SETTING_KEYS = ['code_style', 'banner_on', 'banner_text', 'banner_until'] as const;
+export const codeStyleKey = (use: CodeUse) => `code_style_${use}`;
+export const SETTING_KEYS = ['code_style', ...CODE_USES.map(codeStyleKey), 'banner_on', 'banner_text', 'banner_until'] as const;
 
 /** The settings from the rows of team_settings (any other rows are ignored). */
 export function parseSettings(rows: { key: string; value: string }[] | null | undefined): SiteSettings {
   const v = new Map((rows ?? []).map((r) => [r.key, r.value]));
   const until = v.get('banner_until') ?? '';
   return {
-    codeStyle: v.get('code_style') === 'byte' ? 'byte' : v.get('code_style') === 'qr' ? 'qr' : 'tg',
+    codeStyle: isStyle(v.get('code_style')) ? (v.get('code_style') as CodeStyle) : 'tg',
+    codeStyles: Object.fromEntries(CODE_USES.map((u) => [u, v.get(codeStyleKey(u))]).filter(([, s]) => isStyle(s))),
     banner: {
       on: v.get('banner_on') === 'on',
       text: (v.get('banner_text') ?? '').slice(0, BANNER_MAX),
@@ -42,6 +51,9 @@ export async function loadSiteSettings(svc: SupabaseClient): Promise<SiteSetting
     .in('key', [...SETTING_KEYS]);
   return parseSettings(data);
 }
+
+/** The style a use is drawn as: its own choice, else the default. Pure. */
+export const styleFor = (s: SiteSettings, use?: CodeUse): CodeStyle => (use && s.codeStyles[use]) || s.codeStyle;
 
 /** Whether the banner shows on a day (`today`: YYYY-MM-DD, Pacific): it is on, has words, and its last day has not passed. */
 export const bannerShown = (s: SiteSettings, today: string): boolean => s.banner.on && s.banner.text.trim().length > 0 && (!s.banner.until || s.banner.until >= today);

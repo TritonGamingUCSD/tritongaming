@@ -67,9 +67,6 @@ export interface PlannedQuestion {
   image?: string;
 } // choices as shown (shuffled); correct (and also) are positions in them
 
-/** Is this pick one of the question's right answers? */
-export const isRightPick = (q: { correct: number; also?: number[] }, pos: number): boolean => pos === q.correct || !!q.also?.includes(pos);
-
 /** A question can be asked once it has a category, text, four answers, and a right one that is filled in. */
 export function isAskable(q: { text: string; choices: string[]; correct: number; category?: string }): boolean {
   return (

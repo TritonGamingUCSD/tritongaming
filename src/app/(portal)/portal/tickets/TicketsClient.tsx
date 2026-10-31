@@ -311,7 +311,8 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       {checkoutResult === 'cancelled' && <Notice tone="warning">Checkout was cancelled — no charge was made.</Notice>}
       {claimed && (
         <Notice tone="success">
-          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your <CodeName /> will be right here in My Tickets when the day comes.{' '}
+          You&apos;re in! You got your ticket for <strong>{claimed.title}</strong> ({claimed.when}). Your <CodeName use="ticket" /> will be right here in My Tickets when the day
+          comes.{' '}
           <button
             type="button"
             onClick={() => setClaimed(null)}
@@ -365,9 +366,9 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
               ) : (
                 <button className={styles.showQrBtn} onClick={() => setQrTicket(nextActiveTicket)}>
                   <span className={styles.showQrIcon}>
-                    <CodeIcon size={18} />
+                    <CodeIcon size={18} use="ticket" />
                   </span>
-                  Show <CodeName />
+                  Show <CodeName use="ticket" />
                 </button>
               )}
             </div>
@@ -647,7 +648,7 @@ function TicketRow({
             <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} checkinFormUrl={ticket.checkinFormUrl} onFormComplete={onFormComplete} compact />
           ) : isActionable && onShowQR ? (
             <button className={styles.qrMiniBtn} onClick={onShowQR}>
-              <CodeIcon size={14} /> View <CodeName />
+              <CodeIcon size={14} use="ticket" /> View <CodeName use="ticket" />
             </button>
           ) : (
             <span className={`${styles.statusBadge} ${styles[`status_${displayStatus}`]}`}>{STATUS_LABEL[displayStatus]}</span>

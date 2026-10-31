@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { DateInput, Field, Textarea } from '@/components/ui/Field';
 import { showToast } from '@/lib/ui/toast';
-import { BANNER_MAX, CODE_STYLE_NAMES, DEFAULT_SETTINGS, type CodeStyle, type SiteSettings } from '@/lib/portal/siteSettings';
+import { BANNER_MAX, CODE_STYLE_NAMES, CODE_USES, CODE_USE_NAMES, DEFAULT_SETTINGS, styleFor, type CodeStyle, type CodeUse, type SiteSettings } from '@/lib/portal/siteSettings';
 import styles from './settings.module.css';
 
 async function api(init?: { method: 'POST'; body: object }) {
@@ -41,6 +41,7 @@ export default function SettingsPanel() {
       <p className={styles.intro}>These apply to everyone on the portal. Each one saves on its own, and every change is recorded in the Audit Log.</p>
       {error && <Notice tone="error">{error}</Notice>}
       <CodeStyleCard saved={saved} onSaved={setSaved} onError={setError} />
+      <CodeUsesCard saved={saved} onSaved={setSaved} onError={setError} />
       <BannerCard saved={saved} onSaved={setSaved} onError={setError} />
     </div>
   );
@@ -64,9 +65,9 @@ function CodeStyleCard({ saved, onSaved, onError }: CardProps) {
   };
   return (
     <section className={styles.card} aria-labelledby="set-code">
-      <h2 id="set-code">Code Everyone Shows</h2>
+      <h2 id="set-code">Default Code</h2>
       <p className={styles.about}>
-        Which code every ticket, meeting check-in and reward pickup is drawn as. The Scan page reads all of them, so changing this never breaks a phone that still has another one
+        Which code is drawn for anything that has no choice of its own below. The Scan page reads all of them, so changing this never breaks a phone that still has another one
         open. Anyone can try the other one on their own device from Previews.
       </p>
       <div className={styles.choices} role="radiogroup" aria-label="Code everyone shows">
@@ -87,7 +88,7 @@ function CodeStyleCard({ saved, onSaved, onError }: CardProps) {
         ))}
       </div>
       <div className={styles.actions}>
-        <Button onClick={() => send({ setting: 'code_style', value }, `Everyone's codes are now ${CODE_STYLE_NAMES[value]}s`)} loading={busy} disabled={value === saved.codeStyle}>
+        <Button onClick={() => send({ setting: 'code_style', value }, `The default code is now ${CODE_STYLE_NAMES[value]}`)} loading={busy} disabled={value === saved.codeStyle}>
           Save
         </Button>
         <Button
@@ -99,6 +100,51 @@ function CodeStyleCard({ saved, onSaved, onError }: CardProps) {
         </Button>
         <span className={styles.state}>Now: {CODE_STYLE_NAMES[saved.codeStyle]}</span>
       </div>
+    </section>
+  );
+}
+
+// One code per use: the event ticket, the meeting check-in and the reward pickup can each be a different style. A choice saves as soon as it is made.
+function CodeUsesCard({ saved, onSaved, onError }: CardProps) {
+  const [busy, setBusy] = useState<CodeUse | null>(null);
+  const choose = async (use: CodeUse, value: CodeStyle | 'default') => {
+    setBusy(use);
+    onError('');
+    const { ok, json } = await api({ method: 'POST', body: { setting: 'code_style', use, value } });
+    setBusy(null);
+    if (ok && json.settings) {
+      onSaved(json.settings);
+      showToast(value === 'default' ? `${CODE_USE_NAMES[use]} follows the default` : `${CODE_USE_NAMES[use]} is now a ${CODE_STYLE_NAMES[value]}`);
+    } else onError(json.error || 'Could not save.');
+  };
+  return (
+    <section className={styles.card} aria-labelledby="set-uses">
+      <h2 id="set-uses">Code For Each Use</h2>
+      <p className={styles.about}>
+        Choose what a member&apos;s event ticket, a meeting&apos;s check-in code and a reward pickup are drawn as, each on its own. A use set to the default follows the Default
+        Code above.
+      </p>
+      {CODE_USES.map((use) => {
+        const own = saved.codeStyles[use];
+        return (
+          <div key={use} className={styles.useRow} role="radiogroup" aria-label={CODE_USE_NAMES[use]}>
+            <span>
+              <strong>{CODE_USE_NAMES[use]}</strong>
+              <small className={styles.state}>Now: {CODE_STYLE_NAMES[styleFor(saved, use)]}</small>
+            </span>
+            <div className={styles.actions}>
+              <Button variant={own ? 'secondary' : 'primary'} onClick={() => choose(use, 'default')} disabled={busy === use} aria-pressed={!own}>
+                Default
+              </Button>
+              {(['tg', 'byte', 'qr'] as const).map((s) => (
+                <Button key={s} variant={own === s ? 'primary' : 'secondary'} onClick={() => choose(use, s)} disabled={busy === use} aria-pressed={own === s}>
+                  {CODE_STYLE_NAMES[s]}
+                </Button>
+              ))}
+            </div>
+          </div>
+        );
+      })}
     </section>
   );
 }

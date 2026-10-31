@@ -687,5 +687,3 @@ export function decodeBytecodeAt(gray: Uint8ClampedArray | Uint8Array, w: number
 
 /** Looks for a Bytecode in a grey picture and returns what it says, or null. */
 export const decodeBytecode = (gray: Uint8ClampedArray | Uint8Array, w: number, h: number): string | null => decodeBytecodeAt(gray, w, h)?.payload ?? null;
-
-export const __debug = { hypotheses, stretchLevels, evidence, readBlocks };

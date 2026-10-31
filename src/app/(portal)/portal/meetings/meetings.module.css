@@ -38,7 +38,14 @@
 .liveCount strong { font-size: 1.5rem; color: var(--pp-ink); }
 .presentBtn { position: absolute; top: 0.7rem; right: 0.7rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.37); background: rgba(var(--pp-ink-rgb), 0.06); color: rgba(var(--pp-ink-rgb), 0.92); font-size: 0.74rem; cursor: pointer; }
 .presentBtn:hover { color: var(--p-accent-text); border-color: rgba(125, 180, 234, 0.5); }
-.presenting { position: fixed; inset: 0; z-index: 3000; justify-content: center; border-radius: 0; border: none; background: var(--pp-card); }
+.presenting { position: fixed; inset: 0; z-index: 3000; justify-content: safe center; overflow-y: auto; padding-top: 4.6rem; padding-bottom: 1.5rem; border-radius: 0; border: none; background: var(--pp-card); }   /* a screen too short for everything scrolls from its top instead of cutting the top off */
+@media (max-height: 860px) and (min-width: 641px) {   /* a laptop or a 720p screen: the same screen, a little smaller so it still fits */
+  .presenting { gap: 0.6rem; padding-top: 4.2rem; }
+  .presenting .qrCanvas { width: min(250px, 30vh) !important; }
+  .presenting .duo .bigCode { font-size: clamp(2.6rem, 5vw, 4.4rem); }
+  .presenting .duo { padding: 0.9rem 1.6rem; }
+  .presenting .screenQuestion p { font-size: clamp(1.2rem, 3.2vw, 2rem); }
+}
 .presenting .bigCode { font-size: clamp(4rem, 22vw, 13rem); }
 .presenting .liveCount { font-size: 1.4rem; }
 .presenting .liveCount strong { font-size: 2.4rem; }
@@ -813,7 +820,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 @media (max-width: 640px) { .stageBar { left: 1rem; top: 1rem; max-width: 55%; } }
 @media (prefers-reduced-motion: reduce) { .arrival { animation: none; } }
 
-@media (max-width: 640px) { .stageBar { position: static; align-items: center; text-align: center; max-width: 100%; padding-top: 2.4rem; } .stageBar h2 { font-size: 1.3rem; } }
+@media (max-width: 640px) { .presenting { padding-top: 0.8rem; } .stageBar { position: static; align-items: center; text-align: center; max-width: 100%; padding-top: 2.4rem; } .stageBar h2 { font-size: 1.3rem; } }
 
 
 .scanProblem { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; max-width: 22rem; padding: 0 1.4rem; text-align: center; color: rgba(255, 255, 255, 0.92); }   /* theme-ok */

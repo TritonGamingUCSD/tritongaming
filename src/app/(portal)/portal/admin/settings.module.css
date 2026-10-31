@@ -11,3 +11,5 @@
 .toggle { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; }
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
 .state { color: rgba(var(--pp-ink-rgb), 0.7); font-size: 0.88rem; }
+.useRow { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; justify-content: space-between; padding-top: 0.6rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
+.useRow span { display: grid; gap: 0.1rem; }

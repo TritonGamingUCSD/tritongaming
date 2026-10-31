@@ -922,7 +922,7 @@ export default function PointsSectionContent({
                   const reward = oneOf(r.reward);
                   return (
                     <button key={r.id} type="button" className={styles.pendingCard} onClick={() => setQrFor(r.id)}>
-                      <CodeIcon size={20} />
+                      <CodeIcon size={20} use="reward" />
                       <span>{reward?.title ?? 'Reward'}</span>
                     </button>
                   );
@@ -1437,7 +1437,7 @@ export default function PointsSectionContent({
           <div className={styles.qrModal} onClick={(e) => e.stopPropagation()}>
             <p className={styles.qrHint}>Show this to an officer at an event</p>
             <div className={styles.qrCanvas}>
-              <PortalCode payload={`r${qrFor.replace(/-/g, '').slice(0, 12)}`} />
+              <PortalCode use="reward" payload={`r${qrFor.replace(/-/g, '').slice(0, 12)}`} />
             </div>
             <Button type="button" onClick={() => setQrFor(null)}>
               Done

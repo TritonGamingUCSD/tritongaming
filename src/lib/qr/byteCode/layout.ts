@@ -146,7 +146,6 @@ STRETCHES.forEach((st, si) => {
     from = Math.floor((st.cells.length - n * BLOCK) / 2);
   for (let b = 0; b < n; b++) ALL_BLOCKS.push(Array.from({ length: BLOCK }, (_, k) => [si, from + b * BLOCK + k] as Cell));
 });
-export const BLOCKS_AVAILABLE = ALL_BLOCKS.length;
 
 // The message is written in two places. Seven of the 15 bytes are the patches' (each bit is one pair of patches on his body, see patchArt.ts: the left one lighter is 1, the right one lighter is 0); the other
 // 8 are written as dashes along his outline, in blocks of 10 cells. The bytes are spread so that losing one place does not take the whole of any part of the message.

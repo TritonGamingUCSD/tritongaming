@@ -4,7 +4,18 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { logAudit } from '@/lib/notifications/audit';
 import { strictUser } from '@/lib/supabase/localAuth';
-import { BANNER_MAX, CODE_STYLE_NAMES, DEFAULT_SETTINGS, loadSiteSettings, type CodeStyle } from '@/lib/portal/siteSettings';
+import {
+  BANNER_MAX,
+  CODE_STYLE_NAMES,
+  CODE_USES,
+  CODE_USE_NAMES,
+  DEFAULT_SETTINGS,
+  codeStyleKey,
+  loadSiteSettings,
+  styleFor,
+  type CodeStyle,
+  type CodeUse,
+} from '@/lib/portal/siteSettings';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +32,8 @@ async function authorize() {
 
 // The site-wide settings (Admin → System → Settings). Admin only; every change is written to the audit log with what it was and what it is now.
 //   GET                                         the settings
-//   POST { setting: 'code_style', value: 'tg' | 'byte' | 'qr' }
+//   POST { setting: 'code_style', value: 'tg' | 'byte' | 'qr' }                          the default for every use
+//   POST { setting: 'code_style', use: 'ticket' | 'meeting' | 'reward', value: 'tg' | 'byte' | 'qr' | 'default' }   one use's own (or back to following the default)
 //   POST { setting: 'banner', on: boolean, text: string, until: 'YYYY-MM-DD' | '' }
 //   POST { setting: 'code_style' | 'banner', reset: true }   back to the default
 export async function GET() {
@@ -37,6 +49,25 @@ export async function POST(request: Request) {
   const before = await loadSiteSettings(auth.svc);
   const save = (rows: { key: string; value: string }[]) => auth.svc.from('team_settings').upsert(rows, { onConflict: 'key' });
 
+  if (b.setting === 'code_style' && CODE_USES.includes(b.use)) {
+    const use: CodeUse = b.use;
+    const next: CodeStyle | 'default' | null = b.reset || b.value === 'default' ? 'default' : b.value === 'tg' || b.value === 'byte' || b.value === 'qr' ? b.value : null;
+    if (!next) return NextResponse.json({ error: 'Choose TGcode, Bytecode, QR code or the default.' }, { status: 400 });
+    const { error } = next === 'default' ? await auth.svc.from('team_settings').delete().eq('key', codeStyleKey(use)) : await save([{ key: codeStyleKey(use), value: next }]);
+    if (error) return NextResponse.json({ error: 'Could not save. Try again.' }, { status: 500 });
+    const after = await loadSiteSettings(auth.svc);
+    if (styleFor(before, use) !== styleFor(after, use) || (before.codeStyles[use] ?? 'default') !== (after.codeStyles[use] ?? 'default'))
+      await logAudit(auth.svc, {
+        actorId: auth.user.id,
+        action: 'update',
+        entityType: 'site setting',
+        entityId: null,
+        summary: `Changed the ${CODE_USE_NAMES[use].toLowerCase()} code from ${CODE_STYLE_NAMES[styleFor(before, use)]} to ${next === 'default' ? `${CODE_STYLE_NAMES[after.codeStyle]} (the default)` : CODE_STYLE_NAMES[next]}`,
+        details: { setting: codeStyleKey(use), from: before.codeStyles[use] ?? 'default', to: next },
+      });
+    return NextResponse.json({ settings: after });
+  }
+
   if (b.setting === 'code_style') {
     const value: CodeStyle | null = b.reset ? DEFAULT_SETTINGS.codeStyle : b.value === 'tg' || b.value === 'byte' || b.value === 'qr' ? b.value : null;
     if (!value) return NextResponse.json({ error: 'Choose TGcode, Bytecode or QR code.' }, { status: 400 });
@@ -48,7 +79,7 @@ export async function POST(request: Request) {
         action: 'update',
         entityType: 'site setting',
         entityId: null,
-        summary: `Changed the code everyone shows from ${CODE_STYLE_NAMES[before.codeStyle]} to ${CODE_STYLE_NAMES[value]}`,
+        summary: `Changed the default code from ${CODE_STYLE_NAMES[before.codeStyle]} to ${CODE_STYLE_NAMES[value]}`,
         details: { setting: 'code_style', from: before.codeStyle, to: value },
       });
     return NextResponse.json({ settings: await loadSiteSettings(auth.svc) });
