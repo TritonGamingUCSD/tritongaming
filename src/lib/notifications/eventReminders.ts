@@ -3,6 +3,8 @@ import { createNotifications } from '@/lib/notifications/notify';
 import { formatPacificDateTime, formatPacificTime, pacificDaysUntil } from '@/lib/core/timezone';
 
 const HOUR = 3600_000;
+// The job runs once a day (9 AM Pacific), so it looks 36 hours ahead: everything tomorrow up to 9 PM is announced the morning before, not only what starts before 9 AM.
+const LOOK_AHEAD_HOURS = 36;
 
 interface TicketRow {
   id: string;
@@ -20,11 +22,11 @@ export function reminderTitle(kind: '24h' | '1h', eventTitle: string, startISO: 
   return `${eventTitle} is ${day} at ${formatPacificTime(startISO)}`;
 }
 
-// Sends an in-app (bell) notification, with a push, once ~24h and once ~1h before an event starts (no email). Per-ticket sent-timestamps make it safe to run as
+// Sends an in-app (bell) notification, with a push, once the day before (up to 36 hours ahead) and once ~1h before an event starts (no email). Per-ticket sent-timestamps make it safe to run as
 // often as you like. (Called by the daily-reminders job, see src/app/api/cron/daily-reminders.)
 export async function sendEventReminders(svc: SupabaseClient, nowDate: Date = new Date()): Promise<{ sent: number; error?: string }> {
   const now = nowDate.getTime();
-  const horizon = new Date(now + 24 * HOUR).toISOString();
+  const horizon = new Date(now + LOOK_AHEAD_HOURS * HOUR).toISOString();
 
   const { data, error } = await svc
     .from('tickets')

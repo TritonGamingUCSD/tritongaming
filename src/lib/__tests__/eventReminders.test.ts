@@ -12,6 +12,9 @@ describe('event reminder headline', () => {
     expect(reminderTitle('24h', 'Game Night', '2026-11-01T16:00:00Z', morning)).toBe('Game Night is tomorrow at 8:00 AM'); // 25h away: clocks go back on Nov 1
     expect(reminderTitle('24h', 'Late One', '2026-11-01T08:00:00Z', morning)).toBe('Late One is tomorrow at 1:00 AM'); // 1 AM Nov 1: 17h away
   });
+  test('an event tomorrow evening, more than 24 hours away, is still tomorrow', () => {
+    expect(reminderTitle('24h', 'Finals Jam', '2026-11-02T03:00:00Z', morning)).toBe('Finals Jam is tomorrow at 7:00 PM'); // 7 PM PST Nov 1, 35h away
+  });
   test('the hour-before reminder keeps its own wording', () => {
     expect(reminderTitle('1h', 'Game Night', '2026-10-31T16:45:00Z', morning)).toBe('Game Night starts within the hour');
   });
