@@ -14,7 +14,7 @@ Code: `src/app/(portal)/portal/meetings`, `src/app/api/meetings`, `src/lib/meeti
 
 ## Teams (TG Members → Team)
 
-Code: `TeamsPanel` in `src/app/(portal)/portal/meetings/MeetingsSectionContent.tsx`, `src/app/api/meetings/groups`, table `meeting_groups`.
+Code: `TeamsPanel` in `src/app/(portal)/portal/meetings/TeamsPanel.tsx`, `src/app/api/meetings/groups`, table `meeting_groups`.
 
 - A team is a name and a list of people (`meeting_groups.member_ids`). It is also what a meeting, plan or event can be sent to, so there is one list, not two.
 - **By team** lists the teams closed (name and size only); “Show who” opens one to reveal its people as removable chips, with an “Add person” box. Searching opens the teams a person is in; **By person** shows each officer, lead and exec with their teams, a “no team yet” filter, and a “+ Add to a team” picker. The view is in the address (`/portal/members/team/people`).
