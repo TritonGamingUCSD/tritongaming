@@ -14,7 +14,7 @@ import SectionTabs from '@/components/ui/SectionTabs';
 import { Eye, KeyRound, LayoutGrid, List, ListOrdered, Moon, Users, UsersRound } from 'lucide-react';
 import BoardOrderManager from './BoardOrderManager';
 import { mergedPortalParams } from '@/lib/portal/portalPath';
-import { TeamsPanel } from '../meetings/MeetingsSectionContent';
+import { TeamsPanel } from '../meetings/TeamsPanel';
 import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import { resolveAvatarUrl, isOrgMember } from '@/lib/members/profile';

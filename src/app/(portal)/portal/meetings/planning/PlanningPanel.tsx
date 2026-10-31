@@ -29,7 +29,8 @@ import {
   type PlanSlots,
   type PlanView,
 } from '@/lib/meetings/meetingPlans';
-import { AudiencePicker, audienceEmpty, audFrom, audPayload, defaultAud, type Aud } from '../MeetingsSectionContent';
+import { AudiencePicker } from '../AudiencePicker';
+import { audienceEmpty, audFrom, audPayload, defaultAud, type Aud } from '../audience';
 import m from '../meetings.module.css';
 import styles from './planning.module.css';
 import AvailabilityGrid from './AvailabilityGrid';

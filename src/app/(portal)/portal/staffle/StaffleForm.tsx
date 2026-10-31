@@ -8,7 +8,7 @@ import Notice from '@/components/ui/Notice';
 import { Field, Input } from '@/components/ui/Field';
 import { Combo } from '../logistics/Combo';
 import { NO_RULES, rulesEmpty, SKIPS, type Rules, type Skip } from '@/lib/staffle/rules';
-import { AudiencePicker } from '../meetings/MeetingsSectionContent';
+import { AudiencePicker } from '../meetings/AudiencePicker';
 import { call, type StaffleView } from './api';
 import styles from './staffle.module.css';
 
