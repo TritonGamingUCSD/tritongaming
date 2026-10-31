@@ -5,7 +5,7 @@ import { getExpectedPeople, occurrenceTimes, seriesRunsOn, type MeetingRow, type
 
 const clock = (iso: string) => formatPacificTime(iso);
 
-interface Item {
+export interface Item {
   key: string;
   kind: 'meeting';
   title: string;
@@ -18,12 +18,8 @@ interface Item {
   skip: Set<string>; // people who shouldn't get it (excused from the meeting, said they can't go)
 }
 
-// "Today at 5:00 PM" reminders for the meetings happening today that haven't started yet, sent to
-// the people they're for. Safe to run as often as you like: reminders_sent remembers who already got which one.
-// (Run it once a morning; run it every 15 minutes with `withinMinutes` set to get "starting soon" reminders instead.)
-export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new Date(), withinMinutes?: number, onlyUsers?: string[]): Promise<{ items: number; sent: number }> {
-  const today = pacificDayKey(now);
-  const until = withinMinutes ? now.getTime() + withinMinutes * 60_000 : Infinity;
+// The meetings to remind about on this day: the day's real meetings plus the occurrences of repeating series nobody has opened yet (virtual ones), each with the people to leave out.
+async function loadItems(svc: SupabaseClient, today: string): Promise<Item[]> {
   const [{ data: seriesData }, { data: meetingRows }] = await Promise.all([
     svc
       .from('meeting_series')
@@ -76,37 +72,49 @@ export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new 
       skip: new Set((standing ?? []).filter((a) => a.series_id === s.id).map((a) => a.user_id as string)),
     });
   }
+  return items;
+}
 
-  let sent = 0,
-    counted = 0;
-  for (const it of items) {
+// The ones still to come, and (with a limit) starting no later than it. Pure.
+export function upcomingItems(items: Item[], now: Date, withinMinutes?: number): Item[] {
+  const until = withinMinutes ? now.getTime() + withinMinutes * 60_000 : Infinity;
+  return items.filter((it) => {
     const t = new Date(it.starts_at).getTime();
-    if (t <= now.getTime() || t > until) continue;
-    counted++;
-    const people = (await getExpectedPeople(svc, { audience: it.audience, invitees: it.invitees, group_ids: it.group_ids })).filter(
-      (p) => !it.skip.has(p.id) && (!onlyUsers || onlyUsers.includes(p.id)),
-    );
-    if (people.length === 0) continue;
-    // Only people who haven't been reminded about this one yet (the insert reports just the new rows).
-    const { data: fresh } = await svc
-      .from('reminders_sent')
-      .upsert(
-        people.map((p) => ({ item_key: it.key, user_id: p.id })),
-        { onConflict: 'item_key,user_id', ignoreDuplicates: true },
-      )
-      .select('user_id');
-    const ids = (fresh ?? []).map((f) => f.user_id as string);
-    if (ids.length === 0) continue;
-    sent += await createNotifications(
-      svc,
-      ids.map((user_id) => ({
-        user_id,
-        type: 'meeting_reminder',
-        title: `${it.title} is today at ${clock(it.starts_at)}`,
-        body: it.location ? `Where: ${it.location}` : null,
-        href: it.href,
-      })),
-    );
-  }
-  return { items: counted, sent };
+    return t > now.getTime() && t <= until;
+  });
+}
+
+// What the reminder says. Pure.
+export function reminderText(it: Pick<Item, 'title' | 'starts_at' | 'location'>): { title: string; body: string | null } {
+  return { title: `${it.title} is today at ${clock(it.starts_at)}`, body: it.location ? `Where: ${it.location}` : null };
+}
+
+// Reminds the people a meeting is for (leaving out the excused and, in a test, everyone but `onlyUsers`), once each: the insert reports only the rows that were new.
+async function remindPeople(svc: SupabaseClient, it: Item, onlyUsers?: string[]): Promise<number> {
+  const people = (await getExpectedPeople(svc, { audience: it.audience, invitees: it.invitees, group_ids: it.group_ids })).filter(
+    (p) => !it.skip.has(p.id) && (!onlyUsers || onlyUsers.includes(p.id)),
+  );
+  if (people.length === 0) return 0;
+  const { data: fresh } = await svc
+    .from('reminders_sent')
+    .upsert(
+      people.map((p) => ({ item_key: it.key, user_id: p.id })),
+      { onConflict: 'item_key,user_id', ignoreDuplicates: true },
+    )
+    .select('user_id');
+  const text = reminderText(it);
+  return createNotifications(
+    svc,
+    (fresh ?? []).map((f) => ({ user_id: f.user_id as string, type: 'meeting_reminder', ...text, href: it.href })),
+  );
+}
+
+// "Today at 5:00 PM" reminders for the meetings happening today that haven't started yet, sent to
+// the people they're for. Safe to run as often as you like: reminders_sent remembers who already got which one.
+// (Run it once a morning; run it every 15 minutes with `withinMinutes` set to get "starting soon" reminders instead.)
+export async function sendMeetingReminders(svc: SupabaseClient, now: Date = new Date(), withinMinutes?: number, onlyUsers?: string[]): Promise<{ items: number; sent: number }> {
+  const items = upcomingItems(await loadItems(svc, pacificDayKey(now)), now, withinMinutes);
+  let sent = 0;
+  for (const it of items) sent += await remindPeople(svc, it, onlyUsers);
+  return { items: items.length, sent };
 }
