@@ -35,7 +35,7 @@ import { PACIFIC_TZ, pacificDaysUntil, pacificToday } from '@/lib/core/timezone'
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { sectionLabel } from '@/lib/portal/sections';
 import { getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
-import type { HubSection } from '@/components/portal/PortalHub';
+import type { HubSection } from '@/components/portal/hubTypes';
 import SignOutButton from '@/components/portal/SignOutButton';
 import OnboardingGuide from '@/components/portal/OnboardingGuide';
 import DashboardClient from './DashboardClient';
