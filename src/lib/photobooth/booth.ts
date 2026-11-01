@@ -13,17 +13,52 @@ export const FILTER_NAMES: Record<Filter, string> = { none: 'Natural', bw: 'Blac
 /** How many photos a layout takes. */
 export const SHOTS: Record<Layout, number> = { single: 1, grid: 4, strip3: 3, strip4: 4 };
 
+/** One sticker on one photo: its centre and width as fractions of the photo, and its turn in degrees. */
+export interface Placement {
+  x: number;
+  y: number;
+  size: number;
+  rotation: number;
+}
+
+/** A sticker of a look. `placements` has an entry for each photo of the strip (up to 4): where it sits on that photo, or null when that photo does not show it (dragged onto a photo from the tray to show it there). */
 export interface Overlay {
   id: string;
   name: string;
   kind: 'frame' | 'sticker';
   image: string;
-  /** A sticker's starting centre and width, as fractions of one photo. */
-  x: number;
-  y: number;
-  size: number;
-  /** Which photos show it: a bit for each (the first photo is the lowest bit). */
-  photos: number;
+  placements: (Placement | null)[];
+}
+
+/** The most photos one picture holds. */
+export const MAX_PHOTOS = 4;
+/** Where a new sticker starts on a photo. */
+export const DEFAULT_PLACEMENT: Placement = { x: 0.5, y: 0.5, size: 0.4, rotation: 0 };
+
+const num = (v: unknown, min: number, max: number, d: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+
+/** One placement from anything a screen might send (null stays null). */
+export function cleanPlacement(v: unknown): Placement | null {
+  if (!v || typeof v !== 'object') return null;
+  const b = v as Record<string, unknown>;
+  return { x: num(b.x, 0, 1, 0.5), y: num(b.y, 0, 1, 0.5), size: num(b.size, 0.05, 1, 0.4), rotation: num(b.rotation, -180, 180, 0) };
+}
+
+/** A sticker's placements: an entry for each of the 4 possible photos (null: that photo does not show it; a new sticker waits in the tray on no photo at all). */
+export function cleanPlacements(v: unknown): (Placement | null)[] {
+  const list = Array.isArray(v) ? v : [];
+  return Array.from({ length: MAX_PHOTOS }, (_, i) => cleanPlacement(list[i]));
+}
+
+/** The placements with photo `i` changed (null takes the sticker off that photo). */
+export function withPlacement(placements: (Placement | null)[], i: number, p: Placement | null): (Placement | null)[] {
+  return cleanPlacements(placements).map((q, k) => (k === i ? p : q));
+}
+
+/** The placements with photo `i`'s placement copied to every one of the layout's `count` photos. */
+export function copyPlacementToAll(placements: (Placement | null)[], i: number, count: number): (Placement | null)[] {
+  const from = placements[i];
+  return from ? cleanPlacements(placements).map((q, k) => (k < count ? { ...from } : q)) : cleanPlacements(placements);
 }
 
 export interface BoothConfig {
@@ -108,15 +143,15 @@ export function cleanBooth(input: unknown, base: BoothConfig = DEFAULT_BOOTH): B
 export const hexToRgb = (hex: string): string => `${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}`;
 
 /** What a look decides about the finished picture (the rest of BoothConfig is the booth's own). */
-export const LOOK_STYLE_KEYS = ['strip_bg', 'text_color', 'footer', 'filter'] as const;
+export const LOOK_STYLE_KEYS = ['layout', 'aspect', 'strip_bg', 'text_color', 'footer', 'filter'] as const;
 export type LookStyle = Pick<BoothConfig, (typeof LOOK_STYLE_KEYS)[number]>;
 export type BoothSettings = Omit<BoothConfig, (typeof LOOK_STYLE_KEYS)[number]>;
 
 /** A booth's full settings split into what the booth keeps and what a look keeps (both brought into range). */
 export function splitConfig(config: BoothConfig): { settings: BoothSettings; style: LookStyle } {
   const full = cleanBooth(config);
-  const { strip_bg, text_color, footer, filter, ...settings } = full;
-  return { settings, style: { strip_bg, text_color, footer, filter } };
+  const { layout, aspect, strip_bg, text_color, footer, filter, ...settings } = full;
+  return { settings, style: { layout, aspect, strip_bg, text_color, footer, filter } };
 }
 
 /** The most looks one booth can offer. */
@@ -125,21 +160,8 @@ export const MAX_LOOKS_PER_BOOTH = 6;
 /** The most stickers one look can have. */
 export const MAX_STICKERS_PER_LOOK = 24;
 
-/** Every photo (a sticker's default). */
-export const ALL_PHOTOS = 255;
-/** Whether a sticker is shown on photo `i` (0-based). */
-export const onPhoto = (s: { photos: number }, i: number): boolean => ((s.photos >> i) & 1) === 1;
-/** A sticker's photos with photo `i` switched on or off, or null when that would leave it on none of the `count` photos. */
-export function togglePhoto(photos: number, i: number, count: number): number | null {
-  const next = photos ^ (1 << i);
-  return (next & ((1 << count) - 1)) === 0 ? null : next;
-}
-
-/** A sticker's starting values, brought into range. */
-export function cleanSticker(b: Record<string, unknown>): Pick<Overlay, 'x' | 'y' | 'size' | 'photos'> {
-  const f = (v: unknown, min: number, max: number, d: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
-  return { x: f(b.x, 0, 1, 0.5), y: f(b.y, 0, 1, 0.3), size: f(b.size, 0.05, 1, 0.3), photos: f(b.photos, 1, ALL_PHOTOS, ALL_PHOTOS) | 0 };
-}
+/** A sticker's placements, brought into range. */
+export const cleanSticker = (b: Record<string, unknown>): Pick<Overlay, 'placements'> => ({ placements: cleanPlacements(b.placements) });
 
 // ── The booth's own frame (drawn over each photo; designed on the booth's setup page, never shared between booths) ──
 export const BORDERS = ['none', 'solid', 'rounded', 'double'] as const;
@@ -314,7 +336,7 @@ export const promptFor = (prompts: string[], i: number): string => (prompts.leng
 /** The URL of a finished picture's page. */
 export const photoLink = (token: string, origin: string): string => `${origin.replace(/\/$/, '')}/photos/${token}`;
 
-/** A sticker's centre, width and turn on one photo, in pixels, from its fractions. */
+/** A sticker's centre and width on one photo, in pixels, from its fractions. */
 export function stickerBox(cell: Rect, s: { x: number; y: number; size: number }): { cx: number; cy: number; w: number } {
   return { cx: cell.x + s.x * cell.w, cy: cell.y + s.y * cell.h, w: s.size * cell.w };
 }

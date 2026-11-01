@@ -12,13 +12,16 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const [{ data: booths }, { data: photos }] = await Promise.all([
-    auth.svc.from('photobooths').select('id, slug, name, layout, created_at').order('created_at', { ascending: false }).limit(200),
+  const [{ data: booths }, { data: photos }, { data: lookRows }] = await Promise.all([
+    auth.svc.from('photobooths').select('id, slug, name, created_at').order('created_at', { ascending: false }).limit(200),
     auth.svc.from('photobooth_photos').select('booth_id').gt('expires_at', new Date().toISOString()).limit(5000),
+    auth.svc.from('photobooth_looks').select('booth_id').limit(2000),
   ]);
   const count = new Map<string, number>();
   for (const p of photos ?? []) count.set(p.booth_id as string, (count.get(p.booth_id as string) ?? 0) + 1);
-  return NextResponse.json({ booths: (booths ?? []).map((b) => ({ ...b, photos: count.get(b.id as string) ?? 0 })) });
+  const looks = new Map<string, number>();
+  for (const l of lookRows ?? []) looks.set(l.booth_id as string, (looks.get(l.booth_id as string) ?? 0) + 1);
+  return NextResponse.json({ booths: (booths ?? []).map((b) => ({ ...b, photos: count.get(b.id as string) ?? 0, looks: looks.get(b.id as string) ?? 1 })) });
 }
 
 export async function POST(request: Request) {

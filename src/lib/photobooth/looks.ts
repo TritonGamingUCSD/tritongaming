@@ -29,7 +29,7 @@ export async function copyLook(
   return {
     id: data.id as string,
     name: opts.name,
-    style: { strip_bg: '#ffffff', text_color: '#011941', footer: '', filter: 'none', ...style } as LookStyle,
+    style: { layout: 'strip3', aspect: 'portrait', strip_bg: '#ffffff', text_color: '#011941', footer: '', filter: 'none', ...style } as LookStyle,
     frame: source ? source.frame : { image: '', spec: null },
     overlays,
   };

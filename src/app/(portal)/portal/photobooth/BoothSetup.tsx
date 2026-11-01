@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Camera, Copy, Frame, Images, LayoutGrid, Plus, MessageSquare, Palette, QrCode, Redo2, Smile, Trash2, Undo2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
@@ -11,20 +11,23 @@ import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { showToast } from '@/lib/ui/toast';
 import {
   DEFAULT_FRAME_SPEC,
+  DEFAULT_PLACEMENT,
   MAX_LOOKS_PER_BOOTH,
   SHOTS,
   cleanBooth,
   splitConfig,
+  withPlacement,
   type BoothConfig,
   type BoothSettings,
   type FrameSpec,
   type Overlay,
+  type Placement,
 } from '@/lib/photobooth/booth';
 import { renderFrame } from '@/lib/photobooth/design';
 import { loadImage } from '@/lib/photobooth/compose';
 import { call, saveFrame, saveStickers, type BoothData, type LookData } from './api';
 import { FramePanel } from './FramePanel';
-import { DownloadsPanel, LookPanel, PhotosPanel, PromptsPanel } from './SettingsPanels';
+import { PhotosPanel, ScreenPanel, SharingPanel, StylePanel } from './SettingsPanels';
 import { PicturesPanel } from './PicturesPanel';
 import { StickersPanel } from './StickersPanel';
 import { StudioCanvas, type Selection } from './StudioCanvas';
@@ -36,14 +39,14 @@ import styles from './photobooth.module.css';
 /** Everything on the studio page that is saved with the Save button and can be undone: the booth's name and settings, and for the look being edited its name, colours, frame and where each sticker sits (a change to a sticker, by its id). */
 type Form = BoothConfig & { name: string; lookName: string; frame: FrameSpec | null; edits: Record<string, Partial<Overlay>>; stamp: number };
 
-const TOOLS: { id: StudioTool; label: string; icon: React.ReactNode }[] = [
-  { id: 'photos', label: 'Photos', icon: <Images size={20} aria-hidden="true" /> },
-  { id: 'frame', label: 'Frame', icon: <Frame size={20} aria-hidden="true" /> },
-  { id: 'stickers', label: 'Stickers', icon: <Smile size={20} aria-hidden="true" /> },
-  { id: 'look', label: 'Look', icon: <Palette size={20} aria-hidden="true" /> },
-  { id: 'words', label: 'Prompts', icon: <MessageSquare size={20} aria-hidden="true" /> },
-  { id: 'downloads', label: 'Downloads', icon: <QrCode size={20} aria-hidden="true" /> },
-  { id: 'pictures', label: 'Pictures', icon: <LayoutGrid size={20} aria-hidden="true" /> },
+const TOOLS: { id: StudioTool; label: string; icon: React.ReactNode; group: string }[] = [
+  { id: 'frame', label: 'Frame', icon: <Frame size={20} aria-hidden="true" />, group: 'This Look' },
+  { id: 'stickers', label: 'Stickers', icon: <Smile size={20} aria-hidden="true" />, group: 'This Look' },
+  { id: 'style', label: 'Style', icon: <Palette size={20} aria-hidden="true" />, group: 'This Look' },
+  { id: 'photos', label: 'Photos', icon: <Images size={20} aria-hidden="true" />, group: 'Whole Booth' },
+  { id: 'screen', label: 'Screen', icon: <MessageSquare size={20} aria-hidden="true" />, group: 'Whole Booth' },
+  { id: 'sharing', label: 'Sharing', icon: <QrCode size={20} aria-hidden="true" />, group: 'Whole Booth' },
+  { id: 'pictures', label: 'Pictures', icon: <LayoutGrid size={20} aria-hidden="true" />, group: 'Guests' },
 ];
 
 /** True when the keys being typed belong to a box (so Undo is the box's own). */
@@ -75,8 +78,8 @@ export function BoothSetup({
 }) {
   const [data, setData] = useState<BoothData | null>(null);
   const [looks, setLooks] = useState<LookData[]>([]); // the booth's looks as the server has them (adding and removing a look or a sticker happen at once)
-  const [photo, setPhoto] = useState<number | null>(null); // which photo of the strip the stickers tool is showing (null: all of them)
   const look = looks.find((l) => lookKey && l.id.startsWith(lookKey)) ?? looks[0];
+  const lookId = look?.id;
   const h = useHistory<Form | null>(null);
   const form = h.value;
   const logos = useRef(new Map<string, Blob>()); // logos picked but not saved yet, by their temporary address
@@ -136,12 +139,49 @@ export function BoothSetup({
     return () => window.removeEventListener('keydown', onKey);
   }, [h]);
 
+  // Delete (or Backspace) takes the selected sticker off the photo it is selected on.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.key !== 'Delete' && e.key !== 'Backspace') || typing(e.target) || sel?.kind !== 'sticker' || !h.value) return;
+      const o = (looks.find((l) => l.id === lookId)?.overlays ?? []).find((k) => k.id === sel.id);
+      if (!o) return;
+      e.preventDefault();
+      const current = { ...o, ...h.value.edits[o.id] };
+      h.set({ ...h.value, edits: { ...h.value.edits, [o.id]: { ...h.value.edits[o.id], placements: withPlacement(current.placements, sel.photo, null) } } });
+      setSel(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [h, sel, looks, lookId]);
+
   if (!form || !data || !look) return error ? <Notice tone="error">{error}</Notice> : <Loading label="Loading the booth…" />;
   const set = (patch: Partial<Form>, key?: string) => h.set({ ...form, ...patch }, key);
   const setFrame = (patch: Partial<FrameSpec> | null, key?: string) => set({ frame: patch === null ? null : { ...(form.frame ?? DEFAULT_FRAME_SPEC), ...patch } }, key);
   const dragFrame = (patch: Partial<FrameSpec>) => form.frame && h.drag({ ...form, frame: { ...form.frame, ...patch } });
   const editSticker = (id: string, patch: Partial<Overlay>, key?: string) => h.set({ ...form, edits: { ...form.edits, [id]: { ...form.edits[id], ...patch } } }, key);
-  const dragSticker = (id: string, patch: Partial<Overlay>) => h.drag({ ...form, edits: { ...form.edits, [id]: { ...form.edits[id], ...patch } } });
+  /** One sticker's place, size or turn on one photo (a drag is one undo step). */
+  const dragSticker = (id: string, photo: number, patch: Partial<Placement>) => {
+    const sticker = stickers.find((o) => o.id === id);
+    const cur = sticker?.placements[photo];
+    if (!sticker || !cur) return;
+    const placements = withPlacement(sticker.placements, photo, { ...cur, ...patch });
+    h.drag({ ...form, edits: { ...form.edits, [id]: { ...form.edits[id], placements } } });
+  };
+  /** A sticker from the tray was dropped on a photo: it shows there, at the drop point (the size and turn it has on another photo, or the usual). */
+  const placeSticker = (id: string, photo: number, x: number, y: number) => {
+    const o = stickers.find((k) => k.id === id);
+    if (!o) return;
+    const base = o.placements[photo] ?? o.placements.find(Boolean) ?? DEFAULT_PLACEMENT;
+    editSticker(id, { placements: withPlacement(o.placements, photo, { ...base, x, y }) });
+    setSel({ kind: 'sticker', id, photo });
+    onTool('stickers');
+  };
+  const removeFrom = (id: string, photo: number) => {
+    const o = stickers.find((k) => k.id === id);
+    if (!o) return;
+    editSticker(id, { placements: withPlacement(o.placements, photo, null) });
+    setSel(null);
+  };
   const select = (s: Selection) => {
     setSel(s);
     if (s?.kind === 'sticker') onTool('stickers');
@@ -212,12 +252,12 @@ export function BoothSetup({
     // The frame is drawn again whenever it, the photo's shape or the logo changed (cheap, and always right), and removed when it is switched off.
     const before = look.frame.spec;
     const logoBlob = frame?.logoUrl ? (logos.current.get(frame.logoUrl) ?? null) : null;
-    const frameChanged = JSON.stringify(frame) !== JSON.stringify(before) || data.config.aspect !== settings.aspect || !!logoBlob;
+    const frameChanged = JSON.stringify(frame) !== JSON.stringify(before) || look.style.aspect !== style.aspect || !!logoBlob;
     let nextFrame = look.frame;
     if (frameChanged) {
       if (frame) {
         const img = frame.logoUrl ? await loadImage(frame.logoUrl).catch(() => null) : null;
-        const blob = await renderFrame({ ...frame, aspect: settings.aspect, logo: img });
+        const blob = await renderFrame({ ...frame, aspect: style.aspect, logo: img });
         if (!blob) return fail('This browser could not draw the frame. Try Chrome or Safari.');
         const f = await saveFrame(look.id, { frame: blob, spec: frame, logo: logoBlob });
         if (!f.ok) return fail(f.error);
@@ -228,24 +268,9 @@ export function BoothSetup({
         nextFrame = { image: '', spec: null };
       }
     }
-    // The frames are drawn for the shape of the photos, so when the shape changed every other look's frame is drawn again too.
-    const redrawn = new Map<string, LookData['frame']>();
-    if (data.config.aspect !== settings.aspect) {
-      for (const o of looks) {
-        if (o.id === look.id || !o.frame.spec) continue;
-        const img = o.frame.spec.logoUrl ? await loadImage(o.frame.spec.logoUrl).catch(() => null) : null;
-        const blob = await renderFrame({ ...o.frame.spec, aspect: settings.aspect, logo: img });
-        const f = blob ? await saveFrame(o.id, { frame: blob, spec: o.frame.spec }) : null;
-        if (f?.ok) redrawn.set(o.id, f.frame);
-      }
-    }
     logos.current.clear();
     setSaving(false);
-    setLooks((all) =>
-      all.map((x) =>
-        x.id === look.id ? { ...x, name: l.data.name, style: l.data.style, frame: nextFrame, overlays: nextOverlays } : redrawn.has(x.id) ? { ...x, frame: redrawn.get(x.id)! } : x,
-      ),
-    );
+    setLooks((all) => all.map((x) => (x.id === look.id ? { ...x, name: l.data.name, style: l.data.style, frame: nextFrame, overlays: nextOverlays } : x)));
     setData({ ...data, config: r.data.config, booth: { ...data.booth, name: r.data.booth.name } });
     showToast('Booth saved');
   };
@@ -270,7 +295,8 @@ export function BoothSetup({
         photos={SHOTS[form.layout]}
         stickers={stickers}
         selectedId={sel?.kind === 'sticker' ? sel.id : null}
-        onSelect={(id) => setSel(id ? { kind: 'sticker', id } : null)}
+        selectedPhoto={sel?.kind === 'sticker' ? sel.photo : 0}
+        onSelect={(id, photo = 0) => setSel(id ? { kind: 'sticker', id, photo } : null)}
         onChange={editSticker}
         onAdded={(o) => setLooks((all) => all.map((x) => (x.id === look.id ? { ...x, overlays: [...x.overlays, o] } : x)))}
         onRemoved={(id) => {
@@ -279,8 +305,8 @@ export function BoothSetup({
         }}
       />
     ),
-    look: (
-      <LookPanel
+    style: (
+      <StylePanel
         config={config}
         set={set}
         lookName={form.lookName}
@@ -288,9 +314,9 @@ export function BoothSetup({
         onDelete={looks.length > 1 ? () => void removeLook() : undefined}
       />
     ),
-    words: <PromptsPanel config={config} set={set} />,
+    screen: <ScreenPanel config={config} set={set} />,
     pictures: <PicturesPanel booth={booth} />,
-    downloads: <DownloadsPanel config={config} set={set} galleryToken={data.booth.gallery_token} />,
+    sharing: <SharingPanel config={config} set={set} galleryToken={data.booth.gallery_token} />,
   }[tool];
 
   return (
@@ -348,17 +374,19 @@ export function BoothSetup({
       </div>
       <div className={`${styles.studioBody} ${tool === 'pictures' ? styles.studioWide : ''}`}>
         <nav className={styles.rail} aria-label="Tools">
-          {TOOLS.map((t) => (
-            <button
-              key={t.id}
-              type="button"
-              className={`${styles.railBtn} ${tool === t.id ? styles.railOn : ''}`}
-              aria-current={tool === t.id ? 'page' : undefined}
-              onClick={() => onTool(t.id)}
-            >
-              {t.icon}
-              <span>{t.label}</span>
-            </button>
+          {TOOLS.map((t, i) => (
+            <Fragment key={t.id}>
+              {TOOLS[i - 1]?.group !== t.group && <span className={styles.railGroup}>{t.group}</span>}
+              <button
+                type="button"
+                className={`${styles.railBtn} ${tool === t.id ? styles.railOn : ''}`}
+                aria-current={tool === t.id ? 'page' : undefined}
+                onClick={() => onTool(t.id)}
+              >
+                {t.icon}
+                <span>{t.label}</span>
+              </button>
+            </Fragment>
           ))}
         </nav>
         <section className={styles.toolPanel} aria-label={TOOLS.find((t) => t.id === tool)?.label}>
@@ -367,32 +395,18 @@ export function BoothSetup({
         </section>
         {tool !== 'pictures' && (
           <div className={styles.studioStage}>
-            {tool === 'stickers' && SHOTS[form.layout] > 1 && (
-              <div className={styles.photoSwitch} role="group" aria-label="Photo to show">
-                {[null, ...Array.from({ length: SHOTS[form.layout] }, (_, i) => i)].map((n) => (
-                  <button
-                    key={n ?? 'all'}
-                    type="button"
-                    className={`${styles.photoChip} ${photo === n ? styles.photoChipOn : ''}`}
-                    aria-pressed={photo === n}
-                    onClick={() => setPhoto(n)}
-                  >
-                    {n === null ? 'All' : `Photo ${n + 1}`}
-                  </button>
-                ))}
-              </div>
-            )}
             <StudioCanvas
               config={config}
               frame={form.frame}
               drawing={drawing}
               logoRatio={logoRatio}
               stickers={stickers}
-              photo={tool === 'stickers' ? photo : null}
               selected={sel}
               onSelect={select}
               onFrame={dragFrame}
               onSticker={dragSticker}
+              onPlace={placeSticker}
+              onRemoveFrom={removeFrom}
               onDrop={h.endDrag}
             />
           </div>

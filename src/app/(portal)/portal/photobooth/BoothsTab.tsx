@@ -5,7 +5,6 @@ import { Camera, Copy, Plus, Settings2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
-import { LAYOUT_NAMES, type Layout } from '@/lib/photobooth/booth';
 import { call, type BoothRow } from './api';
 import styles from './photobooth.module.css';
 
@@ -47,7 +46,7 @@ export function BoothsTab({ onNew, onOpen, onRun }: { onNew: () => void; onOpen:
               <div className={styles.rowMain}>
                 <strong>{b.name}</strong>
                 <span className={styles.meta}>
-                  {LAYOUT_NAMES[b.layout as Layout] ?? b.layout}
+                  {b.looks} look{b.looks === 1 ? '' : 's'}
                   {b.photos > 0 ? ` · ${b.photos} photo${b.photos === 1 ? '' : 's'} waiting to be downloaded` : ''}
                 </span>
               </div>

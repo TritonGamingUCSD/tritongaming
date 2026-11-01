@@ -1,4 +1,4 @@
-import type { BoothSettings, FrameSpec, LookStyle, Overlay } from '@/lib/photobooth/booth';
+import type { BoothSettings, FrameSpec, LookStyle, Overlay, Placement } from '@/lib/photobooth/booth';
 
 import { call } from '@/lib/ui/apiCall';
 
@@ -8,7 +8,7 @@ export interface BoothRow {
   id: string;
   slug: string;
   name: string;
-  layout: string;
+  looks: number;
   created_at: string;
   photos: number;
 }
@@ -31,13 +31,13 @@ export async function uploadSticker(
   opts: {
     name: string;
     blob: Blob;
-    sticker?: { x: number; y: number; size: number; photos: number };
+    sticker?: { placements: (Placement | null)[] };
   },
 ): Promise<{ ok: true; overlay: Overlay } | { ok: false; error: string }> {
   const form = new FormData();
   form.append('name', opts.name);
   form.append('file', new File([opts.blob], 'sticker.webp', { type: 'image/webp' }));
-  for (const [k, v] of Object.entries(opts.sticker ?? {})) form.append(k, String(v));
+  if (opts.sticker) form.append('placements', JSON.stringify(opts.sticker.placements));
   const res = await fetch(`/api/photobooth/looks/${look}/stickers`, { method: 'POST', body: form, cache: 'no-store' }).catch(() => null);
   const json = res ? await res.json().catch(() => ({})) : {};
   return res?.ok ? { ok: true, overlay: json.overlay as Overlay } : { ok: false, error: json.error ?? 'Couldn’t reach the server.' };

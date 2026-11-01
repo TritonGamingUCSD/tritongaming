@@ -11,8 +11,9 @@ import {
   cleanFrameSpec,
   frameLayout,
   cleanSticker,
-  onPhoto,
-  togglePhoto,
+  cleanPlacements,
+  copyPlacementToAll,
+  withPlacement,
   composition,
   expiresAt,
   photoLink,
@@ -52,9 +53,14 @@ describe('booth settings', () => {
     expect(cleanBooth({ prompts: Array(20).fill('a') }).prompts).toHaveLength(6);
   });
   test('a sticker is kept inside its limits', () => {
-    expect(cleanSticker({ x: 3, y: -1, size: 0 })).toEqual({ x: 1, y: 0, size: 0.05, photos: 255 });
-    expect(cleanSticker({ photos: 5 }).photos).toBe(5);
-    expect(cleanSticker({ photos: 0 }).photos).toBe(1); // (a sticker on no photo would never be seen)
+    const p = cleanSticker({ placements: [{ x: 3, y: -1, size: 0, rotation: 400 }] }).placements;
+    expect(p[0]).toEqual({ x: 1, y: 0, size: 0.05, rotation: 180 });
+    expect(p).toHaveLength(4);
+    expect(p.slice(1)).toEqual([null, null, null]);
+  });
+  test('a new sticker waits on no photo', () => {
+    expect(cleanSticker({ placements: [null, null] }).placements).toEqual([null, null, null, null]);
+    expect(cleanSticker({}).placements).toEqual([null, null, null, null]);
   });
 });
 
@@ -211,17 +217,24 @@ describe('animated strip frames', () => {
   });
 });
 
-describe('stickers on some photos', () => {
-  test('a sticker shows on the photos whose bit is set', () => {
-    expect([0, 1, 2].map((i) => onPhoto({ photos: 5 }, i))).toEqual([true, false, true]);
+describe('stickers on each photo', () => {
+  const at = (x: number) => ({ x, y: 0.5, size: 0.4, rotation: 0 });
+  test('each photo keeps its own place', () => {
+    const p = withPlacement([at(0.2), at(0.2), null, null], 1, at(0.8));
+    expect(p[0]?.x).toBe(0.2);
+    expect(p[1]?.x).toBe(0.8);
   });
-  test('switching a photo off and on', () => {
-    expect(togglePhoto(255, 1, 3)).toBe(253);
-    expect(togglePhoto(253, 1, 3)).toBe(255);
+  test('a photo can be left off', () => {
+    expect(withPlacement([at(0.2), at(0.2), null, null], 1, null)[1]).toBeNull();
+    expect(withPlacement([at(0.2), null, null, null], 0, null).every((q) => q === null)).toBe(true);
   });
-  test('the last photo cannot be switched off', () => {
-    expect(togglePhoto(1, 0, 3)).toBeNull();
-    expect(togglePhoto(249, 0, 3)).toBeNull(); // (bits beyond this layout's photos do not count)
+  test("one photo's place can be copied to all the layout's photos", () => {
+    const p = copyPlacementToAll([at(0.2), at(0.7), null, null], 1, 3);
+    expect(p.map((q) => q?.x)).toEqual([0.7, 0.7, 0.7, undefined]);
+  });
+  test('placements are cleaned to 4 entries', () => {
+    expect(cleanPlacements([at(0.1)])).toHaveLength(4);
+    expect(cleanPlacements('nonsense')).toEqual([null, null, null, null]);
   });
 });
 

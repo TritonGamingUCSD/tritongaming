@@ -15,9 +15,40 @@ interface Props {
   set: (patch: Partial<BoothConfig>, key?: string) => void;
 }
 
+/** Taking the photos: the countdown, the message before each shot and the sounds. Every look shares them. */
 export function PhotosPanel({ config, set }: Props) {
   return (
     <div className={styles.tools}>
+      <Field label="Countdown (seconds)">
+        <NumberInput min={1} max={10} value={config.countdown} onChange={(e) => set({ countdown: Number(e.target.value) }, 'countdown')} />
+      </Field>
+      <Field label="A message before each shot" hint="One per line, in order (up to 6). The last one repeats if there are more shots.">
+        <Textarea
+          rows={5}
+          value={config.prompts.join('\n')}
+          onChange={(e) => set({ prompts: e.target.value.split('\n').slice(0, 6) }, 'prompts')}
+          onBlur={() => set({ prompts: config.prompts.map((p) => p.trim()).filter(Boolean) })}
+          placeholder={'Smile!\nNow something silly!\nLast one: your best pose!'}
+        />
+      </Field>
+      <label className={styles.check}>
+        <input type="checkbox" checked={config.sounds} onChange={(e) => set({ sounds: e.target.checked })} /> Play sounds (a rising countdown, a camera click, a chime when the
+        strip is ready)
+      </label>
+      <label className={styles.check}>
+        <input type="checkbox" checked={config.flash} onChange={(e) => set({ flash: e.target.checked })} /> Flash the screen white at each shot
+      </label>
+    </div>
+  );
+}
+
+/** The look being edited: its name, its colour filter, the words under its photos and the colours of its strip. */
+export function StylePanel({ config, set, lookName, onLookName, onDelete }: Props & { lookName: string; onLookName: (n: string) => void; onDelete?: () => void }) {
+  return (
+    <div className={styles.tools}>
+      <Field label="Look name" hint="Guests see it when they pick a look">
+        <Input value={lookName} maxLength={40} onChange={(e) => onLookName(e.target.value)} />
+      </Field>
       <div className={styles.choices} role="radiogroup" aria-label="Layout">
         {LAYOUTS.map((l) => (
           <label key={l} className={`${styles.choice} ${config.layout === l ? styles.on : ''}`}>
@@ -36,25 +67,6 @@ export function PhotosPanel({ config, set }: Props) {
             </option>
           ))}
         </select>
-      </Field>
-      <Field label="Countdown (seconds)">
-        <NumberInput min={1} max={10} value={config.countdown} onChange={(e) => set({ countdown: Number(e.target.value) }, 'countdown')} />
-      </Field>
-    </div>
-  );
-}
-
-export function LookPanel({ config, set, lookName, onLookName, onDelete }: Props & { lookName: string; onLookName: (n: string) => void; onDelete?: () => void }) {
-  return (
-    <div className={styles.tools}>
-      <Field label="Look name" hint="Guests see it when they pick a look">
-        <Input value={lookName} maxLength={40} onChange={(e) => onLookName(e.target.value)} />
-      </Field>
-      <Field label="Welcome title" hint="Every look">
-        <Input value={config.welcome_title} maxLength={60} onChange={(e) => set({ welcome_title: e.target.value }, 'welcome-title')} />
-      </Field>
-      <Field label="Welcome text">
-        <Input value={config.welcome_text} maxLength={120} onChange={(e) => set({ welcome_text: e.target.value }, 'welcome-text')} />
       </Field>
       <Field label="Colour filter">
         <select className={styles.select} value={config.filter} onChange={(e) => set({ filter: e.target.value as BoothConfig['filter'] })}>
@@ -76,9 +88,28 @@ export function LookPanel({ config, set, lookName, onLookName, onDelete }: Props
           <ColorInput value={config.text_color} onChange={(e) => set({ text_color: e.target.value }, 'text-colour')} aria-label="Text colour" />
         </Field>
       </div>
+      {onDelete && (
+        <Button size="sm" variant="secondary" onClick={onDelete}>
+          <Trash2 size={15} aria-hidden="true" /> Delete This Look
+        </Button>
+      )}
+    </div>
+  );
+}
+
+/** The full-screen booth: its welcome words and its colours. Every look shares them. */
+export function ScreenPanel({ config, set }: Props) {
+  return (
+    <div className={styles.tools}>
+      <Field label="Welcome title">
+        <Input value={config.welcome_title} maxLength={60} onChange={(e) => set({ welcome_title: e.target.value }, 'welcome-title')} />
+      </Field>
+      <Field label="Welcome text">
+        <Input value={config.welcome_text} maxLength={120} onChange={(e) => set({ welcome_text: e.target.value }, 'welcome-text')} />
+      </Field>
       <fieldset className={styles.group}>
-        <legend>Host Screen (Every Look)</legend>
-        <p className={styles.hint}>The colours of the full-screen booth, to match the event. Empty means the website&rsquo;s own colours.</p>
+        <legend>Colours</legend>
+        <p className={styles.hint}>To match the event. Empty means the website&rsquo;s own colours.</p>
         <div className={styles.colors}>
           <Field label="Background">
             <ColorInput value={config.screen_bg || '#e9e6df'} onChange={(e) => set({ screen_bg: e.target.value }, 'screen-bg')} aria-label="Host screen background colour" />
@@ -96,38 +127,12 @@ export function LookPanel({ config, set, lookName, onLookName, onDelete }: Props
           </Button>
         )}
       </fieldset>
-      {onDelete && (
-        <Button size="sm" variant="secondary" onClick={onDelete}>
-          <Trash2 size={15} aria-hidden="true" /> Delete This Look
-        </Button>
-      )}
     </div>
   );
 }
 
-export function PromptsPanel({ config, set }: Props) {
-  return (
-    <div className={styles.tools}>
-      <Field label="A message before each shot" hint="One per line, in order (up to 6). The last one repeats if there are more shots.">
-        <Textarea
-          rows={5}
-          value={config.prompts.join('\n')}
-          onChange={(e) => set({ prompts: e.target.value.split('\n').slice(0, 6) }, 'prompts')}
-          onBlur={() => set({ prompts: config.prompts.map((p) => p.trim()).filter(Boolean) })}
-          placeholder={'Smile!\nNow something silly!\nLast one: your best pose!'}
-        />
-      </Field>
-      <label className={styles.check}>
-        <input type="checkbox" checked={config.sounds} onChange={(e) => set({ sounds: e.target.checked })} /> Play the countdown beeps and the shutter sound
-      </label>
-      <label className={styles.check}>
-        <input type="checkbox" checked={config.flash} onChange={(e) => set({ flash: e.target.checked })} /> Flash the screen white at each shot
-      </label>
-    </div>
-  );
-}
-
-export function DownloadsPanel({ config, set, galleryToken }: Props & { galleryToken: string }) {
+/** How guests get their pictures: how long the QR code stays, how long pictures are kept and the event gallery. */
+export function SharingPanel({ config, set, galleryToken }: Props & { galleryToken: string }) {
   const link = typeof window === 'undefined' ? '' : `${window.location.origin}/gallery/${galleryToken}`;
   return (
     <div className={styles.tools}>
@@ -155,6 +160,9 @@ export function DownloadsPanel({ config, set, galleryToken }: Props & { galleryT
           </Button>
           <a className={styles.linkBtn} href={link} target="_blank" rel="noreferrer">
             Open The Gallery
+          </a>
+          <a className={styles.linkBtn} href={`${link}?wall=1`} target="_blank" rel="noreferrer">
+            Open The Wall (For A Big Screen)
           </a>
         </div>
       </fieldset>

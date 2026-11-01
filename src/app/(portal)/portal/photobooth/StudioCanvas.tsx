@@ -1,28 +1,29 @@
 'use client';
 
-import { useRef } from 'react';
-import { cellRatio, composition, frameLayout, onPhoto, type Aspect, type BoothConfig, type FrameSpec, type Overlay } from '@/lib/photobooth/booth';
+import { useRef, useState } from 'react';
+import { cellRatio, composition, frameLayout, type Aspect, type BoothConfig, type FrameSpec, type Overlay, type Placement } from '@/lib/photobooth/booth';
 import { cellSize } from '@/lib/photobooth/booth';
 import styles from './photobooth.module.css';
 
-/** What is selected on the canvas: the frame itself, a line of words, the logo or one sticker (by id). */
-export type Selection = { kind: 'frame' | 'top' | 'bottom' | 'logo' } | { kind: 'sticker'; id: string } | null;
+/** What is selected on the canvas: the frame itself, a line of words, the logo or one sticker on one photo (by id and photo, 0-based). */
+export type Selection = { kind: 'frame' | 'top' | 'bottom' | 'logo' } | { kind: 'sticker'; id: string; photo: number } | null;
 
 const clamp = (n: number, min = 0, max = 1) => Math.min(max, Math.max(min, n));
 
-// The finished picture, big, in the middle of the studio, and everything on it can be touched: drag the logo or a line of words or a sticker, pull the corner to make it bigger, click the border to edit the frame. Only the first photo is
-// live; the others show the same frame so you see the whole strip. The edits come out as small patches (the owner keeps the history); `onDrop` is the end of a move (the owner makes the whole move one undo step).
+// The finished picture, big, in the middle of the studio, and everything on it can be touched: drag the logo or a line of words (on the first photo: the frame is the same on every photo), drag any sticker on any photo, pull its corner to
+// make it bigger, turn it with the knob above it. Every photo has its own place for each sticker. The edits come out as small patches (the owner keeps the history); `onDrop` is the end of a move (the owner makes the whole move one undo step).
 export function StudioCanvas({
   config,
   frame,
   drawing,
   logoRatio,
   stickers,
-  photo,
   selected,
   onSelect,
   onFrame,
   onSticker,
+  onPlace,
+  onRemoveFrom,
   onDrop,
 }: {
   config: BoothConfig;
@@ -32,31 +33,56 @@ export function StudioCanvas({
   /** The logo's height ÷ width, or null before it has loaded. */
   logoRatio: number | null;
   stickers: Overlay[];
-  /** The photo being edited (0-based; null: the first, showing every sticker). The others show what each photo has. */
-  photo: number | null;
   selected: Selection;
   onSelect: (s: Selection) => void;
   onFrame: (patch: Partial<FrameSpec>) => void;
-  onSticker: (id: string, patch: Partial<Overlay>) => void;
+  onSticker: (id: string, photo: number, patch: Partial<Placement>) => void;
+  /** A sticker from the tray was dropped on a photo at (x, y) (fractions of the photo). */
+  onPlace: (id: string, photo: number, x: number, y: number) => void;
+  /** A sticker was dragged off a photo (it no longer shows there). */
+  onRemoveFrom: (id: string, photo: number) => void;
   onDrop: () => void;
 }) {
   const comp = composition(config.layout, config.aspect, !!config.footer.trim());
   const pct = (n: number, of: number) => `${(n / of) * 100}%`;
-  const cell = useRef<HTMLDivElement>(null);
-  const move = useRef<((x: number, y: number) => void) | null>(null);
+  const cells = useRef<(HTMLDivElement | null)[]>([]);
+  const drag = useRef<{ cell: number; sel: Selection; how: (x: number, y: number, rect: DOMRect) => void; removable: boolean } | null>(null);
+  const strip = useRef<HTMLDivElement>(null);
+  const [out, setOut] = useState(false); // (a sticker is being dragged off the picture: let go and it leaves that photo)
   const { w: cw, h: ch } = cellSize(config.aspect);
-  const live = photo ?? 0;
   const lay = frame ? frameLayout(frame, cw, ch, logoRatio) : null;
 
-  const at = (e: React.PointerEvent) => {
-    const r = cell.current!.getBoundingClientRect();
-    return { x: clamp((e.clientX - r.left) / r.width), y: clamp((e.clientY - r.top) / r.height) };
-  };
-  const grab = (e: React.PointerEvent, sel: Selection, how: (x: number, y: number) => void) => {
+  const grab = (e: React.PointerEvent, cell: number, sel: Selection, how: (x: number, y: number, rect: DOMRect) => void, removable = false) => {
     e.stopPropagation();
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     onSelect(sel);
-    move.current = how;
+    drag.current = { cell, sel, how, removable };
+  };
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    const el = d && cells.current[d.cell];
+    if (!d || !el) return;
+    const r = el.getBoundingClientRect();
+    d.how(clamp((e.clientX - r.left) / r.width), clamp((e.clientY - r.top) / r.height), r);
+    const sr = strip.current?.getBoundingClientRect();
+    setOut(!!sr && d.removable && d.sel?.kind === 'sticker' && (e.clientX < sr.left - 12 || e.clientX > sr.right + 12 || e.clientY < sr.top - 12 || e.clientY > sr.bottom + 12));
+  };
+  const onUp = () => {
+    const d = drag.current;
+    if (d) {
+      onDrop();
+      if (out && d.removable && d.sel?.kind === 'sticker') onRemoveFrom(d.sel.id, d.sel.photo);
+    }
+    drag.current = null;
+    setOut(false);
+  };
+  const drop = (e: React.DragEvent, i: number) => {
+    const id = e.dataTransfer.getData('text/sticker');
+    const el = cells.current[i];
+    if (!id || !el) return;
+    e.preventDefault();
+    const r = el.getBoundingClientRect();
+    onPlace(id, i, clamp((e.clientX - r.left) / r.width), clamp((e.clientY - r.top) / r.height));
   };
   const box = (cx: number, cy: number, w: number, h: number) => ({
     left: `${((cx - w / 2) / cw) * 100}%`,
@@ -69,16 +95,22 @@ export function StudioCanvas({
   return (
     <div className={styles.canvas}>
       <div
+        ref={strip}
         className={styles.strip}
         style={{ aspectRatio: `${comp.width} / ${comp.height}`, ['--ratio' as string]: comp.width / comp.height, background: config.strip_bg }}
         role="img"
         aria-label="The finished picture; drag things on it to move them"
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
       >
         {comp.cells.map((c, i) => (
           <div
             key={i}
-            ref={i === live ? cell : undefined}
-            className={`${styles.stripCell} ${i === live ? styles.stripLive : ''}`}
+            ref={(el) => {
+              cells.current[i] = el;
+            }}
+            className={`${styles.stripCell} ${styles.stripLive}`}
             style={{
               left: pct(c.x, comp.width),
               top: pct(c.y, comp.height),
@@ -86,43 +118,22 @@ export function StudioCanvas({
               height: pct(c.h, comp.height),
               aspectRatio: String(cellRatio(config.aspect as Aspect)),
             }}
-            onPointerDown={i === live ? () => onSelect({ kind: 'frame' }) : undefined}
-            onPointerMove={i === live ? (e) => move.current && move.current(at(e).x, at(e).y) : undefined}
-            onPointerUp={
-              i === live
-                ? () => {
-                    if (move.current) onDrop();
-                    move.current = null;
-                  }
-                : undefined
-            }
-            onPointerCancel={i === live ? () => ((move.current = null), onDrop()) : undefined}
+            onPointerDown={() => onSelect({ kind: 'frame' })}
+            onDragOver={(e) => e.dataTransfer.types.includes('text/sticker') && e.preventDefault()}
+            onDrop={(e) => drop(e, i)}
           >
             {drawing && (
               // eslint-disable-next-line @next/next/no-img-element
               <img className={styles.stripFrame} src={drawing} alt="" draggable={false} />
             )}
-            {stickers.map((s) =>
-              i === live || !onPhoto(s, i) ? null : (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  key={s.id}
-                  className={styles.stripSticker}
-                  src={s.image}
-                  alt=""
-                  draggable={false}
-                  style={{ left: `${s.x * 100}%`, top: `${s.y * 100}%`, width: `${s.size * 100}%` }}
-                />
-              ),
-            )}
-            {i === live && (
+            {i === 0 && (
               <>
                 {lay?.top && (
                   <div
                     className={`${styles.handle} ${is('top') ? styles.handleOn : ''}`}
                     style={box(lay.top.cx, lay.top.cy, lay.top.w, lay.top.h)}
                     title="Drag the words"
-                    onPointerDown={(e) => grab(e, { kind: 'top' }, (x, y) => onFrame({ topX: x, topY: y }))}
+                    onPointerDown={(e) => grab(e, i, { kind: 'top' }, (x, y) => onFrame({ topX: x, topY: y }))}
                   />
                 )}
                 {lay?.bottom && (
@@ -130,7 +141,7 @@ export function StudioCanvas({
                     className={`${styles.handle} ${is('bottom') ? styles.handleOn : ''}`}
                     style={box(lay.bottom.cx, lay.bottom.cy, lay.bottom.w, lay.bottom.h)}
                     title="Drag the words"
-                    onPointerDown={(e) => grab(e, { kind: 'bottom' }, (x, y) => onFrame({ bottomX: x, bottomY: y }))}
+                    onPointerDown={(e) => grab(e, i, { kind: 'bottom' }, (x, y) => onFrame({ bottomX: x, bottomY: y }))}
                   />
                 )}
                 {lay?.logo && frame && (
@@ -138,40 +149,65 @@ export function StudioCanvas({
                     className={`${styles.handle} ${is('logo') ? styles.handleOn : ''}`}
                     style={box(lay.logo.cx, lay.logo.cy, lay.logo.w, lay.logo.h)}
                     title="Drag the logo"
-                    onPointerDown={(e) => grab(e, { kind: 'logo' }, (x, y) => onFrame({ logoX: x, logoY: y }))}
+                    onPointerDown={(e) => grab(e, i, { kind: 'logo' }, (x, y) => onFrame({ logoX: x, logoY: y }))}
                   >
                     {is('logo') && (
                       <span
                         className={styles.grip}
                         title="Pull to resize"
-                        onPointerDown={(e) => grab(e, { kind: 'logo' }, (x) => onFrame({ logoSize: clamp(Math.abs(x - frame.logoX) * 2, 0.08, 0.5) }))}
+                        onPointerDown={(e) => grab(e, i, { kind: 'logo' }, (x) => onFrame({ logoSize: clamp(Math.abs(x - frame.logoX) * 2, 0.08, 0.5) }))}
                       />
                     )}
                   </div>
                 )}
-                {stickers
-                  .filter((s) => photo === null || onPhoto(s, photo))
-                  .map((s) => (
-                    <div
-                      key={s.id}
-                      className={`${styles.handle} ${styles.stickerHandle} ${selected?.kind === 'sticker' && selected.id === s.id ? styles.handleOn : ''}`}
-                      style={{ left: `${s.x * 100}%`, top: `${s.y * 100}%`, width: `${s.size * 100}%` }}
-                      title={s.name}
-                      onPointerDown={(e) => grab(e, { kind: 'sticker', id: s.id }, (x, y) => onSticker(s.id, { x, y }))}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={s.image} alt={s.name} draggable={false} />
-                      {selected?.kind === 'sticker' && selected.id === s.id && (
-                        <span
-                          className={styles.grip}
-                          title="Pull to resize"
-                          onPointerDown={(e) => grab(e, { kind: 'sticker', id: s.id }, (x) => onSticker(s.id, { size: clamp(Math.abs(x - s.x) * 2, 0.05, 1) }))}
-                        />
-                      )}
-                    </div>
-                  ))}
               </>
             )}
+            {stickers.map((s) => {
+              const p = s.placements[i];
+              if (!p) return null;
+              const on = selected?.kind === 'sticker' && selected.id === s.id && selected.photo === i;
+              const sel: Selection = { kind: 'sticker', id: s.id, photo: i };
+              return (
+                <div
+                  key={s.id}
+                  className={`${styles.handle} ${styles.stickerHandle} ${on ? styles.handleOn : ''} ${on && out ? styles.handleOut : ''}`}
+                  style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.size * 100}%`, transform: `translate(-50%, -50%) rotate(${p.rotation}deg)` }}
+                  title={`${s.name}: drag to move`}
+                  onPointerDown={(e) => grab(e, i, sel, (x, y) => onSticker(s.id, i, { x, y }), true)}
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={s.image} alt={s.name} draggable={false} />
+                  {on && (
+                    <>
+                      <span
+                        className={styles.grip}
+                        title="Pull to resize"
+                        onPointerDown={(e) =>
+                          grab(e, i, sel, (x, y, r) => {
+                            const rad = (p.rotation * Math.PI) / 180;
+                            const dx = (x - p.x) * r.width;
+                            const dy = (y - p.y) * r.height;
+                            onSticker(s.id, i, { size: clamp((2 * Math.abs(dx * Math.cos(rad) + dy * Math.sin(rad))) / r.width, 0.05, 1) });
+                          })
+                        }
+                      />
+                      <span
+                        className={styles.rotKnob}
+                        title="Drag to turn"
+                        onPointerDown={(e) =>
+                          grab(e, i, sel, (x, y, r) => {
+                            let deg = (Math.atan2((y - p.y) * r.height, (x - p.x) * r.width) * 180) / Math.PI + 90;
+                            if (deg > 180) deg -= 360;
+                            const snap = Math.round(deg / 15) * 15;
+                            onSticker(s.id, i, { rotation: Math.abs(deg - snap) < 4 ? snap : Math.round(deg) });
+                          })
+                        }
+                      />
+                    </>
+                  )}
+                </div>
+              );
+            })}
           </div>
         ))}
         {config.footer.trim() && (

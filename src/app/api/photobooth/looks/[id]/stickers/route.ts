@@ -5,8 +5,8 @@ import { MAX_OVERLAY_BYTES, OVERLAY_BUCKET, OVERLAY_COLUMNS, authorizePhotoBooth
 export const dynamic = 'force-dynamic';
 
 // A look's own stickers (made in the studio: a picture, or words drawn on the website).
-//   POST multipart { name, file (WebP), x?, y?, size?, photos? }   add one (the page shrinks the picture and keeps its see-through parts)
-//   PUT  { stickers: [{ id, name?, x, y, size, photos }] }          change where they sit, how big and which photos show them; the order given is their order
+//   POST multipart { name, file (WebP), placements? (JSON: a place for each photo) }   add one (the page shrinks the picture and keeps its see-through parts)
+//   PUT  { stickers: [{ id, name?, placements }] }          change where they sit, how big, how turned and on which photos; the order given is their order
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
@@ -23,8 +23,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (file.size > MAX_OVERLAY_BYTES) return NextResponse.json({ error: 'That picture is too big (over 600 KB after shrinking). Try a simpler one.' }, { status: 413 });
   const bytes = new Uint8Array(await file.arrayBuffer());
   if (!isWebp(bytes)) return NextResponse.json({ error: 'The picture has to be a WebP file (the page makes it for you).' }, { status: 415 });
-  const num = (k: string) => (form?.get(k) === null ? undefined : Number(form?.get(k)));
-  const sticker = cleanSticker({ x: num('x'), y: num('y'), size: num('size'), photos: num('photos') });
+  let placements: unknown = [];
+  try {
+    placements = JSON.parse(String(form?.get('placements') ?? '[]'));
+  } catch {
+    /* (unreadable: the default) */
+  }
+  const sticker = cleanSticker({ placements });
   const path = `${crypto.randomUUID()}.webp`;
   const up = await auth.svc.storage.from(OVERLAY_BUCKET).upload(path, bytes, { contentType: 'image/webp', cacheControl: '31536000' });
   if (up.error) return NextResponse.json({ error: 'Couldn’t save the picture. Try again.' }, { status: 500 });

@@ -25,11 +25,11 @@ export default function PhotoBoothSectionContent() {
     [setParams],
   );
 
-  if (route.tab === 'run') return <BoothRun booth={route.booth} test={route.test} onExit={() => go({ tab: 'setup', booth: route.booth, tool: 'photos' })} />;
+  if (route.tab === 'run') return <BoothRun booth={route.booth} test={route.test} onExit={() => go({ tab: 'setup', booth: route.booth, tool: 'frame' })} />;
   if (route.tab === 'new')
     return (
       <div className={styles.page}>
-        <NewBoothPage onBack={() => go({ tab: 'booths' })} onMade={(booth, open) => go(open ? { tab: 'run', booth } : { tab: 'setup', booth, tool: 'photos' })} />
+        <NewBoothPage onBack={() => go({ tab: 'booths' })} onMade={(booth, open) => go(open ? { tab: 'run', booth } : { tab: 'setup', booth, tool: 'frame' })} />
       </div>
     );
   if (route.tab === 'setup')
@@ -55,7 +55,7 @@ export default function PhotoBoothSectionContent() {
         flush
         sub="Make a booth, set it up, then run it on a screen at an event: guests place stickers, pose for the countdown and scan a QR code to download their picture."
       />
-      <BoothsTab onNew={() => go({ tab: 'new' })} onOpen={(booth) => go({ tab: 'setup', booth, tool: 'photos' })} onRun={(booth) => go({ tab: 'run', booth })} />
+      <BoothsTab onNew={() => go({ tab: 'new' })} onOpen={(booth) => go({ tab: 'setup', booth, tool: 'frame' })} onRun={(booth) => go({ tab: 'run', booth })} />
     </div>
   );
 }

@@ -6,14 +6,14 @@ import { Maximize2, RotateCcw, X } from 'lucide-react';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { PhotoWall, type WallPhoto } from '@/components/PhotoWall/PhotoWall';
-import { FILTER_CSS, SHOTS, cellRatio, cellSize, hexToRgb, onPhoto, promptFor, type BoothConfig } from '@/lib/photobooth/booth';
+import { FILTER_CSS, SHOTS, cellRatio, cellSize, hexToRgb, promptFor, type BoothConfig } from '@/lib/photobooth/booth';
 import { composeFrame, composePicture, composeStripFrame, cutShot, loadImage, type PlacedSticker } from '@/lib/photobooth/compose';
 import { GIF_TRIES, MAX_GIF_BYTES, encodeGif, spread } from '@/lib/photobooth/gif';
 import { HOLD_END, playbackTicks, type Tick } from '@/lib/photobooth/playback';
 import { BoothSounds } from '@/lib/photobooth/sounds';
 import { call, type BoothData } from './api';
 import { CameraMenu } from './CameraMenu';
-import { LayoutPreview } from './LayoutPreview';
+import { LivePicker } from './LivePicker';
 import { ClipPlayer } from './ClipPlayer';
 import { StripPlayer, type StripPlayback } from './StripPlayer';
 import { QrScreen } from './QrScreen';
@@ -158,7 +158,8 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   const placedFor = (i: number): PlacedSticker[] =>
     stickerList.flatMap((o) => {
       const image = images.current.get(o.id);
-      return image && onPhoto(o, i) ? [{ image, x: o.x, y: o.y, size: o.size }] : [];
+      const p = o.placements[i];
+      return image && p ? [{ image, x: p.x, y: p.y, size: p.size, rotation: (p.rotation * Math.PI) / 180 }] : [];
     });
 
   /** Counts down and takes one photo, with the clip around it (null when the booth was left or cancelled meanwhile). */
@@ -184,7 +185,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
       for (let c = config.countdown; c >= 1; c--) {
         if (!alive()) return null;
         setCount(c);
-        sounds.current?.beep();
+        sounds.current?.tick(c, config.countdown);
         await wait(1000);
       }
       if (!alive()) return null;
@@ -227,6 +228,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
       setThumbs(shots.current.map(thumbOf));
       setMaking(false);
       setPhase('review');
+      sounds.current?.chime();
     } catch {
       setError('The picture could not be made. Try again.');
       reset();
@@ -247,6 +249,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
       shots.current.push(got.shot);
       clips.current.push(got.clip);
       setThumbs((t) => [...t, thumbOf(got.shot)]);
+      sounds.current?.pop();
     }
     if (alive()) await build(alive);
   }
@@ -312,6 +315,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     if (res?.ok && json.token) {
       setToken(json.token);
       setPhase('qr');
+      sounds.current?.chime();
     } else {
       setError(json.error ?? 'The picture could not be saved. Check the connection and try again.');
       setPhase('review');
@@ -352,7 +356,11 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   const ratio = config ? cellRatio(config.aspect) : 0.75;
   const showCam = phase === 'idle' || phase === 'choose' || phase === 'shoot';
   const total = config ? SHOTS[config.layout] : 0;
-  const placedNow = stickerList.filter((o) => onPhoto(o, Math.max(0, shotNo - 1))); // (the stickers of the photo being taken, over the live camera)
+  // (the stickers of the photo being taken, over the live camera)
+  const placedNow = stickerList.flatMap((o) => {
+    const p = o.placements[Math.max(0, shotNo - 1)];
+    return p ? [{ o, p }] : [];
+  });
   const stage = (
     <div
       className={styles.stage}
@@ -394,7 +402,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
             </div>
           )}
           {/* the camera stays on behind everything so the next guest starts at once */}
-          <div className={`${styles.booth} ${showCam ? '' : styles.boothHidden}`}>
+          <div className={`${styles.booth} ${phase === 'choose' ? styles.boothWide : ''} ${showCam ? '' : styles.boothHidden}`}>
             <div className={styles.side}>
               {phase === 'idle' && !camera.error && (
                 <>
@@ -415,24 +423,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
                 <>
                   <p className={styles.kicker}>{total} photos</p>
                   <h2 className={styles.sideTitle}>Pick Your Look</h2>
-                  <div className={styles.pickRow} role="radiogroup" aria-label="Look">
-                    {looks.map((l, i) => (
-                      <button
-                        key={l.id}
-                        type="button"
-                        role="radio"
-                        aria-checked={l.id === look?.id}
-                        className={`${styles.pickCard} ${styles.chipIn} ${l.id === look?.id ? styles.pickCardOn : ''}`}
-                        style={{ animationDelay: `${i * 60}ms` }}
-                        onClick={() => setLookId(l.id)}
-                      >
-                        <span className={styles.pickThumb}>
-                          <LayoutPreview config={{ ...config, ...l.style }} frameUrl={l.frame.image || undefined} />
-                        </span>
-                        <span>{l.name}</span>
-                      </button>
-                    ))}
-                  </div>
+                  <p className={styles.welcomeText}>Every look is live on the right: tap the one you like.</p>
                   <div className={styles.btnRow}>
                     <button type="button" className={`${styles.bigBtn} ${styles.startBtn}`} onClick={() => void shoot()}>
                       Take The Photos
@@ -475,7 +466,8 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
               )}
             </div>
 
-            <div className={`${styles.cam} ${phase === 'shoot' && flash ? styles.camSnap : ''}`}>
+            {phase === 'choose' && data && <LivePicker video={camera.video.current} base={data.config} looks={looks} selectedId={look?.id ?? ''} onPick={setLookId} />}
+            <div className={`${styles.cam} ${phase === 'choose' ? styles.camOff : ''} ${phase === 'shoot' && flash ? styles.camSnap : ''}`}>
               <video ref={camera.attach} playsInline muted className={styles.video} style={{ transform: 'scaleX(-1)', filter: FILTER_CSS[config.filter] }} />
               {frameUrl && showCam && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -483,7 +475,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
               )}
               {(phase === 'shoot' || phase === 'choose') && placedNow.length > 0 && (
                 <div className={styles.stickerLayer}>
-                  {placedNow.map((o) => (
+                  {placedNow.map(({ o, p }) => (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       key={o.id}
@@ -491,7 +483,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
                       alt=""
                       draggable={false}
                       className={styles.placed}
-                      style={{ left: `${o.x * 100}%`, top: `${o.y * 100}%`, width: `${o.size * 100}%`, transform: 'translate(-50%, -50%)' }}
+                      style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.size * 100}%`, transform: `translate(-50%, -50%) rotate(${p.rotation}deg)` }}
                     />
                   ))}
                 </div>

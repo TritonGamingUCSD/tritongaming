@@ -6,6 +6,8 @@ export interface PlacedSticker {
   x: number;
   y: number;
   size: number;
+  /** The turn, in radians. */
+  rotation: number;
 }
 
 /** One camera picture cut to the shape of a photo (centre crop). It is not mirrored: the screen shows the camera like a mirror, but the saved picture is the way others see the guest (as on a phone's front camera). */
@@ -36,6 +38,7 @@ function drawCell(ctx: CanvasRenderingContext2D, cell: Rect, shot: HTMLCanvasEle
     const h = box.w * (s.image.naturalHeight / Math.max(1, s.image.naturalWidth));
     ctx.save();
     ctx.translate(box.cx, box.cy);
+    ctx.rotate(s.rotation);
     ctx.drawImage(s.image, -box.w / 2, -h / 2, box.w, h);
     ctx.restore();
   }

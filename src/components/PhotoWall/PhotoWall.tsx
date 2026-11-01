@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import styles from './PhotoWall.module.css';
 
+/** With this many pictures or fewer the wall scatters them instead of tiling them. */
+const SCATTER_UP_TO = 5;
+
 export interface WallPhoto {
   token: string;
   url: string;
@@ -43,26 +46,35 @@ export function PhotoWall({ photos, spotlight = false, dim = false }: { photos: 
   }, [photos, spotlight]);
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
+  // Few pictures: they are not repeated into a wall (a face repeated dozens of times is unsettling): each one floats on its own at the sides, like prints pinned up.
+  const scattered = photos.length > 0 && photos.length <= SCATTER_UP_TO;
   const lists = useMemo(() => {
-    const out: WallPhoto[][] = Array.from({ length: cols }, () => []);
-    if (photos.length === 0) return out;
-    const slots = Math.max(photos.length, cols * 5); // (few pictures: they repeat so every strip is full and long enough to drift)
-    for (let k = 0; k < slots; k++) out[k % cols].push(photos[k % photos.length]);
+    const used = Math.max(2, Math.min(cols, Math.floor(photos.length / 2)));
+    const out: WallPhoto[][] = Array.from({ length: used }, () => []);
+    if (photos.length === 0 || scattered) return out;
+    const slots = Math.max(photos.length, used * 4); // (fewer pictures than that: they repeat just enough that every strip is long enough to drift)
+    for (let k = 0; k < slots; k++) out[k % used].push(photos[k % photos.length]);
     return out;
-  }, [photos, cols]);
+  }, [photos, cols, scattered]);
 
   return (
-    <div ref={box} className={`${styles.wall} ${dim ? styles.dim : ''}`} style={{ ['--cols' as string]: cols }} aria-hidden={dim}>
-      {lists.map((list, c) => (
-        <div key={c} className={styles.col}>
-          <div className={styles.drift} style={{ animationDuration: `${Math.max(30, list.length * 8)}s`, animationDirection: c % 2 ? 'reverse' : 'normal' }}>
-            {[...list, ...list].map((p, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={`${p.token}-${i}`} src={p.url} alt="" className={styles.tile} loading="lazy" />
-            ))}
+    <div ref={box} className={`${styles.wall} ${dim ? styles.dim : ''}`} style={{ ['--cols' as string]: scattered ? 1 : lists.length }} aria-hidden={dim}>
+      {scattered &&
+        photos.map((p, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img key={p.token} src={p.url} alt="" className={`${styles.pin} ${styles[`pin${i}`]}`} loading="lazy" />
+        ))}
+      {!scattered &&
+        lists.map((list, c) => (
+          <div key={c} className={styles.col}>
+            <div className={styles.drift} style={{ animationDuration: `${Math.max(30, list.length * 8)}s`, animationDirection: c % 2 ? 'reverse' : 'normal' }}>
+              {[...list, ...list].map((p, i) => (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img key={`${p.token}-${i}`} src={p.url} alt="" className={styles.tile} loading="lazy" />
+              ))}
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
       {lit && (
         <div className={styles.spot} key={lit.token}>
           {/* eslint-disable-next-line @next/next/no-img-element */}

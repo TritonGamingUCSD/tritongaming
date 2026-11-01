@@ -10,3 +10,12 @@
 @keyframes wallSpot { 0% { opacity: 0; } 8% { opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; } }
 @keyframes wallPop { from { opacity: 0; transform: scale(0.35) rotate(-9deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
 @media (prefers-reduced-motion: reduce) { .drift, .spot, .spotImg { animation: none; } }
+
+.pin { position: absolute; width: clamp(8rem, 14vw, 15rem); height: auto; border-radius: 8px; border: 0.35rem solid #fff; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35); background: #fff; animation: wallBob 7s ease-in-out infinite; }   /* theme-ok */
+.pin0 { left: 1.5%; top: 12%; rotate: -6deg; }
+.pin1 { right: 1.5%; top: 9%; rotate: 5deg; animation-delay: -2s; }
+.pin2 { left: 2%; bottom: 8%; rotate: 4deg; animation-delay: -4s; }
+.pin3 { right: 2%; bottom: 10%; rotate: -4deg; animation-delay: -1s; }
+.pin4 { left: 50%; top: 3%; margin-left: -6rem; rotate: 2deg; animation-delay: -3s; }
+@keyframes wallBob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -0.8rem; } }
+@media (prefers-reduced-motion: reduce) { .pin { animation: none; } }
