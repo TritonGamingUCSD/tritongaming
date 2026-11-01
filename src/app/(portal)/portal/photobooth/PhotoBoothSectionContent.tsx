@@ -10,6 +10,7 @@ import { BoothRun } from './BoothRun';
 import { BoothSetup } from './BoothSetup';
 import { BoothsTab } from './BoothsTab';
 import { TextStickerDesigner } from './TextStickerDesigner';
+import { NewBoothPage } from './NewBoothPage';
 import { OverlayLibrary } from './OverlayLibrary';
 import { parsePhotoBoothRoute, photoBoothParams, type PhotoBoothRoute } from './photoboothRoute';
 import styles from './photobooth.module.css';
@@ -35,6 +36,12 @@ export default function PhotoBoothSectionContent() {
         <TextStickerDesigner onBack={() => go({ tab: 'overlays' })} />
       </div>
     );
+  if (route.tab === 'new')
+    return (
+      <div className={styles.page}>
+        <NewBoothPage onBack={() => go({ tab: 'booths' })} onMade={(booth, open) => go(open ? { tab: 'run', booth } : { tab: 'setup', booth })} />
+      </div>
+    );
   const inSetup = route.tab === 'setup';
   return (
     <div className={styles.page}>
@@ -54,7 +61,7 @@ export default function PhotoBoothSectionContent() {
           ]}
         />
       )}
-      {route.tab === 'booths' && <BoothsTab onOpen={(booth) => go({ tab: 'setup', booth })} onRun={(booth) => go({ tab: 'run', booth })} />}
+      {route.tab === 'booths' && <BoothsTab onNew={() => go({ tab: 'new' })} onOpen={(booth) => go({ tab: 'setup', booth })} onRun={(booth) => go({ tab: 'run', booth })} />}
       {route.tab === 'overlays' && <OverlayLibrary onDesignText={() => go({ tab: 'text' })} />}
       {route.tab === 'setup' && (
         <BoothSetup

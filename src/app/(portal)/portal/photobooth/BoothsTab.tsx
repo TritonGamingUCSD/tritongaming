@@ -7,13 +7,11 @@ import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import { LAYOUT_NAMES, type Layout } from '@/lib/photobooth/booth';
 import { call, type BoothRow } from './api';
-import { NewBoothDialog } from './NewBoothDialog';
 import styles from './photobooth.module.css';
 
 // The booths. Each is its own thing (not tied to an event): Set Up opens its settings, Open Booth runs it on this screen.
-export function BoothsTab({ onOpen, onRun }: { onOpen: (booth: string) => void; onRun: (booth: string) => void }) {
+export function BoothsTab({ onNew, onOpen, onRun }: { onNew: () => void; onOpen: (booth: string) => void; onRun: (booth: string) => void }) {
   const [booths, setBooths] = useState<BoothRow[] | null>(null);
-  const [making, setMaking] = useState(false);
   const [error, setError] = useState('');
   const load = useCallback(async () => {
     const r = await call<{ booths: BoothRow[] }>('/api/photobooth/booths');
@@ -36,7 +34,7 @@ export function BoothsTab({ onOpen, onRun }: { onOpen: (booth: string) => void; 
       {error && <Notice tone="error">{error}</Notice>}
       <div className={styles.toolbar}>
         <p className={styles.about}>A booth is its own thing, not tied to an event: make as many as you like and open the one for the day.</p>
-        <Button onClick={() => setMaking(true)}>
+        <Button onClick={onNew}>
           <Plus size={16} aria-hidden="true" /> Make A Booth
         </Button>
       </div>
@@ -68,7 +66,6 @@ export function BoothsTab({ onOpen, onRun }: { onOpen: (booth: string) => void; 
           ))}
         </ul>
       )}
-      {making && <NewBoothDialog onClose={() => setMaking(false)} onMade={(slug, open) => (open ? onRun(slug) : onOpen(slug))} />}
     </div>
   );
 }
