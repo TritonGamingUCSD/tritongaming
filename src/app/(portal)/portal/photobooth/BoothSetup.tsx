@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Camera } from 'lucide-react';
+import { ArrowLeft, Camera, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -9,6 +9,7 @@ import SaveBar from '@/components/portal/SaveBar';
 import ColorInput from '@/components/ui/ColorInput';
 import NumberInput from '@/components/ui/NumberInput';
 import { Field, Input, Textarea } from '@/components/ui/Field';
+import { confirmHold } from '@/lib/ui/confirmHold';
 import { useUnsavedChanges } from '@/lib/ui/useUnsavedChanges';
 import { showToast } from '@/lib/ui/toast';
 import { ASPECTS, ASPECT_NAMES, FILTERS, FILTER_NAMES, LAYOUTS, LAYOUT_NAMES, cleanBooth, type BoothConfig, type Overlay } from '@/lib/photobooth/booth';
@@ -16,39 +17,57 @@ import { call, type BoothData } from './api';
 import { LayoutPreview } from './LayoutPreview';
 import styles from './photobooth.module.css';
 
-// One event's booth settings, in groups: what it takes, how it looks, what it says and plays, which overlays it offers, how long things stay. A drawing of the finished picture follows every change.
-export function BoothSetup({ event, onBack, onRun, onOverlays }: { event: string; onBack: () => void; onRun: () => void; onOverlays: () => void }) {
+// One booth's settings, in groups: what it takes, how it looks, what it says and plays, which overlays it offers, how long things stay. A drawing of the finished picture follows every change.
+export function BoothSetup({
+  booth,
+  onBack,
+  onRun,
+  onOverlays,
+  onDeleted,
+}: {
+  booth: string;
+  onBack: () => void;
+  onRun: () => void;
+  onOverlays: () => void;
+  onDeleted: () => void;
+}) {
   const [data, setData] = useState<BoothData | null>(null);
   const [library, setLibrary] = useState<Overlay[]>([]);
-  const [form, setForm] = useState<BoothConfig | null>(null);
+  const [form, setForm] = useState<(BoothConfig & { name: string }) | null>(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
-  const { dirty, markSaved, saved } = useUnsavedChanges(form, 'You have unsaved changes to this booth.', event);
+  const { dirty, markSaved, saved } = useUnsavedChanges(form, 'You have unsaved changes to this booth.', booth);
 
   useEffect(() => {
     void (async () => {
-      const [b, o] = await Promise.all([call<BoothData>(`/api/photobooth/booths/${event}`), call<{ overlays: Overlay[] }>('/api/photobooth/overlays')]);
+      const [b, o] = await Promise.all([call<BoothData>(`/api/photobooth/booths/${booth}`), call<{ overlays: Overlay[] }>('/api/photobooth/overlays')]);
       if (!b.ok) return setError(b.error);
       setData(b.data);
-      setForm(b.data.config);
+      setForm({ ...b.data.config, name: b.data.booth.name });
       if (o.ok) setLibrary(o.data.overlays);
     })();
-  }, [event]);
+  }, [booth]);
 
   if (!form || !data) return error ? <Notice tone="error">{error}</Notice> : <Loading label="Loading the booth…" />;
-  const set = (patch: Partial<BoothConfig>) => setForm({ ...form, ...patch });
+  const set = (patch: Partial<BoothConfig & { name: string }>) => setForm({ ...form, ...patch });
   const frame = library.find((o) => o.kind === 'frame' && form.overlay_ids.includes(o.id));
   const toggle = (id: string) => set({ overlay_ids: form.overlay_ids.includes(id) ? form.overlay_ids.filter((x) => x !== id) : [...form.overlay_ids, id] });
+
+  const remove = async () => {
+    if (!(await confirmHold({ title: `Delete "${data.booth.name}"?`, message: 'The booth and every picture it took are deleted.', confirmLabel: 'Hold to delete' }))) return;
+    const r = await call(`/api/photobooth/booths/${booth}`, 'DELETE');
+    if (r.ok) onDeleted();
+    else setError(r.error);
+  };
 
   const save = async () => {
     setSaving(true);
     setError('');
-    const r = await call<{ config: BoothConfig }>(`/api/photobooth/booths/${event}`, 'PUT', cleanBooth(form));
+    const r = await call<{ config: BoothConfig; booth: { name: string } }>(`/api/photobooth/booths/${booth}`, 'PUT', { ...cleanBooth(form), name: form.name });
     setSaving(false);
     if (!r.ok) return setError(r.error);
-    setForm(r.data.config);
+    setForm({ ...r.data.config, name: r.data.booth.name });
     markSaved();
-    setData({ ...data, saved: true });
     showToast('Booth saved');
   };
 
@@ -58,22 +77,24 @@ export function BoothSetup({ event, onBack, onRun, onOverlays }: { event: string
         <Button variant="secondary" size="sm" onClick={onBack}>
           <ArrowLeft size={15} aria-hidden="true" /> All Booths
         </Button>
-        {data.saved ? (
+        <div className={styles.rowActions}>
+          <Button variant="secondary" size="sm" onClick={() => void remove()}>
+            <Trash2 size={15} aria-hidden="true" /> Delete Booth
+          </Button>
           <Button onClick={onRun} disabled={dirty} title={dirty ? 'Save your changes first' : undefined}>
             <Camera size={16} aria-hidden="true" /> Open Booth
           </Button>
-        ) : (
-          <Button onClick={() => void save()} loading={saving}>
-            Create The Booth
-          </Button>
-        )}
+        </div>
       </div>
-      <h2 className={styles.h2}>{data.event.title}</h2>
+      <h2 className={styles.h2}>{data.booth.name}</h2>
       {error && <Notice tone="error">{error}</Notice>}
       <div className={styles.setupGrid}>
         <div className={styles.stack}>
           <section className={styles.card} aria-labelledby="pb-photos">
             <h3 id="pb-photos">Photos</h3>
+            <Field label="Booth name">
+              <Input value={form.name} maxLength={80} onChange={(e) => set({ name: e.target.value })} />
+            </Field>
             <div className={styles.choices} role="radiogroup" aria-label="Layout">
               {LAYOUTS.map((l) => (
                 <label key={l} className={`${styles.choice} ${form.layout === l ? styles.on : ''}`}>
@@ -206,7 +227,14 @@ export function BoothSetup({ event, onBack, onRun, onOverlays }: { event: string
           <LayoutPreview config={form} frame={frame} />
         </aside>
       </div>
-      <SaveBar dirty={dirty} saving={saving} onSave={() => void save()} onDiscard={() => setForm(saved() ?? form)} message="Unsaved changes to this booth" />
+      <SaveBar
+        dirty={dirty}
+        saving={saving}
+        onSave={() => void save()}
+        saveDisabled={!form.name.trim()}
+        onDiscard={() => setForm(saved() ?? form)}
+        message="Unsaved changes to this booth"
+      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
--- Photo Booth: a booth for an event, run on a screen at the event. Guests choose an overlay, three photos are taken after a countdown, and a QR code opens a page where they download the finished picture.
+-- Photo Booth: a booth (not tied to any event, like a Trivia quiz) run on a screen at an event. Guests choose an overlay, three photos are taken after a countdown, and a QR code opens a page where they download the finished picture.
 -- Everything is read and written by the routes (service role); RLS is on with no policies. Pictures live in two public buckets with unguessable file names.
 
 -- The overlay library: frames and stickers (transparent WebP pictures) shared by every event; each event's booth picks which ones to offer.
@@ -28,10 +28,12 @@ create table if not exists public.photobooth_overlays (
   created_at  timestamptz not null default now()
 );
 
--- One booth per event: how it looks, what it takes and which overlays it offers.
+-- A booth: a name, how it looks, what it takes and which overlays it offers. Any number of them; an officer runs whichever suits the event.
 create table if not exists public.photobooths (
   id             uuid primary key default gen_random_uuid(),
-  event_id       uuid not null unique references public.events(id) on delete cascade,
+  slug           text not null unique,
+  name           text not null check (length(name) between 1 and 80),
+  created_by     uuid references auth.users(id) on delete set null,
   layout         text not null default 'strip3' check (layout in ('single', 'grid', 'strip3', 'strip4')),
   aspect         text not null default 'portrait' check (aspect in ('portrait', 'square', 'wide')),
   countdown      int  not null default 3 check (countdown between 1 and 10),
@@ -57,8 +59,7 @@ create table if not exists public.photobooths (
 create table if not exists public.photobooth_photos (
   id         uuid primary key default gen_random_uuid(),
   token      text not null unique check (length(token) >= 16),
-  booth_id   uuid references public.photobooths(id) on delete set null,
-  event_id   uuid references public.events(id) on delete set null,
+  booth_id   uuid not null references public.photobooths(id) on delete cascade,
   path       text not null,                                           -- the file in the 'photobooth' bucket
   expires_at timestamptz not null,
   created_at timestamptz not null default now()

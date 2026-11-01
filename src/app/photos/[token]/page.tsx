@@ -18,13 +18,13 @@ interface Found {
 async function find(token: string): Promise<Found | null> {
   if (!TOKEN.test(token)) return null;
   const svc = createServiceClient();
-  const { data } = await svc.from('photobooth_photos').select('path, expires_at, events(title)').eq('token', token).maybeSingle();
+  const { data } = await svc.from('photobooth_photos').select('path, expires_at, photobooths(name)').eq('token', token).maybeSingle();
   if (!data || new Date(data.expires_at as string).getTime() <= Date.now()) return null;
-  const ev = data.events as unknown as { title: string } | { title: string }[] | null;
+  const b = data.photobooths as unknown as { name: string } | { name: string }[] | null;
   return {
     url: svc.storage.from(PHOTO_BUCKET).getPublicUrl(data.path as string).data.publicUrl,
     until: data.expires_at as string,
-    event: (Array.isArray(ev) ? ev[0]?.title : ev?.title) ?? null,
+    event: (Array.isArray(b) ? b[0]?.name : b?.name) ?? null,
   };
 }
 

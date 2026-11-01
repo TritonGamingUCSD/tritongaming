@@ -18,8 +18,8 @@ type Phase = 'idle' | 'choose' | 'shoot' | 'review' | 'saving' | 'qr';
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const DEG = Math.PI / 12; // one turn of a sticker: 15 degrees
 
-// The booth itself, on the whole screen: a welcome screen, the guest picks a frame and stickers on the live camera, the countdown and shots, a look at the picture (retake or keep), then the QR code to download it.
-export function BoothRun({ event, onExit }: { event: string; onExit: () => void }) {
+// A booth itself, on the whole screen: a welcome screen, the guest picks a frame and stickers on the live camera, the countdown and shots, a look at the picture (retake or keep), then the QR code to download it.
+export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void }) {
   const [data, setData] = useState<BoothData | null>(null);
   const [error, setError] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
@@ -40,9 +40,8 @@ export function BoothRun({ event, onExit }: { event: string; onExit: () => void 
 
   useEffect(() => {
     void (async () => {
-      const r = await call<BoothData>(`/api/photobooth/booths/${event}`);
+      const r = await call<BoothData>(`/api/photobooth/booths/${booth}`);
       if (!r.ok) return setError(r.error);
-      if (!r.data.saved) return setError('This event has no booth yet. Set it up first.');
       setData(r.data);
       sounds.current = new BoothSounds(r.data.config.sounds);
       for (const o of r.data.overlays)
@@ -56,7 +55,7 @@ export function BoothRun({ event, onExit }: { event: string; onExit: () => void 
       stop.current++;
       audio.current?.close();
     };
-  }, [event]);
+  }, [booth]);
 
   useEffect(() => {
     const url = picture?.url;
@@ -139,7 +138,7 @@ export function BoothRun({ event, onExit }: { event: string; onExit: () => void 
     if (!picture) return;
     setPhase('saving');
     const form = new FormData();
-    form.append('event', event);
+    form.append('booth', booth);
     form.append('file', new File([picture.blob], 'photo.jpg', { type: 'image/jpeg' }));
     const res = await fetch('/api/photobooth/photos', { method: 'POST', body: form, cache: 'no-store' }).catch(() => null);
     const json = res ? await res.json().catch(() => ({})) : {};

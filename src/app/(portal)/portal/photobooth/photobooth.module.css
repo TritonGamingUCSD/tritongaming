@@ -8,6 +8,8 @@
 .h2 { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.4rem; color: var(--pp-ink); }
 .h3 { margin: 0 0 0.6rem; font-size: 1rem; }
 
+.newRow { display: flex; flex-wrap: wrap; gap: 0.6rem 0.8rem; align-items: end; max-width: 40rem; }
+.newRow > :first-child { flex: 1 1 14rem; }
 .list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
 .row { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; justify-content: space-between; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); color: var(--pp-ink); }
 .rowMain { display: grid; gap: 0.15rem; min-width: 0; }

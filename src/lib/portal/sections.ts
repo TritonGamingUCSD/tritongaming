@@ -61,7 +61,11 @@ export const SECTIONS: SectionDef[] = [
     id: 'photobooth',
     label: 'Photo Booth',
     mainTab: 'booths',
-    search: { hint: 'Set up and run an event’s photo booth', keywords: ['photo', 'booth', 'pictures', 'camera', 'overlay', 'frame', 'sticker', 'strip', 'selfie'], caps: ['run_photobooth'] },
+    search: {
+      hint: 'Make, set up and run a photo booth',
+      keywords: ['photo', 'booth', 'pictures', 'camera', 'overlay', 'frame', 'sticker', 'strip', 'selfie'],
+      caps: ['run_photobooth'],
+    },
   },
   {
     id: 'divisions',

@@ -13,7 +13,7 @@ import { OverlayLibrary } from './OverlayLibrary';
 import { parsePhotoBoothRoute, photoBoothParams, type PhotoBoothRoute } from './photoboothRoute';
 import styles from './photobooth.module.css';
 
-// The Photo Booth: officers and above set up a booth for an event (layout, look, which overlays to offer), keep the overlay library, and run the booth on a screen at the event. Guests scan the QR code
+// The Photo Booth: officers and above make booths (not tied to any event, like Trivia quizzes: layout, look, which overlays to offer), keep the overlay library, and run a booth on a screen at an event. Guests scan the QR code
 // the booth shows and download their picture from /photos/<token> without an account. Every place has its own address (see photoboothRoute.ts).
 export default function PhotoBoothSectionContent() {
   const { tab, subtab } = useUrlNav();
@@ -27,14 +27,14 @@ export default function PhotoBoothSectionContent() {
     [setParams],
   );
 
-  if (route.tab === 'run') return <BoothRun event={route.event} onExit={() => go({ tab: 'setup', event: route.event })} />;
+  if (route.tab === 'run') return <BoothRun booth={route.booth} onExit={() => go({ tab: 'setup', booth: route.booth })} />;
   const inSetup = route.tab === 'setup';
   return (
     <div className={styles.page}>
       <SectionHeader
         title="Photo Booth"
         flush
-        sub="Set up a booth for an event, then run it on a screen: guests pick an overlay, pose for the countdown and scan a QR code to download their picture."
+        sub="Make a booth, set it up, then run it on a screen at an event: guests pick an overlay, pose for the countdown and scan a QR code to download their picture."
       />
       {!inSetup && (
         <SectionTabs
@@ -47,10 +47,16 @@ export default function PhotoBoothSectionContent() {
           ]}
         />
       )}
-      {route.tab === 'booths' && <BoothsTab onOpen={(event) => go({ tab: 'setup', event })} onRun={(event) => go({ tab: 'run', event })} />}
+      {route.tab === 'booths' && <BoothsTab onOpen={(booth) => go({ tab: 'setup', booth })} onRun={(booth) => go({ tab: 'run', booth })} />}
       {route.tab === 'overlays' && <OverlayLibrary />}
       {route.tab === 'setup' && (
-        <BoothSetup event={route.event} onBack={() => go({ tab: 'booths' })} onRun={() => go({ tab: 'run', event: route.event })} onOverlays={() => go({ tab: 'overlays' })} />
+        <BoothSetup
+          booth={route.booth}
+          onBack={() => go({ tab: 'booths' })}
+          onDeleted={() => go({ tab: 'booths' })}
+          onRun={() => go({ tab: 'run', booth: route.booth })}
+          onOverlays={() => go({ tab: 'overlays' })}
+        />
       )}
     </div>
   );
