@@ -375,6 +375,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
       >
         <Maximize2 size={16} aria-hidden="true" />
       </button>
+      <p className={styles.brand}>Triton Gaming · Gaming Org at UC San Diego</p>
       {phase === 'idle' && <CameraMenu cameras={camera.cameras} current={camera.current} onChoose={camera.choose} />}
 
       {!data || !config ? (
@@ -393,123 +394,134 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
             </div>
           )}
           {/* the camera stays on behind everything so the next guest starts at once */}
-          <div className={`${styles.cam} ${showCam ? '' : styles.camHidden} ${phase === 'shoot' && flash ? styles.camSnap : ''}`}>
-            <video ref={camera.attach} playsInline muted className={styles.video} style={{ transform: 'scaleX(-1)', filter: FILTER_CSS[config.filter] }} />
-            {frameUrl && showCam && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img className={styles.camFrame} src={frameUrl} alt="" />
-            )}
-            {(phase === 'shoot' || phase === 'choose') && placedNow.length > 0 && (
-              <div className={styles.stickerLayer}>
-                {placedNow.map((o) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={o.id}
-                    src={o.image}
-                    alt=""
-                    draggable={false}
-                    className={styles.placed}
-                    style={{ left: `${o.x * 100}%`, top: `${o.y * 100}%`, width: `${o.size * 100}%`, transform: 'translate(-50%, -50%)' }}
-                  />
-                ))}
-              </div>
-            )}
-            {phase === 'idle' && <div className={styles.dim} />}
-            {phase === 'shoot' && count !== null && (
-              <div className={styles.count} key={`${shotNo}-${count}`} aria-live="assertive">
-                <span className={styles.ring} />
-                <span className={styles.digit}>{count}</span>
-              </div>
-            )}
-            {phase === 'shoot' && making && (
-              <div className={styles.making}>
-                <span className={styles.spinner} aria-hidden="true" />
-                Making Your Picture…
-              </div>
-            )}
-            {flash && <div className={styles.flash} />}
-          </div>
+          <div className={`${styles.booth} ${showCam ? '' : styles.boothHidden}`}>
+            <div className={styles.side}>
+              {phase === 'idle' && !camera.error && (
+                <>
+                  <p className={styles.kicker}>{data.booth.name}</p>
+                  <h1 className={styles.welcomeTitle}>
+                    <span className={styles.mark}>{config.welcome_title}</span>
+                  </h1>
+                  {config.welcome_text && <p className={styles.welcomeText}>{config.welcome_text}</p>}
+                  <button type="button" className={`${styles.bigBtn} ${styles.startBtn}`} onClick={start} disabled={!camera.ready}>
+                    {camera.ready ? 'Start' : 'Starting Camera…'}
+                  </button>
+                  <p className={styles.hint}>Tap Start or press Enter</p>
+                  {error && <p className={styles.problem}>{error}</p>}
+                </>
+              )}
 
-          {phase === 'shoot' && thumbs.length > 0 && (
-            <ol className={styles.filmstrip} aria-label="Photos so far">
-              {thumbs.map((t, i) => (
-                <li key={`${i}-${t.length}`} className={styles.filmTile}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={t} alt={`Photo ${i + 1}`} />
-                </li>
-              ))}
-            </ol>
-          )}
+              {phase === 'choose' && (
+                <>
+                  <p className={styles.kicker}>{total} photos</p>
+                  <h2 className={styles.sideTitle}>Pick Your Look</h2>
+                  <div className={styles.pickRow} role="radiogroup" aria-label="Look">
+                    {looks.map((l, i) => (
+                      <button
+                        key={l.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={l.id === look?.id}
+                        className={`${styles.pickCard} ${styles.chipIn} ${l.id === look?.id ? styles.pickCardOn : ''}`}
+                        style={{ animationDelay: `${i * 60}ms` }}
+                        onClick={() => setLookId(l.id)}
+                      >
+                        <span className={styles.pickThumb}>
+                          <LayoutPreview config={{ ...config, ...l.style }} frameUrl={l.frame.image || undefined} />
+                        </span>
+                        <span>{l.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <div className={styles.btnRow}>
+                    <button type="button" className={`${styles.bigBtn} ${styles.startBtn}`} onClick={() => void shoot()}>
+                      Take The Photos
+                    </button>
+                    <button type="button" className={styles.ghostBtn} onClick={reset}>
+                      Cancel
+                    </button>
+                  </div>
+                  <p className={styles.hint}>Arrow keys change the look, Enter starts</p>
+                </>
+              )}
+
+              {phase === 'shoot' && (
+                <>
+                  <p className={styles.kicker}>
+                    Photo {shotNo} of {total}
+                  </p>
+                  <h2 className={`${styles.sideTitle} ${styles.prompt}`} key={`${shotNo}-${prompt}`}>
+                    <span className={styles.mark}>{prompt || 'Get ready!'}</span>
+                  </h2>
+                  <span className={styles.dots} aria-hidden="true">
+                    {Array.from({ length: total }, (_, i) => (
+                      <i key={i} className={i + 1 < shotNo || (i + 1 === shotNo && count === null && !making && flash) ? styles.dotDone : i + 1 === shotNo ? styles.dotNow : ''} />
+                    ))}
+                  </span>
+                  {thumbs.length > 0 && (
+                    <ol className={styles.filmstrip} aria-label="Photos so far">
+                      {thumbs.map((t, i) => (
+                        <li key={`${i}-${t.length}`} className={styles.filmTile}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={t} alt={`Photo ${i + 1}`} />
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                  <button type="button" className={styles.ghostBtn} onClick={reset}>
+                    Cancel
+                  </button>
+                </>
+              )}
+            </div>
+
+            <div className={`${styles.cam} ${phase === 'shoot' && flash ? styles.camSnap : ''}`}>
+              <video ref={camera.attach} playsInline muted className={styles.video} style={{ transform: 'scaleX(-1)', filter: FILTER_CSS[config.filter] }} />
+              {frameUrl && showCam && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img className={styles.camFrame} src={frameUrl} alt="" />
+              )}
+              {(phase === 'shoot' || phase === 'choose') && placedNow.length > 0 && (
+                <div className={styles.stickerLayer}>
+                  {placedNow.map((o) => (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      key={o.id}
+                      src={o.image}
+                      alt=""
+                      draggable={false}
+                      className={styles.placed}
+                      style={{ left: `${o.x * 100}%`, top: `${o.y * 100}%`, width: `${o.size * 100}%`, transform: 'translate(-50%, -50%)' }}
+                    />
+                  ))}
+                </div>
+              )}
+              {showCam && (
+                <span className={styles.liveTag}>
+                  <i aria-hidden="true" /> Live
+                </span>
+              )}
+              {phase === 'shoot' && count !== null && (
+                <div className={styles.count} key={`${shotNo}-${count}`} aria-live="assertive">
+                  <span className={styles.ring} />
+                  <span className={styles.digit}>{count}</span>
+                </div>
+              )}
+              {phase === 'shoot' && making && (
+                <div className={styles.making}>
+                  <span className={styles.spinner} aria-hidden="true" />
+                  Making Your Picture…
+                </div>
+              )}
+              {flash && <div className={styles.flash} />}
+            </div>
+          </div>
 
           {camera.error && (
             <div className={styles.center}>
               <Notice tone="error">{camera.error}</Notice>
               <button type="button" className={styles.bigBtn} onClick={() => void camera.retry()}>
                 Try Again
-              </button>
-            </div>
-          )}
-
-          {phase === 'idle' && !camera.error && (
-            <div className={styles.welcome}>
-              <h1 className={styles.welcomeTitle}>{config.welcome_title}</h1>
-              {config.welcome_text && <p className={styles.welcomeText}>{config.welcome_text}</p>}
-              <button type="button" className={`${styles.bigBtn} ${styles.startBtn}`} onClick={start} disabled={!camera.ready}>
-                {camera.ready ? 'Start' : 'Starting Camera…'}
-              </button>
-              {error && <p className={styles.problem}>{error}</p>}
-            </div>
-          )}
-
-          {phase === 'choose' && config && (
-            <div className={styles.panel}>
-              <span className={styles.chipLabel}>Pick Your Look</span>
-              <div className={styles.pickRow} role="radiogroup" aria-label="Look">
-                {looks.map((l, i) => (
-                  <button
-                    key={l.id}
-                    type="button"
-                    role="radio"
-                    aria-checked={l.id === look?.id}
-                    className={`${styles.pickCard} ${styles.chipIn} ${l.id === look?.id ? styles.pickCardOn : ''}`}
-                    style={{ animationDelay: `${i * 60}ms` }}
-                    onClick={() => setLookId(l.id)}
-                  >
-                    <span className={styles.pickThumb}>
-                      <LayoutPreview config={{ ...config, ...l.style }} frameUrl={l.frame.image || undefined} />
-                    </span>
-                    <span>{l.name}</span>
-                  </button>
-                ))}
-              </div>
-              <div className={styles.btnRow}>
-                <button type="button" className={styles.ghostBtn} onClick={reset}>
-                  Cancel
-                </button>
-                <button type="button" className={`${styles.bigBtn} ${styles.startBtn}`} onClick={() => void shoot()}>
-                  Take The Photos
-                </button>
-              </div>
-            </div>
-          )}
-
-          {phase === 'shoot' && (
-            <div className={styles.shootBar}>
-              <span className={styles.shotNo}>
-                Photo {shotNo} of {total}
-              </span>
-              <span className={styles.dots} aria-hidden="true">
-                {Array.from({ length: total }, (_, i) => (
-                  <i key={i} className={i + 1 < shotNo || (i + 1 === shotNo && count === null && !making && flash) ? styles.dotDone : i + 1 === shotNo ? styles.dotNow : ''} />
-                ))}
-              </span>
-              {prompt && (
-                <span className={styles.prompt} key={`${shotNo}-${prompt}`}>
-                  {prompt}
-                </span>
-              )}
-              <button type="button" className={styles.ghostBtn} onClick={reset}>
-                Cancel
               </button>
             </div>
           )}
@@ -524,7 +536,9 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
               )}
               {playing.length > 0 && <ClipPlayer clips={playing} frameMs={FRAME_MS} />}
               <div className={`${styles.reviewSide} ${styles.riseIn}`}>
-                <h2 className={styles.qrTitle}>How Does It Look?</h2>
+                <h2 className={styles.qrTitle}>
+                  <span className={styles.mark}>How Does It Look?</span>
+                </h2>
                 {error && <p className={styles.problem}>{error}</p>}
                 <button type="button" className={`${styles.bigBtn} ${styles.startBtn}`} onClick={() => void keep()} disabled={phase === 'saving'}>
                   {phase === 'saving' ? 'Saving…' : 'Looks Great!'}

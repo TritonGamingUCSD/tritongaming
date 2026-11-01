@@ -81,7 +81,9 @@ export function QrScreen({
           </>
         ) : (
           <>
-            <h2 className={styles.qrTitle}>Scan To Download</h2>
+            <h2 className={styles.qrTitle}>
+              <span className={styles.mark}>Scan To Download</span>
+            </h2>
             <p className={styles.qrText}>Point your phone’s camera at the code.</p>
             <div className={`${styles.qrCode} ${styles.popIn}`}>
               <StyledQRCode options={options} />
