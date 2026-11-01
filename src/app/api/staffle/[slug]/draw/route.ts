@@ -3,13 +3,15 @@ import { randomBytes } from 'node:crypto';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { logAudit } from '@/lib/notifications/audit';
 import { draw } from '@/lib/staffle/draw';
+import { eligibleIds } from '@/lib/staffle/eligible';
+import { cleanRules } from '@/lib/staffle/rules';
 import { loadStaffle, staffleView } from '@/lib/staffle/detail';
 import { tellWinners } from '@/lib/staffle/server';
 
 export const dynamic = 'force-dynamic';
 
-// Draw a Staffle: the winners are worked out here, in one go, and saved, so the projector only has to show them (and a reload shows the same). Items come up in random order; nobody wins twice; an item with
-// N winners gives N different people. Winners are told. A Staffle can be drawn once (items nobody entered simply have no winner; an unclaimed prize can be drawn again from the rest, see /redraw).
+// Draw a Staffle: the winners are worked out here, in one go, and saved, so the projector only has to show them (and a reload shows the same). The least contested prize is drawn first; nobody wins twice; an item with
+// N winners gives N different people; a prize with fewer entrants than winners goes to all of them, and any spot still open is filled from the people who said they would take anything, then from everyone else who may enter. Winners are told. A Staffle can be drawn once (an unclaimed prize can be drawn again from the rest, see /redraw).
 export async function POST(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
@@ -30,15 +32,19 @@ export async function POST(_req: Request, { params }: { params: Promise<{ slug: 
     .in('status', ['open', 'closed'])
     .select('id');
   if (!locked?.length) return NextResponse.json({ error: 'It has already been drawn.' }, { status: 409 });
-  const [{ data: items }, { data: entries }] = await Promise.all([
+  const [{ data: items }, { data: entries }, { data: anything }, everyone] = await Promise.all([
     auth.svc.from('staffle_items').select('id, winners, prize_id').eq('staffle_id', id).order('sort'),
     auth.svc.from('staffle_entries').select('item_id, user_id').eq('staffle_id', id).limit(30000),
+    auth.svc.from('staffle_anything').select('user_id').eq('staffle_id', id).limit(5000),
+    eligibleIds(auth.svc, cleanRules(row.rules)),
   ]);
   const { won } = draw(
     (items ?? []).map((i) => ({ id: i.id as string, winners: i.winners as number, entrants: (entries ?? []).filter((e) => e.item_id === i.id).map((e) => e.user_id as string) })),
     seed,
+    [],
+    { anything: (anything ?? []).map((a) => a.user_id as string), everyone },
   );
-  if (won.length) await auth.svc.from('staffle_winners').insert(won.map((w) => ({ staffle_id: id, item_id: w.item_id, user_id: w.user_id, position: w.position })));
+  if (won.length) await auth.svc.from('staffle_winners').insert(won.map((w) => ({ staffle_id: id, item_id: w.item_id, user_id: w.user_id, position: w.position, via: w.via })));
   await tellWinners(
     auth.svc,
     row,

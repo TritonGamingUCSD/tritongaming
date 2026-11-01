@@ -3,13 +3,15 @@ import { randomBytes } from 'node:crypto';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { logAudit } from '@/lib/notifications/audit';
 import { draw } from '@/lib/staffle/draw';
+import { eligibleIds } from '@/lib/staffle/eligible';
+import { cleanRules } from '@/lib/staffle/rules';
 import { loadStaffle, staffleView } from '@/lib/staffle/detail';
 import { tellWinners, UUID } from '@/lib/staffle/server';
 
 export const dynamic = 'force-dynamic';
 
 // Draw again for a prize nobody picked up: `winner_id` passes over one winner and picks a replacement for the same item; `item_id` does it for every winner of that item who has not claimed. The new winners come from the
-// people who entered that item and have not won (or been passed over) in this Staffle. A passed-over winner is kept, so they cannot be picked again, and no longer holds the prize back from stock.
+// people who entered that item and have not won (or been passed over) in this Staffle, and when they run out from the people who said they would take anything, then everyone else who may enter and has not won. A passed-over winner is kept, so they cannot be picked again, and no longer holds the prize back from stock.
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
@@ -33,10 +35,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   } else return NextResponse.json({ error: 'Pick a winner or an item.' }, { status: 400 });
   const { data: item } = await auth.svc.from('staffle_items').select('id, prize_id').eq('id', itemId).eq('staffle_id', id).maybeSingle();
   if (!item) return NextResponse.json({ error: 'That item is gone.' }, { status: 404 });
-  const { data: entries } = await auth.svc.from('staffle_entries').select('user_id').eq('item_id', itemId);
+  const [{ data: entries }, { data: anything }, everyone] = await Promise.all([
+    auth.svc.from('staffle_entries').select('user_id').eq('item_id', itemId),
+    auth.svc.from('staffle_anything').select('user_id').eq('staffle_id', id).limit(5000),
+    eligibleIds(auth.svc, cleanRules(row.rules)),
+  ]);
   const taken = new Set((all ?? []).map((x) => x.user_id as string)); // everyone who won or was passed over in this Staffle
   const seed = randomBytes(12).toString('hex');
-  const { won } = draw([{ id: itemId!, winners: toPass.length, entrants: (entries ?? []).map((e) => e.user_id as string) }], seed, taken);
+  const { won } = draw([{ id: itemId!, winners: toPass.length, entrants: (entries ?? []).map((e) => e.user_id as string) }], seed, taken, {
+    anything: (anything ?? []).map((a) => a.user_id as string),
+    everyone,
+  });
   await auth.svc
     .from('staffle_winners')
     .update({ passed_at: new Date().toISOString() })
@@ -45,7 +54,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       toPass.map((w) => w.id),
     );
   const start = Math.max(-1, ...(all ?? []).map((x) => x.position as number)) + 1;
-  if (won.length) await auth.svc.from('staffle_winners').insert(won.map((w, n) => ({ staffle_id: id, item_id: itemId, user_id: w.user_id, position: start + n })));
+  if (won.length) await auth.svc.from('staffle_winners').insert(won.map((w, n) => ({ staffle_id: id, item_id: itemId, user_id: w.user_id, position: start + n, via: w.via })));
   await tellWinners(
     auth.svc,
     row,

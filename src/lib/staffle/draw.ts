@@ -1,8 +1,10 @@
 // The Staffle draw. Pure logic: given the items (each with how many winners and who entered) and a seed, it picks the winners. The same seed always gives the same result, so a draw can be shown on the
 // projector one item at a time from what was saved, and checked later.
-//   - The items are drawn in a random order (a different one every Staffle).
-//   - A person who wins an item drops out of every later item: nobody wins twice in one Staffle.
-//   - An item with N winners gives N different people (or fewer, when fewer entered).
+//   - Nobody wins twice: a person who wins an item drops out of every later one.
+//   - The prize with the fewest entrants for each winner is drawn next (worked out again after every prize, since winners drop out; ties are random). So a prize only one person entered goes to that person, and the popular
+//     prizes are drawn from whoever is left.
+//   - An item with N winners gives N different people. When fewer entered than there are winners, they all win it.
+//   - Spots still open after that go to the leftover pools: the people who said they would take anything first, then everyone else who may enter and has not won.
 
 export interface DrawItem {
   id: string;
@@ -13,6 +15,14 @@ export interface Won {
   item_id: string;
   user_id: string;
   position: number;
+  /** 'entered': they entered this prize. 'leftover': it was nobody's pick and they came from a leftover pool. */
+  via: 'entered' | 'leftover';
+}
+export interface DrawPools {
+  /** People who said they would take anything that is left. */
+  anything?: string[];
+  /** Everyone who may enter (the draw leaves out whoever has already won). */
+  everyone?: string[];
 }
 
 // A small seeded random number generator (mulberry32 over a hash of the seed text).
@@ -40,17 +50,57 @@ function shuffle<T>(list: T[], next: () => number): T[] {
   return a;
 }
 
-export function draw(items: DrawItem[], seed: string, alreadyWon: Iterable<string> = []): { won: Won[]; order: string[] } {
+export function draw(items: DrawItem[], seed: string, alreadyWon: Iterable<string> = [], pools: DrawPools = {}): { won: Won[]; order: string[] } {
   const next = rng(seed);
   const gone = new Set(alreadyWon);
-  const order = shuffle(items, next);
+  const tie = new Map(shuffle(items, next).map((it, i) => [it.id, i])); // the random order that settles ties
+  const open = new Map(items.map((i) => [i.id, i.winners]));
   const won: Won[] = [];
-  for (const item of order) {
-    const pool = shuffle([...new Set(item.entrants)].filter((u) => !gone.has(u)).sort(), next); // sorted first so the shuffle does not depend on the order entries were read in
-    for (const u of pool.slice(0, item.winners)) {
-      gone.add(u);
-      won.push({ item_id: item.id, user_id: u, position: won.length });
+  const order: string[] = [];
+  const give = (item: DrawItem, user: string, via: Won['via']) => {
+    gone.add(user);
+    open.set(item.id, (open.get(item.id) ?? 0) - 1);
+    won.push({ item_id: item.id, user_id: user, position: won.length, via });
+    if (!order.includes(item.id)) order.push(item.id);
+  };
+
+  // 1. the prizes people entered, the least contested first
+  const pending = new Set(items.map((i) => i.id));
+  for (;;) {
+    let best: DrawItem | null = null;
+    let bestRatio = Infinity;
+    for (const item of items) {
+      if (!pending.has(item.id)) continue;
+      const avail = new Set(item.entrants.filter((u) => !gone.has(u))).size;
+      if (avail === 0) continue;
+      const ratio = avail / item.winners;
+      if (ratio < bestRatio || (ratio === bestRatio && best && tie.get(item.id)! < tie.get(best.id)!)) {
+        best = item;
+        bestRatio = ratio;
+      }
+    }
+    if (!best) break;
+    pending.delete(best.id);
+    const pool = shuffle([...new Set(best.entrants)].filter((u) => !gone.has(u)).sort(), next); // sorted first so the shuffle does not depend on the order entries were read in
+    for (const u of pool.slice(0, best.winners)) give(best, u, 'entered');
+  }
+
+  // 2. open spots go to the leftover pools
+  const anything = shuffle([...new Set(pools.anything ?? [])].sort(), next);
+  const everyone = shuffle([...new Set(pools.everyone ?? [])].sort(), next);
+  for (const item of [...items].sort((a, b) => tie.get(a.id)! - tie.get(b.id)!)) {
+    for (const list of [anything, everyone]) {
+      for (const u of list) {
+        if ((open.get(item.id) ?? 0) <= 0) break;
+        if (!gone.has(u)) give(item, u, 'leftover');
+      }
     }
   }
-  return { won, order: order.map((i) => i.id) };
+  return { won, order };
+}
+
+/** About how likely you are to win a prize if you enter it, from how many have entered (counting you) and how many win it: `all` when everyone who enters wins. A guide: the draw also drops people who win another prize first. */
+export function oddsOf(entries: number, winners: number, entered: boolean): { all: boolean; oneIn: number } {
+  const n = Math.max(1, entries + (entered ? 0 : 1));
+  return { all: n <= winners, oneIn: Math.max(1, Math.round(n / winners)) };
 }

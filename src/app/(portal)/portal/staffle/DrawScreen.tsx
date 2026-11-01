@@ -177,13 +177,14 @@ export default function DrawScreen({ slug, onClose }: { slug: string; onClose: (
               </p>
             </div>
             <div className={styles.drawArena}>
-              {phase === 'rolling' && <Drum names={item.entrants} />}
+              {phase === 'rolling' && <Drum names={item.entrants.length ? item.entrants : item.won.map((w) => w.name)} />}
               {phase !== 'rolling' && (
                 <div className={styles.drawWinners} data-count={winners.length}>
                   {winners.length === 0 && <div className={styles.drawNobody}>{item.entries === 0 ? 'Nobody entered this one' : 'No winner'}</div>}
                   {winners.slice(0, shown).map((w, n) => (
                     <div key={w.id} className={styles.drawBall} style={{ '--hue': BALLS[Math.floor(hash(w.id) * BALLS.length)], '--n': n } as CSSProperties}>
                       <span className={styles.drawBallName}>{w.name}</span>
+                      {w.via === 'leftover' && <small className={styles.drawLeft}>from the leftover pool</small>}
                     </div>
                   ))}
                   {winners.length > 0 && shown >= winners.length && <Confetti seed={item.id} />}

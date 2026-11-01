@@ -8,6 +8,7 @@ import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { RowMenu } from '../logistics/RowMenu';
 import { confirmHold } from '@/lib/ui/confirmHold';
+import { oddsOf } from '@/lib/staffle/draw';
 import { call, STATE_LABEL, type StaffleView } from './api';
 import StaffleForm from './StaffleForm';
 import StaffleItemsDialog from './StaffleItemsDialog';
@@ -174,6 +175,23 @@ export default function StaffleViewPage({
           </Button>
         </div>
       )}
+      {open && s.me.can_enter && (
+        <label className={`${styles.anything} ${s.me.anything ? styles.anythingOn : ''}`}>
+          <input
+            type="checkbox"
+            checked={s.me.anything}
+            disabled={busy === 'anything'}
+            onChange={(e) => void act('anything', `/api/staffle/${s.slug}/anything`, 'POST', { on: e.target.checked })}
+          />
+          <span>
+            <b>I’ll take anything left</b>
+            <small>
+              A prize nobody picked, or one with spots left after the draw, goes to people who tick this first (you still win at most one prize). {s.anything}{' '}
+              {s.anything === 1 ? 'person has' : 'people have'}.
+            </small>
+          </span>
+        </label>
+      )}
       <ul className={styles.items}>
         {s.items.map((i) => {
           const live = i.won.filter((w) => !w.passed),
@@ -194,6 +212,14 @@ export default function StaffleViewPage({
                   {i.prize.sponsor ? `${i.prize.sponsor} · ` : ''}
                   {i.winners} {i.winners === 1 ? 'winner' : 'winners'} · {i.entries} {i.entries === 1 ? 'entry' : 'entries'}
                 </span>
+                {open && (
+                  <small className={styles.odds}>
+                    {(() => {
+                      const o = oddsOf(i.entries, i.winners, i.mine);
+                      return o.all ? 'Everyone who enters wins this' : `About 1 in ${o.oneIn} if you enter`;
+                    })()}
+                  </small>
+                )}
                 {open && (
                   <button
                     type="button"
@@ -223,6 +249,7 @@ export default function StaffleViewPage({
                       <div key={w.id} className={`${styles.winner} ${w.claimed ? styles.claimed : ''}`}>
                         <Trophy size={13} aria-hidden="true" />
                         <span>{w.name}</span>
+                        {w.via === 'leftover' && <em>leftover pick</em>}
                         {w.claimed && <em>picked up</em>}
                         {canManage && s.state === 'drawn' && (
                           <span className={styles.winnerTools}>

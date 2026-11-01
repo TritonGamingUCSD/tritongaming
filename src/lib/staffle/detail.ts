@@ -12,7 +12,7 @@ export interface StaffleItemView {
   mine: boolean;
   entrants: string[]; // entrants: their names, only for the people who run it (the draw screen shuffles them)
   prize: { name: string; photo: string; sponsor: string | null; type: string | null; size: string | null };
-  won: { id: string; user_id: string; name: string; position: number; claimed: boolean; passed: boolean }[];
+  won: { id: string; user_id: string; name: string; position: number; claimed: boolean; passed: boolean; via: 'entered' | 'leftover' }[];
 }
 export interface StaffleView {
   id: string;
@@ -26,8 +26,10 @@ export interface StaffleView {
   rules_text: string;
   rule_names: Record<string, string>;
   items: StaffleItemView[];
-  me: { can_enter: boolean; why: string | null; entered: number; won: { item_id: string; prize: string; claimed: boolean }[] };
+  me: { can_enter: boolean; why: string | null; entered: number; anything: boolean; won: { item_id: string; prize: string; claimed: boolean }[] };
   entrants: number;
+  /** How many people said they would take anything left. */
+  anything: number;
   canManage: boolean;
 }
 
@@ -40,10 +42,11 @@ export async function loadStaffle(svc: SupabaseClient, slugOrId: string): Promis
 export async function staffleView(svc: SupabaseClient, row: Record<string, unknown>, userId: string, canManage: boolean): Promise<StaffleView> {
   const id = row.id as string;
   const rules = cleanRules(row.rules);
-  const [{ data: items }, { data: entries }, { data: won }, person] = await Promise.all([
+  const [{ data: items }, { data: entries }, { data: won }, { data: anyone }, person] = await Promise.all([
     svc.from('staffle_items').select('id, prize_id, winners, sort').eq('staffle_id', id).order('sort').limit(500),
     svc.from('staffle_entries').select('item_id, user_id').eq('staffle_id', id).limit(30000),
-    svc.from('staffle_winners').select('id, item_id, user_id, position, claimed_at, passed_at').eq('staffle_id', id).order('position').limit(5000),
+    svc.from('staffle_winners').select('id, item_id, user_id, position, claimed_at, passed_at, via').eq('staffle_id', id).order('position').limit(5000),
+    svc.from('staffle_anything').select('user_id').eq('staffle_id', id).limit(5000),
     personFacts(svc, userId),
   ]);
   const prizeIds = [...new Set((items ?? []).map((i) => i.prize_id as string))];
@@ -93,6 +96,7 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
           position: w.position as number,
           claimed: !!w.claimed_at,
           passed: !!w.passed_at,
+          via: (w.via as 'entered' | 'leftover') ?? 'entered',
         })),
     };
   });
@@ -113,9 +117,11 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
       can_enter: verdict.ok,
       why: verdict.ok ? null : verdict.why,
       entered: mine.size,
+      anything: (anyone ?? []).some((a) => a.user_id === userId),
       won: itemViews.flatMap((i) => i.won.filter((w) => w.user_id === userId && !w.passed).map((w) => ({ item_id: i.id, prize: i.prize.name, claimed: w.claimed }))),
     },
     entrants: new Set((entries ?? []).map((e) => e.user_id as string)).size,
+    anything: (anyone ?? []).length,
     canManage,
   };
 }
