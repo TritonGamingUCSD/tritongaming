@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import { TOKEN } from '@/lib/photobooth/token';
 import { PHOTO_BUCKET } from '@/lib/photobooth/server';
+import { ShareToggle } from './ShareToggle';
 import styles from './photo.module.css';
 
 export const metadata: Metadata = { title: 'Your Photo', robots: { index: false, follow: false } };
@@ -11,6 +12,8 @@ export const dynamic = 'force-dynamic';
 
 interface Found {
   url: string;
+  gif: string | null;
+  shared: boolean;
   until: string;
   event: string | null;
 }
@@ -18,11 +21,13 @@ interface Found {
 async function find(token: string): Promise<Found | null> {
   if (!TOKEN.test(token)) return null;
   const svc = createServiceClient();
-  const { data } = await svc.from('photobooth_photos').select('path, expires_at, photobooths(name)').eq('token', token).maybeSingle();
+  const { data } = await svc.from('photobooth_photos').select('path, gif_path, shared, expires_at, photobooths(name)').eq('token', token).maybeSingle();
   if (!data || new Date(data.expires_at as string).getTime() <= Date.now()) return null;
   const b = data.photobooths as unknown as { name: string } | { name: string }[] | null;
   return {
     url: svc.storage.from(PHOTO_BUCKET).getPublicUrl(data.path as string).data.publicUrl,
+    gif: data.gif_path ? svc.storage.from(PHOTO_BUCKET).getPublicUrl(data.gif_path as string).data.publicUrl : null,
+    shared: !!data.shared,
     until: data.expires_at as string,
     event: (Array.isArray(b) ? b[0]?.name : b?.name) ?? null,
   };
@@ -51,6 +56,18 @@ export default async function Page({ params }: { params: Promise<{ token: string
         <a className={styles.download} href={`/photos/${token}/download`}>
           Download Photo
         </a>
+        {photo.gif && (
+          <>
+            <div className={styles.frame}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={photo.gif} alt="An animated picture of your shots" className={styles.img} loading="lazy" />
+            </div>
+            <a className={`${styles.download} ${styles.downloadAlt}`} href={`/photos/${token}/download?gif=1`}>
+              Download Animated Picture
+            </a>
+          </>
+        )}
+        <ShareToggle token={token} initial={photo.shared} />
         <p className={styles.note}>
           On a phone, you can also press and hold the picture to save it. It is kept until {formatPacificDateTime(photo.until, { weekday: true })} and then deleted.
         </p>

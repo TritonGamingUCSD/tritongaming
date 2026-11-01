@@ -43,6 +43,8 @@ export interface BoothConfig {
   flash: boolean;
   qr_seconds: number;
   keep_days: number;
+  /** True: each guest picks stickers before the photos. False: the step is skipped and every sticker of the booth is put on every picture where the host placed it. */
+  guest_stickers: boolean;
 }
 
 export const DEFAULT_BOOTH: BoothConfig = {
@@ -62,6 +64,7 @@ export const DEFAULT_BOOTH: BoothConfig = {
   flash: true,
   qr_seconds: 60,
   keep_days: 7,
+  guest_stickers: false,
 };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -97,6 +100,7 @@ export function cleanBooth(input: unknown, base: BoothConfig = DEFAULT_BOOTH): B
     flash: typeof b.flash === 'boolean' ? b.flash : base.flash,
     qr_seconds: int(b.qr_seconds, 10, 300, base.qr_seconds),
     keep_days: int(b.keep_days, 1, 7, base.keep_days),
+    guest_stickers: typeof b.guest_stickers === 'boolean' ? b.guest_stickers : base.guest_stickers,
   };
 }
 

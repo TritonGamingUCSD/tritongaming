@@ -44,6 +44,11 @@ describe('booth settings', () => {
     expect(c.filter).toBe('none');
     expect(c.mirror).toBe(false);
   });
+  test('guests choosing their own stickers is a yes or no, off unless said', () => {
+    expect(cleanBooth({}).guest_stickers).toBe(false);
+    expect(cleanBooth({ guest_stickers: true }).guest_stickers).toBe(true);
+    expect(cleanBooth({ guest_stickers: 'yes' }, { ...cleanBooth({}), guest_stickers: true }).guest_stickers).toBe(true);
+  });
   test('prompts are cleaned and limited', () => {
     const c = cleanBooth({ prompts: ['  Pose!  ', '', 5, 'Silly!'] });
     expect(c.prompts).toEqual(['Pose!', 'Silly!']);

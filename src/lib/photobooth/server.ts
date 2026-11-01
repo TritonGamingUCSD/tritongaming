@@ -13,7 +13,7 @@ export const MAX_OVERLAY_BYTES = 600 * 1024; // the bucket refuses anything over
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 export const OVERLAY_COLUMNS = 'id, name, kind, image, x, y, size, can_resize, can_rotate';
 export const BOOTH_COLUMNS =
-  'id, slug, name, frame_image, frame_design, layout, aspect, countdown, mirror, filter, strip_bg, text_color, accent, footer, welcome_title, welcome_text, prompts, sounds, flash, qr_seconds, keep_days';
+  'id, slug, name, gallery_token, frame_image, frame_design, layout, aspect, countdown, mirror, filter, strip_bg, text_color, accent, footer, welcome_title, welcome_text, prompts, sounds, flash, qr_seconds, keep_days, guest_stickers';
 
 // Who may set up and run a booth: officers and above (the capability can also be granted in Admin → Access). The guests' download page needs no sign-in and has its own routes.
 export async function authorizePhotoBooth() {
@@ -33,6 +33,8 @@ export interface BoothInfo {
   id: string;
   slug: string;
   name: string;
+  /** The address word of the booth's public gallery (/gallery/<this>). */
+  gallery_token: string;
 }
 
 /** Words that are other addresses under /portal/photobooth, so a booth cannot take them as its own. */
@@ -53,7 +55,7 @@ export async function loadBooth(svc: SupabaseClient, key: string): Promise<{ boo
   const config = cleanBooth(data);
   const overlays = await boothStickers(svc, data.id as string);
   const frame: BoothFrame = { image: (data.frame_image as string) || '', spec: data.frame_design ? cleanFrameSpec(data.frame_design) : null };
-  return { booth: { id: data.id as string, slug: data.slug as string, name: data.name as string }, config, overlays, frame };
+  return { booth: { id: data.id as string, slug: data.slug as string, name: data.name as string, gallery_token: data.gallery_token as string }, config, overlays, frame };
 }
 
 /** The stickers a booth offers, in the order they were arranged. */
@@ -84,4 +86,5 @@ export function pathInBucket(url: string, bucket: string): string | null {
 
 // A WebP file starts with "RIFF", four size bytes, then "WEBP"; a JPEG with FF D8 FF.
 export const isWebp = (b: Uint8Array) => b.length > 12 && String.fromCharCode(...b.slice(0, 4)) === 'RIFF' && String.fromCharCode(...b.slice(8, 12)) === 'WEBP';
+export const isGif = (b: Uint8Array) => b.length > 6 && String.fromCharCode(...b.slice(0, 4)) === 'GIF8';
 export const isJpeg = (b: Uint8Array) => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;

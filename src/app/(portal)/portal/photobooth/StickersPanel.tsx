@@ -21,6 +21,8 @@ const START = { x: 0.5, y: 0.5, size: 0.4, can_resize: true, can_rotate: true };
 // its size and what a guest may do with it. Adding and removing happens at once; where they start is saved with the rest of the booth.
 export function StickersPanel({
   booth,
+  guestPicks,
+  onGuestPicks,
   stickers,
   selectedId,
   onSelect,
@@ -29,6 +31,9 @@ export function StickersPanel({
   onRemoved,
 }: {
   booth: string;
+  /** Whether each guest picks stickers before the photos (otherwise every sticker is on every picture where it was placed here). */
+  guestPicks: boolean;
+  onGuestPicks: (on: boolean) => void;
   stickers: Overlay[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
@@ -81,7 +86,14 @@ export function StickersPanel({
 
   return (
     <div className={styles.tools}>
-      <p className={styles.hint}>Guests drag these onto the live camera. Drag one on the picture to set where it starts.</p>
+      <label className={styles.check}>
+        <input type="checkbox" checked={guestPicks} onChange={(e) => onGuestPicks(e.target.checked)} /> Guests choose their own stickers
+      </label>
+      <p className={styles.hint}>
+        {guestPicks
+          ? 'Each guest picks and places stickers on the live camera before the photos. Drag a sticker on the picture to set where it starts.'
+          : 'The sticker step is skipped (faster): every sticker below is on every picture, exactly where you place it. Drag one on the picture to place it.'}
+      </p>
       <div className={styles.rowActions}>
         <Button size="sm" variant="secondary" disabled={full || busy} onClick={() => setPicking(true)}>
           <ImagePlus size={15} aria-hidden="true" /> Add A Picture

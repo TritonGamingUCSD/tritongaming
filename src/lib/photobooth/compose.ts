@@ -1,4 +1,4 @@
-import { applyFilter, composition, stickerBox, type BoothConfig } from '@/lib/photobooth/booth';
+import { applyFilter, cellSize, composition, stickerBox, type BoothConfig, type Filter, type Rect } from '@/lib/photobooth/booth';
 
 // Makes the finished picture (browser only): the photos on the background in their places, each with its filter, then the guest's stickers, then the frame over it, then the footer text.
 export interface PlacedSticker {
@@ -28,6 +28,40 @@ export function cutShot(video: HTMLVideoElement, w: number, h: number, mirror: b
   return canvas;
 }
 
+/** One photo in its place on a canvas: the shot with the booth's filter, then the guest's stickers, then the frame over it. */
+function drawCell(ctx: CanvasRenderingContext2D, cell: Rect, shot: HTMLCanvasElement, opts: { filter: Filter; stickers: PlacedSticker[]; frame: HTMLImageElement | null }): void {
+  ctx.drawImage(shot, cell.x, cell.y, cell.w, cell.h);
+  if (opts.filter !== 'none') {
+    const px = ctx.getImageData(cell.x, cell.y, cell.w, cell.h);
+    applyFilter(px.data, opts.filter);
+    ctx.putImageData(px, cell.x, cell.y);
+  }
+  for (const s of opts.stickers) {
+    const box = stickerBox(cell, s);
+    const h = box.w * (s.image.naturalHeight / Math.max(1, s.image.naturalWidth));
+    ctx.save();
+    ctx.translate(box.cx, box.cy);
+    ctx.rotate(s.rotation);
+    ctx.drawImage(s.image, -box.w / 2, -h / 2, box.w, h);
+    ctx.restore();
+  }
+  if (opts.frame) ctx.drawImage(opts.frame, cell.x, cell.y, cell.w, cell.h);
+}
+
+/** One finished photo on its own (the shot, filter, stickers and frame), `width` pixels wide: a frame of the animated picture. */
+export function composeFrame(opts: { config: BoothConfig; shot: HTMLCanvasElement; stickers: PlacedSticker[]; frame: HTMLImageElement | null; width: number }): HTMLCanvasElement {
+  const { w, h } = cellSize(opts.config.aspect);
+  const full = document.createElement('canvas');
+  full.width = w;
+  full.height = h;
+  drawCell(full.getContext('2d')!, { x: 0, y: 0, w, h }, opts.shot, { filter: opts.config.filter, stickers: opts.stickers, frame: opts.frame });
+  const out = document.createElement('canvas');
+  out.width = opts.width;
+  out.height = Math.round((opts.width * h) / w);
+  out.getContext('2d')!.drawImage(full, 0, 0, out.width, out.height);
+  return out;
+}
+
 export async function composePicture(opts: { config: BoothConfig; shots: HTMLCanvasElement[]; stickers: PlacedSticker[]; frame: HTMLImageElement | null }): Promise<Blob> {
   const { config, shots, stickers, frame } = opts;
   const hasFooter = !!config.footer.trim();
@@ -40,23 +74,7 @@ export async function composePicture(opts: { config: BoothConfig; shots: HTMLCan
   ctx.fillRect(0, 0, comp.width, comp.height);
   comp.cells.forEach((cell, i) => {
     const shot = shots[i] ?? shots[shots.length - 1];
-    if (!shot) return;
-    ctx.drawImage(shot, cell.x, cell.y, cell.w, cell.h);
-    if (config.filter !== 'none') {
-      const px = ctx.getImageData(cell.x, cell.y, cell.w, cell.h);
-      applyFilter(px.data, config.filter);
-      ctx.putImageData(px, cell.x, cell.y);
-    }
-    for (const s of stickers) {
-      const box = stickerBox(cell, s);
-      const h = box.w * (s.image.naturalHeight / Math.max(1, s.image.naturalWidth));
-      ctx.save();
-      ctx.translate(box.cx, box.cy);
-      ctx.rotate(s.rotation);
-      ctx.drawImage(s.image, -box.w / 2, -h / 2, box.w, h);
-      ctx.restore();
-    }
-    if (frame) ctx.drawImage(frame, cell.x, cell.y, cell.w, cell.h);
+    if (shot) drawCell(ctx, cell, shot, { filter: config.filter, stickers, frame });
   });
   if (hasFooter) {
     ctx.fillStyle = config.text_color;

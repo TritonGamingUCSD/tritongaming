@@ -1,6 +1,9 @@
 'use client';
 
+import { Copy } from 'lucide-react';
+import Button from '@/components/ui/Button';
 import ColorInput from '@/components/ui/ColorInput';
+import { showToast } from '@/lib/ui/toast';
 import NumberInput from '@/components/ui/NumberInput';
 import { Field, Input, Textarea } from '@/components/ui/Field';
 import { ASPECTS, ASPECT_NAMES, FILTERS, FILTER_NAMES, LAYOUTS, LAYOUT_NAMES, type BoothConfig } from '@/lib/photobooth/booth';
@@ -102,7 +105,8 @@ export function PromptsPanel({ config, set }: Props) {
   );
 }
 
-export function DownloadsPanel({ config, set }: Props) {
+export function DownloadsPanel({ config, set, galleryToken }: Props & { galleryToken: string }) {
+  const link = typeof window === 'undefined' ? '' : `${window.location.origin}/gallery/${galleryToken}`;
   return (
     <div className={styles.tools}>
       <Field label="QR code stays on screen (seconds)">
@@ -111,6 +115,27 @@ export function DownloadsPanel({ config, set }: Props) {
       <Field label="Keep pictures for (days)" hint="1 to 7, then they are deleted">
         <NumberInput min={1} max={7} value={config.keep_days} onChange={(e) => set({ keep_days: Number(e.target.value) }, 'keep-days')} />
       </Field>
+      <fieldset className={styles.group}>
+        <legend>Event Gallery</legend>
+        <p className={styles.hint}>
+          Guests can add their picture to this booth&rsquo;s gallery from their download page. Anyone with this link can see the shared pictures until they are deleted.
+        </p>
+        <Input readOnly value={link} aria-label="Gallery link" onFocus={(e) => e.currentTarget.select()} />
+        <div className={styles.rowActions}>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={() => {
+              void navigator.clipboard?.writeText(link).then(() => showToast('Gallery link copied'));
+            }}
+          >
+            <Copy size={15} aria-hidden="true" /> Copy Link
+          </Button>
+          <a className={styles.linkBtn} href={link} target="_blank" rel="noreferrer">
+            Open The Gallery
+          </a>
+        </div>
+      </fieldset>
     </div>
   );
 }

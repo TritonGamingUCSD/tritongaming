@@ -36,8 +36,8 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   if (auth.error) return auth.error;
   const found = await loadBooth(auth.svc, (await params).slug);
   if (!found) return NextResponse.json({ ok: true });
-  const { data: photos } = await auth.svc.from('photobooth_photos').select('path').eq('booth_id', found.booth.id).limit(5000);
-  const paths = (photos ?? []).map((p) => p.path as string);
+  const { data: photos } = await auth.svc.from('photobooth_photos').select('path, gif_path').eq('booth_id', found.booth.id).limit(5000);
+  const paths = (photos ?? []).flatMap((p) => [p.path as string, ...(p.gif_path ? [p.gif_path as string] : [])]);
   if (paths.length) await auth.svc.storage.from(PHOTO_BUCKET).remove(paths);
   const stickerImages = found.overlays.map((o) => o.image);
   await auth.svc.from('photobooths').delete().eq('id', found.booth.id); // its photo rows and stickers go with it

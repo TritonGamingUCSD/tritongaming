@@ -1,0 +1,8 @@
+.page { min-height: 100dvh; display: grid; align-content: start; justify-items: center; gap: 1rem; padding: 1.4rem 1rem 2.5rem; background: var(--pp-paper); color: var(--pp-ink); }
+.title { margin: 0; font-family: var(--font-futura-heavy); font-size: clamp(1.4rem, 5vw, 2rem); text-align: center; text-wrap: balance; }
+.note { margin: 0; max-width: 34rem; text-align: center; color: rgba(var(--pp-ink-rgb), 0.75); }
+.grid { list-style: none; margin: 0; padding: 0; width: min(100%, 64rem); display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.8rem; }
+.item { display: block; border-radius: 0.7rem; overflow: hidden; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); transition: transform 0.15s ease; }
+.item:hover { transform: translateY(-2px); }
+.item img { display: block; width: 100%; height: auto; }
+.brand { margin: 0.6rem 0 0; font-size: 0.8rem; letter-spacing: 0.08em; color: rgba(var(--pp-ink-rgb), 0.6); }

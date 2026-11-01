@@ -68,8 +68,9 @@
 .video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .camFrame { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
 .dim { position: absolute; inset: 0; background: rgba(11, 16, 32, 0.62); }   /* theme-ok */
-.count { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-futura-heavy); font-size: min(34vh, 30vw); color: #fff; text-shadow: 0 6px 30px rgba(0, 0, 0, 0.6); animation: pbCount 1s ease-out both; pointer-events: none; }   /* theme-ok */
-@keyframes pbCount { from { transform: scale(1.5); opacity: 0; } 25% { opacity: 1; } to { transform: scale(0.85); opacity: 0.85; } }
+.count { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-futura-heavy); font-size: min(34vh, 30vw); color: #fff; text-shadow: 0 6px 30px rgba(0, 0, 0, 0.6); pointer-events: none; }   /* theme-ok */
+.digit { grid-area: 1 / 1; animation: pbCount 1s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+.ring { grid-area: 1 / 1; width: 0.9em; height: 0.9em; border-radius: 50%; border: 0.04em solid var(--accent); animation: pbRing 1s ease-out both; }
 .flash { position: absolute; inset: 0; background: #fff; opacity: 0.95; animation: pbFlash 0.18s ease-out forwards; pointer-events: none; }   /* theme-ok */
 @keyframes pbFlash { to { opacity: 0; } }
 .welcome { position: absolute; z-index: 3; display: grid; justify-items: center; gap: 1rem; text-align: center; padding: 1rem; max-width: 40rem; }
@@ -189,3 +190,69 @@
 }
 .tools .choices { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .tools .choice { padding: 0.55rem 0.6rem; }
+
+/* ── Motion: the welcome, the shots, the review and the QR screen (all switched off for people who ask for less motion) ───── */
+@keyframes pbCount { from { transform: scale(1.7) rotate(-6deg); opacity: 0; } 30% { opacity: 1; transform: scale(1) rotate(0); } to { transform: scale(0.85); opacity: 0.85; } }
+@keyframes pbRing { from { transform: scale(0.4); opacity: 0.9; } to { transform: scale(2.2); opacity: 0; } }
+@keyframes pbRise { from { transform: translateY(1.6rem); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pbDrop { from { transform: translateY(-3rem) rotate(-5deg) scale(0.92); opacity: 0; } 60% { transform: translateY(0.4rem) rotate(1.5deg) scale(1.01); opacity: 1; } to { transform: none; opacity: 1; } }
+@keyframes pbPop { from { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.06); opacity: 1; } to { transform: none; } }
+@keyframes pbPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.55); } 50% { transform: scale(1.04); box-shadow: 0 0 0 1.1rem rgba(250, 204, 21, 0); } }   /* theme-ok */
+@keyframes pbFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -0.9rem; } }
+@keyframes pbSlideIn { from { opacity: 0; scale: 0.8; } to { opacity: 0.9; scale: 1; } }
+@keyframes pbSpin { to { transform: rotate(360deg); } }
+@keyframes pbFall { from { transform: translate(0, -12vh) rotate(0); opacity: 1; } to { transform: translate(var(--drift), 112vh) rotate(var(--spin)); opacity: 0.9; } }
+@keyframes pbFilm { from { transform: translateX(3rem) rotate(8deg) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes pbSnap { 0% { transform: scale(1); } 35% { transform: scale(0.985); } 100% { transform: scale(1); } }
+.riseIn { animation: pbRise 0.45s ease-out both; }
+.dropIn { animation: pbDrop 0.7s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.popIn { animation: pbPop 0.55s 0.25s cubic-bezier(0.2, 0.8, 0.3, 1.2) both; }
+.camSnap { animation: pbSnap 0.2s ease-out; }
+.welcomeTitle { animation: pbDrop 0.8s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.welcomeText { animation: pbRise 0.6s 0.25s ease-out both; }
+.startBtn { animation: pbPulse 2.2s ease-in-out infinite; }
+.startBtn:disabled { animation: none; }
+.chipIn { animation: pbPop 0.4s cubic-bezier(0.2, 0.8, 0.3, 1.2) both; }
+.placed { animation: pbPop 0.35s cubic-bezier(0.2, 0.8, 0.3, 1.3); }
+.prompt { animation: pbRise 0.4s ease-out both; }
+.spinner { display: inline-block; width: 1.2em; height: 1.2em; border-radius: 50%; border: 0.18em solid rgba(244, 246, 251, 0.3); border-top-color: var(--accent); animation: pbSpin 0.8s linear infinite; vertical-align: -0.2em; }   /* theme-ok */
+.making { position: absolute; inset: 0; z-index: 5; display: grid; place-content: center; justify-items: center; gap: 0.8rem; background: rgba(11, 16, 32, 0.66); font-family: var(--font-futura-heavy); font-size: clamp(1.3rem, 4vw, 2.2rem); animation: pbRise 0.3s ease-out both; }   /* theme-ok */
+.savingVeil { position: absolute; inset: 0; z-index: 6; display: grid; place-content: center; justify-items: center; gap: 0.8rem; background: rgba(11, 16, 32, 0.7); font-family: var(--font-futura-heavy); font-size: 1.6rem; }   /* theme-ok */
+.dots { display: inline-flex; gap: 0.45rem; }
+.dots i { width: 0.8rem; height: 0.8rem; border-radius: 50%; border: 2px solid rgba(244, 246, 251, 0.6); transition: background 0.25s ease, transform 0.25s ease; }   /* theme-ok */
+.dots .dotNow { border-color: var(--accent); transform: scale(1.25); }
+.dots .dotDone { background: var(--accent); border-color: var(--accent); }
+.filmstrip { list-style: none; margin: 0; padding: 0; position: absolute; z-index: 4; right: 1rem; top: 50%; translate: 0 -50%; display: grid; gap: 0.5rem; max-height: 80vh; }
+.filmTile { width: clamp(4.5rem, 9vw, 7rem); border-radius: 6px; overflow: hidden; border: 2px solid #fff; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5); animation: pbFilm 0.5s cubic-bezier(0.2, 0.8, 0.3, 1.2) both; }   /* theme-ok */
+.filmTile img { display: block; width: 100%; height: auto; }
+.retakes { display: grid; gap: 0.4rem; justify-items: center; }
+.retakeRow { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+.retakeBtn { position: relative; width: 4.6rem; padding: 0; border-radius: 8px; overflow: hidden; border: 2px solid rgba(244, 246, 251, 0.5); background: #000; color: #fff; cursor: pointer; transition: transform 0.15s ease, border-color 0.15s ease; }   /* theme-ok */
+.retakeBtn:hover:not(:disabled) { transform: translateY(-3px) rotate(-2deg); border-color: var(--accent); }
+.retakeBtn img { display: block; width: 100%; height: auto; opacity: 0.85; }
+.retakeBtn span { position: absolute; left: 0; right: 0; bottom: 0; display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; padding: 0.15rem 0; background: rgba(11, 16, 32, 0.8); font-size: 0.8rem; }   /* theme-ok */
+.sent { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.2rem; color: var(--accent); animation: pbPop 0.4s ease-out both; }
+.emailRow { display: grid; gap: 0.5rem; justify-items: center; width: 100%; animation: pbRise 0.3s ease-out both; }
+.emailInput { width: 100%; min-height: 3.2rem; padding: 0 1rem; border-radius: 12px; border: 2px solid rgba(244, 246, 251, 0.5); background: rgba(244, 246, 251, 0.1); color: inherit; font: inherit; font-size: 1.2rem; text-align: center; }   /* theme-ok */
+.emailInput:focus { outline: none; border-color: var(--accent); }
+.fine { margin: 0; font-size: 0.8rem; opacity: 0.7; }
+.confetti { position: absolute; inset: 0; z-index: 7; overflow: hidden; pointer-events: none; }
+.confetti span { position: absolute; top: 0; height: 0.7rem; border-radius: 2px; animation-name: pbFall; animation-timing-function: cubic-bezier(0.3, 0.1, 0.6, 1); animation-fill-mode: both; }
+.slideshow { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+.slide { position: absolute; width: clamp(7rem, 15vw, 13rem); height: auto; border-radius: 8px; border: 0.4rem solid #fff; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); opacity: 0.9; animation: pbSlideIn 0.8s ease-out both, pbFloat 6s ease-in-out infinite; }   /* theme-ok */
+.slide0 { left: 4%; top: 12%; rotate: -7deg; }
+.slide1 { right: 4%; top: 8%; rotate: 6deg; animation-delay: 0s, 0.8s; }
+.slide2 { left: 7%; bottom: 8%; rotate: 5deg; animation-delay: 0s, 1.6s; }
+.slide3 { right: 6%; bottom: 10%; rotate: -5deg; animation-delay: 0s, 2.4s; }
+.slide4 { left: 50%; top: 2%; margin-left: -6rem; rotate: 3deg; animation-delay: 0s, 3.2s; }
+@media (max-width: 900px) { .slide3, .slide4 { display: none; } }
+.cameraMenu { position: absolute; top: 0.8rem; left: 3.6rem; z-index: 7; }
+.cameraBtn { position: static; padding: 0.45rem; }
+.cameraList { list-style: none; margin: 0.4rem 0 0; padding: 0.3rem; min-width: 14rem; max-width: 22rem; border-radius: 12px; border: 1px solid rgba(244, 246, 251, 0.3); background: rgba(11, 16, 32, 0.95); animation: pbRise 0.2s ease-out both; }   /* theme-ok */
+.cameraItem { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; width: 100%; padding: 0.55rem 0.7rem; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.cameraItem:hover { background: rgba(244, 246, 251, 0.12); }   /* theme-ok */
+@media (prefers-reduced-motion: reduce) {
+  .digit, .ring, .riseIn, .dropIn, .popIn, .camSnap, .welcomeTitle, .welcomeText, .startBtn, .chipIn, .placed, .prompt, .spinner, .making, .filmTile, .sent, .emailRow, .slide, .cameraList { animation: none; }
+  .confetti { display: none; }
+  .retakeBtn { transition: none; }
+}

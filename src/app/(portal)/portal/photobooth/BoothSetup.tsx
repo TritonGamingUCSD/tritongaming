@@ -200,6 +200,8 @@ export function BoothSetup({
     stickers: (
       <StickersPanel
         booth={booth}
+        guestPicks={form.guest_stickers}
+        onGuestPicks={(on) => set({ guest_stickers: on })}
         stickers={stickers}
         selectedId={sel?.kind === 'sticker' ? sel.id : null}
         onSelect={(id) => setSel(id ? { kind: 'sticker', id } : null)}
@@ -213,7 +215,7 @@ export function BoothSetup({
     ),
     look: <LookPanel config={config} set={set} />,
     words: <PromptsPanel config={config} set={set} />,
-    downloads: <DownloadsPanel config={config} set={set} />,
+    downloads: <DownloadsPanel config={config} set={set} galleryToken={data.booth.gallery_token} />,
   }[tool];
 
   return (

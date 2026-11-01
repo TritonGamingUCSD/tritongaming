@@ -13,7 +13,7 @@ export interface BoothRow {
   photos: number;
 }
 export interface BoothData {
-  booth: { id: string; slug: string; name: string };
+  booth: { id: string; slug: string; name: string; gallery_token: string };
   config: BoothConfig;
   overlays: Overlay[];
   frame: { image: string; spec: FrameSpec | null };
