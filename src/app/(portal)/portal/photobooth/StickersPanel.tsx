@@ -8,21 +8,20 @@ import PictureDialog from '@/components/ui/PictureDialog';
 import ColorInput from '@/components/ui/ColorInput';
 import { Field, Input } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
-import { MAX_STICKERS_PER_BOOTH, type Overlay } from '@/lib/photobooth/booth';
+import { ALL_PHOTOS, MAX_STICKERS_PER_LOOK, onPhoto, togglePhoto, type Overlay } from '@/lib/photobooth/booth';
 import { DEFAULT_TEXT_STICKER, drawTextSticker, renderTextSticker, type TextSticker } from '@/lib/photobooth/design';
 import { shrinkOverlay } from '@/lib/photobooth/shrink';
 import { call, uploadSticker } from './api';
 import styles from './photobooth.module.css';
 
 /** Where a new sticker starts: the middle of the photo, a good size. */
-const START = { x: 0.5, y: 0.5, size: 0.4, can_resize: true, can_rotate: true };
+const START = { x: 0.5, y: 0.5, size: 0.4, photos: ALL_PHOTOS };
 
-// The stickers tool: the stickers this booth offers (guests drag them into place on the live camera). Add one from a picture or from words, then drag it on the picture to where guests should find it first; here are its name,
-// its size and what a guest may do with it. Adding and removing happens at once; where they start is saved with the rest of the booth.
+// The stickers tool: the stickers of this look. Add one from a picture or from words, then drag it on the picture to where it should sit; here are its name, its size and which photos show it. Adding and removing happens at once;
+// where they sit is saved with the rest of the booth.
 export function StickersPanel({
-  booth,
-  guestPicks,
-  onGuestPicks,
+  look,
+  photos,
   stickers,
   selectedId,
   onSelect,
@@ -30,10 +29,9 @@ export function StickersPanel({
   onAdded,
   onRemoved,
 }: {
-  booth: string;
-  /** Whether each guest picks stickers before the photos (otherwise every sticker is on every picture where it was placed here). */
-  guestPicks: boolean;
-  onGuestPicks: (on: boolean) => void;
+  look: string;
+  /** How many photos the layout takes. */
+  photos: number;
   stickers: Overlay[];
   selectedId: string | null;
   onSelect: (id: string | null) => void;
@@ -47,7 +45,7 @@ export function StickersPanel({
   const [busy, setBusy] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const cur = stickers.find((s) => s.id === selectedId) ?? null;
-  const full = stickers.length >= MAX_STICKERS_PER_BOOTH;
+  const full = stickers.length >= MAX_STICKERS_PER_LOOK;
 
   useEffect(() => {
     if (words && canvas.current) drawTextSticker(canvas.current, words);
@@ -56,7 +54,7 @@ export function StickersPanel({
   const add = async (name: string, blob: Blob) => {
     setBusy(true);
     setError('');
-    const r = await uploadSticker(booth, { name, blob, sticker: START });
+    const r = await uploadSticker(look, { name, blob, sticker: START });
     setBusy(false);
     if (!r.ok) return setError(r.error);
     onAdded(r.overlay);
@@ -79,21 +77,14 @@ export function StickersPanel({
   };
   const remove = async (s: Overlay) => {
     if (!(await confirmHold({ title: `Remove "${s.name}"?`, message: 'It is taken off this booth.', confirmLabel: 'Hold to remove' }))) return;
-    const r = await call(`/api/photobooth/booths/${booth}/stickers/${s.id}`, 'DELETE');
+    const r = await call(`/api/photobooth/looks/${look}/stickers/${s.id}`, 'DELETE');
     if (r.ok) onRemoved(s.id);
     else setError(r.error);
   };
 
   return (
     <div className={styles.tools}>
-      <label className={styles.check}>
-        <input type="checkbox" checked={guestPicks} onChange={(e) => onGuestPicks(e.target.checked)} /> Guests choose their own stickers
-      </label>
-      <p className={styles.hint}>
-        {guestPicks
-          ? 'Each guest picks and places stickers on the live camera before the photos. Drag a sticker on the picture to set where it starts.'
-          : 'The sticker step is skipped (faster): every sticker below is on every picture, exactly where you place it. Drag one on the picture to place it.'}
-      </p>
+      <p className={styles.hint}>Stickers sit on the photos exactly where you place them: drag one on the picture, and choose which photos show it.</p>
       <div className={styles.rowActions}>
         <Button size="sm" variant="secondary" disabled={full || busy} onClick={() => setPicking(true)}>
           <ImagePlus size={15} aria-hidden="true" /> Add A Picture
@@ -102,7 +93,7 @@ export function StickersPanel({
           <Type size={15} aria-hidden="true" /> Add Words
         </Button>
       </div>
-      {full && <p className={styles.hint}>A booth can offer up to {MAX_STICKERS_PER_BOOTH} stickers.</p>}
+      {full && <p className={styles.hint}>A booth can offer up to {MAX_STICKERS_PER_LOOK} stickers.</p>}
       {words && (
         <fieldset className={`${styles.group} ${styles.groupOn}`}>
           <legend>New Words Sticker</legend>
@@ -163,12 +154,24 @@ export function StickersPanel({
             <span>Size</span>
             <input type="range" min={0.05} max={1} step={0.01} value={cur.size} onChange={(e) => onChange(cur.id, { size: Number(e.target.value) }, `size-${cur.id}`)} />
           </label>
-          <label className={styles.check}>
-            <input type="checkbox" checked={cur.can_resize} onChange={(e) => onChange(cur.id, { can_resize: e.target.checked })} /> Guests can make it bigger or smaller
-          </label>
-          <label className={styles.check}>
-            <input type="checkbox" checked={cur.can_rotate} onChange={(e) => onChange(cur.id, { can_rotate: e.target.checked })} /> Guests can turn it
-          </label>
+          {photos > 1 && (
+            <fieldset className={styles.photoPick}>
+              <legend>Shown on</legend>
+              {Array.from({ length: photos }, (_, i) => (
+                <label key={i} className={styles.check}>
+                  <input
+                    type="checkbox"
+                    checked={onPhoto(cur, i)}
+                    onChange={() => {
+                      const next = togglePhoto(cur.photos, i, photos);
+                      if (next !== null) onChange(cur.id, { photos: next });
+                    }}
+                  />{' '}
+                  Photo {i + 1}
+                </label>
+              ))}
+            </fieldset>
+          )}
           <Button size="sm" variant="secondary" onClick={() => void remove(cur)}>
             <Trash2 size={15} aria-hidden="true" /> Remove Sticker
           </Button>

@@ -43,7 +43,7 @@ export function NewBoothPage({ onBack, onMade }: { onBack: () => void; onMade: (
     if (!name.trim() || busy) return;
     setBusy(true);
     setError('');
-    const r = await call<{ booth: { slug: string } }>('/api/photobooth/booths', 'POST', { name: name.trim(), config: preview });
+    const r = await call<{ booth: { slug: string }; look: string | null }>('/api/photobooth/booths', 'POST', { name: name.trim(), config: preview });
     if (!r.ok) {
       setBusy(false);
       return setError(r.error);
@@ -51,7 +51,7 @@ export function NewBoothPage({ onBack, onMade }: { onBack: () => void; onMade: (
     // (If the frame cannot be drawn or saved the booth is still made, and the frame can be added on its setup page.)
     const spec = frameOf(preset, colour, words);
     const blob = await renderFrame({ ...spec, aspect: preview.aspect, logo: null });
-    if (blob) await saveFrame(r.data.booth.slug, { frame: blob, spec });
+    if (blob && r.data.look) await saveFrame(r.data.look, { frame: blob, spec });
     setBusy(false);
     onMade(r.data.booth.slug, open);
   };

@@ -14,9 +14,9 @@ import styles from './photobooth.module.css';
 // The Photo Booth: officers and above make booths (not tied to any event, like Trivia quizzes: layout, look, a frame of its own, which stickers to offer), keep the sticker library, and run a booth on a screen at an event. Guests scan the QR code
 // the booth shows and download their picture from /photos/<token> without an account. Every place has its own address (see photoboothRoute.ts).
 export default function PhotoBoothSectionContent() {
-  const { tab, subtab } = useUrlNav();
+  const { tab, subtab, detail } = useUrlNav();
   const setParams = usePortalParams();
-  const [route, setRoute] = useState<PhotoBoothRoute>(() => parsePhotoBoothRoute(tab, subtab));
+  const [route, setRoute] = useState<PhotoBoothRoute>(() => parsePhotoBoothRoute(tab, subtab, detail));
   const go = useCallback(
     (r: PhotoBoothRoute) => {
       setRoute(r);
@@ -38,7 +38,9 @@ export default function PhotoBoothSectionContent() {
         <BoothSetup
           booth={route.booth}
           tool={route.tool}
-          onTool={(tool) => go({ tab: 'setup', booth: route.booth, tool })}
+          lookKey={route.look}
+          onTool={(tool) => go({ tab: 'setup', booth: route.booth, tool, look: route.look })}
+          onLook={(look) => go({ tab: 'setup', booth: route.booth, tool: route.tool, look })}
           onBack={() => go({ tab: 'booths' })}
           onDeleted={() => go({ tab: 'booths' })}
           onRun={() => go({ tab: 'run', booth: route.booth })}

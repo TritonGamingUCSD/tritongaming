@@ -1,6 +1,6 @@
 'use client';
 
-import { Copy } from 'lucide-react';
+import { Copy, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import ColorInput from '@/components/ui/ColorInput';
 import { showToast } from '@/lib/ui/toast';
@@ -40,6 +40,22 @@ export function PhotosPanel({ config, set }: Props) {
       <Field label="Countdown (seconds)">
         <NumberInput min={1} max={10} value={config.countdown} onChange={(e) => set({ countdown: Number(e.target.value) }, 'countdown')} />
       </Field>
+    </div>
+  );
+}
+
+export function LookPanel({ config, set, lookName, onLookName, onDelete }: Props & { lookName: string; onLookName: (n: string) => void; onDelete?: () => void }) {
+  return (
+    <div className={styles.tools}>
+      <Field label="Look name" hint="Guests see it when they pick a look">
+        <Input value={lookName} maxLength={40} onChange={(e) => onLookName(e.target.value)} />
+      </Field>
+      <Field label="Welcome title" hint="Every look">
+        <Input value={config.welcome_title} maxLength={60} onChange={(e) => set({ welcome_title: e.target.value }, 'welcome-title')} />
+      </Field>
+      <Field label="Welcome text">
+        <Input value={config.welcome_text} maxLength={120} onChange={(e) => set({ welcome_text: e.target.value }, 'welcome-text')} />
+      </Field>
       <Field label="Colour filter">
         <select className={styles.select} value={config.filter} onChange={(e) => set({ filter: e.target.value as BoothConfig['filter'] })}>
           {FILTERS.map((f) => (
@@ -48,22 +64,6 @@ export function PhotosPanel({ config, set }: Props) {
             </option>
           ))}
         </select>
-      </Field>
-      <label className={styles.check}>
-        <input type="checkbox" checked={config.mirror} onChange={(e) => set({ mirror: e.target.checked })} /> Mirror the camera, like a mirror (the saved picture is mirrored too)
-      </label>
-    </div>
-  );
-}
-
-export function LookPanel({ config, set }: Props) {
-  return (
-    <div className={styles.tools}>
-      <Field label="Welcome title">
-        <Input value={config.welcome_title} maxLength={60} onChange={(e) => set({ welcome_title: e.target.value }, 'welcome-title')} />
-      </Field>
-      <Field label="Welcome text">
-        <Input value={config.welcome_text} maxLength={120} onChange={(e) => set({ welcome_text: e.target.value }, 'welcome-text')} />
       </Field>
       <Field label="Text under the photos" hint="The event name, date or hashtag">
         <Input value={config.footer} maxLength={80} onChange={(e) => set({ footer: e.target.value }, 'footer')} />
@@ -75,10 +75,32 @@ export function LookPanel({ config, set }: Props) {
         <Field label="Text colour">
           <ColorInput value={config.text_color} onChange={(e) => set({ text_color: e.target.value }, 'text-colour')} aria-label="Text colour" />
         </Field>
-        <Field label="Booth accent">
-          <ColorInput value={config.accent} onChange={(e) => set({ accent: e.target.value }, 'accent')} aria-label="Booth accent colour" />
-        </Field>
       </div>
+      <fieldset className={styles.group}>
+        <legend>Host Screen (Every Look)</legend>
+        <p className={styles.hint}>The colours of the full-screen booth, to match the event. Empty means the website&rsquo;s own colours.</p>
+        <div className={styles.colors}>
+          <Field label="Background">
+            <ColorInput value={config.screen_bg || '#e9e6df'} onChange={(e) => set({ screen_bg: e.target.value }, 'screen-bg')} aria-label="Host screen background colour" />
+          </Field>
+          <Field label="Text and outlines">
+            <ColorInput value={config.screen_ink || '#011941'} onChange={(e) => set({ screen_ink: e.target.value }, 'screen-ink')} aria-label="Host screen text colour" />
+          </Field>
+          <Field label="Buttons and highlights">
+            <ColorInput value={config.accent} onChange={(e) => set({ accent: e.target.value }, 'accent')} aria-label="Booth accent colour" />
+          </Field>
+        </div>
+        {(config.screen_bg || config.screen_ink) && (
+          <Button size="sm" variant="secondary" onClick={() => set({ screen_bg: '', screen_ink: '' })}>
+            Use The Website&rsquo;s Colours
+          </Button>
+        )}
+      </fieldset>
+      {onDelete && (
+        <Button size="sm" variant="secondary" onClick={onDelete}>
+          <Trash2 size={15} aria-hidden="true" /> Delete This Look
+        </Button>
+      )}
     </div>
   );
 }

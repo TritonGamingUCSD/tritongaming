@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { HOLD_EACH } from '@/lib/photobooth/playback';
 import styles from './photobooth.module.css';
 
-// One big screen that plays each shot's live clip in turn (the moments just before the shutter, then the shot), over and over, while the animated strip plays beside it. `clips[i]` are the finished frames of shot i.
+// One big screen that plays each shot's live clip in turn (the moments just before the shutter, then it freezes on the shot for a moment), over and over, while the strip plays beside it. `clips[i]` are the finished frames of shot i, the last being the shot itself.
 export function ClipPlayer({ clips, frameMs }: { clips: HTMLCanvasElement[][]; frameMs: number }) {
   const canvas = useRef<HTMLCanvasElement | null>(null);
   const [which, setWhich] = useState(0);
@@ -17,10 +18,10 @@ export function ClipPlayer({ clips, frameMs }: { clips: HTMLCanvasElement[][]; f
     let shot = 0,
       frame = 0;
     const draw = () => {
-      const f = clips[shot]?.[frame];
+      const f = clips[shot]?.[Math.min(frame, (clips[shot]?.length ?? 1) - 1)];
       if (f) ctx.drawImage(f, 0, 0, el.width, el.height);
       frame++;
-      if (frame >= (clips[shot]?.length ?? 0)) {
+      if (frame >= (clips[shot]?.length ?? 0) + HOLD_EACH * 2) {
         frame = 0;
         shot = (shot + 1) % clips.length;
         setWhich(shot);

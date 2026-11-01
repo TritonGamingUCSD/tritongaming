@@ -1,5 +1,6 @@
 import { describe, expect, test } from 'vitest';
 import { GIF_TRIES, spread } from '@/lib/photobooth/gif';
+import { playbackTicks } from '@/lib/photobooth/playback';
 import {
   DEFAULT_BOOTH,
   DEFAULT_FRAME_SPEC,
@@ -10,6 +11,8 @@ import {
   cleanFrameSpec,
   frameLayout,
   cleanSticker,
+  onPhoto,
+  togglePhoto,
   composition,
   expiresAt,
   photoLink,
@@ -33,7 +36,6 @@ describe('booth settings', () => {
       accent: '#ABCDEF',
       footer: 'x'.repeat(200),
       filter: 'sepia',
-      mirror: false,
     });
     expect(c.layout).toBe('grid');
     expect(c.countdown).toBe(10);
@@ -43,12 +45,6 @@ describe('booth settings', () => {
     expect(c.accent).toBe('#abcdef');
     expect(c.footer).toHaveLength(80);
     expect(c.filter).toBe('none');
-    expect(c.mirror).toBe(false);
-  });
-  test('guests choosing their own stickers is a yes or no, off unless said', () => {
-    expect(cleanBooth({}).guest_stickers).toBe(false);
-    expect(cleanBooth({ guest_stickers: true }).guest_stickers).toBe(true);
-    expect(cleanBooth({ guest_stickers: 'yes' }, { ...cleanBooth({}), guest_stickers: true }).guest_stickers).toBe(true);
   });
   test('prompts are cleaned and limited', () => {
     const c = cleanBooth({ prompts: ['  Pose!  ', '', 5, 'Silly!'] });
@@ -56,7 +52,9 @@ describe('booth settings', () => {
     expect(cleanBooth({ prompts: Array(20).fill('a') }).prompts).toHaveLength(6);
   });
   test('a sticker is kept inside its limits', () => {
-    expect(cleanSticker({ x: 3, y: -1, size: 0, can_resize: false })).toEqual({ x: 1, y: 0, size: 0.05, can_resize: false, can_rotate: true });
+    expect(cleanSticker({ x: 3, y: -1, size: 0 })).toEqual({ x: 1, y: 0, size: 0.05, photos: 255 });
+    expect(cleanSticker({ photos: 5 }).photos).toBe(5);
+    expect(cleanSticker({ photos: 0 }).photos).toBe(1); // (a sticker on no photo would never be seen)
   });
 });
 
@@ -210,5 +208,39 @@ describe('animated strip frames', () => {
   test('tries smaller strips after bigger ones', () => {
     const widths = GIF_TRIES.map(([w]) => w);
     expect([...widths].sort((a, b) => b - a)).toEqual(widths);
+  });
+});
+
+describe('stickers on some photos', () => {
+  test('a sticker shows on the photos whose bit is set', () => {
+    expect([0, 1, 2].map((i) => onPhoto({ photos: 5 }, i))).toEqual([true, false, true]);
+  });
+  test('switching a photo off and on', () => {
+    expect(togglePhoto(255, 1, 3)).toBe(253);
+    expect(togglePhoto(253, 1, 3)).toBe(255);
+  });
+  test('the last photo cannot be switched off', () => {
+    expect(togglePhoto(1, 0, 3)).toBeNull();
+    expect(togglePhoto(249, 0, 3)).toBeNull(); // (bits beyond this layout's photos do not count)
+  });
+});
+
+describe('strip playback', () => {
+  test('each photo plays and freezes in turn, then all play together and freeze', () => {
+    const ticks = playbackTicks(3, 5, 2, 3);
+    expect(ticks[0]).toEqual([0, 0, 0]); // photo 1 starts, the others wait on their first moment
+    expect(ticks[4]).toEqual([4, 0, 0]); // photo 1 reaches its shot
+    expect(ticks[5]).toEqual([4, 0, 0]); // and holds
+    expect(ticks[7]).toEqual([4, 0, 0]); // photo 2 begins with photo 1 frozen on its shot
+    expect(ticks[7 + 0]).toEqual([4, 0, 0]);
+    expect(ticks[8]).toEqual([4, 1, 0]);
+    const together = ticks.slice(3 * 7);
+    expect(together[0]).toEqual([0, 0, 0]);
+    expect(together[4]).toEqual([4, 4, 4]);
+    expect(together.at(-1)).toEqual([4, 4, 4]);
+    expect(ticks).toHaveLength(3 * 7 + 5 + 3);
+  });
+  test('one photo only plays together', () => {
+    expect(playbackTicks(1, 4, 2, 2)).toEqual([[0], [1], [2], [3], [3], [3]]);
   });
 });

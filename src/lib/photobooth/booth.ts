@@ -22,19 +22,21 @@ export interface Overlay {
   x: number;
   y: number;
   size: number;
-  can_resize: boolean;
-  can_rotate: boolean;
+  /** Which photos show it: a bit for each (the first photo is the lowest bit). */
+  photos: number;
 }
 
 export interface BoothConfig {
   layout: Layout;
   aspect: Aspect;
   countdown: number;
-  mirror: boolean;
   filter: Filter;
   strip_bg: string;
   text_color: string;
   accent: string;
+  /** The host screen's background and its text and outlines ('' = the website's own colours). */
+  screen_bg: string;
+  screen_ink: string;
   footer: string;
   welcome_title: string;
   welcome_text: string;
@@ -43,19 +45,18 @@ export interface BoothConfig {
   flash: boolean;
   qr_seconds: number;
   keep_days: number;
-  /** True: each guest picks stickers before the photos. False: the step is skipped and every sticker of the booth is put on every picture where the host placed it. */
-  guest_stickers: boolean;
 }
 
 export const DEFAULT_BOOTH: BoothConfig = {
   layout: 'strip3',
   aspect: 'portrait',
   countdown: 3,
-  mirror: true,
   filter: 'none',
   strip_bg: '#ffffff',
   text_color: '#011941',
   accent: '#facc15',
+  screen_bg: '',
+  screen_ink: '',
   footer: '',
   welcome_title: 'Photo Booth',
   welcome_text: 'Tap to start',
@@ -64,7 +65,6 @@ export const DEFAULT_BOOTH: BoothConfig = {
   flash: true,
   qr_seconds: 60,
   keep_days: 7,
-  guest_stickers: false,
 };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -87,11 +87,12 @@ export function cleanBooth(input: unknown, base: BoothConfig = DEFAULT_BOOTH): B
     layout: oneOf(b.layout, LAYOUTS, base.layout),
     aspect: oneOf(b.aspect, ASPECTS, base.aspect),
     countdown: int(b.countdown, 1, 10, base.countdown),
-    mirror: typeof b.mirror === 'boolean' ? b.mirror : base.mirror,
     filter: oneOf(b.filter, FILTERS, base.filter),
     strip_bg: color(b.strip_bg, base.strip_bg),
     text_color: color(b.text_color, base.text_color),
     accent: color(b.accent, base.accent),
+    screen_bg: b.screen_bg === '' ? '' : color(b.screen_bg, base.screen_bg),
+    screen_ink: b.screen_ink === '' ? '' : color(b.screen_ink, base.screen_ink),
     footer: text(b.footer, 80, base.footer),
     welcome_title: text(b.welcome_title, 60, base.welcome_title) || base.welcome_title,
     welcome_text: text(b.welcome_text, 120, base.welcome_text),
@@ -100,17 +101,44 @@ export function cleanBooth(input: unknown, base: BoothConfig = DEFAULT_BOOTH): B
     flash: typeof b.flash === 'boolean' ? b.flash : base.flash,
     qr_seconds: int(b.qr_seconds, 10, 300, base.qr_seconds),
     keep_days: int(b.keep_days, 1, 7, base.keep_days),
-    guest_stickers: typeof b.guest_stickers === 'boolean' ? b.guest_stickers : base.guest_stickers,
   };
 }
 
-/** The most stickers one booth can offer. */
-export const MAX_STICKERS_PER_BOOTH = 24;
+/** A colour as 'r, g, b' for use in rgba(). */
+export const hexToRgb = (hex: string): string => `${parseInt(hex.slice(1, 3), 16)}, ${parseInt(hex.slice(3, 5), 16)}, ${parseInt(hex.slice(5, 7), 16)}`;
 
-/** A sticker's starting values and limits, brought into range. */
-export function cleanSticker(b: Record<string, unknown>): Pick<Overlay, 'x' | 'y' | 'size' | 'can_resize' | 'can_rotate'> {
+/** What a look decides about the finished picture (the rest of BoothConfig is the booth's own). */
+export const LOOK_STYLE_KEYS = ['strip_bg', 'text_color', 'footer', 'filter'] as const;
+export type LookStyle = Pick<BoothConfig, (typeof LOOK_STYLE_KEYS)[number]>;
+export type BoothSettings = Omit<BoothConfig, (typeof LOOK_STYLE_KEYS)[number]>;
+
+/** A booth's full settings split into what the booth keeps and what a look keeps (both brought into range). */
+export function splitConfig(config: BoothConfig): { settings: BoothSettings; style: LookStyle } {
+  const full = cleanBooth(config);
+  const { strip_bg, text_color, footer, filter, ...settings } = full;
+  return { settings, style: { strip_bg, text_color, footer, filter } };
+}
+
+/** The most looks one booth can offer. */
+export const MAX_LOOKS_PER_BOOTH = 6;
+
+/** The most stickers one look can have. */
+export const MAX_STICKERS_PER_LOOK = 24;
+
+/** Every photo (a sticker's default). */
+export const ALL_PHOTOS = 255;
+/** Whether a sticker is shown on photo `i` (0-based). */
+export const onPhoto = (s: { photos: number }, i: number): boolean => ((s.photos >> i) & 1) === 1;
+/** A sticker's photos with photo `i` switched on or off, or null when that would leave it on none of the `count` photos. */
+export function togglePhoto(photos: number, i: number, count: number): number | null {
+  const next = photos ^ (1 << i);
+  return (next & ((1 << count) - 1)) === 0 ? null : next;
+}
+
+/** A sticker's starting values, brought into range. */
+export function cleanSticker(b: Record<string, unknown>): Pick<Overlay, 'x' | 'y' | 'size' | 'photos'> {
   const f = (v: unknown, min: number, max: number, d: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
-  return { x: f(b.x, 0, 1, 0.5), y: f(b.y, 0, 1, 0.3), size: f(b.size, 0.05, 1, 0.3), can_resize: b.can_resize !== false, can_rotate: b.can_rotate !== false };
+  return { x: f(b.x, 0, 1, 0.5), y: f(b.y, 0, 1, 0.3), size: f(b.size, 0.05, 1, 0.3), photos: f(b.photos, 1, ALL_PHOTOS, ALL_PHOTOS) | 0 };
 }
 
 // ── The booth's own frame (drawn over each photo; designed on the booth's setup page, never shared between booths) ──

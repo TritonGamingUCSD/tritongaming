@@ -6,13 +6,30 @@ import { DEFAULT_QR_OPTIONS } from '@/lib/qr/qrCodeStyling';
 import { photoLink } from '@/lib/photobooth/booth';
 import { call } from './api';
 import { Confetti } from './Confetti';
+import { StripPlayer, type StripPlayback } from './StripPlayer';
 import styles from './photobooth.module.css';
 
 const StyledQRCode = dynamic(() => import('@/components/StyledQRCode/StyledQRCode'), { ssr: false, loading: () => null }); // (the QR library needs the browser)
 
 // The picture and the Triton Gaming QR code for its page, with the seconds left shown as a bar. A guest without a phone camera at hand can have the link emailed to them (the address is used once and never kept); the clock waits while they type.
 // When the time is up (or Next Guest is pressed) the booth goes back to its welcome screen.
-export function QrScreen({ token, picture, seconds, test = false, onDone }: { token: string; picture: string; seconds: number; test?: boolean; onDone: () => void }) {
+export function QrScreen({
+  token,
+  picture,
+  playback,
+  frameMs,
+  seconds,
+  test = false,
+  onDone,
+}: {
+  token: string;
+  picture: string;
+  playback: StripPlayback | null;
+  frameMs: number;
+  seconds: number;
+  test?: boolean;
+  onDone: () => void;
+}) {
   const [left, setLeft] = useState(seconds);
   const [emailing, setEmailing] = useState(false);
   const [email, setEmail] = useState('');
@@ -46,8 +63,12 @@ export function QrScreen({ token, picture, seconds, test = false, onDone }: { to
     <div className={styles.qrScreen}>
       <Confetti />
       <div className={`${styles.qrPicture} ${styles.dropIn}`}>
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={picture} alt="Your finished picture" />
+        {playback ? (
+          <StripPlayer playback={playback} frameMs={frameMs} label="Your finished picture, moving" />
+        ) : (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={picture} alt="Your finished picture" />
+        )}
       </div>
       <div className={`${styles.qrSide} ${styles.riseIn}`}>
         {test ? (

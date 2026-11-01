@@ -2,25 +2,26 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Maximize2, Minus, Plus, RotateCcw, RotateCw, Trash2, X } from 'lucide-react';
+import { Maximize2, RotateCcw, X } from 'lucide-react';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { PhotoWall, type WallPhoto } from '@/components/PhotoWall/PhotoWall';
-import { FILTER_CSS, SHOTS, cellRatio, cellSize, promptFor, type Overlay } from '@/lib/photobooth/booth';
+import { FILTER_CSS, SHOTS, cellRatio, cellSize, hexToRgb, onPhoto, promptFor, type BoothConfig } from '@/lib/photobooth/booth';
 import { composeFrame, composePicture, composeStripFrame, cutShot, loadImage, type PlacedSticker } from '@/lib/photobooth/compose';
 import { GIF_TRIES, MAX_GIF_BYTES, encodeGif, spread } from '@/lib/photobooth/gif';
+import { HOLD_END, playbackTicks, type Tick } from '@/lib/photobooth/playback';
 import { BoothSounds } from '@/lib/photobooth/sounds';
 import { call, type BoothData } from './api';
 import { CameraMenu } from './CameraMenu';
+import { LayoutPreview } from './LayoutPreview';
 import { ClipPlayer } from './ClipPlayer';
+import { StripPlayer, type StripPlayback } from './StripPlayer';
 import { QrScreen } from './QrScreen';
-import { StickerLayer, type Placed } from './StickerLayer';
 import { useCamera } from './useCamera';
 import styles from './photobooth.module.css';
 
 type Phase = 'idle' | 'choose' | 'shoot' | 'review' | 'saving' | 'qr';
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-const DEG = Math.PI / 12; // one turn of a sticker: 15 degrees
 const THUMB_W = 180;
 // A live clip around each shot: the camera is sampled all the time, the last 1.5 seconds before the shutter are kept, and half a second after it.
 const FRAME_MS = 125;
@@ -28,6 +29,7 @@ const BEFORE = 12;
 const AFTER = 4;
 const CLIP_W = 320;
 const CLIP_PLAY_W = 480;
+const SCREEN_STRIP_W = 420;
 
 /** A small picture of one shot, for the film strip beside the camera and the Retake buttons. */
 const thumbOf = (shot: HTMLCanvasElement): string => {
@@ -47,8 +49,6 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   const [data, setData] = useState<BoothData | null>(null);
   const [error, setError] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
-  const [stickers, setStickers] = useState<Placed[]>([]);
-  const [selected, setSelected] = useState<number | null>(null);
   const [count, setCount] = useState<number | null>(null);
   const [prompt, setPrompt] = useState('');
   const [shotNo, setShotNo] = useState(0);
@@ -57,8 +57,10 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   const [thumbs, setThumbs] = useState<string[]>([]);
   const [picture, setPicture] = useState<{ blob: Blob; url: string } | null>(null);
   const [moving, setMoving] = useState<{ blob: Blob; url: string } | null>(null); // the animated strip
+  const [playback, setPlayback] = useState<StripPlayback | null>(null); // the strip playing, for the screens
   const [playing, setPlaying] = useState<HTMLCanvasElement[][]>([]); // the finished frames of each shot's clip, for the big player
   const [token, setToken] = useState('');
+  const [lookId, setLookId] = useState(''); // the look the guest picked (the first one until they do)
   const [wall, setWall] = useState<WallPhoto[]>([]); // every picture in the booth's gallery, drifting behind the welcome screen
   const camera = useCamera();
   const [mounted, setMounted] = useState(false);
@@ -71,7 +73,6 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   const clips = useRef<HTMLCanvasElement[][]>([]); // each shot's raw clip frames (BEFORE + AFTER of them)
   const sounds = useRef<BoothSounds | null>(null);
   const run = useRef(0); // a number for each go at the shots: leaving or cancelling makes the running one stop
-  const keys = useRef(0);
 
   useEffect(() => {
     void (async () => {
@@ -79,14 +80,17 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
       if (!r.ok) return setError(r.error);
       setData(r.data);
       sounds.current = new BoothSounds(r.data.config.sounds);
-      for (const o of r.data.overlays)
-        loadImage(o.image)
-          .then((img) => images.current.set(o.id, img))
-          .catch(() => undefined);
-      if (r.data.frame.image)
-        loadImage(r.data.frame.image)
-          .then((img) => images.current.set('frame', img))
-          .catch(() => undefined);
+      setLookId(r.data.looks[0]?.id ?? '');
+      for (const l of r.data.looks) {
+        for (const o of l.overlays)
+          loadImage(o.image)
+            .then((img) => images.current.set(o.id, img))
+            .catch(() => undefined);
+        if (l.frame.image)
+          loadImage(l.frame.image)
+            .then((img) => images.current.set(`frame-${l.id}`, img))
+            .catch(() => undefined);
+      }
     })();
     const stop = run;
     const audio = sounds;
@@ -126,26 +130,21 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     };
   }, [galleryToken, test, phase]);
 
-  const config = data?.config;
-  const stickerChoices = useMemo(() => data?.overlays ?? [], [data]);
-  const frameUrl = data?.frame.image ?? '';
-  const guestPicks = !!config?.guest_stickers;
-  // With the sticker step skipped, every sticker of the booth is on every picture where the host placed it.
-  const onPicture: Placed[] = useMemo(
-    () => (guestPicks ? stickers : stickerChoices.map((o, i) => ({ key: -1 - i, overlay: o, x: o.x, y: o.y, size: o.size, rotation: 0 }))),
-    [guestPicks, stickers, stickerChoices],
-  );
-  const chosen = stickers.find((s) => s.key === selected) ?? null;
+  const looks = data?.looks ?? [];
+  const look = looks.find((l) => l.id === lookId) ?? looks[0];
+  const config: BoothConfig | undefined = useMemo(() => (data && look ? { ...data.config, ...look.style } : undefined), [data, look]);
+  const stickerList = look?.overlays ?? [];
+  const frameUrl = look?.frame.image ?? '';
+  const frameImage = () => (look && frameUrl ? (images.current.get(`frame-${look.id}`) ?? null) : null);
 
   const reset = useCallback(() => {
     run.current++;
     shots.current = [];
     clips.current = [];
     setMoving(null);
+    setPlayback(null);
     setPlaying([]);
     setPhase('idle');
-    setStickers([]);
-    setSelected(null);
     setPicture(null);
     setToken('');
     setCount(null);
@@ -155,17 +154,11 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     setMaking(false);
   }, []);
 
-  const addSticker = (o: Overlay) => {
-    const s: Placed = { key: ++keys.current, overlay: o, x: o.x, y: o.y, size: o.size, rotation: 0 };
-    setStickers((l) => [...l, s]);
-    setSelected(s.key);
-  };
-  const patch = (key: number, f: (s: Placed) => Placed) => setStickers((l) => l.map((s) => (s.key === key ? f(s) : s)));
-
-  const placed = (): PlacedSticker[] =>
-    onPicture.flatMap((s) => {
-      const image = images.current.get(s.overlay.id);
-      return image ? [{ image, x: s.x, y: s.y, size: s.size, rotation: s.rotation }] : [];
+  /** The stickers that belong on photo `i` (0-based), where the host placed them. */
+  const placedFor = (i: number): PlacedSticker[] =>
+    stickerList.flatMap((o) => {
+      const image = images.current.get(o.id);
+      return image && onPhoto(o, i) ? [{ image, x: o.x, y: o.y, size: o.size }] : [];
     });
 
   /** Counts down and takes one photo, with the clip around it (null when the booth was left or cancelled meanwhile). */
@@ -179,7 +172,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     const before: HTMLCanvasElement[] = [];
     let after: HTMLCanvasElement[] | null = null;
     const sampler = window.setInterval(() => {
-      const f = cutShot(video, CLIP_W, Math.round((CLIP_W * h) / w), config.mirror);
+      const f = cutShot(video, CLIP_W, Math.round((CLIP_W * h) / w));
       if (after) {
         if (after.length < AFTER) after.push(f);
       } else {
@@ -201,7 +194,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
         setFlash(true);
         setTimeout(() => setFlash(false), 180);
       }
-      const shot = cutShot(video, w, h, config.mirror);
+      const shot = cutShot(video, w, h);
       after = [];
       await wait(900);
       const clip = [...before, ...after];
@@ -219,7 +212,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     setPrompt('');
     setMaking(true);
     try {
-      const blob = await composePicture({ config, shots: shots.current, stickers: placed(), frame: frameUrl ? (images.current.get('frame') ?? null) : null });
+      const blob = await composePicture({ config, shots: shots.current, stickers: placedFor, frame: frameImage() });
       if (!alive()) return;
       const still = { blob, url: URL.createObjectURL(blob) };
       const strip = await movingStrip();
@@ -230,6 +223,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
       setPicture(still);
       setMoving(strip.gif ? { blob: strip.gif, url: URL.createObjectURL(strip.gif) } : null);
       setPlaying(strip.played);
+      setPlayback(strip.playback);
       setThumbs(shots.current.map(thumbOf));
       setMaking(false);
       setPhase('review');
@@ -247,7 +241,6 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     clips.current = [];
     setThumbs([]);
     setPhase('shoot');
-    setSelected(null);
     for (let i = 0; i < SHOTS[config.layout]; i++) {
       const got = await takeShot(i, alive);
       if (!got) return;
@@ -272,27 +265,32 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     if (alive()) await build(alive);
   }
 
-  /** The animated strip (the whole strip with every photo playing its own clip at once, as small as it needs to be; null if it cannot be made: the picture is still kept) and the finished frames of each clip for the big player. */
-  async function movingStrip(): Promise<{ gif: Blob | null; played: HTMLCanvasElement[][] }> {
-    if (!config) return { gif: null, played: [] };
-    const frame = frameUrl ? (images.current.get('frame') ?? null) : null;
-    const stickersOn = placed();
-    const played = clips.current.map((clip) => clip.map((f) => composeFrame({ config, shot: f, stickers: stickersOn, frame, width: CLIP_PLAY_W })));
+  /** What the finished strip plays: each photo's moments before its shot and then the shot itself. Gives the strip's playback for the screens (each photo in turn, then all together), the finished frames of each clip for the big player, and the animated
+   * picture to keep (all photos together, then held on the shots, as small as it needs to be; null if it cannot be made: the picture is still kept). */
+  async function movingStrip(): Promise<{ gif: Blob | null; played: HTMLCanvasElement[][]; playback: StripPlayback }> {
+    const empty = { ticks: [], render: () => document.createElement('canvas') };
+    if (!config) return { gif: null, played: [], playback: empty };
+    const frame = frameImage();
+    const seqs = shots.current.map((shot, i) => [...clips.current[i].slice(0, BEFORE), shot]);
+    const played = seqs.map((seq, i) => seq.map((f) => composeFrame({ config, shot: f, stickers: placedFor(i), frame, width: CLIP_PLAY_W })));
+    const draw = (at: Tick, width: number) => composeStripFrame({ config, shots: seqs.map((seq, i) => seq[at[i]]), stickers: placedFor, frame, width });
+    const playback: StripPlayback = { ticks: playbackTicks(seqs.length, BEFORE + 1), render: (at) => draw(at, SCREEN_STRIP_W) };
+    const together = (f: number) => Array<number>(seqs.length).fill(f);
     try {
-      const n = BEFORE + AFTER;
       for (const [width, count] of GIF_TRIES) {
         const at = spread(
-          Array.from({ length: n }, (_, i) => i),
+          Array.from({ length: BEFORE }, (_, i) => i),
           count,
         );
-        const frames = at.map((f) => composeStripFrame({ config, shots: clips.current.map((c) => c[f]), stickers: stickersOn, frame, width }));
-        const gif = await encodeGif(frames, Math.round((n * FRAME_MS) / count));
-        if (gif.size <= MAX_GIF_BYTES) return { gif, played };
+        const frames = [...at, BEFORE].map((f) => draw(together(f), width));
+        const gif = await encodeGif(frames, Math.round((BEFORE * FRAME_MS) / count), HOLD_END * FRAME_MS);
+        if (gif.size <= MAX_GIF_BYTES) return { gif, played, playback };
       }
-    } catch {
-      /* (no animated strip this time) */
+      console.warn('The animated strip was too big to save at every size.');
+    } catch (e) {
+      console.warn('The animated strip could not be made.', e);
     }
-    return { gif: null, played };
+    return { gif: null, played, playback };
   }
 
   async function keep() {
@@ -323,7 +321,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   const start = () => {
     sounds.current?.unlock();
     setError('');
-    if (guestPicks && stickerChoices.length) setPhase('choose');
+    if (looks.length > 1) setPhase('choose');
     else void shoot();
   };
 
@@ -331,6 +329,15 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (typing(e.target) || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (phase === 'choose' && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
+        const at = Math.max(
+          0,
+          looks.findIndex((l) => l.id === look?.id),
+        );
+        setLookId(looks[(at + (e.key === 'ArrowRight' ? 1 : looks.length - 1)) % looks.length].id);
+        e.preventDefault();
+        return;
+      }
       if (!['Enter', ' ', 'PageDown', 'ArrowRight'].includes(e.key)) return;
       if (phase === 'idle' && camera.ready && !camera.error) start();
       else if (phase === 'choose') void shoot();
@@ -345,8 +352,17 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   const ratio = config ? cellRatio(config.aspect) : 0.75;
   const showCam = phase === 'idle' || phase === 'choose' || phase === 'shoot';
   const total = config ? SHOTS[config.layout] : 0;
+  const placedNow = stickerList.filter((o) => onPhoto(o, Math.max(0, shotNo - 1))); // (the stickers of the photo being taken, over the live camera)
   const stage = (
-    <div className={styles.stage} style={{ ['--accent' as string]: config?.accent ?? '#facc15', ['--ratio' as string]: ratio }}>
+    <div
+      className={styles.stage}
+      style={{
+        ['--accent' as string]: config?.accent ?? '#facc15',
+        ['--ratio' as string]: ratio,
+        ...(config?.screen_bg ? { ['--screen-bg' as string]: config.screen_bg } : {}),
+        ...(config?.screen_ink ? { ['--screen-ink' as string]: config.screen_ink, ['--screen-rgb' as string]: hexToRgb(config.screen_ink) } : {}),
+      }}
+    >
       <button type="button" className={styles.exit} onClick={onExit} aria-label="Leave the booth">
         <X size={18} aria-hidden="true" /> Exit
       </button>
@@ -378,25 +394,25 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
           )}
           {/* the camera stays on behind everything so the next guest starts at once */}
           <div className={`${styles.cam} ${showCam ? '' : styles.camHidden} ${phase === 'shoot' && flash ? styles.camSnap : ''}`}>
-            <video
-              ref={camera.attach}
-              playsInline
-              muted
-              className={styles.video}
-              style={{ transform: config.mirror ? 'scaleX(-1)' : undefined, filter: FILTER_CSS[config.filter] }}
-            />
+            <video ref={camera.attach} playsInline muted className={styles.video} style={{ transform: 'scaleX(-1)', filter: FILTER_CSS[config.filter] }} />
             {frameUrl && showCam && (
               // eslint-disable-next-line @next/next/no-img-element
               <img className={styles.camFrame} src={frameUrl} alt="" />
             )}
-            {showCam && phase !== 'idle' && (
-              <StickerLayer
-                stickers={onPicture}
-                selected={guestPicks ? selected : null}
-                locked={phase === 'shoot' || !guestPicks}
-                onSelect={setSelected}
-                onMove={(k, x, y) => patch(k, (s) => ({ ...s, x, y }))}
-              />
+            {(phase === 'shoot' || phase === 'choose') && placedNow.length > 0 && (
+              <div className={styles.stickerLayer}>
+                {placedNow.map((o) => (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={o.id}
+                    src={o.image}
+                    alt=""
+                    draggable={false}
+                    className={styles.placed}
+                    style={{ left: `${o.x * 100}%`, top: `${o.y * 100}%`, width: `${o.size * 100}%`, transform: 'translate(-50%, -50%)' }}
+                  />
+                ))}
+              </div>
             )}
             {phase === 'idle' && <div className={styles.dim} />}
             {phase === 'shoot' && count !== null && (
@@ -445,62 +461,27 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
             </div>
           )}
 
-          {phase === 'choose' && (
+          {phase === 'choose' && config && (
             <div className={styles.panel}>
-              {stickerChoices.length > 0 && (
-                <div className={styles.chips} aria-label="Stickers">
-                  <span className={styles.chipLabel}>Stickers</span>
-                  {stickerChoices.map((s, i) => (
-                    <button
-                      key={s.id}
-                      type="button"
-                      className={`${styles.chip} ${styles.chipIn}`}
-                      style={{ animationDelay: `${i * 45}ms` }}
-                      onClick={() => addSticker(s)}
-                      aria-label={`Add ${s.name}`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={s.image} alt="" /> {s.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-              {chosen && (
-                <div className={styles.chips} aria-label="Selected sticker">
-                  <span className={styles.chipLabel}>{chosen.overlay.name}</span>
-                  {chosen.overlay.can_resize && (
-                    <>
-                      <button type="button" className={styles.chip} onClick={() => patch(chosen.key, (s) => ({ ...s, size: Math.max(0.05, s.size / 1.2) }))} aria-label="Smaller">
-                        <Minus size={18} aria-hidden="true" />
-                      </button>
-                      <button type="button" className={styles.chip} onClick={() => patch(chosen.key, (s) => ({ ...s, size: Math.min(1, s.size * 1.2) }))} aria-label="Bigger">
-                        <Plus size={18} aria-hidden="true" />
-                      </button>
-                    </>
-                  )}
-                  {chosen.overlay.can_rotate && (
-                    <>
-                      <button type="button" className={styles.chip} onClick={() => patch(chosen.key, (s) => ({ ...s, rotation: s.rotation - DEG }))} aria-label="Turn left">
-                        <RotateCcw size={18} aria-hidden="true" />
-                      </button>
-                      <button type="button" className={styles.chip} onClick={() => patch(chosen.key, (s) => ({ ...s, rotation: s.rotation + DEG }))} aria-label="Turn right">
-                        <RotateCw size={18} aria-hidden="true" />
-                      </button>
-                    </>
-                  )}
+              <span className={styles.chipLabel}>Pick Your Look</span>
+              <div className={styles.pickRow} role="radiogroup" aria-label="Look">
+                {looks.map((l, i) => (
                   <button
+                    key={l.id}
                     type="button"
-                    className={styles.chip}
-                    onClick={() => {
-                      setStickers((l) => l.filter((s) => s.key !== chosen.key));
-                      setSelected(null);
-                    }}
-                    aria-label="Remove the sticker"
+                    role="radio"
+                    aria-checked={l.id === look?.id}
+                    className={`${styles.pickCard} ${styles.chipIn} ${l.id === look?.id ? styles.pickCardOn : ''}`}
+                    style={{ animationDelay: `${i * 60}ms` }}
+                    onClick={() => setLookId(l.id)}
                   >
-                    <Trash2 size={18} aria-hidden="true" />
+                    <span className={styles.pickThumb}>
+                      <LayoutPreview config={{ ...config, ...l.style }} frameUrl={l.frame.image || undefined} />
+                    </span>
+                    <span>{l.name}</span>
                   </button>
-                </div>
-              )}
+                ))}
+              </div>
               <div className={styles.btnRow}>
                 <button type="button" className={styles.ghostBtn} onClick={reset}>
                   Cancel
@@ -536,7 +517,11 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
           {(phase === 'review' || phase === 'saving') && picture && (
             <div className={styles.review}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className={`${styles.reviewImg} ${styles.dropIn}`} src={moving?.url ?? picture.url} alt="Your picture, moving" />
+              {playback ? (
+                <StripPlayer playback={playback} frameMs={FRAME_MS} className={`${styles.reviewImg} ${styles.dropIn}`} label="Your picture, moving" />
+              ) : (
+                <img className={`${styles.reviewImg} ${styles.dropIn}`} src={picture.url} alt="Your picture" />
+              )}
               {playing.length > 0 && <ClipPlayer clips={playing} frameMs={FRAME_MS} />}
               <div className={`${styles.reviewSide} ${styles.riseIn}`}>
                 <h2 className={styles.qrTitle}>How Does It Look?</h2>
@@ -579,7 +564,9 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
             </div>
           )}
 
-          {phase === 'qr' && picture && token && <QrScreen token={token} picture={moving?.url ?? picture.url} seconds={config.qr_seconds} test={test} onDone={reset} />}
+          {phase === 'qr' && picture && token && (
+            <QrScreen token={token} picture={picture.url} playback={playback} frameMs={FRAME_MS} seconds={config.qr_seconds} test={test} onDone={reset} />
+          )}
         </>
       )}
     </div>
