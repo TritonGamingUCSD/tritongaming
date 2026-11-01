@@ -1,0 +1,12 @@
+.wall { position: relative; width: 100%; height: 100%; overflow: hidden; display: grid; grid-template-columns: repeat(var(--cols), minmax(0, 1fr)); gap: 0.9rem; padding: 0 0.9rem; }
+.dim { opacity: 0.45; filter: saturate(0.85); }
+.col { overflow: hidden; }
+.drift { display: block; animation: wallDrift linear infinite; will-change: transform; }
+.tile { display: block; width: 100%; height: auto; margin-bottom: 0.9rem; border-radius: 8px; border: 0.3rem solid #fff; box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45); background: #fff; }   /* theme-ok */
+.spot { position: absolute; inset: 0; z-index: 3; display: grid; place-content: center; justify-items: center; gap: 0.8rem; background: rgba(5, 8, 20, 0.72); animation: wallSpot 4.5s ease both; }   /* theme-ok */
+.spotImg { max-height: 82%; max-width: 80%; width: auto; height: auto; border-radius: 12px; border: 0.5rem solid #fff; box-shadow: 0 20px 70px rgba(0, 0, 0, 0.7); animation: wallPop 0.9s cubic-bezier(0.2, 0.8, 0.3, 1.25) both; }   /* theme-ok */
+.spotTag { padding: 0.2rem 1rem; border-radius: 999px; background: #facc15; color: #011941; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }   /* theme-ok */
+@keyframes wallDrift { from { transform: translateY(0); } to { transform: translateY(-50%); } }
+@keyframes wallSpot { 0% { opacity: 0; } 8% { opacity: 1; } 88% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes wallPop { from { opacity: 0; transform: scale(0.35) rotate(-9deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+@media (prefers-reduced-motion: reduce) { .drift, .spot, .spotImg { animation: none; } }

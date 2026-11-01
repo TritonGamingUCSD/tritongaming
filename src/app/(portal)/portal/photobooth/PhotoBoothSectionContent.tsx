@@ -25,7 +25,7 @@ export default function PhotoBoothSectionContent() {
     [setParams],
   );
 
-  if (route.tab === 'run') return <BoothRun booth={route.booth} onExit={() => go({ tab: 'setup', booth: route.booth, tool: 'photos' })} />;
+  if (route.tab === 'run') return <BoothRun booth={route.booth} test={route.test} onExit={() => go({ tab: 'setup', booth: route.booth, tool: 'photos' })} />;
   if (route.tab === 'new')
     return (
       <div className={styles.page}>
@@ -42,6 +42,7 @@ export default function PhotoBoothSectionContent() {
           onBack={() => go({ tab: 'booths' })}
           onDeleted={() => go({ tab: 'booths' })}
           onRun={() => go({ tab: 'run', booth: route.booth })}
+          onTest={() => go({ tab: 'run', booth: route.booth, test: true })}
         />
       </div>
     );

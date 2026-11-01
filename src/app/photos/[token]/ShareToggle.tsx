@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import styles from './photo.module.css';
 
-// The guest's choice to show their picture in the event gallery (off until they choose it, and they can take it out again).
+// The guest's choice to show their picture in the event gallery (every picture starts in it; they can take theirs out, and put it back).
 export function ShareToggle({ token, initial }: { token: string; initial: boolean }) {
   const [shared, setShared] = useState(initial);
   const [busy, setBusy] = useState(false);
@@ -21,9 +21,13 @@ export function ShareToggle({ token, initial }: { token: string; initial: boolea
   return (
     <div className={styles.share}>
       <button type="button" className={styles.shareBtn} onClick={() => void toggle()} disabled={busy} aria-pressed={shared}>
-        {shared ? 'Shown In The Event Gallery · Tap To Remove' : 'Add To The Event Gallery'}
+        {shared ? 'In The Event Gallery · Tap To Remove' : 'Add Back To The Event Gallery'}
       </button>
-      <p className={styles.note}>{shared ? 'Anyone with the gallery link can see this picture until it is deleted.' : 'Optional. Anyone with the gallery link could see it.'}</p>
+      <p className={styles.note}>
+        {shared
+          ? 'Anyone with the booth’s gallery link can see this picture until it is deleted. Tap above if you would rather it was not shown.'
+          : 'Removed. Only people with this page’s link can see it.'}
+      </p>
       {problem && <p className={styles.problem}>{problem}</p>}
     </div>
   );

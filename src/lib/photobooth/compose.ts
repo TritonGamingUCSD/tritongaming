@@ -48,46 +48,63 @@ function drawCell(ctx: CanvasRenderingContext2D, cell: Rect, shot: HTMLCanvasEle
   if (opts.frame) ctx.drawImage(opts.frame, cell.x, cell.y, cell.w, cell.h);
 }
 
-/** One finished photo on its own (the shot, filter, stickers and frame), `width` pixels wide: a frame of the animated picture. */
+/** One finished photo on its own (the shot, filter, stickers and frame), `width` pixels wide: a frame of a clip. */
 export function composeFrame(opts: { config: BoothConfig; shot: HTMLCanvasElement; stickers: PlacedSticker[]; frame: HTMLImageElement | null; width: number }): HTMLCanvasElement {
   const { w, h } = cellSize(opts.config.aspect);
-  const full = document.createElement('canvas');
-  full.width = w;
-  full.height = h;
-  drawCell(full.getContext('2d')!, { x: 0, y: 0, w, h }, opts.shot, { filter: opts.config.filter, stickers: opts.stickers, frame: opts.frame });
   const out = document.createElement('canvas');
   out.width = opts.width;
   out.height = Math.round((opts.width * h) / w);
-  out.getContext('2d')!.drawImage(full, 0, 0, out.width, out.height);
+  drawCell(out.getContext('2d', { willReadFrequently: true })!, { x: 0, y: 0, w: out.width, h: out.height }, opts.shot, {
+    filter: opts.config.filter,
+    stickers: opts.stickers,
+    frame: opts.frame,
+  });
   return out;
 }
 
-export async function composePicture(opts: { config: BoothConfig; shots: HTMLCanvasElement[]; stickers: PlacedSticker[]; frame: HTMLImageElement | null }): Promise<Blob> {
-  const { config, shots, stickers, frame } = opts;
+/** The whole strip on a canvas `width` pixels wide: `shots[i]` goes in photo i's place (the picture itself uses the full size; a frame of the animated strip a small one). */
+function drawStrip(config: BoothConfig, shots: HTMLCanvasElement[], stickers: PlacedSticker[], frame: HTMLImageElement | null, width: number): HTMLCanvasElement {
   const hasFooter = !!config.footer.trim();
   const comp = composition(config.layout, config.aspect, hasFooter);
+  const k = width / comp.width;
   const canvas = document.createElement('canvas');
-  canvas.width = comp.width;
-  canvas.height = comp.height;
-  const ctx = canvas.getContext('2d')!;
+  canvas.width = width;
+  canvas.height = Math.round(comp.height * k);
+  const ctx = canvas.getContext('2d', { willReadFrequently: true })!;
   ctx.fillStyle = config.strip_bg;
-  ctx.fillRect(0, 0, comp.width, comp.height);
-  comp.cells.forEach((cell, i) => {
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  comp.cells.forEach((c, i) => {
     const shot = shots[i] ?? shots[shots.length - 1];
-    if (shot) drawCell(ctx, cell, shot, { filter: config.filter, stickers, frame });
+    if (shot) drawCell(ctx, { x: Math.round(c.x * k), y: Math.round(c.y * k), w: Math.round(c.w * k), h: Math.round(c.h * k) }, shot, { filter: config.filter, stickers, frame });
   });
   if (hasFooter) {
     ctx.fillStyle = config.text_color;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    let size = 54;
-    ctx.font = `700 ${size}px "Futura", "Avenir Next", system-ui, sans-serif`;
-    while (ctx.measureText(config.footer).width > comp.width - 80 && size > 22) {
-      size -= 2;
-      ctx.font = `700 ${size}px "Futura", "Avenir Next", system-ui, sans-serif`;
+    let size = 54 * k;
+    const font = () => `700 ${size}px "Futura", "Avenir Next", system-ui, sans-serif`;
+    ctx.font = font();
+    while (ctx.measureText(config.footer).width > (comp.width - 80) * k && size > 22 * k) {
+      size -= 2 * k;
+      ctx.font = font();
     }
-    ctx.fillText(config.footer, comp.width / 2, comp.footer.y + comp.footer.h / 2 - 6);
+    ctx.fillText(config.footer, canvas.width / 2, (comp.footer.y + comp.footer.h / 2 - 6) * k);
   }
+  return canvas;
+}
+
+/** One frame of the animated strip: the whole strip, `width` wide, with `shots[i]` (that moment of each clip) in photo i's place. */
+export const composeStripFrame = (opts: {
+  config: BoothConfig;
+  shots: HTMLCanvasElement[];
+  stickers: PlacedSticker[];
+  frame: HTMLImageElement | null;
+  width: number;
+}): HTMLCanvasElement => drawStrip(opts.config, opts.shots, opts.stickers, opts.frame, opts.width);
+
+export async function composePicture(opts: { config: BoothConfig; shots: HTMLCanvasElement[]; stickers: PlacedSticker[]; frame: HTMLImageElement | null }): Promise<Blob> {
+  const { config, shots, stickers, frame } = opts;
+  const canvas = drawStrip(config, shots, stickers, frame, composition(config.layout, config.aspect, !!config.footer.trim()).width);
   for (const q of [0.9, 0.82, 0.74, 0.65]) {
     const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, 'image/jpeg', q));
     if (blob && blob.size <= 1_900_000) return blob;

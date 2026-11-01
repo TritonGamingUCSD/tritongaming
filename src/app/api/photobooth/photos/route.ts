@@ -40,7 +40,7 @@ export async function POST(request: Request) {
   }
   const { error } = await auth.svc
     .from('photobooth_photos')
-    .insert({ token, booth_id: booth.booth.id, path, gif_path: gifPath, expires_at: expiresAt(new Date(), booth.config.keep_days).toISOString() });
+    .insert({ token, booth_id: booth.booth.id, path, gif_path: gifPath, shared: true, expires_at: expiresAt(new Date(), booth.config.keep_days).toISOString() });
   if (error) {
     await auth.svc.storage.from(PHOTO_BUCKET).remove(gifPath ? [path, gifPath] : [path]);
     return NextResponse.json({ error: 'Couldn’t save the picture. Try again.' }, { status: 500 });

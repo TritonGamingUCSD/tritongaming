@@ -5,14 +5,15 @@ import { createPortal } from 'react-dom';
 import { Maximize2, Minus, Plus, RotateCcw, RotateCw, Trash2, X } from 'lucide-react';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
+import { PhotoWall, type WallPhoto } from '@/components/PhotoWall/PhotoWall';
 import { FILTER_CSS, SHOTS, cellRatio, cellSize, promptFor, type Overlay } from '@/lib/photobooth/booth';
-import { composeFrame, composePicture, cutShot, loadImage, type PlacedSticker } from '@/lib/photobooth/compose';
-import { GIF_WIDTHS, MAX_GIF_BYTES, encodeGif } from '@/lib/photobooth/gif';
+import { composeFrame, composePicture, composeStripFrame, cutShot, loadImage, type PlacedSticker } from '@/lib/photobooth/compose';
+import { GIF_TRIES, MAX_GIF_BYTES, encodeGif, spread } from '@/lib/photobooth/gif';
 import { BoothSounds } from '@/lib/photobooth/sounds';
 import { call, type BoothData } from './api';
 import { CameraMenu } from './CameraMenu';
+import { ClipPlayer } from './ClipPlayer';
 import { QrScreen } from './QrScreen';
-import { Slideshow } from './Slideshow';
 import { StickerLayer, type Placed } from './StickerLayer';
 import { useCamera } from './useCamera';
 import styles from './photobooth.module.css';
@@ -21,6 +22,12 @@ type Phase = 'idle' | 'choose' | 'shoot' | 'review' | 'saving' | 'qr';
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const DEG = Math.PI / 12; // one turn of a sticker: 15 degrees
 const THUMB_W = 180;
+// A live clip around each shot: the camera is sampled all the time, the last 1.5 seconds before the shutter are kept, and half a second after it.
+const FRAME_MS = 125;
+const BEFORE = 12;
+const AFTER = 4;
+const CLIP_W = 320;
+const CLIP_PLAY_W = 480;
 
 /** A small picture of one shot, for the film strip beside the camera and the Retake buttons. */
 const thumbOf = (shot: HTMLCanvasElement): string => {
@@ -36,7 +43,7 @@ const typing = (t: EventTarget | null) => t instanceof HTMLElement && (t.isConte
 
 // A booth itself, on the whole screen: a welcome screen (with the guests' shared pictures drifting by), the booth's frame on the live camera, the countdown and the shots (each flies into a film strip), a look at the picture where any one
 // shot can be retaken, then the QR code to download it (and the animated picture and the gallery choice are on the guest's page). Enter, Space or a clicker's page key does the main button of each step.
-export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void }) {
+export function BoothRun({ booth, test = false, onExit }: { booth: string; test?: boolean; onExit: () => void }) {
   const [data, setData] = useState<BoothData | null>(null);
   const [error, setError] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
@@ -49,7 +56,10 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
   const [making, setMaking] = useState(false);
   const [thumbs, setThumbs] = useState<string[]>([]);
   const [picture, setPicture] = useState<{ blob: Blob; url: string } | null>(null);
+  const [moving, setMoving] = useState<{ blob: Blob; url: string } | null>(null); // the animated strip
+  const [playing, setPlaying] = useState<HTMLCanvasElement[][]>([]); // the finished frames of each shot's clip, for the big player
   const [token, setToken] = useState('');
+  const [wall, setWall] = useState<WallPhoto[]>([]); // every picture in the booth's gallery, drifting behind the welcome screen
   const camera = useCamera();
   const [mounted, setMounted] = useState(false);
   useEffect(() => {
@@ -58,6 +68,7 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
   }, []);
   const images = useRef(new Map<string, HTMLImageElement>());
   const shots = useRef<HTMLCanvasElement[]>([]);
+  const clips = useRef<HTMLCanvasElement[][]>([]); // each shot's raw clip frames (BEFORE + AFTER of them)
   const sounds = useRef<BoothSounds | null>(null);
   const run = useRef(0); // a number for each go at the shots: leaving or cancelling makes the running one stop
   const keys = useRef(0);
@@ -91,6 +102,29 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
       if (url) URL.revokeObjectURL(url);
     };
   }, [picture]);
+  useEffect(() => {
+    const url = moving?.url;
+    return () => {
+      if (url) URL.revokeObjectURL(url);
+    };
+  }, [moving]);
+
+  // The welcome screen shows every picture of the booth's gallery; it looks again now and then, so new ones join in.
+  const galleryToken = data?.booth.gallery_token;
+  useEffect(() => {
+    if (!galleryToken || test || phase !== 'idle') return;
+    let live = true;
+    const load = async () => {
+      const r = await call<{ photos: WallPhoto[] }>(`/api/gallery/${galleryToken}`);
+      if (live && r.ok) setWall(r.data.photos);
+    };
+    void load();
+    const id = window.setInterval(() => void load(), 20000);
+    return () => {
+      live = false;
+      window.clearInterval(id);
+    };
+  }, [galleryToken, test, phase]);
 
   const config = data?.config;
   const stickerChoices = useMemo(() => data?.overlays ?? [], [data]);
@@ -106,6 +140,9 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
   const reset = useCallback(() => {
     run.current++;
     shots.current = [];
+    clips.current = [];
+    setMoving(null);
+    setPlaying([]);
     setPhase('idle');
     setStickers([]);
     setSelected(null);
@@ -131,28 +168,49 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
       return image ? [{ image, x: s.x, y: s.y, size: s.size, rotation: s.rotation }] : [];
     });
 
-  /** Counts down and takes one photo (null when the booth was left or cancelled meanwhile). */
-  async function takeShot(i: number, alive: () => boolean): Promise<HTMLCanvasElement | null> {
+  /** Counts down and takes one photo, with the clip around it (null when the booth was left or cancelled meanwhile). */
+  async function takeShot(i: number, alive: () => boolean): Promise<{ shot: HTMLCanvasElement; clip: HTMLCanvasElement[] } | null> {
     if (!config || !camera.video.current) return null;
+    const video = camera.video.current;
     const { w, h } = cellSize(config.aspect);
     setShotNo(i + 1);
     setPrompt(promptFor(config.prompts, i));
-    for (let c = config.countdown; c >= 1; c--) {
+    // the camera is watched all through the countdown, keeping only the latest moments
+    const before: HTMLCanvasElement[] = [];
+    let after: HTMLCanvasElement[] | null = null;
+    const sampler = window.setInterval(() => {
+      const f = cutShot(video, CLIP_W, Math.round((CLIP_W * h) / w), config.mirror);
+      if (after) {
+        if (after.length < AFTER) after.push(f);
+      } else {
+        before.push(f);
+        if (before.length > BEFORE) before.shift();
+      }
+    }, FRAME_MS);
+    try {
+      for (let c = config.countdown; c >= 1; c--) {
+        if (!alive()) return null;
+        setCount(c);
+        sounds.current?.beep();
+        await wait(1000);
+      }
       if (!alive()) return null;
-      setCount(c);
-      sounds.current?.beep();
-      await wait(1000);
+      setCount(null);
+      sounds.current?.shutter();
+      if (config.flash) {
+        setFlash(true);
+        setTimeout(() => setFlash(false), 180);
+      }
+      const shot = cutShot(video, w, h, config.mirror);
+      after = [];
+      await wait(900);
+      const clip = [...before, ...after];
+      // (a short countdown has fewer moments: the first one is held so every clip is as long as the others)
+      while (clip.length < BEFORE + AFTER) clip.unshift(clip[0] ?? shot);
+      return { shot, clip };
+    } finally {
+      window.clearInterval(sampler);
     }
-    if (!alive()) return null;
-    setCount(null);
-    sounds.current?.shutter();
-    if (config.flash) {
-      setFlash(true);
-      setTimeout(() => setFlash(false), 180);
-    }
-    const shot = cutShot(camera.video.current, w, h, config.mirror);
-    await wait(900);
-    return shot;
   }
 
   /** Puts the finished picture together from the shots and goes to the review. */
@@ -163,7 +221,15 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
     try {
       const blob = await composePicture({ config, shots: shots.current, stickers: placed(), frame: frameUrl ? (images.current.get('frame') ?? null) : null });
       if (!alive()) return;
-      setPicture({ blob, url: URL.createObjectURL(blob) });
+      const still = { blob, url: URL.createObjectURL(blob) };
+      const strip = await movingStrip();
+      if (!alive()) {
+        URL.revokeObjectURL(still.url);
+        return;
+      }
+      setPicture(still);
+      setMoving(strip.gif ? { blob: strip.gif, url: URL.createObjectURL(strip.gif) } : null);
+      setPlaying(strip.played);
       setThumbs(shots.current.map(thumbOf));
       setMaking(false);
       setPhase('review');
@@ -178,14 +244,16 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
     const mine = ++run.current;
     const alive = () => run.current === mine;
     shots.current = [];
+    clips.current = [];
     setThumbs([]);
     setPhase('shoot');
     setSelected(null);
     for (let i = 0; i < SHOTS[config.layout]; i++) {
-      const shot = await takeShot(i, alive);
-      if (!shot) return;
-      shots.current.push(shot);
-      setThumbs((t) => [...t, thumbOf(shot)]);
+      const got = await takeShot(i, alive);
+      if (!got) return;
+      shots.current.push(got.shot);
+      clips.current.push(got.clip);
+      setThumbs((t) => [...t, thumbOf(got.shot)]);
     }
     if (alive()) await build(alive);
   }
@@ -196,34 +264,47 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
     const mine = ++run.current;
     const alive = () => run.current === mine;
     setPhase('shoot');
-    const shot = await takeShot(i, alive);
-    if (!shot) return;
-    shots.current[i] = shot;
+    const got = await takeShot(i, alive);
+    if (!got) return;
+    shots.current[i] = got.shot;
+    clips.current[i] = got.clip;
     setThumbs(shots.current.map(thumbOf));
     if (alive()) await build(alive);
   }
 
-  /** The animated picture of the shots, as small as it needs to be (null if it cannot be made: the picture is still kept). */
-  function animated(): Blob | null {
-    if (!config) return null;
+  /** The animated strip (the whole strip with every photo playing its own clip at once, as small as it needs to be; null if it cannot be made: the picture is still kept) and the finished frames of each clip for the big player. */
+  async function movingStrip(): Promise<{ gif: Blob | null; played: HTMLCanvasElement[][] }> {
+    if (!config) return { gif: null, played: [] };
+    const frame = frameUrl ? (images.current.get('frame') ?? null) : null;
+    const stickersOn = placed();
+    const played = clips.current.map((clip) => clip.map((f) => composeFrame({ config, shot: f, stickers: stickersOn, frame, width: CLIP_PLAY_W })));
     try {
-      const frame = frameUrl ? (images.current.get('frame') ?? null) : null;
-      for (const width of GIF_WIDTHS) {
-        const frames = shots.current.map((shot) => composeFrame({ config, shot, stickers: placed(), frame, width }));
-        const gif = encodeGif(frames, 700);
-        if (gif.size <= MAX_GIF_BYTES) return gif;
+      const n = BEFORE + AFTER;
+      for (const [width, count] of GIF_TRIES) {
+        const at = spread(
+          Array.from({ length: n }, (_, i) => i),
+          count,
+        );
+        const frames = at.map((f) => composeStripFrame({ config, shots: clips.current.map((c) => c[f]), stickers: stickersOn, frame, width }));
+        const gif = await encodeGif(frames, Math.round((n * FRAME_MS) / count));
+        if (gif.size <= MAX_GIF_BYTES) return { gif, played };
       }
     } catch {
-      /* (no animated picture this time) */
+      /* (no animated strip this time) */
     }
-    return null;
+    return { gif: null, played };
   }
 
   async function keep() {
     if (!picture) return;
     setPhase('saving');
-    await wait(30); // (let "Saving" show before the animated picture is made)
-    const gif = animated();
+    const gif = moving?.blob ?? null;
+    if (test) {
+      await wait(400);
+      setToken('TEST');
+      setPhase('qr');
+      return;
+    }
     const form = new FormData();
     form.append('booth', booth);
     form.append('file', new File([picture.blob], 'photo.jpg', { type: 'image/jpeg' }));
@@ -269,6 +350,7 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
       <button type="button" className={styles.exit} onClick={onExit} aria-label="Leave the booth">
         <X size={18} aria-hidden="true" /> Exit
       </button>
+      {test && <span className={styles.testTag}>Test Run · Nothing Is Saved</span>}
       <button
         type="button"
         className={`${styles.exit} ${styles.full}`}
@@ -289,7 +371,11 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
         )
       ) : (
         <>
-          {phase === 'idle' && <Slideshow booth={booth} />}
+          {phase === 'idle' && wall.length > 0 && (
+            <div className={styles.idleWall}>
+              <PhotoWall photos={wall} dim />
+            </div>
+          )}
           {/* the camera stays on behind everything so the next guest starts at once */}
           <div className={`${styles.cam} ${showCam ? '' : styles.camHidden} ${phase === 'shoot' && flash ? styles.camSnap : ''}`}>
             <video
@@ -450,7 +536,8 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
           {(phase === 'review' || phase === 'saving') && picture && (
             <div className={styles.review}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img className={`${styles.reviewImg} ${styles.dropIn}`} src={picture.url} alt="Your picture" />
+              <img className={`${styles.reviewImg} ${styles.dropIn}`} src={moving?.url ?? picture.url} alt="Your picture, moving" />
+              {playing.length > 0 && <ClipPlayer clips={playing} frameMs={FRAME_MS} />}
               <div className={`${styles.reviewSide} ${styles.riseIn}`}>
                 <h2 className={styles.qrTitle}>How Does It Look?</h2>
                 {error && <p className={styles.problem}>{error}</p>}
@@ -492,7 +579,7 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
             </div>
           )}
 
-          {phase === 'qr' && picture && token && <QrScreen token={token} picture={picture.url} seconds={config.qr_seconds} onDone={reset} />}
+          {phase === 'qr' && picture && token && <QrScreen token={token} picture={moving?.url ?? picture.url} seconds={config.qr_seconds} test={test} onDone={reset} />}
         </>
       )}
     </div>

@@ -1,4 +1,5 @@
 import { describe, expect, test } from 'vitest';
+import { GIF_TRIES, spread } from '@/lib/photobooth/gif';
 import {
   DEFAULT_BOOTH,
   DEFAULT_FRAME_SPEC,
@@ -192,5 +193,22 @@ describe('deleting expired pictures', () => {
     expect(removedFiles).toEqual([['e/a.jpg']]);
     expect(deletedIds).toEqual([['a']]);
     expect(await cleanupPhotos(svc as never, new Date('2026-10-29T00:00:00Z'))).toEqual({ removed: 0 });
+  });
+});
+
+describe('animated strip frames', () => {
+  test('keeps every frame when there are not more than asked for', () => {
+    expect(spread([1, 2, 3], 5)).toEqual([1, 2, 3]);
+  });
+  test('spreads the kept frames evenly, first and last included', () => {
+    const all = Array.from({ length: 16 }, (_, i) => i);
+    const kept = spread(all, 8);
+    expect(kept).toHaveLength(8);
+    expect(kept[0]).toBe(0);
+    expect(kept[7]).toBe(15);
+  });
+  test('tries smaller strips after bigger ones', () => {
+    const widths = GIF_TRIES.map(([w]) => w);
+    expect([...widths].sort((a, b) => b - a)).toEqual(widths);
   });
 });

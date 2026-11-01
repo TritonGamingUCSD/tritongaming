@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Camera, Frame, Images, MessageSquare, Palette, QrCode, Redo2, Smile, Trash2, Undo2 } from 'lucide-react';
+import { ArrowLeft, Camera, Frame, Images, LayoutGrid, MessageSquare, Palette, QrCode, Redo2, Smile, Trash2, Undo2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -15,6 +15,7 @@ import { loadImage } from '@/lib/photobooth/compose';
 import { call, saveFrame, saveStickers, type BoothData } from './api';
 import { FramePanel } from './FramePanel';
 import { DownloadsPanel, LookPanel, PhotosPanel, PromptsPanel } from './SettingsPanels';
+import { PicturesPanel } from './PicturesPanel';
 import { StickersPanel } from './StickersPanel';
 import { StudioCanvas, type Selection } from './StudioCanvas';
 import { useFrameDrawing } from './useFrameDrawing';
@@ -32,6 +33,7 @@ const TOOLS: { id: StudioTool; label: string; icon: React.ReactNode }[] = [
   { id: 'look', label: 'Look', icon: <Palette size={20} aria-hidden="true" /> },
   { id: 'words', label: 'Prompts', icon: <MessageSquare size={20} aria-hidden="true" /> },
   { id: 'downloads', label: 'Downloads', icon: <QrCode size={20} aria-hidden="true" /> },
+  { id: 'pictures', label: 'Pictures', icon: <LayoutGrid size={20} aria-hidden="true" /> },
 ];
 
 /** True when the keys being typed belong to a box (so Undo is the box's own). */
@@ -45,6 +47,7 @@ export function BoothSetup({
   onTool,
   onBack,
   onRun,
+  onTest,
   onDeleted,
 }: {
   booth: string;
@@ -52,6 +55,7 @@ export function BoothSetup({
   onTool: (t: StudioTool) => void;
   onBack: () => void;
   onRun: () => void;
+  onTest: () => void;
   onDeleted: () => void;
 }) {
   const [data, setData] = useState<BoothData | null>(null);
@@ -215,6 +219,7 @@ export function BoothSetup({
     ),
     look: <LookPanel config={config} set={set} />,
     words: <PromptsPanel config={config} set={set} />,
+    pictures: <PicturesPanel booth={booth} />,
     downloads: <DownloadsPanel config={config} set={set} galleryToken={data.booth.gallery_token} />,
   }[tool];
 
@@ -234,6 +239,9 @@ export function BoothSetup({
           </Button>
           <Button variant="secondary" size="sm" onClick={() => void remove()}>
             <Trash2 size={15} aria-hidden="true" /> Delete
+          </Button>
+          <Button variant="secondary" size="sm" onClick={onTest} disabled={dirty} title={dirty ? 'Save your changes first' : 'Try the booth without saving anything'}>
+            Test Run
           </Button>
           <Button size="sm" onClick={onRun} disabled={dirty} title={dirty ? 'Save your changes first' : undefined}>
             <Camera size={16} aria-hidden="true" /> Open Booth

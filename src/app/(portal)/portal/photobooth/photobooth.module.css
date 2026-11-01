@@ -73,6 +73,7 @@
 .ring { grid-area: 1 / 1; width: 0.9em; height: 0.9em; border-radius: 50%; border: 0.04em solid var(--accent); animation: pbRing 1s ease-out both; }
 .flash { position: absolute; inset: 0; background: #fff; opacity: 0.95; animation: pbFlash 0.18s ease-out forwards; pointer-events: none; }   /* theme-ok */
 @keyframes pbFlash { to { opacity: 0; } }
+.idleWall { position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 .welcome { position: absolute; z-index: 3; display: grid; justify-items: center; gap: 1rem; text-align: center; padding: 1rem; max-width: 40rem; }
 .welcome h1 { margin: 0; font-family: var(--font-futura-heavy); font-size: clamp(2.4rem, 8vw, 5rem); line-height: 1.05; text-wrap: balance; }
 .welcome p { margin: 0; font-size: clamp(1.1rem, 3vw, 1.7rem); opacity: 0.9; }
@@ -98,6 +99,9 @@
 .review, .qrScreen { position: absolute; inset: 0; z-index: 4; display: flex; flex-wrap: wrap; gap: 1.5rem 3rem; align-items: center; justify-content: center; padding: 3.5rem 1.5rem 1.5rem; background: #0b1020; overflow-y: auto; }   /* theme-ok */
 .reviewImg, .qrPicture img { display: block; max-height: 80vh; max-width: min(90vw, 36rem); width: auto; height: auto; border-radius: 10px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); }   /* theme-ok */
 .qrPicture { display: grid; place-items: center; max-height: 80vh; }
+.clipBox { position: relative; display: grid; place-items: center; }
+.clipCanvas { display: block; max-height: 62vh; max-width: min(40vw, 26rem); width: auto; height: auto; border-radius: 10px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); animation: pbDrop 0.7s 0.15s cubic-bezier(0.2, 0.8, 0.3, 1) both; }
+.clipTag { position: absolute; left: 0.6rem; top: 0.6rem; padding: 0.15rem 0.6rem; border-radius: 999px; background: rgba(11, 16, 32, 0.75); font-size: 0.8rem; }   /* theme-ok */
 .reviewSide, .qrSide { display: grid; gap: 1rem; justify-items: center; text-align: center; min-width: 14rem; max-width: 24rem; }
 .qrTitle { margin: 0; font-family: var(--font-futura-heavy); font-size: clamp(1.8rem, 4vw, 2.8rem); }
 .qrText { margin: 0; opacity: 0.85; }
@@ -199,7 +203,6 @@
 @keyframes pbPop { from { transform: scale(0.6); opacity: 0; } 70% { transform: scale(1.06); opacity: 1; } to { transform: none; } }
 @keyframes pbPulse { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(250, 204, 21, 0.55); } 50% { transform: scale(1.04); box-shadow: 0 0 0 1.1rem rgba(250, 204, 21, 0); } }   /* theme-ok */
 @keyframes pbFloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -0.9rem; } }
-@keyframes pbSlideIn { from { opacity: 0; scale: 0.8; } to { opacity: 0.9; scale: 1; } }
 @keyframes pbSpin { to { transform: rotate(360deg); } }
 @keyframes pbFall { from { transform: translate(0, -12vh) rotate(0); opacity: 1; } to { transform: translate(var(--drift), 112vh) rotate(var(--spin)); opacity: 0.9; } }
 @keyframes pbFilm { from { transform: translateX(3rem) rotate(8deg) scale(0.6); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -238,21 +241,23 @@
 .fine { margin: 0; font-size: 0.8rem; opacity: 0.7; }
 .confetti { position: absolute; inset: 0; z-index: 7; overflow: hidden; pointer-events: none; }
 .confetti span { position: absolute; top: 0; height: 0.7rem; border-radius: 2px; animation-name: pbFall; animation-timing-function: cubic-bezier(0.3, 0.1, 0.6, 1); animation-fill-mode: both; }
-.slideshow { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
-.slide { position: absolute; width: clamp(7rem, 15vw, 13rem); height: auto; border-radius: 8px; border: 0.4rem solid #fff; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5); opacity: 0.9; animation: pbSlideIn 0.8s ease-out both, pbFloat 6s ease-in-out infinite; }   /* theme-ok */
-.slide0 { left: 4%; top: 12%; rotate: -7deg; }
-.slide1 { right: 4%; top: 8%; rotate: 6deg; animation-delay: 0s, 0.8s; }
-.slide2 { left: 7%; bottom: 8%; rotate: 5deg; animation-delay: 0s, 1.6s; }
-.slide3 { right: 6%; bottom: 10%; rotate: -5deg; animation-delay: 0s, 2.4s; }
-.slide4 { left: 50%; top: 2%; margin-left: -6rem; rotate: 3deg; animation-delay: 0s, 3.2s; }
-@media (max-width: 900px) { .slide3, .slide4 { display: none; } }
-.cameraMenu { position: absolute; top: 0.8rem; left: 3.6rem; z-index: 7; }
 .cameraBtn { position: static; padding: 0.45rem; }
 .cameraList { list-style: none; margin: 0.4rem 0 0; padding: 0.3rem; min-width: 14rem; max-width: 22rem; border-radius: 12px; border: 1px solid rgba(244, 246, 251, 0.3); background: rgba(11, 16, 32, 0.95); animation: pbRise 0.2s ease-out both; }   /* theme-ok */
 .cameraItem { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; width: 100%; padding: 0.55rem 0.7rem; border: 0; border-radius: 8px; background: transparent; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .cameraItem:hover { background: rgba(244, 246, 251, 0.12); }   /* theme-ok */
 @media (prefers-reduced-motion: reduce) {
-  .digit, .ring, .riseIn, .dropIn, .popIn, .camSnap, .welcomeTitle, .welcomeText, .startBtn, .chipIn, .placed, .prompt, .spinner, .making, .filmTile, .sent, .emailRow, .slide, .cameraList { animation: none; }
+  .digit, .ring, .riseIn, .dropIn, .popIn, .camSnap, .welcomeTitle, .welcomeText, .startBtn, .chipIn, .placed, .prompt, .spinner, .clipCanvas, .making, .filmTile, .sent, .emailRow, .cameraList { animation: none; }
   .confetti { display: none; }
   .retakeBtn { transition: none; }
 }
+
+.testTag { position: absolute; top: 1rem; left: 50%; transform: translateX(-50%); z-index: 9; padding: 0.25rem 1rem; border-radius: 999px; background: #facc15; color: #011941; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase; }   /* theme-ok */
+.picStats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; margin: 0; }
+.picStat { padding: 0.5rem 0.7rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); display: grid; }
+.picStat strong { font-size: 1.4rem; line-height: 1.1; }
+.picGrid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem; }
+.pic { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); }
+.pic img { display: block; width: 100%; aspect-ratio: 3 / 4; object-fit: cover; object-position: top; }
+.picHidden img { opacity: 0.35; }
+.picBar { display: flex; justify-content: space-between; gap: 0.2rem; padding: 0.2rem; }
+.picTag { position: absolute; top: 0.25rem; left: 0.25rem; padding: 0 0.4rem; border-radius: 999px; background: rgba(11, 16, 32, 0.8); color: #fff; font-size: 0.7rem; }   /* theme-ok */
