@@ -4,9 +4,9 @@ import { MAX_OVERLAY_BYTES, OVERLAY_BUCKET, OVERLAY_COLUMNS, authorizePhotoBooth
 
 export const dynamic = 'force-dynamic';
 
-// The overlay library: frames and stickers shared by every event's booth.
+// The sticker library shared by every booth (a booth's frame is its own: see booths/[slug]/frame).
 //   GET                                             all of them, newest first
-//   POST multipart { name, kind: 'frame' | 'sticker', file (WebP), x?, y?, size?, can_resize?, can_rotate? }    add one (the page shrinks the picture and keeps its see-through parts)
+//   POST multipart { name, file (WebP), x?, y?, size?, can_resize?, can_rotate? }    add a sticker (the page shrinks the picture and keeps its see-through parts)
 export async function GET() {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
@@ -21,10 +21,8 @@ export async function POST(request: Request) {
   const name = String(form?.get('name') ?? '')
     .trim()
     .slice(0, 60);
-  const kind = form?.get('kind');
   const file = form?.get('file');
-  if (!name) return NextResponse.json({ error: 'Give the overlay a name.' }, { status: 400 });
-  if (kind !== 'frame' && kind !== 'sticker') return NextResponse.json({ error: 'Choose whether it is a frame or a sticker.' }, { status: 400 });
+  if (!name) return NextResponse.json({ error: 'Give the sticker a name.' }, { status: 400 });
   if (!(file instanceof File)) return NextResponse.json({ error: 'Choose a picture.' }, { status: 400 });
   if (file.size > MAX_OVERLAY_BYTES) return NextResponse.json({ error: 'That picture is too big (over 600 KB after shrinking). Try a simpler one.' }, { status: 413 });
   const bytes = new Uint8Array(await file.arrayBuffer());
@@ -37,7 +35,7 @@ export async function POST(request: Request) {
   const image = auth.svc.storage.from(OVERLAY_BUCKET).getPublicUrl(path).data.publicUrl;
   const { data, error } = await auth.svc
     .from('photobooth_overlays')
-    .insert({ name, kind, image, ...(kind === 'sticker' ? sticker : {}), created_by: auth.user.id })
+    .insert({ name, kind: 'sticker', image, ...sticker, created_by: auth.user.id })
     .select(OVERLAY_COLUMNS)
     .single();
   if (error || !data) {

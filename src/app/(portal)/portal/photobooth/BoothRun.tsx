@@ -18,12 +18,11 @@ type Phase = 'idle' | 'choose' | 'shoot' | 'review' | 'saving' | 'qr';
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const DEG = Math.PI / 12; // one turn of a sticker: 15 degrees
 
-// A booth itself, on the whole screen: a welcome screen, the guest picks a frame and stickers on the live camera, the countdown and shots, a look at the picture (retake or keep), then the QR code to download it.
+// A booth itself, on the whole screen: a welcome screen, the booth's frame is on the live camera and the guest places stickers, the countdown and shots, a look at the picture (retake or keep), then the QR code to download it.
 export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void }) {
   const [data, setData] = useState<BoothData | null>(null);
   const [error, setError] = useState('');
   const [phase, setPhase] = useState<Phase>('idle');
-  const [frameId, setFrameId] = useState<string | null>(null);
   const [stickers, setStickers] = useState<Placed[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [count, setCount] = useState<number | null>(null);
@@ -33,6 +32,11 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
   const [picture, setPicture] = useState<{ blob: Blob; url: string } | null>(null);
   const [token, setToken] = useState('');
   const camera = useCamera();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = window.setTimeout(() => setMounted(true), 0); // (a portal needs the page: not drawn on the server)
+    return () => window.clearTimeout(t);
+  }, []);
   const images = useRef(new Map<string, HTMLImageElement>());
   const sounds = useRef<BoothSounds | null>(null);
   const run = useRef(0); // a number for each go at the shots: leaving or cancelling makes the running one stop
@@ -65,9 +69,8 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
   }, [picture]);
 
   const config = data?.config;
-  const frames = useMemo(() => (data?.overlays ?? []).filter((o) => o.kind === 'frame'), [data]);
-  const stickerChoices = useMemo(() => (data?.overlays ?? []).filter((o) => o.kind === 'sticker'), [data]);
-  const frame = frames.find((f) => f.id === frameId) ?? null;
+  const stickerChoices = useMemo(() => data?.overlays ?? [], [data]);
+  const frameUrl = data?.frame.image ?? '';
   const chosen = stickers.find((s) => s.key === selected) ?? null;
 
   const reset = useCallback(() => {
@@ -75,7 +78,6 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
     setPhase('idle');
     setStickers([]);
     setSelected(null);
-    setFrameId(null);
     setPicture(null);
     setToken('');
     setCount(null);
@@ -124,7 +126,7 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
         const image = images.current.get(s.overlay.id);
         return image ? [{ image, x: s.x, y: s.y, size: s.size, rotation: s.rotation }] : [];
       });
-      const blob = await composePicture({ config, shots, stickers: placed, frame: frame ? (images.current.get(frame.id) ?? null) : null });
+      const blob = await composePicture({ config, shots, stickers: placed, frame: frameUrl ? (images.current.get('frame') ?? null) : null });
       if (!alive()) return;
       setPicture({ blob, url: URL.createObjectURL(blob) });
       setPhase('review');
@@ -154,7 +156,7 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
   const start = () => {
     sounds.current?.unlock();
     setError('');
-    if (frames.length || stickerChoices.length) setPhase('choose');
+    if (stickerChoices.length) setPhase('choose');
     else void shoot();
   };
 
@@ -187,15 +189,15 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
           {/* the camera stays on behind everything so the next guest starts at once */}
           <div className={`${styles.cam} ${showCam ? '' : styles.camHidden}`}>
             <video
-              ref={camera.video}
+              ref={camera.attach}
               playsInline
               muted
               className={styles.video}
               style={{ transform: config.mirror ? 'scaleX(-1)' : undefined, filter: FILTER_CSS[config.filter] }}
             />
-            {frame && showCam && (
+            {frameUrl && showCam && (
               // eslint-disable-next-line @next/next/no-img-element
-              <img className={styles.camFrame} src={frame.image} alt="" />
+              <img className={styles.camFrame} src={frameUrl} alt="" />
             )}
             {showCam && phase !== 'idle' && (
               <StickerLayer stickers={stickers} selected={selected} locked={phase === 'shoot'} onSelect={setSelected} onMove={(k, x, y) => patch(k, (s) => ({ ...s, x, y }))} />
@@ -231,20 +233,6 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
 
           {phase === 'choose' && (
             <div className={styles.panel}>
-              {frames.length > 0 && (
-                <div className={styles.chips} role="radiogroup" aria-label="Frame">
-                  <span className={styles.chipLabel}>Frame</span>
-                  <button type="button" className={`${styles.chip} ${frameId === null ? styles.chipOn : ''}`} onClick={() => setFrameId(null)}>
-                    None
-                  </button>
-                  {frames.map((f) => (
-                    <button key={f.id} type="button" className={`${styles.chip} ${frameId === f.id ? styles.chipOn : ''}`} onClick={() => setFrameId(f.id)}>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={f.image} alt="" /> {f.name}
-                    </button>
-                  ))}
-                </div>
-              )}
               {stickerChoices.length > 0 && (
                 <div className={styles.chips} aria-label="Stickers">
                   <span className={styles.chipLabel}>Stickers</span>
@@ -337,5 +325,5 @@ export function BoothRun({ booth, onExit }: { booth: string; onExit: () => void 
       )}
     </div>
   );
-  return typeof document === 'undefined' ? null : createPortal(stage, document.body);
+  return mounted ? createPortal(stage, document.body) : null;
 }

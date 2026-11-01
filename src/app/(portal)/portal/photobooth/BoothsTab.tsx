@@ -1,21 +1,20 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Camera, Plus, Settings2 } from 'lucide-react';
+import { Camera, Copy, Plus, Settings2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
-import { Field, Input } from '@/components/ui/Field';
 import { LAYOUT_NAMES, type Layout } from '@/lib/photobooth/booth';
 import { call, type BoothRow } from './api';
+import { NewBoothDialog } from './NewBoothDialog';
 import styles from './photobooth.module.css';
 
 // The booths. Each is its own thing (not tied to an event): Set Up opens its settings, Open Booth runs it on this screen.
 export function BoothsTab({ onOpen, onRun }: { onOpen: (booth: string) => void; onRun: (booth: string) => void }) {
   const [booths, setBooths] = useState<BoothRow[] | null>(null);
-  const [name, setName] = useState('');
+  const [making, setMaking] = useState(false);
   const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
   const load = useCallback(async () => {
     const r = await call<{ booths: BoothRow[] }>('/api/photobooth/booths');
     if (r.ok) setBooths(r.data.booths);
@@ -25,13 +24,9 @@ export function BoothsTab({ onOpen, onRun }: { onOpen: (booth: string) => void; 
     void load();
   }, [load]);
 
-  const create = async () => {
-    if (!name.trim() || busy) return;
-    setBusy(true);
-    setError('');
-    const r = await call<{ booth: { slug: string } }>('/api/photobooth/booths', 'POST', { name });
-    setBusy(false);
-    if (r.ok) onOpen(r.data.booth.slug);
+  const copy = async (b: BoothRow) => {
+    const r = await call<{ booth: { slug: string } }>('/api/photobooth/booths', 'POST', { name: `${b.name} copy`.slice(0, 80), from: b.slug });
+    if (r.ok) await load();
     else setError(r.error);
   };
 
@@ -39,20 +34,12 @@ export function BoothsTab({ onOpen, onRun }: { onOpen: (booth: string) => void; 
   return (
     <div className={styles.stack}>
       {error && <Notice tone="error">{error}</Notice>}
-      <form
-        className={styles.newRow}
-        onSubmit={(e) => {
-          e.preventDefault();
-          void create();
-        }}
-      >
-        <Field label="New booth">
-          <Input value={name} maxLength={80} onChange={(e) => setName(e.target.value)} placeholder="Costume Party booth" />
-        </Field>
-        <Button type="submit" loading={busy} disabled={!name.trim()}>
+      <div className={styles.toolbar}>
+        <p className={styles.about}>A booth is its own thing, not tied to an event: make as many as you like and open the one for the day.</p>
+        <Button onClick={() => setMaking(true)}>
           <Plus size={16} aria-hidden="true" /> Make A Booth
         </Button>
-      </form>
+      </div>
       {booths.length === 0 ? (
         <p className={styles.empty}>No booths yet. Make one, set up its look and overlays, then open it on a screen at your event.</p>
       ) : (
@@ -67,6 +54,9 @@ export function BoothsTab({ onOpen, onRun }: { onOpen: (booth: string) => void; 
                 </span>
               </div>
               <div className={styles.rowActions}>
+                <Button size="sm" variant="secondary" onClick={() => void copy(b)} aria-label={`Copy ${b.name}`}>
+                  <Copy size={15} aria-hidden="true" /> Copy
+                </Button>
                 <Button size="sm" variant="secondary" onClick={() => onOpen(b.slug)}>
                   <Settings2 size={15} aria-hidden="true" /> Set Up
                 </Button>
@@ -78,6 +68,7 @@ export function BoothsTab({ onOpen, onRun }: { onOpen: (booth: string) => void; 
           ))}
         </ul>
       )}
+      {making && <NewBoothDialog onClose={() => setMaking(false)} onMade={(slug, open) => (open ? onRun(slug) : onOpen(slug))} />}
     </div>
   );
 }

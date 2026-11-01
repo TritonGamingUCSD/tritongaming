@@ -1,8 +1,8 @@
-import { composition, type BoothConfig, type Overlay } from '@/lib/photobooth/booth';
+import { composition, type BoothConfig } from '@/lib/photobooth/booth';
 import styles from './photobooth.module.css';
 
-// A small drawing of the finished picture for the booth's settings: the photos as grey boxes, the first frame over each, and the footer text, in the chosen colours.
-export function LayoutPreview({ config, frame }: { config: BoothConfig; frame?: Overlay }) {
+// A small drawing of the finished picture for the booth's settings: the photos as grey boxes, the booth's frame over each (a picture address or a drawing), and the footer text, in the chosen colours.
+export function LayoutPreview({ config, frameUrl }: { config: BoothConfig; frameUrl?: string }) {
   const comp = composition(config.layout, config.aspect, !!config.footer.trim());
   const pct = (n: number, of: number) => `${(n / of) * 100}%`;
   return (
@@ -14,9 +14,9 @@ export function LayoutPreview({ config, frame }: { config: BoothConfig; frame?: 
     >
       {comp.cells.map((c, i) => (
         <div key={i} className={styles.previewCell} style={{ left: pct(c.x, comp.width), top: pct(c.y, comp.height), width: pct(c.w, comp.width), height: pct(c.h, comp.height) }}>
-          {frame && (
+          {frameUrl && (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={frame.image} alt="" />
+            <img src={frameUrl} alt="" />
           )}
         </div>
       ))}

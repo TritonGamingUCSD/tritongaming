@@ -4,10 +4,19 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 // The camera for the booth: the front (or only) camera as large as the device gives, kept on while the booth is open and switched off when it closes. `error` is a sentence for the screen.
 export function useCamera() {
-  const video = useRef<HTMLVideoElement>(null);
+  const video = useRef<HTMLVideoElement | null>(null);
   const stream = useRef<MediaStream | null>(null);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState('');
+
+  // The picture element only exists once the booth has loaded, which can be after the camera is already on: whichever comes second connects them.
+  const attach = useCallback((node: HTMLVideoElement | null) => {
+    video.current = node;
+    if (node && stream.current && node.srcObject !== stream.current) {
+      node.srcObject = stream.current;
+      void node.play().catch(() => undefined);
+    }
+  }, []);
 
   const start = useCallback(async () => {
     setError('');
@@ -42,5 +51,5 @@ export function useCamera() {
     };
   }, [start]);
 
-  return { video, ready, error, retry: start };
+  return { video, attach, ready, error, retry: start };
 }

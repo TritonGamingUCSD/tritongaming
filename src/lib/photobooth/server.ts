@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilities';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
-import { cleanBooth, type BoothConfig, type Overlay } from '@/lib/photobooth/booth';
+import { cleanBooth, cleanFrameSpec, type BoothConfig, type FrameSpec, type Overlay } from '@/lib/photobooth/booth';
 
 export const UUID = /^[0-9a-f-]{36}$/i;
 export const OVERLAY_BUCKET = 'photobooth-overlays';
@@ -13,7 +13,7 @@ export const MAX_OVERLAY_BYTES = 600 * 1024; // the bucket refuses anything over
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 export const OVERLAY_COLUMNS = 'id, name, kind, image, x, y, size, can_resize, can_rotate';
 export const BOOTH_COLUMNS =
-  'id, slug, name, layout, aspect, countdown, mirror, filter, strip_bg, text_color, accent, footer, welcome_title, welcome_text, prompts, sounds, flash, qr_seconds, keep_days, overlay_ids';
+  'id, slug, name, frame_image, frame_design, layout, aspect, countdown, mirror, filter, strip_bg, text_color, accent, footer, welcome_title, welcome_text, prompts, sounds, flash, qr_seconds, keep_days, overlay_ids';
 
 // Who may set up and run a booth: officers and above (the capability can also be granted in Admin → Access). The guests' download page needs no sign-in and has its own routes.
 export async function authorizePhotoBooth() {
@@ -38,14 +38,22 @@ export interface BoothInfo {
 /** Words that are other addresses under /portal/photobooth, so a booth cannot take them as its own. */
 export const RESERVED_SLUGS = ['booths', 'overlays', 'new'];
 
-/** A booth with its settings and the overlays it offers, by its address word (or id). */
-export async function loadBooth(svc: SupabaseClient, key: string): Promise<{ booth: BoothInfo; config: BoothConfig; overlays: Overlay[] } | null> {
+/** A booth with its settings, its frame and the stickers it offers, by its address word (or id). */
+export interface BoothFrame {
+  /** The public address of the frame picture, or '' for none. */
+  image: string;
+  /** What it is made of, or null when there is no frame designed. */
+  spec: FrameSpec | null;
+}
+
+export async function loadBooth(svc: SupabaseClient, key: string): Promise<{ booth: BoothInfo; config: BoothConfig; overlays: Overlay[]; frame: BoothFrame } | null> {
   const q = svc.from('photobooths').select(BOOTH_COLUMNS);
   const { data } = await (UUID.test(key) ? q.eq('id', key) : q.eq('slug', key)).maybeSingle();
   if (!data) return null;
   const config = cleanBooth(data);
   const overlays = await overlaysByIds(svc, config.overlay_ids);
-  return { booth: { id: data.id as string, slug: data.slug as string, name: data.name as string }, config: { ...config, overlay_ids: overlays.map((o) => o.id) }, overlays };
+  const frame: BoothFrame = { image: (data.frame_image as string) || '', spec: data.frame_design ? cleanFrameSpec(data.frame_design) : null };
+  return { booth: { id: data.id as string, slug: data.slug as string, name: data.name as string }, config: { ...config, overlay_ids: overlays.map((o) => o.id) }, overlays, frame };
 }
 
 /** The overlays with these ids, in the order given (an id that no longer exists is skipped). */

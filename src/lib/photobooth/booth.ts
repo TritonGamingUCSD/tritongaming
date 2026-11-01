@@ -111,6 +111,65 @@ export function cleanSticker(b: Record<string, unknown>): Pick<Overlay, 'x' | 'y
   return { x: f(b.x, 0, 1, 0.5), y: f(b.y, 0, 1, 0.3), size: f(b.size, 0.05, 1, 0.3), can_resize: b.can_resize !== false, can_rotate: b.can_rotate !== false };
 }
 
+// ── The booth's own frame (drawn over each photo; designed on the booth's setup page, never shared between booths) ──
+export const BORDERS = ['none', 'solid', 'rounded', 'double'] as const;
+export type BorderStyle = (typeof BORDERS)[number];
+export const BORDER_NAMES: Record<BorderStyle, string> = { none: 'No Border', solid: 'Solid', rounded: 'Rounded Inside', double: 'Double Line' };
+export const LOGO_SPOTS = ['top-left', 'top', 'top-right', 'bottom-left', 'bottom', 'bottom-right'] as const;
+export type LogoSpot = (typeof LOGO_SPOTS)[number];
+export const LOGO_SPOT_NAMES: Record<LogoSpot, string> = {
+  'top-left': 'Top Left',
+  top: 'Top Middle',
+  'top-right': 'Top Right',
+  'bottom-left': 'Bottom Left',
+  bottom: 'Bottom Middle',
+  'bottom-right': 'Bottom Right',
+};
+
+/** What a frame is made of (the shape of the photo comes from the booth). `logoUrl` is the booth's logo file, or '' for none. */
+export interface FrameSpec {
+  border: BorderStyle;
+  color: string;
+  width: number;
+  top: string;
+  bottom: string;
+  band: string;
+  text: string;
+  logoUrl: string;
+  logoSpot: LogoSpot;
+  logoSize: number;
+}
+export const DEFAULT_FRAME_SPEC: FrameSpec = {
+  border: 'rounded',
+  color: '#facc15',
+  width: 22,
+  top: '',
+  bottom: '',
+  band: '#011941',
+  text: '#ffffff',
+  logoUrl: '',
+  logoSpot: 'top-right',
+  logoSize: 0.2,
+};
+
+/** A frame spec from anything a screen might send, every field brought into range. */
+export function cleanFrameSpec(input: unknown, base: FrameSpec = DEFAULT_FRAME_SPEC): FrameSpec {
+  const b = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
+  const num = (v: unknown, min: number, max: number, d: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  return {
+    border: oneOf(b.border, BORDERS, base.border),
+    color: color(b.color, base.color),
+    width: Math.round(num(b.width, 4, 60, base.width)),
+    top: text(b.top, 40, base.top),
+    bottom: text(b.bottom, 40, base.bottom),
+    band: color(b.band, base.band),
+    text: color(b.text, base.text),
+    logoUrl: typeof b.logoUrl === 'string' && /^https?:\/\//.test(b.logoUrl) ? b.logoUrl.slice(0, 500) : '',
+    logoSpot: oneOf(b.logoSpot, LOGO_SPOTS, base.logoSpot),
+    logoSize: num(b.logoSize, 0.08, 0.5, base.logoSize),
+  };
+}
+
 // ── The picture ───────────────────────────────────────────────────────────────
 
 /** One photo's width in pixels in the finished picture; its height follows the aspect. */

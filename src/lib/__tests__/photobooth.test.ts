@@ -1,5 +1,19 @@
 import { describe, expect, test } from 'vitest';
-import { DEFAULT_BOOTH, SHOTS, applyFilter, cellSize, cleanBooth, cleanSticker, composition, expiresAt, photoLink, promptFor, stickerBox } from '@/lib/photobooth/booth';
+import {
+  DEFAULT_BOOTH,
+  DEFAULT_FRAME_SPEC,
+  SHOTS,
+  applyFilter,
+  cellSize,
+  cleanBooth,
+  cleanFrameSpec,
+  cleanSticker,
+  composition,
+  expiresAt,
+  photoLink,
+  promptFor,
+  stickerBox,
+} from '@/lib/photobooth/booth';
 import { TOKEN, photoToken } from '@/lib/photobooth/token';
 
 describe('booth settings', () => {
@@ -38,6 +52,23 @@ describe('booth settings', () => {
   });
   test('a sticker is kept inside its limits', () => {
     expect(cleanSticker({ x: 3, y: -1, size: 0, can_resize: false })).toEqual({ x: 1, y: 0, size: 0.05, can_resize: false, can_rotate: true });
+  });
+});
+
+describe("a booth's frame", () => {
+  test('nothing sent means the default frame', () => {
+    expect(cleanFrameSpec(undefined)).toEqual(DEFAULT_FRAME_SPEC);
+  });
+  test('every field is brought into range and a logo must be a web address', () => {
+    const f = cleanFrameSpec({ border: 'dotted', color: 'blue', width: 500, top: 'x'.repeat(90), logoUrl: 'javascript:alert(1)', logoSize: 0, logoSpot: 'middle' });
+    expect(f.border).toBe(DEFAULT_FRAME_SPEC.border);
+    expect(f.color).toBe(DEFAULT_FRAME_SPEC.color);
+    expect(f.width).toBe(60);
+    expect(f.top).toHaveLength(40);
+    expect(f.logoUrl).toBe('');
+    expect(f.logoSize).toBe(0.08);
+    expect(f.logoSpot).toBe(DEFAULT_FRAME_SPEC.logoSpot);
+    expect(cleanFrameSpec({ logoUrl: 'https://x.supabase.co/storage/v1/object/public/photobooth-overlays/a.webp' }).logoUrl).toContain('https://');
   });
 });
 

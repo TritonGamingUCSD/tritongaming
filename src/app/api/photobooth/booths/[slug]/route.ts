@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { cleanBooth } from '@/lib/photobooth/booth';
-import { PHOTO_BUCKET, authorizePhotoBooth, loadBooth, overlaysByIds } from '@/lib/photobooth/server';
+import { OVERLAY_BUCKET, PHOTO_BUCKET, authorizePhotoBooth, loadBooth, overlaysByIds, pathInBucket } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
 // One booth, by its address word.
-//   GET      its name, its settings and the overlays it offers
+//   GET      its name, its settings, its frame and the stickers it offers
 //   PUT      save the settings (every field is brought into range) and which overlays it offers; { name } too renames it
-//   DELETE   remove the booth and every picture it took (the files too)
+//   DELETE   remove the booth, its frame and every picture it took (the files too)
 export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
@@ -41,5 +41,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const paths = (photos ?? []).map((p) => p.path as string);
   if (paths.length) await auth.svc.storage.from(PHOTO_BUCKET).remove(paths);
   await auth.svc.from('photobooths').delete().eq('id', found.booth.id); // its photo rows go with it
+  const own = [found.frame.image, found.frame.spec?.logoUrl].flatMap((u) => (u && pathInBucket(u, OVERLAY_BUCKET) ? [pathInBucket(u, OVERLAY_BUCKET)!] : []));
+  if (own.length) await auth.svc.storage.from(OVERLAY_BUCKET).remove(own);
   return NextResponse.json({ ok: true });
 }

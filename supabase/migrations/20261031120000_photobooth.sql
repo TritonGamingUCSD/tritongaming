@@ -1,7 +1,7 @@
 -- Photo Booth: a booth (not tied to any event, like a Trivia quiz) run on a screen at an event. Guests choose an overlay, three photos are taken after a countdown, and a QR code opens a page where they download the finished picture.
 -- Everything is read and written by the routes (service role); RLS is on with no policies. Pictures live in two public buckets with unguessable file names.
 
--- The overlay library: frames and stickers (transparent WebP pictures) shared by every event; each event's booth picks which ones to offer.
+-- The sticker library: transparent WebP pictures (and text stickers) shared by every booth; each booth picks which ones to offer. A booth's frame is its own (see photobooths.frame_image) and is not in the library.
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('photobooth-overlays', 'photobooth-overlays', true, 614400, array['image/webp'])
 on conflict (id) do update set public = true, file_size_limit = 614400, allowed_mime_types = array['image/webp'];
@@ -16,7 +16,7 @@ create policy "photobooth public read" on storage.objects for select using (buck
 create table if not exists public.photobooth_overlays (
   id          uuid primary key default gen_random_uuid(),
   name        text not null check (length(name) between 1 and 60),
-  kind        text not null check (kind in ('frame', 'sticker')),
+  kind        text not null default 'sticker' check (kind = 'sticker'),
   image       text not null,                                         -- the picture's full public address
   -- A sticker's starting place and size (fractions of the photo: x and y are its centre, size is its width) and what a guest may do with it.
   x           real not null default 0.5 check (x between 0 and 1),
@@ -50,7 +50,9 @@ create table if not exists public.photobooths (
   flash          boolean not null default true,
   qr_seconds     int  not null default 60 check (qr_seconds between 10 and 300),
   keep_days      int  not null default 7 check (keep_days between 1 and 7),
-  overlay_ids    uuid[] not null default '{}' check (cardinality(overlay_ids) <= 24),
+  overlay_ids    uuid[] not null default '{}' check (cardinality(overlay_ids) <= 24),   -- the stickers this booth offers
+  frame_image    text not null default '',                                -- the booth's own frame, drawn over each photo: the public address of its WebP ('' for none)
+  frame_design   jsonb,                                                   -- what the frame is made of (border, words, logo), so it can be edited again
   updated_at     timestamptz not null default now(),
   created_at     timestamptz not null default now()
 );
