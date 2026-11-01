@@ -1,6 +1,8 @@
 import type { BoothConfig, FrameSpec, Overlay } from '@/lib/photobooth/booth';
 
-export { call } from '@/lib/ui/apiCall';
+import { call } from '@/lib/ui/apiCall';
+
+export { call };
 
 export interface BoothRow {
   id: string;
@@ -17,17 +19,20 @@ export interface BoothData {
   frame: { image: string; spec: FrameSpec | null };
 }
 
-/** Adds one sticker (a WebP file made in the browser) to the sticker library: the sticker, or a sentence to show. */
-export async function uploadSticker(opts: {
-  name: string;
-  blob: Blob;
-  sticker?: { x: number; y: number; size: number; can_resize: boolean; can_rotate: boolean };
-}): Promise<{ ok: true; overlay: Overlay } | { ok: false; error: string }> {
+/** Adds one sticker (a WebP file made in the browser: a picture, or words drawn) to a booth. */
+export async function uploadSticker(
+  booth: string,
+  opts: {
+    name: string;
+    blob: Blob;
+    sticker?: { x: number; y: number; size: number; can_resize: boolean; can_rotate: boolean };
+  },
+): Promise<{ ok: true; overlay: Overlay } | { ok: false; error: string }> {
   const form = new FormData();
   form.append('name', opts.name);
   form.append('file', new File([opts.blob], 'sticker.webp', { type: 'image/webp' }));
   for (const [k, v] of Object.entries(opts.sticker ?? {})) form.append(k, String(v));
-  const res = await fetch('/api/photobooth/overlays', { method: 'POST', body: form, cache: 'no-store' }).catch(() => null);
+  const res = await fetch(`/api/photobooth/booths/${booth}/stickers`, { method: 'POST', body: form, cache: 'no-store' }).catch(() => null);
   const json = res ? await res.json().catch(() => ({})) : {};
   return res?.ok ? { ok: true, overlay: json.overlay as Overlay } : { ok: false, error: json.error ?? 'Couldn’t reach the server.' };
 }
@@ -44,4 +49,10 @@ export async function saveFrame(
   const res = await fetch(`/api/photobooth/booths/${booth}/frame`, { method: 'PUT', body: form, cache: 'no-store' }).catch(() => null);
   const json = res ? await res.json().catch(() => ({})) : {};
   return res?.ok ? { ok: true, frame: json.frame } : { ok: false, error: json.error ?? 'Couldn’t reach the server.' };
+}
+
+/** Saves where a booth's stickers start, how big and what a guest may do with them, in the order given. */
+export async function saveStickers(booth: string, stickers: Overlay[]): Promise<{ ok: true; overlays: Overlay[] } | { ok: false; error: string }> {
+  const r = await call<{ overlays: Overlay[] }>(`/api/photobooth/booths/${booth}/stickers`, 'PUT', { stickers });
+  return r.ok ? { ok: true, overlays: r.data.overlays } : { ok: false, error: r.error };
 }

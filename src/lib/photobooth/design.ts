@@ -1,4 +1,4 @@
-import { DEFAULT_FRAME_SPEC, cellSize, type Aspect, type FrameSpec } from '@/lib/photobooth/booth';
+import { DEFAULT_FRAME_SPEC, WORDS_SIZE, cellSize, frameLayout, type Aspect, type FrameSpec } from '@/lib/photobooth/booth';
 
 // Drawing a frame or a text sticker on the website, so nobody has to make a picture of exactly the right shape in another program. Browser only (it draws on a canvas); the result is a see-through
 // WebP that goes into the overlay library like any other.
@@ -10,8 +10,8 @@ export interface FrameDesign extends FrameSpec {
 
 export const DEFAULT_FRAME: FrameDesign = { ...DEFAULT_FRAME_SPEC, aspect: 'portrait', logo: null };
 
-/** The height of a line of words at the top or the bottom, as a fraction of the photo's height. */
-export const BAND = 0.09;
+/** The starting height of a line of words, as a fraction of the photo's height. */
+export const BAND = WORDS_SIZE;
 
 const FONT = '"Futura", "Avenir Next", system-ui, sans-serif';
 
@@ -41,29 +41,21 @@ export function drawFrame(ctx: CanvasRenderingContext2D, w: number, h: number, d
     ring(ctx, 0, 0, w, h, t * 0.55, 0);
     ring(ctx, t * 0.95, t * 0.95, w - t * 1.9, h - t * 1.9, t * 0.3, 0);
   }
-  const bandH = h * BAND;
-  const words = (text: string, atTop: boolean) => {
-    if (!text.trim()) return;
-    const y = atTop ? t : h - t - bandH;
+  const lay = frameLayout(d, w, h, d.logo ? d.logo.naturalHeight / Math.max(1, d.logo.naturalWidth) : null);
+  const words = (text: string, p: (typeof lay)['top']) => {
+    if (!p) return;
     ctx.fillStyle = d.band;
-    ctx.fillRect(t, y, w - 2 * t, bandH);
+    ctx.fillRect(t, p.cy - p.h / 2, p.w, p.h);
     ctx.fillStyle = d.text;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const size = fitFont((s) => ((ctx.font = `700 ${s}px ${FONT}`), ctx.measureText(text).width), w - 2 * t - 40, bandH * 0.62);
+    const size = fitFont((s) => ((ctx.font = `700 ${s}px ${FONT}`), ctx.measureText(text).width), p.w - 40, p.h * 0.62);
     ctx.font = `700 ${size}px ${FONT}`;
-    ctx.fillText(text, w / 2, y + bandH / 2 + 2);
+    ctx.fillText(text, p.x, p.y + 2);
   };
-  words(d.top, true);
-  words(d.bottom, false);
-  if (d.logo) {
-    const lw = w * d.logoSize;
-    const lh = lw * (d.logo.naturalHeight / Math.max(1, d.logo.naturalWidth));
-    const pad = t + 14;
-    const x = d.logoSpot.endsWith('left') ? pad : d.logoSpot.endsWith('right') ? w - pad - lw : (w - lw) / 2;
-    const y = d.logoSpot.startsWith('top') ? pad + (d.top.trim() ? bandH : 0) : h - pad - lh - (d.bottom.trim() ? bandH : 0);
-    ctx.drawImage(d.logo, x, y, lw, lh);
-  }
+  words(d.top, lay.top);
+  words(d.bottom, lay.bottom);
+  if (d.logo && lay.logo) ctx.drawImage(d.logo, lay.logo.cx - lay.logo.w / 2, lay.logo.cy - lay.logo.h / 2, lay.logo.w, lay.logo.h);
 }
 
 /** The finished frame as a WebP file (see-through where the photo shows). */

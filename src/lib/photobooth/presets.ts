@@ -68,6 +68,6 @@ export const PRESETS: Preset[] = [
 export const findPreset = (id: string): Preset => PRESETS.find((p) => p.id === id) ?? PRESETS[0];
 
 /** A new booth's settings from a preset, the text under the photos and an accent colour (brought into range). */
-export function presetConfig(preset: Preset, opts: { footer?: string; accent?: string; overlay_ids?: string[] } = {}): BoothConfig {
-  return cleanBooth({ ...DEFAULT_BOOTH, ...preset.config, footer: opts.footer ?? '', accent: opts.accent ?? preset.config.accent, overlay_ids: opts.overlay_ids ?? [] });
+export function presetConfig(preset: Preset, opts: { footer?: string; accent?: string } = {}): BoothConfig {
+  return cleanBooth({ ...DEFAULT_BOOTH, ...preset.config, footer: opts.footer ?? '', accent: opts.accent ?? preset.config.accent });
 }

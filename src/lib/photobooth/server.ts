@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilities';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
-import { cleanBooth, cleanFrameSpec, type BoothConfig, type FrameSpec, type Overlay } from '@/lib/photobooth/booth';
+import { MAX_STICKERS_PER_BOOTH, cleanBooth, cleanFrameSpec, type BoothConfig, type FrameSpec, type Overlay } from '@/lib/photobooth/booth';
 
 export const UUID = /^[0-9a-f-]{36}$/i;
 export const OVERLAY_BUCKET = 'photobooth-overlays';
@@ -13,7 +13,7 @@ export const MAX_OVERLAY_BYTES = 600 * 1024; // the bucket refuses anything over
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 export const OVERLAY_COLUMNS = 'id, name, kind, image, x, y, size, can_resize, can_rotate';
 export const BOOTH_COLUMNS =
-  'id, slug, name, frame_image, frame_design, layout, aspect, countdown, mirror, filter, strip_bg, text_color, accent, footer, welcome_title, welcome_text, prompts, sounds, flash, qr_seconds, keep_days, overlay_ids';
+  'id, slug, name, frame_image, frame_design, layout, aspect, countdown, mirror, filter, strip_bg, text_color, accent, footer, welcome_title, welcome_text, prompts, sounds, flash, qr_seconds, keep_days';
 
 // Who may set up and run a booth: officers and above (the capability can also be granted in Admin → Access). The guests' download page needs no sign-in and has its own routes.
 export async function authorizePhotoBooth() {
@@ -36,7 +36,7 @@ export interface BoothInfo {
 }
 
 /** Words that are other addresses under /portal/photobooth, so a booth cannot take them as its own. */
-export const RESERVED_SLUGS = ['booths', 'overlays', 'new'];
+export const RESERVED_SLUGS = ['booths', 'new'];
 
 /** A booth with its settings, its frame and the stickers it offers, by its address word (or id). */
 export interface BoothFrame {
@@ -51,17 +51,28 @@ export async function loadBooth(svc: SupabaseClient, key: string): Promise<{ boo
   const { data } = await (UUID.test(key) ? q.eq('id', key) : q.eq('slug', key)).maybeSingle();
   if (!data) return null;
   const config = cleanBooth(data);
-  const overlays = await overlaysByIds(svc, config.overlay_ids);
+  const overlays = await boothStickers(svc, data.id as string);
   const frame: BoothFrame = { image: (data.frame_image as string) || '', spec: data.frame_design ? cleanFrameSpec(data.frame_design) : null };
-  return { booth: { id: data.id as string, slug: data.slug as string, name: data.name as string }, config: { ...config, overlay_ids: overlays.map((o) => o.id) }, overlays, frame };
+  return { booth: { id: data.id as string, slug: data.slug as string, name: data.name as string }, config, overlays, frame };
 }
 
-/** The overlays with these ids, in the order given (an id that no longer exists is skipped). */
-export async function overlaysByIds(svc: SupabaseClient, ids: string[]): Promise<Overlay[]> {
-  if (!ids.length) return [];
-  const { data } = await svc.from('photobooth_overlays').select(OVERLAY_COLUMNS).in('id', ids);
-  const byId = new Map(((data ?? []) as Overlay[]).map((o) => [o.id, o]));
-  return ids.flatMap((id) => (byId.has(id) ? [byId.get(id)!] : []));
+/** The stickers a booth offers, in the order they were arranged. */
+export async function boothStickers(svc: SupabaseClient, boothId: string): Promise<Overlay[]> {
+  const { data } = await svc.from('photobooth_overlays').select(OVERLAY_COLUMNS).eq('booth_id', boothId).order('position').order('created_at').limit(MAX_STICKERS_PER_BOOTH);
+  return (data ?? []) as Overlay[];
+}
+
+/** Deletes sticker picture files, except any a sticker still uses (a copied booth shares its pictures with the booth it was copied from). */
+export async function removeUnusedStickerFiles(svc: SupabaseClient, images: string[]): Promise<void> {
+  const unique = [...new Set(images)];
+  if (!unique.length) return;
+  const { data: still } = await svc.from('photobooth_overlays').select('image').in('image', unique);
+  const used = new Set((still ?? []).map((r) => r.image as string));
+  const paths = unique.flatMap((u) => {
+    const p = used.has(u) ? null : pathInBucket(u, OVERLAY_BUCKET);
+    return p ? [p] : [];
+  });
+  if (paths.length) await svc.storage.from(OVERLAY_BUCKET).remove(paths);
 }
 
 /** The path inside a bucket of one of our public addresses, or null when the address is not that bucket's. */

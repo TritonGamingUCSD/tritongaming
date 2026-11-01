@@ -43,7 +43,6 @@ export interface BoothConfig {
   flash: boolean;
   qr_seconds: number;
   keep_days: number;
-  overlay_ids: string[];
 }
 
 export const DEFAULT_BOOTH: BoothConfig = {
@@ -63,11 +62,9 @@ export const DEFAULT_BOOTH: BoothConfig = {
   flash: true,
   qr_seconds: 60,
   keep_days: 7,
-  overlay_ids: [],
 };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
-const UUID = /^[0-9a-f-]{36}$/i;
 const int = (v: unknown, min: number, max: number, fallback: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, Math.round(v))) : fallback);
 const text = (v: unknown, max: number, fallback: string) => (typeof v === 'string' ? v.trim().slice(0, max) : fallback);
 const oneOf = <T extends string>(v: unknown, all: readonly T[], fallback: T): T => (all.includes(v as T) ? (v as T) : fallback);
@@ -83,7 +80,6 @@ export function cleanBooth(input: unknown, base: BoothConfig = DEFAULT_BOOTH): B
         .filter(Boolean)
         .slice(0, 6)
     : base.prompts;
-  const overlay_ids = Array.isArray(b.overlay_ids) ? [...new Set(b.overlay_ids.filter((x): x is string => typeof x === 'string' && UUID.test(x)))].slice(0, 24) : base.overlay_ids;
   return {
     layout: oneOf(b.layout, LAYOUTS, base.layout),
     aspect: oneOf(b.aspect, ASPECTS, base.aspect),
@@ -101,9 +97,11 @@ export function cleanBooth(input: unknown, base: BoothConfig = DEFAULT_BOOTH): B
     flash: typeof b.flash === 'boolean' ? b.flash : base.flash,
     qr_seconds: int(b.qr_seconds, 10, 300, base.qr_seconds),
     keep_days: int(b.keep_days, 1, 7, base.keep_days),
-    overlay_ids,
   };
 }
+
+/** The most stickers one booth can offer. */
+export const MAX_STICKERS_PER_BOOTH = 24;
 
 /** A sticker's starting values and limits, brought into range. */
 export function cleanSticker(b: Record<string, unknown>): Pick<Overlay, 'x' | 'y' | 'size' | 'can_resize' | 'can_rotate'> {
@@ -125,6 +123,15 @@ export const LOGO_SPOT_NAMES: Record<LogoSpot, string> = {
   bottom: 'Bottom Middle',
   'bottom-right': 'Bottom Right',
 };
+/** Where each named spot puts the middle of the logo (as fractions of the photo). */
+export const LOGO_SPOT_AT: Record<LogoSpot, { x: number; y: number }> = {
+  'top-left': { x: 0.18, y: 0.12 },
+  top: { x: 0.5, y: 0.12 },
+  'top-right': { x: 0.82, y: 0.12 },
+  'bottom-left': { x: 0.18, y: 0.88 },
+  bottom: { x: 0.5, y: 0.88 },
+  'bottom-right': { x: 0.82, y: 0.88 },
+};
 
 /** What a frame is made of (the shape of the photo comes from the booth). `logoUrl` is the booth's logo file, or '' for none. */
 export interface FrameSpec {
@@ -135,10 +142,21 @@ export interface FrameSpec {
   bottom: string;
   band: string;
   text: string;
+  /** The height of a line of words, as a fraction of the photo's height. */
+  wordsSize: number;
+  /** Where the top and the bottom words sit (the middle of the words, as fractions of the photo), or null for the edge they start at. */
+  topX: number | null;
+  topY: number | null;
+  bottomX: number | null;
+  bottomY: number | null;
   logoUrl: string;
-  logoSpot: LogoSpot;
+  /** The middle of the logo, as fractions of the photo, and its width as a fraction of the photo's width. */
+  logoX: number;
+  logoY: number;
   logoSize: number;
 }
+/** The starting height of a line of words. */
+export const WORDS_SIZE = 0.09;
 export const DEFAULT_FRAME_SPEC: FrameSpec = {
   border: 'rounded',
   color: '#facc15',
@@ -147,15 +165,23 @@ export const DEFAULT_FRAME_SPEC: FrameSpec = {
   bottom: '',
   band: '#011941',
   text: '#ffffff',
+  wordsSize: WORDS_SIZE,
+  topX: null,
+  topY: null,
+  bottomX: null,
+  bottomY: null,
   logoUrl: '',
-  logoSpot: 'top-right',
+  logoX: LOGO_SPOT_AT['top-right'].x,
+  logoY: LOGO_SPOT_AT['top-right'].y,
   logoSize: 0.2,
 };
 
-/** A frame spec from anything a screen might send, every field brought into range. */
+/** A frame spec from anything a screen might send, every field brought into range (a frame saved with a named logo spot keeps its place). */
 export function cleanFrameSpec(input: unknown, base: FrameSpec = DEFAULT_FRAME_SPEC): FrameSpec {
   const b = (input && typeof input === 'object' ? input : {}) as Record<string, unknown>;
   const num = (v: unknown, min: number, max: number, d: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
+  const spot = typeof b.logoSpot === 'string' && (LOGO_SPOTS as readonly string[]).includes(b.logoSpot) ? LOGO_SPOT_AT[b.logoSpot as LogoSpot] : null;
+  const opt = (v: unknown, d: number | null) => (v === null ? null : typeof v === 'number' && Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : d);
   return {
     border: oneOf(b.border, BORDERS, base.border),
     color: color(b.color, base.color),
@@ -164,9 +190,50 @@ export function cleanFrameSpec(input: unknown, base: FrameSpec = DEFAULT_FRAME_S
     bottom: text(b.bottom, 40, base.bottom),
     band: color(b.band, base.band),
     text: color(b.text, base.text),
+    wordsSize: num(b.wordsSize, 0.04, 0.2, base.wordsSize),
+    topX: opt(b.topX, base.topX),
+    topY: opt(b.topY, base.topY),
+    bottomX: opt(b.bottomX, base.bottomX),
+    bottomY: opt(b.bottomY, base.bottomY),
     logoUrl: typeof b.logoUrl === 'string' && /^https?:\/\//.test(b.logoUrl) ? b.logoUrl.slice(0, 500) : '',
-    logoSpot: oneOf(b.logoSpot, LOGO_SPOTS, base.logoSpot),
+    logoX: num(b.logoX, 0, 1, spot?.x ?? base.logoX),
+    logoY: num(b.logoY, 0, 1, spot?.y ?? base.logoY),
     logoSize: num(b.logoSize, 0.08, 0.5, base.logoSize),
+  };
+}
+
+/** One piece of a frame placed on a photo `w` by `h` pixels: where its middle is and how big it is. */
+export interface FramePiece {
+  cx: number;
+  cy: number;
+  w: number;
+  h: number;
+}
+export interface FrameLayout {
+  /** How thick the border is, in pixels. */
+  border: number;
+  /** The strip behind each line of words (null when that line is empty) and where its words are centred. */
+  top: (FramePiece & { x: number; y: number }) | null;
+  bottom: (FramePiece & { x: number; y: number }) | null;
+  logo: FramePiece | null;
+}
+
+/** Where every part of a frame sits on a photo `w` by `h` pixels (`logoRatio` is the logo's height ÷ width, or null for none). The drawing and the editor on the booth's setup page both use this, so they always agree. */
+export function frameLayout(spec: FrameSpec, w: number, h: number, logoRatio: number | null): FrameLayout {
+  const t = spec.border === 'none' ? 0 : spec.width;
+  const bandH = h * spec.wordsSize;
+  const clampY = (y: number) => Math.min(h - t - bandH / 2, Math.max(t + bandH / 2, y));
+  const line = (words: string, atTop: boolean, x: number | null, y: number | null) => {
+    if (!words.trim()) return null;
+    const cy = clampY(y === null ? (atTop ? t + bandH / 2 : h - t - bandH / 2) : y * h);
+    return { cx: w / 2, cy, w: w - 2 * t, h: bandH, x: x === null ? w / 2 : x * w, y: cy };
+  };
+  const lw = w * spec.logoSize;
+  return {
+    border: t,
+    top: line(spec.top, true, spec.topX, spec.topY),
+    bottom: line(spec.bottom, false, spec.bottomX, spec.bottomY),
+    logo: logoRatio === null || !spec.logoUrl ? null : { cx: spec.logoX * w, cy: spec.logoY * h, w: lw, h: lw * logoRatio },
   };
 }
 

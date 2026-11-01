@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { slugify } from '@/lib/core/slug';
 import { cleanBooth } from '@/lib/photobooth/booth';
-import { BOOTH_COLUMNS, RESERVED_SLUGS, authorizePhotoBooth, loadBooth, overlaysByIds } from '@/lib/photobooth/server';
+import { BOOTH_COLUMNS, RESERVED_SLUGS, authorizePhotoBooth, loadBooth } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,18 +28,21 @@ export async function POST(request: Request) {
   if (!name) return NextResponse.json({ error: 'Give the booth a name.' }, { status: 400 });
   const source = typeof b.from === 'string' ? await loadBooth(auth.svc, b.from) : null;
   const config = cleanBooth(b.config, source?.config);
-  const overlays = await overlaysByIds(auth.svc, config.overlay_ids);
-  const settings = { ...config, overlay_ids: overlays.map((o) => o.id) };
   let base = slugify(name).slice(0, 50) || 'booth';
   if (RESERVED_SLUGS.includes(base)) base = `${base}-booth`;
   for (let i = 0; i < 6; i++) {
     const slug = i === 0 ? base : `${base}-${i + 1}`;
     const { data, error } = await auth.svc
       .from('photobooths')
-      .insert({ ...settings, slug, name, created_by: auth.user.id })
+      .insert({ ...config, slug, name, created_by: auth.user.id })
       .select(BOOTH_COLUMNS)
       .single();
-    if (data) return NextResponse.json({ booth: { id: data.id, slug: data.slug, name: data.name } }, { status: 201 });
+    if (data) {
+      // A copy offers its own rows for the same stickers (the pictures are shared until one is changed or removed).
+      if (source?.overlays.length)
+        await auth.svc.from('photobooth_overlays').insert(source.overlays.map(({ id: _id, ...o }, i) => ({ ...o, booth_id: data.id, position: i, created_by: auth.user.id })));
+      return NextResponse.json({ booth: { id: data.id, slug: data.slug, name: data.name } }, { status: 201 });
+    }
     if (error?.code !== '23505') return NextResponse.json({ error: 'Couldn’t make that booth.' }, { status: 500 });
   }
   return NextResponse.json({ error: 'There is already a booth with that name.' }, { status: 409 });

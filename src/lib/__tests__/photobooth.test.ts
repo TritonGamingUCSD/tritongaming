@@ -7,6 +7,7 @@ import {
   cellSize,
   cleanBooth,
   cleanFrameSpec,
+  frameLayout,
   cleanSticker,
   composition,
   expiresAt,
@@ -43,11 +44,9 @@ describe('booth settings', () => {
     expect(c.filter).toBe('none');
     expect(c.mirror).toBe(false);
   });
-  test('prompts and overlays are cleaned and limited', () => {
-    const id = '11111111-1111-1111-1111-111111111111';
-    const c = cleanBooth({ prompts: ['  Pose!  ', '', 5, 'Silly!'], overlay_ids: [id, id, 'nope'] });
+  test('prompts are cleaned and limited', () => {
+    const c = cleanBooth({ prompts: ['  Pose!  ', '', 5, 'Silly!'] });
     expect(c.prompts).toEqual(['Pose!', 'Silly!']);
-    expect(c.overlay_ids).toEqual([id]);
     expect(cleanBooth({ prompts: Array(20).fill('a') }).prompts).toHaveLength(6);
   });
   test('a sticker is kept inside its limits', () => {
@@ -67,8 +66,23 @@ describe("a booth's frame", () => {
     expect(f.top).toHaveLength(40);
     expect(f.logoUrl).toBe('');
     expect(f.logoSize).toBe(0.08);
-    expect(f.logoSpot).toBe(DEFAULT_FRAME_SPEC.logoSpot);
+    expect(f.logoX).toBe(DEFAULT_FRAME_SPEC.logoX);
     expect(cleanFrameSpec({ logoUrl: 'https://x.supabase.co/storage/v1/object/public/photobooth-overlays/a.webp' }).logoUrl).toContain('https://');
+  });
+  test('a frame saved with a named logo spot keeps its place, and moved words stay on the photo', () => {
+    const f = cleanFrameSpec({ logoSpot: 'bottom-left', topX: 4, topY: -2, bottomY: null });
+    expect([f.logoX, f.logoY]).toEqual([0.18, 0.88]);
+    expect([f.topX, f.topY, f.bottomY]).toEqual([1, 0, null]);
+  });
+  test('the layout starts the words at their edges, keeps moved words inside the border, and only has a logo when there is one', () => {
+    const spec = { ...DEFAULT_FRAME_SPEC, width: 20, top: 'Hi', bottom: 'There', logoUrl: 'https://x/y.webp' };
+    const l = frameLayout(spec, 720, 960, 0.5);
+    expect(l.top?.cy).toBeCloseTo(20 + (960 * 0.09) / 2);
+    expect(l.bottom?.cy).toBeCloseTo(960 - 20 - (960 * 0.09) / 2);
+    expect(l.logo).toMatchObject({ cx: 0.82 * 720, w: 0.2 * 720, h: 0.1 * 720 });
+    expect(frameLayout({ ...spec, topY: 0 }, 720, 960, null).top?.cy).toBeCloseTo(20 + (960 * 0.09) / 2);
+    expect(frameLayout({ ...spec, top: ' ' }, 720, 960, null).top).toBeNull();
+    expect(frameLayout(spec, 720, 960, null).logo).toBeNull();
   });
 });
 
