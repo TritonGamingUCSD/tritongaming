@@ -95,6 +95,8 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   send_event_emails: ['exec', 'admin'],
   // Trivia: writing quizzes and hosting games is open to every officer and above. Playing needs no permission, only an account (checked by the play routes themselves).
   host_trivia: ['officer', 'lead', 'exec', 'admin'],
+  // Photo Booth: setting up an event's booth, keeping the overlay library and running the booth on a screen at the event. Officers and above; the guests' download page needs nothing.
+  run_photobooth: ['officer', 'lead', 'exec', 'admin'],
 };
 
 // What being inactive takes away: anything that manages, hosts or deletes, plus checking in and scanning redemptions. Attending meetings is NOT stripped: roles never

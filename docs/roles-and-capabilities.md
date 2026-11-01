@@ -62,6 +62,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | `checkin` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
 | `send_event_emails` | · | · | · | · | · | · | · | ✔ | ✔ |
 | `host_trivia` | · | · | · | · | ✔ | · | ✔ | ✔ | ✔ |
+| `run_photobooth` | · | · | · | · | ✔ | · | ✔ | ✔ | ✔ |
 | **Rewards** ||||||||||
 | `manage_rewards_shop` | · | · | · | · | · | · | · | ✔ | ✔ |
 | `scan_redemptions` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
@@ -128,6 +129,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | **Check people in** · `checkin` | Open Check-In: scan tickets and reveal the online check-in code. Checking someone in by hand and undoing a check-in need “Change points” (exec and admin). | Recruit, Officer, Lead, Executive, Admin | database + routes; lost while inactive |
 | **Send event emails** · `send_event_emails` | Open Event Emails, write a reminder or update for an event and send it to everyone with a ticket (after a 60-second cancel window). Executive and Admin by default; can be granted. | Executive, Admin | pages + routes |
 | **Host Trivia** · `host_trivia` | Write quizzes and question pools and host live Trivia games, see their results and delete games. A quiz can be made private to its creator, Admins and a list of officers. Playing only needs an account. Officers and above; lost while inactive. | Officer, Lead, Executive, Admin | pages + routes; lost while inactive |
+| **Run The Photo Booth** · `run_photobooth` | Set up an event’s photo booth (layout, look, overlays), keep the overlay library and run the booth on a screen at the event. Guests download their photos from the QR code without an account. Officers and above. | Officer, Lead, Executive, Admin | pages + routes |
 | **Rewards** | | | |
 | **Run the rewards shop** · `manage_rewards_shop` | Create, edit and retire shop items and edit the tier ladder (Rewards → Tools). | Executive, Admin | database + routes; lost while inactive |
 | **Hand over rewards** · `scan_redemptions` | Scan a member’s reward QR and mark a reward as handed over (done at events, next to check-in). | Recruit, Officer, Lead, Executive, Admin | database + routes; lost while inactive |
@@ -214,4 +216,5 @@ The files that ask for each capability, so a change can be traced. Page and rout
 - `manage_logistics` (4): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/logistics/requestServer.ts`, `lib/portal/sections.ts`
 - `send_event_emails` (2): `app/(portal)/portal/page`, `lib/email/eventEmailServer.ts`
 - `host_trivia` (2): `app/(portal)/portal/page`, `lib/trivia/server.ts`
+- `run_photobooth` (3): `app/(portal)/portal/page`, `lib/photobooth/server.ts`, `lib/portal/sections.ts`
 

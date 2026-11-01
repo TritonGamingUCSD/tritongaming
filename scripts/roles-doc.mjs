@@ -111,6 +111,12 @@ const CAPS = {
     'Write quizzes and question pools and host live Trivia games, see their results and delete games. A quiz can be made private to its creator, Admins and a list of officers. Playing only needs an account. Officers and above; lost while inactive.',
     'pages + routes',
   ],
+  run_photobooth: [
+    'Events',
+    'Run The Photo Booth',
+    'Set up an event’s photo booth (layout, look, overlays), keep the overlay library and run the booth on a screen at the event. Guests download their photos from the QR code without an account. Officers and above.',
+    'pages + routes',
+  ],
   manage_strikes: ['HR', 'Strike tracker', 'See everyone’s strikes and vouchers, add or remove strikes, review missed meetings, give or remove vouchers.', 'routes'],
   manage_quarters: ['HR', 'Quarter status', 'Mark officers and leads inactive for a quarter, and see the yearly team records.', 'routes'],
   manage_help: ['Support', 'Answer Help tickets', 'See every Help ticket and reply. Everyone signed in can ask a question; only this answers.', 'routes'],

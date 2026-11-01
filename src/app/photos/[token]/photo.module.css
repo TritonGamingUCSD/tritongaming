@@ -1,0 +1,9 @@
+.page { min-height: 100dvh; display: grid; place-items: center; padding: 1.2rem 1rem 2rem; background: var(--pp-paper); color: var(--pp-ink); }
+.card { width: min(100%, 26rem); display: grid; gap: 1rem; justify-items: center; text-align: center; }
+.title { margin: 0; font-family: var(--font-futura-heavy); font-size: clamp(1.3rem, 5vw, 1.7rem); line-height: 1.15; text-wrap: balance; }
+.frame { width: 100%; border-radius: 0.8rem; overflow: hidden; border: 1px solid rgba(var(--pp-ink-rgb), 0.18); background: var(--pp-card); }
+.img { display: block; width: 100%; height: auto; }
+.download { display: inline-flex; align-items: center; justify-content: center; width: 100%; min-height: 3.2rem; padding: 0 1.4rem; border-radius: 0.8rem; background: #facc15; color: #011941; font-family: var(--font-futura-heavy); font-size: 1.05rem; letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none; border: 2px solid #011941; }   /* theme-ok */
+.download:hover { filter: brightness(1.04); }
+.note { margin: 0; font-size: 0.9rem; color: rgba(var(--pp-ink-rgb), 0.75); text-wrap: balance; }
+.brand { margin: 0.4rem 0 0; font-size: 0.8rem; letter-spacing: 0.08em; color: rgba(var(--pp-ink-rgb), 0.6); }

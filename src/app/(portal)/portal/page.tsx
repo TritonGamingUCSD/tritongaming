@@ -66,6 +66,7 @@ import StrikesSectionContent from './strikes/StrikesSectionContent';
 import LogisticsSectionContent from './logistics/LogisticsSectionContent';
 import StaffleSectionContent from './staffle/StaffleSectionContent';
 import TriviaSectionContent from './trivia/TriviaSectionContent';
+import PhotoBoothSectionContent from './photobooth/PhotoBoothSectionContent';
 import QuarterStatusContent from './quarters/QuarterStatusContent';
 import InactiveNote from './quarters/InactiveNote';
 import { currentQuarter, loadQuarters, quarterName } from '@/lib/members/quarters';
@@ -456,6 +457,21 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'Events' as const,
       content: <TriviaSectionContent canHost={hasCapability(roles, 'host_trivia')} />,
     },
+    // The photo booth for events: officers and above set one up for an event, keep the overlay library and run it on a screen at the event.
+    ...(hasCapability(roles, 'run_photobooth')
+      ? [
+          {
+            id: 'photobooth',
+            icon: <Camera size={28} strokeWidth={1.5} aria-hidden="true" />,
+            label: sectionLabel('photobooth'),
+            description: 'Set up and run a photo booth at an event',
+            homeExclude: true,
+            dockExclude: true,
+            group: 'Events' as const,
+            content: <PhotoBoothSectionContent />,
+          },
+        ]
+      : []),
     ...(canViewMembers
       ? [
           {

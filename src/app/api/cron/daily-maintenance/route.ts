@@ -8,16 +8,17 @@ import { runTeamSync } from '@/lib/members/teamYears';
 import { logSystem } from '@/lib/notifications/audit';
 import { alertJobFailed, checkUsage, digestNewMembers, remindStaleHelp } from '@/lib/notifications/adminAlerts';
 import { runStorageMaintenance } from '@/lib/storage/storageMaintenance';
+import { cleanupPhotos } from '@/lib/photobooth/cleanup';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // the most the free (Hobby) plan allows
 
 // The one scheduled job for housekeeping (see vercel.json; the free Vercel plan allows two jobs, each at most once a day), called with
-// `Authorization: Bearer $CRON_SECRET`. Every day: delete old notifications (audit alerts after 14 days, routine ones soon after they are read, the rest after 30 to 90 days) and role grants that waited for a first sign-in for 90 days without being used, start a new quarter's
+// `Authorization: Bearer $CRON_SECRET`. Every day: delete Photo Booth pictures whose days are up, delete old notifications (audit alerts after 14 days, routine ones soon after they are read, the rest after 30 to 90 days) and role grants that waited for a first sign-in for 90 days without being used, start a new quarter's
 // inactive markers when the quarter changes, and record today's team roster (archive years whose Spring has ended and, when an admin has turned it
 // on, move graduates to Alumni). Every day it also checks how full the free plan is and tells the admins at 80% and 90%. On Sundays also: remove stored files nothing uses and re-save pictures smaller.
-// `?only=notifications|grants|quarters|teams|help|signups|usage|storage` runs just that step (`?storage=1` adds storage on another day). A failure in one step never stops the
+// `?only=notifications|photos|grants|quarters|teams|help|signups|usage|storage` runs just that step (`?storage=1` adds storage on another day). A failure in one step never stops the
 // others. On a dev machine `x-cron-dev: 1` may run only the quarters and teams steps, which are safe at any time.
 // The steps that change real data are written to the audit log as the daily job (the notification tidy-up is routine housekeeping, so it is not).
 async function recordStep(svc: ReturnType<typeof createServiceClient>, name: string, r: unknown) {
@@ -54,6 +55,7 @@ export async function GET(request: Request) {
   const svc = createServiceClient();
   const steps: [string, () => Promise<unknown>][] = [
     ['notifications', () => cleanupNotifications(svc)],
+    ['photos', () => cleanupPhotos(svc)],
     ['grants', () => cleanupExpiredGrants(svc)],
     [
       'quarters',
