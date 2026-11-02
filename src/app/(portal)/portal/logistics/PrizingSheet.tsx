@@ -568,6 +568,8 @@ function PrizeLines({
   const [station, setStation] = useState('');
   const [qty, setQtyText] = useState('1');
   const num = (v: string) => Math.max(0, Math.round(Number(v) || 0));
+  const loose = p.left >= 99999; // free merch has no count to run out of
+  const room = Math.max(0, p.left); // how many more can go to a Staffle that does not have it yet
   const field = (value: number, onSave: (n: number) => void, label: string, max?: number) => (
     <input
       className={sh.mini}
@@ -646,7 +648,14 @@ function PrizeLines({
                 {inStaffles.map((i) => (
                   <tr key={i.slug}>
                     <td>{sheet.staffles.list.find((s) => s.slug === i.slug)?.name ?? i.slug}</td>
-                    <td>{field(i.winners, (n) => void setStaffle(i.slug, p.id, n), `Winners in ${sheet.staffles.list.find((s) => s.slug === i.slug)?.name ?? 'the Staffle'}`)}</td>
+                    <td>
+                      {field(
+                        i.winners,
+                        (n) => void setStaffle(i.slug, p.id, n),
+                        `Winners in ${sheet.staffles.list.find((s) => s.slug === i.slug)?.name ?? 'the Staffle'}`,
+                        loose ? undefined : Math.max(0, p.left) + i.winners,
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -668,14 +677,14 @@ function PrizeLines({
                 type="text"
                 inputMode="numeric"
                 value={winners}
-                onChange={(e) => setWinnersText(e.target.value)}
+                onChange={(e) => setWinnersText(loose ? e.target.value : String(Math.min(room, num(e.target.value))))}
                 onKeyDown={(e) => e.stopPropagation()}
                 aria-label="How many winners"
               />
               <button
                 type="button"
                 className={sh.addBtn}
-                disabled={!staffle || num(winners) < 1}
+                disabled={!staffle || num(winners) < 1 || (!loose && num(winners) > room)}
                 onClick={() => {
                   void setStaffle(staffle, p.id, num(winners)).then((ok) => {
                     if (ok) setStaffleSlug('');

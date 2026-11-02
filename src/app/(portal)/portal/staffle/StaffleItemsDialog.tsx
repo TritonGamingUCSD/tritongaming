@@ -32,6 +32,11 @@ export default function StaffleItemsDialog({ staffle, onClose, onSaved }: { staf
     });
   }, []);
   const byId = useMemo(() => new Map((prizes ?? []).map((p) => [p.id, p])), [prizes]);
+  const held = useMemo(() => new Map(staffle.items.map((i) => [i.prize_id, i.winners])), [staffle.items]); // what this Staffle already holds back (not counted in `left`)
+  const most = (id: string) => {
+    const p = byId.get(id);
+    return !p ? 0 : p.loose ? 500 : Math.max(0, p.left) + (held.get(id) ?? 0); // winners can't pass what is in stock
+  };
   const label = (p: PrizeOption) => `${p.name}${p.size ? ` · ${p.size.replace(/ Prizing$/, '')}` : ''}${p.loose ? '' : ` (${p.left} left)`}`;
   const free = (prizes ?? []).filter((p) => !items.some((i) => i.prize_id === p.id) && p.left > 0);
   async function save() {
@@ -79,6 +84,8 @@ export default function StaffleItemsDialog({ staffle, onClose, onSaved }: { staf
                       <button
                         type="button"
                         aria-label="One more winner"
+                        title={i.winners >= most(i.prize_id) ? 'That is all that is in stock' : undefined}
+                        disabled={i.winners >= most(i.prize_id)}
                         onClick={() => setItems((l) => l.map((x) => (x.prize_id === i.prize_id ? { ...x, winners: x.winners + 1 } : x)))}
                       >
                         <Plus size={14} aria-hidden="true" />
