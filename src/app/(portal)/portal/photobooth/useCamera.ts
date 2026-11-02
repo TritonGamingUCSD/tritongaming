@@ -10,6 +10,32 @@ export interface CameraChoice {
   label: string;
 }
 
+/** What the booth can tell about the camera in use (for the Camera Check). `controls` are the settings the browser is allowed to change on it, in plain words. */
+export interface CameraInfo {
+  label: string;
+  width: number;
+  height: number;
+  fps: number;
+  controls: string[];
+}
+
+const CONTROLS: Record<string, string> = {
+  exposureMode: 'Exposure mode',
+  exposureCompensation: 'Exposure',
+  exposureTime: 'Shutter time',
+  iso: 'ISO',
+  whiteBalanceMode: 'White balance mode',
+  colorTemperature: 'White balance',
+  brightness: 'Brightness',
+  contrast: 'Contrast',
+  saturation: 'Saturation',
+  sharpness: 'Sharpness',
+  focusMode: 'Focus mode',
+  focusDistance: 'Focus distance',
+  zoom: 'Zoom',
+  torch: 'Light',
+};
+
 const remembered = (): string => {
   try {
     return window.localStorage.getItem(REMEMBERED) ?? '';
@@ -35,6 +61,7 @@ export function useCamera() {
   const [error, setError] = useState('');
   const [cameras, setCameras] = useState<CameraChoice[]>([]);
   const [current, setCurrent] = useState('');
+  const [info, setInfo] = useState<CameraInfo | null>(null);
 
   // The picture element only exists once the booth has loaded, which can be after the camera is already on: whichever comes second connects them.
   const attach = useCallback((node: HTMLVideoElement | null) => {
@@ -71,6 +98,18 @@ export function useCamera() {
       }
       const all = await navigator.mediaDevices.enumerateDevices().catch(() => []);
       setCameras(all.filter((d) => d.kind === 'videoinput').map((d, i) => ({ id: d.deviceId, label: d.label || `Camera ${i + 1}` })));
+      const track = s.getVideoTracks()[0];
+      const got = track?.getSettings() ?? {};
+      const caps = (track as MediaStreamTrack & { getCapabilities?: () => Record<string, unknown> }).getCapabilities?.() ?? {};
+      setInfo({
+        label: all.find((d) => d.deviceId === got.deviceId)?.label || track?.label || 'Camera',
+        width: got.width ?? 0,
+        height: got.height ?? 0,
+        fps: Math.round(got.frameRate ?? 0),
+        controls: Object.keys(CONTROLS)
+          .filter((k) => k in caps)
+          .map((k) => CONTROLS[k]),
+      });
       setReady(true);
     } catch (e) {
       const name = (e as DOMException).name;
@@ -102,5 +141,5 @@ export function useCamera() {
     };
   }, [open]);
 
-  return { video, attach, ready, error, retry, cameras, current, choose };
+  return { video, attach, ready, error, retry, cameras, current, choose, info };
 }

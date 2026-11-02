@@ -103,26 +103,28 @@ export function QrScreen({
                   if (email.trim()) void send();
                 }}
               >
-                <input
-                  className={styles.emailInput}
-                  type="email"
-                  inputMode="email"
-                  autoComplete="off"
-                  autoFocus
-                  placeholder="you@example.com"
-                  value={email}
-                  maxLength={200}
-                  onChange={(e) => setEmail(e.target.value)}
-                  aria-label="Your email address"
-                />
-                <button type="submit" className={styles.bigBtn} disabled={state === 'sending' || !email.trim()}>
-                  {state === 'sending' ? 'Sending…' : 'Send'}
-                </button>
-                <button type="button" className={styles.ghostBtn} onClick={() => setEmailing(false)}>
-                  Cancel
-                </button>
+                <div className={styles.emailFields}>
+                  <input
+                    className={styles.emailInput}
+                    type="email"
+                    inputMode="email"
+                    autoComplete="off"
+                    autoFocus
+                    placeholder="you@example.com"
+                    value={email}
+                    maxLength={200}
+                    onChange={(e) => setEmail(e.target.value)}
+                    aria-label="Your email address"
+                  />
+                  <button type="submit" className={`${styles.bigBtn} ${styles.emailSend}`} disabled={state === 'sending' || !email.trim()}>
+                    {state === 'sending' ? 'Sending…' : 'Send'}
+                  </button>
+                </div>
                 {problem && <p className={styles.problem}>{problem}</p>}
                 <p className={styles.fine}>We use your address once to send this link and don’t keep it.</p>
+                <button type="button" className={styles.linkBtn2} onClick={() => setEmailing(false)}>
+                  Cancel
+                </button>
               </form>
             ) : (
               <button type="button" className={styles.ghostBtn} onClick={() => setEmailing(true)}>

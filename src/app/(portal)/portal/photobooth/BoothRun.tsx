@@ -7,7 +7,7 @@ import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { PhotoWall, type WallPhoto } from '@/components/PhotoWall/PhotoWall';
 import { FILTER_CSS, SHOTS, cellRatio, composition, cellSize, hexToRgb, promptFor, type BoothConfig } from '@/lib/photobooth/booth';
-import { composeFrame, composePicture, composeStripFrame, cutShot, loadImage, type PlacedSticker } from '@/lib/photobooth/compose';
+import { autoAdjust, composeFrame, composePicture, composeStripFrame, cutShot, loadImage, type PlacedSticker } from '@/lib/photobooth/compose';
 import { GIF_TRIES, MAX_GIF_BYTES, encodeGif, spread } from '@/lib/photobooth/gif';
 import { HOLD_END, playbackTicks, type Tick } from '@/lib/photobooth/playback';
 import { BoothSounds } from '@/lib/photobooth/sounds';
@@ -193,6 +193,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
       const clip = [...before];
       // (a short countdown has fewer moments: the first one is held so every clip is as long as the others)
       while (clip.length < BEFORE) clip.unshift(clip[0] ?? shot);
+      autoAdjust(shot, clip, config.auto_adjust);
       return { shot, clip };
     } finally {
       window.clearInterval(sampler);
@@ -383,7 +384,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
         <Maximize2 size={16} aria-hidden="true" />
       </button>
       <p className={styles.brand}>Triton Gaming · Gaming Org at UC San Diego</p>
-      {phase === 'idle' && <CameraMenu cameras={camera.cameras} current={camera.current} onChoose={camera.choose} />}
+      {phase === 'idle' && <CameraMenu cameras={camera.cameras} current={camera.current} info={camera.info} onChoose={camera.choose} />}
 
       {!data || !config ? (
         error ? (

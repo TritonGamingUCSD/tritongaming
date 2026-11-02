@@ -1,0 +1,21 @@
+/* The portal's item cards (a quiz, a booth, a Staffle…): one look everywhere. A grid of cards, each with an optional picture area, a small yellow sticker saying what it is, the name, a row of badges and its buttons. Import it as
+   `card` and use the classes: grid, card (+ link when the whole card opens something), preview, kicker, title, meta, badge (+ badgeOk, badgeBad), actions (+ actionsWide: the first button on a row of its own). */
+.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 1.1rem; }
+.grid > li { display: grid; min-width: 0; }
+.card { position: relative; display: flex; flex-direction: column; gap: 0.65rem; padding: 1.1rem 1.1rem 1rem; border-radius: 4px; border: 2px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); font: inherit; text-align: left; box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.8); min-width: 0; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.card:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(var(--pp-ink-rgb), 0.8); }
+.link { cursor: pointer; }
+.link:focus-within, .link:focus-visible { outline: 3px solid rgba(125, 180, 234, 0.9); outline-offset: 3px; }
+.preview { display: grid; place-items: center; overflow: hidden; border-radius: 4px; background: rgba(var(--pp-ink-rgb), 0.07); color: rgba(var(--pp-ink-rgb), 0.4); }
+.kicker { align-self: flex-start; margin: 0 0 -0.1rem; padding: 0.22rem 0.6rem; background: var(--yellow); color: #011941; border: 2px solid #011941; border-radius: 6px; font-family: var(--font-renegare); font-size: 0.67rem; letter-spacing: 0.16em; text-transform: uppercase; transform: rotate(-2deg); }   /* theme-ok: a yellow sticker stays yellow with ink text */
+.title { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.3rem; line-height: 1.15; color: var(--pp-ink); overflow-wrap: anywhere; }
+.title button { all: unset; cursor: pointer; }
+.meta { display: flex; gap: 0.4rem; flex-wrap: wrap; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.78); }
+.badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.14rem 0.6rem; border-radius: 999px; font-size: 0.74rem; font-weight: 600; white-space: nowrap; color: rgba(var(--pp-ink-rgb), 0.85); background: rgba(var(--pp-ink-rgb), 0.07); border: 1px solid rgba(var(--pp-ink-rgb), 0.2); }
+.badgeOk { color: var(--pp-ink); background: color-mix(in srgb, var(--pp-ok) 25%, var(--pp-card)); border-color: color-mix(in srgb, var(--pp-ok) 45%, transparent); }
+.badgeBad { color: var(--pp-bad); background: color-mix(in srgb, var(--pp-bad) 12%, transparent); border-color: color-mix(in srgb, var(--pp-bad) 35%, transparent); }
+.actions { display: grid; grid-template-columns: 1.35fr 1fr 1fr; gap: 0.5rem; margin-top: auto; }
+.actions > * { min-width: 0; justify-content: center; padding-inline: 0.5rem; }
+.actionsWide { grid-template-columns: 1fr 1fr; }
+.actionsWide > :first-child { grid-column: 1 / -1; }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }

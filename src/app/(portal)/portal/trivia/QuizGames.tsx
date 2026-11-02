@@ -10,6 +10,7 @@ import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
 import { call } from './api';
 import { LETTERS, fmtScore } from './shapes';
+import card from '@/components/ui/Card.module.css';
 import styles from './trivia.module.css';
 
 interface GameItem {
@@ -156,7 +157,7 @@ export function LiveGames({ onHost }: { onHost: (code: string) => void }) {
   if (!games.length) return null;
   return (
     <div className={styles.liveStrip} role="status">
-      <span className={styles.cardKicker}>Live now</span>
+      <span className={card.kicker}>Live now</span>
       {games.map((g) => (
         <div key={g.code} className={styles.row}>
           <b>{g.quiz}</b>
@@ -238,7 +239,7 @@ export function GameResults({ code, onBack }: { code: string; onBack: () => void
                   <div className={styles.itemMain}>
                     <b>{q.text}</b>
                     <span className={styles.muted}>{total ? `${pct}% got it right (${rightN} of ${total})` : 'Nobody answered'}</span>
-                    <div className={styles.cardMeta}>
+                    <div className={card.meta}>
                       {q.choices.map((c, i) => (
                         <span key={i} className={`${styles.badge} ${rightIdx.includes(i) ? styles.good : styles.neutral}`}>
                           {LETTERS[i]}. {c} · {q.counts[i]}

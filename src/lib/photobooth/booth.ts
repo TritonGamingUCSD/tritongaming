@@ -79,6 +79,8 @@ export interface BoothConfig {
   sounds: boolean;
   flash: boolean;
   qr_seconds: number;
+  /** How strongly each picture's brightness and colour are corrected, 0 (not at all) to 100. */
+  auto_adjust: number;
 }
 
 export const DEFAULT_BOOTH: BoothConfig = {
@@ -98,6 +100,7 @@ export const DEFAULT_BOOTH: BoothConfig = {
   sounds: true,
   flash: true,
   qr_seconds: 60,
+  auto_adjust: 60,
 };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -133,6 +136,7 @@ export function cleanBooth(input: unknown, base: BoothConfig = DEFAULT_BOOTH): B
     sounds: typeof b.sounds === 'boolean' ? b.sounds : base.sounds,
     flash: typeof b.flash === 'boolean' ? b.flash : base.flash,
     qr_seconds: int(b.qr_seconds, 10, 300, base.qr_seconds),
+    auto_adjust: int(b.auto_adjust, 0, 100, base.auto_adjust),
   };
 }
 

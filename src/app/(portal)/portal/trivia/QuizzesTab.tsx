@@ -9,6 +9,7 @@ import { Field, Input } from '@/components/ui/Field';
 import { call } from './api';
 import { LiveGames } from './QuizGames';
 import type { QuizRow } from '@/lib/trivia/types';
+import card from '@/components/ui/Card.module.css';
 import styles from './trivia.module.css';
 
 // The quizzes. Each is a pool of questions; hosting it draws a fresh random set from the pool.
@@ -86,31 +87,31 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, 
           <p>No quizzes yet. Name one above, then add its questions.</p>
         </div>
       ) : (
-        <div className={styles.cards}>
+        <div className={card.grid}>
           {quizzes.map((q) =>
             q.locked ? (
-              <div key={q.id} className={styles.card}>
-                <span className={styles.cardKicker}>
+              <div key={q.id} className={card.card}>
+                <span className={card.kicker}>
                   <Lock size={11} aria-hidden="true" /> Private
                 </span>
-                <h3 className={styles.cardTitle}>{q.name}</h3>
+                <h3 className={card.title}>{q.name}</h3>
                 <p className={styles.muted}>Shared with only some officers. Ask its creator or an Admin for access.</p>
               </div>
             ) : (
               <div
                 key={q.id}
-                className={`${styles.card} ${styles.cardLink}`}
+                className={`${card.card} ${card.link}`}
                 onClick={(e) => {
                   if (!(e.target as HTMLElement).closest('button, a, input')) onOpen(q.slug);
                 }}
               >
-                <span className={styles.cardKicker}>Quiz</span>
-                <h3 className={styles.cardTitle}>
+                <span className={card.kicker}>Quiz</span>
+                <h3 className={card.title}>
                   <button type="button" onClick={() => onOpen(q.slug)}>
                     {q.name}
                   </button>
                 </h3>
-                <div className={styles.cardMeta}>
+                <div className={card.meta}>
                   {q.open_to_guests && <span className={`${styles.badge} ${styles.neutral}`}>Guests welcome</span>}
                   {q.restricted && (
                     <span className={`${styles.badge} ${styles.neutral}`}>
@@ -128,7 +129,7 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, 
                   </span>
                   {q.ready < q.questions && <span className={`${styles.badge} ${styles.bad}`}>{q.questions - q.ready} unfinished</span>}
                 </div>
-                <div className={styles.cardActions}>
+                <div className={card.actions}>
                   <Button size="sm" disabled={!q.ready} loading={busy === q.id} onClick={() => void host(q)}>
                     Host Game
                   </Button>

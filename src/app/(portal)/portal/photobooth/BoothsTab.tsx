@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import { DEFAULT_BOOTH, type BoothConfig } from '@/lib/photobooth/booth';
+import card from '@/components/ui/Card.module.css';
 import { call, type BoothRow } from './api';
 import { LiveStrip } from './LiveStrip';
 import styles from './photobooth.module.css';
@@ -42,35 +43,35 @@ export function BoothsTab({ onNew, onOpen, onRun }: { onNew: () => void; onOpen:
       {booths.length === 0 ? (
         <p className={styles.empty}>No booths yet. Make one, set up its looks and stickers, then open it on a screen at your event.</p>
       ) : (
-        <div className={styles.boothCards}>
+        <div className={card.grid}>
           {booths.map((b) => (
             <div
               key={b.id}
-              className={styles.boothCard}
+              className={`${card.card} ${card.link}`}
               onClick={(e) => {
                 if (!(e.target as HTMLElement).closest('button, a, input')) onOpen(b.slug);
               }}
             >
-              <div className={styles.boothPreview} aria-hidden="true">
+              <div className={`${card.preview} ${styles.boothPreview}`} aria-hidden="true">
                 {b.look ? (
                   <LiveStrip video={null} config={{ ...DEFAULT_BOOTH, ...b.look.style } as BoothConfig} frameUrl={b.look.frame.image} stickers={b.look.overlays} height={220} />
                 ) : (
                   <Camera size={48} />
                 )}
               </div>
-              <span className={styles.boothKicker}>Booth</span>
-              <h3 className={styles.boothTitle}>
+              <span className={card.kicker}>Booth</span>
+              <h3 className={card.title}>
                 <button type="button" onClick={() => onOpen(b.slug)}>
                   {b.name}
                 </button>
               </h3>
-              <div className={styles.boothMeta}>
-                <span className={styles.boothBadge}>
+              <div className={card.meta}>
+                <span className={card.badge}>
                   {b.looks} look{b.looks === 1 ? '' : 's'}
                 </span>
-                <span className={styles.boothBadge}>{b.photos === 0 ? 'No pictures waiting' : `${b.photos} picture${b.photos === 1 ? '' : 's'} waiting`}</span>
+                <span className={card.badge}>{b.photos === 0 ? 'No pictures waiting' : `${b.photos} picture${b.photos === 1 ? '' : 's'} waiting`}</span>
               </div>
-              <div className={styles.boothActions}>
+              <div className={`${card.actions} ${card.actionsWide}`}>
                 <Button size="sm" onClick={() => onRun(b.slug)}>
                   <Camera size={15} aria-hidden="true" /> Open Booth
                 </Button>

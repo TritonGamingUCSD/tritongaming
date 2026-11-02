@@ -282,6 +282,7 @@ export function BoothSetup({
       <FramePanel
         spec={form.frame}
         accent={form.accent}
+        boothName={data?.booth.name ?? ''}
         selected={sel}
         onChange={setFrame}
         onLogo={(l) => {

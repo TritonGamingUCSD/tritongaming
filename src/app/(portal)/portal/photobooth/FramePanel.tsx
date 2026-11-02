@@ -8,6 +8,7 @@ import ColorInput from '@/components/ui/ColorInput';
 import NumberInput from '@/components/ui/NumberInput';
 import { Field, Input } from '@/components/ui/Field';
 import { BORDERS, BORDER_NAMES, DEFAULT_FRAME_SPEC, LOGO_SPOTS, LOGO_SPOT_AT, LOGO_SPOT_NAMES, type FrameSpec } from '@/lib/photobooth/booth';
+import { FRAME_PRESETS } from '@/lib/photobooth/presets';
 import { shrinkOverlay } from '@/lib/photobooth/shrink';
 import type { Selection } from './StudioCanvas';
 import styles from './photobooth.module.css';
@@ -16,12 +17,14 @@ import styles from './photobooth.module.css';
 export function FramePanel({
   spec,
   accent,
+  boothName,
   selected,
   onChange,
   onLogo,
 }: {
   spec: FrameSpec | null;
   accent: string;
+  boothName: string;
   selected: Selection;
   onChange: (patch: Partial<FrameSpec> | null, key?: string) => void;
   /** A logo the person picked: its small file and a temporary address to show it from. */
@@ -47,6 +50,21 @@ export function FramePanel({
       <label className={styles.check}>
         <input type="checkbox" checked={!!spec} onChange={(e) => onChange(e.target.checked ? { ...DEFAULT_FRAME_SPEC, color: accent } : null)} /> Draw a frame over every photo
       </label>
+      <fieldset className={styles.group}>
+        <legend>Start From A Preset</legend>
+        <div className={styles.segment}>
+          {FRAME_PRESETS.map((p) => (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => onChange({ ...(spec ?? { ...DEFAULT_FRAME_SPEC, color: accent }), ...p.make({ name: boothName, accent }) }, `preset-${p.id}`)}
+            >
+              {p.name}
+            </button>
+          ))}
+        </div>
+        <p className={styles.hint}>Changes the border and words. Your logo stays. Undo brings the old frame back.</p>
+      </fieldset>
       {spec && (
         <>
           <fieldset className={`${styles.group} ${on('frame')}`}>

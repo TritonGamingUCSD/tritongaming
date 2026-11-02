@@ -5,6 +5,7 @@ import { Trophy } from 'lucide-react';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { call, STATE_LABEL, type StaffleCard } from './api';
+import shared from '@/components/ui/Card.module.css';
 import styles from './staffle.module.css';
 
 // Every Staffle, the ones you can enter first. A card shows its prizes' pictures, whether it is open, and what you entered or won.
@@ -27,7 +28,7 @@ export default function StaffleList({ onOpen }: { onOpen: (slug: string) => void
     past = cards.filter((c) => c.state === 'ended');
   const card = (c: StaffleCard) => (
     <li key={c.id}>
-      <button type="button" className={styles.card} onClick={() => onOpen(c.slug)}>
+      <button type="button" className={`${shared.card} ${shared.link}`} onClick={() => onOpen(c.slug)}>
         <span className={styles.cardPics} aria-hidden="true">
           {c.photos.length === 0 ? (
             <i className={styles.cardNoPic}>
@@ -37,16 +38,19 @@ export default function StaffleList({ onOpen }: { onOpen: (slug: string) => void
             c.photos.map((p, n) => /* eslint-disable-next-line @next/next/no-img-element */ <img key={n} src={p} alt="" loading="lazy" />)
           )}
         </span>
-        <span className={styles.cardBody}>
-          <b>{c.name}</b>
-          <span className={styles.cardMeta}>{STATE_LABEL[c.state]}</span>
-          <span className={styles.cardMeta}>
-            {c.items} {c.items === 1 ? 'prize' : 'prizes'} · {c.winners} {c.winners === 1 ? 'winner' : 'winners'}
-            {c.entered > 0 ? ` · you entered ${c.entered}` : ''}
+        <span className={shared.kicker}>{STATE_LABEL[c.state]}</span>
+        <span className={shared.title}>{c.name}</span>
+        <span className={shared.meta}>
+          <span className={shared.badge}>
+            {c.items} {c.items === 1 ? 'prize' : 'prizes'}
           </span>
+          <span className={shared.badge}>
+            {c.winners} {c.winners === 1 ? 'winner' : 'winners'}
+          </span>
+          {c.entered > 0 && <span className={shared.badge}>You entered {c.entered}</span>}
           {c.won > 0 && (
-            <span className={styles.won}>
-              <Trophy size={13} aria-hidden="true" /> You won {c.won === 1 ? 'a prize' : `${c.won} prizes`}
+            <span className={`${shared.badge} ${shared.badgeOk}`}>
+              <Trophy size={12} aria-hidden="true" /> You won {c.won === 1 ? 'a prize' : `${c.won} prizes`}
             </span>
           )}
         </span>
@@ -59,12 +63,12 @@ export default function StaffleList({ onOpen }: { onOpen: (slug: string) => void
         <summary>
           {title} <span>{list.length}</span>
         </summary>
-        <ul className={styles.cards}>{list.map(card)}</ul>
+        <ul className={shared.grid}>{list.map(card)}</ul>
       </details>
     ) : (
       <section className={styles.group}>
         <h2>{title}</h2>
-        <ul className={styles.cards}>{list.map(card)}</ul>
+        <ul className={shared.grid}>{list.map(card)}</ul>
       </section>
     );
   return (

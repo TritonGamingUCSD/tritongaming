@@ -31,6 +31,21 @@ export function PhotosPanel({ config, set }: Props) {
           placeholder={'Smile!\nNow something silly!\nLast one: your best pose!'}
         />
       </Field>
+      <Field
+        label={`Auto-correct the pictures: ${config.auto_adjust === 0 ? 'off' : `${config.auto_adjust}%`}`}
+        hint="Brightens a dark room, evens out a colour tint and adds a little contrast to every photo. 0 turns it off."
+      >
+        <input
+          type="range"
+          min={0}
+          max={100}
+          step={5}
+          value={config.auto_adjust}
+          onChange={(e) => set({ auto_adjust: Number(e.target.value) }, 'auto-adjust')}
+          aria-label="Auto-correct strength"
+          style={{ width: '100%' }}
+        />
+      </Field>
       <label className={styles.check}>
         <input type="checkbox" checked={config.sounds} onChange={(e) => set({ sounds: e.target.checked })} /> Play sounds (a rising countdown, a camera click, a chime when the
         strip is ready)

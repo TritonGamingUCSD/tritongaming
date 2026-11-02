@@ -1,4 +1,4 @@
-import { DEFAULT_BOOTH, cleanBooth, type BoothConfig } from '@/lib/photobooth/booth';
+import { DEFAULT_BOOTH, cleanBooth, type BoothConfig, type FrameSpec } from '@/lib/photobooth/booth';
 
 // The ready-made looks for a new booth: pick one, give the booth a name, and it is set up (the booth's settings page can still change anything). Plain data.
 export interface Preset {
@@ -62,6 +62,22 @@ export const PRESETS: Preset[] = [
       prompts: ['Smile!', 'Look serious!', 'Laugh!', 'Wild card!'],
     },
     frame: { border: 'solid', width: 16 },
+  },
+];
+
+/** A ready-made frame to start from in the studio's Frame tool: what it changes about the frame (the logo stays), given the booth's name and accent colour. */
+export interface FramePreset {
+  id: string;
+  name: string;
+  make: (booth: { name: string; accent: string }) => Partial<FrameSpec>;
+}
+
+export const FRAME_PRESETS: FramePreset[] = [
+  { id: 'clean', name: 'Clean And Simple', make: () => ({ border: 'solid', color: '#011941', width: 8, top: '', bottom: '' }) },
+  {
+    id: 'starter',
+    name: 'Blank Starter',
+    make: ({ name, accent }) => ({ border: 'rounded', color: accent, width: 18, top: '', bottom: name.slice(0, 40), band: '#011941', text: '#ffffff' }),
   },
 ];
 

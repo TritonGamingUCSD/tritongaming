@@ -1,3 +1,4 @@
+import { adjustFor, applyAdjust } from '@/lib/photobooth/adjust';
 import { applyFilter, cellSize, composition, stickerBox, type BoothConfig, type Filter, type Rect } from '@/lib/photobooth/booth';
 
 // Makes the finished picture (browser only): the photos on the background in their places, each with its filter, then the stickers that belong on that photo, then the frame over it, then the footer text.
@@ -23,6 +24,18 @@ export function cutShot(video: HTMLVideoElement, w: number, h: number): HTMLCanv
     sh = h / scale;
   ctx.drawImage(video, (vw - sw) / 2, (vh - sh) / 2, sw, sh, 0, 0, w, h);
   return canvas;
+}
+
+/** Corrects the brightness and colour of a shot and its clip together (one correction, worked out from the shot, so the moving picture does not flicker). `strength` is 0 to 100; 0 leaves them as they are. */
+export function autoAdjust(shot: HTMLCanvasElement, clip: HTMLCanvasElement[], strength: number): void {
+  if (strength <= 0) return;
+  const read = (c: HTMLCanvasElement) => c.getContext('2d')!.getImageData(0, 0, c.width, c.height);
+  const fix = adjustFor(read(shot).data, strength);
+  for (const c of [shot, ...new Set(clip)]) {
+    const img = read(c);
+    applyAdjust(img.data, fix);
+    c.getContext('2d')!.putImageData(img, 0, 0);
+  }
 }
 
 /** One photo in its place on a canvas: the shot with the booth's filter, then its stickers, then the frame over it. */

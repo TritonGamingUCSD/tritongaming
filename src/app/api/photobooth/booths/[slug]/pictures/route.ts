@@ -4,7 +4,7 @@ import { PHOTO_BUCKET, authorizePhotoBooth, loadBooth } from '@/lib/photobooth/s
 export const dynamic = 'force-dynamic';
 
 // The pictures a booth still holds (they are deleted when their days are up), newest first, with how it is doing:
-// GET → { photos: [{ id, token, url, created_at, shared, hidden, downloads, animated }], stats: { total, gallery, hidden, downloads } }.
+// GET → { photos: [{ id, token, url, gif, created_at, shared, hidden, downloads, animated }], stats: { total, gallery, hidden, downloads } }.
 export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
@@ -22,6 +22,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
     id: p.id as string,
     token: p.token as string,
     url: auth.svc.storage.from(PHOTO_BUCKET).getPublicUrl(p.path as string).data.publicUrl,
+    gif: p.gif_path ? auth.svc.storage.from(PHOTO_BUCKET).getPublicUrl(p.gif_path as string).data.publicUrl : '',
     created_at: p.created_at as string,
     shared: !!p.shared,
     hidden: !!p.hidden,
