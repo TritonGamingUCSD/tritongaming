@@ -6,7 +6,7 @@ import { Maximize2, RotateCcw, X } from 'lucide-react';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { PhotoWall, type WallPhoto } from '@/components/PhotoWall/PhotoWall';
-import { FILTER_CSS, SHOTS, cellRatio, cellSize, hexToRgb, promptFor, type BoothConfig } from '@/lib/photobooth/booth';
+import { FILTER_CSS, SHOTS, cellRatio, composition, cellSize, hexToRgb, promptFor, type BoothConfig } from '@/lib/photobooth/booth';
 import { composeFrame, composePicture, composeStripFrame, cutShot, loadImage, type PlacedSticker } from '@/lib/photobooth/compose';
 import { GIF_TRIES, MAX_GIF_BYTES, encodeGif, spread } from '@/lib/photobooth/gif';
 import { HOLD_END, playbackTicks, type Tick } from '@/lib/photobooth/playback';
@@ -23,10 +23,9 @@ import styles from './photobooth.module.css';
 type Phase = 'idle' | 'choose' | 'shoot' | 'review' | 'saving' | 'qr';
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const THUMB_W = 180;
-// A live clip around each shot: the camera is sampled all the time, the last 1.5 seconds before the shutter are kept, and half a second after it.
+// A live clip for each shot: the camera is sampled all through the countdown and the last 3 seconds before the shutter are kept (the strip plays them and freezes on the shot).
 const FRAME_MS = 125;
-const BEFORE = 12;
-const AFTER = 4;
+const BEFORE = 24;
 const CLIP_W = 320;
 const CLIP_PLAY_W = 480;
 const SCREEN_STRIP_W = 420;
@@ -70,7 +69,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   }, []);
   const images = useRef(new Map<string, HTMLImageElement>());
   const shots = useRef<HTMLCanvasElement[]>([]);
-  const clips = useRef<HTMLCanvasElement[][]>([]); // each shot's raw clip frames (BEFORE + AFTER of them)
+  const clips = useRef<HTMLCanvasElement[][]>([]); // each shot's raw clip frames (BEFORE of them)
   const sounds = useRef<BoothSounds | null>(null);
   const run = useRef(0); // a number for each go at the shots: leaving or cancelling makes the running one stop
 
@@ -171,15 +170,9 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     setPrompt(promptFor(config.prompts, i));
     // the camera is watched all through the countdown, keeping only the latest moments
     const before: HTMLCanvasElement[] = [];
-    let after: HTMLCanvasElement[] | null = null;
     const sampler = window.setInterval(() => {
-      const f = cutShot(video, CLIP_W, Math.round((CLIP_W * h) / w));
-      if (after) {
-        if (after.length < AFTER) after.push(f);
-      } else {
-        before.push(f);
-        if (before.length > BEFORE) before.shift();
-      }
+      before.push(cutShot(video, CLIP_W, Math.round((CLIP_W * h) / w)));
+      if (before.length > BEFORE) before.shift();
     }, FRAME_MS);
     try {
       for (let c = config.countdown; c >= 1; c--) {
@@ -196,11 +189,10 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
         setTimeout(() => setFlash(false), 180);
       }
       const shot = cutShot(video, w, h);
-      after = [];
-      await wait(900);
-      const clip = [...before, ...after];
+      await wait(700);
+      const clip = [...before];
       // (a short countdown has fewer moments: the first one is held so every clip is as long as the others)
-      while (clip.length < BEFORE + AFTER) clip.unshift(clip[0] ?? shot);
+      while (clip.length < BEFORE) clip.unshift(clip[0] ?? shot);
       return { shot, clip };
     } finally {
       window.clearInterval(sampler);
@@ -250,6 +242,12 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
       clips.current.push(got.clip);
       setThumbs((t) => [...t, thumbOf(got.shot)]);
       sounds.current?.pop();
+      if (i < SHOTS[config.layout] - 1) {
+        // (a beat to laugh, change pose or swap places before the next countdown)
+        setPrompt('Next one in a moment…');
+        await wait(1300);
+        if (!alive()) return;
+      }
     }
     if (alive()) await build(alive);
   }
@@ -354,6 +352,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   });
 
   const ratio = config ? cellRatio(config.aspect) : 0.75;
+  const strip = config ? composition(config.layout, config.aspect, !!config.footer.trim()) : null; // where each photo sits on the strip (for tapping one to retake it)
   const showCam = phase === 'idle' || phase === 'choose' || phase === 'shoot';
   const total = config ? SHOTS[config.layout] : 0;
   // (the stickers of the photo being taken, over the live camera)
@@ -423,10 +422,10 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
                 <>
                   <p className={styles.kicker}>{total} photos</p>
                   <h2 className={styles.sideTitle}>Pick Your Look</h2>
-                  <p className={styles.welcomeText}>Every look is live on the right: tap the one you like.</p>
+                  <p className={styles.welcomeText}>The look is live on the right. Slide, tap an arrow or press ← → to see the others.</p>
                   <div className={styles.btnRow}>
                     <button type="button" className={`${styles.bigBtn} ${styles.startBtn}`} onClick={() => void shoot()}>
-                      Take The Photos
+                      Use This Look
                     </button>
                     <button type="button" className={styles.ghostBtn} onClick={reset}>
                       Cancel
@@ -520,12 +519,38 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
 
           {(phase === 'review' || phase === 'saving') && picture && (
             <div className={styles.review}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              {playback ? (
-                <StripPlayer playback={playback} frameMs={FRAME_MS} className={`${styles.reviewImg} ${styles.dropIn}`} label="Your picture, moving" />
-              ) : (
-                <img className={`${styles.reviewImg} ${styles.dropIn}`} src={picture.url} alt="Your picture" />
-              )}
+              <div className={`${styles.stripWrap} ${styles.dropIn}`}>
+                {playback ? (
+                  <StripPlayer playback={playback} frameMs={FRAME_MS} className={styles.reviewImg} label="Your picture, moving" />
+                ) : (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img className={styles.reviewImg} src={picture.url} alt="Your picture" />
+                )}
+                {total > 1 && strip && (
+                  <div className={styles.stripHots}>
+                    {strip.cells.map((c, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        className={styles.stripHot}
+                        style={{
+                          left: `${(c.x / strip.width) * 100}%`,
+                          top: `${(c.y / strip.height) * 100}%`,
+                          width: `${(c.w / strip.width) * 100}%`,
+                          height: `${(c.h / strip.height) * 100}%`,
+                        }}
+                        onClick={() => void retakeOne(i)}
+                        disabled={phase === 'saving'}
+                        aria-label={`Retake photo ${i + 1} of ${total}`}
+                      >
+                        <span>
+                          <RotateCcw size={16} aria-hidden="true" /> Retake
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
               {playing.length > 0 && <ClipPlayer clips={playing} frameMs={FRAME_MS} />}
               <div className={`${styles.reviewSide} ${styles.riseIn}`}>
                 <h2 className={styles.qrTitle}>
@@ -535,29 +560,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
                 <button type="button" className={`${styles.bigBtn} ${styles.startBtn}`} onClick={() => void keep()} disabled={phase === 'saving'}>
                   {phase === 'saving' ? 'Saving…' : 'Looks Great!'}
                 </button>
-                {total > 1 && (
-                  <div className={styles.retakes} role="group" aria-label="Retake one photo">
-                    <span className={styles.chipLabel}>Retake just one</span>
-                    <div className={styles.retakeRow}>
-                      {thumbs.map((t, i) => (
-                        <button
-                          key={i}
-                          type="button"
-                          className={styles.retakeBtn}
-                          onClick={() => void retakeOne(i)}
-                          disabled={phase === 'saving'}
-                          aria-label={`Retake photo ${i + 1}`}
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={t} alt="" />
-                          <span>
-                            <RotateCcw size={14} aria-hidden="true" /> {i + 1}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {total > 1 && <p className={styles.reviewHint}>Not happy with one? Tap that photo to take it again.</p>}
                 <button type="button" className={styles.ghostBtn} onClick={() => (setError(''), void shoot())} disabled={phase === 'saving'}>
                   {total > 1 ? 'Retake All' : 'Retake'}
                 </button>

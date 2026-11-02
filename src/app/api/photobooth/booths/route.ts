@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { slugify } from '@/lib/core/slug';
 import { DEFAULT_BOOTH, cleanBooth, splitConfig } from '@/lib/photobooth/booth';
 import { copyLook } from '@/lib/photobooth/looks';
-import { BOOTH_COLUMNS, RESERVED_SLUGS, authorizePhotoBooth, loadBooth } from '@/lib/photobooth/server';
+import { BOOTH_COLUMNS, RESERVED_SLUGS, authorizePhotoBooth, firstLooks, loadBooth } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
 // The booths (each is its own thing, not tied to an event).
-//   GET                 every booth with how many pictures are waiting to be downloaded
+//   GET                 every booth with how many pictures are waiting to be downloaded and its first look (to draw a small picture of it)
 //   POST { name, config?, from? }   make a booth with one look called Main: with `config` (any settings and colours, brought into range), or a copy of the booth `from` (its address word, with all its looks), or else the defaults
 export async function GET() {
   const auth = await authorizePhotoBooth();
@@ -17,11 +17,17 @@ export async function GET() {
     auth.svc.from('photobooth_photos').select('booth_id').gt('expires_at', new Date().toISOString()).limit(5000),
     auth.svc.from('photobooth_looks').select('booth_id').limit(2000),
   ]);
+  const shown = await firstLooks(
+    auth.svc,
+    (booths ?? []).map((b) => b.id as string),
+  );
   const count = new Map<string, number>();
   for (const p of photos ?? []) count.set(p.booth_id as string, (count.get(p.booth_id as string) ?? 0) + 1);
   const looks = new Map<string, number>();
   for (const l of lookRows ?? []) looks.set(l.booth_id as string, (looks.get(l.booth_id as string) ?? 0) + 1);
-  return NextResponse.json({ booths: (booths ?? []).map((b) => ({ ...b, photos: count.get(b.id as string) ?? 0, looks: looks.get(b.id as string) ?? 1 })) });
+  return NextResponse.json({
+    booths: (booths ?? []).map((b) => ({ ...b, photos: count.get(b.id as string) ?? 0, looks: looks.get(b.id as string) ?? 1, look: shown.get(b.id as string) ?? null })),
+  });
 }
 
 export async function POST(request: Request) {

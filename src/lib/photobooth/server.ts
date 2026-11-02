@@ -105,6 +105,34 @@ export async function loadBooth(svc: SupabaseClient, key: string): Promise<{ boo
   return { booth: { id: data.id as string, slug: data.slug as string, name: data.name as string, gallery_token: data.gallery_token as string }, config, looks };
 }
 
+/** The first look of each of the given booths, with its stickers (for the cards on the booths page). */
+export async function firstLooks(svc: SupabaseClient, boothIds: string[]): Promise<Map<string, Look>> {
+  const out = new Map<string, Look>();
+  if (!boothIds.length) return out;
+  const { data: rows } = await svc.from('photobooth_looks').select(LOOK_COLUMNS).in('booth_id', boothIds).order('position').order('created_at').limit(2000);
+  const first = new Map<string, Record<string, unknown>>();
+  for (const r of rows ?? []) if (!first.has(r.booth_id as string)) first.set(r.booth_id as string, r);
+  const { data: stickers } = await svc
+    .from('photobooth_overlays')
+    .select(`${OVERLAY_COLUMNS}, look_id`)
+    .in(
+      'look_id',
+      [...first.values()].map((r) => r.id as string),
+    )
+    .order('position')
+    .order('created_at')
+    .limit(MAX_STICKERS_PER_LOOK * Math.max(1, first.size));
+  for (const [boothId, r] of first)
+    out.set(
+      boothId,
+      toLook(
+        r,
+        ((stickers ?? []) as unknown as (Overlay & { look_id: string })[]).filter((o) => o.look_id === r.id).map(({ look_id: _l, ...o }) => o),
+      ),
+    );
+  return out;
+}
+
 /** One look by its id, with the booth it belongs to. */
 export async function loadLook(svc: SupabaseClient, lookId: string): Promise<{ look: Look; booth: BoothInfo; boothId: string } | null> {
   if (!UUID.test(lookId)) return null;

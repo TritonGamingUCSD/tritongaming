@@ -11,6 +11,7 @@ export interface BoothRow {
   looks: number;
   created_at: string;
   photos: number;
+  look: LookData | null; // its first look, for the card's small picture
 }
 export interface BoothData {
   booth: { id: string; slug: string; name: string; gallery_token: string };
