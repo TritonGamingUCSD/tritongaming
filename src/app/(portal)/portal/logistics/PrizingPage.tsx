@@ -92,7 +92,7 @@ export default function PrizingPage({ api, data, slug, sheet, go }: { api: Logis
         /* not remembered */
       }
   }, [chosen]);
-  // Back from the stock: the last event looked at if it still exists, else today's or the next one (the address with no event).
+  // Back from the stock: the last event looked at if it is still open, else today's or the next one, else none (the address with no event).
   const lastEvent = () => {
     let k: string | null = null;
     try {
@@ -100,7 +100,7 @@ export default function PrizingPage({ api, data, slug, sheet, go }: { api: Logis
     } catch {
       /* none */
     }
-    return k && list.plans?.some((p) => p.slug === k) ? k : null;
+    return k && list.plans?.some((p) => p.slug === k && p.status === 'draft') ? k : null;
   };
   const d = plan.detail;
   const [view, setView] = useState<View>(DEFAULT_VIEW);

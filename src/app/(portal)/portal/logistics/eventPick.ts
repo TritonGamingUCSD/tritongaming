@@ -1,14 +1,13 @@
 import { formatDayRange } from '@/lib/core/timezone';
 import type { PlanSummary } from './usePlans';
 
-// The event a page opens on when none is named: the one on today, else the next one coming, else the latest.
+// The event a page opens on when none is named: the open one on today, else the next open one coming, else the latest open one. With no open event it is none: the page shows the stock (a closed event is only opened when it is named).
 export function autoPlan(plans: PlanSummary[], today: string): PlanSummary | null {
   const open = plans.filter((p) => p.status === 'draft');
   return (
     open.find((p) => p.starts_on <= today && today <= p.ends_on) ??
     [...open].filter((p) => p.starts_on >= today).sort((a, b) => a.starts_on.localeCompare(b.starts_on))[0] ??
     open[0] ??
-    plans[0] ??
     null
   );
 }
