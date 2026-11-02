@@ -238,6 +238,7 @@ export function BoothSetup({
     const fail = (message: string) => {
       setSaving(false);
       setError(message);
+      showToast(`Not saved: ${message}`); // (the notice at the top of the page can be out of sight)
     };
     const r = await call<{ config: BoothSettings; booth: { name: string } }>(`/api/photobooth/booths/${booth}`, 'PUT', { ...settings, name });
     if (!r.ok) return fail(r.error);

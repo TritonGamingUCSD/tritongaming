@@ -1,4 +1,5 @@
 import { formatPacificDateTime, formatPacificTime } from '@/lib/core/timezone';
+import { safeFetch } from '@/lib/ui/safeFetch';
 // Small fetch helper for the docs routes. Every route answers { error?, code? }: `code` is what tells a conflict apart from a plain failure.
 
 export interface ApiResult<T = Record<string, unknown>> {
@@ -19,7 +20,7 @@ export async function docsPost<T = Record<string, unknown>>(path: string, body: 
 
 export async function docsGet<T = Record<string, unknown>>(path: string): Promise<ApiResult<T>> {
   try {
-    const r = await fetch(path, { cache: 'no-store' });
+    const r = await safeFetch(path, { cache: 'no-store' });
     const json = await r.json().catch(() => ({}));
     return { ok: r.ok, status: r.status, json };
   } catch {

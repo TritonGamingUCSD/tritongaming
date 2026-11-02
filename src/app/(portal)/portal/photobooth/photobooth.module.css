@@ -232,6 +232,7 @@
 .reviewHint { margin: 0; font-size: 1rem; color: rgba(var(--screen-rgb, var(--pp-ink-rgb)), 0.8); }
 .sent { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.2rem; color: var(--accent); animation: pbPop 0.4s ease-out both; }
 .emailRow { display: grid; gap: 0.6rem; justify-items: center; width: 100%; animation: pbRise 0.3s ease-out both; }
+.emailOpen { display: inline-flex; align-items: center; gap: 0.6rem; min-height: 3.6rem; padding: 0 2rem; font-size: 1.2rem; }
 .emailFields { display: flex; gap: 0.6rem; width: 100%; align-items: stretch; }
 .emailInput { flex: 1 1 auto; min-width: 0; min-height: 3.4rem; padding: 0 1rem; border-radius: 12px; border: 2px solid var(--screen-ink, var(--pp-ink)); background: rgba(var(--screen-rgb, var(--pp-ink-rgb)), 0.06); color: inherit; font: inherit; font-size: 1.15rem; }
 .emailInput::placeholder { color: rgba(var(--screen-rgb, var(--pp-ink-rgb)), 0.6); }

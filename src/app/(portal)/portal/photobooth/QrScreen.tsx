@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
+import { Mail } from 'lucide-react';
 import { DEFAULT_QR_OPTIONS } from '@/lib/qr/qrCodeStyling';
 import { photoLink } from '@/lib/photobooth/booth';
 import { call } from './api';
@@ -127,8 +128,8 @@ export function QrScreen({
                 </button>
               </form>
             ) : (
-              <button type="button" className={styles.ghostBtn} onClick={() => setEmailing(true)}>
-                Email Me The Link
+              <button type="button" className={`${styles.ghostBtn} ${styles.emailOpen}`} onClick={() => setEmailing(true)}>
+                <Mail size={20} aria-hidden="true" /> Email Me The Link
               </button>
             )}
             <button type="button" className={styles.bigBtn} onClick={onDone}>

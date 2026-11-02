@@ -52,3 +52,7 @@ The live meeting screen and the docs use Supabase Realtime. A route that changes
 ## Notifications
 
 `createNotifications` (`src/lib/notifications/notify.ts`) writes to the bell and sends web push in one step. Everything that notifies a person goes through it. See [features.md](features.md#notifications).
+
+## Talking to the server from a screen
+
+Screens use `call` in `src/lib/ui/apiCall.ts` (Trivia has its own copy in `trivia/api.ts`), which sends through `safeFetch` (`src/lib/ui/safeFetch.ts`): a read, a replace (PUT) or a delete that fails on the network or gets a 502, 503 or 504 is tried again twice, after half a second and a second. Creating (POST) and changing a few fields (PATCH) are sent once, because sending them twice could do it twice. A failure shows `Couldn’t reach the server…` with `status: 0`; the studio's Save also shows a toast, since its notice can be out of sight.

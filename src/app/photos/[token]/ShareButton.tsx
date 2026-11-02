@@ -1,30 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Share2 } from 'lucide-react';
+import { Copy, Share2 } from 'lucide-react';
 import styles from './photo.module.css';
 
-// Opens the phone's own share sheet (AirDrop, Messages, WhatsApp, Instagram…) with the picture itself, or with this page's link when the phone can't share a file. A computer with no share sheet gets a button that copies the link.
+// Two ways to pass the picture on. Share Picture opens the phone's own share sheet (AirDrop, Messages, WhatsApp, Instagram, Save Image…) with the picture itself, or with this page's link when the phone can't share a file; a computer
+// with no share sheet only gets Copy Link. Copy Link copies this page's address.
 export function ShareButton({ token, event }: { token: string; event: string | null }) {
-  const [mode, setMode] = useState<'share' | 'copy'>('copy');
+  const [canShare, setCanShare] = useState(false);
   const [note, setNote] = useState('');
   useEffect(() => {
-    const t = window.setTimeout(() => setMode(typeof navigator.share === 'function' ? 'share' : 'copy'), 0);
+    const t = window.setTimeout(() => setCanShare(typeof navigator.share === 'function'), 0);
     return () => window.clearTimeout(t);
   }, []);
-  const go = async () => {
+  const share = async () => {
     setNote('');
     const url = window.location.href;
     const title = event ? `My photo from ${event}` : 'My photo from the photo booth';
-    if (mode === 'copy') {
-      try {
-        await navigator.clipboard.writeText(url);
-        setNote('Link copied. Paste it into a message.');
-      } catch {
-        setNote('Couldn’t copy the link. Press and hold the picture to save it instead.');
-      }
-      return;
-    }
     try {
       const res = await fetch(`/photos/${token}/download`);
       const blob = res.ok ? await res.blob() : null;
@@ -35,10 +27,24 @@ export function ShareButton({ token, event }: { token: string; event: string | n
       if ((e as DOMException).name !== 'AbortError') setNote('Couldn’t open sharing. Press and hold the picture to save it instead.');
     }
   };
+  const copy = async () => {
+    setNote('');
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      setNote('Link copied. Paste it into a message.');
+    } catch {
+      setNote('Couldn’t copy the link. Press and hold the picture to save it instead.');
+    }
+  };
   return (
     <div className={styles.share}>
-      <button type="button" className={`${styles.shareBtn} ${styles.shareMain}`} onClick={() => void go()}>
-        <Share2 size={18} aria-hidden="true" /> {mode === 'share' ? 'Share Picture' : 'Copy Link To Share'}
+      {canShare && (
+        <button type="button" className={`${styles.shareBtn} ${styles.shareMain}`} onClick={() => void share()}>
+          <Share2 size={18} aria-hidden="true" /> Share Picture
+        </button>
+      )}
+      <button type="button" className={`${styles.shareBtn} ${styles.shareMain}`} onClick={() => void copy()}>
+        <Copy size={18} aria-hidden="true" /> Copy Link
       </button>
       {note && (
         <p className={styles.note} role="status">

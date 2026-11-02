@@ -1,6 +1,7 @@
 import type { BoothSettings, FrameSpec, LookStyle, Overlay, Placement } from '@/lib/photobooth/booth';
 
 import { call } from '@/lib/ui/apiCall';
+import { safeFetch } from '@/lib/ui/safeFetch';
 
 export { call };
 
@@ -53,7 +54,7 @@ export async function saveFrame(
   form.append('frame', new File([opts.frame], 'frame.webp', { type: 'image/webp' }));
   form.append('design', JSON.stringify(opts.spec));
   if (opts.logo) form.append('logo', new File([opts.logo], 'logo.webp', { type: 'image/webp' }));
-  const res = await fetch(`/api/photobooth/looks/${look}/frame`, { method: 'PUT', body: form, cache: 'no-store' }).catch(() => null);
+  const res = await safeFetch(`/api/photobooth/looks/${look}/frame`, { method: 'PUT', body: form, cache: 'no-store' }).catch(() => null);
   const json = res ? await res.json().catch(() => ({})) : {};
   return res?.ok ? { ok: true, frame: json.frame } : { ok: false, error: json.error ?? 'Couldn’t reach the server.' };
 }
