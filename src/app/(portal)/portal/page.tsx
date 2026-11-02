@@ -23,6 +23,7 @@ import {
   Package,
   Gamepad2,
   Vote,
+  MessagesSquare,
   Trophy,
 } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
@@ -69,6 +70,7 @@ import StaffleSectionContent from './staffle/StaffleSectionContent';
 import TriviaSectionContent from './trivia/TriviaSectionContent';
 import PhotoBoothSectionContent from './photobooth/PhotoBoothSectionContent';
 import PollsSectionContent from './polls/PollsSectionContent';
+import QaSectionContent from './qa/QaSectionContent';
 import QuarterStatusContent from './quarters/QuarterStatusContent';
 import InactiveNote from './quarters/InactiveNote';
 import { currentQuarter, loadQuarters, quarterName } from '@/lib/members/quarters';
@@ -471,6 +473,21 @@ export default async function PortalDashboard({ searchParams }: Props) {
             dockExclude: true,
             group: 'Events' as const,
             content: <PollsSectionContent />,
+          },
+        ]
+      : []),
+    // Q&A for events (a panel, a keynote, an open mic): officers and above approve the questions guests send and put them on a big screen; anyone asks with a code, no account needed.
+    ...(hasCapability(roles, 'host_trivia')
+      ? [
+          {
+            id: 'qa',
+            icon: <MessagesSquare size={28} strokeWidth={1.5} aria-hidden="true" />,
+            label: sectionLabel('qa'),
+            description: 'A live question wall for the room',
+            homeExclude: true,
+            dockExclude: true,
+            group: 'Events' as const,
+            content: <QaSectionContent />,
           },
         ]
       : []),

@@ -67,6 +67,15 @@ export const SECTIONS: SectionDef[] = [
     },
   },
   {
+    id: 'qa',
+    label: 'Q&A',
+    search: {
+      hint: 'A live question wall: guests ask, you approve, the room likes the best',
+      keywords: ['q&a', 'qa', 'question', 'questions', 'ask', 'panel', 'wall', 'ama', 'keynote', 'audience'],
+      caps: ['host_trivia'],
+    },
+  },
+  {
     id: 'photobooth',
     label: 'Photo Booth',
     mainTab: 'booths',

@@ -30,7 +30,7 @@ export interface PollRow {
 
 // Who may do what. 'host' (officers and above, the same permission as hosting Trivia): make polls, set up their entries, open, close and reveal them, see the live counts. 'vote' (anyone with a session, which includes a guest signed in
 // anonymously for this one poll): follow an open poll and vote in it. A guest is never a host, whatever their session says.
-export async function authorizePolls(mode: 'host' | 'vote') {
+export async function authorizePolls(mode: 'host' | 'vote', what = 'polls') {
   const supabase = await createClient();
   const {
     data: { user },
@@ -39,10 +39,10 @@ export async function authorizePolls(mode: 'host' | 'vote') {
   const guest = !!user.is_anonymous;
   const svc = createServiceClient();
   if (mode === 'host') {
-    if (guest) return { error: NextResponse.json({ error: 'Hosting polls is for officers and above.' }, { status: 403 }) };
+    if (guest) return { error: NextResponse.json({ error: `Hosting ${what} is for officers and above.` }, { status: 403 }) };
     const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
     const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
-    if (!hasCapability(grants, 'host_trivia')) return { error: NextResponse.json({ error: 'Hosting polls is for officers and above.' }, { status: 403 }) };
+    if (!hasCapability(grants, 'host_trivia')) return { error: NextResponse.json({ error: `Hosting ${what} is for officers and above.` }, { status: 403 }) };
   }
   return { user, svc, guest };
 }
@@ -81,15 +81,16 @@ export async function results(svc: SupabaseClient, poll: PollRow, entries?: Entr
   return { standings: tally(poll.mode, list, votes), voters: voterCount(votes) };
 }
 
-/** A 6-digit code no open poll and no running Trivia game is using. */
+/** A 6-digit code no poll, Q&A session or running Trivia game is using. */
 export async function freshCode(svc: SupabaseClient): Promise<string | null> {
   for (let i = 0; i < 25; i++) {
     const code = String(Math.floor(Math.random() * 1_000_000)).padStart(6, '0');
-    const [p, t] = await Promise.all([
+    const [p, q, t] = await Promise.all([
       svc.from('polls').select('id', { count: 'exact', head: true }).eq('code', code),
+      svc.from('qa_sessions').select('id', { count: 'exact', head: true }).eq('code', code),
       svc.from('trivia_games').select('id', { count: 'exact', head: true }).eq('code', code).neq('status', 'done'),
     ]);
-    if (!p.count && !t.count) return code;
+    if (!p.count && !q.count && !t.count) return code;
   }
   return null;
 }

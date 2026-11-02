@@ -113,6 +113,7 @@ Every portal section is defined once in `src/lib/portal/sections.ts` (its addres
 | `/portal/strikes` | Strikes | - | Private strike tracker (HR and exec) (needs manage_strikes) |
 | `/portal/trivia` | Trivia | - | Join a quiz game, or write and host one |
 | `/portal/polls` | Polls | - | Run a vote on a big screen: a contest, a favourite, a choice on stage (needs host_trivia) |
+| `/portal/qa` | Q&A | - | A live question wall: guests ask, you approve, the room likes the best (needs host_trivia) |
 | `/portal/photobooth` | Photo Booth | booths | Make, set up and run a photo booth (needs run_photobooth) |
 | `/portal/divisions` | Divisions | - | Edit the divisions directory and pages (needs manage_divisions_directory or manage_division) |
 | `/portal/division-members` | Division Members | - | Who leads each division (needs view_division_members) |

@@ -57,6 +57,17 @@ A portal section (Events group, `/portal/polls`) for contests and on-stage votes
 - **Who can do what:** the host routes (`/api/polls…`) answer 403 to anyone without `host_trivia` and 401 to guests and signed-out visitors; the voting routes (`/api/polls/play/<poll>`, `/vote`, `/join`) take any session; `/api/polls/lookup/<code>` is open to everyone and says only that a poll with that code exists and its name. The three tables have row level security on with no policies (only the site's own routes read or write them) and the "no anonymous sessions" policy; guests may reach only the join, play and lookup routes (`GUEST_API` in `middleware-client.ts`). `scripts/checks/polls.mjs` checks all of this end to end.
 - **Files:** deleting a poll (or an entry, or an entry's picture) removes the pictures from storage at once (`removeUnreferencedFiles`).
 
+## Q&A (a live question wall)
+
+A portal section (Events group, `/portal/qa`) for a panel, a keynote or an open mic. **Making and running a Q&A is for officers and above** (`host_trivia`, the same as Polls); **anyone with the code asks and likes**, no account needed.
+
+- **A session** (`qa_sessions`, `qa_questions`, `qa_likes`; migration `20261102180000_qa.sql`) has a name and a state: **Draft** (no code), **Taking Questions** (open, has a 6-digit code that no poll, Q&A or running Trivia game is using) and **Closed** (no new questions or likes; the code is kept so a late scan says it is closed).
+- **Asking** (`/vote` to type the code, `/vote/<code>` from the QR code; the Dashboard code box, the scanner and `/play` open it too, because a Q&A code resolves like a poll code): a box for the question (up to 280 characters) and an optional name (remembered on the phone; blank is Anonymous). **Every question waits for the host.** One person can have 3 waiting and send 10 in a session. Guests see the approved questions (most liked first) with a like button, the one on the big screen, the answered ones, and their own questions with what became of each.
+- **The console** (`/portal/qa/<session>`, on the host's laptop or phone): **Open For Questions**, **Close**, **Open Again**; **Waiting For You** (Approve, Hide, **Approve All**), **On The List** (most liked first: **Show On Screen**, **Answered**, Hide), Answered (Put Back) and Hidden (Approve, Delete). It refreshes by itself every few seconds.
+- **The big screen** (`/portal/qa/host/<session>`, the whole screen): the QR code and code while open; the question the host put up, large, with who asked and its likes, and the next three most liked underneath (or the three most liked until one is put up). **Answered · Next** (Space or Enter on a clicker) marks the shown question answered and puts up the most liked one left. Only approved questions ever reach this screen.
+- **Who can do what:** the host routes (`/api/qa…`) answer 403 to anyone without `host_trivia` and 401 to guests and signed-out visitors; the guest routes (`/api/qa/play/<session>`, `/ask`, `/like`) take any session and never give out a waiting or hidden question to anyone but whoever asked it. The tables have row level security on with no policies.
+- **Checks:** `scripts/checks/qa.mjs` (permissions for every kind of visitor, the limits, approval, likes, the screen, closing and deleting).
+
 ## Trivia (quiz games for events)
 
 A portal section (Events group). **Everyone signed in can play**; officers and above (`host_trivia`) write quizzes, host games and see results.
