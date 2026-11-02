@@ -5,7 +5,7 @@ import SectionTabs from '@/components/ui/SectionTabs';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ReactNode } from 'react';
-import { LayoutDashboard, BarChart3, Activity, X, Server, Users as UsersIcon, MailPlus } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Activity, X, Server, Users as UsersIcon, MailPlus, KeyRound, ScrollText } from 'lucide-react';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
@@ -40,11 +40,13 @@ interface Props {
 
 type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system' | 'settings' | 'preview' | 'email';
 const VALID_TABS: Tab[] = ['overview', 'members', 'access', 'analytics', 'audit-log', 'short-links', 'system', 'settings', 'preview', 'email'];
-type Group = 'overview' | 'people' | 'insights' | 'system';
+type Group = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'system';
 const GROUPS: Record<Group, { label: string; icon: ReactNode; views: Tab[] }> = {
   overview: { label: 'Overview', icon: <LayoutDashboard />, views: ['overview'] },
-  people: { label: 'People', icon: <UsersIcon />, views: ['members', 'access'] },
-  insights: { label: 'Insights', icon: <BarChart3 />, views: ['analytics', 'audit-log'] },
+  members: { label: 'Members', icon: <UsersIcon />, views: ['members'] },
+  access: { label: 'Access', icon: <KeyRound />, views: ['access'] },
+  analytics: { label: 'Analytics', icon: <BarChart3 />, views: ['analytics'] },
+  'audit-log': { label: 'Audit Log', icon: <ScrollText />, views: ['audit-log'] },
   system: { label: 'System', icon: <Server />, views: ['system', 'settings', 'preview', 'short-links', 'email'] },
 };
 const VIEW_LABELS: Record<Tab, string> = {
@@ -122,7 +124,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
     <div className={styles.page}>
       <SectionHeader title="Admin" sub="Platform management" />
 
-      {/* Four groups instead of eight tabs. Each view keeps its own id in the address (tab=roles, tab=audit …), so every old link still works. */}
+      {/* One row of tabs; only System has sub-views. Each view keeps its own id in the address (tab=roles, tab=audit …), so every old link still works. */}
       <SectionTabs<Group>
         label="Admin"
         value={groupOf(tab)}
