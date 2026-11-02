@@ -187,7 +187,14 @@ describe('deleting expired pictures', () => {
         }),
         delete: () => ({ in: async (_c: string, ids: string[]) => void deletedIds.push(ids) }),
       }),
-      storage: { from: () => ({ remove: async (paths: string[]) => void removedFiles.push(paths) }) },
+      storage: {
+        from: () => ({
+          remove: async (paths: string[]) => {
+            removedFiles.push(paths);
+            return { error: null };
+          },
+        }),
+      },
     };
     const out = await cleanupPhotos(svc as never, new Date('2026-10-31T00:00:00Z'));
     expect(out).toEqual({ removed: 1 });
@@ -253,5 +260,82 @@ describe('strip playback', () => {
   });
   test('one photo only plays together', () => {
     expect(playbackTicks(1, 4, 2, 2)).toEqual([[0], [1], [2], [3], [3], [3]]);
+  });
+
+  test('keeps the rows when the files could not be removed, so the next run tries again', async () => {
+    const { cleanupPhotos } = await import('@/lib/photobooth/cleanup');
+    const deleted: string[][] = [];
+    const svc = {
+      from: () => ({
+        select: () => ({ lte: () => ({ limit: async () => ({ data: [{ id: 'a', path: 'e/a.jpg', gif_path: null }] }) }) }),
+        delete: () => ({ in: async (_c: string, ids: string[]) => void deleted.push(ids) }),
+      }),
+      storage: { from: () => ({ remove: async () => ({ error: { message: 'down' } }) }) },
+    };
+    expect(await cleanupPhotos(svc as never, new Date('2026-10-31T00:00:00Z'))).toEqual({ removed: 0 });
+    expect(deleted).toEqual([]);
+  });
+});
+
+describe('the weekly sweep of stray picture files', () => {
+  const DAY = 24 * 60 * 60 * 1000;
+  const NOW = new Date('2026-11-10T00:00:00Z');
+  /** A fake bucket: `files` are the objects it holds (path and when it was made), `rows` the picture rows that point at some of them. */
+  function fake(files: { path: string; at: string }[], rows: { path: string; gif_path: string | null }[]) {
+    const removed: string[] = [];
+    const svc = {
+      from: () => ({ select: () => ({ range: async (from: number) => ({ data: from === 0 ? rows : [], error: null }) }) }),
+      storage: {
+        from: () => ({
+          list: async (prefix: string) => ({
+            data: files
+              .filter((f) => (prefix ? f.path.startsWith(`${prefix}/`) && !f.path.slice(prefix.length + 1).includes('/') : !f.path.includes('/')))
+              .map((f) => ({ name: f.path.split('/').pop(), id: 'x', created_at: f.at, metadata: { size: 1 } }))
+              .concat(
+                prefix
+                  ? []
+                  : [...new Set(files.filter((f) => f.path.includes('/')).map((f) => f.path.split('/')[0]))].map((name) => ({
+                      name,
+                      id: null as never,
+                      created_at: '',
+                      metadata: { size: 0 },
+                    })),
+              ),
+          }),
+          remove: async (paths: string[]) => {
+            removed.push(...paths);
+            return { error: null };
+          },
+        }),
+      },
+    };
+    return { svc: svc as never, removed };
+  }
+  const old = new Date(NOW.getTime() - 2 * DAY).toISOString();
+  const young = new Date(NOW.getTime() - 3600_000).toISOString();
+
+  test('removes a day-old file no row points to, and nothing else', async () => {
+    const { sweepOrphanPhotos } = await import('@/lib/photobooth/cleanup');
+    const { svc, removed } = fake(
+      [
+        { path: 'b/live.jpg', at: old },
+        { path: 'b/live.gif', at: old },
+        { path: 'b/stray.jpg', at: old },
+        { path: 'b/new-upload.jpg', at: young },
+      ],
+      [{ path: 'b/live.jpg', gif_path: 'b/live.gif' }],
+    );
+    expect(await sweepOrphanPhotos(svc, NOW)).toEqual({ orphans: 1 });
+    expect(removed).toEqual(['b/stray.jpg']);
+  });
+  test('removes nothing when it cannot read which pictures are in use', async () => {
+    const { sweepOrphanPhotos } = await import('@/lib/photobooth/cleanup');
+    const removed: string[] = [];
+    const svc = {
+      from: () => ({ select: () => ({ range: async () => ({ data: null, error: { message: 'down' } }) }) }),
+      storage: { from: () => ({ list: async () => ({ data: [] }), remove: async (p: string[]) => void removed.push(...p) }) },
+    };
+    await expect(sweepOrphanPhotos(svc as never, NOW)).rejects.toThrow();
+    expect(removed).toEqual([]);
   });
 });

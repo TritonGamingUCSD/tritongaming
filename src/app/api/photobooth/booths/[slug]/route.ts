@@ -38,7 +38,10 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   if (!found) return NextResponse.json({ ok: true });
   const { data: photos } = await auth.svc.from('photobooth_photos').select('path, gif_path').eq('booth_id', found.booth.id).limit(5000);
   const paths = (photos ?? []).flatMap((p) => [p.path as string, ...(p.gif_path ? [p.gif_path as string] : [])]);
-  if (paths.length) await auth.svc.storage.from(PHOTO_BUCKET).remove(paths);
+  if (paths.length) {
+    const gone = await auth.svc.storage.from(PHOTO_BUCKET).remove(paths);
+    if (gone.error) console.warn('[photobooth] could not remove a deleted booth’s pictures; the weekly tidy-up will:', gone.error.message);
+  }
   const files = found.looks.flatMap((l) => [l.frame.image, l.frame.spec?.logoUrl, ...l.overlays.map((o) => o.image)]);
   await auth.svc.from('photobooths').delete().eq('id', found.booth.id); // its looks, stickers and photo rows go with it
   await removeUnusedOverlayFiles(auth.svc, files);

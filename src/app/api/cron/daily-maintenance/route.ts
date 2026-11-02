@@ -8,7 +8,7 @@ import { runTeamSync } from '@/lib/members/teamYears';
 import { logSystem } from '@/lib/notifications/audit';
 import { alertJobFailed, checkUsage, digestNewMembers, remindStaleHelp } from '@/lib/notifications/adminAlerts';
 import { runStorageMaintenance } from '@/lib/storage/storageMaintenance';
-import { cleanupPhotos } from '@/lib/photobooth/cleanup';
+import { cleanupPhotos, sweepOrphanPhotos } from '@/lib/photobooth/cleanup';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,6 +35,8 @@ async function recordStep(svc: ReturnType<typeof createServiceClient>, name: str
       `Team roster: archived ${n('archived')} finished year${n('archived') === 1 ? '' : 's'}, moved ${n('moved')} graduate${n('moved') === 1 ? '' : 's'} to Alumni`,
       x,
     );
+  if (name === 'photo-files' && n('orphans'))
+    await logSystem(svc, 'storage', `Weekly tidy-up: removed ${n('orphans')} stray Photo Booth picture file${n('orphans') === 1 ? '' : 's'}`, x);
   if (name === 'storage' && (n('deletedFiles') || n('compressedFiles')))
     await logSystem(
       svc,
@@ -71,6 +73,7 @@ export async function GET(request: Request) {
   const weekly = new Date().getUTCDay() === 0 || url.searchParams.get('storage') === '1';
   steps.push(['usage', () => checkUsage(svc, { storage: weekly || only === 'usage' })]);
   if (weekly || only === 'storage') steps.push(['storage', () => runStorageMaintenance(svc)]);
+  if (weekly || only === 'storage') steps.push(['photo-files', () => sweepOrphanPhotos(svc)]);
 
   const out: Record<string, unknown> = {};
   for (const [name, run] of steps) {

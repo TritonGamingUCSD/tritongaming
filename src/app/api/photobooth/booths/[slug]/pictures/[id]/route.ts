@@ -31,7 +31,8 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   const { slug, id } = await params;
   const r = await find(slug, id);
   if ('error' in r) return r.error;
-  await r.svc.storage.from(PHOTO_BUCKET).remove(r.photo.gif_path ? [r.photo.path, r.photo.gif_path] : [r.photo.path]);
+  const gone = await r.svc.storage.from(PHOTO_BUCKET).remove(r.photo.gif_path ? [r.photo.path, r.photo.gif_path] : [r.photo.path]);
+  if (gone.error) return NextResponse.json({ error: 'Couldn’t remove the picture’s file. Try again.' }, { status: 500 }); // (the picture stays, so nothing is left behind)
   await r.svc.from('photobooth_photos').delete().eq('id', id);
   return NextResponse.json({ ok: true });
 }
