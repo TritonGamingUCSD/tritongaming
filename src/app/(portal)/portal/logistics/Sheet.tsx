@@ -460,7 +460,14 @@ export default function Sheet<T>({
       );
     } else if (c.kind === 'photo' && r) {
       body = (
-        <button type="button" className={styles.photoBtn} onClick={() => c.photo?.(r)} disabled={!can} aria-label={`${c.label}: ${can ? 'choose a picture' : 'view'}`}>
+        <button
+          type="button"
+          className={styles.photoBtn}
+          onClick={() => c.photo?.(r)}
+          disabled={!canEdit}
+          aria-label={`${c.label}: ${canEdit ? 'choose a picture' : 'view'}`}
+          title={canEdit ? 'Choose a picture' : undefined}
+        >
           {c.display ? c.display(r) : null}
         </button>
       );
@@ -485,7 +492,7 @@ export default function Sheet<T>({
       <td
         key={c.id}
         data-cell={`${ri}:${ci}`}
-        className={`${styles.cell} ${pinClass(ci)} ${isActive ? styles.active : ''} ${c.align === 'right' ? styles.right : ''} ${can ? styles.canEdit : styles.ro} ${flash === k && k ? styles.refused : ''}`}
+        className={`${styles.cell} ${pinClass(ci)} ${isActive ? styles.active : ''} ${c.align === 'right' ? styles.right : ''} ${can || (c.kind === 'photo' && canEdit) ? styles.canEdit : styles.ro} ${flash === k && k ? styles.refused : ''}`}
         style={pinStyle(ci)}
         onMouseDown={() => {
           if (!isEditing) setActive({ row: ri, col: ci });
