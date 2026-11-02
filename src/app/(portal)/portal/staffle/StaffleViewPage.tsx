@@ -120,7 +120,7 @@ export default function StaffleViewPage({
             )}
             {s.state === 'drawn' && (
               <Button variant="secondary" onClick={onDraw}>
-                <Presentation size={15} aria-hidden="true" /> Show The Draw Again
+                <Presentation size={15} aria-hidden="true" /> Replay The Draw
               </Button>
             )}
             <IconButton kind="edit" label="Edit this Staffle" onClick={() => setEditing(true)} />
@@ -206,9 +206,7 @@ export default function StaffleViewPage({
       )}
       <ul className={styles.items}>
         {s.items.map((i) => {
-          const live = i.won.filter((w) => !w.passed),
-            passed = i.won.filter((w) => w.passed);
-          const unclaimed = live.filter((w) => !w.claimed);
+          const live = i.won;
           return (
             <li key={i.id} className={`${styles.item} ${i.mine ? styles.itemMine : ''}`}>
               <div className={styles.itemPic}>{i.prize.photo ? <ZoomImg src={i.prize.photo} alt={i.prize.name} /> : <Gift size={34} strokeWidth={1.4} aria-hidden="true" />}</div>
@@ -266,21 +264,10 @@ export default function StaffleViewPage({
                             >
                               {w.claimed ? 'Undo' : 'Mark Picked Up'}
                             </button>
-                            {!w.claimed && (
-                              <button type="button" className={styles.mini} onClick={() => void act(w.id, `/api/staffle/${s.slug}/redraw`, 'POST', { winner_id: w.id })}>
-                                Draw Again
-                              </button>
-                            )}
                           </span>
                         )}
                       </div>
                     ))}
-                    {passed.length > 0 && <small className={styles.passed}>Passed over: {passed.map((w) => w.name).join(', ')}</small>}
-                    {canManage && s.state === 'drawn' && unclaimed.length > 1 && (
-                      <button type="button" className={styles.mini} onClick={() => void act(i.id, `/api/staffle/${s.slug}/redraw`, 'POST', { item_id: i.id })}>
-                        Draw Again For All Not Picked Up
-                      </button>
-                    )}
                   </div>
                 )}
               </div>

@@ -90,10 +90,6 @@ try {
   );
 
   t.ok('once it is drawn the sheet cannot change its prizes', (await exec.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: c.id, winners: 2 })).s === 409);
-  // ---- drawing again falls back to the pools
-  const bravo = view.items.find((i) => i.prize.name === 'ZZ Left Bravo');
-  const again = await exec.call('POST', `/api/staffle/${slug}/redraw`, { winner_id: bravo.won[0].id });
-  t.ok('drawing again with nobody left gives a short answer, not an error', again.s === 200 && again.j.short === 1, JSON.stringify(again.j));
 } finally {
   await svc.from('staffles').delete().like('name', 'ZZ%');
   await svc.from('logistics_prizes').delete().like('name', 'ZZ%');

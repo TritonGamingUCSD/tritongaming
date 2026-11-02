@@ -18,12 +18,12 @@ export async function GET() {
     ? await Promise.all([
         auth.svc.from('staffle_items').select('staffle_id, prize_id, winners').in('staffle_id', ids).limit(5000),
         auth.svc.from('staffle_entries').select('staffle_id').eq('user_id', auth.user.id).in('staffle_id', ids).limit(5000),
-        auth.svc.from('staffle_winners').select('staffle_id, user_id, passed_at').in('staffle_id', ids).limit(20000),
+        auth.svc.from('staffle_winners').select('staffle_id, user_id').in('staffle_id', ids).limit(20000),
       ])
     : [
         { data: [] as { staffle_id: string; prize_id: string; winners: number }[] },
         { data: [] as { staffle_id: string }[] },
-        { data: [] as { staffle_id: string; user_id: string; passed_at: string | null }[] },
+        { data: [] as { staffle_id: string; user_id: string }[] },
       ];
   const prizeIds = [...new Set((items ?? []).map((i) => i.prize_id as string))];
   const { data: prizes } = prizeIds.length ? await auth.svc.from('logistics_prizes').select('id, photo').in('id', prizeIds) : { data: [] as { id: string; photo: string }[] };
@@ -44,7 +44,7 @@ export async function GET() {
         .filter(Boolean)
         .slice(0, 4),
       entered: (mine ?? []).filter((e) => e.staffle_id === s.id).length,
-      won: (won ?? []).filter((w) => w.staffle_id === s.id && w.user_id === auth.user.id && !w.passed_at).length,
+      won: (won ?? []).filter((w) => w.staffle_id === s.id && w.user_id === auth.user.id).length,
     })),
   });
 }

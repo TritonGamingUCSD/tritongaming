@@ -18,12 +18,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
   const b = (await request.json().catch(() => ({}))) as { claimed?: unknown };
   const { data: w } = await auth.svc
     .from('staffle_winners')
-    .select('id, item_id, user_id, claimed_at, passed_at')
+    .select('id, item_id, user_id, claimed_at')
     .eq('id', wid)
     .eq('staffle_id', row.id as string)
     .maybeSingle();
   if (!w) return NextResponse.json({ error: 'That winner is gone.' }, { status: 404 });
-  if (w.passed_at) return NextResponse.json({ error: 'That winner was passed over.' }, { status: 409 });
   const claim = b.claimed !== false;
   if (claim === !!w.claimed_at) return NextResponse.json({ staffle: await staffleView(auth.svc, row, auth.user.id, true) });
   const { data: item } = await auth.svc

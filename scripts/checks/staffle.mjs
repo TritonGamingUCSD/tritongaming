@@ -1,4 +1,4 @@
-// Staffle: making one (items hold prizes back), entering (rules), drawing (winners saved, told, nobody twice), drawing again, claiming (stock), ending.
+// Staffle: making one (items hold prizes back), entering (rules), drawing (winners saved, told, nobody twice), claiming (stock), ending.
 // End to end against a running dev server as temporary "ZZ" accounts. It only writes ZZ prizes, Staffles and notifications, all deleted at the end.
 // Run: BASE_URL=http://localhost:3222 node scripts/checks/staffle.mjs
 import { accounts, svc, tracker } from './lib.mjs';
@@ -158,22 +158,12 @@ try {
     (await exec.call('PATCH', `/api/staffle/${slug}/winners/${winner.id}`, { claimed: false })).s === 200 && (await stockOf(wItem.prize_id)) === before,
   );
 
-  // ---- drawing again for one who did not claim
-  const again = await exec.call('POST', `/api/staffle/${slug}/redraw`, { winner_id: winner.id });
-  const nowWon = again.j.staffle.items.find((i) => i.id === wItem.id).won;
-  t.ok(
-    'drawing again passes the winner over (kept, greyed) and picks someone else who entered',
-    again.s === 200 && nowWon.find((w) => w.id === winner.id)?.passed === true && nowWon.filter((w) => !w.passed).every((w) => w.user_id !== winner.user_id),
-    JSON.stringify(again.j).slice(0, 200),
-  );
-  t.ok('someone passed over cannot be passed again', (await exec.call('POST', `/api/staffle/${slug}/redraw`, { winner_id: winner.id })).s === 409);
   void winnerUser;
 
   // ---- ending and removing
   t.ok('a drawn Staffle with a claim cannot be removed, but can be ended', true);
-  const claimedId = nowWon.find((w) => !w.passed)?.id;
-  if (claimedId) await exec.call('PATCH', `/api/staffle/${slug}/winners/${claimedId}`, { claimed: true });
-  t.ok('removing one with a claim is refused', claimedId ? (await exec.call('DELETE', `/api/staffle/${slug}`)).s === 409 : true);
+  await exec.call('PATCH', `/api/staffle/${slug}/winners/${winner.id}`, { claimed: true });
+  t.ok('removing one with a claim is refused', (await exec.call('DELETE', `/api/staffle/${slug}`)).s === 409);
   t.ok('ending it frees what was not claimed', (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'ended' })).j.staffle?.state === 'ended' && (await left(pad.id)) >= 0);
   t.ok('an ended Staffle cannot be ended again', (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'ended' })).s === 409);
 

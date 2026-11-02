@@ -52,7 +52,7 @@ export default function DrawScreen({ slug, onClose }: { slug: string; onClose: (
     return [...s.items].sort((a, b) => first(a) - first(b));
   }, [s]);
   const item = order[idx];
-  const winners = (item?.won ?? []).filter((w) => !w.passed);
+  const winners = item?.won ?? [];
   const drawn = !!s && (s.state === 'drawn' || s.state === 'ended');
   const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -83,17 +83,8 @@ export default function DrawScreen({ slug, onClose }: { slug: string; onClose: (
 
   // Who is in the wall: everyone who entered this prize (or, for a prize filled from the leftover pool, the winners), and who has already won an earlier prize (they are out).
   const pool = useMemo(() => [...new Set(item?.entrants.length ? item.entrants : (item?.won ?? []).map((w) => w.name))], [item]);
-  const out = useMemo(() => new Set(order.slice(0, idx).flatMap((i) => i.won.filter((w) => !w.passed).map((w) => w.name))), [order, idx]);
-  const gotNames = useMemo(
-    () =>
-      new Set(
-        (item?.won ?? [])
-          .filter((w) => !w.passed)
-          .slice(0, shown)
-          .map((w) => w.name),
-      ),
-    [item, shown],
-  );
+  const out = useMemo(() => new Set(order.slice(0, idx).flatMap((i) => i.won.map((w) => w.name))), [order, idx]);
+  const gotNames = useMemo(() => new Set((item?.won ?? []).slice(0, shown).map((w) => w.name)), [item, shown]);
 
   // The wheel for the next pull: everyone still in (not out from an earlier prize, not already pulled for this one), and the winner somewhere on it. With a crowd it holds the winner and 35 others, mixed the same way every time.
   const wheelFor = useCallback(
@@ -107,7 +98,7 @@ export default function DrawScreen({ slug, onClose }: { slug: string; onClose: (
     [pool, out, gotNames, item],
   );
   const pull = useCallback(() => {
-    const target = item?.won.filter((w) => !w.passed)[shown];
+    const target = item?.won[shown];
     if (!target) return;
     setWheel(wheelFor(target.name, (wheel?.key ?? 0) + 1));
     setPhase('spin');
@@ -128,7 +119,7 @@ export default function DrawScreen({ slug, onClose }: { slug: string; onClose: (
   // After a winner lands: a moment to cheer, then back to waiting for the next pull (or on to the next prize).
   useEffect(() => {
     if (!started || !item || phase !== 'landed') return;
-    const total = item.won.filter((w) => !w.passed).length;
+    const total = item.won.length;
     const t = window.setTimeout(() => setPhase(shown < total ? 'ready' : 'shown'), reduced ? 600 : 1800);
     return () => window.clearTimeout(t);
   }, [started, item, phase, shown, reduced]);
@@ -187,12 +178,7 @@ export default function DrawScreen({ slug, onClose }: { slug: string; onClose: (
             {order.map((i) => (
               <li key={i.id}>
                 <b>{i.prize.name}</b>
-                <span>
-                  {i.won
-                    .filter((w) => !w.passed)
-                    .map((w) => w.name)
-                    .join(', ') || 'No winner'}
-                </span>
+                <span>{i.won.map((w) => w.name).join(', ') || 'No winner'}</span>
               </li>
             ))}
           </ul>
