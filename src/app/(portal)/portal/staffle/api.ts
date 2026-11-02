@@ -7,7 +7,9 @@ export interface StaffleCard {
   slug: string;
   name: string;
   state: StaffleState;
+  drawn_at: string | null;
   items: number;
+  winners: number;
   photos: string[];
   entered: number;
   won: number;

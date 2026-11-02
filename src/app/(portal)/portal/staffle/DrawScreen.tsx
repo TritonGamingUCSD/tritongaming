@@ -7,17 +7,11 @@ import Button from '@/components/ui/Button';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { call, type StaffleView } from './api';
+import PrizeWheel, { WHEEL_MS } from './PrizeWheel';
 import styles from './staffle.module.css';
 
 type Item = StaffleView['items'][number];
 const BALLS = ['#ffc72c', '#e8912d', '#d9487f', '#7db4ea', '#2fae86', '#8b6cdc', '#f2f1f0', '#e5484d']; /* theme-ok */
-const initials = (n: string) =>
-  n
-    .split(/\s+/)
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join('')
-    .toUpperCase();
 // A repeatable pseudo-random number from a text (so a ball keeps its path and colour between renders).
 const hash = (s: string) => {
   let h = 2166136261;
@@ -33,16 +27,17 @@ const hash = (s: string) => {
   return (h >>> 0) / 4294967296;
 }; // the last lines spread nearby texts (x1, x2, …) apart
 
-// The draw, full screen for a projector. Staff press Draw: the winners are worked out and saved on the server first (so a reload shows the same), then each prize comes up in turn with a lottery: a drum of balls
-// (one per person who entered) tumbles, then a ball drops out and opens on the winner's name. Space, Enter or → goes on to the next prize; Esc leaves.
+// The draw, full screen for a projector. Staff press Draw: the winners are worked out and saved on the server first (so a reload shows the same), then each prize comes up in turn. The host pulls each winner
+// (button, Space, Enter or →): the names of everyone who entered flicker past on the wall and in the big box, slow down and stop on the winner. Whoever already won an earlier prize fades out. Esc leaves.
 export default function DrawScreen({ slug, onClose }: { slug: string; onClose: () => void }) {
   const [s, setS] = useState<StaffleView | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [started, setStarted] = useState(false);
   const [idx, setIdx] = useState(0);
-  const [phase, setPhase] = useState<'rolling' | 'reveal' | 'shown'>('rolling');
-  const [shown, setShown] = useState(0);
+  const [phase, setPhase] = useState<'ready' | 'spin' | 'landed' | 'shown'>('ready'); // ready: waiting for a pull; spin: names flickering; landed: stopped on a winner; shown: every winner of this prize is out
+  const [shown, setShown] = useState(0); // winners of this prize pulled so far
+  const [wheel, setWheel] = useState<{ names: string[]; target: string; key: number } | null>(null); // the wheel as it was set up for the last pull of this prize
   useEffect(() => {
     void call<{ staffle: StaffleView }>(`/api/staffle/${slug}`).then((r) => {
       if (r.ok) setS(r.data.staffle);
@@ -75,34 +70,78 @@ export default function DrawScreen({ slug, onClose }: { slug: string; onClose: (
   const begin = () => {
     setStarted(true);
     setIdx(0);
-    setPhase('rolling');
+    setPhase('ready');
     setShown(0);
+    setWheel(null);
   };
   const next = useCallback(() => {
     setIdx((n) => n + 1);
-    setPhase('rolling');
+    setPhase('ready');
     setShown(0);
+    setWheel(null);
   }, []);
 
-  // The timeline of one prize: the drum rolls, then the winners drop out one after another, then it waits for "Next".
+  // Who is in the wall: everyone who entered this prize (or, for a prize filled from the leftover pool, the winners), and who has already won an earlier prize (they are out).
+  const pool = useMemo(() => [...new Set(item?.entrants.length ? item.entrants : (item?.won ?? []).map((w) => w.name))], [item]);
+  const out = useMemo(() => new Set(order.slice(0, idx).flatMap((i) => i.won.filter((w) => !w.passed).map((w) => w.name))), [order, idx]);
+  const gotNames = useMemo(
+    () =>
+      new Set(
+        (item?.won ?? [])
+          .filter((w) => !w.passed)
+          .slice(0, shown)
+          .map((w) => w.name),
+      ),
+    [item, shown],
+  );
+
+  // The wheel for the next pull: everyone still in (not out from an earlier prize, not already pulled for this one), and the winner somewhere on it. With a crowd it holds the winner and 35 others, mixed the same way every time.
+  const wheelFor = useCallback(
+    (target: string, key: number) => {
+      const rest = pool
+        .filter((n) => !out.has(n) && !gotNames.has(n) && n !== target)
+        .sort((a, b) => hash(`${item?.id}${a}`) - hash(`${item?.id}${b}`))
+        .slice(0, 35);
+      return { names: [...rest, target].sort((a, b) => hash(`${item?.id}${a}`) - hash(`${item?.id}${b}`)), target, key };
+    },
+    [pool, out, gotNames, item],
+  );
+  const pull = useCallback(() => {
+    const target = item?.won.filter((w) => !w.passed)[shown];
+    if (!target) return;
+    setWheel(wheelFor(target.name, (wheel?.key ?? 0) + 1));
+    setPhase('spin');
+  }, [item, shown, wheelFor, wheel]);
+
+  // The wheel turns for a while, then the winner is called.
   useEffect(() => {
-    if (!started || !item) return;
-    const timers: number[] = [];
-    if (phase === 'rolling') timers.push(window.setTimeout(() => setPhase('reveal'), reduced ? 500 : 3800));
-    if (phase === 'reveal') {
-      if (winners.length === 0) timers.push(window.setTimeout(() => setPhase('shown'), 1500));
-      else if (shown < winners.length) timers.push(window.setTimeout(() => setShown((n) => n + 1), shown === 0 ? 200 : reduced ? 400 : 1700));
-      else timers.push(window.setTimeout(() => setPhase('shown'), 600));
-    }
-    return () => timers.forEach((t) => window.clearTimeout(t));
-  }, [started, item, phase, shown, winners.length, reduced]);
+    if (!started || !item || phase !== 'spin') return;
+    const t = window.setTimeout(
+      () => {
+        setShown((n) => n + 1);
+        setPhase('landed');
+      },
+      reduced ? 800 : WHEEL_MS + 350,
+    );
+    return () => window.clearTimeout(t);
+  }, [started, item, phase, reduced]);
+  // After a winner lands: a moment to cheer, then back to waiting for the next pull (or on to the next prize).
+  useEffect(() => {
+    if (!started || !item || phase !== 'landed') return;
+    const total = item.won.filter((w) => !w.passed).length;
+    const t = window.setTimeout(() => setPhase(shown < total ? 'ready' : 'shown'), reduced ? 600 : 1800);
+    return () => window.clearTimeout(t);
+  }, [started, item, phase, shown, reduced]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
-      else if ((e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') && started && phase === 'shown') {
+      else if ((e.key === ' ' || e.key === 'Enter' || e.key === 'ArrowRight') && started) {
         e.preventDefault();
-        if (idx < order.length) next();
+        if (phase === 'ready' && winners.length > 0) pull();
+        else if (phase === 'shown' || (phase === 'ready' && winners.length === 0)) {
+          if (idx < order.length) next();
+        }
       }
     };
     window.addEventListener('keydown', onKey);
@@ -112,9 +151,11 @@ export default function DrawScreen({ slug, onClose }: { slug: string; onClose: (
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [onClose, started, phase, idx, order.length, next]);
+  }, [onClose, started, phase, idx, order.length, next, pull, winners.length]);
 
   const done = started && idx >= order.length;
+  const ph = winners.length === 0 && phase === 'ready' ? 'shown' : phase; // a prize nobody won has nothing to pull
+  const pulled = winners.slice(0, ph === 'landed' ? shown - 1 : shown).filter(() => winners.length > 1 || ph !== 'shown'); // winners already out, listed under the box (the one just landed is in the box)
   return (
     <div className={styles.draw} role="dialog" aria-modal="true" aria-label="The draw">
       <button type="button" className={styles.drawClose} onClick={onClose} aria-label="Leave the draw">
@@ -174,74 +215,56 @@ export default function DrawScreen({ slug, onClose }: { slug: string; onClose: (
               </p>
             </div>
             <div className={styles.drawArena}>
-              {phase === 'rolling' && <Drum names={item.entrants.length ? item.entrants : item.won.map((w) => w.name)} />}
-              {phase !== 'rolling' && (
-                <div className={styles.drawWinners} data-count={winners.length}>
-                  {winners.length === 0 && <div className={styles.drawNobody}>{item.entries === 0 ? 'Nobody entered this one' : 'No winner'}</div>}
-                  {winners.slice(0, shown).map((w, n) => (
-                    <div key={w.id} className={styles.drawBall} style={{ '--hue': BALLS[Math.floor(hash(w.id) * BALLS.length)], '--n': n } as CSSProperties}>
-                      <span className={styles.drawBallName}>{w.name}</span>
-                      {w.via === 'leftover' && <small className={styles.drawLeft}>from the leftover pool</small>}
-                    </div>
+              {winners.length > 0 &&
+                (() => {
+                  const spec = wheel ?? wheelFor(winners[0].name, 0);
+                  return <PrizeWheel key={`${item.id}:${spec.key}`} names={spec.names} target={spec.target} spinning={ph === 'spin'} reduced={reduced} />;
+                })()}
+              <div className={styles.spinBox} data-state={ph}>
+                {ph === 'shown' && winners.length === 0 ? (
+                  <span>{item.entries === 0 ? 'Nobody entered this one' : 'No winner'}</span>
+                ) : ph === 'ready' ? (
+                  <span className={styles.spinHint}>{shown === 0 ? 'Who will it be?' : 'Who is next?'}</span>
+                ) : ph === 'spin' ? (
+                  <span className={styles.spinHint}>Spinning…</span>
+                ) : (
+                  <span className={styles.spinWon}>{ph === 'shown' && winners.length > 1 ? `All ${winners.length} winners drawn` : (winners[shown - 1]?.name ?? '')}</span>
+                )}
+                {ph === 'landed' && winners[shown - 1]?.via === 'leftover' && <small className={styles.drawLeft}>from the leftover pool</small>}
+                {ph === 'landed' && <Confetti seed={`${item.id}${shown}`} />}
+              </div>
+              {pulled.length > 0 && (
+                <ul className={styles.pulled} aria-label="Winners so far">
+                  {pulled.map((w, n) => (
+                    <li key={w.id} style={{ '--hue': BALLS[Math.floor(hash(w.id) * BALLS.length)], '--n': n } as CSSProperties}>
+                      {w.name}
+                      {w.via === 'leftover' && <small> · leftover pool</small>}
+                    </li>
                   ))}
-                  {winners.length > 0 && shown >= winners.length && <Confetti seed={item.id} />}
-                </div>
+                </ul>
+              )}
+              {pool.length > 0 && (
+                <ul className={styles.wall} aria-label="Everyone who entered">
+                  {pool.map((n) => (
+                    <li key={n} className={`${out.has(n) ? styles.wallOut : ''} ${gotNames.has(n) ? styles.wallGot : ''}`}>
+                      {n}
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
             <div className={styles.drawFoot}>
-              {phase === 'shown' ? (
+              {ph === 'ready' && winners.length > 0 ? (
+                <Button onClick={pull}>{winners.length > 1 ? `Pull Winner ${shown + 1} Of ${winners.length}` : 'Pull The Winner'}</Button>
+              ) : ph === 'shown' || ph === 'ready' ? (
                 <Button onClick={next}>{idx + 1 >= order.length ? 'Show everyone' : 'Next prize'} →</Button>
               ) : (
-                <span className={styles.drawHint}>{phase === 'rolling' ? 'Drawing…' : ''}</span>
+                <span className={styles.drawHint}>{ph === 'spin' ? 'Drawing…' : ''}</span>
               )}
             </div>
           </div>
         )
       )}
-    </div>
-  );
-}
-
-// The drum: a ring of balls, one per person who entered (at least a dozen so it is never sparse), each tumbling on its own path.
-function Drum({ names }: { names: string[] }) {
-  const balls = useMemo(() => {
-    const list = names.length ? names : ['?'];
-    const out: string[] = [];
-    while (out.length < 14) out.push(...list);
-    return out.slice(0, Math.max(14, Math.min(40, list.length)));
-  }, [names]);
-  return (
-    <div className={styles.drum} aria-hidden="true">
-      {balls.map((n, i) => {
-        // Three spots inside the drum for the ball to roll between (polar, so none is outside the circle), in units of the drum's own width.
-        const spot = (k: number) => {
-          const a = hash(`${n}${i}a${k}`) * Math.PI * 2,
-            r = (0.3 + hash(`${n}${i}r${k}`) * 0.7) * 37;
-          return [`${(Math.cos(a) * r).toFixed(1)}cqw`, `${(Math.sin(a) * r).toFixed(1)}cqw`];
-        };
-        const [p1, p2, p3] = [spot(1), spot(2), spot(3)];
-        return (
-          <span
-            key={i}
-            className={styles.drumBall}
-            style={
-              {
-                '--hue': BALLS[i % BALLS.length],
-                '--x1': p1[0],
-                '--y1': p1[1],
-                '--x2': p2[0],
-                '--y2': p2[1],
-                '--x3': p3[0],
-                '--y3': p3[1],
-                '--d': `${0.45 + hash(`${n}${i}d`) * 0.5}s`,
-                '--w': `${-hash(`${n}${i}w`)}s`,
-              } as CSSProperties
-            }
-          >
-            {initials(n)}
-          </span>
-        );
-      })}
     </div>
   );
 }

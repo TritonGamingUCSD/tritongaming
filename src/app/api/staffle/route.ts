@@ -16,12 +16,12 @@ export async function GET() {
   const ids = (data ?? []).map((s) => s.id as string);
   const [{ data: items }, { data: mine }, { data: won }] = ids.length
     ? await Promise.all([
-        auth.svc.from('staffle_items').select('staffle_id, prize_id').in('staffle_id', ids).limit(5000),
+        auth.svc.from('staffle_items').select('staffle_id, prize_id, winners').in('staffle_id', ids).limit(5000),
         auth.svc.from('staffle_entries').select('staffle_id').eq('user_id', auth.user.id).in('staffle_id', ids).limit(5000),
         auth.svc.from('staffle_winners').select('staffle_id, user_id, passed_at').in('staffle_id', ids).limit(20000),
       ])
     : [
-        { data: [] as { staffle_id: string; prize_id: string }[] },
+        { data: [] as { staffle_id: string; prize_id: string; winners: number }[] },
         { data: [] as { staffle_id: string }[] },
         { data: [] as { staffle_id: string; user_id: string; passed_at: string | null }[] },
       ];
@@ -35,7 +35,9 @@ export async function GET() {
       slug: s.slug,
       name: s.name,
       state: s.status as StaffleState,
+      drawn_at: (s.drawn_at as string | null) ?? null,
       items: (items ?? []).filter((i) => i.staffle_id === s.id).length,
+      winners: (items ?? []).filter((i) => i.staffle_id === s.id).reduce((n, i) => n + ((i.winners as number) ?? 0), 0), // how many people can win in all
       photos: (items ?? [])
         .filter((i) => i.staffle_id === s.id)
         .map((i) => photo.get(i.prize_id as string) ?? '')

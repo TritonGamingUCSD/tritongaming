@@ -2,7 +2,7 @@
 
 import { ZoomImg } from '@/components/ui/PictureZoom';
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Check, Gift, Lock, Play, Presentation, Trophy } from 'lucide-react';
+import { ArrowLeft, Check, CircleHelp, Gift, Lock, Play, Presentation, Trophy } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
 import Loading from '@/components/Loading/Loading';
@@ -13,6 +13,7 @@ import { oddsOf } from '@/lib/staffle/draw';
 import { call, STATE_LABEL, type StaffleView } from './api';
 import StaffleForm from './StaffleForm';
 import StaffleItemsDialog from './StaffleItemsDialog';
+import StaffleRules from './StaffleRules';
 import styles from './staffle.module.css';
 
 // One Staffle: what it is, who it is open to, the prizes (tick the ones you want), and once drawn who won. People who run it also get the draw, claiming, drawing again and the edit menu.
@@ -32,6 +33,7 @@ export default function StaffleViewPage({
   const [s, setS] = useState<StaffleView | null>(null);
   const [error, setError] = useState('');
   const [editing, setEditing] = useState(false);
+  const [how, setHow] = useState(false);
   const [picking, setPicking] = useState(false);
   const [busy, setBusy] = useState('');
   const load = useCallback(async () => {
@@ -78,6 +80,7 @@ export default function StaffleViewPage({
     else setError(r.error);
   };
   const over = s.state === 'ended';
+  const total = s.items.reduce((n, i) => n + i.winners, 0); // people who can win, across all prizes
   return (
     <div className={styles.page}>
       <div className={styles.head}>
@@ -90,7 +93,7 @@ export default function StaffleViewPage({
             <span className={`${styles.chip} ${open ? styles.chipOn : ''}`}>{STATE_LABEL[s.state]}</span>
           </h2>
           <p>
-            {s.entrants} {s.entrants === 1 ? 'person has' : 'people have'} entered
+            {s.entrants} {s.entrants === 1 ? 'person has' : 'people have'} entered · {total} {total === 1 ? 'winner' : 'winners'} to be drawn
           </p>
         </div>
         {canManage && !over && (
@@ -156,8 +159,12 @@ export default function StaffleViewPage({
         </div>
       )}
       <p className={styles.rules}>
-        {s.rules_text}.{s.notes ? ` ${s.notes}` : ''}
+        {s.rules_text}.{s.notes ? ` ${s.notes}` : ''}{' '}
+        <button type="button" className={styles.howLink} onClick={() => setHow(true)}>
+          <CircleHelp size={14} aria-hidden="true" /> How It Works
+        </button>
       </p>
+      {how && <StaffleRules staffle={s} onClose={() => setHow(false)} />}
       {s.state === 'draft' && (
         <Notice tone="info">
           {canManage
@@ -170,7 +177,11 @@ export default function StaffleViewPage({
       {!s.me.can_enter && open && <Notice tone="info">{s.me.why}</Notice>}
       {canManage && ['draft', 'open', 'closed'].includes(s.state) && (
         <div className={styles.prizesBar}>
-          <span>{s.items.length === 0 ? 'No prizes yet.' : `${s.items.length} ${s.items.length === 1 ? 'prize' : 'prizes'} to raffle.`}</span>
+          <span>
+            {s.items.length === 0
+              ? 'No prizes yet.'
+              : `${s.items.length} ${s.items.length === 1 ? 'prize' : 'prizes'} to raffle, ${total} ${total === 1 ? 'winner' : 'winners'} in all.`}
+          </span>
           <Button variant="secondary" onClick={() => setPicking(true)}>
             <Gift size={15} aria-hidden="true" /> {s.items.length ? 'Change Prizes' : 'Pick Prizes'}
           </Button>

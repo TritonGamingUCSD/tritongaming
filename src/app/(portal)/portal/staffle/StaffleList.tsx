@@ -18,9 +18,12 @@ export default function StaffleList({ onOpen }: { onOpen: (slug: string) => void
     });
   }, []);
   if (!cards) return error ? <Notice tone="error">{error}</Notice> : <Loading variant="inline" label="Loading…" />;
-  const live = cards.filter((c) => c.state === 'open'),
+  // Newest first inside each group (that is the order the server sends). Open ones you have not entered yet come first, and in the drawn ones the ones you won, then the most recently drawn.
+  const when = (c: StaffleCard) => (c.drawn_at ? Date.parse(c.drawn_at) : 0);
+  const live = cards.filter((c) => c.state === 'open').sort((a, b) => Number(a.entered > 0) - Number(b.entered > 0)),
+    waiting = cards.filter((c) => c.state === 'closed'),
+    drawn = cards.filter((c) => c.state === 'drawn').sort((a, b) => Number(b.won > 0) - Number(a.won > 0) || when(b) - when(a)),
     soon = cards.filter((c) => c.state === 'draft'),
-    waiting = cards.filter((c) => c.state === 'closed' || c.state === 'drawn'),
     past = cards.filter((c) => c.state === 'ended');
   const card = (c: StaffleCard) => (
     <li key={c.id}>
@@ -38,7 +41,7 @@ export default function StaffleList({ onOpen }: { onOpen: (slug: string) => void
           <b>{c.name}</b>
           <span className={styles.cardMeta}>{STATE_LABEL[c.state]}</span>
           <span className={styles.cardMeta}>
-            {c.items} {c.items === 1 ? 'prize' : 'prizes'}
+            {c.items} {c.items === 1 ? 'prize' : 'prizes'} · {c.winners} {c.winners === 1 ? 'winner' : 'winners'}
             {c.entered > 0 ? ` · you entered ${c.entered}` : ''}
           </span>
           {c.won > 0 && (
@@ -72,8 +75,9 @@ export default function StaffleList({ onOpen }: { onOpen: (slug: string) => void
         </div>
       )}
       {section('Open now', live)}
+      {section('Closed, waiting for the draw', waiting)}
+      {section('Drawn, being picked up', drawn)}
       {section('Not open yet', soon)}
-      {section('Drawn, being picked up', waiting)}
       {section('Past Staffles', past, true)}
     </div>
   );
