@@ -59,6 +59,7 @@ export default function Sheet<T>({
   expand,
   noun,
   rowTone,
+  barExtra,
 }: {
   id: string;
   rows: T[];
@@ -71,6 +72,7 @@ export default function Sheet<T>({
   expand?: (r: T) => ReactNode;
   noun: string;
   rowTone?: (r: T) => 'bad' | 'warn' | undefined;
+  barExtra?: ReactNode; // more controls in the bar above the sheet (a page's own switch)
 }) {
   // The view (sort, filters, full screen) is in the address and the rows opened and the scroll are kept for the tab: all through lib/portal/usePageState, so a refresh or a shared link brings them back.
   const sortCodec = useMemo<Codec<{ col: string; dir: 1 | -1 } | null>>(
@@ -530,6 +532,7 @@ export default function Sheet<T>({
             <X size={13} aria-hidden="true" /> Clear Filters And Sort
           </button>
         )}
+        {barExtra}
         <details className={styles.cols}>
           <summary>
             <Columns3 size={15} aria-hidden="true" /> Columns

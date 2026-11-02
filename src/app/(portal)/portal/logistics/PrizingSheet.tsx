@@ -8,6 +8,7 @@ import PictureDialog from '@/components/ui/PictureDialog';
 import { Select } from '@/components/ui/Field';
 import { compressImage } from '@/lib/ui/compressImage';
 import { call } from '@/lib/ui/apiCall';
+import { flagCodec, useAddressState } from '@/lib/portal/usePageState';
 import { showToast } from '@/lib/ui/toast';
 import { LEVELS, LEVEL_LABEL, isLoose, setLooseSizes, type PrizeStepDef, type StockLevel } from '@/lib/logistics/prizes';
 import type { CellValue } from '@/lib/logistics/sheetMath';
@@ -62,6 +63,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
   const [sheet, setSheet] = useState<SheetData | null>(null);
   const [error, setError] = useState('');
   const [photoFor, setPhotoFor] = useState<PrizeRow | null>(null);
+  const [hideOut, setHideOut] = useAddressState('out', flagCodec); // hide the prizes that are out of stock (in the address, so a link keeps it)
   useMemo(() => setLooseSizes(data.lists.prize_size.filter((o) => o.loose).map((o) => o.value)), [data.lists.prize_size]);
 
   const load = useCallback(async () => {
@@ -435,6 +437,10 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
     return <PrizeLines p={p} lines={mine} sheet={sheet} can={can} setQty={setQty} setCount={setCount} addLine={addLine} setStaffle={setStaffle} />;
   };
 
+  // Out of stock: none in stock (free merch: the level is out) and nothing promised or held back for it, so a prize that is short for an event still shows.
+  const outOfStock = (p: PrizeRow) => (isLoose(p) ? p.stock_level === 'out' : p.quantity <= 0 && p.allocated + p.staffle <= 0);
+  const shownRows = hideOut ? (prizes.rows ?? []).filter((p) => !outOfStock(p)) : (prizes.rows ?? []);
+  const hiddenCount = (prizes.rows ?? []).length - shownRows.length;
   if (!prizes.rows || !sheet)
     return (
       <div className={styles.tab}>{error || prizes.error ? <Notice tone="error">{error || prizes.error}</Notice> : <Loading variant="inline" label="Loading the sheet…" />}</div>
@@ -462,13 +468,19 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
       )}
       <Sheet<PrizeRow>
         id="prizing"
-        rows={prizes.rows}
+        rows={shownRows}
         rowKey={(p) => p.id}
         cols={cols}
         canEdit={can}
         add={add}
         noun="prize"
         expand={detail}
+        barExtra={
+          <label className={sh.hideOut}>
+            <input type="checkbox" checked={hideOut} onChange={(e) => setHideOut(e.target.checked)} /> Hide Out Of Stock
+            {hideOut && hiddenCount > 0 && <span> ({hiddenCount} hidden)</span>}
+          </label>
+        }
         rowTone={(p) => (p.left < 0 && !isLoose(p) ? 'bad' : !p.in_hand && p.allocated + p.staffle > 0 ? 'warn' : undefined)}
         onDelete={
           can
