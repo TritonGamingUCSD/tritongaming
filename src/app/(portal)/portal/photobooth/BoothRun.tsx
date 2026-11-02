@@ -423,7 +423,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
                 <>
                   <p className={styles.kicker}>{total} photos</p>
                   <h2 className={styles.sideTitle}>Pick Your Look</h2>
-                  <p className={styles.welcomeText}>The look is live on the right. Slide, tap an arrow or press ← → to see the others.</p>
+                  <p className={styles.welcomeText}>The look is live with the camera. Slide, tap an arrow or press ← → to see the others.</p>
                   <div className={styles.btnRow}>
                     <button type="button" className={`${styles.bigBtn} ${styles.startBtn}`} onClick={() => void shoot()}>
                       Use This Look

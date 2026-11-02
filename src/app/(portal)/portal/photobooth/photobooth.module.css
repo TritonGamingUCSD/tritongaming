@@ -140,6 +140,7 @@
 .nameInput { flex: 1 1 10rem; min-width: 0; max-width: 24rem; height: var(--btn-h); padding: 0 0.7rem; border-radius: 8px; border: 1px solid transparent; background: transparent; color: var(--pp-ink); font-family: var(--font-futura-heavy); font-size: 1.25rem; }
 .nameInput:hover, .nameInput:focus { border-color: rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); }
 .studioBar .rowActions { margin-left: auto; flex-wrap: nowrap; }
+@media (max-width: 640px) { .studioBar .rowActions { flex-wrap: wrap; margin-left: 0; } }
 .studioBody { flex: 1; min-height: 0; display: grid; grid-template-columns: 5rem 19rem minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); gap: 0.8rem; }
 .rail { display: flex; flex-direction: column; gap: 0.35rem; padding: 0.4rem; border-radius: 12px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); overflow-y: auto; }
 .railBtn { display: grid; justify-items: center; gap: 0.2rem; padding: 0.55rem 0.2rem; border: 0; border-radius: 8px; background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.72rem; font-weight: 600; cursor: pointer; }
@@ -345,6 +346,7 @@
 .pickDots .pickDotOn { background: var(--accent); transform: scale(1.3); }
 @media (prefers-reduced-motion: reduce) { .pickFromRight, .pickFromLeft { animation: none; } }
 .boothWide { grid-template-columns: minmax(15rem, 24rem) minmax(0, 1fr); }
+@media (max-width: 900px) { .boothWide { grid-template-columns: minmax(0, 1fr); } .pickArea { height: min(50vh, 34rem); } }   /* (after the rule above, so a phone stacks the picker under the buttons) */
 .pickName { padding: 0.15rem 0.9rem; border-radius: 999px; border: 2px solid var(--screen-ink, var(--pp-ink)); font-family: var(--font-futura-heavy); font-size: 1.1rem; }
 .handleOut { opacity: 0.35; }
 .trayItem { cursor: grab; }
