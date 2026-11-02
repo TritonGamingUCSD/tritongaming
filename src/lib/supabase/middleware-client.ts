@@ -2,8 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import { withLocalAuthCheck } from '@/lib/supabase/localAuth';
 import { NextResponse, type NextRequest } from 'next/server';
 
-// The only routes a guest may call: joining a game, following and answering it, and the sign-in plumbing.
-const GUEST_API = ['/api/trivia/join', '/api/trivia/play/', '/api/auth/'];
+// The only routes a guest may call: joining a Trivia game or a poll, following and answering it, and the sign-in plumbing.
+const GUEST_API = ['/api/trivia/join', '/api/trivia/play/', '/api/polls/join', '/api/polls/play/', '/api/polls/lookup/', '/api/auth/'];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

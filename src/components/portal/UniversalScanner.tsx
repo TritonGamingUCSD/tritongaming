@@ -101,6 +101,8 @@ export default function UniversalScanner({
         };
       if (u.origin === window.location.origin && (u.pathname === '/portal' || u.pathname.startsWith('/portal/')))
         return { href: `${u.pathname}${u.search}`, title: 'Opening The Page', heading: 'Portal page', text: 'Taking you there now.' };
+      const poll = u.pathname.match(/^\/vote\/([0-9]{6})\/?$/); // a poll's voting link
+      if (poll) return { href: `/vote/${poll[1]}`, title: 'Opening The Poll', heading: 'Poll', text: 'Taking you to the vote.' };
       const trivia = u.pathname.match(/^\/play\/([0-9]{6})\/?$/); // a Trivia game's join link
       if (trivia) return { href: `/portal/trivia/play/${trivia[1]}`, title: 'Joining The Game', heading: 'Trivia', text: 'Taking you into the game.' };
       // any other page of this site (events, divisions, the team page…) opens as it is
@@ -154,6 +156,12 @@ export default function UniversalScanner({
       window.clearTimeout(goTimer.current);
       setState({ kind: 'opening', href: `/portal/trivia/play/${outcome.code}`, title: 'Joining The Game', heading: 'Trivia', text: 'Taking you into the game.' });
       goTimer.current = window.setTimeout(() => go(`/portal/trivia/play/${outcome.code}`), 250);
+      return;
+    }
+    if (outcome.kind === 'poll') {
+      window.clearTimeout(goTimer.current);
+      setState({ kind: 'opening', href: `/vote/${outcome.code}`, title: 'Opening The Poll', heading: 'Poll', text: 'Taking you to the vote.' });
+      goTimer.current = window.setTimeout(() => window.location.assign(`/vote/${outcome.code}`), 250);
       return;
     }
     setState({ kind: 'result', outcome });

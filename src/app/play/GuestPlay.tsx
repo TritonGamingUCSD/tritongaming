@@ -11,6 +11,15 @@ import { FloatShapes, Stage, Tape } from '../(portal)/portal/trivia/shapes';
 import styles from '../(portal)/portal/trivia/trivia.module.css';
 
 const NICK_KEY = 'tg-trivia-nickname';
+/** Is this 6-digit code a poll (voted on at /vote) rather than a Trivia game? Anyone may ask, signed in or not. */
+const isPoll = async (code: string): Promise<boolean> => {
+  try {
+    const r = await fetch(`/api/polls/lookup/${code}`, { cache: 'no-store' });
+    return !!(await r.json()).poll;
+  } catch {
+    return false;
+  }
+};
 const read = () => {
   try {
     return localStorage.getItem(NICK_KEY) ?? '';
@@ -68,6 +77,7 @@ export default function GuestPlay({ initialCode }: { initialCode: string }) {
   // Someone with an account plays as themselves in the portal; a guest who was here before (a refresh) goes straight back into the game.
   useEffect(() => {
     let on = true;
+    if (code) void isPoll(code).then((poll) => on && poll && window.location.replace(`/vote/${code}`)); // (a poll's code opened on the Trivia page)
     void createClient()
       .auth.getUser()
       .then(({ data: { user } }) => {
@@ -105,8 +115,11 @@ export default function GuestPlay({ initialCode }: { initialCode: string }) {
       return;
     }
     setError('');
-    setCode(c);
-    history.replaceState(null, '', `/play/${c}`);
+    void isPoll(c).then((poll) => {
+      if (poll) return window.location.assign(`/vote/${c}`);
+      setCode(c);
+      history.replaceState(null, '', `/play/${c}`);
+    });
   };
   return (
     <Stage>

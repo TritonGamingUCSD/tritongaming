@@ -18,7 +18,7 @@ export default function DashboardCode() {
 
   const settle = (o: Outcome) => {
     if (o.kind === 'trivia') return router.push(`/portal/trivia/play/${o.code}`);
-    if (o.kind === 'poll') return router.push(`/play/${o.code}`);
+    if (o.kind === 'poll') return router.push(`/vote/${o.code}`);
     if (o.kind === 'meeting') window.dispatchEvent(new Event('tg:meetings-changed'));
     setOutcome(o);
   };

@@ -58,6 +58,15 @@ export const SECTIONS: SectionDef[] = [
   },
   { id: 'trivia', label: 'Trivia', search: { hint: 'Join a quiz game, or write and host one', keywords: ['quiz', 'kahoot', 'game', 'questions', 'play', 'join'] } },
   {
+    id: 'polls',
+    label: 'Polls',
+    search: {
+      hint: 'Run a vote on a big screen: a contest, a favourite, a choice on stage',
+      keywords: ['poll', 'vote', 'voting', 'contest', 'cosplay', 'favourite', 'favorite', 'ballot'],
+      caps: ['host_trivia'],
+    },
+  },
+  {
     id: 'photobooth',
     label: 'Photo Booth',
     mainTab: 'booths',

@@ -11,6 +11,7 @@ export const MANAGED_BUCKETS: { bucket: string }[] = [
   { bucket: 'prize-photos' },
   { bucket: 'photobooth-overlays' },
   { bucket: 'doc-attachments' },
+  { bucket: 'poll-images' },
 ];
 
 export interface StorageObject {

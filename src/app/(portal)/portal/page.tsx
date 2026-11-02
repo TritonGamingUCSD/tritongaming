@@ -22,6 +22,7 @@ import {
   Globe,
   Package,
   Gamepad2,
+  Vote,
   Trophy,
 } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
@@ -67,6 +68,7 @@ import LogisticsSectionContent from './logistics/LogisticsSectionContent';
 import StaffleSectionContent from './staffle/StaffleSectionContent';
 import TriviaSectionContent from './trivia/TriviaSectionContent';
 import PhotoBoothSectionContent from './photobooth/PhotoBoothSectionContent';
+import PollsSectionContent from './polls/PollsSectionContent';
 import QuarterStatusContent from './quarters/QuarterStatusContent';
 import InactiveNote from './quarters/InactiveNote';
 import { currentQuarter, loadQuarters, quarterName } from '@/lib/members/quarters';
@@ -457,6 +459,21 @@ export default async function PortalDashboard({ searchParams }: Props) {
       group: 'Events' as const,
       content: <TriviaSectionContent canHost={hasCapability(roles, 'host_trivia')} />,
     },
+    // Polls for events (a cosplay contest, a favourite, a choice on stage): officers and above run them on a big screen; anyone votes with a code, no account needed.
+    ...(hasCapability(roles, 'host_trivia')
+      ? [
+          {
+            id: 'polls',
+            icon: <Vote size={28} strokeWidth={1.5} aria-hidden="true" />,
+            label: sectionLabel('polls'),
+            description: 'Run a vote on a big screen',
+            homeExclude: true,
+            dockExclude: true,
+            group: 'Events' as const,
+            content: <PollsSectionContent />,
+          },
+        ]
+      : []),
     // The photo booth for events: officers and above set one up for an event, keep the overlay library and run it on a screen at the event.
     ...(hasCapability(roles, 'run_photobooth')
       ? [

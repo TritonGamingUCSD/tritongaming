@@ -107,8 +107,8 @@ const CAPS = {
   ],
   host_trivia: [
     'Events',
-    'Host Trivia',
-    'Write quizzes and question pools and host live Trivia games, see their results and delete games. A quiz can be made private to its creator, Admins and a list of officers. Playing only needs an account. Officers and above; lost while inactive.',
+    'Host Trivia And Polls',
+    'Write quizzes and question pools and host live Trivia games, see their results and delete games; make and run Polls (a vote on a big screen) with their entries, and reveal the results. A quiz can be made private to its creator, Admins and a list of officers. Playing Trivia needs an account; voting in a poll needs only the code. Officers and above; lost while inactive.',
     'pages + routes',
   ],
   run_photobooth: [
