@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { TriangleAlert, X } from 'lucide-react';
 import styles from './Dialog.module.css';
@@ -10,8 +10,7 @@ import styles from './Dialog.module.css';
 // undo check-in, delete account) so they all look and behave the same — Escape
 // and backdrop-click close it (unless `busy`), body scroll is locked while open.
 // Content goes in as children; <DialogActions> lays out the button row.
-// `dirty` (the dialog holds edits that are not saved): every way of closing it (Escape, the backdrop, the X, a Cancel button) first asks whether to keep editing or throw the changes away.
-const CloseGuard = createContext<(go: () => void) => void>((go) => go());
+// `dirty` (the dialog holds edits that are not saved): Escape, a click outside and the X do not close it; the window shakes and goes red until they save, or press Cancel to throw the edits away.
 
 export default function Dialog({
   title,
@@ -34,21 +33,29 @@ export default function Dialog({
   children: ReactNode;
   label?: string;
 }) {
-  const [asking, setAsking] = useState(false);
-  const askingRef = useRef(false);
-  useEffect(() => {
-    askingRef.current = asking;
-  }, [asking]);
-  const attempt = useCallback(
-    (go: () => void) => {
-      if (dirty && !busy) setAsking(true);
-      else go();
-    },
-    [dirty, busy],
-  );
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const [warned, setWarned] = useState(false);
+  const attempt = useCallback(() => {
+    if (dirty && !busy) {
+      setWarned(true);
+      if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches)
+        sheetRef.current?.animate(
+          [
+            { transform: 'translateX(0)' },
+            { transform: 'translateX(-9px)' },
+            { transform: 'translateX(9px)' },
+            { transform: 'translateX(-7px)' },
+            { transform: 'translateX(7px)' },
+            { transform: 'translateX(-3px)' },
+            { transform: 'translateX(0)' },
+          ],
+          { duration: 420, easing: 'ease-out' },
+        );
+    } else onClose();
+  }, [dirty, busy, onClose]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy && !askingRef.current) attempt(onClose); // the question on top answers its own Escape
+      if (e.key === 'Escape' && !busy) attempt();
     };
     window.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
@@ -57,17 +64,23 @@ export default function Dialog({
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [busy, onClose, attempt]);
+  }, [busy, attempt]);
 
   return createPortal(
     <div
       className={`${styles.backdrop} ${sheet ? styles.backdropSheet : ''}`}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !busy) attempt(onClose);
+        if (e.target === e.currentTarget && !busy) attempt();
       }}
     >
-      <div className={`${styles.sheet} ${wide ? styles.wide : ''} ${sheet ? styles.sheetFull : ''}`} role="alertdialog" aria-modal="true" aria-label={label ?? title}>
-        <button type="button" className={styles.close} onClick={() => attempt(onClose)} disabled={busy} aria-label="Close">
+      <div
+        ref={sheetRef}
+        className={`${styles.sheet} ${wide ? styles.wide : ''} ${sheet ? styles.sheetFull : ''} ${warned && dirty ? styles.warned : ''}`}
+        role="alertdialog"
+        aria-modal="true"
+        aria-label={label ?? title}
+      >
+        <button type="button" className={styles.close} onClick={() => attempt()} disabled={busy} aria-label="Close">
           <X size={18} strokeWidth={1.75} />
         </button>
         {tone === 'danger' && (
@@ -76,24 +89,13 @@ export default function Dialog({
           </div>
         )}
         <h2 className={styles.title}>{title}</h2>
-        <CloseGuard.Provider value={attempt}>{children}</CloseGuard.Provider>
+        {warned && dirty && (
+          <p className={styles.unsaved} role="alert">
+            You have unsaved changes. Save them, or press Cancel to throw them away.
+          </p>
+        )}
+        {children}
       </div>
-      {asking && (
-        <Dialog title="Discard Your Changes?" tone="danger" onClose={() => setAsking(false)}>
-          <DialogText>You have changes that are not saved. Keep editing to save them, or discard them and close.</DialogText>
-          <DialogActions>
-            <DialogCancel onClick={() => setAsking(false)}>Keep Editing</DialogCancel>
-            <DialogDanger
-              onClick={() => {
-                setAsking(false);
-                onClose();
-              }}
-            >
-              Discard Changes
-            </DialogDanger>
-          </DialogActions>
-        </Dialog>
-      )}
     </div>,
     document.body,
   );
@@ -108,9 +110,8 @@ export function DialogActions({ children }: { children: ReactNode }) {
 }
 
 export function DialogCancel({ onClick, disabled, children = 'Cancel' }: { onClick: () => void; disabled?: boolean; children?: ReactNode }) {
-  const attempt = useContext(CloseGuard);
   return (
-    <button type="button" className={styles.cancel} onClick={() => attempt(onClick)} disabled={disabled}>
+    <button type="button" className={styles.cancel} onClick={onClick} disabled={disabled}>
       {children}
     </button>
   );

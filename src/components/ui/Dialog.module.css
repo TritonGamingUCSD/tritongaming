@@ -10,6 +10,8 @@
   background: #fff; color: #011941; border-radius: 1.25rem; padding: 1.5rem; /* theme-ok */
   display: flex; flex-direction: column; gap: 0.75rem;
 }
+.warned { box-shadow: 0 0 0 3px #dc2626, 0 0 28px rgba(220, 38, 38, 0.55); } /* theme-ok */
+.unsaved { margin: 0; padding: 0.55rem 0.75rem; border-radius: 0.6rem; background: #fee2e2; color: #991b1b; font-size: 0.85rem; font-weight: 700; line-height: 1.35; } /* theme-ok */
 .close {
   position: absolute; top: 0.75rem; right: 0.75rem; width: 32px; height: 32px; border-radius: 50%;
   background: rgba(1, 25, 65, 0.06); color: #011941; display: flex; align-items: center; justify-content: center; cursor: pointer; /* theme-ok */
