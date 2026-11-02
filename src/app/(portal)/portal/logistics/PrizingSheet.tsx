@@ -5,6 +5,8 @@ import { Gift } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import PictureDialog from '@/components/ui/PictureDialog';
+import { PictureZoom } from '@/components/ui/PictureZoom';
+import Button from '@/components/ui/Button';
 import { Select } from '@/components/ui/Field';
 import { compressImage } from '@/lib/ui/compressImage';
 import { call } from '@/lib/ui/apiCall';
@@ -63,6 +65,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
   const [sheet, setSheet] = useState<SheetData | null>(null);
   const [error, setError] = useState('');
   const [photoFor, setPhotoFor] = useState<PrizeRow | null>(null);
+  const [zoomFor, setZoomFor] = useState<PrizeRow | null>(null); // a prize whose picture is shown large
   const [hideOut, setHideOut] = useAddressState('out', flagCodec); // hide the prizes that are out of stock (in the address, so a link keeps it)
   useMemo(() => setLooseSizes(data.lists.prize_size.filter((o) => o.loose).map((o) => o.value)), [data.lists.prize_size]);
 
@@ -290,7 +293,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
       width: 74,
       kind: 'photo',
       get: (p) => p.photo || null,
-      photo: (p) => setPhotoFor(p),
+      photo: (p) => (p.photo ? setZoomFor(p) : setPhotoFor(p)), // a picture opens large (with Change Picture inside); no picture yet opens the chooser
       display: (p) =>
         p.photo /* eslint-disable-next-line @next/next/no-img-element */ ? (
           <img src={p.photo} alt="" className={sh.pic} loading="lazy" />
@@ -491,6 +494,31 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
         }
         deleteLabel={(p) => p.name}
       />
+      {zoomFor && (
+        <PictureZoom src={zoomFor.photo} title={zoomFor.name} onClose={() => setZoomFor(null)}>
+          {can && (
+            <>
+              <Button
+                onClick={() => {
+                  setPhotoFor(zoomFor);
+                  setZoomFor(null);
+                }}
+              >
+                Change Picture
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  void prizes.clearPhoto(zoomFor.id);
+                  setZoomFor(null);
+                }}
+              >
+                Remove Picture
+              </Button>
+            </>
+          )}
+        </PictureZoom>
+      )}
       {photoFor && (
         <PictureDialog
           title={`Picture of ${photoFor.name}`}

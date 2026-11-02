@@ -1,5 +1,6 @@
 'use client';
 
+import { ZoomImg } from '@/components/ui/PictureZoom';
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Check, Gift, Lock, Play, Presentation, Trophy } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -199,13 +200,7 @@ export default function StaffleViewPage({
           const unclaimed = live.filter((w) => !w.claimed);
           return (
             <li key={i.id} className={`${styles.item} ${i.mine ? styles.itemMine : ''}`}>
-              <div className={styles.itemPic}>
-                {i.prize.photo ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */ <img src={i.prize.photo} alt={i.prize.name} loading="lazy" />
-                ) : (
-                  <Gift size={34} strokeWidth={1.4} aria-hidden="true" />
-                )}
-              </div>
+              <div className={styles.itemPic}>{i.prize.photo ? <ZoomImg src={i.prize.photo} alt={i.prize.name} /> : <Gift size={34} strokeWidth={1.4} aria-hidden="true" />}</div>
               <div className={styles.itemBody}>
                 <b className={styles.itemName}>{i.prize.name}</b>
                 <span className={styles.itemMeta}>

@@ -1,5 +1,6 @@
 'use client';
 
+import { ZoomImg } from '@/components/ui/PictureZoom';
 import Select from '@/components/ui/Select';
 import { useState, type CSSProperties } from 'react';
 import { ChevronDown, ChevronRight, CircleAlert, Lock, Minus, Plus, TriangleAlert } from 'lucide-react';
@@ -71,8 +72,7 @@ function LevelChip({ level }: { level: StockLevel }) {
 
 // A prize's picture, small, beside its name (nothing when it has none).
 function Pic({ p }: { p: PrizeRow }) {
-  // eslint-disable-next-line @next/next/no-img-element
-  return p.photo ? <img className={pz.rowPic} src={p.photo} alt={p.name} loading="lazy" /> : null;
+  return p.photo ? <ZoomImg className={pz.rowPic} src={p.photo} alt={p.name} /> : null;
 }
 
 const leftClass = (n: number) => (n < 0 ? pz.leftBad : n === 0 ? pz.leftZero : pz.leftOk);

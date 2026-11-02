@@ -1,5 +1,6 @@
 'use client';
 
+import { ZoomImg } from '@/components/ui/PictureZoom';
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { Gift, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -164,11 +165,7 @@ export default function DrawScreen({ slug, onClose }: { slug: string; onClose: (
                 Prize {idx + 1} of {order.length}
               </small>
               <div className={styles.drawPic}>
-                {item.prize.photo ? (
-                  /* eslint-disable-next-line @next/next/no-img-element */ <img src={item.prize.photo} alt="" />
-                ) : (
-                  <Gift size={56} strokeWidth={1.2} aria-hidden="true" />
-                )}
+                {item.prize.photo ? <ZoomImg src={item.prize.photo} alt={item.prize.name} /> : <Gift size={56} strokeWidth={1.2} aria-hidden="true" />}
               </div>
               <h2>{item.prize.name}</h2>
               <p>
