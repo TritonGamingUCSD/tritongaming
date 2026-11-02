@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Gift, Minus, Plus, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Notice from '@/components/ui/Notice';
 import { Combo } from '../logistics/Combo';
 import { call, type StaffleView } from './api';
@@ -24,6 +25,7 @@ export default function StaffleItemsDialog({ staffle, onClose, onSaved }: { staf
     staffle.items.map((i) => ({ prize_id: i.prize_id, winners: i.winners, draw_order: i.draw_order })),
   );
   const [prizes, setPrizes] = useState<PrizeOption[] | null>(null);
+  const dirty = useDirty(items);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   useEffect(() => {
@@ -48,7 +50,7 @@ export default function StaffleItemsDialog({ staffle, onClose, onSaved }: { staf
     else setProblem(r.error);
   }
   return (
-    <Dialog title="Prizes To Raffle" wide sheet busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title="Prizes To Raffle" wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         <section className={styles.fCard}>

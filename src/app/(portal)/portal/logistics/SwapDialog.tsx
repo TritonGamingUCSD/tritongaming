@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { ArrowRightLeft } from 'lucide-react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input } from '@/components/ui/Field';
@@ -29,6 +30,7 @@ export default function SwapDialog({
 }) {
   const [tag, setTag] = useState('');
   const [reason, setReason] = useState('');
+  const dirty = useDirty({ tag, reason });
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const [got, setGot] = useState<{ replacement: Slim; station: { name: string } | null } | null>(null);
@@ -71,7 +73,7 @@ export default function SwapDialog({
     );
   }
   return (
-    <Dialog title={`Swap ${device.tag ?? device.type}`} sheet busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title={`Swap ${device.tag ?? device.type}`} sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         <Field

@@ -1,3 +1,4 @@
+import { ranksFor } from '@/lib/staffle/draw';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { namesOf } from '@/lib/docs/docsServer';
 import { canEnter, cleanRules, rulesText, type Rules } from '@/lib/staffle/rules';
@@ -54,7 +55,7 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
   const prizeIds = [...new Set((items ?? []).map((i) => i.prize_id as string))];
   const [{ data: prizes }, { data: sponsors }] = await Promise.all([
     prizeIds.length
-      ? svc.from('logistics_prizes').select('id, name, photo, sponsor_id, type, size').in('id', prizeIds)
+      ? svc.from('logistics_prizes').select('id, name, photo, sponsor_id, type, size, price').in('id', prizeIds)
       : Promise.resolve({ data: [] as Record<string, unknown>[] }),
     svc.from('logistics_sponsors').select('id, name'),
   ]);
@@ -73,7 +74,16 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
     if (e.user_id === userId) mine.add(e.item_id as string);
   }
   const state = row.status as StaffleState;
-  const itemViews: StaffleItemView[] = (items ?? []).map((i) => {
+  // Shown in the order they are drawn: the Draw # the host set, then by value (the same ranking the draw uses); prizes that tie keep the order they were added in.
+  const ranks = ranksFor(
+    (items ?? []).map((i) => ({
+      id: i.id as string,
+      draw_order: (i.draw_order as number | null) ?? null,
+      price: Number((prize.get(i.prize_id as string) as { price?: number } | undefined)?.price ?? 0),
+    })),
+  );
+  const inDrawOrder = [...(items ?? [])].sort((a, b) => (ranks.get(a.id as string) ?? 0) - (ranks.get(b.id as string) ?? 0));
+  const itemViews: StaffleItemView[] = inDrawOrder.map((i) => {
     const p = prize.get(i.prize_id as string) as { name: string; photo: string; sponsor_id: string | null; type: string | null; size: string | null } | undefined;
     return {
       id: i.id as string,

@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { Select } from '@/components/ui/Field';
 import Dialog, { DialogActions, DialogCancel, DialogInput } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Button from '@/components/ui/Button';
 import type { DocSection } from '@/lib/docs/docsTree';
 import type { Doc } from '@/types/database';
@@ -44,6 +45,7 @@ export default function NewDocDialog({
 }) {
   const [title, setTitle] = useState('');
   const [where, setWhere] = useState(defaultParentId ? `doc:${defaultParentId}` : `cat:${defaultCategoryId ?? ''}`);
+  const dirty = useDirty({ title, where });
   const [busy, setBusy] = useState(false);
   const places = useMemo(
     () =>
@@ -57,7 +59,7 @@ export default function NewDocDialog({
   );
   const ready = !!title.trim();
   return (
-    <Dialog title="New Doc" onClose={onClose} busy={busy}>
+    <Dialog dirty={dirty} title="New Doc" onClose={onClose} busy={busy}>
       <label className={styles.dlgField}>
         <span className={styles.dlgLabel}>Title</span>
         <DialogInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. How to run check-in" maxLength={120} autoFocus />

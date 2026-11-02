@@ -3,6 +3,7 @@
 import { formatPacificDate, formatPacificDateTime } from '@/lib/core/timezone';
 import { useEffect, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
@@ -69,6 +70,7 @@ export function PrizeEditor({
   });
   const set = <K extends keyof typeof f>(k: K, v: (typeof f)[K]) => setF((c) => ({ ...c, [k]: v }));
   const [busy, setBusy] = useState(false);
+  const dirty = useDirty(f);
   const [problem, setProblem] = useState('');
   const sponsorNames = data.sponsors.map((s) => s.name);
   const loose = isLoose({ size: f.size }); // free merch: a level instead of an exact count
@@ -126,7 +128,7 @@ export function PrizeEditor({
     else setProblem('It couldn’t be removed. The message at the top of the page says why.');
   }
   return (
-    <Dialog title={prize ? prize.name : 'Add Prize'} wide sheet busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title={prize ? prize.name : 'Add Prize'} wide sheet busy={busy} onClose={onClose}>
       {prize && (
         <SectionTabs<PrizeTab>
           variant="segmented"
@@ -736,6 +738,7 @@ function HistoryBody({ prize, from }: { prize: PrizeRow; from: string }) {
 // A station already in this event (a team with devices) that has no prizes yet, or a new one made only for prizes (a raffle, a scavenger hunt).
 export function AddStationDialog({ plan, existing, onClose }: { plan: PlanApi; existing: Station[]; onClose: () => void }) {
   const [name, setName] = useState('');
+  const dirty = useDirty(name);
   const [busy, setBusy] = useState(false);
   const save = async () => {
     const n = name.trim();
@@ -747,7 +750,7 @@ export function AddStationDialog({ plan, existing, onClose }: { plan: PlanApi; e
     if (ok) onClose();
   };
   return (
-    <Dialog title="Add Station" busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title="Add Station" busy={busy} onClose={onClose}>
       <div className={styles.form}>
         <Field label="Station" hint="A team, raffle, game or hunt. Pick one this event already has, or type a new one.">
           <Combo

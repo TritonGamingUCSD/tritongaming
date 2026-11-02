@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import { Textarea, Select } from '@/components/ui/Field';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
@@ -34,6 +35,7 @@ export default function PasteEmailsDialog({ divisions, onClose }: { divisions: {
   const [text, setText] = useState('');
   const [role, setRole] = useState<AppRole>('recruit');
   const [divisionId, setDivisionId] = useState('');
+  const dirty = useDirty({ text, role, divisionId });
   const [plan, setPlan] = useState<Plan | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -114,7 +116,7 @@ export default function PasteEmailsDialog({ divisions, onClose }: { divisions: {
   const divisionName = (id: string | null) => divisions.find((d) => d.id === id)?.name;
 
   return (
-    <Dialog title="Give A Role By Email" onClose={close} busy={busy}>
+    <Dialog dirty={dirty} title="Give A Role By Email" onClose={close} busy={busy}>
       <DialogText>
         Paste a list of email addresses (commas, spaces or one per line). Anyone who already has an account gets the role right away. An address with no account yet waits and gets
         the role the first time someone signs in with it, for up to 90 days.

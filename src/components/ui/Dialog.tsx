@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { TriangleAlert, X } from 'lucide-react';
 import styles from './Dialog.module.css';
@@ -10,10 +10,14 @@ import styles from './Dialog.module.css';
 // undo check-in, delete account) so they all look and behave the same — Escape
 // and backdrop-click close it (unless `busy`), body scroll is locked while open.
 // Content goes in as children; <DialogActions> lays out the button row.
+// `dirty` (the dialog holds edits that are not saved): every way of closing it (Escape, the backdrop, the X, a Cancel button) first asks whether to keep editing or throw the changes away.
+const CloseGuard = createContext<(go: () => void) => void>((go) => go());
+
 export default function Dialog({
   title,
   tone = 'default',
   busy = false,
+  dirty = false,
   wide = false,
   sheet = false,
   onClose,
@@ -25,13 +29,26 @@ export default function Dialog({
   title: string;
   tone?: 'default' | 'danger';
   busy?: boolean;
+  dirty?: boolean;
   onClose: () => void;
   children: ReactNode;
   label?: string;
 }) {
+  const [asking, setAsking] = useState(false);
+  const askingRef = useRef(false);
+  useEffect(() => {
+    askingRef.current = asking;
+  }, [asking]);
+  const attempt = useCallback(
+    (go: () => void) => {
+      if (dirty && !busy) setAsking(true);
+      else go();
+    },
+    [dirty, busy],
+  );
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !busy) onClose();
+      if (e.key === 'Escape' && !busy && !askingRef.current) attempt(onClose); // the question on top answers its own Escape
     };
     window.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
@@ -40,17 +57,17 @@ export default function Dialog({
       window.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
     };
-  }, [busy, onClose]);
+  }, [busy, onClose, attempt]);
 
   return createPortal(
     <div
       className={`${styles.backdrop} ${sheet ? styles.backdropSheet : ''}`}
       onClick={(e) => {
-        if (e.target === e.currentTarget && !busy) onClose();
+        if (e.target === e.currentTarget && !busy) attempt(onClose);
       }}
     >
       <div className={`${styles.sheet} ${wide ? styles.wide : ''} ${sheet ? styles.sheetFull : ''}`} role="alertdialog" aria-modal="true" aria-label={label ?? title}>
-        <button type="button" className={styles.close} onClick={onClose} disabled={busy} aria-label="Close">
+        <button type="button" className={styles.close} onClick={() => attempt(onClose)} disabled={busy} aria-label="Close">
           <X size={18} strokeWidth={1.75} />
         </button>
         {tone === 'danger' && (
@@ -59,8 +76,24 @@ export default function Dialog({
           </div>
         )}
         <h2 className={styles.title}>{title}</h2>
-        {children}
+        <CloseGuard.Provider value={attempt}>{children}</CloseGuard.Provider>
       </div>
+      {asking && (
+        <Dialog title="Discard Your Changes?" tone="danger" onClose={() => setAsking(false)}>
+          <DialogText>You have changes that are not saved. Keep editing to save them, or discard them and close.</DialogText>
+          <DialogActions>
+            <DialogCancel onClick={() => setAsking(false)}>Keep Editing</DialogCancel>
+            <DialogDanger
+              onClick={() => {
+                setAsking(false);
+                onClose();
+              }}
+            >
+              Discard Changes
+            </DialogDanger>
+          </DialogActions>
+        </Dialog>
+      )}
     </div>,
     document.body,
   );
@@ -75,8 +108,9 @@ export function DialogActions({ children }: { children: ReactNode }) {
 }
 
 export function DialogCancel({ onClick, disabled, children = 'Cancel' }: { onClick: () => void; disabled?: boolean; children?: ReactNode }) {
+  const attempt = useContext(CloseGuard);
   return (
-    <button type="button" className={styles.cancel} onClick={onClick} disabled={disabled}>
+    <button type="button" className={styles.cancel} onClick={() => attempt(onClick)} disabled={disabled}>
       {children}
     </button>
   );

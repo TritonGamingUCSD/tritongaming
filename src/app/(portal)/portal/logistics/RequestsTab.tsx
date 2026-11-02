@@ -4,6 +4,7 @@ import { formatPacificDate } from '@/lib/core/timezone';
 import { Lock, Plus, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -350,6 +351,7 @@ function RequestDialog({
   const sizes = useMemo(() => data.lists.prize_size.map((o) => o.value), [data.lists.prize_size]);
   const [priz, setPriz] = useState<PrizeItem[]>(request?.kind === 'prizes' ? (request.items as PrizeItem[]) : []);
   const [onBehalf, setOnBehalf] = useState('');
+  const dirty = useDirty({ team, division, notes, dev, priz, onBehalf });
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
@@ -380,7 +382,7 @@ function RequestDialog({
   const setDevAt = (i: number, patch: Partial<DeviceItem>) => setDev((c) => c.map((x, k) => (k === i ? { ...x, ...patch } : x)));
   const setPrizAt = (i: number, patch: Partial<PrizeItem>) => setPriz((c) => c.map((x, k) => (k === i ? { ...x, ...patch } : x)));
   return (
-    <Dialog title={request ? 'Edit Request' : 'New Request'} wide sheet busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title={request ? 'Edit Request' : 'New Request'} wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         {/* A request that is already sent is changed in its table row (team, contact, notes); this form then only holds what the row has no box for. */}

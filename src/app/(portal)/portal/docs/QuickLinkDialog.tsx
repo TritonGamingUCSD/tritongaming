@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Dialog, { DialogActions, DialogCancel, DialogInput } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import type { QuickLink } from '@/types/database';
@@ -27,6 +28,7 @@ export default function QuickLinkDialog({
   const [url, setUrl] = useState(link?.url ?? '');
   const [note, setNote] = useState(link?.note ?? '');
   const [forTeams, setForTeams] = useState<string[]>(link?.teams ?? []);
+  const dirty = useDirty({ title, url, note, forTeams });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [confirmRemove, setConfirmRemove] = useState(false);
@@ -59,7 +61,7 @@ export default function QuickLinkDialog({
   };
 
   return (
-    <Dialog title={link ? 'Edit Quick Link' : 'Add Quick Link'} onClose={onClose} busy={busy}>
+    <Dialog dirty={dirty} title={link ? 'Edit Quick Link' : 'Add Quick Link'} onClose={onClose} busy={busy}>
       <label className={styles.dlgField}>
         <span className={styles.dlgLabel}>Title</span>
         <DialogInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Tabling staffing sheet" maxLength={120} autoFocus />

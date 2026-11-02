@@ -3,6 +3,7 @@
 import FileDialog from '@/components/ui/FileDialog';
 import { useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Textarea } from '@/components/ui/Field';
@@ -29,6 +30,7 @@ Answer: C`;
 // Paste a list of questions as text: each one with four lettered answers, the right one starred (or an "Answer:" line). It shows what it understood before anything is added; each question gets a time from its length.
 export function BulkAdd({ slug, onClose, onAdded }: { slug: string; onClose: () => void; onAdded: (rows: QuestionRow[]) => void }) {
   const [text, setText] = useState('');
+  const dirty = useDirty(text);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [choosing, setChoosing] = useState(false);
@@ -55,7 +57,7 @@ export function BulkAdd({ slug, onClose, onAdded }: { slug: string; onClose: () 
     onAdded(added);
   };
   return (
-    <Dialog title="Paste Questions" wide busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title="Paste Questions" wide busy={busy} onClose={onClose}>
       {choosing && <FileDialog title="Choose A CSV File" accept=".csv,text/csv" hint="A CSV saved from Excel or Sheets" onUse={pick} onClose={() => setChoosing(false)} />}
       <p className={styles.muted}>
         One question after another: the question, then its four answers starting with A. B. C. D. Put a * by the right one, or add an “Answer: B” line after the answers. A line

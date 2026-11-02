@@ -39,7 +39,7 @@ function Picker({ options, onPick, onCreate, placeholder, initial = '', disabled
   }, [autoFocus]); // a phone won't focus a box by itself, so a box opened to be edited shows its list at once
 
   const q = text.trim().toLowerCase();
-  const shown = useMemo(() => options.filter((o) => !q || o.toLowerCase().includes(q)).slice(0, 60), [options, q]);
+  const shown = useMemo(() => options.filter((o) => !q || o.toLowerCase().includes(q)).slice(0, 500), [options, q]);
   const exact = options.some((o) => o.toLowerCase() === q);
   const canAdd = !!onCreate && !!q && !exact;
   const rows: { kind: 'opt' | 'add' | 'clear'; value: string }[] = [
@@ -273,7 +273,7 @@ export function Suggest({
   const listEl = useRef<HTMLUListElement>(null);
   const listId = useId();
   const q = value.trim().toLowerCase();
-  const shown = useMemo(() => options.filter((o) => !q || o.value.toLowerCase().includes(q)).slice(0, 60), [options, q]);
+  const shown = useMemo(() => options.filter((o) => !q || o.value.toLowerCase().includes(q)).slice(0, 500), [options, q]);
   const visible = open && shown.length > 0 && !(shown.length === 1 && shown[0].value.toLowerCase() === q);
   const pos = useListPlacement(visible, own, shown.length);
   useEffect(() => {

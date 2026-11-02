@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea, DateInput } from '@/components/ui/Field';
@@ -12,6 +13,7 @@ import styles from './logistics.module.css';
 export function StationDialog({ plan, station, onClose }: { plan: PlanApi; station: Station | null; onClose: () => void }) {
   const [name, setName] = useState(station?.name ?? '');
   const [room, setRoom] = useState(station?.room ?? '');
+  const dirty = useDirty({ name, room });
   const [busy, setBusy] = useState(false);
   const save = async () => {
     if (!name.trim()) return;
@@ -29,7 +31,7 @@ export function StationDialog({ plan, station, onClose }: { plan: PlanApi; stati
     if (ok) onClose();
   };
   return (
-    <Dialog title={station ? 'Edit Team' : 'Add Team'} sheet busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title={station ? 'Edit Team' : 'Add Team'} sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         <Field label="Team or booth" hint="Who it is for, like Triton Valorant or Tech Booth.">
           <Input value={name} onChange={(e) => setName(e.target.value)} autoFocus maxLength={200} />
@@ -63,6 +65,7 @@ export function EditPlanDialog({
   const [starts, setStarts] = useState(p.starts_on);
   const [ends, setEnds] = useState(p.ends_on);
   const [notes, setNotes] = useState(p.notes ?? '');
+  const dirty = useDirty({ name, starts, ends, notes });
   const [busy, setBusy] = useState(false);
   const save = async () => {
     setBusy(true);
@@ -71,7 +74,7 @@ export function EditPlanDialog({
     if (ok) onClose();
   };
   return (
-    <Dialog title="Edit Plan" sheet busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title="Edit Plan" sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         <Field label="Name">
           <Input value={name} onChange={(e) => setName(e.target.value)} maxLength={120} />

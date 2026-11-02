@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Notice from '@/components/ui/Notice';
 import { Field, Input } from '@/components/ui/Field';
 import { Combo } from '../logistics/Combo';
@@ -22,6 +23,7 @@ export default function StaffleForm({ staffle, onClose, onSaved }: { staffle: St
   const [pickup, setPickup] = useState(staffle?.pickup_note ?? 'Pick it up from Event Logistics and tell them your name.');
   const [notes, setNotes] = useState(staffle?.notes ?? '');
   const [rules, setRules] = useState<Rules>(staffle?.rules ?? NO_RULES);
+  const dirty = useDirty({ name, pickup, notes, rules });
   const [people, setPeople] = useState<Person[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>(staffle?.rule_names ?? {});
   const [busy, setBusy] = useState(false);
@@ -51,7 +53,7 @@ export default function StaffleForm({ staffle, onClose, onSaved }: { staffle: St
     else setProblem(r.error);
   }
   return (
-    <Dialog title={staffle ? 'Edit Staffle' : 'New Staffle'} wide sheet busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title={staffle ? 'Edit Staffle' : 'New Staffle'} wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         <section className={styles.fCard}>

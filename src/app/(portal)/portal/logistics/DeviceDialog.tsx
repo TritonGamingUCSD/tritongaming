@@ -4,6 +4,7 @@ import { formatPacificDateTime } from '@/lib/core/timezone';
 import { useEffect, useMemo, useState } from 'react';
 import { Plus, TriangleAlert, X } from 'lucide-react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea, Select } from '@/components/ui/Field';
@@ -75,6 +76,7 @@ export default function DeviceDialog({
   const editing = !!device;
   const readOnly = !data.canManage;
   const [d, setD] = useState<Draft>(() => (device ? fromDevice(device) : { ...blank(), ...(template ?? {}) }));
+  const dirty = useDirty(d);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const [history, setHistory] = useState<{ id: string; at: string; summary: string; by: string | null }[] | null>(null);
@@ -169,7 +171,7 @@ export default function DeviceDialog({
   const title = readOnly ? (device?.tag ?? device?.type ?? 'Device') : editing ? `Edit ${device.tag ?? device.type}` : 'Add Device';
 
   return (
-    <Dialog title={title} wide sheet busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title={title} wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         {!rowHas && (

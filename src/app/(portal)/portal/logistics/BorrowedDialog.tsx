@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input } from '@/components/ui/Field';
@@ -37,6 +38,7 @@ export default function BorrowedDialog({
   const [note, setNote] = useState(borrowed?.owner_note ?? '');
   const [games, setGames] = useState<string[]>(borrowed?.games ?? []);
   const [parts, setParts] = useState<string[]>(borrowed?.kit.map((k) => k.item) ?? []);
+  const dirty = useDirty({ tag, type, sponsorId, officerId, note, games, parts });
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const [people, setPeople] = useState<{ id: string; name: string }[]>([]);
@@ -98,7 +100,7 @@ export default function BorrowedDialog({
   }
 
   return (
-    <Dialog title={borrowed ? `Edit ${borrowed.tag}` : 'Add Borrowed Device'} wide sheet busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title={borrowed ? `Edit ${borrowed.tag}` : 'Add Borrowed Device'} wide sheet busy={busy} onClose={onClose}>
       <div className={styles.form}>
         {problem && <Notice tone="error">{problem}</Notice>}
         {!(extrasOnly && borrowed) && (

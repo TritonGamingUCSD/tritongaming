@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
+import { useDirty } from '@/lib/ui/useDirty';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Field, Input, Textarea } from '@/components/ui/Field';
@@ -20,6 +21,7 @@ export function QuestionDialog({ slug, categories, onClose, onAdded }: { slug: s
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
   const [picture, setPicture] = useState<Blob | null>(null); // optional: the shrunk file, sent once the question exists
+  const dirty = useDirty({ category, text, choices, correct, picture: !!picture });
   const [preview, setPreview] = useState('');
   const [round, setRound] = useState(0); // a new round gives the question box back to the cursor
   const missing = [
@@ -71,7 +73,7 @@ export function QuestionDialog({ slug, categories, onClose, onAdded }: { slug: s
     } else onClose();
   };
   return (
-    <Dialog title="Add Question" wide sheet busy={busy} onClose={onClose}>
+    <Dialog dirty={dirty} title="Add Question" wide sheet busy={busy} onClose={onClose}>
       <div className={styles.dialogForm}>
         {problem && <Notice tone="error">{problem}</Notice>}
         <Field label="Category" hint="Shown on its own card before the question; a category you used before is suggested.">
