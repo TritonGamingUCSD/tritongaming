@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { countAt, ensureLoose, loadPrizeSteps, stepKinds } from '@/lib/logistics/prizeServer';
 import { lineNumbers } from '@/lib/logistics/prizes';
+import { BEFORE_DRAW } from '@/lib/staffle/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,9 +13,23 @@ export async function GET() {
   if (auth.error) return auth.error;
   const svc = auth.svc;
   await ensureLoose(svc);
+  // The Staffles whose prizes can still change, and what each holds (so a prize's row can show and change them).
+  const { data: openStaffles } = await svc.from('staffles').select('id, slug, name, status').in('status', BEFORE_DRAW).order('created_at', { ascending: false }).limit(50);
+  const staffleIds = (openStaffles ?? []).map((x) => x.id as string);
+  const { data: staffleItems } = staffleIds.length
+    ? await svc.from('staffle_items').select('staffle_id, prize_id, winners').in('staffle_id', staffleIds).limit(5000)
+    : { data: [] };
+  const staffles = {
+    list: (openStaffles ?? []).map((x) => ({ slug: x.slug as string, name: x.name as string, status: x.status as string })),
+    items: (staffleItems ?? []).map((i) => ({
+      slug: (openStaffles ?? []).find((x) => x.id === i.staffle_id)?.slug as string,
+      prize_id: i.prize_id as string,
+      winners: i.winners as number,
+    })),
+  };
   const { data: plans } = await svc.from('logistics_plans').select('id, slug, name, starts_on, ends_on').eq('status', 'draft').order('starts_on').limit(20);
   const ids = (plans ?? []).map((p) => p.id as string);
-  if (!ids.length) return NextResponse.json({ plans: [], stations: [], steps: [], lines: [], canManage: auth.canManage });
+  if (!ids.length) return NextResponse.json({ plans: [], stations: [], steps: [], lines: [], staffles, canManage: auth.canManage });
   const [stations, lines, done, steps] = await Promise.all([
     svc.from('logistics_stations').select('id, plan_id, name, prize_only').in('plan_id', ids).order('sort').limit(2000),
     svc.from('logistics_plan_prizes').select('id, plan_id, station_id, prize_id, quantity').in('plan_id', ids).limit(20000),
@@ -47,6 +62,7 @@ export async function GET() {
         held: n.held,
       };
     }),
+    staffles,
     canManage: auth.canManage,
   });
 }

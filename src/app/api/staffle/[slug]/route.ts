@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { logAudit } from '@/lib/notifications/audit';
 import { loadStaffle, staffleView } from '@/lib/staffle/detail';
+import { applyItems } from '@/lib/staffle/items';
 import { cleanRules, rulesEmpty } from '@/lib/staffle/rules';
-import { BEFORE_DRAW, notEnough, UUID } from '@/lib/staffle/server';
+import { BEFORE_DRAW, UUID, cleanDrawOrder } from '@/lib/staffle/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,22 +60,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
   }
   if (Array.isArray(b.items)) {
     if (!BEFORE_DRAW.includes(row.status as string)) return NextResponse.json({ error: 'The items can’t change once it is drawn.' }, { status: 409 });
-    const items = (b.items as { prize_id?: unknown; winners?: unknown }[]).flatMap((i) =>
-      typeof i.prize_id === 'string' && UUID.test(i.prize_id) ? [{ prize_id: i.prize_id, winners: Math.min(500, Math.max(1, Math.round(Number(i.winners)) || 1)) }] : [],
+    const items = (b.items as { prize_id?: unknown; winners?: unknown; draw_order?: unknown }[]).flatMap((i) =>
+      typeof i.prize_id === 'string' && UUID.test(i.prize_id)
+        ? [{ prize_id: i.prize_id, winners: Math.min(500, Math.max(1, Math.round(Number(i.winners)) || 1)), draw_order: cleanDrawOrder(i.draw_order) }]
+        : [],
     );
-    if (new Set(items.map((i) => i.prize_id)).size !== items.length)
-      return NextResponse.json({ error: 'A prize can be in a Staffle only once. Give it more winners instead.' }, { status: 400 });
-    const short = items.length ? await notEnough(auth.svc, items, id) : null;
-    if (short) return NextResponse.json({ error: short }, { status: 409 });
-    const { data: have } = await auth.svc.from('staffle_items').select('id, prize_id').eq('staffle_id', id);
-    const keep = new Map((have ?? []).map((h) => [h.prize_id as string, h.id as string]));
-    const drop = (have ?? []).filter((h) => !items.some((i) => i.prize_id === h.prize_id)).map((h) => h.id as string);
-    if (drop.length) await auth.svc.from('staffle_items').delete().in('id', drop); // their entries go with them
-    for (const [n, i] of items.entries()) {
-      const kept = keep.get(i.prize_id);
-      if (kept) await auth.svc.from('staffle_items').update({ winners: i.winners, sort: n }).eq('id', kept);
-      else await auth.svc.from('staffle_items').insert({ staffle_id: id, prize_id: i.prize_id, winners: i.winners, sort: n });
-    }
+    const failed = await applyItems(auth.svc, id, items);
+    if (failed) return NextResponse.json({ error: failed.error }, { status: failed.status });
   }
   const { error } = await auth.svc.from('staffles').update(patch).eq('id', id);
   if (error) return NextResponse.json({ error: 'Couldn’t save that.' }, { status: 500 });

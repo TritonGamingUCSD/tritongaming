@@ -8,6 +8,8 @@ export interface StaffleItemView {
   id: string;
   prize_id: string;
   winners: number;
+  /** The number the host gave for when it is drawn (lower first), or null for by value. */
+  draw_order: number | null;
   entries: number;
   mine: boolean;
   entrants: string[]; // entrants: their names, only for the people who run it (the draw screen shuffles them)
@@ -43,7 +45,7 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
   const id = row.id as string;
   const rules = cleanRules(row.rules);
   const [{ data: items }, { data: entries }, { data: won }, { data: anyone }, person] = await Promise.all([
-    svc.from('staffle_items').select('id, prize_id, winners, sort').eq('staffle_id', id).order('sort').limit(500),
+    svc.from('staffle_items').select('id, prize_id, winners, draw_order, sort').eq('staffle_id', id).order('sort').limit(500),
     svc.from('staffle_entries').select('item_id, user_id').eq('staffle_id', id).limit(30000),
     svc.from('staffle_winners').select('id, item_id, user_id, position, claimed_at, passed_at, via').eq('staffle_id', id).order('position').limit(5000),
     svc.from('staffle_anything').select('user_id').eq('staffle_id', id).limit(5000),
@@ -77,6 +79,7 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
       id: i.id as string,
       prize_id: i.prize_id as string,
       winners: i.winners as number,
+      draw_order: (i.draw_order as number | null) ?? null,
       entries: perItem.get(i.id as string) ?? 0,
       mine: mine.has(i.id as string),
       entrants: canManage ? (entries ?? []).filter((e) => e.item_id === i.id).map((e) => names.get(e.user_id as string) ?? 'Someone') : [],

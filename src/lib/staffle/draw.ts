@@ -1,8 +1,9 @@
 // The Staffle draw. Pure logic: given the items (each with how many winners and who entered) and a seed, it picks the winners. The same seed always gives the same result, so a draw can be shown on the
 // projector one item at a time from what was saved, and checked later.
 //   - Nobody wins twice: a person who wins an item drops out of every later one.
-//   - The prize with the fewest entrants for each winner is drawn next (worked out again after every prize, since winners drop out; ties are random). So a prize only one person entered goes to that person, and the popular
-//     prizes are drawn from whoever is left.
+//   - The prizes are drawn in order of their `rank` (lower first: the most valuable first, see `rankByValue`), and people who do not win stay in for every prize drawn after, so entering a cheap prize never costs a chance at a better one.
+//   - Among prizes with the same rank, the one with the fewest entrants for each winner is drawn next (worked out again after every prize, since winners drop out; ties are random). So of two similar prizes, one only a person entered goes to
+//     that person, and the popular one is drawn from whoever is left.
 //   - An item with N winners gives N different people. When fewer entered than there are winners, they all win it.
 //   - Spots still open after that go to the leftover pools: the people who said they would take anything first, then everyone else who may enter and has not won.
 
@@ -10,6 +11,8 @@ export interface DrawItem {
   id: string;
   winners: number;
   entrants: string[];
+  /** When it is drawn: lower first, the same number is a tie (0 for all when not given). */
+  rank?: number;
 }
 export interface Won {
   item_id: string;
@@ -74,7 +77,9 @@ export function draw(items: DrawItem[], seed: string, alreadyWon: Iterable<strin
       const avail = new Set(item.entrants.filter((u) => !gone.has(u))).size;
       if (avail === 0) continue;
       const ratio = avail / item.winners;
-      if (ratio < bestRatio || (ratio === bestRatio && best && tie.get(item.id)! < tie.get(best.id)!)) {
+      const rank = item.rank ?? 0;
+      const better = !best || rank < (best.rank ?? 0) || (rank === (best.rank ?? 0) && (ratio < bestRatio || (ratio === bestRatio && tie.get(item.id)! < tie.get(best.id)!)));
+      if (better) {
         best = item;
         bestRatio = ratio;
       }
@@ -103,4 +108,26 @@ export function draw(items: DrawItem[], seed: string, alreadyWon: Iterable<strin
 export function oddsOf(entries: number, winners: number, entered: boolean): { all: boolean; oneIn: number } {
   const n = Math.max(1, entries + (entered ? 0 : 1));
   return { all: n <= winners, oneIn: Math.max(1, Math.round(n / winners)) };
+}
+
+/** The draw rank of each prize by value when nobody set one: the most valuable first, and prizes whose price is within 20% of the first of their group count as the same (so rare, similar prizes can still go to the person who entered them). */
+export function rankByValue(prizes: { id: string; price: number }[]): Map<string, number> {
+  const sorted = [...prizes].sort((a, b) => b.price - a.price || a.id.localeCompare(b.id));
+  const out = new Map<string, number>();
+  let group = 0;
+  let top = Infinity;
+  for (const p of sorted) {
+    if (group === 0 || p.price < top * 0.8) {
+      group++;
+      top = p.price;
+    }
+    out.set(p.id, group);
+  }
+  return out;
+}
+
+/** The final rank of each item: the number the host set (1 to 99), or else by value after all the numbered ones. */
+export function ranksFor(items: { id: string; draw_order: number | null; price: number }[]): Map<string, number> {
+  const byValue = rankByValue(items.map((i) => ({ id: i.id, price: i.price })));
+  return new Map(items.map((i) => [i.id, i.draw_order ?? 100 + (byValue.get(i.id) ?? 1)]));
 }

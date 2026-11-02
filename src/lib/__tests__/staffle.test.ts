@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { canEnter, cleanRules, NO_RULES, rulesEmpty, rulesText } from '@/lib/staffle/rules';
-import { draw, oddsOf } from '@/lib/staffle/draw';
+import { draw, oddsOf, rankByValue, ranksFor } from '@/lib/staffle/draw';
 
 const A = '00000000-0000-4000-8000-00000000000a',
   B = '00000000-0000-4000-8000-00000000000b';
@@ -114,6 +114,76 @@ describe('the draw', () => {
       ).toEqual(['a', 'b']);
       expect(won.find((w) => w.item_id === 'popular')?.user_id).toMatch(/[cdef]/);
     }
+  });
+  describe('draw order', () => {
+    it('a person who entered a cheap rare prize and a valuable popular one still has a chance at the valuable one', () => {
+      let a = 0;
+      for (let i = 0; i < 400; i++) {
+        const { won } = draw(
+          [
+            { id: 'valuable', winners: 1, rank: 1, entrants: ['a', 'b', 'c', 'd'] },
+            { id: 'cheap', winners: 1, rank: 2, entrants: ['a'] },
+          ],
+          `v${i}`,
+        );
+        if (won.find((w) => w.item_id === 'valuable')?.user_id === 'a') a++;
+      }
+      expect(a).toBeGreaterThan(60); // about 1 in 4 (100 of 400)
+    });
+    it('and when they do not win it they still get the cheap one', () => {
+      for (let i = 0; i < 60; i++) {
+        const { won } = draw(
+          [
+            { id: 'valuable', winners: 1, rank: 1, entrants: ['a', 'b', 'c'] },
+            { id: 'cheap', winners: 1, rank: 2, entrants: ['a'] },
+          ],
+          `w${i}`,
+        );
+        const v = won.find((w) => w.item_id === 'valuable')!.user_id;
+        if (v !== 'a') expect(won.find((w) => w.item_id === 'cheap')?.user_id).toBe('a');
+        else expect(won.find((w) => w.item_id === 'cheap')).toBeUndefined();
+      }
+    });
+    it('people who lose a drawn-first prize stay in for the prizes after it', () => {
+      const { won } = draw(
+        [
+          { id: 'one', winners: 1, rank: 1, entrants: ['a', 'b'] },
+          { id: 'two', winners: 1, rank: 2, entrants: ['a', 'b'] },
+        ],
+        'x',
+      );
+      expect(new Set(won.map((w) => w.user_id)).size).toBe(2);
+    });
+    it('prizes of the same rank go least contested first', () => {
+      for (let i = 0; i < 30; i++) {
+        const { won } = draw(
+          [
+            { id: 'popular', winners: 1, rank: 1, entrants: ['a', 'b', 'c', 'd'] },
+            { id: 'rare', winners: 1, rank: 1, entrants: ['a'] },
+          ],
+          `t${i}`,
+        );
+        expect(won.find((w) => w.item_id === 'rare')?.user_id).toBe('a');
+      }
+    });
+    it('by value: the most valuable first, and prices within 20% are a tie', () => {
+      const r = rankByValue([
+        { id: 'big', price: 100 },
+        { id: 'near', price: 85 },
+        { id: 'mid', price: 40 },
+        { id: 'small', price: 5 },
+      ]);
+      expect([r.get('big'), r.get('near'), r.get('mid'), r.get('small')]).toEqual([1, 1, 2, 3]);
+    });
+    it('a number the host set wins over value, and prizes without one come after', () => {
+      const r = ranksFor([
+        { id: 'a', draw_order: null, price: 100 },
+        { id: 'b', draw_order: 3, price: 1 },
+        { id: 'c', draw_order: 1, price: 1 },
+      ]);
+      expect(r.get('c')! < r.get('b')!).toBe(true);
+      expect(r.get('b')! < r.get('a')!).toBe(true);
+    });
   });
   describe('leftovers', () => {
     const one = [{ id: 'x', winners: 2, entrants: ['a'] }];

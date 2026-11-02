@@ -32,6 +32,9 @@ export async function freshSlug(svc: SupabaseClient, name: string): Promise<stri
 
 export const UUID = /^[0-9a-f-]{36}$/i;
 
+/** A draw-order number a host typed (1 to 99), or null for "by value". */
+export const cleanDrawOrder = (v: unknown): number | null => (v === null || v === undefined || v === '' ? null : Math.min(99, Math.max(1, Math.round(Number(v)) || 1)));
+
 // A Staffle may not hold back more of a prize than is left to promise (stock, minus what events and other Staffles already hold). `exceptStaffle` leaves one Staffle's own holds out (when it is being edited).
 export async function notEnough(svc: SupabaseClient, items: { prize_id: string; winners: number }[], exceptStaffle?: string): Promise<string | null> {
   await ensureLoose(svc);

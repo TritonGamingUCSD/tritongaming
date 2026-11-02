@@ -27,6 +27,24 @@ try {
   });
   t.ok('a Staffle is made', made1.s === 201, JSON.stringify(made1.j));
   const slug = made1.j.staffle.slug;
+  // ---- the Prizing sheet changes a Staffle's prizes (before it is drawn)
+  const sheet0 = (await exec.call('GET', '/api/logistics/prizes/sheet')).j;
+  t.ok(
+    'the sheet lists the Staffles that can still change and what they hold',
+    sheet0.staffles?.list.some((x) => x.slug === slug) && sheet0.staffles.items.filter((i) => i.slug === slug).length === 3,
+    JSON.stringify(sheet0.staffles?.items?.filter((i) => i.slug === slug)),
+  );
+  t.ok('an officer cannot change it from the sheet', (await o1.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: a.id, winners: 1 })).s === 403);
+  const up = await exec.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: c.id, winners: 1 });
+  t.ok('winners can be changed', up.s === 200 && (await exec.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: b.id, winners: 1 })).s === 200);
+  t.ok('more than is in stock is refused', (await exec.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: b.id, winners: 5 })).s === 409);
+  t.ok(
+    '0 takes it out, and it can be put back',
+    (await exec.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: b.id, winners: 0 })).s === 200 &&
+      (await exec.call('GET', `/api/staffle/${slug}`)).j.staffle.items.length === 2 &&
+      (await exec.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: b.id, winners: 1 })).s === 200 &&
+      (await exec.call('GET', `/api/staffle/${slug}`)).j.staffle.items.length === 3,
+  );
   await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'open' });
   const item = async (prize) => (await exec.call('GET', `/api/staffle/${slug}`)).j.staffle.items.find((i) => i.prize_id === prize.id);
   const enter = async (who, prize) => (await who.call('POST', `/api/staffle/${slug}/entries`, { item_id: (await item(prize)).id, enter: true })).s;
@@ -71,6 +89,7 @@ try {
     JSON.stringify(leftover),
   );
 
+  t.ok('once it is drawn the sheet cannot change its prizes', (await exec.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: c.id, winners: 2 })).s === 409);
   // ---- drawing again falls back to the pools
   const bravo = view.items.find((i) => i.prize.name === 'ZZ Left Bravo');
   const again = await exec.call('POST', `/api/staffle/${slug}/redraw`, { winner_id: bravo.won[0].id });

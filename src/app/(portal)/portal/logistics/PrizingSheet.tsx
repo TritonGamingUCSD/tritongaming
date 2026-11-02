@@ -41,8 +41,13 @@ interface SheetLine {
   back: number;
   held: number;
 }
+interface SheetStaffles {
+  list: { slug: string; name: string; status: string }[];
+  items: { slug: string; prize_id: string; winners: number }[];
+}
 interface SheetData {
   plans: SheetPlan[];
+  staffles: SheetStaffles;
   stations: SheetStation[];
   steps: PrizeStepDef[];
   lines: SheetLine[];
@@ -108,6 +113,13 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
   };
   const setCount = async (l: SheetLine, step: PrizeStepDef, done: number): Promise<boolean> => {
     const r = await call<{ done: number }>(`/api/logistics/events/${l.plan_id}/counts`, 'POST', { line_id: l.id, step_id: step.id, done, expected: l.counts[step.id] ?? 0 });
+    if (!r.ok) return fail(r.error);
+    await refresh();
+    return true;
+  };
+  // A prize in a Staffle that has not been drawn: how many people win it (0 takes it out). The same checks as picking prizes on the Staffle's page (enough left in stock).
+  const setStaffle = async (slug: string, prize: string, winners: number): Promise<boolean> => {
+    const r = await call(`/api/staffle/${slug}/prize`, 'PUT', { prize_id: prize, winners });
     if (!r.ok) return fail(r.error);
     await refresh();
     return true;
@@ -357,7 +369,8 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
       width: 80,
       kind: 'readonly',
       align: 'right',
-      title: 'What a Staffle is holding back for its raffle (until its prizes are claimed or it ends). Counted apart from the events.',
+      title:
+        'What a Staffle is holding back for its raffle (until its prizes are claimed or it ends). Counted apart from the events. Open the row (the chevron) to change how many winners it has in each Staffle that is not drawn yet.',
       get: (p) => (isLoose(p) ? null : p.staffle || null),
     },
     {
@@ -419,7 +432,7 @@ export default function PrizingSheet({ api, data, prizes }: { api: LogisticsApi;
   const detail = (p: PrizeRow) => {
     if (!sheet) return null;
     const mine = linesOf.get(p.id) ?? [];
-    return <PrizeLines p={p} lines={mine} sheet={sheet} can={can} setQty={setQty} setCount={setCount} addLine={addLine} />;
+    return <PrizeLines p={p} lines={mine} sheet={sheet} can={can} setQty={setQty} setCount={setCount} addLine={addLine} setStaffle={setStaffle} />;
   };
 
   if (!prizes.rows || !sheet)
@@ -495,6 +508,7 @@ function PrizeLines({
   setQty,
   setCount,
   addLine,
+  setStaffle,
 }: {
   p: PrizeRow;
   lines: SheetLine[];
@@ -503,7 +517,12 @@ function PrizeLines({
   setQty: (l: SheetLine, n: number) => Promise<boolean>;
   setCount: (l: SheetLine, s: PrizeStepDef, n: number) => Promise<boolean>;
   addLine: (plan: string, station: string, prize: string, qty: number) => Promise<boolean>;
+  setStaffle: (slug: string, prize: string, winners: number) => Promise<boolean>;
 }) {
+  const inStaffles = sheet.staffles.items.filter((i) => i.prize_id === p.id);
+  const otherStaffles = sheet.staffles.list.filter((s) => !inStaffles.some((i) => i.slug === s.slug));
+  const [staffle, setStaffleSlug] = useState('');
+  const [winners, setWinnersText] = useState('1');
   const [plan, setPlan] = useState(sheet.plans[0]?.id ?? '');
   const stations = sheet.stations.filter((s) => s.plan_id === plan && !lines.some((l) => l.station_id === s.id));
   const [station, setStation] = useState('');
@@ -569,6 +588,65 @@ function PrizeLines({
             ))}
           </tbody>
         </table>
+      )}
+      {(inStaffles.length > 0 || sheet.staffles.list.length > 0) && (
+        <>
+          <p className={sh.note}>
+            <b>Staffles</b> (not drawn yet): how many people win {p.name} in each. Set it to 0 to take it out.
+          </p>
+          {inStaffles.length > 0 && (
+            <table className={sh.lineTable}>
+              <thead>
+                <tr>
+                  <th>Staffle</th>
+                  <th>Winners</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inStaffles.map((i) => (
+                  <tr key={i.slug}>
+                    <td>{sheet.staffles.list.find((s) => s.slug === i.slug)?.name ?? i.slug}</td>
+                    <td>{field(i.winners, (n) => void setStaffle(i.slug, p.id, n), `Winners in ${sheet.staffles.list.find((s) => s.slug === i.slug)?.name ?? 'the Staffle'}`)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {can && otherStaffles.length > 0 && (
+            <div className={sh.addLine}>
+              <span>Put it in a Staffle:</span>
+              <Select value={staffle} onChange={(e) => setStaffleSlug(e.target.value)} aria-label="Staffle">
+                <option value="">Staffle…</option>
+                {otherStaffles.map((s) => (
+                  <option key={s.slug} value={s.slug}>
+                    {s.name}
+                  </option>
+                ))}
+              </Select>
+              <input
+                className={sh.mini}
+                type="text"
+                inputMode="numeric"
+                value={winners}
+                onChange={(e) => setWinnersText(e.target.value)}
+                onKeyDown={(e) => e.stopPropagation()}
+                aria-label="How many winners"
+              />
+              <button
+                type="button"
+                className={sh.addBtn}
+                disabled={!staffle || num(winners) < 1}
+                onClick={() => {
+                  void setStaffle(staffle, p.id, num(winners)).then((ok) => {
+                    if (ok) setStaffleSlug('');
+                  });
+                }}
+              >
+                Add
+              </button>
+            </div>
+          )}
+        </>
       )}
       {can && sheet.plans.length > 0 && (
         <div className={sh.addLine}>

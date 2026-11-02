@@ -127,3 +127,6 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .anythingOn { border-color: var(--pp-ink); }
 .odds { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.7); }
 .drawLeft { display: block; margin-top: 0.15rem; font-size: 0.7em; opacity: 0.85; font-weight: 600; }
+
+.fOrder { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.75); }
+.fOrder input { width: 3.6rem; min-height: 2rem; padding: 0 0.4rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); font: inherit; text-align: center; }

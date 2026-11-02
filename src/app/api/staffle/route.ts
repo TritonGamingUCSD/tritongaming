@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { logAudit } from '@/lib/notifications/audit';
 import { cleanRules, NO_RULES, rulesEmpty } from '@/lib/staffle/rules';
-import { freshSlug, notEnough, STAFFLE_COLUMNS, UUID, type StaffleState } from '@/lib/staffle/server';
+import { freshSlug, notEnough, STAFFLE_COLUMNS, UUID, type StaffleState, cleanDrawOrder } from '@/lib/staffle/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,9 +59,11 @@ export async function POST(request: Request) {
   if (!name) return NextResponse.json({ error: 'Give the Staffle a name.' }, { status: 400 });
   const rules = b.rules === undefined ? NO_RULES : cleanRules(b.rules); // no rules sent: the whole team
   if (rulesEmpty(rules)) return NextResponse.json({ error: 'Pick at least one role or person who can enter.' }, { status: 400 });
-  const rawItems = (Array.isArray(b.items) ? b.items : []) as { prize_id?: unknown; winners?: unknown }[];
+  const rawItems = (Array.isArray(b.items) ? b.items : []) as { prize_id?: unknown; winners?: unknown; draw_order?: unknown }[];
   const items = rawItems.flatMap((i) =>
-    typeof i.prize_id === 'string' && UUID.test(i.prize_id) ? [{ prize_id: i.prize_id, winners: Math.min(500, Math.max(1, Math.round(Number(i.winners)) || 1)) }] : [],
+    typeof i.prize_id === 'string' && UUID.test(i.prize_id)
+      ? [{ prize_id: i.prize_id, winners: Math.min(500, Math.max(1, Math.round(Number(i.winners)) || 1)), draw_order: cleanDrawOrder(i.draw_order) }]
+      : [],
   );
   if (new Set(items.map((i) => i.prize_id)).size !== items.length)
     return NextResponse.json({ error: 'A prize can be in a Staffle only once. Give it more winners instead.' }, { status: 400 });
@@ -87,7 +89,8 @@ export async function POST(request: Request) {
     .select(STAFFLE_COLUMNS)
     .single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t make the Staffle.' }, { status: 500 });
-  if (items.length) await auth.svc.from('staffle_items').insert(items.map((i, n) => ({ staffle_id: data.id, prize_id: i.prize_id, winners: i.winners, sort: n })));
+  if (items.length)
+    await auth.svc.from('staffle_items').insert(items.map((i, n) => ({ staffle_id: data.id, prize_id: i.prize_id, winners: i.winners, draw_order: i.draw_order, sort: n })));
   await logAudit(auth.svc, {
     actorId: auth.user.id,
     action: 'create',

@@ -20,7 +20,9 @@ interface PrizeOption {
 
 // Picking a Staffle's prizes after it is made: each prize and how many people win it. They are held back from stock until the Staffle is ended or removed.
 export default function StaffleItemsDialog({ staffle, onClose, onSaved }: { staffle: StaffleView; onClose: () => void; onSaved: () => void }) {
-  const [items, setItems] = useState<{ prize_id: string; winners: number }[]>(staffle.items.map((i) => ({ prize_id: i.prize_id, winners: i.winners })));
+  const [items, setItems] = useState<{ prize_id: string; winners: number; draw_order: number | null }[]>(
+    staffle.items.map((i) => ({ prize_id: i.prize_id, winners: i.winners, draw_order: i.draw_order })),
+  );
   const [prizes, setPrizes] = useState<PrizeOption[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
@@ -46,6 +48,12 @@ export default function StaffleItemsDialog({ staffle, onClose, onSaved }: { staf
         {problem && <Notice tone="error">{problem}</Notice>}
         <section className={styles.fCard}>
           {items.length === 0 && <p className={styles.fNote}>No prizes yet. Pick them below; they are held back from stock while the Staffle runs.</p>}
+          {items.length > 1 && (
+            <p className={styles.fNote}>
+              <b>Draw order:</b> prizes are drawn lowest number first, and people who do not win stay in for every prize after, so entering a smaller prize never costs a chance at
+              a bigger one. Leave it on auto to draw the most valuable first (prices within 20% count as the same); prizes with the same number go least contested first.
+            </p>
+          )}
           <ul className={styles.fItems}>
             {items.map((i) => {
               const p = byId.get(i.prize_id);
@@ -77,6 +85,24 @@ export default function StaffleItemsDialog({ staffle, onClose, onSaved }: { staf
                       </button>
                     </span>
                   }
+                  <label className={styles.fOrder} title="Lower numbers are drawn first. Leave it empty to draw the most valuable first.">
+                    <span>Draw #</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={99}
+                      inputMode="numeric"
+                      placeholder="auto"
+                      value={i.draw_order ?? ''}
+                      onChange={(e) =>
+                        setItems((l) =>
+                          l.map((x) =>
+                            x.prize_id === i.prize_id ? { ...x, draw_order: e.target.value === '' ? null : Math.min(99, Math.max(1, Math.round(Number(e.target.value)) || 1)) } : x,
+                          ),
+                        )
+                      }
+                    />
+                  </label>
                   {
                     <button
                       type="button"
@@ -99,7 +125,7 @@ export default function StaffleItemsDialog({ staffle, onClose, onSaved }: { staf
             ariaLabel="Add a prize to raffle"
             onChange={(v) => {
               const p = free.find((x) => label(x) === v);
-              if (p) setItems((l) => [...l, { prize_id: p.id, winners: 1 }]);
+              if (p) setItems((l) => [...l, { prize_id: p.id, winners: 1, draw_order: null }]);
             }}
           />
         </section>
