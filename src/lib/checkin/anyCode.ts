@@ -28,6 +28,8 @@ export type Outcome =
   | { kind: 'choose'; code: string; meeting: string; ticket: string }
   /** The six digits were a Trivia game's join code: the person has joined it and the screen opens the game. */
   | { kind: 'trivia'; code: string }
+  /** The six digits were a poll's code: the screen opens the poll's voting page. */
+  | { kind: 'poll'; code: string }
   /** A ticket for an event that is not the one on right now: staff are asked before the person is checked in. `redo` is what to send again to go ahead. */
   | { kind: 'confirmEvent'; userName: string; eventTitle: string; nowEvent: string; redo: { code?: string; qr_token?: string } }
   /** Not a mistake, just not for this person (a ticket or a reward pickup opened by someone who is not staff): said calmly, with no error look and nothing to try again. */
@@ -115,14 +117,17 @@ export async function checkInWithCode(code: string): Promise<Outcome> {
     if (isMeeting && isTicket) return { kind: 'choose', code, meeting: m.json.title, ticket: `${t.json.user_name}${t.json.event_title ? ` · ${t.json.event_title}` : ''}` };
     if (isMeeting) return await resolveChoice(code, 'meeting');
     if (isTicket) return await resolveChoice(code, 'ticket');
-    // Neither: say why. A meeting that is not open yet is the more useful answer. (A 403 is not: meetings and tickets are for staff, so every ordinary member gets one for any code, and their code may be a Trivia game's.)
-    if (m.status === 409) return { kind: 'error', message: m.json.error };
-    // Not a meeting or a ticket: a Trivia game with that code is joined (a code that is none of the three is told so).
+    // Not a meeting or a ticket: a Trivia game with that code is joined, and a poll with that code is opened. (A 403 from the meeting side is not an answer: meetings and tickets are for staff, so every ordinary member gets one for any code.)
     const game = await post('/api/trivia/join', { code });
     if (game.ok) return { kind: 'trivia', code };
     if (game.status === 403 || game.status === 409) return { kind: 'error', message: game.json.error };
+    const poll = await post('/api/polls/join', { code });
+    if (poll.ok) return { kind: 'poll', code };
+    if (poll.status === 409) return { kind: 'error', message: poll.json.error };
+    // None of them: say why. A meeting that is not open yet is the more useful answer when one is expected.
+    if (m.status === 409) return { kind: 'error', message: `${m.json.error} If you meant a Trivia game or a poll, check its code on the screen.` };
     if (t.status === 404 || t.status === 403)
-      return { kind: 'error', message: 'That code isn’t a meeting, ticket or Trivia game code right now. Check the screen for the current one.' };
+      return { kind: 'error', message: 'That code isn’t a meeting, ticket, Trivia game or poll code right now. Check the screen for the current one.' };
     return { kind: 'error', message: t.json.error || m.json.error || 'Check-in failed.' };
   } catch {
     return { kind: 'error', message: 'No connection, or it is taking too long. Check the signal and scan again (if it did go through, it will say already checked in).' };

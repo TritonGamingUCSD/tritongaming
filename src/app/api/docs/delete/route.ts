@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { descendantIds } from '@/lib/docs/docsTree';
 import { UUID, authorizeDocs, bad, editingNow } from '@/lib/docs/docsServer';
 import { notifyDocs } from '@/lib/docs/docsLive';
+import { removeUnreferencedFiles, storageUrlsIn } from '@/lib/storage/removeFiles';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,8 +51,14 @@ export async function POST(request: Request) {
         { status: 409 },
       );
   }
+  // What the doc pages (and their older versions) show, read before they are gone, so their pictures and attached files can go too.
+  const [{ data: pages }, { data: versions }] = await Promise.all([
+    auth.svc.from('docs').select('*').in('id', inside),
+    auth.svc.from('doc_versions').select('*').in('doc_id', inside).limit(5000),
+  ]);
   const { error } = await auth.svc.from('docs').delete().eq('id', id);
   if (error) return bad('Couldn’t delete that.', 500);
+  await removeUnreferencedFiles(auth.svc, storageUrlsIn([pages, versions]));
   await notifyDocs();
   return NextResponse.json({ ok: true, removed: inside.length });
 }

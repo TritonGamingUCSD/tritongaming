@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
-import { parseStorageUrl } from '@/lib/storage/imageUpload';
+import { removeUnreferencedFiles, storageUrlsIn } from '@/lib/storage/removeFiles';
 import { getEventById } from '@/lib/events/events';
 
 export const runtime = 'nodejs';
@@ -51,7 +51,7 @@ export async function DELETE(request: Request, { params }: Params) {
   const reversePoints = body.reversePoints !== false;
 
   const service = createServiceClient();
-  const { data: event } = await service.from('events').select('id, title').eq('id', id).maybeSingle();
+  const { data: event } = await service.from('events').select('*').eq('id', id).maybeSingle();
   if (!event) return NextResponse.json({ error: 'Event not found' }, { status: 404 });
   if (confirmTitle.trim() !== event.title.trim()) {
     return NextResponse.json({ error: 'Confirmation title does not match.' }, { status: 400 });
@@ -67,15 +67,8 @@ export async function DELETE(request: Request, { params }: Params) {
     return NextResponse.json({ error: 'Failed to delete event.' }, { status: 500 });
   }
 
-  // Best-effort: the DB delete is what matters, a leftover flyer file isn't fatal.
-  const flyer = (result as { flyer_url?: string | null } | null)?.flyer_url;
-  const parsed = flyer ? parseStorageUrl(flyer) : null;
-  if (parsed) {
-    await service.storage
-      .from(parsed.bucket)
-      .remove([parsed.path])
-      .catch(() => {});
-  }
+  // Best-effort: the DB delete is what matters. Every picture the event had (its flyer, the art, stickers and fonts of its theme, its extras) goes too, unless something else still shows it.
+  await removeUnreferencedFiles(service, [...storageUrlsIn(event), (result as { flyer_url?: string | null } | null)?.flyer_url]);
 
   invalidate('events');
   return NextResponse.json({ ok: true, ...(result as object) });

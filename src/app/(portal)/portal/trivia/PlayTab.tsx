@@ -23,11 +23,8 @@ interface Mine {
 }
 const day = (iso: string) => formatPacificDate(iso, { year: true });
 
-// Join a game with its code, and the games you played. A game's QR code opens this with the code already in the address.
+// The games you played (a game's code is typed in the box on the Dashboard; its QR code opens the game with the code already in the address).
 export default function PlayTab({ onOpen }: { onOpen: (code: string | null) => void }) {
-  const [text, setText] = useState('');
-  const [error, setError] = useState('');
-  const [busy, setBusy] = useState(false);
   const [mine, setMine] = useState<Mine[] | null>(null);
   useEffect(() => {
     let on = true;
@@ -38,48 +35,9 @@ export default function PlayTab({ onOpen }: { onOpen: (code: string | null) => v
       on = false;
     };
   }, []);
-  const join = async () => {
-    const code = cleanCode(text);
-    if (!code) {
-      setError('A code is 6 numbers.');
-      return;
-    }
-    setBusy(true);
-    setError('');
-    const r = await call('POST', '/api/trivia/join', { code });
-    setBusy(false);
-    if (r.ok) onOpen(code);
-    else setError(r.error);
-  };
   return (
     <div className={styles.tab}>
-      <div className={styles.joinBox}>
-        <span className={styles.tape} aria-hidden="true" />
-        <h2>Join a Game</h2>
-        <p className={styles.muted}>Scan the QR code on the screen with your camera, or type the code shown there.</p>
-        <input
-          className={styles.codeInput}
-          value={text}
-          maxLength={40}
-          inputMode="numeric"
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="000000"
-          aria-label="Game code"
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') void join();
-          }}
-        />
-        {error && (
-          <div role="alert">
-            <Notice tone="error">{error}</Notice>
-          </div>
-        )}
-        <Button loading={busy} disabled={!text.trim()} onClick={() => void join()}>
-          Join
-        </Button>
-      </div>
+      <p className={styles.muted}>To join a game, type its code in the box at the top of the Dashboard (or scan its QR code).</p>
       <h2 className={styles.sectionTitle}>Your Games</h2>
       {!mine ? (
         <Loading variant="inline" label="Loading…" />

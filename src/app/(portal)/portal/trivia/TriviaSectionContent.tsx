@@ -50,8 +50,8 @@ export default function TriviaSectionContent({ canHost }: { canHost: boolean }) 
     );
 
   const tabs = [
-    { id: 'play' as const, label: 'Play', icon: <Gamepad2 size={15} /> },
     ...(canHost ? [{ id: 'quizzes' as const, label: 'Quizzes', icon: <ListChecks size={15} /> }] : []),
+    { id: 'play' as const, label: 'My Games', icon: <Gamepad2 size={15} /> },
   ];
   const pick = (t: 'quizzes' | 'play') => go(t === 'quizzes' ? { tab: 'quizzes', quiz: null, view: 'questions', game: null } : { tab: 'play', code: null });
   const inQuiz = route.tab === 'quizzes' && !!route.quiz;

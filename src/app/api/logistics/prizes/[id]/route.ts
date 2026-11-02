@@ -5,6 +5,7 @@ import { cleanPrize, prizeLeft, type PrizePatch } from '@/lib/logistics/prizes';
 import { UUID } from '@/lib/logistics/planServer';
 import { announce, stockTopic, whoIs } from '@/lib/logistics/live';
 import { logAudit } from '@/lib/notifications/audit';
+import { removeUnreferencedFiles } from '@/lib/storage/removeFiles';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,8 +81,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
       { error: `This prize is in ${inStaffle} Staffle${inStaffle === 1 ? '' : 's'}. Take it out of ${inStaffle === 1 ? 'that one' : 'those'} first.` },
       { status: 409 },
     );
-  const { data: p } = await auth.svc.from('logistics_prizes').select('name').eq('id', b.id).maybeSingle();
+  const { data: p } = await auth.svc.from('logistics_prizes').select('name, photo').eq('id', b.id).maybeSingle();
   await auth.svc.from('logistics_prizes').delete().eq('id', b.id);
+  if (p?.photo) await removeUnreferencedFiles(auth.svc, [p.photo as string]); // its picture goes with it
   if (p) await logAudit(auth.svc, { actorId: auth.user.id, action: 'remove', entityType: 'logistics prize', entityId: b.id, summary: `Removed the prize “${p.name}”` });
   await announce(stockTopic(), { k: 'prizes' }, await whoIs(auth.svc, auth.user.id));
   return NextResponse.json({ ok: true });

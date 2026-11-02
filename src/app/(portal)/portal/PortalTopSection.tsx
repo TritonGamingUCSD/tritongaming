@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 import DashboardClient from './DashboardClient';
 import UpcomingEventsPreview from './UpcomingEventsPreview';
 import PortalSearch from '@/components/portal/PortalSearch';
+import DashboardCode from './DashboardCode';
 import PortalHub from '@/components/portal/PortalHub';
 import { useIsDesktop } from '@/components/portal/useIsDesktop';
 import type { HubSection, HubIdentity } from '@/components/portal/hubTypes';
@@ -104,6 +105,7 @@ export default function PortalTopSection({
       {!isDesktop && !panelOpen && (
         <>
           {top}
+          <DashboardCode />
           {cards}
         </>
       )}

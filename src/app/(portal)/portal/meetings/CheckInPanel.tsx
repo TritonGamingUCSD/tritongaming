@@ -3,13 +3,10 @@
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
-import Notice from '@/components/ui/Notice';
+import Link from '@/components/portal/PortalLink';
 import Button from '@/components/ui/Button';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
-import Dialog from '@/components/ui/Dialog';
-import CheckInOutcome from '@/components/portal/CheckInOutcome';
-import { checkInWithCode, resolveChoice, confirmEventCheckIn, type Outcome } from '@/lib/checkin/anyCode';
 import { NextMeeting, TodayMeeting } from './types';
 import { dayLabel, time, timeRange } from './format';
 import { DocButton } from './DocButton';
@@ -18,10 +15,6 @@ import { FunBox } from './FunBox';
 // ── A team member checking themselves in ──────────────────────────────────────
 export function CheckInPanel() {
   const [data, setData] = useState<{ meetings: TodayMeeting[]; next: NextMeeting | null } | undefined>(undefined);
-  const [code, setCode] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [other, setOther] = useState<Outcome | null>(null); // a ticket the code turned out to be (staff)
 
   const load = useCallback(async () => {
     try {
@@ -54,20 +47,6 @@ export function CheckInPanel() {
     return () => clearTimeout(id);
   }, [data]);
 
-  // The box takes a meeting's code, or (for staff) a ticket's: whichever the six digits turn out to be.
-  async function submit(proof: { code: string }) {
-    if (busy) return;
-    setBusy(true);
-    setError('');
-    const o = await checkInWithCode(proof.code);
-    setCode('');
-    if (o.kind === 'error') setError(o.message);
-    else if (o.kind === 'info') setError(`${o.title}. ${o.message}`);
-    else if (o.kind === 'meeting') await load();
-    else setOther(o);
-    setBusy(false);
-  }
-
   if (!data) return <Loading label="Loading meetings…" />;
 
   const meetings = data.meetings.filter((m) => new Date(m.ends_at).getTime() > Date.now());
@@ -78,33 +57,6 @@ export function CheckInPanel() {
 
   return (
     <div className={styles.stack}>
-      {error && openToEnter.length === 0 && <Notice tone="error">{error}</Notice>}
-      {other && (
-        <Dialog title="Ticket Check-In" onClose={() => setOther(null)}>
-          <CheckInOutcome
-            outcome={other}
-            busy={busy}
-            onDone={() => setOther(null)}
-            onChoose={async (which) => {
-              if (other.kind !== 'choose') return;
-              setBusy(true);
-              const o = await resolveChoice(other.code, which);
-              setBusy(false);
-              if (o.kind === 'meeting') {
-                setOther(null);
-                await load();
-              } else setOther(o);
-            }}
-            onConfirmEvent={async () => {
-              if (other.kind !== 'confirmEvent') return;
-              setBusy(true);
-              const o = await confirmEventCheckIn(other.redo);
-              setBusy(false);
-              setOther(o);
-            }}
-          />
-        </Dialog>
-      )}
       {checkedIn.map((m) => (
         <div key={m.id} className={`${styles.card} ${styles.done}`}>
           <div className={styles.doneHead}>
@@ -129,28 +81,11 @@ export function CheckInPanel() {
           <h2 className={styles.cardTitle}>{checkedIn.length > 0 ? 'Another meeting? Enter its code' : 'Enter the code on the screen'}</h2>
           <p className={styles.muted}>{openToEnter.length === 1 ? `${openToEnter[0].title} · ` : 'The code decides which meeting you join · '}the code changes every 30 s</p>
           {openToEnter.length === 1 && openToEnter[0].doc_url && <DocButton url={openToEnter[0].doc_url} label="Open meeting doc" />}
-          <input
-            className={styles.codeInput}
-            value={code}
-            onChange={(e) => {
-              const v = e.target.value.replace(/\D/g, '').slice(0, 6);
-              setCode(v);
-              if (v.length === 6) void submit({ code: v });
-            }}
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]*"
-            maxLength={6}
-            placeholder="000000"
-            aria-label="6-digit meeting code"
-            disabled={busy}
-            autoFocus={checkedIn.length === 0}
-          />
-          {error && <Notice tone="error">{error}</Notice>}
+          <p className={styles.muted}>Codes are typed in one place: the box at the top of the Dashboard (or use the Scan button on a phone).</p>
           <div className={styles.codeActions}>
-            <Button onClick={() => void submit({ code })} disabled={code.length !== 6} loading={busy}>
-              Check in
-            </Button>
+            <Link href="/portal">
+              <Button>Go to the Dashboard</Button>
+            </Link>
           </div>
         </div>
       )}

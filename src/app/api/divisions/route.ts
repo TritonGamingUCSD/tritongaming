@@ -3,6 +3,8 @@ import { invalidate } from '@/lib/site/revalidate';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { removeUnreferencedFiles, storageUrlsIn } from '@/lib/storage/removeFiles';
 import { slugify } from '@/lib/core/slug';
 import type { SocialEmbed } from '@/types/database';
 
@@ -189,8 +191,10 @@ export async function DELETE(request: Request) {
   const { id } = (await request.json()) as { id?: string };
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
+  const { data: before } = await supabase.from('divisions').select('*').eq('id', id).maybeSingle();
   const { error } = await supabase.from('divisions').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  await removeUnreferencedFiles(createServiceClient(), storageUrlsIn(before)); // its logo and page pictures go with it
   invalidate('divisions');
   return NextResponse.json({ ok: true });
 }

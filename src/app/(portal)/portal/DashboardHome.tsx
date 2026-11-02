@@ -4,6 +4,7 @@ import CodeName from '@/components/portal/CodeName';
 import { ExternalLink, MapPin, Ticket } from 'lucide-react';
 import { PACIFIC_TZ, formatPacificTime } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
+import DashboardCode from './DashboardCode';
 import EventCountdown from './EventCountdown';
 import type { HomeActivity, HomeAttention } from '@/lib/portal/homeExtras';
 import RoleAsk from './RoleAsk';
@@ -57,6 +58,7 @@ export function DashboardWelcome({ eyebrow, name, showSearch = true }: { eyebrow
           <PortalSearch large placeholder="Search anything: people, events, meetings, docs, pages…" />
         </div>
       )}
+      <DashboardCode />
     </header>
   );
 }

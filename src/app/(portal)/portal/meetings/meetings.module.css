@@ -11,19 +11,6 @@
 .doneText { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
 .doneIcon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 50%; background: rgba(52, 211, 153, 0.18); color: var(--pp-ok); }
 
-.codeInput {
-  composes: card from '../../../../components/ui/Surface.module.css';
-  width: 100%;
-  text-align: center;
-  font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 2.2rem;
-  letter-spacing: 0.4em;
-  padding: 0.8rem 0.5rem 0.8rem 0.9rem;
-  color: var(--pp-ink);
-  outline: none;
-}
-.codeInput:focus { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
-.codeInput::placeholder { color: rgba(var(--pp-ink-rgb), 0.5); }
 
 .runWrap { display: flex; flex-direction: column; gap: 1.1rem; }
 .codePanel {
@@ -77,7 +64,6 @@
 @media (max-width: 640px) {
   .lists { grid-template-columns: 1fr; }
   .card { padding: 1.1rem; }
-  .codeInput { font-size: 1.8rem; letter-spacing: 0.3em; }
   .bar { flex-basis: 60px; }
 }
 

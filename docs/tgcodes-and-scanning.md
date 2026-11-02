@@ -59,7 +59,7 @@ ordinary QR codes. Every result says exactly what happened.
 
 ## The typed code box
 
-One box on the Scan page (always at the bottom), on Check-In → Enter Code, and on My Meetings. Six digits: a meeting's code and a ticket's code are both asked first **without
+One box on the **Dashboard** (`DashboardCode`, the only place to type a code in the portal) and one at the bottom of the Scan page. The old boxes on Check-In, My Meetings and Trivia are gone (they point to the Dashboard). Guests have `/play`. Six digits: a meeting's code and a ticket's code are both asked first **without
 changing anything**; if only one fits it is done, if neither fits the reason is shown, and if both fit (one in a million) the person is asked **Which one is it?**. Only people who
 may scan tickets can ever hit the ticket side.
 

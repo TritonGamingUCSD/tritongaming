@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { removeUnreferencedFiles, storageUrlsIn } from '@/lib/storage/removeFiles';
 import { strictUser } from '@/lib/supabase/localAuth';
 
 interface Params {
@@ -152,7 +153,7 @@ export async function DELETE(request: Request, { params }: Params) {
 
   const serviceClient = createServiceClient();
   // Names are read before the rows are gone, for the audit trail.
-  const { data: target } = await serviceClient.from('profiles').select('display_name').eq('id', id).maybeSingle();
+  const { data: target } = await serviceClient.from('profiles').select('*').eq('id', id).maybeSingle();
   const { data: mergeInto } = reassignTo ? await serviceClient.from('profiles').select('display_name').eq('id', reassignTo).maybeSingle() : { data: null };
   const { error: rpcError } = await serviceClient.rpc('admin_delete_account', {
     _user_id: id,
@@ -166,6 +167,8 @@ export async function DELETE(request: Request, { params }: Params) {
   // its identities, sessions) only goes away through the Admin API.
   const { error: authError } = await serviceClient.auth.admin.deleteUser(id);
   if (authError) return NextResponse.json({ error: `Account data was removed, but deleting the login itself failed: ${authError.message}` }, { status: 500 });
+
+  await removeUnreferencedFiles(serviceClient, storageUrlsIn(target)); // their profile picture
 
   await logAudit(serviceClient, {
     actorId: user.id,
