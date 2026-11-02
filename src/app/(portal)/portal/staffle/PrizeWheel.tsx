@@ -30,7 +30,7 @@ export default function PrizeWheel({ names, target, spinning, reduced }: { names
     const id = requestAnimationFrame(() => setDeg((reduced ? 360 : 360 * 6) - (t + 0.5) * step + jitter));
     return () => cancelAnimationFrame(id);
   }, [spinning, names, target, step, reduced]);
-  const fs = Math.min(7.5, Math.max(3.4, 320 / n));
+  const fs = Math.min(8.5, Math.max(3.4, 340 / n));
   return (
     <div className={styles.wheel} aria-hidden="true">
       <svg viewBox="-120 -120 240 240">

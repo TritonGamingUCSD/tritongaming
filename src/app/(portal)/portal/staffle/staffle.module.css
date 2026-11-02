@@ -81,7 +81,7 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 @media (max-width: 560px) { .fLine > span { flex-basis: 100%; } .itemPic { width: 4.6rem; height: 4.6rem; } }
 
 /* The draw: a dark stage for a projector */
-.draw { position: fixed; inset: 0; z-index: 3500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; background: radial-gradient(circle at 50% 30%, #1a2f6b 0%, #0a1230 70%); color: #f2f1f0; overflow: hidden; text-align: center; }   /* theme-ok */
+.draw { position: fixed; inset: 0; z-index: 3500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.2rem 1.5rem; background: radial-gradient(circle at 50% 30%, #1a2f6b 0%, #0a1230 70%); color: #f2f1f0; overflow: hidden; text-align: center; }   /* theme-ok */
 .drawClose { position: absolute; top: 1rem; right: 1rem; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.4); background: rgba(0, 0, 0, 0.3); color: #fff; cursor: pointer; }   /* theme-ok */
 .drawIntro, .drawEnd { display: flex; flex-direction: column; align-items: center; gap: 1rem; max-width: 46rem; width: 100%; }
 .drawIntro small, .drawEnd small, .drawPrize small { letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.85rem; color: #ffc72c; }   /* theme-ok */
@@ -90,13 +90,13 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .drawEnd ul { list-style: none; margin: 0.5rem 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 0.5rem; max-height: 50vh; overflow-y: auto; }
 .drawEnd li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.7rem 1rem; border-radius: 10px; background: rgba(255, 255, 255, 0.08); font-size: 1.1rem; text-align: left; }   /* theme-ok */
 .drawEnd li span { color: #ffc72c; font-weight: 700; text-align: right; }   /* theme-ok */
-.drawStage { display: grid; grid-template-columns: minmax(16rem, 1fr) minmax(0, 1.5fr); grid-template-rows: 1fr auto; gap: 1rem 3rem; align-items: center; width: min(78rem, 100%); height: 100%; }
+.drawStage { display: grid; grid-template-columns: minmax(14rem, 0.55fr) minmax(0, 2.2fr); grid-template-rows: 1fr auto; gap: 0.6rem 2rem; align-items: center; width: min(110rem, 100%); height: 100%; }
 .drawPrize { display: flex; flex-direction: column; align-items: center; gap: 0.7rem; }
-.drawPic { display: grid; place-items: center; width: min(22rem, 70vw, 40vh); aspect-ratio: 1; border-radius: 20px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }   /* theme-ok */
+.drawPic { display: grid; place-items: center; width: min(18rem, 24vw, 30vh); aspect-ratio: 1; border-radius: 20px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }   /* theme-ok */
 .drawPic img { width: 100%; height: 100%; object-fit: cover; }
-.drawPrize h2 { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: clamp(1.6rem, 3.4vw, 2.8rem); line-height: 1.1; }
-.drawPrize p { margin: 0; font-size: 1.05rem; opacity: 0.85; }
-.drawArena { position: relative; display: grid; place-items: center; min-height: 22rem; }
+.drawPrize h2 { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: clamp(1.8rem, 3.2vw, 3.2rem); line-height: 1.1; }
+.drawPrize p { margin: 0; font-size: 1.25rem; opacity: 0.85; }
+.drawArena { position: relative; display: grid; place-items: center; min-height: 22rem; width: 100%; }
 .drawFoot { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; min-height: 3.5rem; }
 .drawHint { font-size: 1.1rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.7; }
 
@@ -104,7 +104,7 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .confetti { position: absolute; inset: -50vh -50vw; pointer-events: none; overflow: hidden; }
 .confetti i { position: absolute; top: -5%; left: var(--x); width: 0.7rem; height: 1.2rem; background: var(--c); border-radius: 2px; animation: fall var(--t) linear var(--w) forwards; }
 @keyframes fall { to { transform: translateY(115vh) rotate(var(--r)); } }
-@media (max-width: 900px) { .drawStage { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; } .drawArena { min-height: 16rem; } .drawPic { width: min(12rem, 40vw); } }
+@media (max-width: 900px) { .drawStage { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; } .drawArena { min-height: 16rem; } .drawPic { width: min(9rem, 30vw); } .wheel { width: min(90vw, 46vh); } }
 @media (prefers-reduced-motion: reduce) { .spinBox, .pulled li, .confetti i { animation: none !important; } .confetti { display: none; } .wall li { transition: none; } }
 
 .anything { display: grid; grid-template-columns: auto 1fr; gap: 0.7rem; align-items: start; padding: 0.7rem 0.9rem; border-radius: 12px; border: 2px solid rgba(var(--pp-ink-rgb), 0.25); background: var(--pp-card); color: var(--pp-ink); cursor: pointer; }
@@ -117,8 +117,8 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 
 
 /* The draw: the big box the names flicker through, the winners pulled so far, and the wall of everyone who entered */
-.drawArena { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.1rem; }
-.spinBox { position: relative; display: grid; place-items: center; gap: 0.2rem; width: min(100%, 36rem); min-height: 4.2rem; padding: 0.6rem 1.2rem; border-radius: 22px; border: 3px solid rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.08); font-family: var(--font-futura-heavy); font-size: clamp(1.5rem, 3.2vw, 2.6rem); line-height: 1.1; text-align: center; overflow-wrap: anywhere; transition: background 0.2s, border-color 0.2s, color 0.2s; }   /* theme-ok */
+.drawArena { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.9rem; }
+.spinBox { position: relative; display: grid; place-items: center; gap: 0.2rem; width: min(100%, 52rem); min-height: 5rem; padding: 0.5rem 1.4rem; border-radius: 22px; border: 3px solid rgba(255, 255, 255, 0.45); background: rgba(255, 255, 255, 0.08); font-family: var(--font-futura-heavy); font-size: clamp(2rem, 4.2vw, 4rem); line-height: 1.1; text-align: center; overflow-wrap: anywhere; transition: background 0.2s, border-color 0.2s, color 0.2s; }   /* theme-ok */
 .spinBox[data-state='spin'] { border-color: #ffc72c; box-shadow: 0 0 36px rgba(255, 199, 44, 0.45); }   /* theme-ok */
 .spinBox[data-state='landed'], .spinBox[data-state='shown'] { border-color: #ffc72c; }   /* theme-ok */
 .spinBox[data-state='landed'] { background: #ffc72c; color: #0a1230; animation: landPop 0.55s ease; }   /* theme-ok */
@@ -127,10 +127,10 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 @keyframes nameIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
 @keyframes landPop { 0% { transform: scale(0.94); } 55% { transform: scale(1.07); } 100% { transform: scale(1); } }
 .pulled { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
-.pulled li { padding: 0.45rem 1rem; border-radius: 999px; background: var(--hue); color: #0a1230; font-weight: 800; font-size: 1.05rem; animation: nameIn 0.4s ease both; }   /* theme-ok */
+.pulled li { padding: 0.5rem 1.2rem; border-radius: 999px; background: var(--hue); color: #0a1230; font-weight: 800; font-size: 1.3rem; animation: nameIn 0.4s ease both; }   /* theme-ok */
 .pulled small { font-weight: 600; opacity: 0.8; }
-.wall { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem; max-height: 13vh; overflow: hidden; width: min(100%, 40rem); }
-.wall li { padding: 0.22rem 0.65rem; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font-size: 0.85rem; transition: transform 0.12s, background 0.12s, color 0.12s, opacity 0.4s; }
+.wall { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem; max-height: 14vh; overflow: hidden; width: min(100%, 64rem); }
+.wall li { padding: 0.28rem 0.8rem; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font-size: 1.05rem; transition: transform 0.12s, background 0.12s, color 0.12s, opacity 0.4s; }
 .wallGot { background: #2fae86 !important; color: #06251c; font-weight: 800; }   /* theme-ok */
 .wallOut { opacity: 0.25; text-decoration: line-through; }
 
@@ -145,7 +145,7 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .howTable th { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
 .howNote { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.7); }
 
-.wheel { width: min(24rem, 78vw, 44vh); aspect-ratio: 1; filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.5)); }
+.wheel { width: min(52rem, 100%, 64vh); aspect-ratio: 1; filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.5)); }
 .wheel svg { width: 100%; height: 100%; overflow: visible; }
 .wheelDisc { transform-origin: center; transform-box: fill-box; will-change: transform; }
 
@@ -158,3 +158,4 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .fMove button { display: grid; place-items: center; width: 26px; height: 16px; border-radius: 4px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); cursor: pointer; padding: 0; }
 .fMove button:disabled { opacity: 0.3; cursor: default; }
 .fLink { padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--p-accent-text, var(--pp-ink)); text-decoration: underline; cursor: pointer; }
+.drawFoot button, .drawIntro button:not(.drawClose), .drawEnd button { font-size: 1.35rem; padding: 1rem 2.8rem; min-height: 3.6rem; }
