@@ -13,3 +13,6 @@
 .shareBtn[aria-pressed='true'] { background: var(--pp-ink); color: var(--pp-card); }
 .shareBtn:disabled { opacity: 0.6; }
 .problem { margin: 0; color: var(--pp-bad); font-size: 0.9rem; }
+.badge { margin: 0; padding: 0.3rem 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); font-size: 0.85rem; font-weight: 700; color: var(--pp-ink); }
+.badgeSoon { background: #facc15; border-color: #011941; color: #011941; }   /* theme-ok */
+.shareMain { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; }

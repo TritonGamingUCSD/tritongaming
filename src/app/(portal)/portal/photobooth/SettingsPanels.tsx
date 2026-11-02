@@ -6,7 +6,7 @@ import ColorInput from '@/components/ui/ColorInput';
 import { showToast } from '@/lib/ui/toast';
 import NumberInput from '@/components/ui/NumberInput';
 import { Field, Input, Textarea } from '@/components/ui/Field';
-import { ASPECTS, ASPECT_NAMES, FILTERS, FILTER_NAMES, LAYOUTS, LAYOUT_NAMES, type BoothConfig } from '@/lib/photobooth/booth';
+import { ASPECTS, ASPECT_NAMES, FILTERS, FILTER_NAMES, KEEP_DAYS, LAYOUTS, LAYOUT_NAMES, type BoothConfig } from '@/lib/photobooth/booth';
 import styles from './photobooth.module.css';
 
 /** The small tools: each is a few settings of the booth, and every change is one undo step. `set(patch, key)` merges typing in one box into one step. */
@@ -139,9 +139,7 @@ export function SharingPanel({ config, set, galleryToken }: Props & { galleryTok
       <Field label="QR code stays on screen (seconds)">
         <NumberInput min={10} max={300} step={5} value={config.qr_seconds} onChange={(e) => set({ qr_seconds: Number(e.target.value) }, 'qr-seconds')} />
       </Field>
-      <Field label="Keep pictures for (days)" hint="1 to 7, then they are deleted">
-        <NumberInput min={1} max={7} value={config.keep_days} onChange={(e) => set({ keep_days: Number(e.target.value) }, 'keep-days')} />
-      </Field>
+      <p className={styles.hint}>Pictures are kept for {KEEP_DAYS} days and then deleted. That is the same for every booth.</p>
       <fieldset className={styles.group}>
         <legend>Event Gallery</legend>
         <p className={styles.hint}>

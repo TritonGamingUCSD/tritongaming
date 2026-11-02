@@ -79,7 +79,6 @@ export interface BoothConfig {
   sounds: boolean;
   flash: boolean;
   qr_seconds: number;
-  keep_days: number;
 }
 
 export const DEFAULT_BOOTH: BoothConfig = {
@@ -99,7 +98,6 @@ export const DEFAULT_BOOTH: BoothConfig = {
   sounds: true,
   flash: true,
   qr_seconds: 60,
-  keep_days: 7,
 };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -135,7 +133,6 @@ export function cleanBooth(input: unknown, base: BoothConfig = DEFAULT_BOOTH): B
     sounds: typeof b.sounds === 'boolean' ? b.sounds : base.sounds,
     flash: typeof b.flash === 'boolean' ? b.flash : base.flash,
     qr_seconds: int(b.qr_seconds, 10, 300, base.qr_seconds),
-    keep_days: int(b.keep_days, 1, 7, base.keep_days),
   };
 }
 
@@ -341,8 +338,11 @@ export function stickerBox(cell: Rect, s: { x: number; y: number; size: number }
   return { cx: cell.x + s.x * cell.w, cy: cell.y + s.y * cell.h, w: s.size * cell.w };
 }
 
+/** How many days a picture is kept before it is deleted (the same for every booth). */
+export const KEEP_DAYS = 7;
+
 /** The time a finished picture stops being available. */
-export const expiresAt = (now: Date, keepDays: number): Date => new Date(now.getTime() + keepDays * 86_400_000);
+export const expiresAt = (now: Date): Date => new Date(now.getTime() + KEEP_DAYS * 86_400_000);
 
 /** A filter applied to the pixels of a picture (r, g, b, a in a flat array), in place. Done by hand because not every phone's canvas can apply a filter itself. */
 export function applyFilter(data: Uint8ClampedArray, filter: Filter): void {

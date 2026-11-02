@@ -129,7 +129,7 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .pulled li { padding: 0.5rem 1.2rem; border-radius: 999px; background: var(--hue); color: #0a1230; font-weight: 800; font-size: 1.3rem; animation: nameIn 0.4s ease both; }   /* theme-ok */
 .pulled small { font-weight: 600; opacity: 0.8; }
 .wall { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem; max-height: 14vh; overflow: hidden; width: min(100%, 64rem); }
-.wall li { padding: 0.28rem 0.8rem; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font-size: 1.05rem; transition: transform 0.12s, background 0.12s, color 0.12s, opacity 0.4s; }
+.wall li { padding: 0.28rem 0.8rem; border-radius: 999px; background: rgba(255, 255, 255, 0.14); font-size: 1.05rem; transition: transform 0.12s, background 0.12s, color 0.12s, opacity 0.4s; } /* theme-ok */
 .wallGot { background: #2fae86 !important; color: #06251c; font-weight: 800; }   /* theme-ok */
 .wallOut { opacity: 0.25; text-decoration: line-through; }
 

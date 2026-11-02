@@ -22,7 +22,7 @@ export const PHOTO_BUCKET = 'photobooth';
 export const MAX_OVERLAY_BYTES = 600 * 1024; // the bucket refuses anything over 614400 bytes too
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 export const OVERLAY_COLUMNS = 'id, name, kind, image, placements';
-export const BOOTH_COLUMNS = 'id, slug, name, gallery_token, countdown, accent, screen_bg, screen_ink, welcome_title, welcome_text, prompts, sounds, flash, qr_seconds, keep_days';
+export const BOOTH_COLUMNS = 'id, slug, name, gallery_token, countdown, accent, screen_bg, screen_ink, welcome_title, welcome_text, prompts, sounds, flash, qr_seconds';
 
 // Who may set up and run a booth: officers and above (the capability can also be granted in Admin → Access). The guests' download page needs no sign-in and has its own routes.
 export async function authorizePhotoBooth() {

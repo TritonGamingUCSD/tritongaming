@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import { TOKEN } from '@/lib/photobooth/token';
 import { PHOTO_BUCKET } from '@/lib/photobooth/server';
+import { ShareButton } from './ShareButton';
 import { ShareToggle } from './ShareToggle';
 import styles from './photo.module.css';
 
@@ -33,6 +34,9 @@ async function find(token: string): Promise<Found | null> {
   };
 }
 
+/** The days a picture has left, counted up (a picture with 3 hours left has "1 day left"). */
+const daysLeft = (until: string): number => Math.max(1, Math.ceil((new Date(until).getTime() - Date.now()) / 86_400_000));
+
 // The page a guest reaches by scanning the booth's QR code: their picture and a Download button. No sign-in, no account: the long random address is the key, and the picture is deleted when its days are up.
 export default async function Page({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
@@ -50,12 +54,21 @@ export default async function Page({ params }: { params: Promise<{ token: string
     <main className={styles.page}>
       <div className={styles.card}>
         <h1 className={styles.title}>{photo.event ? `Your Photo From ${photo.event}` : 'Your Photo'}</h1>
+        {(() => {
+          const left = daysLeft(photo.until);
+          return (
+            <p className={`${styles.badge} ${left <= 2 ? styles.badgeSoon : ''}`}>
+              {left === 1 ? 'Last day' : `${left} days left`} · Gone {formatPacificDateTime(photo.until, { weekday: true })}
+            </p>
+          );
+        })()}
         <div className={styles.frame}>
           <Image src={photo.url} alt="Your photo from the Triton Gaming photo booth" width={720} height={1200} unoptimized className={styles.img} priority />
         </div>
         <a className={styles.download} href={`/photos/${token}/download`}>
           Download Photo
         </a>
+        <ShareButton token={token} event={photo.event} />
         {photo.gif && (
           <>
             <div className={styles.frame}>
@@ -68,9 +81,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
           </>
         )}
         <ShareToggle token={token} initial={photo.shared} />
-        <p className={styles.note}>
-          On a phone, you can also press and hold the picture to save it. It is kept until {formatPacificDateTime(photo.until, { weekday: true })} and then deleted.
-        </p>
+        <p className={styles.note}>On a phone, you can also press and hold the picture to save it. Save it before it is deleted.</p>
         <p className={styles.brand}>Triton Gaming · Gaming Org at UC San Diego</p>
       </div>
     </main>

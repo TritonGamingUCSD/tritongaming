@@ -31,7 +31,6 @@ describe('booth settings', () => {
     const c = cleanBooth({
       layout: 'grid',
       countdown: 99,
-      keep_days: 0,
       qr_seconds: 5,
       strip_bg: 'red',
       accent: '#ABCDEF',
@@ -40,7 +39,6 @@ describe('booth settings', () => {
     });
     expect(c.layout).toBe('grid');
     expect(c.countdown).toBe(10);
-    expect(c.keep_days).toBe(1);
     expect(c.qr_seconds).toBe(10);
     expect(c.strip_bg).toBe(DEFAULT_BOOTH.strip_bg); // not a colour: the default
     expect(c.accent).toBe('#abcdef');
@@ -141,7 +139,7 @@ describe('prompts, links and expiry', () => {
   });
   test('the link and the expiry', () => {
     expect(photoLink('abc', 'https://tritongaming.org/')).toBe('https://tritongaming.org/photos/abc');
-    expect(expiresAt(new Date('2026-10-31T00:00:00Z'), 7).toISOString()).toBe('2026-11-07T00:00:00.000Z');
+    expect(expiresAt(new Date('2026-10-31T00:00:00Z')).toISOString()).toBe('2026-11-07T00:00:00.000Z');
   });
   test('tokens are 22 letters and digits and differ', () => {
     const a = photoToken(),
