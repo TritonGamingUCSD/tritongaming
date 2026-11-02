@@ -4,7 +4,7 @@
 //   /portal/photobooth/<booth>/<tool>/<look>   the same tool for one of its looks (the first 8 letters of the look's id; the first look when left out)
 //   /portal/photobooth/<booth>/run        the booth itself (the whole screen)      /portal/photobooth/<booth>/test   a test run of it (nothing is saved)
 
-export const STUDIO_TOOLS = ['frame', 'stickers', 'style', 'photos', 'screen', 'sharing', 'pictures'] as const;
+export const STUDIO_TOOLS = ['style', 'frame', 'stickers', 'photos', 'screen', 'sharing', 'pictures'] as const;
 /** Older addresses of tools that have been renamed or merged. */
 const OLD_TOOLS: Record<string, StudioTool> = { look: 'style', words: 'screen', downloads: 'sharing' };
 export type StudioTool = (typeof STUDIO_TOOLS)[number];

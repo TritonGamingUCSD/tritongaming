@@ -40,9 +40,9 @@ import styles from './photobooth.module.css';
 type Form = BoothConfig & { name: string; lookName: string; frame: FrameSpec | null; edits: Record<string, Partial<Overlay>>; stamp: number };
 
 const TOOLS: { id: StudioTool; label: string; icon: React.ReactNode; group: string }[] = [
+  { id: 'style', label: 'Style', icon: <Palette size={20} aria-hidden="true" />, group: 'This Look' },
   { id: 'frame', label: 'Frame', icon: <Frame size={20} aria-hidden="true" />, group: 'This Look' },
   { id: 'stickers', label: 'Stickers', icon: <Smile size={20} aria-hidden="true" />, group: 'This Look' },
-  { id: 'style', label: 'Style', icon: <Palette size={20} aria-hidden="true" />, group: 'This Look' },
   { id: 'photos', label: 'Photos', icon: <Images size={20} aria-hidden="true" />, group: 'Whole Booth' },
   { id: 'screen', label: 'Screen', icon: <MessageSquare size={20} aria-hidden="true" />, group: 'Whole Booth' },
   { id: 'sharing', label: 'Sharing', icon: <QrCode size={20} aria-hidden="true" />, group: 'Whole Booth' },
