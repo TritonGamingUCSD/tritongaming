@@ -33,6 +33,8 @@ export interface PrizeRow {
 // The prizes are read when the Prizes tab (or a plan's prize picker) opens and kept in memory; each edit's reply is applied on screen. Shown from memory for a minute, then refreshed once.
 const FRESH_MS = 60_000;
 let kept: { at: number; rows: PrizeRow[]; channel: string | null } | null = null;
+const waiting = new Map<string, number>(); // `${prize id}:${field}` -> edits sent and not yet answered
+const withLeft = (x: PrizeRow): PrizeRow => ({ ...x, left: x.quantity - x.allocated - x.staffle });
 let gen = 0; // counts the edits made on screen: a refresh already on its way when someone edited holds the old value and is dropped
 
 export function usePrizes() {
@@ -62,10 +64,29 @@ export function usePrizes() {
   }, [load]);
 
   // `expected_quantity` is the count the person was looking at; if someone else changed it first the server refuses, says who and what it is now, and the row shows that.
+  // An edit to an existing prize shows on screen at once and is sent behind it; if the server refuses it the old values come back. `waiting` counts the edits not yet answered per field, so a late reply never
+  // overwrites a newer edit of the same field.
   const save = useCallback(
     async (id: string | null, patch: PrizePatch & { note?: string; expected_quantity?: number }): Promise<PrizeRow | null> => {
+      const { note: _note, expected_quantity: _expected, ...fields } = patch;
+      const keys = Object.keys(fields) as (keyof PrizeRow)[];
+      const before = id ? kept?.rows.find((x) => x.id === id) : undefined;
+      if (id && before) {
+        for (const k of keys) waiting.set(`${id}:${k}`, (waiting.get(`${id}:${k}`) ?? 0) + 1);
+        gen++;
+        put((kept?.rows ?? []).map((x) => (x.id === id ? withLeft({ ...x, ...fields }) : x)));
+      }
+      const settle = () => {
+        if (id && before) for (const k of keys) waiting.set(`${id}:${k}`, Math.max(0, (waiting.get(`${id}:${k}`) ?? 1) - 1));
+      };
       const r = id ? await call<{ prize: PrizeRow }>(`/api/logistics/prizes/${id}`, 'PATCH', patch) : await call<{ prize: PrizeRow }>('/api/logistics/prizes', 'POST', patch);
+      settle();
       if (!r.ok) {
+        if (id && before && r.body?.code !== 'changed') {
+          gen++;
+          const undo = Object.fromEntries(keys.filter((k) => !waiting.get(`${id}:${k}`)).map((k) => [k, before[k]]));
+          put((kept?.rows ?? []).map((x) => (x.id === id ? withLeft({ ...x, ...undo }) : x)));
+        }
         if (r.body?.code === 'changed' && id) {
           gen++;
           put(
@@ -78,7 +99,8 @@ export function usePrizes() {
         return null;
       }
       setError('');
-      const next = id ? (kept?.rows ?? []).map((x) => (x.id === id ? { ...x, ...r.data.prize } : x)) : [...(kept?.rows ?? []), r.data.prize];
+      const reply = id ? Object.fromEntries(Object.entries(r.data.prize).filter(([k]) => !waiting.get(`${id}:${k}`))) : r.data.prize; // fields with a newer edit still on its way keep what is on screen
+      const next = id ? (kept?.rows ?? []).map((x) => (x.id === id ? { ...x, ...reply } : x)) : [...(kept?.rows ?? []), r.data.prize];
       gen++;
       put(next.sort((a, b) => a.name.localeCompare(b.name)));
       return r.data.prize;

@@ -112,16 +112,19 @@ export default function DevicesSheet({ api, data }: { api: LogisticsApi; data: C
   const doneSet = useMemo(() => new Set((sheet?.done ?? []).map((x) => `${x.plan_id}:${x.device_id}:${x.step_id}`)), [sheet]);
   // Tick or clear one step for one device; the ticks on screen change at once (no reload of the whole sheet).
   const tick = async (plan: string, device: string, step: string, on: boolean): Promise<boolean> => {
+    const mark = (to: boolean) =>
+      setSheet((cur) => {
+        if (!cur) return cur;
+        const rest = cur.done.filter((x) => !(x.plan_id === plan && x.device_id === device && x.step_id === step));
+        return { ...cur, done: to ? [...rest, { plan_id: plan, device_id: device, step_id: step }] : rest };
+      });
+    mark(on); // shown at once; put back if the server refuses
     const r = await call(`/api/logistics/events/${plan}/steps`, on ? 'POST' : 'DELETE', { device_id: device, step_id: step });
     if (!r.ok) {
+      mark(!on);
       showToast(r.error);
       return false;
     }
-    setSheet((cur) => {
-      if (!cur) return cur;
-      const rest = cur.done.filter((x) => !(x.plan_id === plan && x.device_id === device && x.step_id === step));
-      return { ...cur, done: on ? [...rest, { plan_id: plan, device_id: device, step_id: step }] : rest };
-    });
     return true;
   };
   const eventCols = (pl: SheetPlan): SheetCol<Device>[] => {
