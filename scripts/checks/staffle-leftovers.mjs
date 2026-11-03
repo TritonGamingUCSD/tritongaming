@@ -46,6 +46,19 @@ try {
       (await exec.call('GET', `/api/staffle/${slug}`)).j.staffle.items.length === 3,
   );
   await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'open' });
+  t.ok(
+    'while entry is open the prizes are locked (the sheet and the Staffle page both refuse, and the sheet stops listing it)',
+    (await exec.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: b.id, winners: 2 })).s === 409 &&
+      (await exec.call('PATCH', `/api/staffle/${slug}`, { items: [{ prize_id: a.id, winners: 1 }] })).s === 409 &&
+      !(await exec.call('GET', '/api/logistics/prizes/sheet')).j.staffles.list.some((x) => x.slug === slug),
+  );
+  t.ok(
+    'closing entry unlocks them, and opening again locks them',
+    (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'closed' })).s === 200 &&
+      (await exec.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: b.id, winners: 1 })).s === 200 &&
+      (await exec.call('PATCH', `/api/staffle/${slug}`, { status: 'open' })).s === 200 &&
+      (await exec.call('PUT', `/api/staffle/${slug}/prize`, { prize_id: b.id, winners: 1 })).s === 409,
+  );
   const item = async (prize) => (await exec.call('GET', `/api/staffle/${slug}`)).j.staffle.items.find((i) => i.prize_id === prize.id);
   const enter = async (who, prize) => (await who.call('POST', `/api/staffle/${slug}/entries`, { item_id: (await item(prize)).id, enter: true })).s;
   t.ok('people enter', (await enter(o1, a)) === 200 && (await enter(o2, c)) === 200);

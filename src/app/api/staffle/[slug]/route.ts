@@ -4,7 +4,7 @@ import { logAudit } from '@/lib/notifications/audit';
 import { loadStaffle, staffleView } from '@/lib/staffle/detail';
 import { applyItems } from '@/lib/staffle/items';
 import { cleanRules, rulesEmpty } from '@/lib/staffle/rules';
-import { BEFORE_DRAW, UUID, cleanDrawOrder } from '@/lib/staffle/server';
+import { PRIZES_CAN_CHANGE, UUID, cleanDrawOrder } from '@/lib/staffle/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -59,7 +59,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
     patch.status = b.status;
   }
   if (Array.isArray(b.items)) {
-    if (!BEFORE_DRAW.includes(row.status as string)) return NextResponse.json({ error: 'The items can’t change once it is drawn.' }, { status: 409 });
+    if (!PRIZES_CAN_CHANGE.includes(row.status as string))
+      return NextResponse.json(
+        { error: row.status === 'open' ? 'The prizes are locked while people can enter. Close entry first.' : 'The prizes can’t change once it is drawn.' },
+        { status: 409 },
+      );
     const items = (b.items as { prize_id?: unknown; winners?: unknown; draw_order?: unknown }[]).flatMap((i) =>
       typeof i.prize_id === 'string' && UUID.test(i.prize_id)
         ? [{ prize_id: i.prize_id, winners: Math.min(500, Math.max(1, Math.round(Number(i.winners)) || 1)), draw_order: cleanDrawOrder(i.draw_order) }]

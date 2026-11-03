@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { countAt, ensureLoose, loadPrizeSteps, stepKinds } from '@/lib/logistics/prizeServer';
 import { lineNumbers } from '@/lib/logistics/prizes';
-import { BEFORE_DRAW } from '@/lib/staffle/server';
+import { PRIZES_CAN_CHANGE } from '@/lib/staffle/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,7 @@ export async function GET() {
   const svc = auth.svc;
   await ensureLoose(svc);
   // The Staffles whose prizes can still change, and what each holds (so a prize's row can show and change them).
-  const { data: openStaffles } = await svc.from('staffles').select('id, slug, name, status').in('status', BEFORE_DRAW).order('created_at', { ascending: false }).limit(50);
+  const { data: openStaffles } = await svc.from('staffles').select('id, slug, name, status').in('status', PRIZES_CAN_CHANGE).order('created_at', { ascending: false }).limit(50);
   const staffleIds = (openStaffles ?? []).map((x) => x.id as string);
   const { data: staffleItems } = staffleIds.length
     ? await svc.from('staffle_items').select('staffle_id, prize_id, winners').in('staffle_id', staffleIds).limit(5000)

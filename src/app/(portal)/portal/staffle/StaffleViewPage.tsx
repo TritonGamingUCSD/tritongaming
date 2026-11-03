@@ -182,9 +182,13 @@ export default function StaffleViewPage({
               ? 'No prizes yet.'
               : `${s.items.length} ${s.items.length === 1 ? 'prize' : 'prizes'} to raffle, ${total} ${total === 1 ? 'winner' : 'winners'} in all.`}
           </span>
-          <Button variant="secondary" onClick={() => setPicking(true)}>
-            <Gift size={15} aria-hidden="true" /> {s.items.length ? 'Change Prizes' : 'Pick Prizes'}
-          </Button>
+          {open ? (
+            <span className={styles.rules}>Locked while people can enter. Close entry to change them.</span>
+          ) : (
+            <Button variant="secondary" onClick={() => setPicking(true)}>
+              <Gift size={15} aria-hidden="true" /> {s.items.length ? 'Change Prizes' : 'Pick Prizes'}
+            </Button>
+          )}
         </div>
       )}
       {open && s.me.can_enter && (

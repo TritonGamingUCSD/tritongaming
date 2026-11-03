@@ -3,7 +3,7 @@ import { authorizeLogistics } from '@/lib/logistics/auth';
 import { logAudit } from '@/lib/notifications/audit';
 import { loadStaffle } from '@/lib/staffle/detail';
 import { applyItems } from '@/lib/staffle/items';
-import { BEFORE_DRAW, UUID } from '@/lib/staffle/server';
+import { PRIZES_CAN_CHANGE, UUID } from '@/lib/staffle/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slug
   if (auth.error) return auth.error;
   const row = await loadStaffle(auth.svc, (await params).slug);
   if (!row) return NextResponse.json({ error: 'That Staffle is gone.' }, { status: 404 });
-  if (!BEFORE_DRAW.includes(row.status as string)) return NextResponse.json({ error: 'The prizes can’t change once it is drawn.' }, { status: 409 });
+  if (!PRIZES_CAN_CHANGE.includes(row.status as string))
+    return NextResponse.json(
+      { error: row.status === 'open' ? 'The prizes are locked while people can enter. Close entry first.' : 'The prizes can’t change once it is drawn.' },
+      { status: 409 },
+    );
   const b = (await request.json().catch(() => ({}))) as { prize_id?: unknown; winners?: unknown };
   if (typeof b.prize_id !== 'string' || !UUID.test(b.prize_id)) return NextResponse.json({ error: 'Pick a prize.' }, { status: 400 });
   const winners = Math.min(500, Math.max(0, Math.round(Number(b.winners)) || 0));

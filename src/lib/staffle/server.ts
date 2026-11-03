@@ -12,7 +12,8 @@ export const STAFFLE_COLUMNS = 'id, slug, name, notes, pickup_note, rules, statu
 // A Staffle is opened and closed by hand: draft (not open yet), open (taking entries), closed (no more entries, can open again), drawn or ended (one that is not wanted is removed).
 export type StaffleState = 'draft' | 'open' | 'closed' | 'drawn' | 'ended';
 // Before it is drawn the prizes can still change and it can still be drawn.
-export const BEFORE_DRAW: string[] = ['draft', 'open', 'closed'];
+/** When the prizes of a Staffle can change: not while entry is open (people are entering for exactly these prizes), and never once it is drawn. */
+export const PRIZES_CAN_CHANGE: string[] = ['draft', 'closed'];
 
 export async function personFacts(svc: SupabaseClient, userId: string): Promise<Person> {
   const [{ data: roles }, marks] = await Promise.all([svc.from('user_roles').select('role').eq('user_id', userId), activeCount(svc, userId)]);
