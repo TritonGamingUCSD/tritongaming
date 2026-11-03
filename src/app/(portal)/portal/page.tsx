@@ -432,7 +432,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: canManageLogistics ? 'Equipment catalog and event setups' : 'Find equipment and see event setups',
             dockBoost: logisticsToday ? 100 : 0,
             dockLabel: 'Logistics',
-            group: 'Events' as const,
+            group: 'Run' as const,
             content: <LogisticsSectionContent canManage={canManageLogistics} />,
           },
         ]

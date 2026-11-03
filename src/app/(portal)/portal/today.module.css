@@ -1,0 +1,16 @@
+/* The Dashboard's Today cards: a short row of what needs this person now (stacks to one column on a phone). */
+.today { display: grid; gap: 0.6rem; margin: 0 0 1rem; }
+.heading { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.1rem; color: var(--pp-ink); }
+.cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.7rem; }
+.card { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.8rem; align-items: center; height: 100%; padding: 0.8rem 0.95rem; border-radius: 4px; border: 2px solid rgba(var(--pp-ink-rgb), 0.4); background: var(--pp-card); color: var(--pp-ink); text-decoration: none; transition: transform 0.12s ease, box-shadow 0.12s ease; }
+.card:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.55); }
+.now { border-color: var(--pp-ink); box-shadow: 4px 4px 0 var(--yellow); }
+.now:hover { box-shadow: 5px 5px 0 var(--yellow); }
+.done { border-style: dashed; }
+.icon { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 8px; border: 2px solid var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.08); }
+.now .icon { background: var(--yellow); color: #011941; border-color: #011941; }   /* theme-ok: the yellow sticker stays yellow with ink on either theme */
+.icon svg { width: 1.2rem; height: 1.2rem; }
+.text { display: grid; gap: 0.15rem; min-width: 0; }
+.text b { font-size: 0.98rem; line-height: 1.25; overflow-wrap: anywhere; }
+.text small { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.78); line-height: 1.3; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover { transform: none; } }

@@ -9,6 +9,7 @@ import EventCountdown from './EventCountdown';
 import type { HomeActivity, HomeAttention } from '@/lib/portal/homeExtras';
 import RoleAsk from './RoleAsk';
 import LogisticsDayCard from './LogisticsDayCard';
+import TodayCards from './TodayCards';
 import { RequiredBanner } from './docs/DocRequired';
 import styles from './dashboardHome.module.css';
 
@@ -90,6 +91,7 @@ export function DashboardBody({
     <div className={styles.body}>
       {showRoleAsk && !compact && <RoleAsk />}
       <RequiredBanner hrefBase="/portal/docs?id=" />
+      <TodayCards />
       {logistics && <LogisticsDayCard />}
       <div className={styles.deskGrid}>
         <div className={styles.deskMain}>
