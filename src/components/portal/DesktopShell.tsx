@@ -5,7 +5,8 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import PortalRefresh from './PortalRefresh';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home } from 'lucide-react';
+import { Hash, Home } from 'lucide-react';
+import CodeBox from '@/components/portal/CodeBox';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
 import PortalThemeToggle from './PortalThemeToggle';
@@ -133,6 +134,16 @@ export function DesktopShell({
             </span>
           </button>
         )}
+        {/* the code box: a meeting's, a ticket's, a Trivia game's or a poll's code can be typed on any page */}
+        <div className={styles.railCode} title="Enter a code: a meeting check-in, a ticket, a Trivia game or a poll">
+          <span className={styles.railCodeIcon} aria-hidden="true">
+            <Hash />
+          </span>
+          <div className={styles.railCodeBox}>
+            <span className={styles.railCodeLabel}>Enter A Code</span>
+            <CodeBox compact />
+          </div>
+        </div>
         <nav className={styles.railNav} aria-label="Portal sections">
           <button
             className={`${styles.railItem} ${!openSection ? styles.railItemActive : ''}`}

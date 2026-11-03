@@ -11,16 +11,18 @@ export default function CodeEntry({
   busy,
   autoFocus = false,
   dark = false,
+  compact = false,
 }: {
   onSubmit: (code: string) => void;
   busy?: boolean;
   autoFocus?: boolean;
   /** On the camera screen: light text on a dark glass. */ dark?: boolean;
+  /** Small, for the sidebar. */ compact?: boolean;
 }) {
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
   return (
-    <div className={`${styles.wrap} ${dark ? styles.dark : ''}`}>
+    <div className={`${styles.wrap} ${dark ? styles.dark : ''} ${compact ? styles.compact : ''}`}>
       <input
         className={`${styles.box} ${dark ? styles.darkBox : ''}`}
         value={value}

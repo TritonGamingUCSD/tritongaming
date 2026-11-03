@@ -59,7 +59,7 @@ ordinary QR codes. Every result says exactly what happened.
 
 ## The typed code box
 
-The same box (`CodeBox`, with `CodeEntry` for the six places) is on the **Dashboard**, on **My Meetings** (while a meeting is open to enter), on **Check-In**, on **Trivia** (Play) and at the bottom of the Scan page, so a code can be typed where the person already is: what happened is said in a pop-up on that page, and My Meetings refreshes. Guests have `/play`. The box always shows six places; the typed digits replace the placeholder zeros one by one.
+The box (`CodeBox`, with `CodeEntry` for the six places) is in the **sidebar of every portal page on a computer** (under your name; a small Hash tile when the sidebar is collapsed to icons, opening with it), big on the **Dashboard**, and at the bottom of the Scan page, so a code can be typed wherever the person already is: what happened is said in a pop-up on that page, and My Meetings refreshes. My Meetings, Check-In and Trivia have no box of their own and point to the sidebar's (on a phone, the Scan button). Guests have `/play`. The box always shows six places; the typed digits replace the placeholder zeros one by one.
 
 Six digits (`checkInWithCode`): everything is asked **at once**, one round trip, so the answer comes back as fast as the slowest single question. A meeting's code checks the person in straight away; a ticket's code is only asked about first (which person and event) and then confirmed by staff, because a six-digit number can be a ticket's by chance; a Trivia game's code joins the game; a poll's or Q&A's code opens it. If nothing fits, the reason is shown. Only people who may scan tickets can ever hit the ticket side.
 

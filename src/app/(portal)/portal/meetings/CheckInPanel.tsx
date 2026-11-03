@@ -3,7 +3,6 @@
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
-import CodeBox from '@/components/portal/CodeBox';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
 import { NextMeeting, TodayMeeting } from './types';
@@ -80,9 +79,7 @@ export function CheckInPanel() {
           <h2 className={styles.cardTitle}>{checkedIn.length > 0 ? 'Another meeting? Enter its code' : 'Enter the code on the screen'}</h2>
           <p className={styles.muted}>{openToEnter.length === 1 ? `${openToEnter[0].title} · ` : 'The code decides which meeting you join · '}the code changes every 30 s</p>
           {openToEnter.length === 1 && openToEnter[0].doc_url && <DocButton url={openToEnter[0].doc_url} label="Open meeting doc" />}
-          <div className={styles.codeActions}>
-            <CodeBox />
-          </div>
+          <p className={styles.muted}>Type the code in the Enter A Code box in the sidebar (on a phone, use the Scan button).</p>
         </div>
       )}
 

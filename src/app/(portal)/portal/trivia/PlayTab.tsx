@@ -2,7 +2,6 @@
 
 import { formatPacificDate } from '@/lib/core/timezone';
 import { useEffect, useState } from 'react';
-import CodeBox from '@/components/portal/CodeBox';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -24,7 +23,7 @@ interface Mine {
 }
 const day = (iso: string) => formatPacificDate(iso, { year: true });
 
-// The games you played (a game's code is typed in the code box; its QR code opens the game with the code already in the address).
+// The games you played (a game's code is typed in the sidebar's code box; its QR code opens the game with the code already in the address).
 export default function PlayTab({ onOpen }: { onOpen: (code: string | null) => void }) {
   const [mine, setMine] = useState<Mine[] | null>(null);
   useEffect(() => {
@@ -38,8 +37,7 @@ export default function PlayTab({ onOpen }: { onOpen: (code: string | null) => v
   }, []);
   return (
     <div className={styles.tab}>
-      <p className={styles.muted}>To join a game, type its code here (or scan its QR code).</p>
-      <CodeBox />
+      <p className={styles.muted}>To join a game, type its code in the Enter A Code box in the sidebar (or scan its QR code).</p>
       <h2 className={styles.sectionTitle}>Your Games</h2>
       {!mine ? (
         <Loading variant="inline" label="Loading…" />
