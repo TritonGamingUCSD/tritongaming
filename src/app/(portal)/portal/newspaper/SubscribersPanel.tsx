@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Copy, Trash2 } from 'lucide-react';
+import { Copy, Trash2 } from 'lucide-react';
+import DetailHeader from '@/components/ui/DetailHeader';
 import Button from '@/components/ui/Button';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
@@ -44,11 +45,7 @@ export default function SubscribersPanel({ onBack }: { onBack: () => void }) {
   if (!data) return error ? <Notice tone="error">{error}</Notice> : <Loading label="Loading subscribers…" />;
   return (
     <div className={polls.stack}>
-      <div className={polls.head}>
-        <Button variant="secondary" size="sm" onClick={onBack}>
-          <ArrowLeft size={15} aria-hidden="true" /> All Issues
-        </Button>
-      </div>
+      <DetailHeader back={{ label: 'All Issues', onClick: onBack }} title="Subscribers" />
       {error && <Notice tone="error">{error}</Notice>}
       <section className={polls.panel}>
         <h2>Sign-Up Link</h2>

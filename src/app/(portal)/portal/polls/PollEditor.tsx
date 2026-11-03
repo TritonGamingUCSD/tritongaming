@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, ImagePlus, Plus, Radio, Trash2, X } from 'lucide-react';
+import { ImagePlus, Plus, Radio, Trash2, X } from 'lucide-react';
+import DetailHeader from '@/components/ui/DetailHeader';
 import Button from '@/components/ui/Button';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Loading from '@/components/Loading/Loading';
@@ -81,25 +82,27 @@ export default function PollEditor({ slug, onBack, onRun, onDeleted }: { slug: s
 
   return (
     <div className={styles.stack}>
-      <div className={styles.head}>
-        <Button variant="secondary" size="sm" onClick={onBack}>
-          <ArrowLeft size={15} aria-hidden="true" /> All Polls
-        </Button>
-        <span className={styles.state}>{STATUS_NAMES[poll.status]}</span>
-        <span className={styles.spacer} />
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => void remove()}
-          disabled={poll.status === 'open'}
-          title={poll.status === 'open' ? 'Close voting first' : 'Delete the poll'}
-        >
-          <Trash2 size={15} aria-hidden="true" /> Delete
-        </Button>
-        <Button size="sm" onClick={onRun} disabled={entries.length < 2 && draft}>
-          <Radio size={15} aria-hidden="true" /> {draft ? 'Go Live' : poll.status === 'revealed' ? 'See Results' : 'Run It'}
-        </Button>
-      </div>
+      <DetailHeader
+        back={{ label: 'All Polls', onClick: onBack }}
+        title={poll.name}
+        chip={STATUS_NAMES[poll.status]}
+        actions={
+          <>
+            <Button size="sm" onClick={onRun} disabled={entries.length < 2 && draft}>
+              <Radio size={15} aria-hidden="true" /> {draft ? 'Go Live' : poll.status === 'revealed' ? 'See Results' : 'Run It'}
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void remove()}
+              disabled={poll.status === 'open'}
+              title={poll.status === 'open' ? 'Close voting first' : 'Delete the poll'}
+            >
+              <Trash2 size={15} aria-hidden="true" /> Delete
+            </Button>
+          </>
+        }
+      />
       {error && (
         <div role="alert" onClick={() => setError('')}>
           <Notice tone="error">{error}</Notice>

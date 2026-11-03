@@ -1,0 +1,16 @@
+/* The top of a page inside a section: back link, title and state, actions. */
+.header { display: grid; gap: 0.55rem; min-width: 0; }
+.back { display: inline-flex; align-items: center; gap: 0.35rem; justify-self: start; min-height: 2rem; padding: 0.15rem 0.6rem 0.15rem 0.35rem; border: 0; border-radius: 6px; background: transparent; color: rgba(var(--pp-ink-rgb), 0.82); font: inherit; font-size: 0.88rem; font-weight: 600; cursor: pointer; }
+.back:hover { background: rgba(var(--pp-ink-rgb), 0.08); color: var(--pp-ink); }
+.back:focus-visible { outline: 2px solid var(--pp-ink); outline-offset: 2px; }
+.row { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.7rem 1.2rem; flex-wrap: wrap; }
+.titleBox { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; min-width: 0; flex: 1 1 16rem; }
+.title { margin: 0; min-width: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: clamp(1.4rem, 2.8vw, 2rem); line-height: 1.1; color: var(--pp-ink); overflow-wrap: anywhere; text-wrap: balance; }
+.chip { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.4); font-size: 0.8rem; font-weight: 700; color: var(--pp-ink); white-space: nowrap; }
+.actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-left: auto; }
+.note { font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.75); min-width: 4.5rem; text-align: right; }
+@media (max-width: 640px) {
+  .actions { width: 100%; margin-left: 0; }
+  .actions > button, .actions > a { flex: 1 1 auto; justify-content: center; }
+  .note { width: 100%; text-align: left; order: 9; }
+}

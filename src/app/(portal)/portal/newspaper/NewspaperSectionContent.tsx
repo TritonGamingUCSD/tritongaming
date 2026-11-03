@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import SectionHeader from '@/components/ui/SectionHeader';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { useUrlNav } from '@/lib/portal/usePortalTabSync';
 import IssueEditor from './IssueEditor';
@@ -24,13 +23,6 @@ export default function NewspaperSectionContent() {
   );
   return (
     <div className={polls.page}>
-      {route.tab === 'list' && (
-        <SectionHeader
-          title="Newspaper"
-          flush
-          sub="Write the club’s email, have someone check it, and send it to the people you pick. Event announcements and updates are written here too."
-        />
-      )}
       {route.tab === 'list' ? (
         <NewspaperList onOpen={(slug) => go({ tab: 'issue', slug, view: 'write' })} onSubscribers={() => go({ tab: 'subscribers' })} />
       ) : route.tab === 'subscribers' ? (

@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Trash2 } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
+import DetailHeader from '@/components/ui/DetailHeader';
 import Button from '@/components/ui/Button';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
@@ -151,24 +152,19 @@ export default function IssueEditor({ slug, view, onView, onBack }: { slug: stri
 
   return (
     <div className={polls.stack}>
-      <div className={polls.head}>
-        <Button variant="secondary" size="sm" onClick={onBack}>
-          <ArrowLeft size={15} aria-hidden="true" /> All Issues
-        </Button>
-        <span className={polls.state}>
-          {issue.type === 'newspaper' ? `Issue ${issue.number} · ` : ''}
-          {STATUS_NAMES[issue.status]}
-        </span>
-        <span className={polls.spacer} />
-        <span className={styles.saveState} role="status">
-          {editable ? (state === 'saving' ? 'Saving…' : state === 'unsaved' ? 'Unsaved' : 'Saved') : ''}
-        </span>
-        {issue.status !== 'sending' && issue.status !== 'sent' && (
-          <Button variant="secondary" size="sm" onClick={() => void remove()}>
-            <Trash2 size={15} aria-hidden="true" /> Delete
-          </Button>
-        )}
-      </div>
+      <DetailHeader
+        back={{ label: 'All Issues', onClick: onBack }}
+        title={issue.type === 'newspaper' ? `Issue ${issue.number}` : ISSUE_TYPES[issue.type].label}
+        chip={STATUS_NAMES[issue.status]}
+        note={editable ? (state === 'saving' ? 'Saving…' : state === 'unsaved' ? 'Unsaved' : 'Saved') : undefined}
+        actions={
+          issue.status !== 'sending' && issue.status !== 'sent' ? (
+            <Button variant="secondary" size="sm" onClick={() => void remove()}>
+              <Trash2 size={15} aria-hidden="true" /> Delete
+            </Button>
+          ) : undefined
+        }
+      />
       {error && (
         <div role="alert" onClick={() => setError('')}>
           <Notice tone="error">{error}</Notice>

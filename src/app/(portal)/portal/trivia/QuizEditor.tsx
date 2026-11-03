@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Check, ChevronRight, ClipboardPaste, Download, HelpCircle, History, Pencil, Plus, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import DetailHeader from '@/components/ui/DetailHeader';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
 import SectionTabs from '@/components/ui/SectionTabs';
@@ -288,17 +289,9 @@ export default function QuizEditor({
 
   return (
     <div className={styles.tab}>
-      <div className={styles.row}>
-        <Button variant="ghost" size="sm" onClick={onBack}>
-          <ArrowLeft size={15} aria-hidden="true" /> All Quizzes
-        </Button>
-        <span className={styles.spacer} />
-        <Button size="sm" variant="danger" onClick={() => void removeQuiz()}>
-          Delete Quiz
-        </Button>
-      </div>
-      <div className={styles.qHead}>
-        <span className={styles.nameCell}>
+      <DetailHeader
+        back={{ label: 'All Quizzes', onClick: onBack }}
+        title={
           <TextCell
             value={quiz.name}
             canEdit
@@ -308,11 +301,18 @@ export default function QuizEditor({
               if (v) void setting({ name: v });
             }}
           />
-        </span>
-        <Button disabled={!ready} loading={busy === 'host'} onClick={() => void host()}>
-          Host Game
-        </Button>
-      </div>
+        }
+        actions={
+          <>
+            <Button disabled={!ready} loading={busy === 'host'} onClick={() => void host()}>
+              Host Game
+            </Button>
+            <Button size="sm" variant="danger" onClick={() => void removeQuiz()}>
+              Delete Quiz
+            </Button>
+          </>
+        }
+      />
       <SectionTabs
         label="Quiz"
         value={view}

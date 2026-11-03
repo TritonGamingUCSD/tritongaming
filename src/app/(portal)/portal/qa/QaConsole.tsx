@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Check, EyeOff, Lock, LockOpen, Play, Radio, Trash2, Tv, Undo2 } from 'lucide-react';
+import { Check, EyeOff, Lock, LockOpen, Play, Radio, Trash2, Tv, Undo2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import DetailHeader from '@/components/ui/DetailHeader';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { Field, Input } from '@/components/ui/Field';
@@ -71,25 +72,27 @@ export default function QaConsole({ slug, onBack, onRun, onDeleted }: { slug: st
 
   return (
     <div className={polls.stack}>
-      <div className={polls.head}>
-        <Button variant="secondary" size="sm" onClick={onBack}>
-          <ArrowLeft size={15} aria-hidden="true" /> All Q&amp;A
-        </Button>
-        <span className={polls.state}>{SESSION_NAMES[session.status]}</span>
-        <span className={polls.spacer} />
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => void remove()}
-          disabled={session.status === 'open'}
-          title={session.status === 'open' ? 'Close it first' : 'Delete the Q&A'}
-        >
-          <Trash2 size={15} aria-hidden="true" /> Delete
-        </Button>
-        <Button size="sm" onClick={onRun}>
-          <Tv size={15} aria-hidden="true" /> Open Big Screen
-        </Button>
-      </div>
+      <DetailHeader
+        back={{ label: 'All Q&A', onClick: onBack }}
+        title={session.name}
+        chip={SESSION_NAMES[session.status]}
+        actions={
+          <>
+            <Button size="sm" onClick={onRun}>
+              <Tv size={15} aria-hidden="true" /> Open Big Screen
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => void remove()}
+              disabled={session.status === 'open'}
+              title={session.status === 'open' ? 'Close it first' : 'Delete the Q&A'}
+            >
+              <Trash2 size={15} aria-hidden="true" /> Delete
+            </Button>
+          </>
+        }
+      />
       {error && (
         <div role="alert" onClick={() => setError('')}>
           <Notice tone="error">{error}</Notice>

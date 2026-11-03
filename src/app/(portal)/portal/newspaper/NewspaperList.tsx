@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { Newspaper, Plus, Users } from 'lucide-react';
+import SectionHeader from '@/components/ui/SectionHeader';
+import EmptyState from '@/components/ui/EmptyState';
 import Button from '@/components/ui/Button';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Loading from '@/components/Loading/Loading';
@@ -39,20 +41,28 @@ export default function NewspaperList({ onOpen, onSubscribers }: { onOpen: (slug
   return (
     <div className={polls.stack}>
       {error && <Notice tone="error">{error}</Notice>}
-      <div className={polls.toolbar}>
-        <p className={polls.about}>An issue is one email: the newspaper, an event announcement or an event update. Pick who gets it, have it checked, send it.</p>
-        <div className={polls.head}>
-          {data.canSend && (
-            <Button variant="secondary" onClick={onSubscribers}>
-              <Users size={16} aria-hidden="true" /> Subscribers
+      <SectionHeader
+        title="Newspaper"
+        flush
+        sub="Write the club’s email, have someone check it, and send it to the people you pick. Event announcements, updates and reminders are written here too."
+        actions={
+          <>
+            {data.canSend && (
+              <Button variant="secondary" onClick={onSubscribers}>
+                <Users size={16} aria-hidden="true" /> Subscribers
+              </Button>
+            )}
+            <Button onClick={() => setMaking(true)}>
+              <Plus size={16} aria-hidden="true" /> Make An Issue
             </Button>
-          )}
-          <Button onClick={() => setMaking(true)}>
-            <Plus size={16} aria-hidden="true" /> Make An Issue
-          </Button>
-        </div>
-      </div>
-      {groups.length === 0 && <p className={polls.empty}>No issues yet. Make one: write it in blocks, pick who gets it, and send it for checking.</p>}
+          </>
+        }
+      />
+      {groups.length === 0 && (
+        <EmptyState icon={<Newspaper />} title="No issues yet" action={<Button onClick={() => setMaking(true)}>Make An Issue</Button>}>
+          Write it in blocks, pick who gets it, and send it for checking. A second person reads it before it goes out.
+        </EmptyState>
+      )}
       {groups.map((g) => (
         <section key={g.title} className={polls.stack} aria-label={g.title}>
           <h2 className={styles.groupTitle}>{g.title}</h2>
