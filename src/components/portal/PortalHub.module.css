@@ -907,7 +907,7 @@
 .railCodeIcon { display: none; place-items: center; width: 34px; height: 34px; border-radius: 6px; border: 2px solid rgba(var(--pp-chrome-rgb), 0.55); color: rgba(var(--pp-chrome-rgb), 0.9); }
 .railCodeIcon svg { width: 18px; height: 18px; }
 .railCodeBox { flex: 1; min-width: 0; display: grid; gap: 0.2rem; color: var(--pp-chrome-fg); }
-.railCodeLabel { font-size: 0.66rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-chrome-rgb), 0.7); }
+.railCodeLabel { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-chrome-rgb), 0.7); }
 .rail.railCollapsed:not(:hover):not(:focus-within) .railCode { justify-content: center; padding-bottom: 0.3rem; }
 .rail.railCollapsed:not(:hover):not(:focus-within) .railCodeBox { display: none; }
 .rail.railCollapsed:not(:hover):not(:focus-within) .railCodeIcon { display: grid; }

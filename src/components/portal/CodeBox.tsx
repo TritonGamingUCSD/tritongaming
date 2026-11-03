@@ -1,15 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import CheckInOutcome from '@/components/portal/CheckInOutcome';
 import CodeEntry from '@/components/portal/CodeEntry';
 import Dialog from '@/components/ui/Dialog';
 import { checkInWithCode, confirmEventCheckIn, type Outcome } from '@/lib/checkin/anyCode';
 
-// The portal's 6-digit code box with everything that follows it: a meeting is checked in, a ticket is checked in (staff), a Trivia game or a poll opens, and what happened is said in a pop-up on the page the person is already on
-// (so a meeting's code typed on the meeting page stays on the meeting page, and the page refreshes). The box is in the sidebar of every portal page on a computer (`compact`), on the Dashboard, and at the bottom of the Scan page.
-export default function CodeBox({ compact = false }: { compact?: boolean }) {
+/** What happens after a 6-digit code is typed: a meeting is checked in, a ticket is checked in (staff), a Trivia game or a poll opens, and what happened is said in a pop-up on the page the person is already on (so a meeting's code typed on
+ *  the meeting page stays on the meeting page, and the page refreshes). `dialog` is that pop-up: render it somewhere that stays on screen. */
+export function useCodeFlow(): { submit: (code: string) => Promise<void>; busy: boolean; dialog: ReactNode } {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [outcome, setOutcome] = useState<Outcome | null>(null);
@@ -26,28 +26,35 @@ export default function CodeBox({ compact = false }: { compact?: boolean }) {
     setBusy(false);
     settle(o);
   };
+  const dialog = outcome ? (
+    <Dialog title={outcome.kind === 'error' ? 'That Code Didn’t Work' : 'Code Entered'} onClose={() => setOutcome(null)}>
+      <CheckInOutcome
+        outcome={outcome}
+        busy={busy}
+        doneLabel="Done"
+        onDone={() => setOutcome(null)}
+        onConfirmEvent={async () => {
+          if (outcome.kind === 'confirmEvent') await run(() => confirmEventCheckIn(outcome.redo));
+        }}
+      />
+    </Dialog>
+  ) : null;
+  return { submit: (code) => run(() => checkInWithCode(code)), busy, dialog };
+}
 
+// The portal's 6-digit code box with everything that follows it (see useCodeFlow). The box is in the sidebar of every portal page on a computer (`compact`), on the Dashboard, and at the bottom of the Scan page; while the sidebar is hidden the top bar's
+// Code button opens the same box.
+export default function CodeBox({ compact = false }: { compact?: boolean }) {
+  const { submit, busy, dialog } = useCodeFlow();
   return (
     <>
-      <CodeEntry onSubmit={(c) => void run(() => checkInWithCode(c))} busy={busy} compact={compact} />
+      <CodeEntry onSubmit={(c) => void submit(c)} busy={busy} compact={compact} />
       {busy && (
         <p role="status" style={{ margin: '0.4rem 0 0', fontSize: '0.85rem', textAlign: 'center', opacity: 0.8 }}>
           Checking the code…
         </p>
       )}
-      {outcome && (
-        <Dialog title={outcome.kind === 'error' ? 'That Code Didn’t Work' : 'Code Entered'} onClose={() => setOutcome(null)}>
-          <CheckInOutcome
-            outcome={outcome}
-            busy={busy}
-            doneLabel="Done"
-            onDone={() => setOutcome(null)}
-            onConfirmEvent={async () => {
-              if (outcome.kind === 'confirmEvent') await run(() => confirmEventCheckIn(outcome.redo));
-            }}
-          />
-        </Dialog>
-      )}
+      {dialog}
     </>
   );
 }

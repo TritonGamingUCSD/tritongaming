@@ -9,6 +9,7 @@ import { isVerifiedMember, requiresOrgTitle } from '@/lib/portal/capabilities';
 import { getMissingProfileFields } from '@/lib/members/profile';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
 import NotificationBell from '@/components/portal/NotificationBell';
+import CodeButton from '@/components/portal/CodeButton';
 import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
 import PullToRefresh from '@/components/portal/PullToRefresh';
 import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
@@ -87,6 +88,12 @@ export default async function PortalLayout({ children }: { children: React.React
           <HideOnPaths paths={CHECKIN_PATHS}>
             <div className={styles.fixedTheme}>
               <PortalThemeToggle />
+            </div>
+          </HideOnPaths>
+          {/* Phones: the Enter A Code button, left of the light/dark switch (a computer has the code box in the sidebar, or this button in the top bar when the sidebar is hidden). */}
+          <HideOnPaths paths={CHECKIN_PATHS}>
+            <div className={styles.fixedCode}>
+              <CodeButton />
             </div>
           </HideOnPaths>
           <PullToRefresh />

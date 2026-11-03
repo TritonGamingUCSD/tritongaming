@@ -12,6 +12,7 @@ import NotificationBell from './NotificationBell';
 import PortalThemeToggle from './PortalThemeToggle';
 import PortalCopyLink from './PortalCopyLink';
 import ScanLink from './ScanLink';
+import CodeButton from './CodeButton';
 import PortalCrumbs from './PortalCrumbs';
 import styles from './PortalHub.module.css';
 import { smallIcon } from './smallIcon';
@@ -221,6 +222,7 @@ export function DesktopShell({
             <div className={styles.topSearch}>
               <PortalSearch compact />
             </div>
+            {collapsed && <CodeButton />}
             <ScanLink />
             <PortalCopyLink />
             <PortalRefresh />

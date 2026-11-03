@@ -5,7 +5,7 @@
 .box::selection { background: transparent; }
 .darkBox { padding: 0.55rem 0.8rem; border: 2px solid rgba(255, 255, 255, 0.45); background: rgba(0, 0, 0, 0.45); }   /* theme-ok */
 .cells { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 0.4em; pointer-events: none; }
-.cell { position: relative; display: inline-block; min-width: 0.65em; text-align: center; opacity: 0.35; }
+.cell { position: relative; display: inline-block; width: 0.7em; text-align: center; opacity: 0.45; }
 .filled { opacity: 1; }
 /* the caret: a thin bar on the place about to be filled */
 .next::before { content: ''; position: absolute; left: -0.22em; top: 12%; bottom: 12%; width: 2px; border-radius: 1px; background: currentColor; animation: codeCaret 1s steps(1) infinite; }
