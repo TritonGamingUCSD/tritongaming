@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
+import { removeUnreferencedFiles, storageUrlsIn } from '@/lib/storage/removeFiles';
 import { cleanBlocks, problemsIn } from '@/lib/newspaper/blocks';
 import { cleanRules, isIssueType, rulesEmpty } from '@/lib/newspaper/rules';
 import { UUID, authorizeNewspaper, loadIssue } from '@/lib/newspaper/server';
@@ -130,6 +131,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ slug
   if (!issue) return NextResponse.json({ ok: true });
   if (issue.status === 'sending' || issue.status === 'sent') return NextResponse.json({ error: 'An issue that has gone out stays on record.' }, { status: 409 });
   await auth.svc.from('newspaper_issues').delete().eq('id', issue.id);
+  await removeUnreferencedFiles(auth.svc, storageUrlsIn(issue.blocks)); // its pictures go too, unless something else still shows them
   await logAudit(auth.svc, {
     actorId: auth.user.id,
     action: 'delete',

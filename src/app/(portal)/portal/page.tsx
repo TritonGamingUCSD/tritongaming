@@ -24,6 +24,7 @@ import {
   Gamepad2,
   Vote,
   MessagesSquare,
+  Newspaper,
   Trophy,
 } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
@@ -71,6 +72,7 @@ import TriviaSectionContent from './trivia/TriviaSectionContent';
 import PhotoBoothSectionContent from './photobooth/PhotoBoothSectionContent';
 import PollsSectionContent from './polls/PollsSectionContent';
 import QaSectionContent from './qa/QaSectionContent';
+import NewspaperSectionContent from './newspaper/NewspaperSectionContent';
 import QuarterStatusContent from './quarters/QuarterStatusContent';
 import InactiveNote from './quarters/InactiveNote';
 import { currentQuarter, loadQuarters, quarterName } from '@/lib/members/quarters';
@@ -447,6 +449,21 @@ export default async function PortalDashboard({ searchParams }: Props) {
             dockExclude: true,
             group: 'Team' as const,
             content: <StaffleSectionContent canManage={canManageLogistics} />,
+          },
+        ]
+      : []),
+    // The Newspaper: the club's email written as an issue of blocks, checked by a second person and sent to an audience picked by rules. Officers and above write; exec and admins (or anyone granted it) send.
+    ...(hasCapability(roles, 'write_newspaper') || hasCapability(roles, 'send_newspaper')
+      ? [
+          {
+            id: 'newspaper',
+            icon: <Newspaper size={28} strokeWidth={1.5} aria-hidden="true" />,
+            label: sectionLabel('newspaper'),
+            description: hasCapability(roles, 'send_newspaper') ? 'Write, check and send the club’s email' : 'Write the club’s email',
+            homeExclude: true,
+            dockExclude: true,
+            group: 'Team' as const,
+            content: <NewspaperSectionContent />,
           },
         ]
       : []),

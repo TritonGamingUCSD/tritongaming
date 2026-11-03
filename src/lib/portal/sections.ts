@@ -47,6 +47,15 @@ export const SECTIONS: SectionDef[] = [
     search: { hint: 'Enter the staff raffle and see who won', keywords: ['raffle', 'lottery', 'draw', 'win', 'prizes', 'giveaway'], caps: ['view_logistics', 'manage_logistics'] },
   },
   {
+    id: 'newspaper',
+    label: 'Newspaper',
+    search: {
+      hint: 'Write the club’s email, have it checked, and send it to the people you pick',
+      keywords: ['newspaper', 'newsletter', 'email', 'announcement', 'send', 'subscribers', 'issue', 'blast'],
+      caps: ['write_newspaper', 'send_newspaper'],
+    },
+  },
+  {
     id: 'quarters',
     label: 'Quarter status',
     search: { hint: 'Who is active or inactive each quarter', keywords: ['quarter', 'inactive', 'active', 'officer', 'term', 'year'], caps: ['manage_quarters'] },
