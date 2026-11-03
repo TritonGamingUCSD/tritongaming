@@ -13,8 +13,8 @@ export default function StaffleRules({ staffle: s, onClose }: { staffle: Staffle
         <section>
           <h4>Who Can Enter</h4>
           <p>
-            {s.rules_text}. This is checked when you enter (or tick <b>I’ll take anything left</b>), against your roles, warnings and strikes at that moment, and only while the
-            Staffle is open.
+            Not every Staffle is open to everyone. If you can’t enter one, the page says so. This is checked when you enter (or tick <b>I’ll take anything left</b>), against your
+            roles, warnings and strikes at that moment, and only while the Staffle is open.
           </p>
         </section>
         <section>

@@ -1,7 +1,7 @@
 import { ranksFor } from '@/lib/staffle/draw';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { namesOf } from '@/lib/docs/docsServer';
-import { canEnter, cleanRules, rulesText, type Rules } from '@/lib/staffle/rules';
+import { canEnter, cleanRules, type Rules } from '@/lib/staffle/rules';
 import { personFacts, STAFFLE_COLUMNS, type StaffleState } from '@/lib/staffle/server';
 
 // One Staffle as the page shows it: its items with the prize, how many entered, whether you did, and (once drawn) who won and who has claimed.
@@ -26,7 +26,6 @@ export interface StaffleView {
   state: StaffleState;
   drawn_at: string | null;
   rules: Rules;
-  rules_text: string;
   rule_names: Record<string, string>;
   items: StaffleItemView[];
   me: { can_enter: boolean; why: string | null; entered: number; anything: boolean; won: { item_id: string; prize: string; claimed: boolean }[] };
@@ -122,7 +121,6 @@ export async function staffleView(svc: SupabaseClient, row: Record<string, unkno
     state,
     drawn_at: (row.drawn_at as string | null) ?? null,
     rules,
-    rules_text: rulesText(rules, names),
     rule_names: Object.fromEntries([...rules.people, ...rules.block].map((u) => [u, names.get(u) ?? 'Someone'])),
     items: itemViews,
     me: {

@@ -56,11 +56,3 @@ export function canEnter(rules: Rules, p: Person): { ok: true } | { ok: false; w
         : `This Staffle is only open to ${who.length ? who.join(' and ') : 'the people picked'}.`,
   };
 }
-
-// A line for the Staffle's card: who it is open to.
-export function rulesText(rules: Rules, names: Map<string, string> = new Map()): string {
-  const roles = rules.roles.length === AUDIENCE_ROLES.length ? 'everyone on the team' : rules.roles.map((r) => AUDIENCE_LABELS[r].toLowerCase()).join(' and ');
-  const people = rules.people.map((id) => names.get(id) ?? 'someone').join(', ');
-  const out = [...rules.skip.map((s) => SKIPS.find((x) => x.id === s)!.label.toLowerCase()), ...rules.block.map((id) => names.get(id) ?? 'someone')];
-  return `Open to ${[roles, people].filter(Boolean).join(' + ')}${out.length ? `, not ${out.join(' or ')}` : ''}`;
-}

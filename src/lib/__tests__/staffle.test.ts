@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canEnter, cleanRules, NO_RULES, rulesEmpty, rulesText } from '@/lib/staffle/rules';
+import { canEnter, cleanRules, NO_RULES, rulesEmpty } from '@/lib/staffle/rules';
 import { draw, oddsOf, rankByValue, ranksFor } from '@/lib/staffle/draw';
 
 const A = '00000000-0000-4000-8000-00000000000a',
@@ -51,11 +51,6 @@ describe('who may enter', () => {
   it('cleans what a client sent', () => {
     expect(cleanRules({ roles: ['officer', 'nonsense', 'officer'], people: [A, 'bad', A, B] })).toEqual({ ...NO_RULES, roles: ['officer'], people: [A, B] });
     expect(cleanRules(null)).toEqual({ roles: [], people: [], skip: [], block: [] });
-  });
-  it('describes the rules', () => {
-    expect(rulesText(NO_RULES)).toBe('Open to everyone on the team');
-    expect(rulesText({ ...NO_RULES, roles: ['officer', 'lead'], people: [A] }, new Map([[A, 'Sam']]))).toBe('Open to officers and leads + Sam');
-    expect(rulesText({ ...NO_RULES, skip: ['strike'], block: [B] }, new Map([[B, 'Jo']]))).toBe('Open to everyone on the team, not people with strikes or Jo');
   });
 });
 

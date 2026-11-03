@@ -70,7 +70,7 @@ try {
   const view = (await officer.call('GET', `/api/staffle/${slug}`)).j.staffle;
   t.ok(
     'an officer sees it open, with its items and no entries yet',
-    view.state === 'open' && view.items.length === 2 && view.me.can_enter === true && view.entrants === 0 && view.rules_text.length > 0,
+    view.state === 'open' && view.items.length === 2 && view.me.can_enter === true && view.entrants === 0,
     JSON.stringify(view.me),
   );
   const [iMouse, iPad] = [view.items.find((i) => i.prize.name === 'ZZ Staffle Mouse'), view.items.find((i) => i.prize.name === 'ZZ Staffle Pad')];
