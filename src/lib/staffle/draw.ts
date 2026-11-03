@@ -1,6 +1,6 @@
 // The Staffle draw. Pure logic: given the items (each with how many winners and who entered) and a seed, it picks the winners. The same seed always gives the same result, so a draw can be shown on the
 // projector one item at a time from what was saved, and checked later.
-//   - Nobody wins twice: a person who wins an item drops out of every later one.
+//   - Nobody wins twice: a person who wins an item drops out of every later one. The one exception: a prize only ONE person entered always goes to that person, even if they win another prize too (it does not use up their one prize).
 //   - The prizes are drawn in order of their `rank` (lower first: the most valuable first, see `rankByValue`), and people who do not win stay in for every prize drawn after, so entering a cheap prize never costs a chance at a better one.
 //   - Among prizes with the same rank, the one with the fewest entrants for each winner is drawn next (worked out again after every prize, since winners drop out; ties are random). So of two similar prizes, one only a person entered goes to
 //     that person, and the popular one is drawn from whoever is left.
@@ -56,6 +56,7 @@ function shuffle<T>(list: T[], next: () => number): T[] {
 export function draw(items: DrawItem[], seed: string, alreadyWon: Iterable<string> = [], pools: DrawPools = {}): { won: Won[]; order: string[] } {
   const next = rng(seed);
   const gone = new Set(alreadyWon);
+  const initiallyGone = new Set(gone);
   const tie = new Map(shuffle(items, next).map((it, i) => [it.id, i])); // the random order that settles ties
   const open = new Map(items.map((i) => [i.id, i.winners]));
   const won: Won[] = [];
@@ -67,8 +68,18 @@ export function draw(items: DrawItem[], seed: string, alreadyWon: Iterable<strin
     if (!order.includes(item.id)) order.push(item.id);
   };
 
-  // 1. the prizes people entered, the least contested first
+  // 0. a prize exactly one person entered goes to them, whatever else they win (it does not make them drop out of the other prizes)
   const pending = new Set(items.map((i) => i.id));
+  for (const item of items) {
+    const only = [...new Set(item.entrants)];
+    if (only.length !== 1 || initiallyGone.has(only[0]) || item.winners < 1) continue;
+    pending.delete(item.id);
+    open.set(item.id, (open.get(item.id) ?? 0) - 1);
+    won.push({ item_id: item.id, user_id: only[0], position: won.length, via: 'entered' });
+    if (!order.includes(item.id)) order.push(item.id);
+  }
+
+  // 1. the prizes people entered, the least contested first
   for (;;) {
     let best: DrawItem | null = null;
     let bestRatio = Infinity;
@@ -97,7 +108,7 @@ export function draw(items: DrawItem[], seed: string, alreadyWon: Iterable<strin
     for (const list of [anything, everyone]) {
       for (const u of list) {
         if ((open.get(item.id) ?? 0) <= 0) break;
-        if (!gone.has(u)) give(item, u, 'leftover');
+        if (!gone.has(u) && !won.some((w) => w.item_id === item.id && w.user_id === u)) give(item, u, 'leftover'); // (never the same prize twice)
       }
     }
   }

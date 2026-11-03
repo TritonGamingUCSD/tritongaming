@@ -21,7 +21,8 @@ export default function StaffleRules({ staffle: s, onClose }: { staffle: Staffle
           <h4>The Rules</h4>
           <ul>
             <li>
-              <b>One entry per prize, one prize per person.</b> Enter every prize you would like; you can win at most one.
+              <b>One entry per prize, one prize per person.</b> Enter every prize you would like; you can win at most one. <b>The one exception:</b> if you are the only person who
+              entered a prize, it is yours even if you win another prize too.
             </li>
             <li>
               <b>Prizes are drawn in order,</b> lowest Draw # first, then the most valuable first (prices within 20% count as the same). People who do not win stay in for every

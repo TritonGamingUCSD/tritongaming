@@ -114,11 +114,13 @@ try {
   t.ok('an officer cannot draw', (await officer.call('POST', `/api/staffle/${slug}/draw`)).s === 403);
   const drawn = await exec.call('POST', `/api/staffle/${slug}/draw`);
   const all = drawn.j.staffle?.items.flatMap((i) => i.won) ?? [];
+  // one prize per person, except a prize only that person entered (items with a single entry) does not count against them
+  const normal = (drawn.j.staffle?.items ?? []).filter((i) => i.entries !== 1).flatMap((i) => i.won);
   t.ok(
-    'drawing saves the winners: nobody wins twice, the mouse has at most 2, the pad 1',
+    'drawing saves the winners: nobody wins twice (apart from a prize only they entered), the mouse has at most 2, the pad 1',
     drawn.s === 200 &&
       drawn.j.staffle.state === 'drawn' &&
-      new Set(all.map((w) => w.user_id)).size === all.length &&
+      new Set(normal.map((w) => w.user_id)).size === normal.length &&
       drawn.j.staffle.items.find((i) => i.id === iMouse.id).won.length <= 2 &&
       drawn.j.staffle.items.find((i) => i.id === iPad.id).won.length <= 1,
     JSON.stringify(drawn.j).slice(0, 200),

@@ -202,7 +202,7 @@ export default function StaffleViewPage({
           <span>
             <b>I’ll take anything left</b>
             <small>
-              A prize nobody picked, or one with spots left after the draw, goes to people who tick this first (you still win at most one prize). {s.anything}{' '}
+              A prize nobody picked, or one with spots left after the draw, goes to people who tick this first (you still win at most one of these). {s.anything}{' '}
               {s.anything === 1 ? 'person has' : 'people have'}.
             </small>
           </span>
