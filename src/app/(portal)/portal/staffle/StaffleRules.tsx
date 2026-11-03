@@ -35,6 +35,9 @@ export default function StaffleRules({ staffle: s, onClose }: { staffle: Staffle
               <b>A prize with N winners</b> gives N different people. If fewer people entered than there are winners, they all win.
             </li>
             <li>
+              <b>If everyone who entered a prize already won something else,</b> they still get it (whoever has won the fewest prizes first) before anyone who did not enter it.
+            </li>
+            <li>
               <b>Nothing is left in storage by choice.</b> Spots still open after the draw go to people who ticked <b>I’ll take anything left</b>, then to anyone else who may enter
               and has not won (marked “leftover pick”).
             </li>

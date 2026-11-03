@@ -11,7 +11,6 @@ import type { Person } from '@/lib/staffle/rules';
 export const STAFFLE_COLUMNS = 'id, slug, name, notes, pickup_note, rules, status, seed, drawn_at, created_by, created_at';
 // A Staffle is opened and closed by hand: draft (not open yet), open (taking entries), closed (no more entries, can open again), drawn or ended (one that is not wanted is removed).
 export type StaffleState = 'draft' | 'open' | 'closed' | 'drawn' | 'ended';
-// Before it is drawn the prizes can still change and it can still be drawn.
 /** When the prizes of a Staffle can change: not while entry is open (people are entering for exactly these prizes), and never once it is drawn. */
 export const PRIZES_CAN_CHANGE: string[] = ['draft', 'closed'];
 

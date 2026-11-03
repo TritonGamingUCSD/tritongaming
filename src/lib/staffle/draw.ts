@@ -5,6 +5,7 @@
 //   - Among prizes with the same rank, the one with the fewest entrants for each winner is drawn next (worked out again after every prize, since winners drop out; ties are random). So of two similar prizes, one only a person entered goes to
 //     that person, and the popular one is drawn from whoever is left.
 //   - An item with N winners gives N different people. When fewer entered than there are winners, they all win it.
+//   - Spots still open on a prize people entered go next to those entrants even if they already won something (the fewest wins first): people who asked for a prize beat people who did not.
 //   - Spots still open after that go to the leftover pools: the people who said they would take anything first, then everyone else who may enter and has not won.
 
 export interface DrawItem {
@@ -101,6 +102,20 @@ export function draw(items: DrawItem[], seed: string, alreadyWon: Iterable<strin
     for (const u of pool.slice(0, best.winners)) give(best, u, 'entered');
   }
 
+  // 1b. a prize people entered with spots still open (every entrant already won something) goes to those entrants anyway, before anyone who did not enter it
+  const wins = new Map<string, number>();
+  for (const w of won) wins.set(w.user_id, (wins.get(w.user_id) ?? 0) + 1);
+  for (const item of [...items].sort((a, b) => (a.rank ?? 0) - (b.rank ?? 0) || tie.get(a.id)! - tie.get(b.id)!)) {
+    if ((open.get(item.id) ?? 0) <= 0) continue;
+    const have = new Set(won.filter((w) => w.item_id === item.id).map((w) => w.user_id));
+    const pool = shuffle([...new Set(item.entrants)].filter((u) => !have.has(u) && !initiallyGone.has(u)).sort(), next).sort((a, b) => (wins.get(a) ?? 0) - (wins.get(b) ?? 0));
+    for (const u of pool) {
+      if ((open.get(item.id) ?? 0) <= 0) break;
+      give(item, u, 'entered');
+      wins.set(u, (wins.get(u) ?? 0) + 1);
+    }
+  }
+
   // 2. open spots go to the leftover pools
   const anything = shuffle([...new Set(pools.anything ?? [])].sort(), next);
   const everyone = shuffle([...new Set(pools.everyone ?? [])].sort(), next);
@@ -108,7 +123,7 @@ export function draw(items: DrawItem[], seed: string, alreadyWon: Iterable<strin
     for (const list of [anything, everyone]) {
       for (const u of list) {
         if ((open.get(item.id) ?? 0) <= 0) break;
-        if (!gone.has(u) && !won.some((w) => w.item_id === item.id && w.user_id === u)) give(item, u, 'leftover'); // (never the same prize twice)
+        if (!gone.has(u) && !won.some((w) => w.user_id === u)) give(item, u, 'leftover'); // (only people who have won nothing, a prize only they entered counts)
       }
     }
   }

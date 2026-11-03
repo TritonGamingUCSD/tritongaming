@@ -10,7 +10,7 @@ import { tellWinners } from '@/lib/staffle/server';
 
 export const dynamic = 'force-dynamic';
 
-// Draw a Staffle: the winners are worked out here, in one go, and saved, so the projector only has to show them (and a reload shows the same). The prizes are drawn most valuable first (or in the host's own order) and people who do not win stay in for the later ones; among prizes of the same rank the least contested goes first; nobody wins twice; an item with
+// Draw a Staffle: the winners are worked out here, in one go, and saved, so the projector only has to show them (and a reload shows the same). The prizes are drawn most valuable first (or in the host's own order) and people who do not win stay in for the later ones; among prizes of the same rank the least contested goes first; nobody wins twice (except a prize only one person entered, and a prize whose entrants have all won something else, which still go to those entrants); an item with
 // N winners gives N different people; a prize with fewer entrants than winners goes to all of them, and any spot still open is filled from the people who said they would take anything, then from everyone else who may enter. Winners are told. A Staffle can be drawn once (an unclaimed prize can be drawn again from the rest, see /redraw).
 export async function POST(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizeLogistics('manage');

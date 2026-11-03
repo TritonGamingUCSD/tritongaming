@@ -110,6 +110,62 @@ describe('the draw', () => {
     expect(won.filter((w) => w.user_id === 'a' && w.via === 'entered')).toHaveLength(1);
     expect(won.filter((w) => w.item_id === 'x')).toHaveLength(3);
   });
+  describe('when everyone who entered a prize already won something', () => {
+    it('two winners, both entrants already won: both still win it, not someone who did not enter', () => {
+      for (let i = 0; i < 30; i++) {
+        const { won } = draw(
+          [
+            { id: 'v1', winners: 1, rank: 1, entrants: ['a', 'z'] },
+            { id: 'v2', winners: 1, rank: 1, entrants: ['b', 'y'] },
+            { id: 'cheap', winners: 2, rank: 2, entrants: ['a', 'b'] },
+          ],
+          `d${i}`,
+          [],
+          { everyone: ['a', 'b', 'y', 'z', 'p'] },
+        );
+        const cheap = won.filter((w) => w.item_id === 'cheap');
+        // both entrants win it (those who won a big prize get it as a second one), and never the outsider p
+        expect(cheap.map((w) => w.user_id).sort()).toEqual(['a', 'b']);
+        expect(cheap.every((w) => w.via === 'entered')).toBe(true);
+        expect(cheap.some((w) => w.user_id === 'p')).toBe(false);
+      }
+    });
+    it('one winner, two entrants who both already won: one of them gets it, not an outsider', () => {
+      for (let i = 0; i < 30; i++) {
+        const { won } = draw(
+          [
+            { id: 'v1', winners: 1, rank: 1, entrants: ['a', 'z'] },
+            { id: 'v2', winners: 1, rank: 1, entrants: ['b', 'y'] },
+            { id: 'cheap', winners: 1, rank: 2, entrants: ['a', 'b'] },
+          ],
+          `e${i}`,
+          [],
+          { everyone: ['a', 'b', 'y', 'z', 'p'] },
+        );
+        const cheap = won.filter((w) => w.item_id === 'cheap');
+        expect(cheap).toHaveLength(1);
+        expect(['a', 'b']).toContain(cheap[0].user_id);
+        expect(cheap[0].via).toBe('entered');
+      }
+    });
+    it('the entrant with the fewest wins gets it first', () => {
+      for (let i = 0; i < 30; i++) {
+        const { won } = draw(
+          [
+            { id: 'v1', winners: 1, rank: 1, entrants: ['a'] }, // sole: a wins it without using up their prize
+            { id: 'v2', winners: 1, rank: 1, entrants: ['a', 'b'] },
+            { id: 'v3', winners: 1, rank: 1, entrants: ['b', 'c'] },
+            { id: 'cheap', winners: 1, rank: 2, entrants: ['a', 'b', 'c'] },
+          ],
+          `f${i}`,
+        );
+        const winnerOfCheap = won.find((w) => w.item_id === 'cheap')!.user_id;
+        const count = (u: string) => won.filter((w) => w.user_id === u && w.item_id !== 'cheap').length;
+        // the cheap prize never goes to someone with more wins than another entrant who could have had it
+        for (const u of ['a', 'b', 'c']) expect(count(winnerOfCheap)).toBeLessThanOrEqual(count(u));
+      }
+    });
+  });
   it('when fewer entered than there are winners, they all win it', () => {
     const { won } = draw([{ id: 'x', winners: 3, entrants: ['a', 'b'] }], 's');
     expect(won.map((w) => w.user_id).sort()).toEqual(['a', 'b']);
