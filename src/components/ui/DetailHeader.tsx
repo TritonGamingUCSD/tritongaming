@@ -8,6 +8,7 @@ export default function DetailHeader({
   back,
   title,
   chip,
+  sub,
   note,
   actions,
 }: {
@@ -16,6 +17,8 @@ export default function DetailHeader({
   title: ReactNode;
   /** Where it stands (Draft, Open, Sent…), shown beside the title. */
   chip?: ReactNode;
+  /** One quiet line under the title (counts, dates). */
+  sub?: ReactNode;
   /** A small quiet line beside the actions (such as "Saved"). */
   note?: ReactNode;
   actions?: ReactNode;
@@ -29,6 +32,7 @@ export default function DetailHeader({
         <div className={styles.titleBox}>
           <h1 className={styles.title}>{title}</h1>
           {chip && <span className={styles.chip}>{chip}</span>}
+          {sub && <p className={styles.sub}>{sub}</p>}
         </div>
         {(actions || note) && (
           <div className={styles.actions}>

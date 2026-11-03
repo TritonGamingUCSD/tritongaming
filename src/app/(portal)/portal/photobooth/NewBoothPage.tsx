@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import DetailHeader from '@/components/ui/DetailHeader';
 import Notice from '@/components/ui/Notice';
 import ColorInput from '@/components/ui/ColorInput';
 import { Field, Input } from '@/components/ui/Field';
@@ -58,12 +58,7 @@ export function NewBoothPage({ onBack, onMade }: { onBack: () => void; onMade: (
 
   return (
     <div className={styles.stack}>
-      <div className={styles.toolbar}>
-        <Button variant="secondary" size="sm" onClick={onBack}>
-          <ArrowLeft size={15} aria-hidden="true" /> All Booths
-        </Button>
-      </div>
-      <h2 className={styles.h2}>Make A Booth</h2>
+      <DetailHeader back={{ label: 'All Booths', onClick: onBack }} title="Make A Booth" />
       <div className={styles.studio}>
         <div className={styles.studioPreview}>
           <div className={styles.bigPreview}>

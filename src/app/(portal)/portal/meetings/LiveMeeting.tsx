@@ -1,9 +1,10 @@
 'use client';
 
+import DetailHeader from '@/components/ui/DetailHeader';
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Maximize2, Minimize2, ArrowLeft, MessageCircleQuestion, Lock, Timer } from 'lucide-react';
+import { Maximize2, Minimize2, MessageCircleQuestion, Lock, Timer } from 'lucide-react';
 import IconButton from '@/components/ui/IconButton';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
@@ -395,21 +396,12 @@ export function LiveMeeting({ id, onBack }: { id: string; onBack: () => void }) 
   return (
     <div className={styles.runWrap}>
       {!presenting && (
-        <header className={styles.liveHead}>
-          <button type="button" className={styles.backLink} onClick={onBack}>
-            <ArrowLeft size={15} aria-hidden="true" /> All Meetings
-          </button>
-          <div className={styles.liveTitleRow}>
-            <div className={styles.liveTitle}>
-              <h2>{live.meeting.title}</h2>
-              <span>
-                {dayLabel(live.meeting.meeting_date, true)} · {timeRange(live.meeting.starts_at, live.meeting.ends_at)}
-                {live.meeting.location ? ` · ${live.meeting.location}` : ''}
-              </span>
-            </div>
-            <span className={`${styles.pill} ${open ? styles.pillOpen : styles.pillDone}`}>{open ? 'Check-In Open' : over ? 'Ended' : 'Check-In Closed'}</span>
-          </div>
-        </header>
+        <DetailHeader
+          back={{ label: 'All Meetings', onClick: onBack }}
+          title={live.meeting.title}
+          chip={open ? 'Check-In Open' : over ? 'Ended' : 'Check-In Closed'}
+          sub={`${dayLabel(live.meeting.meeting_date, true)} · ${timeRange(live.meeting.starts_at, live.meeting.ends_at)}${live.meeting.location ? ` · ${live.meeting.location}` : ''}`}
+        />
       )}
 
       {open ? (

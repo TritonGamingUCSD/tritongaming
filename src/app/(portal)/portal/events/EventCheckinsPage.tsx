@@ -1,8 +1,9 @@
 'use client';
 
+import DetailHeader from '@/components/ui/DetailHeader';
 import Loading from '@/components/Loading/Loading';
 import { Input, Select } from '@/components/ui/Field';
-import { ArrowLeft, ArrowDown, ArrowUp } from 'lucide-react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { textCodec, useAddressState, wordCodec, type Codec } from '@/lib/portal/usePageState';
 import Notice from '@/components/ui/Notice';
 import { useEffect, useMemo, useState } from 'react';
@@ -215,9 +216,11 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
 
   return (
     <div className={styles.page}>
-      <button type="button" className={styles.back} onClick={onBack}>
-        <ArrowLeft size={15} aria-hidden="true" /> All Events
-      </button>
+      <DetailHeader
+        back={{ label: 'All Events', onClick: onBack }}
+        title={event?.title ?? 'Check-Ins'}
+        sub={event ? `${formatEventDateRange(event.start_date, event.end_date, { weekday: true })}${event.location ? ` · ${event.location}` : ''}` : undefined}
+      />
       <div>
         {error ? (
           <Notice tone="error">{error}</Notice>
@@ -225,14 +228,6 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
           <Loading label="Loading check-ins…" />
         ) : (
           <>
-            <div className={checkinStyles.header} style={{ marginBottom: '1.5rem' }}>
-              <h1 className={checkinStyles.title}>{event.title}</h1>
-              <p className={checkinStyles.sub}>
-                {formatEventDateRange(event.start_date, event.end_date, { weekday: true })}
-                {event.location && ` · ${event.location}`}
-              </p>
-            </div>
-
             <div className={checkinStyles.statsRow}>
               <div className={checkinStyles.statCard}>
                 <div className={checkinStyles.statValue}>{activeTickets.length}</div>

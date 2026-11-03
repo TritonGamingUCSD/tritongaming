@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import SectionHeader from '@/components/ui/SectionHeader';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { useUrlNav } from '@/lib/portal/usePortalTabSync';
 import HostQa from './HostQa';
@@ -25,13 +24,6 @@ export default function QaSectionContent() {
   if (route.tab === 'host') return <HostQa key={route.slug} slug={route.slug} onExit={() => go({ tab: 'session', slug: route.slug })} />;
   return (
     <div className={polls.page}>
-      {route.tab === 'list' && (
-        <SectionHeader
-          title="Q&A"
-          flush
-          sub="A live question wall. Guests send questions with the 6-digit code or the QR code on their phone, you approve them, and the room likes the best ones."
-        />
-      )}
       {route.tab === 'list' ? (
         <QaList onOpen={(slug) => go({ tab: 'session', slug })} />
       ) : (

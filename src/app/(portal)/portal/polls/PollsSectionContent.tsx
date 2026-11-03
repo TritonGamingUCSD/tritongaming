@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import SectionHeader from '@/components/ui/SectionHeader';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { useUrlNav } from '@/lib/portal/usePortalTabSync';
 import HostPoll from './HostPoll';
@@ -26,9 +25,6 @@ export default function PollsSectionContent() {
   if (route.tab === 'host') return <HostPoll key={route.slug} slug={route.slug} onExit={() => go({ tab: 'poll', slug: route.slug })} />;
   return (
     <div className={styles.page}>
-      {route.tab === 'list' && (
-        <SectionHeader title="Polls" flush sub="Run a vote on a big screen. Guests join with the 6-digit code or the QR code on their phone, no account needed." />
-      )}
       {route.tab === 'list' ? (
         <PollsList onOpen={(slug) => go({ tab: 'poll', slug })} onRun={(slug) => go({ tab: 'host', slug })} />
       ) : (

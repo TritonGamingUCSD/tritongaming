@@ -1,7 +1,8 @@
 'use client';
 
+import DetailHeader from '@/components/ui/DetailHeader';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Gift, Package } from 'lucide-react';
+import { Gift, Package } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import RequestsTab from './RequestsTab';
 import BorrowedTab from './BorrowedTab';
@@ -80,31 +81,23 @@ export default function EventOverview({
   );
   return (
     <div className={styles.evPage}>
-      <div className={styles.evHead}>
-        <button type="button" className={styles.back} onClick={onBack} aria-label="All events">
-          <ArrowLeft size={15} aria-hidden="true" /> <span className={styles.backText}>All Events</span>
-        </button>
-        <div className={styles.evTitle}>
-          <h2>
-            {name}
-            {closed && <span className={`${styles.badge} ${styles.neutral}`}>Closed</span>}
-          </h2>
-          <p>
-            {dates}
-            {portalEvent ? ' · Portal event' : ' · Event logistics only'}
-            {notes ? ` · ${notes}` : ''}
-          </p>
-        </div>
-        <div className={styles.evGo}>
-          <Button variant="secondary" size="sm" onClick={onOpenDevices}>
-            <Package size={15} aria-hidden="true" /> Open Devices
-          </Button>
-          <Button variant="secondary" size="sm" onClick={onOpenPrizing}>
-            <Gift size={15} aria-hidden="true" /> Open Prizing
-          </Button>
-          {menu}
-        </div>
-      </div>
+      <DetailHeader
+        back={{ label: 'All Events', onClick: onBack }}
+        title={name}
+        chip={closed ? 'Closed' : undefined}
+        sub={`${dates}${portalEvent ? ' · Portal event' : ' · Event logistics only'}${notes ? ` · ${notes}` : ''}`}
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={onOpenDevices}>
+              <Package size={15} aria-hidden="true" /> Open Devices
+            </Button>
+            <Button variant="secondary" size="sm" onClick={onOpenPrizing}>
+              <Gift size={15} aria-hidden="true" /> Open Prizing
+            </Button>
+            {menu}
+          </>
+        }
+      />
       <dl className={styles.evStats}>
         <div>
           <dt>Teams</dt>

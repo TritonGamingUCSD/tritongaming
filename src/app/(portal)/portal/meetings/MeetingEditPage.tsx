@@ -1,9 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 import SectionTabs from '@/components/ui/SectionTabs';
-import Button from '@/components/ui/Button';
+import DetailHeader from '@/components/ui/DetailHeader';
 import styles from './meetings.module.css';
 import { DetailsFields, Item, Series } from './types';
 import { dayLabel } from './format';
@@ -33,15 +32,7 @@ export function MeetingEditPage({
   const title = (scope === 'all' ? series?.title : item?.title) ?? 'Meeting';
   return (
     <div className={styles.stack}>
-      <div className={styles.editHead}>
-        <Button size="sm" variant="ghost" onClick={onBack}>
-          <ArrowLeft size={14} aria-hidden="true" /> Back To Meetings
-        </Button>
-        <h2 className={styles.cardTitle}>
-          {title}
-          {item && scope === 'week' ? ` · ${dayLabel(item.date, true)}` : ''}
-        </h2>
-      </div>
+      <DetailHeader back={{ label: 'Back To Meetings', onClick: onBack }} title={`${title}${item && scope === 'week' ? ` · ${dayLabel(item.date, true)}` : ''}`} />
       {item && series && (
         <SectionTabs<'week' | 'all'>
           label="What to edit"

@@ -1,5 +1,6 @@
 'use client';
 
+import DetailHeader from '@/components/ui/DetailHeader';
 import { formatPacificDate, addDaysKey, daysBetweenKeys, pacificToday } from '@/lib/core/timezone';
 import Loading from '@/components/Loading/Loading';
 import SectionTabs from '@/components/ui/SectionTabs';
@@ -8,7 +9,7 @@ import { useDraft } from '@/lib/ui/useDraft';
 import DraftBanner from '@/components/portal/DraftBanner';
 import { useSearchParams } from 'next/navigation';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
-import { ArrowLeft, Bell, CalendarClock, Check, ChevronRight, Hourglass, Lock, MousePointerClick, Plus, RotateCcw, Star, UserX, Users } from 'lucide-react';
+import { Bell, CalendarClock, Check, ChevronRight, Hourglass, Lock, MousePointerClick, Plus, RotateCcw, Star, UserX, Users } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import IconButton from '@/components/ui/IconButton';
@@ -225,10 +226,7 @@ function PlanForm({ plan, onDone, onCancel }: { plan?: PlanView; onDone: () => v
 
   return (
     <form className={m.form} onSubmit={submit}>
-      <button type="button" className={m.backLink} onClick={onCancel}>
-        <ArrowLeft size={15} aria-hidden="true" /> Back to plans
-      </button>
-      <h2 className={m.sectionHead}>{plan ? 'Edit Plan' : 'Plan A Meeting'}</h2>
+      <DetailHeader back={{ label: 'Back To Plans', onClick: onCancel }} title={plan ? 'Edit Plan' : 'Plan A Meeting'} />
       {!plan && draft.offer && (
         <DraftBanner
           at={draft.offer.at}
@@ -426,12 +424,9 @@ function PlanDetail({ plan, userId, onBack, reload }: { plan: PlanView; userId: 
 
   return (
     <div className={m.stack}>
-      <button type="button" className={m.backLink} onClick={onBack}>
-        <ArrowLeft size={15} aria-hidden="true" /> All plans
-      </button>
+      <DetailHeader back={{ label: 'All Plans', onClick: onBack }} title={plan.title} />
       <div className={styles.detailHead}>
         <div>
-          <h2 className={styles.detailTitle}>{plan.title}</h2>
           <p className={styles.planMeta}>
             {rangeLabel(plan)} · {lengthLabel(plan.duration_min)} · {clockLabel(plan.window_start)} to {clockLabel(plan.window_end)}
             {plan.location ? ` · ${plan.location}` : ''}

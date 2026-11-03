@@ -1,7 +1,8 @@
 'use client';
 
+import DetailHeader from '@/components/ui/DetailHeader';
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, Camera, Copy, Frame, Images, LayoutGrid, Plus, MessageSquare, Palette, QrCode, Redo2, Smile, Trash2, Undo2 } from 'lucide-react';
+import { Camera, Copy, Frame, Images, LayoutGrid, Plus, MessageSquare, Palette, QrCode, Redo2, Smile, Trash2, Undo2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Loading from '@/components/Loading/Loading';
@@ -325,29 +326,29 @@ export function BoothSetup({
 
   return (
     <div className={styles.studioShell}>
-      <div className={styles.studioBar}>
-        <Button variant="secondary" size="sm" onClick={onBack}>
-          <ArrowLeft size={15} aria-hidden="true" /> All Booths
-        </Button>
-        <input className={styles.nameInput} value={form.name} maxLength={80} aria-label="Booth name" onChange={(e) => set({ name: e.target.value }, 'name')} />
-        <div className={styles.rowActions}>
-          <Button variant="secondary" size="sm" onClick={h.undo} disabled={!h.canUndo} aria-label="Undo" title="Undo (Ctrl or Cmd + Z)">
-            <Undo2 size={16} aria-hidden="true" />
-          </Button>
-          <Button variant="secondary" size="sm" onClick={h.redo} disabled={!h.canRedo} aria-label="Redo" title="Redo (Ctrl or Cmd + Shift + Z)">
-            <Redo2 size={16} aria-hidden="true" />
-          </Button>
-          <Button variant="secondary" size="sm" onClick={() => void remove()}>
-            <Trash2 size={15} aria-hidden="true" /> Delete
-          </Button>
-          <Button variant="secondary" size="sm" onClick={onTest} disabled={dirty} title={dirty ? 'Save your changes first' : 'Try the booth without saving anything'}>
-            Test Run
-          </Button>
-          <Button size="sm" onClick={onRun} disabled={dirty} title={dirty ? 'Save your changes first' : undefined}>
-            <Camera size={16} aria-hidden="true" /> Open Booth
-          </Button>
-        </div>
-      </div>
+      <DetailHeader
+        back={{ label: 'All Booths', onClick: onBack }}
+        title={<input className={styles.nameInput} value={form.name} maxLength={80} aria-label="Booth name" onChange={(e) => set({ name: e.target.value }, 'name')} />}
+        actions={
+          <>
+            <Button variant="secondary" size="sm" onClick={h.undo} disabled={!h.canUndo} aria-label="Undo" title="Undo (Ctrl or Cmd + Z)">
+              <Undo2 size={16} aria-hidden="true" />
+            </Button>
+            <Button variant="secondary" size="sm" onClick={h.redo} disabled={!h.canRedo} aria-label="Redo" title="Redo (Ctrl or Cmd + Shift + Z)">
+              <Redo2 size={16} aria-hidden="true" />
+            </Button>
+            <Button variant="secondary" size="sm" onClick={() => void remove()}>
+              <Trash2 size={15} aria-hidden="true" /> Delete
+            </Button>
+            <Button variant="secondary" size="sm" onClick={onTest} disabled={dirty} title={dirty ? 'Save your changes first' : 'Try the booth without saving anything'}>
+              Test Run
+            </Button>
+            <Button size="sm" onClick={onRun} disabled={dirty} title={dirty ? 'Save your changes first' : undefined}>
+              <Camera size={16} aria-hidden="true" /> Open Booth
+            </Button>
+          </>
+        }
+      />
       {error && <Notice tone="error">{error}</Notice>}
       <div className={styles.lookBar} role="tablist" aria-label="Looks">
         {looks.map((l) => (

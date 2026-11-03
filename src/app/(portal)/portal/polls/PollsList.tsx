@@ -1,5 +1,7 @@
 'use client';
 
+import EmptyState from '@/components/ui/EmptyState';
+import SectionHeader from '@/components/ui/SectionHeader';
 import { useCallback, useEffect, useState } from 'react';
 import { Plus, Radio, Settings2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -31,14 +33,20 @@ export default function PollsList({ onOpen, onRun }: { onOpen: (slug: string) =>
   return (
     <div className={styles.stack}>
       {error && <Notice tone="error">{error}</Notice>}
-      <div className={styles.toolbar}>
-        <p className={styles.about}>One poll is one vote: a cosplay contest, a favourite, a choice on stage.</p>{' '}
-        <Button onClick={() => setMaking(true)}>
-          <Plus size={16} aria-hidden="true" /> Make A Poll
-        </Button>
-      </div>
+      <SectionHeader
+        title="Polls"
+        flush
+        sub="Run a vote on a big screen. Guests join with the 6-digit code or the QR code on their phone, no account needed."
+        actions={
+          <Button onClick={() => setMaking(true)}>
+            <Plus size={16} aria-hidden="true" /> Make A Poll
+          </Button>
+        }
+      />
       {polls.length === 0 ? (
-        <p className={styles.empty}>No polls yet. Make one, add its entries (with pictures), then open voting at your event.</p>
+        <EmptyState icon={<Radio />} title="No polls yet" action={<Button onClick={() => setMaking(true)}>Make A Poll</Button>}>
+          Make one, add its entries (with pictures), then open voting at your event.
+        </EmptyState>
       ) : (
         <div className={card.grid}>
           {polls.map((p) => (

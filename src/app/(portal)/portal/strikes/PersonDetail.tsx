@@ -1,8 +1,9 @@
 'use client';
 
+import DetailHeader from '@/components/ui/DetailHeader';
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Moon, RotateCcw, Plus, Ticket } from 'lucide-react';
+import { Moon, RotateCcw, Plus, Ticket } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { confirmHold } from '@/lib/ui/confirmHold';
@@ -64,17 +65,17 @@ export function PersonDetail({ person, limit, me, onBack, onChanged }: { person:
   const unused = vouchers.filter((v) => !v.used_at && !v.removed_at);
   return (
     <section className={styles.detail} aria-label={`${person.name}'s record`}>
-      <button type="button" className={styles.back} onClick={onBack}>
-        <ArrowLeft size={15} aria-hidden="true" /> All people
-      </button>
-      <div className={styles.dHead}>
-        <Avatar name={person.name} src={person.avatar_url} />
-        <div className={styles.dName}>
-          <strong>{person.name}</strong>
-          <span>{person.role}</span>
-        </div>
-        <Pips active={person.active} limit={limit} />
-      </div>
+      <DetailHeader
+        back={{ label: 'All People', onClick: onBack }}
+        title={
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.7rem' }}>
+            <Avatar name={person.name} src={person.avatar_url} />
+            {person.name}
+          </span>
+        }
+        chip={person.role}
+        actions={<Pips active={person.active} limit={limit} />}
+      />
       {person.atLimit && <p className={styles.limit}>At {STRIKES_AT_LIMIT} strikes. They’ve been told the HR team will contact them.</p>}
       {isMe && <Notice tone="warning">This is your own record. You can look, but someone else has to change it.</Notice>}
       {error && <Notice tone="error">{error}</Notice>}

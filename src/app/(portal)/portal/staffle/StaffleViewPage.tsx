@@ -2,8 +2,9 @@
 
 import { ZoomImg } from '@/components/ui/PictureZoom';
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Check, CircleHelp, Gift, Lock, Play, Presentation, Trophy } from 'lucide-react';
+import { Check, CircleHelp, Gift, Lock, Play, Presentation, Trophy } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import DetailHeader from '@/components/ui/DetailHeader';
 import IconButton from '@/components/ui/IconButton';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
@@ -62,9 +63,7 @@ export default function StaffleViewPage({
   if (!s)
     return (
       <div className={styles.page}>
-        <button type="button" className={styles.back} onClick={onBack}>
-          <ArrowLeft size={15} aria-hidden="true" /> All Staffles
-        </button>
+        <DetailHeader back={{ label: 'All Staffles', onClick: onBack }} title="Staffle" />
         {error ? <Notice tone="error">{error}</Notice> : <Loading variant="inline" label="Loading…" />}
       </div>
     );
@@ -83,64 +82,55 @@ export default function StaffleViewPage({
   const total = s.items.reduce((n, i) => n + i.winners, 0); // people who can win, across all prizes
   return (
     <div className={styles.page}>
-      <div className={styles.head}>
-        <button type="button" className={styles.back} onClick={onBack} aria-label="All Staffles">
-          <ArrowLeft size={15} aria-hidden="true" /> <span>All Staffles</span>
-        </button>
-        <div className={styles.title}>
-          <h2>
-            {s.name}
-            <span className={`${styles.chip} ${open ? styles.chipOn : ''}`}>{STATE_LABEL[s.state]}</span>
-          </h2>
-          <p>
-            {s.entrants} {s.entrants === 1 ? 'person has' : 'people have'} entered · {total} {total === 1 ? 'winner' : 'winners'} to be drawn
-          </p>
-        </div>
-        {canManage && !over && (
-          <div className={styles.go}>
-            {s.state === 'draft' && s.items.length > 0 && (
-              <Button loading={busy === 'open'} onClick={() => void act('open', `/api/staffle/${s.slug}`, 'PATCH', { status: 'open' })}>
-                <Play size={15} aria-hidden="true" /> Open Staffle
-              </Button>
-            )}
-            {s.state === 'open' && (
-              <Button variant="secondary" loading={busy === 'close'} onClick={() => void act('close', `/api/staffle/${s.slug}`, 'PATCH', { status: 'closed' })}>
-                <Lock size={15} aria-hidden="true" /> Close Entries
-              </Button>
-            )}
-            {s.state === 'closed' && (
-              <Button variant="secondary" loading={busy === 'open'} onClick={() => void act('open', `/api/staffle/${s.slug}`, 'PATCH', { status: 'open' })}>
-                <Play size={15} aria-hidden="true" /> Open Again
-              </Button>
-            )}
-            {(s.state === 'open' || s.state === 'closed') && (
-              <Button onClick={onDraw}>
-                <Presentation size={15} aria-hidden="true" /> Draw On The Big Screen
-              </Button>
-            )}
-            {s.state === 'drawn' && (
-              <Button variant="secondary" onClick={onDraw}>
-                <Presentation size={15} aria-hidden="true" /> Replay The Draw
-              </Button>
-            )}
-            <IconButton kind="edit" label="Edit this Staffle" onClick={() => setEditing(true)} />
-            <RowMenu
-              label="More for this Staffle"
-              items={[
-                ...(s.state === 'drawn'
-                  ? [{ label: 'End Staffle (what was not claimed goes back)', onClick: () => void act('end', `/api/staffle/${s.slug}`, 'PATCH', { status: 'ended' }) }]
-                  : []),
-                { label: 'Remove Staffle', danger: true, onClick: () => void remove() },
-              ]}
-            />
-          </div>
-        )}
-        {canManage && over && (
-          <div className={styles.go}>
+      <DetailHeader
+        back={{ label: 'All Staffles', onClick: onBack }}
+        title={s.name}
+        chip={STATE_LABEL[s.state]}
+        sub={`${s.entrants} ${s.entrants === 1 ? 'person has' : 'people have'} entered · ${total} ${total === 1 ? 'winner' : 'winners'} to be drawn`}
+        actions={
+          canManage && !over ? (
+            <>
+              {s.state === 'draft' && s.items.length > 0 && (
+                <Button loading={busy === 'open'} onClick={() => void act('open', `/api/staffle/${s.slug}`, 'PATCH', { status: 'open' })}>
+                  <Play size={15} aria-hidden="true" /> Open Staffle
+                </Button>
+              )}
+              {s.state === 'open' && (
+                <Button variant="secondary" loading={busy === 'close'} onClick={() => void act('close', `/api/staffle/${s.slug}`, 'PATCH', { status: 'closed' })}>
+                  <Lock size={15} aria-hidden="true" /> Close Entries
+                </Button>
+              )}
+              {s.state === 'closed' && (
+                <Button variant="secondary" loading={busy === 'open'} onClick={() => void act('open', `/api/staffle/${s.slug}`, 'PATCH', { status: 'open' })}>
+                  <Play size={15} aria-hidden="true" /> Open Again
+                </Button>
+              )}
+              {(s.state === 'open' || s.state === 'closed') && (
+                <Button onClick={onDraw}>
+                  <Presentation size={15} aria-hidden="true" /> Draw On The Big Screen
+                </Button>
+              )}
+              {s.state === 'drawn' && (
+                <Button variant="secondary" onClick={onDraw}>
+                  <Presentation size={15} aria-hidden="true" /> Replay The Draw
+                </Button>
+              )}
+              <IconButton kind="edit" label="Edit this Staffle" onClick={() => setEditing(true)} />
+              <RowMenu
+                label="More for this Staffle"
+                items={[
+                  ...(s.state === 'drawn'
+                    ? [{ label: 'End Staffle (what was not claimed goes back)', onClick: () => void act('end', `/api/staffle/${s.slug}`, 'PATCH', { status: 'ended' }) }]
+                    : []),
+                  { label: 'Remove Staffle', danger: true, onClick: () => void remove() },
+                ]}
+              />
+            </>
+          ) : canManage && over ? (
             <RowMenu label="More for this Staffle" items={[{ label: 'Remove Staffle', danger: true, onClick: () => void remove() }]} />
-          </div>
-        )}
-      </div>
+          ) : undefined
+        }
+      />
       {error && (
         <div role="alert" onClick={() => setError('')}>
           <Notice tone="error">{error}</Notice>

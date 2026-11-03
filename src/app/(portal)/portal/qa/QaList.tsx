@@ -1,5 +1,7 @@
 'use client';
 
+import EmptyState from '@/components/ui/EmptyState';
+import SectionHeader from '@/components/ui/SectionHeader';
 import { useCallback, useEffect, useState } from 'react';
 import { MessagesSquare, Plus } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -32,14 +34,20 @@ export default function QaList({ onOpen }: { onOpen: (slug: string) => void }) {
   return (
     <div className={polls.stack}>
       {error && <Notice tone="error">{error}</Notice>}
-      <div className={polls.toolbar}>
-        <p className={polls.about}>One Q&amp;A is one session: a panel, a keynote, an open mic. Questions wait for your OK before the room sees them.</p>
-        <Button onClick={() => setMaking(true)}>
-          <Plus size={16} aria-hidden="true" /> Make A Q&amp;A
-        </Button>
-      </div>
+      <SectionHeader
+        title="Q&A"
+        flush
+        sub="A live question wall. Guests send questions with the 6-digit code or the QR code on their phone, you approve them, and the room likes the best ones."
+        actions={
+          <Button onClick={() => setMaking(true)}>
+            <Plus size={16} aria-hidden="true" /> Make A Q&amp;A
+          </Button>
+        }
+      />
       {list.length === 0 ? (
-        <p className={polls.empty}>No Q&amp;A sessions yet. Make one, open it when the event starts, and put the code on the screen.</p>
+        <EmptyState icon={<MessagesSquare />} title="No Q&A sessions yet" action={<Button onClick={() => setMaking(true)}>Make A Q&amp;A</Button>}>
+          Make one, open it when the event starts, and put the code on the screen.
+        </EmptyState>
       ) : (
         <div className={card.grid}>
           {list.map((s) => (

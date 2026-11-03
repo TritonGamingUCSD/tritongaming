@@ -6,6 +6,7 @@
 .row { display: flex; align-items: flex-end; justify-content: space-between; gap: 0.7rem 1.2rem; flex-wrap: wrap; }
 .titleBox { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; min-width: 0; flex: 1 1 16rem; }
 .title { margin: 0; min-width: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: clamp(1.4rem, 2.8vw, 2rem); line-height: 1.1; color: var(--pp-ink); overflow-wrap: anywhere; text-wrap: balance; }
+.sub { flex-basis: 100%; margin: 0; font-size: 0.9rem; color: rgba(var(--pp-ink-rgb), 0.78); }
 .chip { display: inline-block; padding: 0.2rem 0.7rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.4); font-size: 0.8rem; font-weight: 700; color: var(--pp-ink); white-space: nowrap; }
 .actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; margin-left: auto; }
 .note { font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.75); min-width: 4.5rem; text-align: right; }
