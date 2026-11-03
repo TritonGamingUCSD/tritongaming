@@ -45,8 +45,15 @@ describe('permissions granted to a person or group (Admin → Access)', () => {
   it('works for someone with no role at all', () => {
     expect(hasCapability(withGrantedCapabilities([], ['view_attendance_reports']), 'view_attendance_reports')).toBe(true);
   });
-  it('only attendance reports can be handed out', () => {
-    expect(GRANTABLE_CAPABILITIES.map((c) => c.id)).toEqual(['manage_strikes', 'manage_logistics', 'send_event_emails', 'view_attendance_reports']);
+  it('only these can be handed out', () => {
+    expect(GRANTABLE_CAPABILITIES.map((c) => c.id)).toEqual([
+      'manage_strikes',
+      'manage_logistics',
+      'send_event_emails',
+      'write_newspaper',
+      'send_newspaper',
+      'view_attendance_reports',
+    ]);
   });
   it('strikes: exec, HR (a grant) and admins manage them; leads and officers have no access', () => {
     for (const r of ['admin', 'exec'] as AppRole[]) expect(can(r, 'manage_strikes')).toBe(true);

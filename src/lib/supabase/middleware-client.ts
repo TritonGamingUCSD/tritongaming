@@ -3,7 +3,7 @@ import { withLocalAuthCheck } from '@/lib/supabase/localAuth';
 import { NextResponse, type NextRequest } from 'next/server';
 
 // The only routes a guest may call: joining a Trivia game or a poll, following and answering it, and the sign-in plumbing.
-const GUEST_API = ['/api/trivia/join', '/api/trivia/play/', '/api/polls/join', '/api/polls/play/', '/api/polls/lookup/', '/api/qa/play/', '/api/auth/'];
+const GUEST_API = ['/api/trivia/join', '/api/trivia/play/', '/api/polls/join', '/api/polls/play/', '/api/polls/lookup/', '/api/qa/play/', '/api/newspaper/click/', '/api/auth/'];
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

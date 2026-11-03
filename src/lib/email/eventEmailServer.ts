@@ -113,7 +113,7 @@ export async function audienceFor(svc: SupabaseClient, eventId: string, kind: Em
 }
 
 // Addresses live in auth.users: read them a page at a time until every wanted person is found.
-async function authEmails(svc: SupabaseClient, want: Set<string>): Promise<Map<string, string>> {
+export async function authEmails(svc: SupabaseClient, want: Set<string>): Promise<Map<string, string>> {
   const out = new Map<string, string>();
   for (let page = 1; page <= 20 && out.size < want.size; page++) {
     const { data, error } = await svc.auth.admin.listUsers({ page, perPage: 1000 });

@@ -93,6 +93,10 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   manage_logistics: ['exec', 'admin'],
   // Writing and sending email to an event's ticket holders. Executives and admins by default; can be handed to a person or group (Admin → Access).
   send_event_emails: ['exec', 'admin'],
+  // The Newspaper (Team → Newspaper): writing and editing issues, and asking for them to be checked, is open to every officer and above; approving and sending one (and the subscribers list) is exec and admin. Both can be handed to a person or group (Admin → Access).
+  // A person can't send an issue they asked to have checked themselves (the send route checks that). UI/API gating only (the routes use the service role).
+  write_newspaper: ['officer', 'lead', 'exec', 'admin'],
+  send_newspaper: ['exec', 'admin'],
   // Trivia: writing quizzes and hosting games is open to every officer and above. Playing needs no permission, only an account (checked by the play routes themselves).
   host_trivia: ['officer', 'lead', 'exec', 'admin'],
   // Photo Booth: setting up an event's booth, keeping the overlay library and running the booth on a screen at the event. Officers and above; the guests' download page needs nothing.
@@ -102,7 +106,13 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
 // What being inactive takes away: anything that manages, hosts or deletes, plus checking in and scanning redemptions. Attending meetings is NOT stripped: roles never
 // pull an inactive person into a meeting, but one added by name (or planning one they were asked about) must still work (see isExpectedActive). Everything else (view_*, QR codes, their own profile) stays.
 export function isInactiveStripped(capability: string): boolean {
-  return /^(manage|host|delete)_/.test(capability) || capability === 'checkin' || capability === 'scan_redemptions';
+  return (
+    /^(manage|host|delete)_/.test(capability) ||
+    capability === 'checkin' ||
+    capability === 'scan_redemptions' ||
+    capability === 'write_newspaper' ||
+    capability === 'send_newspaper'
+  );
 }
 
 /** A member of the TG team in the wide sense: exec, lead, officer, recruit or alumni (and admins). Used for team-wide views (what the team is allowed to see together). */
@@ -188,6 +198,18 @@ export const GRANTABLE_CAPABILITIES: { id: Capability; label: string; descriptio
     id: 'send_event_emails',
     label: 'Send event emails',
     description: 'Write and send a reminder or update email to everyone with a ticket to an event, with a test email to yourself first. Members can opt out of each kind of email.',
+  },
+  {
+    id: 'write_newspaper',
+    label: 'Write the Newspaper',
+    description:
+      'Write and edit Newspaper issues (blocks, audience, test emails) and ask for them to be checked. Every officer and above can already; this lets someone else do it too.',
+  },
+  {
+    id: 'send_newspaper',
+    label: 'Send the Newspaper',
+    description:
+      'Read an issue that was sent for checking, send it to its audience (after a test email and a hold-to-confirm), see the results and manage subscribers. A person can’t send an issue they asked to have checked.',
   },
   {
     id: 'view_attendance_reports',

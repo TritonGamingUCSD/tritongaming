@@ -82,6 +82,9 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | `view_attendance_reports` | · | · | · | · | · | · | · | ✔ | ✔ |
 | `attend_meetings` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
 | `host_meetings` | · | · | · | · | · | · | ✔ | ✔ | ✔ |
+| **Team** ||||||||||
+| `write_newspaper` | · | · | · | · | ✔ | · | ✔ | ✔ | ✔ |
+| `send_newspaper` | · | · | · | · | · | · | · | ✔ | ✔ |
 | **Logistics** ||||||||||
 | `view_logistics` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
 | `request_logistics` | · | · | ✔ | · | ✔ | ✔ | ✔ | ✔ | ✔ |
@@ -106,8 +109,8 @@ Admin passes every check. Roles combine: a person has everything each of their r
 1. Admin passes every check, whether or not Admin is listed for that capability.
 2. Otherwise the person needs at least one role listed for it. Roles add up.
 3. **Division Lead is scoped:** for division capabilities the check can name one division, and a Division Lead only qualifies for the division they lead.
-4. **Inactive:** someone marked Inactive keeps every viewing permission but loses: `manage_events`, `delete_events`, `checkin`, `manage_site_content`, `manage_division`, `manage_divisions_directory`, `manage_roles`, `manage_docs`, `manage_rewards_shop`, `scan_redemptions`, `manage_points`, `manage_board_order`, `manage_meetings`, `manage_help`, `manage_strikes`, `manage_quarters`, `host_meetings`, `manage_logistics`, `host_trivia`. Meeting attendance and everything view-only stay. Admins are never affected.
-5. **Granted permissions:** an admin can give one person or a group an extra permission (Admin → Access), added on top of their roles. Only these can be granted: `manage_strikes`, `manage_logistics`, `send_event_emails`, `view_attendance_reports`.
+4. **Inactive:** someone marked Inactive keeps every viewing permission but loses: `manage_events`, `delete_events`, `checkin`, `manage_site_content`, `manage_division`, `manage_divisions_directory`, `manage_roles`, `manage_docs`, `manage_rewards_shop`, `scan_redemptions`, `manage_points`, `manage_board_order`, `manage_meetings`, `manage_help`, `manage_strikes`, `manage_quarters`, `host_meetings`, `manage_logistics`, `write_newspaper`, `send_newspaper`, `host_trivia`. Meeting attendance and everything view-only stay. Admins are never affected.
+5. **Granted permissions:** an admin can give one person or a group an extra permission (Admin → Access), added on top of their roles. Only these can be granted: `manage_strikes`, `manage_logistics`, `send_event_emails`, `write_newspaper`, `send_newspaper`, `view_attendance_reports`.
 6. **Where it is enforced:** the capabilities marked “database” in the table below are also enforced by the database (row level security). The rest are enforced by the page or API route that uses them, so the route’s own check is the boundary.
 
 **Other rules that are not capabilities**
@@ -149,6 +152,9 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | **See attendance reports** · `view_attendance_reports` | See every meeting’s results, absences and reasons, check-in times, and download the HR CSV export. View only. | Executive, Admin | routes |
 | **Attend meetings** · `attend_meetings` | Check in to meetings with the room code, see their own meeting history, answer plans and questions. | Recruit, Officer, Lead, Executive, Admin | routes |
 | **Plan meetings** · `host_meetings` | Create meetings, plans and teams, and run, edit and see results for the meetings they planned. | Lead, Executive, Admin | routes; lost while inactive |
+| **Team** | | | |
+| **Write the Newspaper** · `write_newspaper` | Open Team → Newspaper, write and edit issues (blocks, audience, test emails), save audiences, and ask for an issue to be checked. Officers and above; lost while inactive. Can be granted. | Officer, Lead, Executive, Admin | pages + routes; lost while inactive |
+| **Send the Newspaper** · `send_newspaper` | Read an issue sent for checking, send it to its audience (after a test email and a hold-to-confirm), see delivery and click results and manage subscribers. Cannot send an issue you asked to have checked yourself. Executive and Admin by default; can be granted. | Executive, Admin | pages + routes; lost while inactive |
 | **Logistics** | | | |
 | **See Logistics** · `view_logistics` | Open Logistics and look at the equipment catalog (including device logins), sponsors and event setups. Cannot change anything. | Recruit, Officer, Lead, Executive, Admin | pages + routes |
 | **Send Logistics requests** · `request_logistics` | Open the Requests pages of Logistics and send a request for devices or prizes. A division account sees only these, for its own division. Once sent, only the Logistics team can change a request. | Recruit, Officer, Division Lead, Lead, Executive, Admin | pages + routes |
@@ -215,6 +221,8 @@ The files that ask for each capability, so a change can be traced. Page and rout
 - `request_logistics` (2): `app/(portal)/portal/page`, `lib/logistics/auth.ts`
 - `manage_logistics` (4): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/logistics/requestServer.ts`, `lib/portal/sections.ts`
 - `send_event_emails` (2): `app/(portal)/portal/page`, `lib/email/eventEmailServer.ts`
+- `write_newspaper` (1): `lib/newspaper/server.ts`
+- `send_newspaper` (1): `lib/newspaper/server.ts`
 - `host_trivia` (4): `app/(portal)/portal/page`, `lib/polls/server.ts`, `lib/portal/sections.ts`, `lib/trivia/server.ts`
 - `run_photobooth` (3): `app/(portal)/portal/page`, `lib/photobooth/server.ts`, `lib/portal/sections.ts`
 

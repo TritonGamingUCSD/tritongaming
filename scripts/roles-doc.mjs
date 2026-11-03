@@ -87,6 +87,18 @@ const CAPS = {
     'Open Event Emails, write a reminder or update for an event and send it to everyone with a ticket (after a 60-second cancel window). Executive and Admin by default; can be granted.',
     'pages + routes',
   ],
+  write_newspaper: [
+    'Team',
+    'Write the Newspaper',
+    'Open Team → Newspaper, write and edit issues (blocks, audience, test emails), save audiences, and ask for an issue to be checked. Officers and above; lost while inactive. Can be granted.',
+    'pages + routes',
+  ],
+  send_newspaper: [
+    'Team',
+    'Send the Newspaper',
+    'Read an issue sent for checking, send it to its audience (after a test email and a hold-to-confirm), see delivery and click results and manage subscribers. Cannot send an issue you asked to have checked yourself. Executive and Admin by default; can be granted.',
+    'pages + routes',
+  ],
   request_logistics: [
     'Logistics',
     'Send Logistics requests',
