@@ -9,7 +9,11 @@ let boothId;
 try {
   const officer = await user('officer', ['officer']);
   const member = await user('member', ['ucsd']);
-  const { data: booth } = await svc.from('photobooths').insert({ slug: `zz-pbmail-${token.slice(0, 6)}`, name: 'ZZ Mail Booth' }).select('id').single();
+  const { data: booth } = await svc
+    .from('photobooths')
+    .insert({ slug: `zz-pbmail-${token.slice(0, 6)}`, name: 'ZZ Mail Booth' })
+    .select('id')
+    .single();
   boothId = booth.id;
   await svc.from('photobooth_photos').insert({ token, booth_id: boothId, path: `zz/${token}.webp`, expires_at: new Date(Date.now() + 86400e3).toISOString() });
   const sent = async () => (await svc.from('photobooth_photos').select('emails_sent').eq('token', token).single()).data.emails_sent;
@@ -25,7 +29,11 @@ try {
   t.ok('more than 6 at once is refused', (await send({ emails: Array.from({ length: 7 }, (_, i) => `zz${i}@example.test`) })).s === 400);
   t.ok('six at once is fine', (await send({ emails: Array.from({ length: 6 }, (_, i) => `zzb${i}@example.test`) })).j.sent === 6 && (await sent()) === 9);
   const over = await send({ emails: ['zzc1@example.test', 'zzc2@example.test'] });
-  t.ok('the picture’s limit (10 in all) says how many are left, and sends none', over.s === 429 && /Only 1 more email/.test(over.j.error) && (await sent()) === 9, JSON.stringify(over.j));
+  t.ok(
+    'the picture’s limit (10 in all) says how many are left, and sends none',
+    over.s === 429 && /Only 1 more email/.test(over.j.error) && (await sent()) === 9,
+    JSON.stringify(over.j),
+  );
   t.ok('the last one fits', (await send({ emails: ['zzc3@example.test'] })).j.sent === 1 && (await sent()) === 10);
   t.ok('then it is full', (await send({ emails: ['zzc4@example.test'] })).s === 429);
   t.ok('a made-up picture is gone', (await officer.call('POST', '/api/photobooth/photos/email', { token: 'a'.repeat(22), emails: ['zz@example.test'] })).s === 404);
