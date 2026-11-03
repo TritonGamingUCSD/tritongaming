@@ -12,7 +12,11 @@ import {
   frameLayout,
   cleanSticker,
   cleanPlacements,
-  copyPlacementToAll,
+  MAX_COPIES,
+  PLACE_MAX,
+  PLACE_MIN,
+  stripToCell,
+  withNewCopy,
   withPlacement,
   composition,
   expiresAt,
@@ -52,13 +56,14 @@ describe('booth settings', () => {
   });
   test('a sticker is kept inside its limits', () => {
     const p = cleanSticker({ placements: [{ x: 3, y: -1, size: 0, rotation: 400 }] }).placements;
-    expect(p[0]).toEqual({ x: 1, y: 0, size: 0.05, rotation: 180 });
-    expect(p).toHaveLength(4);
-    expect(p.slice(1)).toEqual([null, null, null]);
+    expect(p[0]).toEqual({ x: PLACE_MAX, y: PLACE_MIN, size: 0.05, rotation: 180 });
+    expect(p).toHaveLength(MAX_COPIES);
+    expect(p.slice(1).every((q) => q === null)).toBe(true);
   });
-  test('a new sticker waits on no photo', () => {
-    expect(cleanSticker({ placements: [null, null] }).placements).toEqual([null, null, null, null]);
-    expect(cleanSticker({}).placements).toEqual([null, null, null, null]);
+  test('a new sticker waits off the picture', () => {
+    const none = Array.from({ length: MAX_COPIES }, () => null);
+    expect(cleanSticker({ placements: [null, null] }).placements).toEqual(none);
+    expect(cleanSticker({}).placements).toEqual(none);
   });
 });
 
@@ -222,24 +227,47 @@ describe('animated strip frames', () => {
   });
 });
 
-describe('stickers on each photo', () => {
-  const at = (x: number) => ({ x, y: 0.5, size: 0.4, rotation: 0 });
-  test('each photo keeps its own place', () => {
+describe('stickers on the whole picture', () => {
+  const at = (x: number, y = 0.5) => ({ x, y, size: 0.4, rotation: 0 });
+  test('each copy keeps its own place', () => {
     const p = withPlacement([at(0.2), at(0.2), null, null], 1, at(0.8));
     expect(p[0]?.x).toBe(0.2);
     expect(p[1]?.x).toBe(0.8);
   });
-  test('a photo can be left off', () => {
+  test('a copy can be taken away', () => {
     expect(withPlacement([at(0.2), at(0.2), null, null], 1, null)[1]).toBeNull();
     expect(withPlacement([at(0.2), null, null, null], 0, null).every((q) => q === null)).toBe(true);
   });
-  test("one photo's place can be copied to all the layout's photos", () => {
-    const p = copyPlacementToAll([at(0.2), at(0.7), null, null], 1, 3);
-    expect(p.map((q) => q?.x)).toEqual([0.7, 0.7, 0.7, undefined]);
+  test('a new copy takes the first free slot, and says when all are used', () => {
+    const one = withNewCopy([at(0.2), null, at(0.5)], at(0.9));
+    expect(one.index).toBe(1);
+    expect(one.placements[1]?.x).toBe(0.9);
+    const full = withNewCopy(
+      Array.from({ length: MAX_COPIES }, () => at(0.5)),
+      at(0.1),
+    );
+    expect(full.index).toBe(-1);
+    expect(full.placements.every((q) => q?.x === 0.5)).toBe(true);
   });
-  test('placements are cleaned to 4 entries', () => {
-    expect(cleanPlacements([at(0.1)])).toHaveLength(4);
-    expect(cleanPlacements('nonsense')).toEqual([null, null, null, null]);
+  test('placements are cleaned to the most copies a sticker can have', () => {
+    expect(cleanPlacements([at(0.1)])).toHaveLength(MAX_COPIES);
+    expect(cleanPlacements('nonsense')).toEqual(Array.from({ length: MAX_COPIES }, () => null));
+  });
+  test('a sticker may sit a little past the picture’s edge, no further', () => {
+    expect(cleanPlacements([at(5, -5)])[0]).toMatchObject({ x: PLACE_MAX, y: PLACE_MIN });
+    expect(cleanPlacements([at(1.1, -0.2)])[0]).toMatchObject({ x: 1.1, y: -0.2 });
+  });
+  test('a sticker on the picture is found again on a photo, and a sticker over the gap reaches the next photo', () => {
+    const comp = composition('strip3', 'portrait', true);
+    const [a, b] = comp.cells;
+    // a sticker centred on the gap between photo 1 and 2 (in picture fractions) is below photo 1's bottom edge and above photo 2's top edge
+    const gapY = (a.y + a.h + (b.y - (a.y + a.h)) / 2) / comp.height;
+    const sticker = { x: 0.5, y: gapY, size: 0.3, rotation: 0 };
+    expect(stripToCell(sticker, a, comp).y).toBeGreaterThan(1);
+    expect(stripToCell(sticker, b, comp).y).toBeLessThan(0);
+    // and on a photo centre it maps to that photo's middle
+    const mid = { x: (a.x + a.w / 2) / comp.width, y: (a.y + a.h / 2) / comp.height, size: a.w / comp.width, rotation: 30 };
+    expect(stripToCell(mid, a, comp)).toEqual({ x: 0.5, y: 0.5, size: 1, rotation: 30 });
   });
 });
 

@@ -6,7 +6,7 @@ import { Maximize2, RotateCcw, X } from 'lucide-react';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { PhotoWall, type WallPhoto } from '@/components/PhotoWall/PhotoWall';
-import { FILTER_CSS, SHOTS, cellRatio, composition, cellSize, hexToRgb, promptFor, type BoothConfig } from '@/lib/photobooth/booth';
+import { FILTER_CSS, SHOTS, cellRatio, composition, cellSize, hexToRgb, promptFor, stripToCell, type BoothConfig } from '@/lib/photobooth/booth';
 import { autoAdjust, composeFrame, composePicture, composeStripFrame, cutShot, loadImage, type PlacedSticker } from '@/lib/photobooth/compose';
 import { GIF_TRIES, MAX_GIF_BYTES, encodeGif, spread } from '@/lib/photobooth/gif';
 import { HOLD_END, playbackTicks, type Tick } from '@/lib/photobooth/playback';
@@ -153,13 +153,21 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     setMaking(false);
   }, []);
 
-  /** The stickers that belong on photo `i` (0-based), where the host placed them. */
-  const placedFor = (i: number): PlacedSticker[] =>
-    stickerList.flatMap((o) => {
-      const image = images.current.get(o.id);
-      const p = o.placements[i];
-      return image && p ? [{ image, x: p.x, y: p.y, size: p.size, rotation: (p.rotation * Math.PI) / 180 }] : [];
-    });
+  /** The stickers of the booth, placed on the picture as a whole (where the host put them): they go over every photo and frame. */
+  const placedAll = (): PlacedSticker[] =>
+    stickerList.flatMap((o) =>
+      o.placements.flatMap((p) => {
+        const image = images.current.get(o.id);
+        return image && p ? [{ image, x: p.x, y: p.y, size: p.size, rotation: (p.rotation * Math.PI) / 180 }] : [];
+      }),
+    );
+  /** The same stickers as they fall on photo `i` alone (its own fractions), for that photo's moving frames. */
+  const placedFor = (i: number): PlacedSticker[] => {
+    if (!config) return [];
+    const comp = composition(config.layout, config.aspect, !!config.footer.trim());
+    const cell = comp.cells[i];
+    return cell ? placedAll().map((s) => ({ ...s, ...stripToCell({ x: s.x, y: s.y, size: s.size, rotation: s.rotation }, cell, comp) })) : [];
+  };
 
   /** Counts down and takes one photo, with the clip around it (null when the booth was left or cancelled meanwhile). */
   async function takeShot(i: number, alive: () => boolean): Promise<{ shot: HTMLCanvasElement; clip: HTMLCanvasElement[] } | null> {
@@ -206,7 +214,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     setPrompt('');
     setMaking(true);
     try {
-      const blob = await composePicture({ config, shots: shots.current, stickers: placedFor, frame: frameImage() });
+      const blob = await composePicture({ config, shots: shots.current, stickers: placedAll(), frame: frameImage() });
       if (!alive()) return;
       const still = { blob, url: URL.createObjectURL(blob) };
       const strip = await movingStrip();
@@ -275,7 +283,7 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
     const frame = frameImage();
     const seqs = shots.current.map((shot, i) => [...clips.current[i].slice(0, BEFORE), shot]);
     const played = seqs.map((seq, i) => seq.map((f) => composeFrame({ config, shot: f, stickers: placedFor(i), frame, width: CLIP_PLAY_W })));
-    const draw = (at: Tick, width: number) => composeStripFrame({ config, shots: seqs.map((seq, i) => seq[at[i]]), stickers: placedFor, frame, width });
+    const draw = (at: Tick, width: number) => composeStripFrame({ config, shots: seqs.map((seq, i) => seq[at[i]]), stickers: placedAll(), frame, width });
     const playback: StripPlayback = { ticks: playbackTicks(seqs.length, BEFORE + 1), render: (at) => draw(at, SCREEN_STRIP_W) };
     const together = (f: number) => Array<number>(seqs.length).fill(f);
     try {
@@ -357,10 +365,12 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
   const showCam = phase === 'idle' || phase === 'choose' || phase === 'shoot';
   const total = config ? SHOTS[config.layout] : 0;
   // (the stickers of the photo being taken, over the live camera)
-  const placedNow = stickerList.flatMap((o) => {
-    const p = o.placements[Math.max(0, shotNo - 1)];
-    return p ? [{ o, p }] : [];
-  });
+  const placedNow = stickerList.flatMap((o) =>
+    o.placements.flatMap((p) => {
+      const cell = strip?.cells[Math.max(0, shotNo - 1)];
+      return p && strip && cell ? [{ o, p: stripToCell(p, cell, strip) }] : [];
+    }),
+  );
   const stage = (
     <div
       className={styles.stage}
@@ -475,10 +485,10 @@ export function BoothRun({ booth, test = false, onExit }: { booth: string; test?
               )}
               {(phase === 'shoot' || phase === 'choose') && placedNow.length > 0 && (
                 <div className={styles.stickerLayer}>
-                  {placedNow.map(({ o, p }) => (
+                  {placedNow.map(({ o, p }, n) => (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      key={o.id}
+                      key={`${o.id}-${n}`}
                       src={o.image}
                       alt=""
                       draggable={false}

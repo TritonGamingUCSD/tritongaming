@@ -1,7 +1,7 @@
 import { adjustFor, applyAdjust } from '@/lib/photobooth/adjust';
 import { applyFilter, cellSize, composition, stickerBox, type BoothConfig, type Filter, type Rect } from '@/lib/photobooth/booth';
 
-// Makes the finished picture (browser only): the photos on the background in their places, each with its filter, then the stickers that belong on that photo, then the frame over it, then the footer text.
+// Makes the finished picture (browser only): the photos on the background in their places, each with its filter and the frame over it, then the footer text, and last the stickers, which belong to the picture as a whole: they sit above every photo and frame and may reach over onto the next photo.
 export interface PlacedSticker {
   image: HTMLImageElement;
   x: number;
@@ -38,16 +38,21 @@ export function autoAdjust(shot: HTMLCanvasElement, clip: HTMLCanvasElement[], s
   }
 }
 
-/** One photo in its place on a canvas: the shot with the booth's filter, then its stickers, then the frame over it. */
-function drawCell(ctx: CanvasRenderingContext2D, cell: Rect, shot: HTMLCanvasElement, opts: { filter: Filter; stickers: PlacedSticker[]; frame: HTMLImageElement | null }): void {
+/** One photo in its place on a canvas: the shot with the booth's filter, then the frame over it. */
+function drawCell(ctx: CanvasRenderingContext2D, cell: Rect, shot: HTMLCanvasElement, opts: { filter: Filter; frame: HTMLImageElement | null }): void {
   ctx.drawImage(shot, cell.x, cell.y, cell.w, cell.h);
   if (opts.filter !== 'none') {
     const px = ctx.getImageData(cell.x, cell.y, cell.w, cell.h);
     applyFilter(px.data, opts.filter);
     ctx.putImageData(px, cell.x, cell.y);
   }
-  for (const s of opts.stickers) {
-    const box = stickerBox(cell, s);
+  if (opts.frame) ctx.drawImage(opts.frame, cell.x, cell.y, cell.w, cell.h);
+}
+
+/** Stickers on an area (a photo, or the whole picture): `x`, `y` and `size` are fractions of that area. */
+function drawStickers(ctx: CanvasRenderingContext2D, area: Rect, stickers: PlacedSticker[]): void {
+  for (const s of stickers) {
+    const box = stickerBox(area, s);
     const h = box.w * (s.image.naturalHeight / Math.max(1, s.image.naturalWidth));
     ctx.save();
     ctx.translate(box.cx, box.cy);
@@ -55,25 +60,23 @@ function drawCell(ctx: CanvasRenderingContext2D, cell: Rect, shot: HTMLCanvasEle
     ctx.drawImage(s.image, -box.w / 2, -h / 2, box.w, h);
     ctx.restore();
   }
-  if (opts.frame) ctx.drawImage(opts.frame, cell.x, cell.y, cell.w, cell.h);
 }
 
-/** One finished photo on its own (the shot, filter, stickers and frame), `width` pixels wide: a frame of a clip. */
+/** One finished photo on its own (the shot, filter and frame, then the part of the stickers that falls on it: `stickers` are placed on this photo), `width` pixels wide: a frame of a clip. */
 export function composeFrame(opts: { config: BoothConfig; shot: HTMLCanvasElement; stickers: PlacedSticker[]; frame: HTMLImageElement | null; width: number }): HTMLCanvasElement {
   const { w, h } = cellSize(opts.config.aspect);
   const out = document.createElement('canvas');
   out.width = opts.width;
   out.height = Math.round((opts.width * h) / w);
-  drawCell(out.getContext('2d', { willReadFrequently: true })!, { x: 0, y: 0, w: out.width, h: out.height }, opts.shot, {
-    filter: opts.config.filter,
-    stickers: opts.stickers,
-    frame: opts.frame,
-  });
+  const ctx = out.getContext('2d', { willReadFrequently: true })!;
+  const area = { x: 0, y: 0, w: out.width, h: out.height };
+  drawCell(ctx, area, opts.shot, { filter: opts.config.filter, frame: opts.frame });
+  drawStickers(ctx, area, opts.stickers);
   return out;
 }
 
-/** The whole strip on a canvas `width` pixels wide: `shots[i]` goes in photo i's place with `stickers(i)` on it (the picture itself uses the full size; a frame of the animated strip a small one). */
-function drawStrip(config: BoothConfig, shots: HTMLCanvasElement[], stickers: (i: number) => PlacedSticker[], frame: HTMLImageElement | null, width: number): HTMLCanvasElement {
+/** The whole strip on a canvas `width` pixels wide: `shots[i]` goes in photo i's place, then the stickers over all of it (the picture itself uses the full size; a frame of the animated strip a small one). */
+function drawStrip(config: BoothConfig, shots: HTMLCanvasElement[], stickers: PlacedSticker[], frame: HTMLImageElement | null, width: number): HTMLCanvasElement {
   const hasFooter = !!config.footer.trim();
   const comp = composition(config.layout, config.aspect, hasFooter);
   const k = width / comp.width;
@@ -88,7 +91,6 @@ function drawStrip(config: BoothConfig, shots: HTMLCanvasElement[], stickers: (i
     if (shot)
       drawCell(ctx, { x: Math.round(c.x * k), y: Math.round(c.y * k), w: Math.round(c.w * k), h: Math.round(c.h * k) }, shot, {
         filter: config.filter,
-        stickers: stickers(i),
         frame,
       });
   });
@@ -105,6 +107,7 @@ function drawStrip(config: BoothConfig, shots: HTMLCanvasElement[], stickers: (i
     }
     ctx.fillText(config.footer, canvas.width / 2, (comp.footer.y + comp.footer.h / 2 - 6) * k);
   }
+  drawStickers(ctx, { x: 0, y: 0, w: canvas.width, h: canvas.height }, stickers);
   return canvas;
 }
 
@@ -112,17 +115,12 @@ function drawStrip(config: BoothConfig, shots: HTMLCanvasElement[], stickers: (i
 export const composeStripFrame = (opts: {
   config: BoothConfig;
   shots: HTMLCanvasElement[];
-  stickers: (i: number) => PlacedSticker[];
+  stickers: PlacedSticker[];
   frame: HTMLImageElement | null;
   width: number;
 }): HTMLCanvasElement => drawStrip(opts.config, opts.shots, opts.stickers, opts.frame, opts.width);
 
-export async function composePicture(opts: {
-  config: BoothConfig;
-  shots: HTMLCanvasElement[];
-  stickers: (i: number) => PlacedSticker[];
-  frame: HTMLImageElement | null;
-}): Promise<Blob> {
+export async function composePicture(opts: { config: BoothConfig; shots: HTMLCanvasElement[]; stickers: PlacedSticker[]; frame: HTMLImageElement | null }): Promise<Blob> {
   const { config, shots, stickers, frame } = opts;
   const canvas = drawStrip(config, shots, stickers, frame, composition(config.layout, config.aspect, !!config.footer.trim()).width);
   for (const q of [0.9, 0.82, 0.74, 0.65]) {

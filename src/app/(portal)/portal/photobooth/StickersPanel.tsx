@@ -8,20 +8,19 @@ import PictureDialog from '@/components/ui/PictureDialog';
 import ColorInput from '@/components/ui/ColorInput';
 import { Field, Input } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
-import { MAX_PHOTOS, MAX_STICKERS_PER_LOOK, cleanPlacements, copyPlacementToAll, withPlacement, type Overlay } from '@/lib/photobooth/booth';
+import { MAX_COPIES, MAX_STICKERS_PER_LOOK, cleanPlacements, withNewCopy, withPlacement, type Overlay } from '@/lib/photobooth/booth';
 import { DEFAULT_TEXT_STICKER, drawTextSticker, renderTextSticker, type TextSticker } from '@/lib/photobooth/design';
 import { shrinkOverlay } from '@/lib/photobooth/shrink';
 import { call, uploadSticker } from './api';
 import styles from './photobooth.module.css';
 
-/** A new sticker waits in the tray on no photo: drag it onto the photos that should show it. */
-const startFor = () => ({ placements: Array.from({ length: MAX_PHOTOS }, () => null) });
+/** A new sticker waits in the tray, not on the picture: drag it onto the picture where it should sit. */
+const startFor = () => ({ placements: Array.from({ length: MAX_COPIES }, () => null) });
 
-// The stickers tool: the stickers of this look. Add one from a picture or from words, then drag it on any photo of the picture: every photo has its own place, size and turn for it, and can leave it out. Adding and removing happens at once;
+// The stickers tool: the stickers of this look. Add one from a picture or from words, then drag it onto the picture: a sticker belongs to the picture as a whole, so it sits above every photo and frame and can reach over onto the next photo. Adding and removing happens at once;
 // where they sit is saved with the rest of the booth.
 export function StickersPanel({
   look,
-  photos,
   stickers,
   selectedId,
   selectedPhoto,
@@ -31,11 +30,9 @@ export function StickersPanel({
   onRemoved,
 }: {
   look: string;
-  /** How many photos the layout takes. */
-  photos: number;
   stickers: Overlay[];
   selectedId: string | null;
-  /** The photo whose place for the selected sticker is shown (0-based). */
+  /** The copy of the selected sticker whose place is shown (0-based). */
   selectedPhoto: number;
   onSelect: (id: string | null, photo?: number) => void;
   onChange: (id: string, patch: Partial<Overlay>, key?: string) => void;
@@ -48,7 +45,7 @@ export function StickersPanel({
   const [busy, setBusy] = useState(false);
   const canvas = useRef<HTMLCanvasElement>(null);
   const cur = stickers.find((s) => s.id === selectedId) ?? null;
-  const photo = Math.min(selectedPhoto, photos - 1);
+  const photo = Math.min(selectedPhoto, MAX_COPIES - 1);
   const here = cur ? cleanPlacements(cur.placements)[photo] : null;
   const full = stickers.length >= MAX_STICKERS_PER_LOOK;
 
@@ -90,8 +87,9 @@ export function StickersPanel({
   return (
     <div className={styles.tools}>
       <p className={styles.hint}>
-        Drag a sticker from the list onto a photo to put it there. Each photo has its own place, size and turn for it: select one on the picture to turn it with the knob above it,
-        drag it off the picture or press Delete to take it off that photo.
+        Drag a sticker from the list onto the picture to put it there. It belongs to the whole picture, so it sits above every photo and frame and can reach over onto the next
+        photo. Select one on the picture to turn it with the knob above it; drag it off the picture or press Delete to take it away. Drag the same sticker on again for another
+        copy.
       </p>
       <div className={styles.rowActions}>
         <Button size="sm" variant="secondary" disabled={full || busy} onClick={() => setPicking(true)}>
@@ -146,7 +144,7 @@ export function StickersPanel({
                   e.dataTransfer.effectAllowed = 'copy';
                 }}
                 className={`${styles.stickerChip} ${styles.trayItem} ${s.id === selectedId ? styles.stickerChipOn : ''} ${s.placements.some(Boolean) ? '' : styles.trayOff}`}
-                title={s.placements.some(Boolean) ? s.name : `${s.name}: drag it onto a photo`}
+                title={s.placements.some(Boolean) ? s.name : `${s.name}: drag it onto the picture`}
                 onClick={() => onSelect(s.id === selectedId ? null : s.id, Math.max(0, s.placements.findIndex(Boolean)))}
                 aria-pressed={s.id === selectedId}
                 aria-label={s.name}
@@ -164,20 +162,23 @@ export function StickersPanel({
           <Field label="Name">
             <Input value={cur.name} maxLength={60} onChange={(e) => onChange(cur.id, { name: e.target.value }, `name-${cur.id}`)} />
           </Field>
-          {photos > 1 && (
-            <div className={styles.photoTabs} role="group" aria-label="Photo to edit">
-              {Array.from({ length: photos }, (_, i) => (
-                <button
-                  key={i}
-                  type="button"
-                  className={`${styles.photoChip} ${i === photo ? styles.photoChipOn : ''}`}
-                  aria-pressed={i === photo}
-                  onClick={() => onSelect(cur.id, i)}
-                >
-                  Photo {i + 1}
-                  {!cur.placements[i] && <span className={styles.photoOff}> off</span>}
-                </button>
-              ))}
+          {cur.placements.filter(Boolean).length > 1 && (
+            <div className={styles.photoTabs} role="group" aria-label="Copy to edit">
+              {cleanPlacements(cur.placements).flatMap((q, i) =>
+                q ? (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`${styles.photoChip} ${i === photo ? styles.photoChipOn : ''}`}
+                    aria-pressed={i === photo}
+                    onClick={() => onSelect(cur.id, i)}
+                  >
+                    Copy {i + 1}
+                  </button>
+                ) : (
+                  []
+                ),
+              )}
             </div>
           )}
           {here ? (
@@ -213,15 +214,22 @@ export function StickersPanel({
                 >
                   <RotateCcw size={14} aria-hidden="true" /> Straighten
                 </Button>
-                {photos > 1 && (
-                  <Button size="sm" variant="secondary" onClick={() => onChange(cur.id, { placements: copyPlacementToAll(cur.placements, photo, photos) })}>
-                    <Copy size={14} aria-hidden="true" /> Same On All Photos
-                  </Button>
-                )}
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={!cleanPlacements(cur.placements).some((q) => !q)}
+                  onClick={() => {
+                    const next = withNewCopy(cur.placements, { ...here, x: Math.min(1, here.x + 0.1), y: Math.min(1, here.y + 0.1) });
+                    onChange(cur.id, { placements: next.placements });
+                    if (next.index >= 0) onSelect(cur.id, next.index);
+                  }}
+                >
+                  <Copy size={14} aria-hidden="true" /> Add Another Copy
+                </Button>
               </div>
             </>
           ) : (
-            <p className={styles.hint}>Not on photo {photo + 1} yet: drag it from the list above onto that photo.</p>
+            <p className={styles.hint}>Not on the picture yet: drag it from the list above onto the picture.</p>
           )}
           <Button size="sm" variant="secondary" onClick={() => void remove(cur)}>
             <Trash2 size={15} aria-hidden="true" /> Remove Sticker

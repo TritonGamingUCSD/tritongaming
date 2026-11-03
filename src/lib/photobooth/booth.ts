@@ -13,7 +13,7 @@ export const FILTER_NAMES: Record<Filter, string> = { none: 'Natural', bw: 'Blac
 /** How many photos a layout takes. */
 export const SHOTS: Record<Layout, number> = { single: 1, grid: 4, strip3: 3, strip4: 4 };
 
-/** One sticker on one photo: its centre and width as fractions of the photo, and its turn in degrees. */
+/** One sticker on the picture as a whole (not on a photo): its centre as fractions of the picture's width and height, its width as a fraction of the picture's width, and its turn in degrees. It sits above every photo and frame and may reach over onto the next photo. */
 export interface Placement {
   x: number;
   y: number;
@@ -21,7 +21,7 @@ export interface Placement {
   rotation: number;
 }
 
-/** A sticker of a look. `placements` has an entry for each photo of the strip (up to 4): where it sits on that photo, or null when that photo does not show it (dragged onto a photo from the tray to show it there). */
+/** A sticker of a look. `placements` are its copies on the picture (up to MAX_COPIES): where each sits on the whole picture, or null for an unused slot. A new sticker waits in the tray with no copy until it is dragged onto the picture. */
 export interface Overlay {
   id: string;
   name: string;
@@ -32,7 +32,12 @@ export interface Overlay {
 
 /** The most photos one picture holds. */
 export const MAX_PHOTOS = 4;
-/** Where a new sticker starts on a photo. */
+/** The most copies of one sticker a picture can carry. */
+export const MAX_COPIES = 6;
+/** A sticker's centre may go a little past the picture's edge (so a big one can hang off it); the picture clips what is outside. */
+export const PLACE_MIN = -0.3;
+export const PLACE_MAX = 1.3;
+/** Where a new sticker starts. */
 export const DEFAULT_PLACEMENT: Placement = { x: 0.5, y: 0.5, size: 0.4, rotation: 0 };
 
 const num = (v: unknown, min: number, max: number, d: number) => (typeof v === 'number' && Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d);
@@ -41,24 +46,25 @@ const num = (v: unknown, min: number, max: number, d: number) => (typeof v === '
 export function cleanPlacement(v: unknown): Placement | null {
   if (!v || typeof v !== 'object') return null;
   const b = v as Record<string, unknown>;
-  return { x: num(b.x, 0, 1, 0.5), y: num(b.y, 0, 1, 0.5), size: num(b.size, 0.05, 1, 0.4), rotation: num(b.rotation, -180, 180, 0) };
+  return { x: num(b.x, PLACE_MIN, PLACE_MAX, 0.5), y: num(b.y, PLACE_MIN, PLACE_MAX, 0.5), size: num(b.size, 0.05, 1, 0.4), rotation: num(b.rotation, -180, 180, 0) };
 }
 
-/** A sticker's placements: an entry for each of the 4 possible photos (null: that photo does not show it; a new sticker waits in the tray on no photo at all). */
+/** A sticker's copies: a slot for each of the MAX_COPIES (null: unused; a new sticker waits in the tray with none). */
 export function cleanPlacements(v: unknown): (Placement | null)[] {
   const list = Array.isArray(v) ? v : [];
-  return Array.from({ length: MAX_PHOTOS }, (_, i) => cleanPlacement(list[i]));
+  return Array.from({ length: MAX_COPIES }, (_, i) => cleanPlacement(list[i]));
 }
 
-/** The placements with photo `i` changed (null takes the sticker off that photo). */
+/** The placements with copy `i` changed (null takes that copy off the picture). */
 export function withPlacement(placements: (Placement | null)[], i: number, p: Placement | null): (Placement | null)[] {
   return cleanPlacements(placements).map((q, k) => (k === i ? p : q));
 }
 
-/** The placements with photo `i`'s placement copied to every one of the layout's `count` photos. */
-export function copyPlacementToAll(placements: (Placement | null)[], i: number, count: number): (Placement | null)[] {
-  const from = placements[i];
-  return from ? cleanPlacements(placements).map((q, k) => (k < count ? { ...from } : q)) : cleanPlacements(placements);
+/** The placements with one more copy at `p` in the first free slot (the same ones back when all slots are used). `index` is the slot used, or -1. */
+export function withNewCopy(placements: (Placement | null)[], p: Placement): { placements: (Placement | null)[]; index: number } {
+  const list = cleanPlacements(placements);
+  const index = list.findIndex((q) => !q);
+  return index < 0 ? { placements: list, index } : { placements: list.map((q, k) => (k === index ? p : q)), index };
 }
 
 export interface BoothConfig {
@@ -337,7 +343,12 @@ export const promptFor = (prompts: string[], i: number): string => (prompts.leng
 /** The URL of a finished picture's page. */
 export const photoLink = (token: string, origin: string): string => `${origin.replace(/\/$/, '')}/photos/${token}`;
 
-/** A sticker's centre and width on one photo, in pixels, from its fractions. */
+/** A sticker placed on the whole picture, as it would be placed on one photo (the fractions of that photo's own width and height): for drawing the part of it that falls on that photo. */
+export function stripToCell(p: Placement, cell: Rect, comp: { width: number; height: number }): Placement {
+  return { x: (p.x * comp.width - cell.x) / cell.w, y: (p.y * comp.height - cell.y) / cell.h, size: (p.size * comp.width) / cell.w, rotation: p.rotation };
+}
+
+/** A sticker's centre and width in pixels on an area (a photo or the whole picture), from its fractions. */
 export function stickerBox(cell: Rect, s: { x: number; y: number; size: number }): { cx: number; cy: number; w: number } {
   return { cx: cell.x + s.x * cell.w, cy: cell.y + s.y * cell.h, w: s.size * cell.w };
 }

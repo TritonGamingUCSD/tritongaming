@@ -1,3 +1,13 @@
-.box { width: 100%; padding: 0.8rem 1rem; border-radius: 0.8rem; text-align: center; font-family: var(--font-mono, ui-monospace, monospace); font-size: 2rem; font-weight: 700; letter-spacing: 0.4em; text-indent: 0.4em; }
-.dark { padding: 0.55rem 0.8rem; border: 2px solid rgba(255, 255, 255, 0.45); background: rgba(0, 0, 0, 0.45); color: #fff; font-size: 1.5rem; }   /* theme-ok */
-.dark::placeholder { color: rgba(255, 255, 255, 0.45); }   /* theme-ok */
+.wrap { position: relative; width: 100%; font-family: var(--font-mono, ui-monospace, monospace); font-size: 2rem; font-weight: 700; }
+.dark { font-size: 1.5rem; color: #fff; }   /* theme-ok */
+/* the real input: it keeps the site's box look and takes the typing, but its own text and caret are hidden (the six places drawn over it show the code) */
+.box { width: 100%; padding: 0.8rem 1rem; border-radius: 0.8rem; font: inherit; color: transparent; caret-color: transparent; text-align: center; letter-spacing: normal; }
+.box::selection { background: transparent; }
+.darkBox { padding: 0.55rem 0.8rem; border: 2px solid rgba(255, 255, 255, 0.45); background: rgba(0, 0, 0, 0.45); }   /* theme-ok */
+.cells { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 0.4em; pointer-events: none; }
+.cell { position: relative; display: inline-block; min-width: 0.65em; text-align: center; opacity: 0.35; }
+.filled { opacity: 1; }
+/* the caret: a thin bar on the place about to be filled */
+.next::before { content: ''; position: absolute; left: -0.22em; top: 12%; bottom: 12%; width: 2px; border-radius: 1px; background: currentColor; animation: codeCaret 1s steps(1) infinite; }
+@keyframes codeCaret { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .next::before { animation: none; } }

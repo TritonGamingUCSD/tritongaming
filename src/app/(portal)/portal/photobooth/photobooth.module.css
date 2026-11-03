@@ -84,7 +84,7 @@
 .chipOn { border-color: var(--accent); background: rgba(250, 204, 21, 0.2); }   /* theme-ok */
 .btnRow { display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center; }
 .prompt { animation: pbRise 0.4s ease-out both; }
-.stickerLayer { position: absolute; inset: 0; touch-action: none; }
+.stickerLayer { position: absolute; inset: 0; overflow: hidden; touch-action: none; }
 .stickerLocked { pointer-events: none; }
 .placed { position: absolute; height: auto; cursor: grab; user-select: none; -webkit-user-drag: none; touch-action: none; }
 .placedOn { outline: 2px dashed var(--accent); outline-offset: 4px; }

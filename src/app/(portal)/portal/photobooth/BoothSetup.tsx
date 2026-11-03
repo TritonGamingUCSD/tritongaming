@@ -12,8 +12,9 @@ import { showToast } from '@/lib/ui/toast';
 import {
   DEFAULT_FRAME_SPEC,
   DEFAULT_PLACEMENT,
+  MAX_COPIES,
+  withNewCopy,
   MAX_LOOKS_PER_BOOTH,
-  SHOTS,
   cleanBooth,
   splitConfig,
   withPlacement,
@@ -139,7 +140,7 @@ export function BoothSetup({
     return () => window.removeEventListener('keydown', onKey);
   }, [h]);
 
-  // Delete (or Backspace) takes the selected sticker off the photo it is selected on.
+  // Delete (or Backspace) takes the selected copy of a sticker off the picture.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.key !== 'Delete' && e.key !== 'Backspace') || typing(e.target) || sel?.kind !== 'sticker' || !h.value) return;
@@ -159,7 +160,7 @@ export function BoothSetup({
   const setFrame = (patch: Partial<FrameSpec> | null, key?: string) => set({ frame: patch === null ? null : { ...(form.frame ?? DEFAULT_FRAME_SPEC), ...patch } }, key);
   const dragFrame = (patch: Partial<FrameSpec>) => form.frame && h.drag({ ...form, frame: { ...form.frame, ...patch } });
   const editSticker = (id: string, patch: Partial<Overlay>, key?: string) => h.set({ ...form, edits: { ...form.edits, [id]: { ...form.edits[id], ...patch } } }, key);
-  /** One sticker's place, size or turn on one photo (a drag is one undo step). */
+  /** One copy of a sticker: its place, size or turn on the picture (a drag is one undo step). */
   const dragSticker = (id: string, photo: number, patch: Partial<Placement>) => {
     const sticker = stickers.find((o) => o.id === id);
     const cur = sticker?.placements[photo];
@@ -167,13 +168,15 @@ export function BoothSetup({
     const placements = withPlacement(sticker.placements, photo, { ...cur, ...patch });
     h.drag({ ...form, edits: { ...form.edits, [id]: { ...form.edits[id], placements } } });
   };
-  /** A sticker from the tray was dropped on a photo: it shows there, at the drop point (the size and turn it has on another photo, or the usual). */
-  const placeSticker = (id: string, photo: number, x: number, y: number) => {
+  /** A sticker from the tray was dropped on the picture: a new copy of it goes there, at the drop point (the size and turn of its other copies, or the usual). */
+  const placeSticker = (id: string, x: number, y: number) => {
     const o = stickers.find((k) => k.id === id);
     if (!o) return;
-    const base = o.placements[photo] ?? o.placements.find(Boolean) ?? DEFAULT_PLACEMENT;
-    editSticker(id, { placements: withPlacement(o.placements, photo, { ...base, x, y }) });
-    setSel({ kind: 'sticker', id, photo });
+    const base = o.placements.find(Boolean) ?? DEFAULT_PLACEMENT;
+    const next = withNewCopy(o.placements, { ...base, x, y });
+    if (next.index < 0) return setError(`A sticker can be on the picture up to ${MAX_COPIES} times.`);
+    editSticker(id, { placements: next.placements });
+    setSel({ kind: 'sticker', id, photo: next.index });
     onTool('stickers');
   };
   const removeFrom = (id: string, photo: number) => {
@@ -294,7 +297,6 @@ export function BoothSetup({
     stickers: (
       <StickersPanel
         look={look.id}
-        photos={SHOTS[form.layout]}
         stickers={stickers}
         selectedId={sel?.kind === 'sticker' ? sel.id : null}
         selectedPhoto={sel?.kind === 'sticker' ? sel.photo : 0}

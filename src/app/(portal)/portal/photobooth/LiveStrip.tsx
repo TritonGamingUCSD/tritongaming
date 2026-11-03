@@ -71,22 +71,24 @@ export function LiveStrip({
             // eslint-disable-next-line @next/next/no-img-element
             <img className={styles.camFrame} src={frameUrl} alt="" />
           )}
-          {stickers.map((s) => {
-            const p = s.placements[i];
-            return p ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                key={s.id}
-                src={s.image}
-                alt=""
-                draggable={false}
-                className={styles.placed}
-                style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.size * 100}%`, transform: `translate(-50%, -50%) rotate(${p.rotation}deg)` }}
-              />
-            ) : null;
-          })}
         </div>
       ))}
+      {/* the stickers belong to the picture as a whole: above every photo and frame, and free to reach over onto the next photo */}
+      {stickers.flatMap((s) =>
+        s.placements.map((p, n) =>
+          p ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              key={`${s.id}-${n}`}
+              src={s.image}
+              alt=""
+              draggable={false}
+              className={styles.placed}
+              style={{ left: `${p.x * 100}%`, top: `${p.y * 100}%`, width: `${p.size * 100}%`, transform: `translate(-50%, -50%) rotate(${p.rotation}deg)` }}
+            />
+          ) : null,
+        ),
+      )}
       {config.footer.trim() && (
         <div
           className={styles.previewFooter}
