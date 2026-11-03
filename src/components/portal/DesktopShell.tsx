@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import PortalRefresh from './PortalRefresh';
 import { motion, AnimatePresence } from 'motion/react';
-import { Hash, Home } from 'lucide-react';
+import { ChevronDown, Hash, Home } from 'lucide-react';
 import CodeBox from '@/components/portal/CodeBox';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
@@ -71,6 +71,26 @@ export function DesktopShell({
         /* ignore */
       }
       return n;
+    });
+  // Groups can be folded away to leave a shorter sidebar: remembered per browser; the group of the page that is open always shows.
+  const [folded, setFolded] = useState<string[]>([]);
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem('tg_rail_groups') ?? '[]');
+      if (Array.isArray(saved)) setFolded(saved.filter((x): x is string => typeof x === 'string'));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+  const toggleGroup = (g: string) =>
+    setFolded((list) => {
+      const next = list.includes(g) ? list.filter((x) => x !== g) : [...list, g];
+      try {
+        localStorage.setItem('tg_rail_groups', JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
+      return next;
     });
   const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
@@ -161,29 +181,41 @@ export function DesktopShell({
             .map(({ group, items: all }) => ({ group, items: all.filter((s) => !s.railHidden) }))
             .filter(({ items }) => items.length > 0)
             .map(({ group, items }) => (
-              <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: items.length }}>
+              <div
+                key={group}
+                className={`${styles.railGroup} ${folded.includes(group) && !items.some((x) => x.id === openId) ? styles.railGroupFolded : ''}`}
+                style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: folded.includes(group) && !items.some((x) => x.id === openId) ? 0 : items.length }}
+              >
                 {groupedSections.length > 1 && group !== 'Overview' && (
-                  <div className={styles.railGroupLabel}>
+                  <button
+                    type="button"
+                    className={`${styles.railGroupLabel} ${styles.railGroupToggle}`}
+                    onClick={() => toggleGroup(group)}
+                    aria-expanded={!folded.includes(group) || items.some((x) => x.id === openId)}
+                    title={folded.includes(group) ? `Show ${GROUP_LABEL[group]}` : `Hide ${GROUP_LABEL[group]}`}
+                  >
                     <span className={styles.railGroupDot} aria-hidden="true" />
                     {GROUP_LABEL[group]}
-                  </div>
-                )}
-                {items.map((s) => (
-                  <button
-                    key={s.id}
-                    className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''}`}
-                    onClick={() => open(s.id)}
-                    aria-current={s.id === openId ? 'page' : undefined}
-                    title={s.label}
-                    aria-label={collapsed ? s.label : undefined}
-                  >
-                    <span className={styles.railMono} aria-hidden="true">
-                      {s.label.charAt(0)}
-                    </span>
-                    <span className={styles.railLabel}>{s.label}</span>
-                    {s.badge !== undefined && s.badge !== 0 && <span className={styles.railBadge}>{s.badge}</span>}
+                    <ChevronDown className={styles.railGroupChevron} size={13} aria-hidden="true" />
                   </button>
-                ))}
+                )}
+                {(!folded.includes(group) || items.some((x) => x.id === openId)) &&
+                  items.map((s) => (
+                    <button
+                      key={s.id}
+                      className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''}`}
+                      onClick={() => open(s.id)}
+                      aria-current={s.id === openId ? 'page' : undefined}
+                      title={s.label}
+                      aria-label={collapsed ? s.label : undefined}
+                    >
+                      <span className={styles.railMono} aria-hidden="true">
+                        {s.label.charAt(0)}
+                      </span>
+                      <span className={styles.railLabel}>{s.label}</span>
+                      {s.badge !== undefined && s.badge !== 0 && <span className={styles.railBadge}>{s.badge}</span>}
+                    </button>
+                  ))}
               </div>
             ))}
         </nav>

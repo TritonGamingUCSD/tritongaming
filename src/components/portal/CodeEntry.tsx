@@ -13,7 +13,6 @@ export default function CodeEntry({
   dark = false,
   compact = false,
   icon,
-  trailing,
   status = null,
 }: {
   onSubmit: (code: string) => void;
@@ -22,7 +21,6 @@ export default function CodeEntry({
   /** On the camera screen: light text on a dark glass. */ dark?: boolean;
   /** Small, for the sidebar. */ compact?: boolean;
   /** A small mark inside the box at the left, in place of a label above it. */ icon?: ReactNode;
-  /** Something small inside the box at the right (the sound switch). */ trailing?: ReactNode;
   /** How the last code went: a flash for 'ok', a shake for 'bad'. */ status?: 'ok' | 'bad' | null;
 }) {
   const [value, setValue] = useState('');
@@ -55,7 +53,6 @@ export default function CodeEntry({
           {icon}
         </span>
       )}
-      {trailing && <span className={styles.trailing}>{trailing}</span>}
       <span className={styles.cells} aria-hidden="true">
         {Array.from({ length: 6 }, (_, i) => (
           <span key={i} className={`${styles.cell} ${i < value.length ? styles.filled : ''} ${focused && i === value.length ? styles.next : ''}`}>

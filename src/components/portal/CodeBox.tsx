@@ -6,7 +6,6 @@ import { Hash } from 'lucide-react';
 import CheckInOutcome from '@/components/portal/CheckInOutcome';
 import CodeEntry from '@/components/portal/CodeEntry';
 import Dialog from '@/components/ui/Dialog';
-import FeedbackToggle from '@/components/portal/FeedbackToggle';
 import { checkInWithCode, confirmEventCheckIn, type Outcome } from '@/lib/checkin/anyCode';
 import { playFeedback } from '@/lib/ui/codeFeedback';
 
@@ -59,7 +58,7 @@ export default function CodeBox({ compact = false }: { compact?: boolean }) {
   const { submit, busy, dialog, status } = useCodeFlow();
   return (
     <>
-      <CodeEntry onSubmit={(c) => void submit(c)} busy={busy} compact={compact} icon={compact ? <Hash /> : undefined} trailing={<FeedbackToggle />} status={status} />
+      <CodeEntry onSubmit={(c) => void submit(c)} busy={busy} compact={compact} icon={compact ? <Hash /> : undefined} status={status} />
       {busy && (
         <p role="status" style={{ margin: '0.4rem 0 0', fontSize: '0.85rem', textAlign: 'center', opacity: 0.8 }}>
           Checking the code…

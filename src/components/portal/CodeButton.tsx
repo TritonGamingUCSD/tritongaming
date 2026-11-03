@@ -4,7 +4,6 @@ import { useRef, useState } from 'react';
 import { Hash } from 'lucide-react';
 import CodeEntry from '@/components/portal/CodeEntry';
 import { useCodeFlow } from '@/components/portal/CodeBox';
-import FeedbackToggle from '@/components/portal/FeedbackToggle';
 import Popover from '@/components/ui/Popover';
 import styles from './PortalThemeToggle.module.css';
 
@@ -24,7 +23,7 @@ export default function CodeButton() {
             <CodeEntry
               compact
               icon={<Hash />}
-              trailing={<FeedbackToggle />}
+
               autoFocus
               busy={busy}
               onSubmit={(c) => {

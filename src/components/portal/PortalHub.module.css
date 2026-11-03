@@ -910,3 +910,12 @@
 .rail.railCollapsed:not(:hover):not(:focus-within) .railCode { justify-content: center; padding-bottom: 0.3rem; }
 .rail.railCollapsed:not(:hover):not(:focus-within) .railCodeBox { display: none; }
 .rail.railCollapsed:not(:hover):not(:focus-within) .railCodeIcon { display: grid; }
+
+/* a group's heading is a button that folds its pages away (remembered); the arrow turns when it is folded */
+.railGroupToggle { border: 0; cursor: pointer; }
+.railGroupToggle:hover { filter: brightness(1.08); }
+.railGroupToggle:focus-visible { outline: 2px solid var(--pp-chrome-fg); outline-offset: 2px; }
+.railGroupChevron { margin-left: 0.15rem; opacity: 0.7; transition: transform 0.2s ease; }
+.railGroupFolded .railGroupChevron { transform: rotate(-90deg); }
+@media (prefers-reduced-motion: reduce) { .railGroupChevron { transition: none; } }
+.rail.railCollapsed:not(:hover):not(:focus-within) .railGroupChevron { display: none; }

@@ -19,21 +19,56 @@ export const DOCK_ICON_SIZE: Record<string, number> = { meetings: 19, events: 19
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
 // 'Overview' is the unlabeled group right under Dashboard (Profile and Help, which have no sidebar entry of their own).
-export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Team', 'Resources', 'Admin'] as const;
+export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Run', 'Team', 'Resources', 'Admin'] as const;
 
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
 // The order and the names of the sections are defined once, in lib/portal/sections.ts.
-export const SECTION_ORDER = SECTION_IDS;
+// (Grouped by job: Events plans an event, Run An Event holds the tools used while it happens, Team is people and meetings.)
+const WANTED_ORDER = [
+  'tickets',
+  'points',
+  'activity',
+  'profile',
+  'events',
+  'checkin',
+  'logistics',
+  'trivia',
+  'polls',
+  'qa',
+  'photobooth',
+  'staffle',
+  'meetings',
+  'members',
+  'division-members',
+  'divisions',
+  'strikes',
+  'quarters',
+  'newspaper',
+  'docs',
+  'qr',
+  'help',
+  'admin',
+  'site-content',
+];
+export const SECTION_ORDER = [...WANTED_ORDER, ...SECTION_IDS.filter((id) => !WANTED_ORDER.includes(id))];
 
 // Accent color per group — tints the heading dot, icon tiles and hover state.
 // The Dashboard is soft white, so it does not read as part of the blue "Yours" or "Events" groups.
 export const DASHBOARD_ACCENT = '#e5e7eb';
 
-export const GROUP_ACCENT: Record<string, string> = { Overview: DASHBOARD_ACCENT, Yours: '#4a90d9', Events: '#e8912d', Team: '#8b6cdc', Resources: '#2fae86', Admin: '#d9487f' };
+export const GROUP_ACCENT: Record<string, string> = {
+  Overview: DASHBOARD_ACCENT,
+  Yours: '#4a90d9',
+  Events: '#e8912d',
+  Run: '#d9573a',
+  Team: '#8b6cdc',
+  Resources: '#2fae86',
+  Admin: '#d9487f',
+};
 
 // Names shown for each group: what you are doing, not who is allowed.
-export const GROUP_LABEL: Record<string, string> = { Overview: 'Portal', Yours: 'Me', Events: 'Events', Team: 'Team', Resources: 'Library', Admin: 'Manage' };
+export const GROUP_LABEL: Record<string, string> = { Overview: 'Portal', Yours: 'Me', Events: 'Events', Run: 'Run An Event', Team: 'Team', Resources: 'Library', Admin: 'Manage' };
 
 // Params that belong to whatever was open, cleared when switching sections.
 export const CLEAR_NAV = { tab: null, subtab: null, block: null, id: null, q: null, status: null, view: null, atype: null, aq: null, ticket: null, plan: null };

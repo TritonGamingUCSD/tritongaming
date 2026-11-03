@@ -432,7 +432,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: canManageLogistics ? 'Equipment catalog and event setups' : 'Find equipment and see event setups',
             dockBoost: logisticsToday ? 100 : 0,
             dockLabel: 'Logistics',
-            group: 'Team' as const,
+            group: 'Events' as const,
             content: <LogisticsSectionContent canManage={canManageLogistics} />,
           },
         ]
@@ -447,7 +447,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: canManageLogistics ? 'Staff raffles: make one, draw it live' : 'Enter the staff raffle for prizes',
             homeExclude: true,
             dockExclude: true,
-            group: 'Team' as const,
+            group: 'Run' as const,
             content: <StaffleSectionContent canManage={canManageLogistics} />,
           },
         ]
@@ -475,7 +475,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       description: hasCapability(roles, 'host_trivia') ? 'Write quizzes and host games' : 'Join a quiz game',
       homeExclude: true,
       dockExclude: true,
-      group: 'Events' as const,
+      group: 'Run' as const,
       content: <TriviaSectionContent canHost={hasCapability(roles, 'host_trivia')} />,
     },
     // Polls for events (a cosplay contest, a favourite, a choice on stage): officers and above run them on a big screen; anyone votes with a code, no account needed.
@@ -488,7 +488,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: 'Run a vote on a big screen',
             homeExclude: true,
             dockExclude: true,
-            group: 'Events' as const,
+            group: 'Run' as const,
             content: <PollsSectionContent />,
           },
         ]
@@ -503,7 +503,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: 'A live question wall for the room',
             homeExclude: true,
             dockExclude: true,
-            group: 'Events' as const,
+            group: 'Run' as const,
             content: <QaSectionContent />,
           },
         ]
@@ -518,7 +518,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: 'Set up and run a photo booth at an event',
             homeExclude: true,
             dockExclude: true,
-            group: 'Events' as const,
+            group: 'Run' as const,
             content: <PhotoBoothSectionContent />,
           },
         ]
