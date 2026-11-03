@@ -1,0 +1,5 @@
+.form { display: flex; flex-direction: column; gap: 0.8rem; }
+.label { display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.85rem; font-weight: 700; }
+.input { min-height: 46px; padding: 0 0.8rem; border: 2px solid #011941; border-radius: 6px; background: #fff; color: #011941; font: inherit; font-size: 1rem; } /* theme-ok: the page is always cream and white */
+.input:focus { outline: none; box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
+.trap { position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden; }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { Newspaper, Plus } from 'lucide-react';
+import { Newspaper, Plus, Users } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import Loading from '@/components/Loading/Loading';
@@ -15,7 +15,7 @@ import polls from '../polls/polls.module.css';
 import styles from './newspaper.module.css';
 
 // The issues, in groups by where they are: waiting for a check (the first thing a sender needs to see), drafts, being sent and sent. A card says what it is, who wrote it and how it went.
-export default function NewspaperList({ onOpen }: { onOpen: (slug: string) => void }) {
+export default function NewspaperList({ onOpen, onSubscribers }: { onOpen: (slug: string) => void; onSubscribers: () => void }) {
   const [data, setData] = useState<{ issues: IssueCard[]; canSend: boolean } | null>(null);
   const [error, setError] = useState('');
   const [making, setMaking] = useState(false);
@@ -41,9 +41,16 @@ export default function NewspaperList({ onOpen }: { onOpen: (slug: string) => vo
       {error && <Notice tone="error">{error}</Notice>}
       <div className={polls.toolbar}>
         <p className={polls.about}>An issue is one email: the newspaper, an event announcement or an event update. Pick who gets it, have it checked, send it.</p>
-        <Button onClick={() => setMaking(true)}>
-          <Plus size={16} aria-hidden="true" /> Make An Issue
-        </Button>
+        <div className={polls.head}>
+          {data.canSend && (
+            <Button variant="secondary" onClick={onSubscribers}>
+              <Users size={16} aria-hidden="true" /> Subscribers
+            </Button>
+          )}
+          <Button onClick={() => setMaking(true)}>
+            <Plus size={16} aria-hidden="true" /> Make An Issue
+          </Button>
+        </div>
       </div>
       {groups.length === 0 && <p className={polls.empty}>No issues yet. Make one: write it in blocks, pick who gets it, and send it for checking.</p>}
       {groups.map((g) => (

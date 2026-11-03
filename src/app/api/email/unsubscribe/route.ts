@@ -6,7 +6,7 @@ import { verifyUnsubscribeToken } from '@/lib/email/unsubscribe';
 
 export const dynamic = 'force-dynamic';
 
-// The opt-out link in an email. It needs no sign-in: the signed token says who and which kind. GET opens the confirmation page. POST turns that kind off (the mail app's one-click "Unsubscribe"
+// The opt-out link in an email (for a member, or for a public Newspaper subscriber). It needs no sign-in: the signed token says who and which kind. GET opens the confirmation page. POST turns that kind off (the mail app's one-click "Unsubscribe"
 // button posts here too, with the token in the address).
 export async function GET(request: Request) {
   const t = new URL(request.url).searchParams.get('t') ?? '';
@@ -24,11 +24,14 @@ export async function POST(request: Request) {
   if (!who) return NextResponse.json({ error: 'That link is not valid.' }, { status: 400 });
   const column = EMAIL_KINDS.find((k) => k.id === who.kind)!.column;
   const svc = createServiceClient();
-  const { error } = await svc
+  const { data: updated, error } = await svc
     .from('profiles')
     .update({ [column]: false })
-    .eq('id', who.userId);
+    .eq('id', who.userId)
+    .select('id');
   if (error) return NextResponse.json({ error: 'Couldn’t save that. Try again.' }, { status: 500 });
+  // not an account: a public subscriber to the Newspaper (the link names the subscriber)
+  if (!updated?.length) await svc.from('newspaper_subscribers').update({ status: 'unsubscribed' }).eq('id', who.userId);
   await logAudit(svc, {
     actorId: who.userId,
     action: 'email.unsubscribe',

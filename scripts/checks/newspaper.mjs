@@ -2,8 +2,15 @@
 // The dev server must run with EMAIL_DRY_RUN=1 (nothing is mailed; the send path is otherwise real). Audiences are always people picked by id (the ZZ accounts), never a role or everyone, so nobody real can be reached.
 // Everything made is deleted at the end. Run: EMAIL_DRY_RUN=1 npm run dev  then  BASE_URL=http://localhost:3000 node scripts/checks/newspaper.mjs
 import { createClient } from '@supabase/supabase-js';
+import { createHmac } from 'node:crypto';
 import { accounts, svc, env, url, tracker, BASE } from './lib.mjs';
 
+// the signed links the same way the site makes them (lib/email/unsubscribe.ts)
+const secret = env.EMAIL_LINK_SECRET || env.SUPABASE_SERVICE_ROLE_KEY;
+const signed = (id, kind) => {
+  const body = Buffer.from(`${id}.${kind}`).toString('base64url');
+  return `${body}.${createHmac('sha256', secret).update(body).digest('base64url')}`;
+};
 const t = tracker();
 const { user, cleanup, made: accountIds } = accounts('news');
 const guests = [];
@@ -207,12 +214,66 @@ try {
     'making, checking and sending are in the Audit Log',
     (audit ?? []).some((a) => /Started sending/.test(a.summary)) && (audit ?? []).some((a) => /Asked for a check/.test(a.summary)),
   );
+
+  // ---- public subscribers
+  const E1 = 'zz-news-sub1@example.test';
+  t.ok(
+    'a robot filling the hidden field is told it worked and nothing is saved',
+    (await nobody('POST', '/api/newspaper/subscribe', { email: 'zz-news-bot@example.test', website: 'http://spam' })).s === 200 &&
+      ((await svc.from('newspaper_subscribers').select('id').eq('email', 'zz-news-bot@example.test')).data ?? []).length === 0,
+  );
+  t.ok('a bad address is refused', (await nobody('POST', '/api/newspaper/subscribe', { email: 'not an email' })).s === 400);
+  const s1 = await nobody('POST', '/api/newspaper/subscribe', { email: ' ZZ-News-Sub1@Example.test ', name: 'Zed' });
+  const { data: row1 } = await svc.from('newspaper_subscribers').select('id, status, name, email').eq('email', E1).maybeSingle();
+  t.ok('signing up saves a pending subscriber (not yet added)', s1.s === 200 && row1?.status === 'pending' && row1.name === 'Zed', JSON.stringify([s1.s, s1.j, row1]));
+  t.ok(
+    'signing up again at once gives the same answer and no second row',
+    (await nobody('POST', '/api/newspaper/subscribe', { email: E1 })).s === 200 && ((await svc.from('newspaper_subscribers').select('id').eq('email', E1)).data ?? []).length === 1,
+  );
+  t.ok('a made-up confirm link is refused', (await nobody('POST', '/api/newspaper/confirm', { t: 'abc.def' })).s === 400);
+  t.ok('an opt-out link cannot be used to confirm', (await nobody('POST', '/api/newspaper/confirm', { t: signed(row1.id, 'newsletter') })).s === 400);
+  t.ok(
+    'the confirm link adds the subscriber',
+    (await nobody('POST', '/api/newspaper/confirm', { t: signed(row1.id, 'confirm') })).s === 200 &&
+      (await svc.from('newspaper_subscribers').select('status').eq('id', row1.id).single()).data.status === 'active',
+  );
+  t.ok(
+    'a subscriber who is already in gets the same answer and stays in',
+    (await nobody('POST', '/api/newspaper/subscribe', { email: E1 })).s === 200 &&
+      (await svc.from('newspaper_subscribers').select('status').eq('id', row1.id).single()).data.status === 'active',
+  );
+  t.ok(
+    'only senders see the subscribers',
+    (await writer.call('GET', '/api/newspaper/subscribers')).s === 403 &&
+      (await member.call('GET', '/api/newspaper/subscribers')).s === 403 &&
+      (await nobody('GET', '/api/newspaper/subscribers')).s === 401,
+  );
+  const list = await sender.call('GET', '/api/newspaper/subscribers?q=zz-news-sub1');
+  t.ok('a sender sees them, with counts and a search', list.s === 200 && list.j.subscribers.length === 1 && list.j.active >= 1, JSON.stringify(list.j));
+  t.ok(
+    'an opt-out link from an email (the same link as members use) takes a subscriber off',
+    (await nobody('POST', `/api/email/unsubscribe?t=${signed(row1.id, 'newsletter')}`)).s === 200 &&
+      (await svc.from('newspaper_subscribers').select('status').eq('id', row1.id).single()).data.status === 'unsubscribed',
+  );
+  t.ok(
+    'an unsubscribed address can sign up again (and must confirm again)',
+    (await nobody('POST', '/api/newspaper/subscribe', { email: E1 })).s === 200 &&
+      (await svc.from('newspaper_subscribers').select('status').eq('id', row1.id).single()).data.status === 'pending',
+  );
+  t.ok(
+    'a writer cannot remove a subscriber; a sender can',
+    (await writer.call('DELETE', `/api/newspaper/subscribers/${row1.id}`)).s === 403 &&
+      (await sender.call('DELETE', `/api/newspaper/subscribers/${row1.id}`)).s === 200 &&
+      ((await svc.from('newspaper_subscribers').select('id').eq('id', row1.id)).data ?? []).length === 0,
+  );
+  t.ok('the sign-up page and confirm page open for anyone', (await fetch(`${BASE}/newspaper`)).status === 200 && (await fetch(`${BASE}/newspaper/confirm?t=bad`)).status === 200);
 } catch (e) {
   console.log('ERR', String(e).slice(0, 700));
   t.fail();
 } finally {
   await svc.from('newspaper_issues').delete().like('title', 'ZZ News%');
   await svc.from('newspaper_lists').delete().like('name', 'ZZ News%');
+  await svc.from('newspaper_subscribers').delete().like('email', 'zz-news-%@example.test');
   await svc
     .from('audit_log')
     .delete()

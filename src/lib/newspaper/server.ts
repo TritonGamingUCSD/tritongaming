@@ -79,7 +79,8 @@ export async function loadIssue(svc: SupabaseClient, key: string): Promise<Issue
 }
 
 export async function freshSlug(svc: SupabaseClient, title: string): Promise<string> {
-  const base = slugify(title).slice(0, 50) || 'issue';
+  let base = slugify(title).slice(0, 50) || 'issue';
+  if (base === 'subscribers') base = 'subscribers-issue'; // (/portal/newspaper/subscribers is the subscribers page)
   for (let i = 0; i < 8; i++) {
     const slug = i === 0 ? base : `${base}-${i + 1}`;
     const { count } = await svc.from('newspaper_issues').select('id', { count: 'exact', head: true }).eq('slug', slug);
@@ -126,7 +127,7 @@ export function renderFor(
   test = false,
 ) {
   const kind = kindOf(issue.type);
-  const unsub = person.user_id ? unsubscribeUrl(person.user_id, kind) : person.subscriber_id ? `${siteUrl()}/api/newspaper/unsubscribe?s=${person.subscriber_id}` : undefined;
+  const unsub = person.user_id ? unsubscribeUrl(person.user_id, kind) : person.subscriber_id ? unsubscribeUrl(person.subscriber_id, 'newsletter') : undefined;
   const r = renderIssue({
     issue: { number: issue.number, title: issue.title, preheader: issue.preheader, type: issue.type, date: new Date(issue.sent_at ?? Date.now()) },
     blocks: issue.blocks,

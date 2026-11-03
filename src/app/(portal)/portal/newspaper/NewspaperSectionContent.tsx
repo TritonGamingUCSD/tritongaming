@@ -6,6 +6,7 @@ import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { useUrlNav } from '@/lib/portal/usePortalTabSync';
 import IssueEditor from './IssueEditor';
 import NewspaperList from './NewspaperList';
+import SubscribersPanel from './SubscribersPanel';
 import { newspaperParams, parseNewspaperRoute, type NewspaperRoute } from './newspaperRoute';
 import polls from '../polls/polls.module.css';
 
@@ -31,7 +32,9 @@ export default function NewspaperSectionContent() {
         />
       )}
       {route.tab === 'list' ? (
-        <NewspaperList onOpen={(slug) => go({ tab: 'issue', slug, view: 'write' })} />
+        <NewspaperList onOpen={(slug) => go({ tab: 'issue', slug, view: 'write' })} onSubscribers={() => go({ tab: 'subscribers' })} />
+      ) : route.tab === 'subscribers' ? (
+        <SubscribersPanel onBack={() => go({ tab: 'list' })} />
       ) : (
         <IssueEditor key={route.slug} slug={route.slug} view={route.view} onView={(view) => go({ tab: 'issue', slug: route.slug, view })} onBack={() => go({ tab: 'list' })} />
       )}

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import styles from './unsubscribe.module.css';
 
 export default function UnsubscribeButton({ token }: { token: string }) {
@@ -17,6 +18,10 @@ export default function UnsubscribeButton({ token }: { token: string }) {
         <a className={styles.link} href="/portal/profile">
           profile
         </a>
+        , or sign up again on the{' '}
+        <Link className={styles.link} href="/newspaper">
+          newspaper page
+        </Link>
         .
       </p>
     );
