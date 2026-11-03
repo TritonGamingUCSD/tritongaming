@@ -159,7 +159,7 @@ export default function StaffleViewPage({
         </div>
       )}
       <p className={styles.rules}>
-        {s.rules_text}.{s.notes ? ` ${s.notes}` : ''}{' '}
+        {s.notes ? `${s.notes} ` : ''}
         <button type="button" className={styles.howLink} onClick={() => setHow(true)}>
           <CircleHelp size={14} aria-hidden="true" /> How It Works
         </button>
