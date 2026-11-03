@@ -70,9 +70,17 @@ export async function POST(request: Request) {
   } else {
     const ev = await loadEventTitle(auth.svc, eventId!);
     if (!ev) return NextResponse.json({ error: 'That event is gone.' }, { status: 404 });
-    title ||= type === 'event_update' ? `An update about ${ev}` : `${ev} is coming`;
+    title ||= type === 'event_update' ? `An update about ${ev}` : type === 'event_reminder' ? `${ev} is coming up` : `${ev} is coming`;
     blocks = cleanBlocks([
-      { type: 'text', text: type === 'event_update' ? 'Here is what changed:' : 'We are excited to tell you about this one.' },
+      {
+        type: 'text',
+        text:
+          type === 'event_update'
+            ? 'Here is what changed:'
+            : type === 'event_reminder'
+              ? 'A quick reminder: it starts soon. Your ticket is in the portal under My Tickets.'
+              : 'We are excited to tell you about this one.',
+      },
       { type: 'event', event_id: eventId! },
     ]);
     audience = { ...NO_AUDIENCE, events: [{ id: eventId!, who: 'ticket' }] };

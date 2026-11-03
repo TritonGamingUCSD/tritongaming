@@ -53,11 +53,12 @@ export function cleanRules(raw: unknown): AudienceRules {
 /** Has anything been picked at all? An issue with no audience can't be sent. */
 export const rulesEmpty = (a: AudienceRules) => !a.everyone && !a.roles.length && !a.divisions.length && !a.teams.length && !a.events.length && !a.people.length && !a.subscribers;
 
-/** The kind of email an issue is, for the opt-out setting and the sender: the newspaper follows Newsletter; event announcements and updates follow "Event updates and announcements". */
-export type IssueType = 'newspaper' | 'event_announcement' | 'event_update';
-export const ISSUE_TYPES: Record<IssueType, { label: string; hint: string; kind: 'newsletter' | 'updates' }> = {
+/** The kind of email an issue is, for the opt-out setting and the sender: the newspaper follows Newsletter; event announcements and updates follow "Event updates and announcements"; event reminders follow "Event reminders". */
+export type IssueType = 'newspaper' | 'event_announcement' | 'event_update' | 'event_reminder';
+export const ISSUE_TYPES: Record<IssueType, { label: string; hint: string; kind: 'newsletter' | 'updates' | 'reminders' }> = {
   newspaper: { label: 'Newspaper', hint: 'News from the club, with any blocks', kind: 'newsletter' },
   event_announcement: { label: 'Event Announcement', hint: 'Tell people about an event', kind: 'updates' },
   event_update: { label: 'Event Update', hint: 'A change of room, time or plan for an event', kind: 'updates' },
+  event_reminder: { label: 'Event Reminder', hint: 'A “starts soon” note for the people with a ticket', kind: 'reminders' },
 };
 export const isIssueType = (v: unknown): v is IssueType => typeof v === 'string' && v in ISSUE_TYPES;

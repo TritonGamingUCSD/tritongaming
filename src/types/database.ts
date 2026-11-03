@@ -53,7 +53,6 @@ export type Capability =
   | 'manage_strikes'
   | 'view_logistics'
   | 'request_logistics'
-  | 'send_event_emails'
   | 'write_newspaper'
   | 'send_newspaper'
   | 'host_trivia'

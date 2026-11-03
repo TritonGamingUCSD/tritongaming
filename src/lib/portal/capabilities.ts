@@ -91,8 +91,6 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // A division account sees only the Requests pages (its division's requests, and submitting new ones): nothing else in Logistics.
   request_logistics: ['recruit', 'officer', 'division', 'lead', 'exec', 'admin'],
   manage_logistics: ['exec', 'admin'],
-  // Writing and sending email to an event's ticket holders. Executives and admins by default; can be handed to a person or group (Admin → Access).
-  send_event_emails: ['exec', 'admin'],
   // The Newspaper (Team → Newspaper): writing and editing issues, and asking for them to be checked, is open to every officer and above; approving and sending one (and the subscribers list) is exec and admin. Both can be handed to a person or group (Admin → Access).
   // A person can't send an issue they asked to have checked themselves (the send route checks that). UI/API gating only (the routes use the service role).
   write_newspaper: ['officer', 'lead', 'exec', 'admin'],
@@ -193,11 +191,6 @@ export const GRANTABLE_CAPABILITIES: { id: Capability; label: string; descriptio
     label: 'Event Logistics',
     description:
       'Add and edit equipment, prizes and sponsors, plan events and manage the Event Logistics lists. Every officer can already look at Logistics; this is what lets someone change it.',
-  },
-  {
-    id: 'send_event_emails',
-    label: 'Send event emails',
-    description: 'Write and send a reminder or update email to everyone with a ticket to an event, with a test email to yourself first. Members can opt out of each kind of email.',
   },
   {
     id: 'write_newspaper',

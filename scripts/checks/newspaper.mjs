@@ -34,6 +34,12 @@ try {
 
   // ---- making and editing a draft
   t.ok('an event announcement needs an event', (await writer.call('POST', '/api/newspaper', { title: 'ZZ Ev', type: 'event_announcement' })).s === 400);
+  t.ok('an event reminder needs an event too', (await writer.call('POST', '/api/newspaper', { title: 'ZZ Rem', type: 'event_reminder' })).s === 400);
+  t.ok(
+    'the issues about an event can be looked up by writers only',
+    (await writer.call('GET', '/api/newspaper/event/00000000-0000-4000-8000-000000000000')).j.issues?.length === 0 &&
+      (await member.call('GET', '/api/newspaper/event/00000000-0000-4000-8000-000000000000')).s === 403,
+  );
   t.ok('a title is needed', (await writer.call('POST', '/api/newspaper', { title: '  ' })).s === 400);
   const mk = await writer.call('POST', '/api/newspaper', { title: 'ZZ News One' });
   t.ok('an officer makes a draft with the next number', mk.s === 201 && mk.j.issue.number > 0, JSON.stringify(mk.j));

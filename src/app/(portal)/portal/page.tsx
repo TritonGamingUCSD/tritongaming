@@ -342,7 +342,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 scope={scope}
                 canEdit={canManageEvents}
                 canDelete={hasCapability(roles, 'delete_events')}
-                canEmail={hasCapability(roles, 'send_event_emails')}
+                canEmail={hasCapability(roles, 'write_newspaper') || hasCapability(roles, 'send_newspaper')}
                 canManagePoints={canManagePoints}
                 initialTab={requestedTab}
               />

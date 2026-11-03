@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { EMAIL_COLUMNS, wantsEmail, type EmailKind } from '@/lib/email/prefs';
-import { authEmails } from '@/lib/email/eventEmailServer';
+import { authEmails } from '@/lib/email/eventData';
 import type { AudienceRules } from './rules';
 
 export interface Recipient {

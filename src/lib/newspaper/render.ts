@@ -1,5 +1,5 @@
 import { blocks as paragraphs, button, CREAM, esc, HEAD, BODY, LOGO_CID, MUTED, NAVY, siteUrl, SKY, YELLOW } from '@/lib/email/template';
-import { eventWhen, shortText, type EventForEmail } from '@/lib/email/eventEmail';
+import { eventWhen, shortText, type EventForEmail } from '@/lib/email/eventData';
 import { CARD_KINDS, type Block } from './blocks';
 import { ISSUE_TYPES, type IssueType } from './rules';
 

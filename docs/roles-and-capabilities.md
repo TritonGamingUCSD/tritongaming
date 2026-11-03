@@ -60,7 +60,6 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | `view_events` | · | · | ✔ | ✔ | ✔ | · | ✔ | ✔ | ✔ |
 | `delete_events` | · | · | · | · | · | · | · | · | ✔ |
 | `checkin` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
-| `send_event_emails` | · | · | · | · | · | · | · | ✔ | ✔ |
 | `host_trivia` | · | · | · | · | ✔ | · | ✔ | ✔ | ✔ |
 | `run_photobooth` | · | · | · | · | ✔ | · | ✔ | ✔ | ✔ |
 | **Rewards** ||||||||||
@@ -110,7 +109,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 2. Otherwise the person needs at least one role listed for it. Roles add up.
 3. **Division Lead is scoped:** for division capabilities the check can name one division, and a Division Lead only qualifies for the division they lead.
 4. **Inactive:** someone marked Inactive keeps every viewing permission but loses: `manage_events`, `delete_events`, `checkin`, `manage_site_content`, `manage_division`, `manage_divisions_directory`, `manage_roles`, `manage_docs`, `manage_rewards_shop`, `scan_redemptions`, `manage_points`, `manage_board_order`, `manage_meetings`, `manage_help`, `manage_strikes`, `manage_quarters`, `host_meetings`, `manage_logistics`, `write_newspaper`, `send_newspaper`, `host_trivia`. Meeting attendance and everything view-only stay. Admins are never affected.
-5. **Granted permissions:** an admin can give one person or a group an extra permission (Admin → Access), added on top of their roles. Only these can be granted: `manage_strikes`, `manage_logistics`, `send_event_emails`, `write_newspaper`, `send_newspaper`, `view_attendance_reports`.
+5. **Granted permissions:** an admin can give one person or a group an extra permission (Admin → Access), added on top of their roles. Only these can be granted: `manage_strikes`, `manage_logistics`, `write_newspaper`, `send_newspaper`, `view_attendance_reports`.
 6. **Where it is enforced:** the capabilities marked “database” in the table below are also enforced by the database (row level security). The rest are enforced by the page or API route that uses them, so the route’s own check is the boundary.
 
 **Other rules that are not capabilities**
@@ -130,7 +129,6 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | **See events** · `view_events` | Open the Events section and read the event list, each event’s check-in list (names and check-in times) and the stats. Cannot create, edit or delete. | Recruit, Alumni, Officer, Lead, Executive, Admin | database + pages |
 | **Delete events** · `delete_events` | Permanently delete an event and its tickets (the delete runs through a database function that also clears everything linked to it). | Admin only | routes; lost while inactive |
 | **Check people in** · `checkin` | Open Check-In: scan tickets and reveal the online check-in code. Checking someone in by hand and undoing a check-in need “Change points” (exec and admin). | Recruit, Officer, Lead, Executive, Admin | database + routes; lost while inactive |
-| **Send event emails** · `send_event_emails` | Open Event Emails, write a reminder or update for an event and send it to everyone with a ticket (after a 60-second cancel window). Executive and Admin by default; can be granted. | Executive, Admin | pages + routes |
 | **Host Trivia, Polls And Q&A** · `host_trivia` | Write quizzes and question pools and host live Trivia games, see their results and delete games; make and run Polls (a vote on a big screen) with their entries, and reveal the results; run Q&A sessions (approve the questions guests send and put them on a big screen). A quiz can be made private to its creator, Admins and a list of officers. Playing Trivia needs an account; voting in a poll or asking in a Q&A needs only the code. Officers and above; lost while inactive. | Officer, Lead, Executive, Admin | pages + routes; lost while inactive |
 | **Run The Photo Booth** · `run_photobooth` | Set up an event’s photo booth (layout, look, overlays), keep the overlay library and run the booth on a screen at the event. Guests download their photos from the QR code without an account. Officers and above. | Officer, Lead, Executive, Admin | pages + routes |
 | **Rewards** | | | |
@@ -153,7 +151,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | **Attend meetings** · `attend_meetings` | Check in to meetings with the room code, see their own meeting history, answer plans and questions. | Recruit, Officer, Lead, Executive, Admin | routes |
 | **Plan meetings** · `host_meetings` | Create meetings, plans and teams, and run, edit and see results for the meetings they planned. | Lead, Executive, Admin | routes; lost while inactive |
 | **Team** | | | |
-| **Write the Newspaper** · `write_newspaper` | Open Team → Newspaper, write and edit issues (blocks, audience, test emails), save audiences, and ask for an issue to be checked. Officers and above; lost while inactive. Can be granted. | Officer, Lead, Executive, Admin | pages + routes; lost while inactive |
+| **Write the Newspaper** · `write_newspaper` | Open Team → Newspaper, write and edit issues (the newspaper, event announcements, updates and reminders; blocks, audience, test emails), save audiences, and ask for an issue to be checked. Also opens the Events → Emails tab. Officers and above; lost while inactive. Can be granted. | Officer, Lead, Executive, Admin | pages + routes; lost while inactive |
 | **Send the Newspaper** · `send_newspaper` | Read an issue sent for checking, send it to its audience (after a test email and a hold-to-confirm), see delivery and click results and manage subscribers. Cannot send an issue you asked to have checked yourself. Executive and Admin by default; can be granted. | Executive, Admin | pages + routes; lost while inactive |
 | **Logistics** | | | |
 | **See Logistics** · `view_logistics` | Open Logistics and look at the equipment catalog (including device logins), sponsors and event setups. Cannot change anything. | Recruit, Officer, Lead, Executive, Admin | pages + routes |
@@ -220,9 +218,8 @@ The files that ask for each capability, so a change can be traced. Page and rout
 - `view_logistics` (3): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/portal/sections.ts`
 - `request_logistics` (2): `app/(portal)/portal/page`, `lib/logistics/auth.ts`
 - `manage_logistics` (4): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/logistics/requestServer.ts`, `lib/portal/sections.ts`
-- `send_event_emails` (2): `app/(portal)/portal/page`, `lib/email/eventEmailServer.ts`
-- `write_newspaper` (1): `lib/newspaper/server.ts`
-- `send_newspaper` (1): `lib/newspaper/server.ts`
+- `write_newspaper` (3): `app/(portal)/portal/page`, `lib/newspaper/server.ts`, `lib/portal/sections.ts`
+- `send_newspaper` (3): `app/(portal)/portal/page`, `lib/newspaper/server.ts`, `lib/portal/sections.ts`
 - `host_trivia` (4): `app/(portal)/portal/page`, `lib/polls/server.ts`, `lib/portal/sections.ts`, `lib/trivia/server.ts`
 - `run_photobooth` (3): `app/(portal)/portal/page`, `lib/photobooth/server.ts`, `lib/portal/sections.ts`
 

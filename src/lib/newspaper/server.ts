@@ -8,8 +8,8 @@ import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import { slugify } from '@/lib/core/slug';
 import { APPLE_ICON_DATA_URI } from '@/lib/site/appleIcon';
 import { siteUrl } from '@/lib/email/template';
-import { loadEvent } from '@/lib/email/eventEmailServer';
-import type { EventForEmail } from '@/lib/email/eventEmail';
+import { loadEvent } from '@/lib/email/eventData';
+import type { EventForEmail } from '@/lib/email/eventData';
 import { unsubscribeUrl } from '@/lib/email/unsubscribe';
 import { cleanBlocks, eventIdsIn, type Block } from './blocks';
 import { cleanRules, ISSUE_TYPES, type AudienceRules, type IssueType } from './rules';
@@ -135,7 +135,7 @@ export function renderFor(
     unsubscribeUrl: unsub,
     settingsUrl: person.user_id ? `${siteUrl()}/portal/profile` : undefined,
     why: person.user_id
-      ? `You get this because you have an account with Triton Gaming and ${kind === 'newsletter' ? 'the newsletter is on' : 'event updates are on'}.`
+      ? `You get this because you have an account with Triton Gaming and ${kind === 'newsletter' ? 'the newsletter is on' : kind === 'reminders' ? 'event reminders are on' : 'event updates are on'}.`
       : 'You get this because you signed up for the Triton Gaming newspaper.',
     test,
     link: (u) => (links.has(u) ? clickUrl(issue, links.get(u)!) : u),
