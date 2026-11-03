@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
-import { Mail } from 'lucide-react';
+import { Mail, Plus, X } from 'lucide-react';
 import { DEFAULT_QR_OPTIONS } from '@/lib/qr/qrCodeStyling';
 import { photoLink } from '@/lib/photobooth/booth';
 import { call } from './api';
@@ -33,7 +33,8 @@ export function QrScreen({
 }) {
   const [left, setLeft] = useState(seconds);
   const [emailing, setEmailing] = useState(false);
-  const [email, setEmail] = useState('');
+  const [emails, setEmails] = useState(['']); // one box for each person who wants the link
+  const [sentTo, setSentTo] = useState(0); // how many have been emailed so far
   const [state, setState] = useState<'idle' | 'sending' | 'sent'>('idle');
   const [problem, setProblem] = useState('');
   useEffect(() => {
@@ -46,14 +47,24 @@ export function QrScreen({
   }, [left, onDone]);
   const options = useMemo(() => ({ ...DEFAULT_QR_OPTIONS, data: photoLink(token, window.location.origin), size: 560, margin: 10 }), [token]);
 
+  const filled = emails.map((e) => e.trim()).filter(Boolean);
   const send = async () => {
+    if (!filled.length) return;
     setState('sending');
     setProblem('');
-    const r = await call('/api/photobooth/photos/email', 'POST', { token, email });
+    const r = await call<{ sent: number; failed: string[] }>('/api/photobooth/photos/email', 'POST', { token, emails: filled });
     if (r.ok) {
-      setState('sent');
-      setEmailing(false);
+      setSentTo((n) => n + r.data.sent);
       setLeft((n) => Math.max(n, 12)); // (a moment to read "Sent" before the booth moves on)
+      if (r.data.failed.length) {
+        // some did not go: keep just those boxes so they can be fixed or tried again
+        setEmails(r.data.failed);
+        setState('idle');
+        setProblem(`Couldn’t send to ${r.data.failed.join(', ')}. Check the address and try again.`);
+      } else {
+        setState('sent');
+        setEmailing(false);
+      }
     } else {
       setState('idle');
       setProblem(r.error);
@@ -92,38 +103,76 @@ export function QrScreen({
             <div className={styles.qrBar} aria-hidden="true">
               <span style={{ width: `${emailing ? 100 : Math.max(0, (left / seconds) * 100)}%` }} />
             </div>
-            {state === 'sent' ? (
-              <p className={styles.sent} role="status">
-                Sent! Check your email.
-              </p>
+            {state === 'sent' && !emailing ? (
+              <div className={styles.emailRow}>
+                <p className={styles.sent} role="status">
+                  Sent to {sentTo} {sentTo === 1 ? 'email' : 'emails'}! Check your inbox.
+                </p>
+                <button
+                  type="button"
+                  className={`${styles.ghostBtn} ${styles.emailOpen}`}
+                  onClick={() => {
+                    setEmails(['']);
+                    setState('idle');
+                    setEmailing(true);
+                  }}
+                >
+                  <Mail size={20} aria-hidden="true" /> Email Someone Else
+                </button>
+              </div>
             ) : emailing ? (
               <form
                 className={styles.emailRow}
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (email.trim()) void send();
+                  void send();
                 }}
               >
-                <div className={styles.emailFields}>
-                  <input
-                    className={styles.emailInput}
-                    type="email"
-                    inputMode="email"
-                    autoComplete="off"
-                    autoFocus
-                    placeholder="you@example.com"
-                    value={email}
-                    maxLength={200}
-                    onChange={(e) => setEmail(e.target.value)}
-                    aria-label="Your email address"
-                  />
-                  <button type="submit" className={`${styles.bigBtn} ${styles.emailSend}`} disabled={state === 'sending' || !email.trim()}>
-                    {state === 'sending' ? 'Sending…' : 'Send'}
+                {emails.map((value, i) => (
+                  <div key={i} className={styles.emailFields}>
+                    <input
+                      className={styles.emailInput}
+                      type="email"
+                      inputMode="email"
+                      autoComplete="off"
+                      autoFocus={i === emails.length - 1}
+                      placeholder="you@example.com"
+                      value={value}
+                      maxLength={200}
+                      onChange={(e) => setEmails((list) => list.map((x, j) => (j === i ? e.target.value : x)))}
+                      aria-label={emails.length > 1 ? `Email address ${i + 1}` : 'Your email address'}
+                    />
+                    {emails.length > 1 && (
+                      <button
+                        type="button"
+                        className={styles.emailRemove}
+                        onClick={() => setEmails((list) => list.filter((_, j) => j !== i))}
+                        aria-label={`Remove email address ${i + 1}`}
+                      >
+                        <X size={20} aria-hidden="true" />
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {emails.length < 6 && (
+                  <button type="button" className={styles.linkBtn2} onClick={() => setEmails((list) => [...list, ''])}>
+                    <Plus size={16} aria-hidden="true" /> Add Another Person
                   </button>
-                </div>
+                )}
+                <button type="submit" className={`${styles.bigBtn} ${styles.emailSend}`} disabled={state === 'sending' || !filled.length}>
+                  {state === 'sending' ? 'Sending…' : filled.length > 1 ? `Send To ${filled.length} People` : 'Send'}
+                </button>
                 {problem && <p className={styles.problem}>{problem}</p>}
-                <p className={styles.fine}>We use your address once to send this link and don’t keep it.</p>
-                <button type="button" className={styles.linkBtn2} onClick={() => setEmailing(false)}>
+                <p className={styles.fine}>Everyone gets their own email. We use the addresses once to send this link and don’t keep them.</p>
+                <button
+                  type="button"
+                  className={styles.linkBtn2}
+                  onClick={() => {
+                    setEmailing(false);
+                    setProblem('');
+                    if (sentTo) setState('sent');
+                  }}
+                >
                   Cancel
                 </button>
               </form>
