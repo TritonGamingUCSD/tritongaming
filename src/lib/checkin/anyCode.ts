@@ -1,5 +1,5 @@
 // One way in for everything a person can check in with. The portal's scanner and its code box both end up here, and what comes back says plainly what was done:
-//   • six typed digits: a meeting's code first, then (for staff) a ticket for an event that can still be checked into, and last a Trivia game's join code (which joins that game)
+//   • six typed digits: a meeting's code, (for staff) a ticket for an event that can still be checked into, a Trivia game's join code (which joins that game) or a poll's: all asked at the same time
 //   • a TGcode read by the scanner (`tg:` and `m…`, `t…` or `r…` with 8 (or, in the first format, 12; in a Bytecode, 7) hex digits):
 //       meeting (`m`) checks the person in to that meeting · ticket (`t`) checks that ticket in (staff) · reward pickup (`r`) looks the reward up so staff can confirm it
 // Which of these a person may do is decided by the server; this only asks, in order, and reports.
@@ -24,8 +24,6 @@ export type Outcome =
     }
   | { kind: 'reward'; id: string; status: string; title: string; member: string; cost: number }
   | { kind: 'rewardDone'; title: string; member: string }
-  /** The six digits are valid for both a meeting and a ticket at once (a one-in-a-million coincidence): the person picks which one is meant. */
-  | { kind: 'choose'; code: string; meeting: string; ticket: string }
   /** The six digits were a Trivia game's join code: the person has joined it and the screen opens the game. */
   | { kind: 'trivia'; code: string }
   /** The six digits were a poll's code: the screen opens the poll's voting page. */
@@ -108,20 +106,23 @@ function ticketOutcome(j: Record<string, unknown>): Outcome {
   };
 }
 
-/** Six typed digits: a meeting code, or a ticket's code. Both are asked first without changing anything, so a code that fits both is never guessed at. */
+/** Six typed digits: a meeting's code, a ticket's, a Trivia game's or a poll's. Everything is asked at once (one round trip, not one after another), so the answer comes back as fast as the slowest single question:
+ *  • a meeting's code checks the person in at once (a typed meeting code is only ever meant for the meeting)
+ *  • a ticket is only asked about first ("preview": which person and event), because many tickets exist and a six-digit number can be a ticket's by chance; staff then confirm it in a second step
+ *  • a Trivia game's code joins that game, a poll's (or Q&A's) code opens it */
 export async function checkInWithCode(code: string): Promise<Outcome> {
   try {
-    const [m, t] = await Promise.all([post('/api/meetings/check-in', { code, preview: true }), post('/api/tickets/checkin', { code, preview: true })]);
-    const isMeeting = m.ok,
-      isTicket = t.ok && t.json.preview;
-    if (isMeeting && isTicket) return { kind: 'choose', code, meeting: m.json.title, ticket: `${t.json.user_name}${t.json.event_title ? ` · ${t.json.event_title}` : ''}` };
-    if (isMeeting) return await resolveChoice(code, 'meeting');
-    if (isTicket) return await resolveChoice(code, 'ticket');
+    const [m, t, game, poll] = await Promise.all([
+      post('/api/meetings/check-in', { code }),
+      post('/api/tickets/checkin', { code, preview: true }),
+      post('/api/trivia/join', { code }),
+      post('/api/polls/join', { code }),
+    ]);
+    if (m.ok) return { kind: 'meeting', title: m.json.title, at: m.json.checked_in_at, already: !!m.json.already };
+    if (t.ok && t.json.preview) return await checkInTicketCode(code);
     // Not a meeting or a ticket: a Trivia game with that code is joined, and a poll with that code is opened. (A 403 from the meeting side is not an answer: meetings and tickets are for staff, so every ordinary member gets one for any code.)
-    const game = await post('/api/trivia/join', { code });
     if (game.ok) return { kind: 'trivia', code };
     if (game.status === 403 || game.status === 409) return { kind: 'error', message: game.json.error };
-    const poll = await post('/api/polls/join', { code });
     if (poll.ok) return { kind: 'poll', code };
     if (poll.status === 409) return { kind: 'error', message: poll.json.error };
     // None of them: say why. A meeting that is not open yet is the more useful answer when one is expected.
@@ -134,13 +135,9 @@ export async function checkInWithCode(code: string): Promise<Outcome> {
   }
 }
 
-/** Does the check-in for the kind of code the person (or the lookup) settled on. */
-export async function resolveChoice(code: string, which: 'meeting' | 'ticket'): Promise<Outcome> {
+/** Checks a ticket in by its typed code (after it was asked about and found to be a ticket's). */
+async function checkInTicketCode(code: string): Promise<Outcome> {
   try {
-    if (which === 'meeting') {
-      const m = await post('/api/meetings/check-in', { code });
-      return m.ok ? { kind: 'meeting', title: m.json.title, at: m.json.checked_in_at, already: !!m.json.already } : { kind: 'error', message: m.json.error || 'Check-in failed.' };
-    }
     const t = await post('/api/tickets/checkin', { code });
     if (t.status === 409 && t.json.code === 'confirm_event') return wrongEvent(t.json, { code });
     return t.ok ? ticketOutcome(t.json) : { kind: 'error', message: t.json.error || 'Check-in failed.' };

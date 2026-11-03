@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import QrScanner, { type ScanLock } from '@/app/(portal)/portal/meetings/QrScanner';
 import CheckInOutcome from './CheckInOutcome';
 import CodeEntry from './CodeEntry';
-import { checkInWithCode, checkInWithQr, confirmReward, resolveChoice, confirmEventCheckIn, TGCODE, type Outcome } from '@/lib/checkin/anyCode';
+import { checkInWithCode, checkInWithQr, confirmReward, confirmEventCheckIn, TGCODE, type Outcome } from '@/lib/checkin/anyCode';
 import { offerToScanHandlers } from '@/lib/portal/scanHandlers';
 import { codeFromLink } from '@/lib/qr/codeLink';
 import styles from './UniversalScanner.module.css';
@@ -271,13 +271,12 @@ export default function UniversalScanner({
   } else if (state.kind === 'result') {
     const o = state.outcome;
     const auto = clean(o) && !landing; // (a code's own page keeps its result: it does not hand the camera back by itself)
-    const again =
-      o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'info' || o.kind === 'reward' || o.kind === 'choose' || o.kind === 'confirmEvent';
+    const again = o.kind === 'ticket' || o.kind === 'rewardDone' || o.kind === 'error' || o.kind === 'info' || o.kind === 'reward' || o.kind === 'confirmEvent';
     lock = {
       tone:
         o.kind === 'error'
           ? 'bad'
-          : o.kind === 'info' || o.kind === 'choose' || o.kind === 'confirmEvent' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already)
+          : o.kind === 'info' || o.kind === 'confirmEvent' || (o.kind === 'ticket' && o.status !== 'active') || (o.kind === 'meeting' && o.already)
             ? 'warn'
             : 'ok',
     };
@@ -312,12 +311,6 @@ export default function UniversalScanner({
             busy={busy}
             doneLabel={again ? 'Scan Next' : 'Done'}
             onDone={() => (again ? rescan() : onClose())}
-            onChoose={async (which) => {
-              if (o.kind !== 'choose') return;
-              setBusy(true);
-              await finish(resolveChoice(o.code, which));
-              setBusy(false);
-            }}
             onConfirmEvent={async () => {
               if (o.kind !== 'confirmEvent') return;
               setBusy(true);

@@ -103,7 +103,6 @@ const SAMPLES: [string, Outcome][] = [
   ['Ticket, Later Day', { kind: 'ticket', status: 'used', userName: 'Sample Person', eventTitle: 'Sample Night', at: NOW, dayNumber: 2, dayTotal: 3, laterDay: true }],
   ['Reward', { kind: 'reward', id: 'sample', status: 'pending', title: 'Sample Sticker', member: 'Sample Person', cost: 50 }],
   ['Reward Handed Over', { kind: 'rewardDone', title: 'Sample Sticker', member: 'Sample Person' }],
-  ['Which One?', { kind: 'choose', code: '123456', meeting: 'General Meeting', ticket: 'Sample Night' }],
   [
     'Wrong Event?',
     { kind: 'confirmEvent', userName: 'Sample Person', eventTitle: 'Sample Night', nowEvent: 'Game Jam', ticketId: 'sample', eventId: 'sample' } as unknown as Outcome,

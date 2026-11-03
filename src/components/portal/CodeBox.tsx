@@ -1,0 +1,53 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import CheckInOutcome from '@/components/portal/CheckInOutcome';
+import CodeEntry from '@/components/portal/CodeEntry';
+import Dialog from '@/components/ui/Dialog';
+import { checkInWithCode, confirmEventCheckIn, type Outcome } from '@/lib/checkin/anyCode';
+
+// The portal's 6-digit code box with everything that follows it: a meeting is checked in, a ticket is checked in (staff), a Trivia game or a poll opens, and what happened is said in a pop-up on the page the person is already on
+// (so a meeting's code typed on the meeting page stays on the meeting page, and the page refreshes). The same box is on the Dashboard, My Meetings, Check-In and Trivia.
+export default function CodeBox() {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [outcome, setOutcome] = useState<Outcome | null>(null);
+
+  const settle = (o: Outcome) => {
+    if (o.kind === 'trivia') return router.push(`/portal/trivia/play/${o.code}`);
+    if (o.kind === 'poll') return router.push(`/vote/${o.code}`);
+    if (o.kind === 'meeting') window.dispatchEvent(new Event('tg:meetings-changed'));
+    setOutcome(o);
+  };
+  const run = async (work: () => Promise<Outcome>) => {
+    setBusy(true);
+    const o = await work();
+    setBusy(false);
+    settle(o);
+  };
+
+  return (
+    <>
+      <CodeEntry onSubmit={(c) => void run(() => checkInWithCode(c))} busy={busy} />
+      {busy && (
+        <p role="status" style={{ margin: '0.4rem 0 0', fontSize: '0.85rem', textAlign: 'center', opacity: 0.8 }}>
+          Checking the code…
+        </p>
+      )}
+      {outcome && (
+        <Dialog title={outcome.kind === 'error' ? 'That Code Didn’t Work' : 'Code Entered'} onClose={() => setOutcome(null)}>
+          <CheckInOutcome
+            outcome={outcome}
+            busy={busy}
+            doneLabel="Done"
+            onDone={() => setOutcome(null)}
+            onConfirmEvent={async () => {
+              if (outcome.kind === 'confirmEvent') await run(() => confirmEventCheckIn(outcome.redo));
+            }}
+          />
+        </Dialog>
+      )}
+    </>
+  );
+}

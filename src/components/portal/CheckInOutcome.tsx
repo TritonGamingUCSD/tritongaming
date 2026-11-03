@@ -14,7 +14,6 @@ export default function CheckInOutcome({
   outcome,
   onDone,
   onConfirmReward,
-  onChoose,
   onConfirmEvent,
   busy,
   doneLabel = 'Done',
@@ -26,33 +25,10 @@ export default function CheckInOutcome({
   outcome: Outcome;
   onDone: () => void;
   onConfirmReward?: () => void;
-  onChoose?: (which: 'meeting' | 'ticket') => void;
   onConfirmEvent?: () => void;
   busy?: boolean;
   doneLabel?: string;
 }) {
-  if (outcome.kind === 'choose') {
-    return (
-      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
-        <span className={`${styles.icon} ${styles.info}`}>
-          <CircleAlert size={32} aria-hidden="true" />
-        </span>
-        <strong className={styles.title}>Which one is it?</strong>
-        <span className={styles.detail}>That code fits both a meeting and a ticket.</span>
-        <div className={styles.choices}>
-          <Button onClick={() => onChoose?.('meeting')} loading={busy}>
-            Meeting: {outcome.meeting}
-          </Button>
-          <Button variant="secondary" onClick={() => onChoose?.('ticket')} disabled={busy}>
-            Ticket: {outcome.ticket}
-          </Button>
-        </div>
-        <Button variant="secondary" onClick={onDone} disabled={busy}>
-          Cancel
-        </Button>
-      </div>
-    );
-  }
   if (outcome.kind === 'info') {
     return (
       <div className={`${styles.box} ${bare ? styles.bare : ''}`}>

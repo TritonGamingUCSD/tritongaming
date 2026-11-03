@@ -338,9 +338,13 @@ export async function authorizeMeetings(capability: Extract<Capability, 'manage_
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
-  const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const svc0 = createServiceClient();
-  const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc0, user.id).catch(() => []));
+  // (asked together: two round trips to the database become one)
+  const [{ data: roles }, granted] = await Promise.all([
+    supabase.from('user_roles').select('role, division_id').eq('user_id', user.id),
+    loadGrantedCapabilities(svc0, user.id).catch(() => []),
+  ]);
+  const grants = withGrantedCapabilities(roles ?? [], granted);
   if (!hasCapability(grants, capability)) {
     const msg =
       capability === 'attend_meetings'

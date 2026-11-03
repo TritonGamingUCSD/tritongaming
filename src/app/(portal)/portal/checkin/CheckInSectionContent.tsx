@@ -3,7 +3,7 @@
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useState } from 'react';
 import { Wifi, QrCode } from 'lucide-react';
-import Link from '@/components/portal/PortalLink';
+import CodeBox from '@/components/portal/CodeBox';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import OnlineCheckinPanel from './OnlineCheckinPanel';
 import SelfCheckinPanel from './SelfCheckinPanel';
@@ -22,7 +22,7 @@ interface Event {
 
 type Tab = 'self' | 'online';
 
-// What staff need from a computer: the event's self check-in QR and, for online events, the code to reveal. Typing a 6-digit code (a ticket's or a meeting's) is the box at the top of the Dashboard;
+// What staff need from a computer: the event's self check-in QR and, for online events, the code to reveal. Typing a 6-digit code (a ticket's or a meeting's) is the code box (CodeBox), here and on the Dashboard;
 // scanning with a camera (tickets, meetings, reward pickups) is the Scan button in the phone's bottom bar. (The older address /portal/checkin/code opens the first tab.)
 export default function CheckInSectionContent({ events, canControlSelfCheckin }: { events: Event[]; canControlSelfCheckin: boolean; initialTab?: string }) {
   const { tab: initialTab } = useUrlNav();
@@ -41,11 +41,16 @@ export default function CheckInSectionContent({ events, canControlSelfCheckin }:
       {available.length === 0 ? (
         <section className={styles.codePanel}>
           <h2>Nothing To Set Up Here Yet</h2>
-          <p>There is no event to check people into right now. To check in with a 6-digit code, use the box at the top of the Dashboard.</p>
-          <Link href="/portal">Go to the Dashboard</Link>
+          <p>There is no event to check people into right now. To check in with a 6-digit code (a meeting’s or a ticket’s), type it here.</p>
+          <CodeBox />
         </section>
       ) : (
         <>
+          <section className={styles.codePanel}>
+            <h2>Type A Code</h2>
+            <p>A ticket’s 6-digit code or a meeting’s. It checks the person in and says what it did.</p>
+            <CodeBox />
+          </section>
           <SectionTabs
             value={tab ?? available[0]}
             onChange={selectTab}
