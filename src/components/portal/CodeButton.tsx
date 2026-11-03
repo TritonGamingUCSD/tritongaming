@@ -4,6 +4,7 @@ import { useRef, useState } from 'react';
 import { Hash } from 'lucide-react';
 import CodeEntry from '@/components/portal/CodeEntry';
 import { useCodeFlow } from '@/components/portal/CodeBox';
+import FeedbackToggle from '@/components/portal/FeedbackToggle';
 import Popover from '@/components/ui/Popover';
 import styles from './PortalThemeToggle.module.css';
 
@@ -20,9 +21,10 @@ export default function CodeButton() {
       {open && (
         <Popover anchor={anchor} onClose={() => setOpen(false)} width={260} label="Enter a code">
           <div className="pp-root" style={{ display: 'grid', gap: '0.4rem', padding: '0.7rem' }}>
-            <span style={{ fontSize: '0.7rem', letterSpacing: '0.12em', textTransform: 'uppercase', opacity: 0.75 }}>Enter A Code</span>
             <CodeEntry
               compact
+              icon={<Hash />}
+              trailing={<FeedbackToggle />}
               autoFocus
               busy={busy}
               onSubmit={(c) => {

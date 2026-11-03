@@ -84,6 +84,19 @@ export default function CheckInOutcome({
       </div>
     );
   }
+  if (outcome.kind === 'online') {
+    return (
+      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
+        <span className={`${styles.icon} ${styles.ok}`}>
+          <Check size={34} strokeWidth={2.5} aria-hidden="true" />
+        </span>
+        <span className={styles.kicker}>Online check-in</span>
+        <strong className={styles.title}>You’re checked in</strong>
+        <span className={styles.detail}>{outcome.eventTitle}</span>
+        <Button onClick={onDone}>{doneLabel}</Button>
+      </div>
+    );
+  }
   if (outcome.kind === 'ticket') {
     const fresh = outcome.status === 'active';
     return (

@@ -903,11 +903,10 @@
 }
 
 /* the code box in the sidebar: a small Hash tile when the sidebar is collapsed to icons (it opens with the sidebar), the labelled box otherwise */
-.railCode { display: flex; align-items: center; gap: 0.5rem; padding: 0.15rem 0.1rem 0.5rem; }
+.railCode { display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.1rem 0.7rem; }
 .railCodeIcon { display: none; place-items: center; width: 34px; height: 34px; border-radius: 6px; border: 2px solid rgba(var(--pp-chrome-rgb), 0.55); color: rgba(var(--pp-chrome-rgb), 0.9); }
 .railCodeIcon svg { width: 18px; height: 18px; }
 .railCodeBox { flex: 1; min-width: 0; display: grid; gap: 0.2rem; color: var(--pp-chrome-fg); }
-.railCodeLabel { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-chrome-rgb), 0.7); }
 .rail.railCollapsed:not(:hover):not(:focus-within) .railCode { justify-content: center; padding-bottom: 0.3rem; }
 .rail.railCollapsed:not(:hover):not(:focus-within) .railCodeBox { display: none; }
 .rail.railCollapsed:not(:hover):not(:focus-within) .railCodeIcon { display: grid; }

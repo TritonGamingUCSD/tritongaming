@@ -7,6 +7,7 @@ import { getTier, nextTier, type Tier } from '@/lib/members/tiers';
 import PortalCode from '@/components/portal/PortalCode';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import type { TransactionRow } from './getMyPointsData';
+import { rewardCode, spaced } from '@/lib/checkin/rewardCode';
 import Button from '@/components/ui/Button';
 import styles from './points.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -127,6 +128,9 @@ export default function PointsSectionContent({
             <div className={styles.qrCanvas}>
               <PortalCode use="reward" payload={`r${qrFor.replace(/-/g, '').slice(0, 12)}`} />
             </div>
+            <p className={styles.qrHint}>
+              Or read this code out: <b style={{ letterSpacing: '0.12em' }}>{spaced(rewardCode(qrFor))}</b>
+            </p>
             <Button type="button" onClick={() => setQrFor(null)}>
               Done
             </Button>

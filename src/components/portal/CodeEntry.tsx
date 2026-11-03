@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import styles from './CodeEntry.module.css';
 
 // The one box for a six-digit code, whatever it is for (a meeting's code, a ticket's, a Trivia game's, a poll's). It sends itself as soon as the sixth digit is in.
@@ -12,17 +12,23 @@ export default function CodeEntry({
   autoFocus = false,
   dark = false,
   compact = false,
+  icon,
+  trailing,
+  status = null,
 }: {
   onSubmit: (code: string) => void;
   busy?: boolean;
   autoFocus?: boolean;
   /** On the camera screen: light text on a dark glass. */ dark?: boolean;
   /** Small, for the sidebar. */ compact?: boolean;
+  /** A small mark inside the box at the left, in place of a label above it. */ icon?: ReactNode;
+  /** Something small inside the box at the right (the sound switch). */ trailing?: ReactNode;
+  /** How the last code went: a flash for 'ok', a shake for 'bad'. */ status?: 'ok' | 'bad' | null;
 }) {
   const [value, setValue] = useState('');
   const [focused, setFocused] = useState(false);
   return (
-    <div className={`${styles.wrap} ${dark ? styles.dark : ''} ${compact ? styles.compact : ''}`}>
+    <div className={`${styles.wrap} ${dark ? styles.dark : ''} ${compact ? styles.compact : ''} ${status === 'ok' ? styles.ok : ''} ${status === 'bad' ? styles.bad : ''}`}>
       <input
         className={`${styles.box} ${dark ? styles.darkBox : ''}`}
         value={value}
@@ -44,6 +50,12 @@ export default function CodeEntry({
         disabled={busy}
         autoFocus={autoFocus}
       />
+      {icon && (
+        <span className={styles.icon} aria-hidden="true">
+          {icon}
+        </span>
+      )}
+      {trailing && <span className={styles.trailing}>{trailing}</span>}
       <span className={styles.cells} aria-hidden="true">
         {Array.from({ length: 6 }, (_, i) => (
           <span key={i} className={`${styles.cell} ${i < value.length ? styles.filled : ''} ${focused && i === value.length ? styles.next : ''}`}>

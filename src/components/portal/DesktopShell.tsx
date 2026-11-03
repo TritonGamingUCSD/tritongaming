@@ -141,7 +141,6 @@ export function DesktopShell({
             <Hash />
           </span>
           <div className={styles.railCodeBox}>
-            <span className={styles.railCodeLabel}>Enter A Code</span>
             <CodeBox compact />
           </div>
         </div>
