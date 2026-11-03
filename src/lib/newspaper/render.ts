@@ -138,7 +138,7 @@ export function renderIssue(o: RenderOptions): { html: string; text: string } {
   const logo = o.logoSrc ?? `cid:${LOGO_CID}`;
   const type = ISSUE_TYPES[o.issue.type];
   const date = (o.issue.date ?? new Date()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' });
-  const masthead = o.issue.type === 'newspaper' ? `Issue ${o.issue.number} · ${date}` : `${type.label} · ${date}`;
+  const masthead = `${type.label} · ${date}`;
   let body = o.blocks.map((b) => renderBlock(b, o)).join('');
   if (o.link) body = body.replace(/href="(https?:[^"]+)"/g, (_m, u: string) => `href="${esc(o.link!(hrefOf(u)))}"`);
   const pre = (o.issue.preheader || o.blocks.map((b) => blockText(b, o)).join(' ')).replace(/\s+/g, ' ').trim().slice(0, 110);

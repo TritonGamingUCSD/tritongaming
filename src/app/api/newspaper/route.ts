@@ -98,7 +98,7 @@ export async function POST(request: Request) {
     action: 'create',
     entityType: 'newspaper',
     entityId: data.id as string,
-    summary: `Started Newspaper issue ${data.number}, “${title}”`,
+    summary: `Started the Newspaper issue “${title}”`,
   });
   return NextResponse.json({ issue: { id: data.id, slug, number: data.number } }, { status: 201 });
 }

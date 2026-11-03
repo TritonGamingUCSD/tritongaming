@@ -154,7 +154,7 @@ export default function IssueEditor({ slug, view, onView, onBack }: { slug: stri
     <div className={polls.stack}>
       <DetailHeader
         back={{ label: 'All Issues', onClick: onBack }}
-        title={issue.type === 'newspaper' ? `Issue ${issue.number}` : ISSUE_TYPES[issue.type].label}
+        title={ISSUE_TYPES[issue.type].label}
         chip={STATUS_NAMES[issue.status]}
         note={editable ? (state === 'saving' ? 'Saving…' : state === 'unsaved' ? 'Unsaved' : 'Saved') : undefined}
         actions={

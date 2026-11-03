@@ -83,7 +83,6 @@ export default function NewspaperList({ onOpen, onSubscribers }: { onOpen: (slug
                 </span>
                 <h3 className={card.title}>
                   <button type="button" onClick={() => onOpen(i.slug)}>
-                    {i.type === 'newspaper' ? `Issue ${i.number}: ` : ''}
                     {i.title}
                   </button>
                 </h3>
@@ -175,7 +174,7 @@ function NewIssue({ issues, onClose, onMade }: { issues: IssueCard[]; onClose: (
           <option value="">A new issue</option>
           {issues.map((i) => (
             <option key={i.id} value={i.id}>
-              Copy of {i.type === 'newspaper' ? `Issue ${i.number}: ` : ''}
+              Copy of
               {i.title}
             </option>
           ))}

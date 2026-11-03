@@ -61,7 +61,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       action: 'update',
       entityType: 'newspaper',
       entityId: issue.id,
-      summary: `Started sending Newspaper issue ${issue.number}, “${issue.title}”, to ${aud.people.length} people`,
+      summary: `Started sending the Newspaper issue “${issue.title}”, to ${aud.people.length} people`,
     });
     return NextResponse.json(await view({ total: aud.people.length }));
   }
@@ -130,7 +130,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
           action: 'update',
           entityType: 'newspaper',
           entityId: issue.id,
-          summary: `Newspaper issue ${issue.number}, “${issue.title}”, went out: ${r.sent} sent, ${r.failed} failed`,
+          summary: `The Newspaper issue “${issue.title}” went out: ${r.sent} sent, ${r.failed} failed`,
         });
       }
     }

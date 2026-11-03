@@ -14,7 +14,7 @@ import { call, type QaView, type QuestionInfo } from './api';
 import polls from '../polls/polls.module.css';
 import styles from './qa.module.css';
 
-const REFRESH_MS = 3000;
+const REFRESH_MS = 8000;
 
 // One Q&A as its host runs it from a laptop or phone: open and close it, approve the questions that come in (or all of them at once), put one on the big screen, mark it answered, hide what should not be seen. The big screen
 // itself is a separate page (Open Big Screen) so the audience never sees this one.

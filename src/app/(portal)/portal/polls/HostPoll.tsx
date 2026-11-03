@@ -11,7 +11,7 @@ import { call, STATUS_NAMES, type PollView } from './api';
 import { PollBars } from './PollBars';
 import styles from './polls.module.css';
 
-const POLL_MS = 2000;
+const POLL_MS = 6000;
 const STEP_MS = 1500; // between one place being revealed and the next
 
 // A poll run on the big screen. Draft: ready to open. Open: the QR code and the 6-digit code to vote with, how many votes are in, and either the live bars or just the entries (the poll's setting). Closed: Reveal, or open again.

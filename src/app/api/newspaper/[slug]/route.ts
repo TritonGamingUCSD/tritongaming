@@ -118,7 +118,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
       action: 'update',
       entityType: 'newspaper',
       entityId: issue.id,
-      summary: `${said} Newspaper issue ${issue.number}, “${issue.title}”`,
+      summary: `${said} the Newspaper issue “${issue.title}”`,
     });
   const fresh = (await loadIssue(auth.svc, issue.id))!;
   return NextResponse.json({ ...(await issueView(auth.svc, fresh, auth.canSend)), canSend: auth.canSend, me: auth.user.id });
@@ -137,7 +137,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ slug
     action: 'delete',
     entityType: 'newspaper',
     entityId: issue.id,
-    summary: `Deleted Newspaper issue ${issue.number}, “${issue.title}”`,
+    summary: `Deleted the Newspaper issue “${issue.title}”`,
   });
   return NextResponse.json({ ok: true });
 }

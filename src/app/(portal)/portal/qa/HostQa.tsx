@@ -11,7 +11,7 @@ import { call, type QaView } from './api';
 import polls from '../polls/polls.module.css';
 import styles from './qa.module.css';
 
-const REFRESH_MS = 2000;
+const REFRESH_MS = 6000;
 
 // A Q&A on the big screen. Draft: ready to open. Open: the QR code and 6-digit code to ask with, and either the question the host put on the screen (large) or, until then, the most liked questions. The controls are for the host
 // (Space or Enter does the main step: show the top question, or mark the shown one answered and show the next). Only questions the host approved are ever shown here, so a rude one never reaches the screen.

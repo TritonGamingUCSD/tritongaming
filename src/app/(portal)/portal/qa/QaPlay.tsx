@@ -14,7 +14,7 @@ interface Loaded {
   questions: { id: string; body: string; author: string; status: QaStatus; likes: number; liked: boolean; mine: boolean }[];
   mine: { id: string; body: string; status: QaStatus; created_at: string }[];
 }
-const POLL_MS = 4000;
+const POLL_MS = 20_000; // backstop only: changes arrive by broadcast
 const NAME_KEY = 'tg-qa-name';
 const remember = (name?: string): string => {
   try {

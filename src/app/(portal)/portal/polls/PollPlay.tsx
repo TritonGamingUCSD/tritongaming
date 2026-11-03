@@ -16,7 +16,7 @@ interface Loaded {
   voters: number | null;
 }
 const ORDINAL = ['1st', '2nd', '3rd'];
-const POLL_MS = 4000;
+const POLL_MS = 20_000; // backstop only: changes arrive by broadcast
 
 // What a guest sees on their phone (and a member too): the entries as cards, a way to choose that fits the poll, and one button to send the vote. The vote can be changed until the host closes voting. Once the results are shown, they show here.
 // `code` is what was typed or scanned; after the first answer the poll's id is used, so the screen keeps working after the code is given back.
