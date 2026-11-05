@@ -3,14 +3,12 @@
 import { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import PortalRefresh from './PortalRefresh';
 import { motion, AnimatePresence } from 'motion/react';
 import { ChevronDown, Hash, Home } from 'lucide-react';
 import CodeBox from '@/components/portal/CodeBox';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
 import PortalThemeToggle from './PortalThemeToggle';
-import PortalCopyLink from './PortalCopyLink';
 import ScanLink from './ScanLink';
 import CodeButton from './CodeButton';
 import PortalCrumbs from './PortalCrumbs';
@@ -86,6 +84,22 @@ export function DesktopShell({
     const h = new Date().getHours();
     setAsleep(h >= 23 || h < 6);
   }, []);
+  // The account menu (profile, help, back to the site, sign out) lives under the picture in the top bar; it closes on a click outside or Escape.
+  const [accountOpen, setAccountOpen] = useState(false);
+  const accountRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!accountOpen) return;
+    const away = (e: MouseEvent) => {
+      if (!accountRef.current?.contains(e.target as Node)) setAccountOpen(false);
+    };
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setAccountOpen(false);
+    document.addEventListener('mousedown', away);
+    document.addEventListener('keydown', esc);
+    return () => {
+      document.removeEventListener('mousedown', away);
+      document.removeEventListener('keydown', esc);
+    };
+  }, [accountOpen]);
   const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
   // the whole frame is on screen without scrolling the page. Re-measured when the window or the page above changes.
@@ -225,7 +239,6 @@ export function DesktopShell({
               </div>
             ))}
         </nav>
-        {railFooter && <div className={styles.railFooter}>{railFooter}</div>}
       </aside>
 
       <div className={styles.frameMain}>
@@ -262,10 +275,38 @@ export function DesktopShell({
             </div>
             {collapsed && <CodeButton />}
             <ScanLink />
-            <PortalCopyLink />
-            <PortalRefresh />
             <PortalThemeToggle />
             <NotificationBell inline />
+            {identity && (
+              <div className={styles.account} ref={accountRef}>
+                <button
+                  type="button"
+                  className={styles.accountBtn}
+                  onClick={() => setAccountOpen((v) => !v)}
+                  aria-haspopup="menu"
+                  aria-expanded={accountOpen}
+                  aria-label="Your account menu"
+                  title={identity.name}
+                >
+                  {identity.avatarUrl ? (
+                    <Image src={identity.avatarUrl} alt="" width={32} height={32} className={styles.accountAvatar} unoptimized referrerPolicy="no-referrer" />
+                  ) : (
+                    <span className={styles.accountAvatar} data-letter={identity.name[0]?.toUpperCase() ?? 'T'}>
+                      {identity.name[0]?.toUpperCase() ?? 'T'}
+                    </span>
+                  )}
+                </button>
+                {accountOpen && (
+                  <div className={styles.accountMenu} role="menu" onClick={() => setAccountOpen(false)}>
+                    <p className={styles.accountName}>{identity.name}</p>
+                    <button type="button" role="menuitem" className={styles.accountItem} onClick={() => open('profile')}>
+                      Your profile
+                    </button>
+                    <div className={styles.accountItems}>{railFooter}</div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </header>
         {frame?.banners && <div className={styles.frameBanners}>{frame.banners}</div>}

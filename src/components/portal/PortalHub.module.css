@@ -978,3 +978,38 @@
 .rail .railGroupToggle .railGroupPixel { margin-top: 0.3rem; }
 .topTab { width: 6px; height: 28px; flex-shrink: 0; border-radius: 3px; background: var(--frame-accent); }
 @media (max-width: 899px) { .topTab { display: none; } }
+
+/* The account menu in the top bar: the picture opens profile, help, back to the site and sign out as a plain list. */
+.account { position: relative; flex-shrink: 0; }
+.accountBtn { display: grid; place-items: center; padding: 0; width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(var(--pp-chrome-rgb), 0.3); background: none; cursor: pointer; overflow: hidden; }
+.accountBtn:hover, .accountBtn[aria-expanded='true'] { border-color: var(--yellow); }
+.accountAvatar { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; display: grid; place-items: center; font-weight: 700; background: var(--pp-chrome-2); color: var(--pp-chrome-fg); }
+.accountMenu { position: absolute; right: 0; top: calc(100% + 8px); z-index: 30; width: 15rem; padding: 0.4rem; border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+.accountName { margin: 0; padding: 0.4rem 0.7rem 0.5rem; font-weight: 700; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.accountItems { display: grid; }
+.accountItem, .accountItems > a, .accountItems > button { display: flex !important; align-items: center; justify-content: flex-start !important; gap: 0.5rem; width: 100%; padding: 0.6rem 0.7rem !important; border: 0 !important; border-radius: 4px !important; background: none !important; box-shadow: none !important; transform: none !important; color: var(--pp-ink) !important; font: inherit !important; font-size: 0.95rem !important; font-weight: 600 !important; text-align: left; text-decoration: none; cursor: pointer; }
+.accountItem:hover, .accountItems > a:hover, .accountItems > button:hover { background: rgba(var(--pp-ink-rgb), 0.07) !important; }
+.accountItems > button { color: var(--pp-bad) !important; }
+.accountItems svg { display: none; }
+.accountItems b { font: inherit; }
+.accountItems span[aria-hidden='true'] { display: none; }
+.accountItems a b { font: inherit !important; font-size: 0.95rem !important; font-weight: 600 !important; letter-spacing: 0 !important; }
+.accountItems > a { justify-content: flex-start !important; }
+
+/* The top bar joins the sidebar into one L-shaped frame: the same navy, white text. */
+@media (min-width: 900px) {
+  .topBar { --pp-chrome: #243f63; --pp-chrome-2: #2f4d77; --pp-chrome-fg: #ffffff; --pp-chrome-rgb: 255, 255, 255; --pp-chrome-edge: #14233a; --pp-chrome-accent: #a9cdf2; background: #243f63; } /* theme-ok: matches the sidebar */
+  :global([data-pp-theme='dark']) .topBar { --pp-chrome: #17263d; --pp-chrome-2: #21344f; --pp-chrome-edge: #0a1220; background: #17263d; } /* theme-ok */
+  .topBar input { background: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255, 255, 255, 0.35) !important; color: #fff; } /* theme-ok: the search field on the navy bar */
+  .topBar .topName, .topBar .topName * { color: #fff; } /* theme-ok */
+}
+
+/* Phones: the page header matches the desktop frame: the same navy, a plain area name above the page name, no stripes, stickers or tilt. */
+@media (max-width: 899px) {
+  .panelHeader { --pp-chrome: #243f63; --pp-chrome-2: #2f4d77; --pp-chrome-fg: #ffffff; --pp-chrome-rgb: 255, 255, 255; --pp-chrome-accent: #a9cdf2; background: #243f63; } /* theme-ok: matches the sidebar */
+  :global([data-pp-theme='dark']) .panelHeader { --pp-chrome: #17263d; background: #17263d; } /* theme-ok */
+  .panelHeader::after { display: none; }
+  .panelHeader .panelTitle { flex-direction: column; align-items: flex-start; gap: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: 0; text-transform: none; }
+  .panelHeader .crumbGroup { padding: 0; margin: 0; background: none; box-shadow: none; transform: none; font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 0.82rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: #a9cdf2; } /* theme-ok */
+  .panelHeader .backBtn { box-shadow: none; border-width: 1px; }
+}
