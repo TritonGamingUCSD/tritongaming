@@ -186,7 +186,7 @@ export function DesktopShell({
                 className={`${styles.railGroup} ${folded.includes(group) && !items.some((x) => x.id === openId) ? styles.railGroupFolded : ''}`}
                 style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: folded.includes(group) && !items.some((x) => x.id === openId) ? 0 : items.length }}
               >
-                {groupedSections.length > 1 && group !== 'Overview' && (
+                {groupedSections.length > 1 && group !== 'Overview' && items.length > 1 && (
                   <button
                     type="button"
                     className={`${styles.railGroupLabel} ${styles.railGroupToggle}`}
@@ -203,7 +203,7 @@ export function DesktopShell({
                   items.map((s) => (
                     <button
                       key={s.id}
-                      className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''}`}
+                      className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''} ${groupedSections.length > 1 && group !== 'Overview' && items.length > 1 ? styles.railItemNested : ''}`}
                       onClick={() => open(s.id)}
                       aria-current={s.id === openId ? 'page' : undefined}
                       title={s.label}
