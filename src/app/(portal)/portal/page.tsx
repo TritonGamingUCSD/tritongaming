@@ -259,6 +259,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const divisionHats = divisionsVisible(
     realRoles.some((r) => r.role === 'admin'),
     siteSettings,
+    profile.id,
   )
     ? await loadDivisionHats(createServiceClient(), roles).catch(() => [])
     : [];

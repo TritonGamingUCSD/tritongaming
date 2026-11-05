@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { MAX_PREVIEW_PEOPLE } from '@/lib/portal/siteSettings';
 import { logAudit } from '@/lib/notifications/audit';
 import { strictUser } from '@/lib/supabase/localAuth';
 import {
@@ -128,6 +129,31 @@ export async function POST(request: Request) {
         summary: on ? 'Turned the division features on for everyone' : 'Made the division features admin-only',
         details: { setting: 'divisions_open', from: before.divisionsOpen, to: on },
       });
+    return NextResponse.json({ settings: await loadSiteSettings(auth.svc) });
+  }
+
+  // { setting: 'divisions_preview', add_email? , remove_id? }: who else may see the division features while they are admin-only.
+  if (b.setting === 'divisions_preview') {
+    let list = [...before.divisionsPreview];
+    let summary = '';
+    if (typeof b.add_email === 'string' && b.add_email.trim()) {
+      const { data: found } = await auth.svc.rpc('find_users_by_emails', { _emails: [b.add_email.trim().toLowerCase()] });
+      const ids = [...new Set(((found ?? []) as { user_id: string }[]).map((r) => r.user_id))];
+      if (ids.length === 0) return NextResponse.json({ error: 'No one has signed in with that address yet.' }, { status: 404 });
+      if (ids.length > 1) return NextResponse.json({ error: 'That address belongs to more than one account.' }, { status: 409 });
+      if (list.some((p) => p.id === ids[0])) return NextResponse.json({ settings: await loadSiteSettings(auth.svc) });
+      if (list.length >= MAX_PREVIEW_PEOPLE) return NextResponse.json({ error: `Up to ${MAX_PREVIEW_PEOPLE} people can preview.` }, { status: 400 });
+      const { data: prof } = await auth.svc.from('profiles').select('display_name').eq('id', ids[0]).maybeSingle();
+      list = [...list, { id: ids[0], name: (prof?.display_name as string | null) || 'Someone' }];
+      summary = `Let ${(prof?.display_name as string | null) || 'someone'} preview the division features`;
+    } else if (typeof b.remove_id === 'string') {
+      const gone = list.find((p) => p.id === b.remove_id);
+      list = list.filter((p) => p.id !== b.remove_id);
+      summary = `Stopped ${gone?.name ?? 'someone'} previewing the division features`;
+    } else return NextResponse.json({ error: 'Say who.' }, { status: 400 });
+    const { error } = await save([{ key: 'divisions_preview', value: JSON.stringify(list) }]);
+    if (error) return NextResponse.json({ error: 'Could not save. Try again.' }, { status: 500 });
+    await logAudit(auth.svc, { actorId: auth.user.id, action: 'update', entityType: 'site setting', entityId: null, summary, details: { setting: 'divisions_preview' } });
     return NextResponse.json({ settings: await loadSiteSettings(auth.svc) });
   }
 

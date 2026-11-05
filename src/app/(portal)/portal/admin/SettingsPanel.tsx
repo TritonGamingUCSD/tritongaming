@@ -183,7 +183,64 @@ function DivisionsCard({ saved, onSaved, onError }: CardProps) {
         </Button>
         <span className={styles.state}>Now: {saved.divisionsOpen ? 'everyone' : 'admins only'}</span>
       </div>
+      {!saved.divisionsOpen && <PreviewPeople saved={saved} onSaved={onSaved} onError={onError} />}
     </section>
+  );
+}
+
+// While the division features are admin-only, a few named people can also see them (a Head to try the walk-through, say). Added by the email they signed in with.
+function PreviewPeople({ saved, onSaved, onError }: CardProps) {
+  const [email, setEmail] = useState('');
+  const [busy, setBusy] = useState(false);
+  const send = async (body: object, done: string) => {
+    setBusy(true);
+    onError('');
+    const { ok, json } = await api({ method: 'POST', body: { setting: 'divisions_preview', ...body } });
+    setBusy(false);
+    if (ok && json.settings) {
+      onSaved(json.settings);
+      setEmail('');
+      showToast(done);
+    } else onError(json.error || 'Could not save.');
+  };
+  return (
+    <div className={styles.about}>
+      <strong>Preview for named people</strong>
+      <p style={{ margin: '0.25rem 0 0.5rem' }}>These people see the division features too, even while they are admin-only.</p>
+      {saved.divisionsPreview.length > 0 && (
+        <ul style={{ listStyle: 'none', margin: '0 0 0.5rem', padding: 0, display: 'grid', gap: '0.3rem' }}>
+          {saved.divisionsPreview.map((p) => (
+            <li key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+              <span>{p.name}</span>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => send({ remove_id: p.id }, 'Removed')}>
+                Remove
+              </Button>
+            </li>
+          ))}
+        </ul>
+      )}
+      <div className={styles.actions}>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Their email address"
+          aria-label="Email address of the person"
+          style={{
+            flex: '1 1 14rem',
+            padding: '0.5rem 0.7rem',
+            border: '1px solid rgba(var(--pp-ink-rgb), 0.3)',
+            borderRadius: 6,
+            background: 'var(--pp-paper)',
+            color: 'var(--pp-ink)',
+            font: 'inherit',
+          }}
+        />
+        <Button size="sm" disabled={busy || !email.includes('@')} onClick={() => send({ add_email: email }, 'Added')}>
+          Add Person
+        </Button>
+      </div>
+    </div>
   );
 }
 

@@ -53,5 +53,9 @@ describe('site settings', () => {
     expect(divisionsVisible(true, DEFAULT_SETTINGS)).toBe(true);
     expect(divisionsVisible(false, DEFAULT_SETTINGS)).toBe(false);
     expect(divisionsVisible(false, { ...DEFAULT_SETTINGS, divisionsOpen: true })).toBe(true);
+    const preview = { ...DEFAULT_SETTINGS, divisionsPreview: [{ id: '11111111-1111-1111-1111-111111111111', name: 'A Head' }] };
+    expect(divisionsVisible(false, preview, '11111111-1111-1111-1111-111111111111')).toBe(true);
+    expect(divisionsVisible(false, preview, '22222222-2222-2222-2222-222222222222')).toBe(false);
+    expect(divisionsVisible(false, preview)).toBe(false);
   });
 });
