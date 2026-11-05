@@ -19,7 +19,7 @@ export const DOCK_ICON_SIZE: Record<string, number> = { meetings: 19, events: 19
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
 // 'Overview' is the unlabeled group right under Dashboard (Profile and Help, which have no sidebar entry of their own).
-export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Run', 'Meetings', 'Comms', 'Team', 'Admin'] as const;
+export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Run', 'Comms', 'Team', 'Admin'] as const;
 
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
@@ -62,7 +62,6 @@ export const GROUP_ACCENT: Record<string, string> = {
   Yours: '#4a90d9',
   Events: '#e8912d',
   Run: '#d9573a',
-  Meetings: '#2fae86',
   Comms: '#3aa6c9',
   Team: '#8b6cdc',
   Admin: '#d9487f',

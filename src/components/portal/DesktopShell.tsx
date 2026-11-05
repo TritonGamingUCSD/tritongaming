@@ -72,26 +72,12 @@ export function DesktopShell({
       }
       return n;
     });
-  // Groups can be folded away to leave a shorter sidebar: remembered per browser; the group of the page that is open always shows.
-  const [folded, setFolded] = useState<string[]>([]);
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('tg_rail_groups') ?? '[]');
-      if (Array.isArray(saved)) setFolded(saved.filter((x): x is string => typeof x === 'string'));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-  const toggleGroup = (g: string) =>
-    setFolded((list) => {
-      const next = list.includes(g) ? list.filter((x) => x !== g) : [...list, g];
-      try {
-        localStorage.setItem('tg_rail_groups', JSON.stringify(next));
-      } catch {
-        /* ignore */
-      }
-      return next;
-    });
+  // One area open at a time keeps the sidebar short: the area of the open page, or the one just clicked. Single-page groups have nothing to fold.
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const openGroup = openSection?.group ?? null;
+  useEffect(() => setExpanded(null), [openGroup]);
+  const isFolded = (g: string, count: number) => count > 1 && g !== openGroup && g !== expanded;
+  const toggleGroup = (g: string) => setExpanded((cur) => (cur === g ? null : g));
   const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
   // the whole frame is on screen without scrolling the page. Re-measured when the window or the page above changes.
@@ -183,23 +169,23 @@ export function DesktopShell({
             .map(({ group, items }) => (
               <div
                 key={group}
-                className={`${styles.railGroup} ${folded.includes(group) && !items.some((x) => x.id === openId) ? styles.railGroupFolded : ''}`}
-                style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: folded.includes(group) && !items.some((x) => x.id === openId) ? 0 : items.length }}
+                className={`${styles.railGroup} ${isFolded(group, items.length) ? styles.railGroupFolded : ''}`}
+                style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: isFolded(group, items.length) ? 0 : items.length }}
               >
                 {groupedSections.length > 1 && group !== 'Overview' && items.length > 1 && (
                   <button
                     type="button"
                     className={`${styles.railGroupLabel} ${styles.railGroupToggle}`}
                     onClick={() => toggleGroup(group)}
-                    aria-expanded={!folded.includes(group) || items.some((x) => x.id === openId)}
-                    title={folded.includes(group) ? `Show ${GROUP_LABEL[group]}` : `Hide ${GROUP_LABEL[group]}`}
+                    aria-expanded={!isFolded(group, items.length)}
+                    title={isFolded(group, items.length) ? `Show ${GROUP_LABEL[group]}` : `Hide ${GROUP_LABEL[group]}`}
                   >
                     <span className={styles.railGroupDot} aria-hidden="true" />
                     {GROUP_LABEL[group]}
                     <ChevronDown className={styles.railGroupChevron} size={13} aria-hidden="true" />
                   </button>
                 )}
-                {(!folded.includes(group) || items.some((x) => x.id === openId)) &&
+                {!isFolded(group, items.length) &&
                   items.map((s) => (
                     <button
                       key={s.id}

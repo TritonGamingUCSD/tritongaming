@@ -421,7 +421,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             // While a meeting is on (or about to start) this is the thing to have under your thumb.
             dockBoost: (meetingNow ? 100 : 0) + (canManageMeetings ? 10 : 0),
             dockExclude: logisticsToday,
-            group: 'Meetings' as const,
+            group: 'Team' as const,
             content: (
               <MeetingsSectionContent
                 canHost={canHostMeetings}
