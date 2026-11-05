@@ -1,5 +1,6 @@
 'use client';
 
+import SectionHeader from '@/components/ui/SectionHeader';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { useState } from 'react';
 import { Wifi, QrCode } from 'lucide-react';
@@ -21,7 +22,7 @@ interface Event {
 
 type Tab = 'self' | 'online';
 
-// What staff need from a computer: the event's self check-in QR and, for online events, the code to reveal. Typing a 6-digit code (a ticket's or a meeting's) is the Enter A Code box in the sidebar (CodeBox);
+// What staff need from a computer: the event's self check-in QR and, for online events, the code to reveal. Typing a 6-digit code (a ticket's or a meeting's) is the code field in the top bar (CodeBox);
 // scanning with a camera (tickets, meetings, reward pickups) is the Scan button in the phone's bottom bar. (The older address /portal/checkin/code opens the first tab.)
 export default function CheckInSectionContent({ events, canControlSelfCheckin }: { events: Event[]; canControlSelfCheckin: boolean; initialTab?: string }) {
   const { tab: initialTab } = useUrlNav();
@@ -37,10 +38,11 @@ export default function CheckInSectionContent({ events, canControlSelfCheckin }:
 
   return (
     <div className={styles.page}>
+      <SectionHeader title="Check-In" sub="Check people in to an event: self check-in with a code or a QR, and codes for online events." />
       {available.length === 0 ? (
         <section className={styles.codePanel}>
           <h2>Nothing To Set Up Here Yet</h2>
-          <p>There is no event to check people into right now. To check in with a 6-digit code (a meeting’s or a ticket’s), type it in the Enter A Code box in the sidebar.</p>
+          <p>There is no event to check people into right now. To check in with a 6-digit code (a meeting’s or a ticket’s), type it in the code field at the top of the page.</p>
         </section>
       ) : (
         <>

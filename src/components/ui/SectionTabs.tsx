@@ -65,36 +65,51 @@ export default function SectionTabs<T extends string>({
     (bar.current?.querySelector('[aria-selected="true"]') as HTMLElement | null)?.scrollIntoView({ inline: 'center', block: 'nearest' });
   }, [overflow, value]);
 
-  // The line under the open tab slides to the next one (set straight on the element, so no extra render).
+  // The line under the open tab (or, on the small toggle, the pill behind the open option) slides to the next one (set straight on the element, so no extra render).
   const line = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
     const el = bar.current?.querySelector<HTMLElement>('[aria-selected="true"]');
     const ln = line.current;
     if (!el || !ln) return;
     ln.style.width = `${el.offsetWidth}px`;
-    ln.style.transform = `translateX(${el.offsetLeft}px)`;
+    if (variant === 'segmented') {
+      ln.style.height = `${el.offsetHeight}px`;
+      ln.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop}px)`;
+    } else ln.style.transform = `translateX(${el.offsetLeft}px)`;
   }, [value, tabs, overflow, variant]);
 
-  // Changing tab slides the page content a few pixels in the direction of travel (the elements after the bar, once the new tab has drawn).
+  // Changing tab slides the page content a few pixels in the direction of travel; changing a view (the small toggle) fades it in with a small rise. The content is what comes after the bar (or, when the tabs sit in the strip under the top bar, the page below it).
   function slideTo(id: T, index: number) {
     const from = tabs.findIndex((x) => x.id === value);
     onChange(id);
-    if (variant === 'segmented' || from < 0 || from === index || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (from < 0 || from === index || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const dir = index > from ? 1 : -1;
-    const host = bar.current?.parentElement;
+    const segmented = variant === 'segmented';
+    const frames = segmented
+      ? [
+          { opacity: 0, transform: 'translateY(6px)' },
+          { opacity: 1, transform: 'none' },
+        ]
+      : [
+          { opacity: 0, transform: `translateX(${dir * 14}px)` },
+          { opacity: 1, transform: 'none' },
+        ];
     window.setTimeout(() => {
-      let el = bar.current?.nextElementSibling;
-      while (el) {
-        if (el !== host && 'animate' in el)
-          (el as HTMLElement).animate(
-            [
-              { opacity: 0, transform: `translateX(${dir * 14}px)` },
-              { opacity: 1, transform: 'none' },
-            ],
-            { duration: 220, easing: 'ease-out' },
-          );
-        el = el.nextElementSibling;
+      const barEl = bar.current;
+      if (!barEl) return;
+      const targets: Element[] = [];
+      if (barEl.closest('[data-top-tabs]')) {
+        const content = document.querySelector('[data-save-anchor]')?.firstElementChild;
+        if (content) targets.push(content);
+      } else {
+        const host = barEl.parentElement;
+        let el: Element | null = barEl.nextElementSibling ?? (segmented ? (host?.nextElementSibling ?? null) : null);
+        while (el) {
+          targets.push(el);
+          el = el.nextElementSibling;
+        }
       }
+      targets.forEach((t) => (t as HTMLElement).animate(frames, { duration: segmented ? 180 : 220, easing: 'ease-out' }));
     }, 40);
   }
 
@@ -160,7 +175,7 @@ export default function SectionTabs<T extends string>({
             </button>
           );
         })}
-        {variant !== 'segmented' && <span ref={line} className={styles.line} aria-hidden="true" />}
+        <span ref={line} className={variant === 'segmented' ? styles.pill : styles.line} aria-hidden="true" />
       </div>
     </>
   );

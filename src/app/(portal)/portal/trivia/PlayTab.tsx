@@ -37,7 +37,7 @@ export default function PlayTab({ onOpen }: { onOpen: (code: string | null) => v
   }, []);
   return (
     <div className={styles.tab}>
-      <p className={styles.muted}>To join a game, type its code in the Enter A Code box in the sidebar (or scan its QR code).</p>
+      <p className={styles.muted}>To join a game, type its code in the code field at the top of the page (or scan its QR code).</p>
       <h2 className={styles.sectionTitle}>Your Games</h2>
       {!mine ? (
         <Loading variant="inline" label="Loading…" />

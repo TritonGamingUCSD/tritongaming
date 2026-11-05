@@ -142,3 +142,10 @@
 /* The small toggle is only as wide as its options, at the right edge of the row it sits in. */
 .segmented { width: fit-content; max-width: 100%; align-self: flex-end; margin-left: auto; }
 @media (max-width: 640px) { .segmented { width: 100%; align-self: stretch; margin-left: 0; } }
+
+/* The small toggle: the pill behind the open option slides (with a little overshoot) to the one that was clicked. */
+.segmented { position: relative; }
+.pill { position: absolute; left: 0; top: 0; width: 0; height: 0; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.14); transition: transform 0.3s cubic-bezier(0.34, 1.35, 0.64, 1), width 0.3s, height 0.3s; pointer-events: none; }
+.segmented .tab { position: relative; z-index: 1; }
+.segmented .active { background: transparent; }
+@media (prefers-reduced-motion: reduce) { .pill { transition: none; } }

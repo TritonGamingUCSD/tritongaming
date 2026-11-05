@@ -5,10 +5,10 @@ import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } fr
 import { motion, AnimatePresence } from 'motion/react';
 import { Pin, PinOff } from 'lucide-react';
 import Spotlight from './Spotlight';
+import CodeBox from '@/components/portal/CodeBox';
 import NotificationBell from './NotificationBell';
 import PortalCrumbs from './PortalCrumbs';
 import styles from './PortalHub.module.css';
-import { smallIcon } from './smallIcon';
 import ByteMini from '@/components/Bytecode/ByteMini';
 import AccountMenu from './AccountMenu';
 import AreaPixelIcon from './AreaPixelIcon';
@@ -212,9 +212,7 @@ export function DesktopShell({
           {openSection ? (
             <div className={styles.topTitle}>
               <span className={styles.topTab} aria-hidden="true" />
-              <span className={styles.topIcon} aria-hidden="true">
-                {smallIcon(openSection.icon, 18)}
-              </span>
+
               <span className={styles.topName}>
                 <PortalCrumbs section={openSection.id} sectionLabel={openSection.label} />
               </span>
@@ -225,6 +223,9 @@ export function DesktopShell({
             </div>
           )}
           <div className={styles.topRight}>
+            <div className={styles.topCode} title="Enter a code: a meeting check-in, a ticket, a Trivia game or a poll">
+              <CodeBox compact />
+            </div>
             <Spotlight />
             <NotificationBell inline />
             {identity && <AccountMenu identity={identity} viewAs={frame?.viewAs} onProfile={() => open('profile')} />}
