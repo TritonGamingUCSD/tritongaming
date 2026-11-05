@@ -3,7 +3,7 @@
 .muted { margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.78); }
 .dim { color: rgba(var(--pp-ink-rgb), 0.6); }
 .editHint { color: rgba(var(--pp-ink-rgb), 0.5); font-size: 0.74rem; }
-.strong { font-family: var(--font-futura-heavy); font-weight: 400; }
+.strong { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; }
 .hidden { display: none; }
 
 /* Search, filters and the main action */
@@ -21,7 +21,7 @@
 .pill { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 32px; padding: 0 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
 .pill:hover { background: rgba(var(--pp-ink-rgb), 0.06); }
 .pillOn { background: rgba(var(--pp-ink-rgb), 0.12); border-color: var(--pp-ink); font-weight: 600; }
-.empty { padding: 1.6rem 1rem; text-align: center; border-radius: 8px; border: 1px dashed rgba(var(--pp-ink-rgb), 0.3); color: rgba(var(--pp-ink-rgb), 0.78); }
+.empty { padding: 1.6rem 1rem; text-align: center; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.16); color: rgba(var(--pp-ink-rgb), 0.78); }
 .empty p { margin: 0; font-size: 0.92rem; }
 .more { display: flex; justify-content: center; }
 
@@ -30,7 +30,7 @@
 .good { color: var(--pp-ok); background: color-mix(in srgb, var(--pp-ok) 12%, transparent); border-color: color-mix(in srgb, var(--pp-ok) 35%, transparent); }
 .bad { color: var(--pp-bad); background: color-mix(in srgb, var(--pp-bad) 12%, transparent); border-color: color-mix(in srgb, var(--pp-bad) 35%, transparent); }
 .neutral { color: rgba(var(--pp-ink-rgb), 0.85); background: rgba(var(--pp-ink-rgb), 0.07); border-color: rgba(var(--pp-ink-rgb), 0.2); }
-.ownerTag { display: inline-flex; padding: 0.12rem 0.55rem; border-radius: 999px; font-size: 0.74rem; background: rgba(125, 180, 234, 0.16); border: 1px solid rgba(125, 180, 234, 0.45); color: var(--pp-ink); }
+.ownerTag { display: inline-flex; padding: 0.12rem 0.55rem; border-radius: 999px; font-size: 0.74rem; background: rgba(36, 63, 99, 0.10); border: 1px solid rgba(36, 63, 99, 0.27); color: var(--pp-ink); }
 .qty { font-size: 0.86rem; font-style: italic; color: rgba(var(--pp-ink-rgb), 0.9); }
 
 /* The spreadsheet-style grid (computers) */
@@ -99,7 +99,7 @@
 /* Tools: the editable lists */
 .listGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: 0.8rem; align-items: start; }
 .listCard { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); background: var(--pp-card); min-width: 0; }
-.listTitle { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1rem; color: var(--pp-ink); display: flex; align-items: baseline; gap: 0.5rem; }
+.listTitle { margin: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 1rem; color: var(--pp-ink); display: flex; align-items: baseline; gap: 0.5rem; }
 .listHint { margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.78); }
 .optName { flex: 1; min-width: 0; }
 .addRow { display: flex; align-items: center; gap: 0.4rem; }
@@ -117,7 +117,7 @@
 .planList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
 .planRow { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.5rem 0.6rem; border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.14); background: rgba(var(--pp-ink-rgb), 0.025); }
 .planRowMain { min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.15rem 0.6rem; }
-.planTag { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.98rem; color: var(--pp-ink); }
+.planTag { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 0.98rem; color: var(--pp-ink); }
 .planSub { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.9); overflow-wrap: anywhere; }
 .planRowSide { display: flex; align-items: center; gap: 0.3rem; flex: none; flex-wrap: wrap; justify-content: flex-end; }
 @media (max-width: 640px) { .planRow { flex-direction: column; align-items: stretch; } .planRowSide { justify-content: flex-start; } }
@@ -133,19 +133,19 @@
 /* ---- Where to get it (shown after a swap and on event day) ---- */
 .getIt { display: flex; flex-direction: column; gap: 0.15rem; padding: 0.8rem 0.9rem; border-radius: 8px; background: rgba(var(--pp-ink-rgb), 0.07); color: var(--pp-ink); }
 .getItLabel { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.8); }
-.getItPlace { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.5rem; line-height: 1.15; overflow-wrap: anywhere; }
+.getItPlace { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 1.5rem; line-height: 1.15; overflow-wrap: anywhere; }
 .getItStation { font-size: 0.92rem; font-weight: 600; }
 
 /* ---- Event day (a phone in one hand) ---- */
 .dayPage { display: flex; flex-direction: column; gap: 1rem; width: 100%; min-width: 0; }
 .dayTop { position: sticky; top: 0; z-index: 6; display: flex; flex-direction: column; gap: 0.6rem; padding: 0.5rem 0 0.7rem; background: var(--pp-paper); }
 .dayBar { display: flex; align-items: center; gap: 0.5rem; }
-.dayTitle { flex: 1; min-width: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.1rem; color: var(--pp-ink); overflow-wrap: anywhere; }
+.dayTitle { flex: 1; min-width: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 1.1rem; color: var(--pp-ink); overflow-wrap: anywhere; }
 .stepChip { position: relative; overflow: hidden; display: inline-flex; align-items: baseline; gap: 0.45rem; min-height: var(--btn-h); padding: 0.4rem 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.86rem; cursor: pointer; }
 .stepChip small { font-variant-numeric: tabular-nums; color: rgba(var(--pp-ink-rgb), 0.75); }
 .stepChip i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--pp-ok); }
 .dayForm { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.dayInput { flex: 1; min-width: 0; min-height: 40px; padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); font-family: var(--font-futura-heavy); font-size: 1.05rem; letter-spacing: 0.03em; }
+.dayInput { flex: 1; min-width: 0; min-height: 40px; padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.05rem; letter-spacing: 0.03em; }
 .dayInput:focus { outline: none; box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.6); }
 .dayInput::placeholder { font-family: var(--font-futura-medium); font-size: 0.92rem; letter-spacing: 0; color: rgba(var(--pp-ink-rgb), 0.5); }
 .dayForm button { min-height: var(--btn-h); }
@@ -159,7 +159,7 @@
 .bundleItems { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
 
 /* ---- Spotting what is not done or not right, and explaining how it works ---- */
-.help { border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: rgba(125, 180, 234, 0.1); color: var(--pp-ink); }
+.help { border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: rgba(36, 63, 99, 0.06); color: var(--pp-ink); }
 .help summary { display: flex; align-items: center; gap: 0.45rem; min-height: 40px; padding: 0 0.8rem; font-size: 0.86rem; font-weight: 600; cursor: pointer; list-style: none; }
 .help summary::-webkit-details-marker { display: none; }
 .helpBody { padding: 0 0.9rem 0.8rem; font-size: 0.86rem; line-height: 1.5; }
@@ -237,7 +237,7 @@
 .dayLine { border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
 .dayLine:last-child { border-bottom: none; }
 .dInfo { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.6rem; min-width: 0; font-size: 0.86rem; }
-.dTag { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.92rem; color: var(--pp-ink); }
+.dTag { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 0.92rem; color: var(--pp-ink); }
 .dType { color: rgba(var(--pp-ink-rgb), 0.9); overflow-wrap: anywhere; }
 .dWhere { flex: 1 1 100%; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.72); overflow-wrap: anywhere; }
 .dayRowHead .dInfo { gap: 0.3rem 0.7rem; }
@@ -824,7 +824,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .evPage { display: flex; flex-direction: column; gap: 1.25rem; }
 .evHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
 .evTitle { flex: 1 1 14rem; min-width: 0; }
-.evTitle h2 { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.5rem; line-height: 1.15; color: var(--pp-ink); overflow-wrap: anywhere; }
+.evTitle h2 { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 1.5rem; line-height: 1.15; color: var(--pp-ink); overflow-wrap: anywhere; }
 .evTitle p { margin: 0.15rem 0 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.75); }
 .evGo { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .evStats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.6rem; margin: 0; }
@@ -839,7 +839,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .evSection > summary::-webkit-details-marker { display: none; }
 .evSection > summary::before { content: '▸'; font-size: 0.9rem; color: var(--pp-ink); }
 .evSection[open] > summary::before { content: '▾'; }
-.evSection > summary h3 { margin: 0; flex: 1; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; color: var(--pp-ink); }
+.evSection > summary h3 { margin: 0; flex: 1; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 1.05rem; color: var(--pp-ink); }
 .evCount { min-width: 1.6rem; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); font-size: 0.8rem; text-align: center; font-variant-numeric: tabular-nums; }
 .evSection > .tab { padding: 0; }
 @media (max-width: 700px) { .evStats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
@@ -850,7 +850,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .evCardToday { border-color: var(--pp-ok); box-shadow: inset 4px 0 0 var(--pp-ok); }
 .evCardMain { display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; flex: 1; padding: 0.9rem 3rem 0.7rem 1rem; border: 0; background: none; color: var(--pp-ink); font: inherit; text-align: left; cursor: pointer; }
 .evCardMain:hover { background: rgba(var(--pp-ink-rgb), 0.04); }
-.evCardName { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.1rem; line-height: 1.2; overflow-wrap: anywhere; }
+.evCardName { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 1.1rem; line-height: 1.2; overflow-wrap: anywhere; }
 .evCardTags { display: flex; flex-wrap: wrap; gap: 0.3rem; }
 .evCardTags:empty { display: none; }
 .evCardDates { font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.75); }
@@ -862,7 +862,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .evCardGo { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.6rem 1rem 0.85rem; }
 .evCardMenu { position: absolute; top: 0.55rem; right: 0.55rem; }
 .evPast { margin-top: 0.4rem; }
-.evPast > summary { display: flex; align-items: center; gap: 0.5rem; min-height: 40px; cursor: pointer; font-family: var(--font-futura-heavy); font-size: 0.95rem; color: var(--pp-ink); }
+.evPast > summary { display: flex; align-items: center; gap: 0.5rem; min-height: 40px; cursor: pointer; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--pp-ink); }
 .evPast > summary span { font-size: 0.78rem; padding: 0.05rem 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); }
 .evPast[open] > summary { margin-bottom: 0.6rem; }
 

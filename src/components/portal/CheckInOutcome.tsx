@@ -2,7 +2,6 @@
 
 import { Check, CircleAlert, Gift, Info, TriangleAlert } from 'lucide-react';
 import Button from '@/components/ui/Button';
-import ByteMini from '@/components/Bytecode/ByteMini';
 import type { ReactNode } from 'react';
 import { formatPacificTime } from '@/lib/core/timezone';
 import type { Outcome } from '@/lib/checkin/anyCode';
@@ -36,7 +35,13 @@ function Card({
     <div className={`${styles.card} ${styles[tone]} ${bare ? styles.bare : ''}`}>
       <div className={styles.head}>
         <span className={styles.tile} aria-hidden="true">
-          {tone === 'ok' ? <ByteMini pose="happy" className={styles.byte} /> : icon}
+          {tone === 'ok' ? (
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className={styles.draw}>
+              <path d="M5 12.5l4.5 4.5L19 7" />
+            </svg>
+          ) : (
+            icon
+          )}
         </span>
         <div className={styles.headText}>
           {kicker && <span className={styles.kicker}>{kicker}</span>}

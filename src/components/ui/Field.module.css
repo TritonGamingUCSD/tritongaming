@@ -17,5 +17,5 @@
 @media (max-width: 640px) { .control { font-size: 16px; padding: 0.45rem 0.7rem; } }
 
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
-.label { font-family: var(--font-renegare); font-size: 0.68rem; color: rgba(var(--pp-ink-rgb), 0.89); letter-spacing: 0.12em; text-transform: uppercase; }
+.label { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 0.68rem; color: rgba(var(--pp-ink-rgb), 0.89); letter-spacing: 0.12em; text-transform: uppercase; }
 .hint { font-size: 0.75rem; color: rgba(var(--pp-ink-rgb), 0.86); }

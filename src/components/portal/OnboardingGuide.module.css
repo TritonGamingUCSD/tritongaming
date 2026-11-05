@@ -39,7 +39,7 @@
   background: rgba(var(--pp-ink-rgb), 0.3);
   transition: background 0.2s, width 0.2s;
 }
-.dotActive { background: var(--p-accent); width: 18px; border-radius: var(--radius-pill); }
+.dotActive { background: var(--yellow); width: 18px; border-radius: var(--radius-pill); }
 
 .icon {
   display: inline-flex;
@@ -98,7 +98,7 @@
   border: 1px solid var(--btn-primary-border);
   border-radius: var(--radius-pill);
   color: var(--btn-primary-text);
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 0.82rem;
   letter-spacing: 0.02em;
   cursor: pointer;

@@ -51,7 +51,7 @@
   padding: 3rem;
   text-align: center;
   background: rgba(var(--pp-ink-rgb), 0.02);
-  border: 1px dashed rgba(var(--pp-ink-rgb), 0.23);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.16);
   border-radius: 0.875rem;
   color: rgba(var(--pp-ink-rgb), 0.87);
   display: flex;
@@ -117,7 +117,7 @@
   display: flex;
   align-items: center;
   gap: 0.25rem;
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 0.7rem;
   letter-spacing: 0.02em;
   color: var(--p-accent-text);

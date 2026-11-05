@@ -2,9 +2,9 @@
 .panel { width: min(640px, 100%); height: 100%; overflow-y: auto; background: var(--pp-paper); color: var(--pp-ink); border-left: 3px solid var(--pp-ink); box-shadow: -8px 0 0 rgba(0, 0, 0, 0.35); padding: 0 1.2rem 2rem; overscroll-behavior: contain; }
 .head { position: sticky; top: 0; z-index: 2; display: flex; align-items: center; gap: 0.9rem; margin: 0 -1.2rem 1rem; padding: 0.9rem 1.2rem; background: var(--pp-card); border-bottom: 3px solid var(--pp-ink); }
 .avatar { border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); object-fit: cover; }
-.avatarFallback { width: 56px; height: 56px; display: grid; place-items: center; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; font-family: var(--font-futura-heavy); font-size: 1.4rem; background: var(--p-accent); color: #011941; } /* theme-ok */
+.avatarFallback { width: 56px; height: 56px; display: grid; place-items: center; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.4rem; background: var(--yellow); color: #011941; } /* theme-ok */
 .headText { flex: 1; min-width: 0; }
-.headText h2 { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.25rem; font-weight: 400; overflow-wrap: anywhere; }
+.headText h2 { margin: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.25rem; font-weight: 400; overflow-wrap: anywhere; }
 .headText p { margin: 0.1rem 0 0; font-size: 0.84rem; color: rgba(var(--pp-ink-rgb), 0.78); }
 .center { display: grid; place-items: center; padding: 3rem 0; }
 .body { display: grid; gap: 1rem; }

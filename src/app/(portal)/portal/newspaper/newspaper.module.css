@@ -1,5 +1,5 @@
 /* ── Newspaper: the list, the editor (blocks, audience, send) and the live preview. The frame (panel, segment, stack, head, state, hint) comes from polls.module.css ─────────────────────────── */
-.groupTitle { margin: 0.4rem 0 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.15rem; color: var(--pp-ink); }
+.groupTitle { margin: 0.4rem 0 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 1.15rem; color: var(--pp-ink); }
 .editor { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; align-items: start; }
 @media (min-width: 1100px) { .editor { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); } .previewSticky { position: sticky; top: 0.5rem; } }
 .pane { display: grid; gap: 1rem; min-width: 0; }
@@ -16,7 +16,7 @@
 .fields { display: grid; gap: 0.6rem; }
 .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
 @media (max-width: 640px) { .two { grid-template-columns: minmax(0, 1fr); } }
-.pic { display: grid; place-items: center; width: 100%; min-height: 6rem; padding: 0; border-radius: 10px; border: 1px dashed rgba(var(--pp-ink-rgb), 0.4); background: rgba(var(--pp-ink-rgb), 0.06); color: rgba(var(--pp-ink-rgb), 0.7); cursor: pointer; overflow: hidden; }
+.pic { display: grid; place-items: center; width: 100%; min-height: 6rem; padding: 0; border-radius: 10px; border: 1px solid rgba(var(--pp-ink-rgb), 0.16); background: rgba(var(--pp-ink-rgb), 0.06); color: rgba(var(--pp-ink-rgb), 0.7); cursor: pointer; overflow: hidden; }
 .pic img { display: block; width: 100%; max-height: 14rem; object-fit: cover; }
 .picSmall { width: 4.4rem; min-height: 4.4rem; height: 4.4rem; flex: none; }
 .person { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 0.6rem; align-items: start; padding: 0.5rem; border-radius: 10px; border: 1px solid rgba(var(--pp-ink-rgb), 0.18); }
@@ -33,7 +33,7 @@
 .group { display: grid; gap: 0.4rem; }
 .group h3 { margin: 0; font-size: 0.9rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.78); }
 .count { display: grid; gap: 0.2rem; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); box-shadow: none; }
-.count b { font-family: var(--font-futura-heavy); font-size: 1.6rem; font-weight: 400; }
+.count b { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.6rem; font-weight: 400; }
 .countWarn { border-color: var(--pp-bad); box-shadow: none; }
 .check { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.6rem; align-items: start; }
 .tick { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); }

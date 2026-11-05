@@ -30,3 +30,9 @@
 .xp > span { transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
 @media (prefers-reduced-motion: reduce) { .band > .card { animation: none; } .xp > span { transition: none; } }
 
+
+/* A soft pulse on something happening right now. */
+.live { display: inline-flex; align-items: center; gap: 0.4rem; color: var(--pp-ok); }
+.live::before { content: ''; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--pp-ok); animation: livePulse 1.6s ease-out infinite; }
+@keyframes livePulse { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--pp-ok) 55%, transparent); } 100% { box-shadow: 0 0 0 0.6rem transparent; } }
+@media (prefers-reduced-motion: reduce) { .live::before { animation: none; } }

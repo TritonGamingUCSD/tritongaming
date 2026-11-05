@@ -1,7 +1,7 @@
 .head { list-style: none; display: flex; align-items: center; gap: 0.6rem; margin-top: 0.4rem; padding: 0.15rem 0; }
 .head::before { content: ''; flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--wk); }
 .head:first-child { margin-top: 0; }
-.head strong { font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--wk) 55%, var(--pp-ink)); }
+.head strong { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--wk) 55%, var(--pp-ink)); }
 .head span { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .next { --wk: #60a5fa; }
 .later { --wk: #a78bfa; }

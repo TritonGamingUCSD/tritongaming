@@ -56,7 +56,7 @@
 /* Team by year */
 .yearBox { display: flex; flex-direction: column; gap: 0.8rem; }
 .yearHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; }
-.yearHead h2 { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.25rem; color: var(--pp-ink); }
+.yearHead h2 { margin: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--pp-ink); }
 .stamp { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); margin-right: auto; }
 .stampDone { color: var(--pp-ok); }
 .tierBlock h3 { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.35rem; font-size: 0.72rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.88); }
@@ -84,7 +84,7 @@
 .alumni > button { align-self: flex-start; }
 
 .pick { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.1rem; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.87); cursor: pointer; }
-.pickBox, .pick input { width: 1rem; height: 1rem; accent-color: var(--p-accent); flex: none; cursor: pointer; }
+.pickBox, .pick input { width: 1rem; height: 1rem; accent-color: var(--yellow); flex: none; cursor: pointer; }
 .bulkBar {
   composes: card from '../../../../components/ui/Surface.module.css';
   position: sticky;
@@ -121,7 +121,7 @@
 }
 .listColOn { border-color: rgba(52, 211, 153, 0.35); }
 .listColOff { border-style: dashed; border-color: rgba(148, 163, 184, 0.5); background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.1) 0 8px, transparent 8px 16px); }
-.listHead { display: flex; align-items: center; gap: 0.45rem; margin: 0; font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--pp-ink); }
+.listHead { display: flex; align-items: center; gap: 0.45rem; margin: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1rem; color: var(--pp-ink); }
 .listColOn .listHead svg { color: var(--pp-ok); }
 .listColOff .listHead svg { color: rgba(var(--pp-ink-rgb), 0.85); }
 .listHead span { margin-left: auto; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.89); }

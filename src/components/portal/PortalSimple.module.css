@@ -9,7 +9,7 @@
 .who:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .avatar, .avatarFallback { width: 36px; height: 36px; border-radius: 50%; flex-shrink: 0; }
 .avatar { object-fit: cover; }
-.avatarFallback { display: grid; place-items: center; background: var(--yellow); color: var(--ink); font-family: var(--font-futura-heavy); }
+.avatarFallback { display: grid; place-items: center; background: var(--yellow); color: var(--ink); font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; }
 .whoText { display: flex; flex-direction: column; line-height: 1.2; }
 .whoText strong { font-size: 0.9rem; }
 .whoText small { font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.8); }

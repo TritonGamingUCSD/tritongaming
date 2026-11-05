@@ -13,14 +13,14 @@
   cursor: pointer;
   font: inherit;
 }
-.planCard:hover { border-color: rgba(125, 180, 234, 0.45); background: rgba(var(--pp-ink-rgb), 0.05); }
+.planCard:hover { border-color: rgba(36, 63, 99, 0.27); background: rgba(var(--pp-ink-rgb), 0.05); }
 .planTop { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
-.planTop strong { font-family: var(--font-futura-heavy); font-size: 1rem; }
+.planTop strong { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1rem; }
 .planMeta { display: flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.87); margin: 0; }
 .chip { font-size: 0.67rem; letter-spacing: 0.01em;  padding: 0.12rem 0.5rem; border-radius: 999px; border: 1px solid; white-space: nowrap; }
 .chipOnce { color: var(--pp-info); border-color: rgba(147, 197, 253, 0.4); }
 .chipWeekly { color: var(--pp-violet); border-color: rgba(196, 181, 253, 0.4); }
-.chipOpen { color: var(--p-accent-text); border-color: rgba(125, 180, 234, 0.45); }
+.chipOpen { color: var(--p-accent-text); border-color: rgba(36, 63, 99, 0.27); }
 .chipDone { color: var(--pp-ok); border-color: rgba(52, 211, 153, 0.45); }
 .chipWarn { color: var(--pp-warn); border-color: rgba(251, 146, 60, 0.45); }
 .needsMe { align-self: flex-start; margin-top: 0.15rem; font-size: 0.78rem; font-weight: 600; color: #0b1426; background: var(--yellow); border-radius: 999px; padding: 0.15rem 0.65rem; }
@@ -38,11 +38,11 @@
   font: inherit;
 }
 .kindBtn span { font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.87); }
-.kindOn { border-color: var(--p-accent); background: rgba(125, 180, 234, 0.1); }
+.kindOn { border-color: var(--yellow); background: rgba(36, 63, 99, 0.06); }
 @media (max-width: 520px) { .kindPick { grid-template-columns: 1fr; } }
 
 .detailHead { display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; align-items: flex-start; }
-.detailTitle { margin: 0 0 0.25rem; font-family: var(--font-futura-heavy); font-size: 1.25rem; color: var(--pp-ink); }
+.detailTitle { margin: 0 0 0.25rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.25rem; color: var(--pp-ink); }
 .hostBtns { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 .todo { font-size: 0.67rem;  letter-spacing: 0.01em; background: var(--yellow); color: #0b1426; border-radius: 999px; padding: 0.05rem 0.45rem; }
 .count { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
@@ -69,7 +69,7 @@
 .mAvail .modeDot { background: #34d399; border-color: #34d399; }
 .mMaybe .modeDot { background: #fbbf24; border-color: #fbbf24; }
 .mNo .modeDot { background: transparent; }
-.modeOn { border-color: var(--p-accent); background: rgba(125, 180, 234, 0.1); }
+.modeOn { border-color: var(--yellow); background: rgba(36, 63, 99, 0.06); }
 @media (max-width: 520px) { .modeBtn em { display: none; } .modeBtn { padding: 0.55rem 0.5rem; font-size: 0.8rem; } }
 
 /* desktop grid */
@@ -98,7 +98,7 @@
 .heat { height: 24px; border: 0; border-left: 1px solid rgba(var(--pp-ink-rgb), 0.18); border-top: 1px solid rgba(var(--pp-ink-rgb), 0.18); background: transparent; color: #04140e; font-size: 0.67rem; font-weight: 700; cursor: pointer; padding: 0; }
 .heat:hover { outline: 1px solid rgba(var(--pp-ink-rgb), 0.60); outline-offset: -1px; }
 .heatNum { pointer-events: none; }
-.heatSel { box-shadow: inset 0 0 0 2px var(--p-accent); }
+.heatSel { box-shadow: inset 0 0 0 2px var(--yellow); }
 .heatNoStart { cursor: pointer; }
 .who {
   composes: card from '../../../../../components/ui/Surface.module.css';
@@ -115,7 +115,7 @@
 .sugRow:first-of-type { border-top: 0; }
 .sugRow div { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; font-size: 0.84rem; }
 .sugRow span { font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.88); }
-.confirm { padding: 0.9rem 1rem; border-radius: 1rem; border: 1px solid var(--p-accent); background: rgba(125, 180, 234, 0.07); display: flex; flex-direction: column; gap: 0.5rem; }
+.confirm { padding: 0.9rem 1rem; border-radius: 1rem; border: 1px solid var(--yellow); background: rgba(36, 63, 99, 0.04); display: flex; flex-direction: column; gap: 0.5rem; }
 .confirm p { margin: 0; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.97); }
 .confirmBtns { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 .warnText { color: var(--pp-warn) !important; }
@@ -152,10 +152,10 @@
 
 /* Meaning, not decoration: blue = planning, yellow = needs you, green = decided, orange = dates passed. */
 .planCard[data-tone='plan'] { --tone: #60a5fa; }
-.planCard[data-tone='todo'] { --tone: var(--p-accent); background: rgba(125, 180, 234, 0.05); }
+.planCard[data-tone='todo'] { --tone: var(--yellow); background: rgba(36, 63, 99, 0.03); }
 .planCard[data-tone='done'] { --tone: #34d399; }
 .planCard[data-tone='warn'] { --tone: #fb923c; }
-.planCard:hover { border-color: var(--tone, rgba(125, 180, 234, 0.45)); }
+.planCard:hover { border-color: var(--tone, rgba(36, 63, 99, 0.27)); }
 .chipOpen { color: var(--pp-info); border-color: rgba(147, 197, 253, 0.45); background: rgba(96, 165, 250, 0.1); }
 .chipDone { background: rgba(52, 211, 153, 0.1); }
 .chipOnce { background: rgba(56, 189, 248, 0.1); color: var(--pp-info); border-color: rgba(125, 211, 252, 0.4); }
@@ -173,7 +173,7 @@
 
 /* Same soft pill and keyboard ring as the rest of the meeting controls. */
 .modeBtn:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.07); }
-.kindBtn:hover { border-color: rgba(125, 180, 234, 0.45); }
+.kindBtn:hover { border-color: rgba(36, 63, 99, 0.27); }
 .colAll:disabled { opacity: 0.4; cursor: default; }
 
 .modeBtn, .kindBtn { border-radius: 0.6rem; }
@@ -231,7 +231,7 @@
 }
 .phoneTop .modeBar { position: static; padding: 0; background: none; }
 /* Press-and-hold painting: the grid glows while a finger is painting, and the page stops scrolling under it. */
-.painting { box-shadow: 0 0 0 2px var(--p-accent); }
+.painting { box-shadow: 0 0 0 2px var(--yellow); }
 .gridTable { -webkit-touch-callout: none; }
 
 /* Group results: a cell shows one number (people free); an amber corner marks "some could, if needed". */
@@ -297,7 +297,7 @@
 .confirmFine { display: flex; align-items: center; gap: 0.35rem; margin: 0; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .whoAnswered { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; }
 .answeredCount { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.92); }
-.chip2 { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.55rem; border-radius: 999px; border: 1px dashed rgba(156, 163, 175, 0.7); font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.92); white-space: nowrap; }
+.chip2 { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.55rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.16); font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.92); white-space: nowrap; }
 
 /* Best times: the whole row is the button. */
 .sugRow { cursor: pointer; }

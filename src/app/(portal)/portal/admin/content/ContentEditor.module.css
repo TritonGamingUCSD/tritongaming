@@ -56,7 +56,7 @@
 }
 
 .editPanelTitle {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 1.05rem;
   color: var(--pp-ink);
   
@@ -215,7 +215,7 @@
   color: var(--pp-ink);
 }
 
-.selectOptActive { font-family: var(--font-futura-heavy); }
+.selectOptActive { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; }
 
 .colorDot {
   width: 10px;
@@ -316,7 +316,7 @@
 .imageLogoFallback {
   width: 48px; height: 48px; border-radius: 0.375rem; background: rgba(var(--pp-ink-rgb), 0.08);
   display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-futura-heavy); font-size: 1.1rem; color: rgba(var(--pp-ink-rgb), 0.88);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.1rem; color: rgba(var(--pp-ink-rgb), 0.88);
 }
 
 .imageCardFields {
@@ -384,7 +384,7 @@
 .previewTools { display: flex; gap: 0.25rem; }
 .previewTool { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.23); background: transparent; color: rgba(var(--pp-ink-rgb), 0.87); cursor: pointer; }
 .previewTool:hover { color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.06); }
-.previewToolOn { color: var(--p-accent-text); border-color: rgba(125, 180, 234, 0.5); background: rgba(125, 180, 234, 0.1); }
+.previewToolOn { color: var(--p-accent-text); border-color: rgba(36, 63, 99, 0.30); background: rgba(36, 63, 99, 0.06); }
 
 .previewBox {
   composes: card from '../../../../../components/ui/Surface.module.css';
@@ -422,4 +422,4 @@
 
 /* every block of the open page, stacked in page order */
 .editorStack { display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
-.editorCardActive { border-color: rgba(125, 180, 234, 0.45); }
+.editorCardActive { border-color: rgba(36, 63, 99, 0.27); }

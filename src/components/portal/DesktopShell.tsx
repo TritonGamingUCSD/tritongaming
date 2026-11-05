@@ -271,8 +271,8 @@ export function DesktopShell({
                 <motion.div
                   key={openSection.id}
                   className={styles.desktopPanel}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0, transition: { duration: 0.18 } }}
+                  initial={{ opacity: 0, y: 6, filter: 'blur(5px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.22 } }}
                   exit={{ opacity: 0, transition: { duration: 0.08 } }}
                 >
                   <div className={styles.panelBody} key={navNonce}>
@@ -283,8 +283,8 @@ export function DesktopShell({
                 <motion.div
                   key="home"
                   className={styles.gridWrap}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0, transition: { duration: 0.18 } }}
+                  initial={{ opacity: 0, y: 6, filter: 'blur(5px)' }}
+                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.22 } }}
                   exit={{ opacity: 0, transition: { duration: 0.08 } }}
                 >
                   {frame?.tiles && <div className={styles.homeTiles}>{frame.tiles}</div>}

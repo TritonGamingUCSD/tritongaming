@@ -32,7 +32,7 @@
 
 
 .statIcon  { display: inline-flex; color: var(--p-accent-text); flex-shrink: 0; }
-.statValue { font-family: var(--font-futura-heavy); font-size: 1.3rem; color: var(--p-accent-text); line-height: 1; }
+.statValue { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.3rem; color: var(--p-accent-text); line-height: 1; }
 .statLabel { font-size: var(--fs-meta); color: rgba(var(--pp-ink-rgb), 0.82); margin-top: 0.2rem; }
 
 /* ── Sections ── */
@@ -159,7 +159,7 @@
   border-radius: 50%;
   background: rgba(125, 180, 234,0.15);
   color: var(--p-accent-text);
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 0.8rem;
 }
 
@@ -199,7 +199,7 @@
 }
 
 .activityAction {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   color: var(--pp-ink);
 }
 
@@ -254,7 +254,7 @@
 .boardOrderRank {
   width: 1.5rem;
   flex-shrink: 0;
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 0.8rem;
   color: rgba(var(--pp-ink-rgb), 0.87);
   text-align: center;

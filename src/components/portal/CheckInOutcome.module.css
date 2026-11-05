@@ -28,3 +28,9 @@
 /* In the scanner's sheet the ring above already shows the outcome: lighter, no big tile. */
 .bare { border: 0; border-left: 0; padding: 0.2rem 0 0; background: none; }
 .bare .tile { display: none; }
+
+/* The check mark draws itself. */
+.ok .tile { color: var(--pp-ok); }
+.draw path { stroke-dasharray: 26; stroke-dashoffset: 26; animation: ciDraw 0.45s ease-out 0.15s forwards; }
+@keyframes ciDraw { to { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .draw path { animation: none; stroke-dashoffset: 0; } }

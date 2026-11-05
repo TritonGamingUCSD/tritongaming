@@ -1,7 +1,7 @@
 .wrap { position: relative; display: inline-block; }
 .trigger { display: inline-flex; align-items: center; gap: 0.4rem; height: 32px; padding: 0 0.75rem; border-radius: 999px; font-size: 0.74rem; cursor: pointer; white-space: nowrap; color: rgba(var(--pp-chrome-rgb), 0.75); background: rgba(var(--pp-chrome-rgb), 0.05); border: 1px solid rgba(var(--pp-chrome-rgb), 0.14); }
-.trigger:hover { border-color: rgba(125, 180, 234, 0.5); color: var(--pp-chrome-accent); }
-.triggerOn { color: var(--pp-chrome); background: var(--p-accent); border-color: var(--p-accent); }
+.trigger:hover { border-color: rgba(36, 63, 99, 0.30); color: var(--pp-chrome-accent); }
+.triggerOn { color: var(--pp-chrome); background: var(--yellow); border-color: var(--yellow); }
 .triggerOn:hover { color: var(--pp-chrome); }
 .menu { position: absolute; right: 0; top: calc(100% + 0.4rem); z-index: 80; width: 230px; padding: 0.4rem; border-radius: 0.8rem; background: var(--pp-chrome); border: 1px solid rgba(var(--pp-chrome-rgb), 0.14); box-shadow: 0 18px 40px -12px rgba(0, 0, 0, 0.7); }
 .menuHead { padding: 0.35rem 0.6rem; font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-chrome-rgb), 0.6); }

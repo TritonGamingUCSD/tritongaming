@@ -20,7 +20,7 @@
   padding: 0.6rem;
 }
 .dragging { opacity: 0.5; }
-.dragOver { border-color: rgba(125, 180, 234, 0.5); }
+.dragOver { border-color: rgba(36, 63, 99, 0.30); }
 .grip { display: grid; place-items: center; width: 24px; height: 36px; color: rgba(var(--pp-ink-rgb), 0.87); flex-shrink: 0; }
 .time { width: 96px; flex-shrink: 0; }
 .rowMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.4rem; }

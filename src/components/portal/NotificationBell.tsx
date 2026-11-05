@@ -8,6 +8,7 @@ import Image from 'next/image';
 import Link from '@/components/portal/NoPrefetchLink';
 import { navigatePortal } from '@/lib/portal/portalNav';
 import { Bell } from 'lucide-react';
+import { enablePush, pushSupport } from '@/lib/notifications/pushClient';
 import type { Notification } from '@/types/database';
 import styles from './NotificationBell.module.css';
 
@@ -35,11 +36,21 @@ function resolveHref(n: Pick<Notification, 'href' | 'type'>): string | null {
 // PortalTopbar (the other persistent portal chrome) hides itself on
 // /portal specifically, and the bell needs to stay reachable everywhere,
 // including there.
+function canOfferPush() {
+  try {
+    return !!process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && pushSupport() === 'ok' && Notification.permission === 'default';
+  } catch {
+    return false;
+  }
+}
+
 export default function NotificationBell({ inline = false }: { inline?: boolean } = {}) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  // A quiet offer to turn on notifications on this device, shown in the list while the browser has not been asked (it used to be a pop-up over the page).
+  const [offer, setOffer] = useState(false);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   // Web push: keep this device's subscription current (the one-time offer to turn it on is PushAsk, mounted in the portal layout).
@@ -110,7 +121,10 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
       <button
         type="button"
         className={styles.bellBtn}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => {
+          setOffer(canOfferPush());
+          setOpen((o) => !o);
+        }}
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
         aria-expanded={open}
       >
@@ -134,6 +148,19 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
               </button>
             )}
           </div>
+
+          {offer && (
+            <button
+              type="button"
+              className={styles.offer}
+              onClick={async () => {
+                await enablePush();
+                setOffer(false);
+              }}
+            >
+              Turn on notifications on this device
+            </button>
+          )}
 
           {!loaded ? (
             <div className={styles.statusLoading}>

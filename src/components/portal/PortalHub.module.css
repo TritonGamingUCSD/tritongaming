@@ -1119,3 +1119,11 @@
   .tabStrip:empty { display: none; }
   .tabStrip > div { margin-bottom: 0; }
 }
+
+/* Sidebar: an item nudges 2px toward you on hover and the area's pixel icon wiggles once. */
+@media (min-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .rail .railNav .railItem { transition: transform 0.15s ease; }
+  .rail .railNav .railItem:hover:not([data-rail-active]) { transform: translateX(3px); }
+  .rail .railGroup:hover .railGroupPixel { animation: pixelWiggle 0.5s ease-in-out 1; }
+}
+@keyframes pixelWiggle { 0%, 100% { transform: rotate(0); } 25% { transform: rotate(-12deg) scale(1.08); } 75% { transform: rotate(12deg) scale(1.08); } }

@@ -26,7 +26,7 @@ export default function HomeCards({ cards }: { cards: HomeCard[] }) {
     <li key={c.id} className={`${styles.card} ${c.locked ? styles.locked : ''}`}>
       <div className={styles.head}>
         <h2 className={styles.title}>{c.title}</h2>
-        {c.status && <span className={styles.status}>{c.status}</span>}
+        {c.status && <span className={`${styles.status} ${c.status === 'On now' ? styles.live : ''}`}>{c.status}</span>}
       </div>
       {c.figure && (
         <p className={styles.figure}>

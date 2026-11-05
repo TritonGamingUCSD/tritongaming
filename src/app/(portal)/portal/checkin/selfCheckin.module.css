@@ -9,7 +9,7 @@
 .actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
 .full { position: fixed; inset: 0; z-index: 10000; background: #ffffff; color: #111c33; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.8rem; padding: 1.5rem; text-align: center; } /* theme-ok: full-screen QR is always dark on white */
 .fullClose { position: absolute; top: 0.8rem; left: 0.8rem; width: 44px; height: 44px; display: grid; place-items: center; border: 1px solid #111c33; border-radius: 50%; background: #ffffff; color: #111c33; cursor: pointer; } /* theme-ok: same */
-.fullTitle { font-family: var(--font-futura-heavy); font-size: 1.5rem; overflow-wrap: anywhere; }
+.fullTitle { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.5rem; overflow-wrap: anywhere; }
 .fullSub { font-size: 1.05rem; }
 .fullQr { line-height: 0; }
 .qrBig canvas, .qrBig svg { width: min(78vw, 70vh, 520px); height: auto; }
@@ -20,4 +20,4 @@
 .modeBtn { flex: 1 1 8rem; min-height: var(--btn-h); padding: 0.5rem 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 0.7rem; background: transparent; color: var(--pp-ink); font-family: var(--font-futura-medium); font-size: 0.85rem; cursor: pointer; }
 .modeBtn:disabled { cursor: default; opacity: 0.75; }
 .modeBtn:not(:disabled):hover { background: rgba(var(--pp-ink-rgb), 0.06); }
-.modeOn { background: var(--yellow); border-color: var(--pp-ink); color: #111c33; font-family: var(--font-futura-heavy); opacity: 1 !important; }
+.modeOn { background: var(--yellow); border-color: var(--pp-ink); color: #111c33; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; opacity: 1 !important; }

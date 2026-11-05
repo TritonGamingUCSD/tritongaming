@@ -2,7 +2,7 @@
 .title { font-family: var(--font-futura-heavy); font-size: 1.5rem; color: var(--pp-ink); text-align: center; }
 .sub { font-size: 0.9rem; line-height: 1.5; color: rgba(var(--pp-ink-rgb), 0.9); text-align: center; }
 .group { composes: card from '../../../../components/ui/Surface.module.css'; display: flex; flex-direction: column; gap: 0.9rem; padding: 1.1rem; }
-.groupTitle { font-family: var(--font-futura-heavy); font-size: 1rem; color: var(--pp-ink); }
+.groupTitle { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1rem; color: var(--pp-ink); }
 .hint { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.85); }
 .submit { width: 100%; min-height: 48px; }
 .optional { background: transparent; border-style: dashed; }

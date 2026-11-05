@@ -14,7 +14,6 @@ import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
 import PullToRefresh from '@/components/portal/PullToRefresh';
 import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
-import PushAsk from '@/components/portal/PushAsk';
 import InstallAsk from '@/components/portal/InstallAsk';
 import HideOnPaths from '@/components/portal/HideOnPaths';
 import PortalBanner from '@/components/portal/PortalBanner';
@@ -98,9 +97,6 @@ export default async function PortalLayout({ children }: { children: React.React
           </HideOnPaths>
           <PullToRefresh />
           <ConnectivityBanner />
-          <HideOnPaths paths={CHECKIN_PATHS}>
-            <PushAsk />
-          </HideOnPaths>
           <HideOnPaths paths={CHECKIN_PATHS}>
             <InstallAsk />
           </HideOnPaths>

@@ -83,7 +83,7 @@
   cursor: pointer;
 }
 
-.checkbox input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--p-accent); }
+.checkbox input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--yellow); }
 
 .sectionDivider {
   display: flex;
@@ -205,7 +205,7 @@
   border: 1px solid rgba(125, 180, 234,0.35);
   border-radius: var(--radius-md);
   color: var(--p-accent-text);
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 0.85rem;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
@@ -215,7 +215,7 @@
 @keyframes evSpin { to { transform: rotate(360deg); } }
 /* while saving the fields are locked and dimmed, and a pill stays in view wherever you have scrolled to */
 .formSaving { opacity: 0.6; pointer-events: none; transition: opacity 0.15s ease; }
-.savingPill { position: fixed; left: 50%; bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 300; display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.7rem 1.2rem; border-radius: var(--radius-sm); background: var(--p-accent); color: #0b1426; font-family: var(--font-futura-heavy); font-size: 0.9rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); white-space: nowrap; }
+.savingPill { position: fixed; left: 50%; bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 300; display: inline-flex; align-items: center; gap: 0.6rem; padding: 0.7rem 1.2rem; border-radius: var(--radius-sm); background: var(--yellow); color: #0b1426; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 0.9rem; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5); white-space: nowrap; }
 @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2.5s; } }
 
 @media (max-width: 600px) {

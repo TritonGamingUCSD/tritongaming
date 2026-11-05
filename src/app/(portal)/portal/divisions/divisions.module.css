@@ -19,7 +19,7 @@
 
 .addCard {
   background: rgba(125, 180, 234,0.04);
-  border: 1px dashed rgba(125, 180, 234,0.25);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.16);
   border-radius: 1rem;
   padding: 1.25rem;
   display: flex;
@@ -83,7 +83,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 1.1rem;
   color: #f2f1f0; /* theme-ok */
   flex-shrink: 0;

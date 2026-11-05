@@ -13,7 +13,7 @@
 .search:focus-within { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 .filters { display: flex; flex-wrap: wrap; gap: 0.35rem; }
 .chip { padding: 0.25rem 0.65rem; border-radius: 0.6rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.26); background: transparent; color: rgba(var(--pp-ink-rgb), 0.87); font: inherit; font-size: 0.76rem; cursor: pointer; white-space: nowrap; }
-.chip:hover { border-color: rgba(125, 180, 234, 0.45); color: var(--pp-ink); }
+.chip:hover { border-color: rgba(36, 63, 99, 0.27); color: var(--pp-ink); }
 .chipOn { background: rgba(var(--pp-ink-rgb), 0.08); border-color: rgba(var(--pp-ink-rgb), 0.57); color: var(--pp-ink); }
 .people { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; max-height: 70vh; overflow-y: auto; }
 .person {
@@ -29,8 +29,8 @@
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
 }
-.person:hover { border-color: rgba(125, 180, 234, 0.4); }
-.personOn { border-color: var(--p-accent); background: rgba(125, 180, 234, 0.08); }
+.person:hover { border-color: rgba(36, 63, 99, 0.24); }
+.personOn { border-color: var(--yellow); background: rgba(36, 63, 99, 0.05); }
 .personName { display: flex; flex-direction: column; min-width: 0; flex: 1; }
 .personName strong { font-size: 0.9rem; overflow-wrap: anywhere; line-height: 1.25; }
 .personName small { font-size: 0.7rem; color: rgba(var(--pp-ink-rgb), 0.88); }
@@ -48,7 +48,7 @@
 .voucherTag { flex: none; display: inline-flex; align-items: center; gap: 0.2rem; padding: 0.05rem 0.45rem; border-radius: 999px; font-size: 0.68rem; font-weight: 700; color: var(--pp-teal); border: 1px solid rgba(45, 212, 191, 0.45); white-space: nowrap; }
 
 .detailCol { min-width: 0; }
-.placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2.5rem 1rem; text-align: center; color: rgba(var(--pp-ink-rgb), 0.88); border: 1px dashed rgba(var(--pp-ink-rgb), 0.30); border-radius: 1rem; }
+.placeholder { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 2.5rem 1rem; text-align: center; color: rgba(var(--pp-ink-rgb), 0.88); border: 1px solid rgba(var(--pp-ink-rgb), 0.16); border-radius: 1rem; }
 .detail {
   composes: card from '../../../../components/ui/Surface.module.css';
   display: flex;
@@ -59,7 +59,7 @@
 .back { display: none; align-self: flex-start; align-items: center; gap: 0.4rem; padding: 0.2rem 0; border: 0; background: none; color: rgba(var(--pp-ink-rgb), 0.89); font: inherit; font-size: 0.85rem; cursor: pointer; }
 .dHead { display: flex; align-items: center; gap: 0.75rem; }
 .dName { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-.dName strong { font-family: var(--font-futura-heavy); font-size: 1.1rem; color: var(--pp-ink); }
+.dName strong { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--pp-ink); }
 .dName span { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .limit { margin: 0; padding: 0.5rem 0.7rem; border-radius: 0.6rem; background: rgba(248, 113, 113, 0.16); color: var(--pp-bad); font-size: 0.86rem; font-weight: 600; }
 .actionsBar { display: flex; flex-wrap: wrap; gap: 0.5rem; }
@@ -89,7 +89,7 @@
 .vouchers li span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
 .vouchers li svg { flex: none; color: var(--pp-teal); }
 .vUsed { opacity: 0.55; border-color: rgba(var(--pp-ink-rgb), 0.23) !important; background: transparent !important; }
-.form { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem; border-radius: 0.8rem; background: rgba(var(--pp-ink-rgb), 0.06); border: 1px solid rgba(125, 180, 234, 0.25); }
+.form { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.8rem; border-radius: 0.8rem; background: rgba(var(--pp-ink-rgb), 0.06); border: 1px solid rgba(36, 63, 99, 0.15); }
 .hint { margin: 0; font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .formActions { display: flex; justify-content: flex-end; gap: 0.5rem; }
 
@@ -108,7 +108,7 @@
 .doneList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .doneList b { color: var(--pp-ink); font-weight: 600; }
 .twoCol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.7rem; }
-.chosen { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem; border-radius: 0.6rem; background: rgba(125, 180, 234, 0.08); border: 1px solid rgba(125, 180, 234, 0.35); color: var(--pp-ink); }
+.chosen { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0.7rem; border-radius: 0.6rem; background: rgba(36, 63, 99, 0.05); border: 1px solid rgba(36, 63, 99, 0.21); color: var(--pp-ink); }
 .chosen span { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 .pick { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
 .people .search { flex: none; }
@@ -125,7 +125,7 @@
   padding: 0.5rem 0.75rem;
 }
 .bulkBtns { display: inline-flex; gap: 0.4rem; }
-.meetingTitle { margin: 0.2rem 0 0; display: flex; align-items: baseline; gap: 0.6rem; font-family: var(--font-futura-heavy); font-size: 0.95rem; color: var(--pp-ink); }
+.meetingTitle { margin: 0.2rem 0 0; display: flex; align-items: baseline; gap: 0.6rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 0.95rem; color: var(--pp-ink); }
 .meetingTitle span { font-family: inherit; font-size: 0.78rem; font-weight: 400; color: rgba(var(--pp-ink-rgb), 0.88); }
 .missList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
 .missRow {

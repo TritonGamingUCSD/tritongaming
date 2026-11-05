@@ -38,8 +38,8 @@
   font: inherit;
   transition: border-color 0.15s, background 0.15s;
 }
-.row:hover { border-color: rgba(125, 180, 234, 0.4); background: rgba(var(--pp-ink-rgb), 0.055); }
-.rowAttention { border-color: rgba(125, 180, 234, 0.45); }
+.row:hover { border-color: rgba(36, 63, 99, 0.24); background: rgba(var(--pp-ink-rgb), 0.055); }
+.rowAttention { border-color: rgba(36, 63, 99, 0.27); }
 .rowMain { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; min-width: 0; }
 .rowSubject { font-weight: 600; color: var(--pp-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rowMeta { font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.88); }
@@ -48,11 +48,11 @@
 .pill_open { color: var(--pp-info); border-color: rgba(96, 165, 250, 0.4); background: rgba(96, 165, 250, 0.1); }
 .pill_in_progress { color: var(--pp-warn); border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.1); }
 .pill_resolved { color: var(--pp-ok); border-color: rgba(52, 211, 153, 0.4); background: rgba(52, 211, 153, 0.1); }
-.empty { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.5rem 1rem; text-align: center; color: rgba(var(--pp-ink-rgb), 0.88); border-radius: 1rem; border: 1px dashed rgba(var(--pp-ink-rgb), 0.30); }
+.empty { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; padding: 2.5rem 1rem; text-align: center; color: rgba(var(--pp-ink-rgb), 0.88); border-radius: 1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.16); }
 
 .thread { display: flex; flex-direction: column; gap: 1rem; }
 .threadHead { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
-.threadTitle h2 { font-family: var(--font-futura-heavy); font-size: 1.3rem; color: var(--pp-ink); margin: 0 0 0.25rem; overflow-wrap: anywhere; }
+.threadTitle h2 { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.3rem; color: var(--pp-ink); margin: 0 0 0.25rem; overflow-wrap: anywhere; }
 .tech { margin-top: 0.4rem; font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.87); overflow-wrap: anywhere; }
 .staffBar { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .msgs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.7rem; }
@@ -62,7 +62,7 @@
   max-width: 92%;
   padding: 0.75rem 0.95rem;
 }
-.msgMine { align-self: flex-end; background: rgba(125, 180, 234, 0.08); border-color: rgba(125, 180, 234, 0.25); }
+.msgMine { align-self: flex-end; background: rgba(36, 63, 99, 0.05); border-color: rgba(36, 63, 99, 0.15); }
 .msgStaff { border-color: rgba(74, 144, 226, 0.4); background: rgba(74, 144, 226, 0.08); }
 .msgHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); margin-bottom: 0.3rem; }
 .msgHead strong { color: var(--pp-ink); font-size: 0.8rem; }

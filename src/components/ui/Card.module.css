@@ -7,7 +7,7 @@
 .link { cursor: pointer; }
 .link:focus-within, .link:focus-visible { outline: 3px solid rgba(125, 180, 234, 0.9); outline-offset: 3px; }
 .preview { display: grid; place-items: center; overflow: hidden; border-radius: 4px; background: rgba(var(--pp-ink-rgb), 0.07); color: rgba(var(--pp-ink-rgb), 0.4); }
-.kicker { align-self: flex-start; margin: 0 0 -0.1rem; padding: 0.22rem 0.6rem; background: var(--yellow); color: #011941; border: 2px solid #011941; border-radius: 6px; font-family: var(--font-renegare); font-size: 0.67rem; letter-spacing: 0.16em; text-transform: uppercase; transform: rotate(-2deg); }   /* theme-ok: a yellow sticker stays yellow with ink text */
+.kicker { align-self: flex-start; margin: 0 0 -0.1rem; padding: 0.22rem 0.6rem; background: var(--yellow); color: #011941; border: 2px solid #011941; border-radius: 6px; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 0.67rem; letter-spacing: 0.16em; text-transform: uppercase; transform: rotate(-2deg); }   /* theme-ok: a yellow sticker stays yellow with ink text */
 .title { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.3rem; line-height: 1.15; color: var(--pp-ink); overflow-wrap: anywhere; }
 .title button { all: unset; cursor: pointer; }
 .meta { display: flex; gap: 0.4rem; flex-wrap: wrap; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.78); }

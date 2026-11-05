@@ -1,6 +1,6 @@
 .card { display: flex; flex-direction: column; gap: 0.9rem; padding: 1.25rem; border-radius: 1rem; background: rgba(var(--pp-ink-rgb), 0.035); border: 1px solid rgba(var(--pp-ink-rgb), 0.09); }
 .head { display: flex; gap: 0.8rem; align-items: flex-start; }
-.icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 0.7rem; background: rgba(125, 180, 234, 0.12); border: 1px solid rgba(125, 180, 234, 0.4); color: var(--p-accent-text); }
+.icon { flex: none; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 0.7rem; background: rgba(36, 63, 99, 0.07); border: 1px solid rgba(36, 63, 99, 0.24); color: var(--p-accent-text); }
 .title { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--pp-ink); }
 .sub { margin: 0.25rem 0 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.65); }
 .muted { margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.6); }

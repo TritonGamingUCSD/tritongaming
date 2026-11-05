@@ -194,7 +194,7 @@
 }
 
 .checkboxField input[type="checkbox"],
-.checkboxField input[type="radio"] { width: 16px; height: 16px; accent-color: var(--p-accent); }
+.checkboxField input[type="radio"] { width: 16px; height: 16px; accent-color: var(--yellow); }
 
 
 .visibilityGrid {
@@ -216,7 +216,7 @@
 }
 
 .backupLoginTitle {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 1rem;
   color: var(--pp-ink);
   margin-bottom: 0.5rem;
@@ -318,7 +318,7 @@
 .portfolioAdd {
   align-self: flex-start;
   padding: 0.4rem 0.9rem; border-radius: 999px;
-  background: rgba(var(--pp-ink-rgb), 0.08); border: 1px dashed rgba(var(--pp-ink-rgb), 0.48);
+  background: rgba(var(--pp-ink-rgb), 0.08); border: 1px solid rgba(var(--pp-ink-rgb), 0.16);
   color: var(--pp-ink); font-size: 0.8rem; cursor: pointer;
 }
 @media (max-width: 520px) { .portfolioRow { grid-template-columns: 1fr auto; } .portfolioRow input:first-child { grid-column: 1 / -1; } }
@@ -358,7 +358,7 @@
   padding: 1rem 1.1rem 1.1rem; border-radius: 0.9rem;
   border: 1px solid rgba(var(--pp-ink-rgb), 0.23); background: rgba(var(--pp-ink-rgb), 0.03);
 }
-.requiredGroup { border-color: rgba(125, 180, 234, 0.35); }
+.requiredGroup { border-color: rgba(36, 63, 99, 0.21); }
 .groupHeading { margin: 0; font-size: 0.78rem; letter-spacing: 0.01em;  color: var(--pp-ink); }
 .requiredGroup .requiredLegend { margin: -0.4rem 0 0; }
 
@@ -376,7 +376,7 @@
 .optionalGroup .optionalTag { opacity: 0.75; }
 
 /* The UCSD-only fields (class, college, major) sit after the ones everyone fills in. */
-.subGroup { display: flex; flex-direction: column; gap: 1rem; padding-top: 0.85rem; border-top: 1px dashed rgba(var(--pp-ink-rgb), 0.30); }
+.subGroup { display: flex; flex-direction: column; gap: 1rem; padding-top: 0.85rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.16); }
 .subGroupLabel { font-size: 0.72rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.87); }
 
 /* "What to show" is about the PUBLIC page, so it's a visibly separate, blue-edged
@@ -400,7 +400,7 @@
 /* ── Major picker ── */
 .majorPicker { display: flex; flex-direction: column; gap: 0.5rem; }
 .majorChips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.majorChip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.4rem 0.3rem 0.75rem; border-radius: 999px; font-size: 0.82rem; background: rgba(125, 180, 234, 0.12); border: 1px solid rgba(125, 180, 234, 0.4); color: var(--pp-ink); white-space: nowrap; }
+.majorChip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.3rem 0.4rem 0.3rem 0.75rem; border-radius: 999px; font-size: 0.82rem; background: rgba(36, 63, 99, 0.07); border: 1px solid rgba(36, 63, 99, 0.24); color: var(--pp-ink); white-space: nowrap; }
 .majorChipX { display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: rgba(var(--pp-ink-rgb), 0.1); color: inherit; border: none; cursor: pointer; }
 .majorChipX:hover { background: rgba(var(--pp-ink-rgb), 0.2); }
 .majorOther { display: flex; gap: 0.5rem; flex-wrap: wrap; }
@@ -423,7 +423,7 @@
 
 /* The public site's card is always navy; the frame makes a dark card on a light page look intended. */
 .previewNote { margin: -0.4rem 0 0.8rem; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.85); }
-.previewFrame { padding: 1rem; border: 2px dashed rgba(var(--pp-ink-rgb), 0.3); border-radius: 12px; background: rgba(var(--pp-ink-rgb), 0.05); }
+.previewFrame { padding: 1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.16); border-radius: 12px; background: rgba(var(--pp-ink-rgb), 0.05); }
 
 /* About Me and School are two views of one form: every field stays in the page (so saving and validation work), the other half is hidden. */
 form.form[data-sub='school'] .requiredGroup > :not([data-school]) { display: none; }

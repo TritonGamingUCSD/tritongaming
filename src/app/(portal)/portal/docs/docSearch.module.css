@@ -14,7 +14,7 @@
 .hitOn { background: rgba(var(--pp-ink-rgb), 0.09); }
 .hitIcon { flex-shrink: 0; margin-top: 0.15rem; color: rgba(var(--pp-ink-rgb), 0.75); }
 .hitText { display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; }
-.hitText strong { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1rem; overflow-wrap: anywhere; }
+.hitText strong { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 1rem; overflow-wrap: anywhere; }
 .hitGroup { font-size: 0.74rem; letter-spacing: 0.01em;  color: var(--p-accent-text); }
 .hitSnippet { font-size: 0.84rem; line-height: 1.4; color: rgba(var(--pp-ink-rgb), 0.85); overflow-wrap: anywhere; }
 .match { background: var(--dh-yellow, #fde68a); color: inherit; border-radius: 0.2em; padding: 0 0.1em; }

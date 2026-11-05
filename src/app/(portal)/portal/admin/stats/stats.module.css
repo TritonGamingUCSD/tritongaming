@@ -30,7 +30,7 @@
 }
 
 .totalValue {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 1.6rem;
   color: var(--pp-ink);
 }
@@ -63,7 +63,7 @@
 .chartRow .chartCard { margin-bottom: 0; }
 
 .chartTitle {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 0.85rem;
   letter-spacing: 0.03em;
   color: rgba(var(--pp-ink-rgb), 0.89);
@@ -87,7 +87,7 @@
 }
 
 .economyValue {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 1.3rem;
   color: var(--p-accent-text);
 }

@@ -69,7 +69,7 @@
 
 .tableBarFill {
   height: 100%;
-  background: linear-gradient(90deg, rgba(125, 180, 234,0.5), var(--p-accent));
+  background: linear-gradient(90deg, rgba(125, 180, 234,0.5), var(--yellow));
   border-radius: var(--radius-pill);
 }
 
@@ -110,7 +110,7 @@
 }
 
 .bucketSize {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700;
   font-size: 1.15rem;
   color: var(--p-accent-text);
 }
@@ -206,4 +206,4 @@
 }
 
 /* The page reads top to bottom: a summary strip, then Usage, Tools and Platform. */
-.groupTitle { margin: 1.2rem 0 0.2rem; padding-bottom: 0.35rem; border-bottom: 2px solid rgba(var(--pp-ink-rgb), 0.18); font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.15rem; color: var(--pp-ink); }
+.groupTitle { margin: 1.2rem 0 0.2rem; padding-bottom: 0.35rem; border-bottom: 2px solid rgba(var(--pp-ink-rgb), 0.18); font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-weight: 400; font-size: 1.15rem; color: var(--pp-ink); }
