@@ -1,0 +1,9 @@
+.wrap { display: flex; flex-direction: column; gap: 0.9rem; }
+.add { display: grid; gap: 0.6rem; padding: 0.9rem 1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 0.7rem; background: var(--pp-card); color: var(--pp-ink); }
+.addRow { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.search { flex: 1 1 16rem; min-width: 0; padding: 0.55rem 0.7rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; background: var(--pp-paper); color: var(--pp-ink); font: inherit; }
+.results { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.35rem; }
+.result { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; padding: 0.4rem 0.6rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.15); border-radius: 0.5rem; }
+.pname { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.have { font-size: 0.78rem; opacity: 0.75; }
+.confirm { display: inline-flex; gap: 0.35rem; }

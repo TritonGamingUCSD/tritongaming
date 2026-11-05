@@ -147,27 +147,6 @@ export const CONTENT_BLOCKS = [
     fields: [{ name: 'label', label: 'Label Above the Ticket', type: 'text' as const, placeholder: 'Next up' }],
   },
   {
-    key: 'homepage.explore',
-    title: 'Explore the Site',
-    description:
-      'Links on the home page to every other page, so visitors can see the whole site without opening the menu. The links are fixed; the words are yours. Hidden on phones, which have the Menu button.',
-    icon: createElement(Home, ICON_PROPS),
-    category: 'Homepage',
-    pages: ['/'],
-    fields: [
-      { name: 'label', label: 'Eyebrow Label', type: 'text' as const, placeholder: 'There is more', optional: true },
-      { name: 'title', label: 'Section Title', type: 'text' as const, placeholder: 'Explore the site', optional: true },
-      { name: 'sub', label: 'Sub-title', type: 'text' as const, placeholder: 'Seven more pages, from the people to the partners.', optional: true },
-      { name: 'story_blurb', label: 'Our Story Card', type: 'text' as const, optional: true },
-      { name: 'team_blurb', label: 'Team Card', type: 'text' as const, optional: true },
-      { name: 'divisions_blurb', label: 'Divisions Card', type: 'text' as const, optional: true },
-      { name: 'media_blurb', label: 'Media Card', type: 'text' as const, optional: true },
-      { name: 'sponsors_blurb', label: 'Sponsors Card', type: 'text' as const, optional: true },
-      { name: 'membership_blurb', label: 'Membership Card', type: 'text' as const, optional: true },
-      { name: 'join_blurb', label: 'Get Involved Card', type: 'text' as const, optional: true },
-    ],
-  },
-  {
     key: 'homepage.sponsors',
     title: 'Sponsors Strip',
     description: 'The eyebrow label above the sponsor logos, between Events and Join the Team.',
@@ -535,7 +514,6 @@ export const BLOCK_ORDER = [
   'homepage.stats',
   'homepage.about',
   'homepage.events',
-  'homepage.explore',
   'homepage.sponsors',
   'homepage.recruitment',
   'page.about',
@@ -564,7 +542,6 @@ export const BLOCK_GROUPS: Record<string, string> = {
   'homepage.stats': 'Top of the page',
   'homepage.about': 'Top of the page',
   'homepage.events': 'Events, pages and sponsors',
-  'homepage.explore': 'Events, pages and sponsors',
   'homepage.sponsors': 'Events, pages and sponsors',
   'homepage.recruitment': 'Get involved',
 };

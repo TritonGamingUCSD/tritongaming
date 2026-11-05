@@ -1,5 +1,6 @@
 'use client';
 
+import { useLiveSide } from '@/lib/portal/usePortalParams';
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Trash2 } from 'lucide-react';
@@ -19,6 +20,7 @@ interface GameItem {
   created_at: string;
   quiz: string;
   quiz_slug: string;
+  division_id?: string | null;
   questions: number;
   players: number;
   winners: { rank: number; name: string }[];
@@ -136,14 +138,16 @@ export function QuizGames({ quiz, onOpen, onHost, reload }: { quiz: string; onOp
 /** Games still running, across every quiz, for the strip at the top of the Quizzes list. */
 export function LiveGames({ onHost }: { onHost: (code: string) => void }) {
   const [games, setGames] = useState<GameItem[]>([]);
+  const side = useLiveSide(); // only this side's games: a division's page shows its own, the club's shows the club's
   useEffect(() => {
     let on = true;
     void call<{ games: GameItem[] }>('GET', '/api/trivia/games?live=1').then((r) => {
-      if (on && r.ok) setGames(r.data.games);
+      if (on && r.ok) setGames(r.data.games.filter(side));
     });
     return () => {
       on = false;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const close = async (g: GameItem) => {
     if (

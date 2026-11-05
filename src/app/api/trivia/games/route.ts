@@ -16,7 +16,7 @@ export async function GET(request: Request) {
   const before = q.get('before');
   let query = auth.svc
     .from('trivia_games')
-    .select('id, code, status, created_at, finished_at, per_game, plan, trivia_quizzes(name, slug)')
+    .select('id, code, status, created_at, finished_at, per_game, plan, trivia_quizzes(name, slug, division_id)')
     .order('created_at', { ascending: false })
     .limit(live ? 100 : PAGE + 1);
   if (live) query = query.neq('status', 'done'); // only the games still running, across every quiz
@@ -42,7 +42,7 @@ export async function GET(request: Request) {
     finished_at: string | null;
     per_game: number;
     plan: unknown[];
-    trivia_quizzes: { name: string; slug: string } | null;
+    trivia_quizzes: { name: string; slug: string; division_id: string | null } | null;
   }[];
   const ids = list.map((g) => g.id);
   const [players, winners] = ids.length
@@ -67,6 +67,7 @@ export async function GET(request: Request) {
       finished_at: g.finished_at,
       quiz: g.trivia_quizzes?.name ?? '',
       quiz_slug: g.trivia_quizzes?.slug ?? '',
+      division_id: g.trivia_quizzes?.division_id ?? null,
       questions: g.plan.length || g.per_game,
       players: count.get(g.id) ?? 0,
       winners: (winners.data ?? [])
