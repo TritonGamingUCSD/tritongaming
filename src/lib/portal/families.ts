@@ -1,4 +1,4 @@
-// Pages that belong together are one entry in the sidebar and one row of tabs under the top bar ("People": Members, Division Leads, Divisions). Each page keeps its own address and its own permissions: a family only changes how they are
+// Pages that belong together are one entry in the sidebar and one row of tabs under the top bar ("Standing": Strikes, Quarter Status). Each page keeps its own address and its own permissions: a family only changes how they are
 // listed and reached. A person who can open just one page of a family sees that page by its own name. Plain data (no imports).
 export interface Family {
   id: string;
@@ -10,12 +10,12 @@ export interface Family {
 
 export const FAMILIES: Family[] = [
   {
-    id: 'people',
-    label: 'People',
+    id: 'divisions',
+    label: 'Divisions',
+    peek: false,
     children: [
-      { id: 'members', label: 'Members' },
-      { id: 'division-members', label: 'Leads' },
       { id: 'divisions', label: 'Divisions' },
+      { id: 'division-members', label: 'Division Heads' },
     ],
   },
   {

@@ -13,7 +13,7 @@ A **role** is a label on a person (someone can hold several, for example Officer
 | **Guest** | Signed in with no role yet (for example a personal email that is not linked to UCSD). |
 | **UCSD Student** | A verified UCSD student (given automatically for an @ucsd.edu sign-in). |
 | **Recruit** | A prospective officer going through onboarding. Can see and take part in team things, but has no position yet. |
-| **Alumni** | A former team member. Read-only: can open TG Members, Documentation, Events and Division Members. No check-in, no Rewards. |
+| **Alumni** | A former team member. Read-only: can open TG Members, Documentation, Events and Division Heads. No check-in, no Rewards. |
 | **Officer** | A team member. Can look at most things and staff check-in, but not create or edit events or docs. |
 | **Division Lead** | Leads one or more divisions (a role scoped to a division). Edits only their own division’s page. |
 | **Lead** | Runs a committee. Creates and edits events, docs and meetings they plan. |
@@ -43,7 +43,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | Documentation | · | · | ✔ | ✔ | ✔ | · | ✔ | ✔ | ✔ |
 | QR Studio | · | · | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 | Divisions | · | · | · | · | · | ◐ | · | ✔ | ✔ |
-| Division Members | · | · | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
+| Division Heads | · | · | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
 | Site Content | · | · | · | · | · | · | · | ✔ | ✔ |
 | Admin | · | · | · | · | · | · | · | · | ✔ |
 
@@ -138,7 +138,7 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | **People** | | | |
 | **See TG Members** · `view_members` | Open TG Members: every member’s card with the details they filled in, emails and which teams they are on. | Recruit, Alumni, Officer, Lead, Executive, Admin | database + pages |
 | **Set the public board order** · `manage_board_order` | Choose the order exec and leads appear in on the public Team page and in TG Members (Display order tab). | Executive, Admin | routes; lost while inactive |
-| **See Division Members** · `view_division_members` | Open the directory of who leads each division. Emails on it need view_members. | Recruit, Alumni, Officer, Division Lead, Lead, Executive, Admin | pages |
+| **See Division Heads** · `view_division_members` | Open the directory of who leads each division. Emails on it need view_members. | Recruit, Alumni, Officer, Division Lead, Lead, Executive, Admin | pages |
 | **Divisions** | | | |
 | **Edit a division** · `manage_division` | Edit a division’s public page: logo, description, links, socials, posts (not its name or address; that is “Manage all divisions”). A Division Lead can only edit the division they lead; exec and admin can edit any. | Division Lead, Executive, Admin | database + routes; lost while inactive |
 | **Manage all divisions** · `manage_divisions_directory` | Create, rename and delete divisions and edit any division’s page. | Executive, Admin | database + routes; lost while inactive |
@@ -177,7 +177,7 @@ These look unusual but were reviewed and confirmed as intended. Do not “fix”
 - Check-In: Recruits, Officers and Leads can scan tickets, but checking someone in **by hand** or undoing a check-in needs “Change points”, which only Exec and Admin have.
 - Rewards are student-only on purpose: a team member earns no points even if they check in to an event, and a guest with no role earns none either. Exec and Admin keep a management-only Rewards section.
 - Alumni can open Events and an event’s check-in list (names and times), the same view Officers have. They still cannot check anyone in.
-- Division Leads cannot open TG Members (`view_members` does not include them). They get Division Members and their own division’s page.
+- Division Leads cannot open TG Members (`view_members` does not include them). They get Division Heads and their own division’s page.
 - Exec cannot open the Admin dashboard (`view_admin_dashboard` is Admin only), and only Admin can change roles or delete events.
 - Only Exec and Admin can run **every** meeting. Leads can plan meetings but only manage their own.
 - Anyone marked Inactive loses check-in, scanning and every `manage_`, `host_` and `delete_` capability, but keeps viewing and meeting attendance.
@@ -193,7 +193,7 @@ The files that ask for each capability, so a change can be traced. Page and rout
 - `manage_events` (9): `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/events/[id]/summary/page`, `app/(portal)/portal/events/new/page`, `app/(portal)/portal/page`, `app/api/admin/checkin-form/detect/route`, `app/api/admin/content/draft/route`, `lib/events/workspace.ts`, `lib/portal/portalCommands.ts`, `lib/site/contentPreview.ts`
 - `view_events` (5): `app/(portal)/portal/page`, `app/api/events/[id]/checkins/route`, `app/api/portal/search/route`, `lib/portal/portalSectionData.ts`, `lib/portal/sections.ts`
 - `delete_events` (2): `app/(portal)/portal/page`, `app/api/events/[id]/route`
-- `checkin` (17): `app/(portal)/portal/checkin/CheckInSectionContent.tsx`, `app/(portal)/portal/code/[payload]/page`, `app/(portal)/portal/events/EventCheckinsPage.tsx`, `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/events/[id]/summary/page`, `app/(portal)/portal/finish-profile/FinishProfile.tsx`, `app/(portal)/portal/finish-profile/page`, `app/(portal)/portal/meetings/MeetingsSectionContent.tsx`, `app/(portal)/portal/page`, `app/(portal)/portal/recap/[eventId]/page`, `app/(portal)/portal/scan/page`, `app/api/checkin/online/[eventId]/code/route`, `app/api/tickets/checkin/route`, `components/portal/hubConstants.ts`, `lib/events/workspace.ts`, `lib/portal/portalCommands.ts`, `lib/portal/sections.ts`
+- `checkin` (18): `app/(portal)/portal/checkin/CheckInSectionContent.tsx`, `app/(portal)/portal/code/[payload]/page`, `app/(portal)/portal/events/EventCheckinsPage.tsx`, `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/events/[id]/summary/page`, `app/(portal)/portal/finish-profile/FinishProfile.tsx`, `app/(portal)/portal/finish-profile/page`, `app/(portal)/portal/meetings/MeetingsSectionContent.tsx`, `app/(portal)/portal/page`, `app/(portal)/portal/recap/[eventId]/page`, `app/(portal)/portal/scan/page`, `app/api/checkin/online/[eventId]/code/route`, `app/api/tickets/checkin/route`, `components/portal/hubConstants.ts`, `lib/events/workspace.ts`, `lib/portal/families.ts`, `lib/portal/portalCommands.ts`, `lib/portal/sections.ts`
 - `manage_site_content` (6): `app/(portal)/portal/page`, `app/api/admin/content/draft/route`, `app/api/admin/content/route`, `lib/portal/portalSectionData.ts`, `lib/portal/sections.ts`, `lib/site/contentPreview.ts`
 - `manage_division` (7): `app/(main)/divisions/[slug]/EditDivisionLink.tsx`, `app/(portal)/portal/divisions/[id]/page`, `app/api/admin/content/draft/route`, `app/api/divisions/route`, `app/api/portal/search/route`, `lib/portal/sections.ts`, `lib/site/contentPreview.ts`
 - `manage_divisions_directory` (5): `app/(portal)/portal/divisions/[id]/page`, `app/(portal)/portal/page`, `app/api/divisions/route`, `lib/portal/portalSectionData.ts`, `lib/portal/sections.ts`

@@ -79,7 +79,7 @@ const SECTION_NAMES: Record<string, string> = {
   staffle: 'Staffle',
   members: 'TG Members',
   divisions: 'Divisions',
-  'division-members': 'Division Members',
+  'division-members': 'Division Heads',
   qrcode: 'QR Studio',
   docs: 'Documentation',
   albums: 'Photo Albums',

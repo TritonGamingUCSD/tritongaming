@@ -13,7 +13,7 @@ export default function TicketsSectionContent({
   return (
     <div>
       <TicketsClient {...tickets} />
-      {activity.length > 0 && <ActivitySectionContent tickets={activity} />}
+      {activity.length > 0 && <ActivitySectionContent tickets={activity} embedded />}
     </div>
   );
 }

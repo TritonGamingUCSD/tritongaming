@@ -72,3 +72,8 @@
 .emptyIcon  { display: inline-flex; color: rgba(var(--pp-ink-rgb), 0.87); }
 .emptyTitle { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--pp-ink); }
 .emptySub   { font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.87); }
+
+/* Under the tickets: a plain section heading with a little room above it. */
+.embeddedTitle { margin: 1.6rem 0 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.3rem; color: var(--pp-ink); }
+.pageEmbedded { max-width: 860px; }
+.more { align-self: flex-start; border: 0; background: none; padding: 0.2rem 0; font: inherit; font-weight: 600; color: var(--pp-ink); text-decoration: underline; cursor: pointer; }

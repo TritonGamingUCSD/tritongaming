@@ -22,7 +22,7 @@ export default function DivisionMembersSectionContent({ groups }: { groups: Divi
   return (
     <div className={styles.page}>
       <SectionHeader
-        title="Division Members"
+        title="Division Heads"
         flush
         sub={`${total} ${total === 1 ? 'person' : 'people'} across ${groups.length} ${groups.length === 1 ? 'division' : 'divisions'}`}
         actions={

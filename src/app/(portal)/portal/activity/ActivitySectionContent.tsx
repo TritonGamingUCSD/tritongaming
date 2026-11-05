@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import ByteMini from '@/components/Bytecode/ByteMini';
 import { Ticket, CircleCheck } from 'lucide-react';
 import { formatPacificDateTime } from '@/lib/core/timezone';
@@ -36,8 +39,11 @@ function buildTimeline(tickets: ActivityTicket[]): ActivityItem[] {
   return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 }
 
-export default function ActivitySectionContent({ tickets }: { tickets: ActivityTicket[] }) {
-  const items = buildTimeline(tickets);
+export default function ActivitySectionContent({ tickets, embedded = false }: { tickets: ActivityTicket[]; embedded?: boolean }) {
+  const all = buildTimeline(tickets);
+  // Under the tickets only the latest few show at first; the full list is one tap away.
+  const [showAll, setShowAll] = useState(false);
+  const items = embedded && !showAll ? all.slice(0, 5) : all;
 
   if (items.length === 0) {
     return (
@@ -54,8 +60,8 @@ export default function ActivitySectionContent({ tickets }: { tickets: ActivityT
   }
 
   return (
-    <div className={styles.page}>
-      <SectionHeader title="Activity" flush sub="Your tickets and check-ins, newest first." />
+    <div className={`${styles.page} ${embedded ? styles.pageEmbedded : ''}`}>
+      {embedded ? <h2 className={styles.embeddedTitle}>History</h2> : <SectionHeader title="Activity" flush sub="Your tickets and check-ins, newest first." />}
       <ol className={styles.timeline}>
         {items.map((item) => (
           <li key={item.key} className={styles.item}>
@@ -71,6 +77,11 @@ export default function ActivitySectionContent({ tickets }: { tickets: ActivityT
           </li>
         ))}
       </ol>
+      {embedded && all.length > 5 && (
+        <button type="button" className={styles.more} onClick={() => setShowAll((v) => !v)}>
+          {showAll ? 'Show less' : `Show all ${all.length}`}
+        </button>
+      )}
     </div>
   );
 }

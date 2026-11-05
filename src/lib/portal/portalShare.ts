@@ -15,7 +15,7 @@ export const PORTAL_PAGE_INFO: Record<string, { name: string; sub: string; accen
   staffle: { name: 'Staffle', sub: 'Enter the staff raffle for prizes.', accent: '#8b6cdc' },
   quarters: { name: 'Quarter Status', sub: 'Who is active each quarter.', accent: '#8b6cdc' },
   divisions: { name: 'Divisions', sub: 'Manage divisions.', accent: '#8b6cdc' },
-  'division-members': { name: 'Division Members', sub: 'People in each division.', accent: '#8b6cdc' },
+  'division-members': { name: 'Division Heads', sub: 'Who heads each division.', accent: '#8b6cdc' },
   docs: { name: 'Documentation', sub: 'Guides and how-tos for the team.', accent: '#2fae86' },
   qrcode: { name: 'QR Studio', sub: 'Make QR codes.', accent: '#2fae86' },
   help: { name: 'Help', sub: 'Ask a question or report a problem.', accent: '#2fae86' },
