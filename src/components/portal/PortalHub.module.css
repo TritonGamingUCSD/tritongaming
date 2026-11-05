@@ -1086,3 +1086,13 @@
   .tabStrip > div { margin-bottom: 0; border-bottom: 0; }
   .tabStrip .picker { display: none; }
 }
+
+/* Yellow back in (the club's own color) so the portal is not only blue: yellow area headings in the sidebar, a yellow line under the top bar, yellow on the open page's marker. The area's own color stays on the small tab beside the page name. */
+@media (min-width: 900px) {
+  .rail .railNav .railGroupLabel { color: #ffd966 !important; } /* theme-ok: warm yellow on the navy panel */
+  .rail .railGroupLabel .railGroupDot { background: var(--yellow); }
+  .frameBody { border-top: 3px solid var(--yellow); }
+  .rail .railNav { scrollbar-color: rgba(255, 199, 44, 0.45) transparent; }
+  .railLogo .railLogoText small { color: #ffd966; opacity: 1; } /* theme-ok */
+  .railLogoOn .railLogoText small { color: #8a6500; } /* theme-ok: darker yellow on the white highlight */
+}
