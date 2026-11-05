@@ -12,7 +12,6 @@ import PageBlocks from '@/components/PageBlocks/PageBlocks';
 import { cleanBlocks } from '@/lib/site/pageBlocks';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import { ZineBand, BandHeader } from '@/components/ZineBand/ZineBand';
-import EditDivisionLink from './EditDivisionLink';
 import DivisionPeople from './DivisionPeople';
 import { getDivisionHubData } from './getDivisionHubData';
 import styles from './division.module.css';
@@ -145,9 +144,6 @@ export default async function DivisionPage({ params }: Params) {
           <EventSocialEmbeds embeds={division.social_embeds} />
         </ZineBand>
       )}
-
-      {/* Edit section for leads/admins, checked in the browser so this page can be cached for everyone. */}
-      <EditDivisionLink divisionId={division.id} />
     </div>
   );
 }

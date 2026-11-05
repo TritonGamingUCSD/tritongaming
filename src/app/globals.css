@@ -526,4 +526,5 @@ mark[data-h='gray'] { background: var(--dh-gray); color: inherit; padding: 0.04e
 @media (hover: none) { .tg-scroll-arrow { display: none; } }
 
 /* A division's own pages draw their own top bar and footer, so the club's are hidden there. */
+[data-tg-chrome] { display: contents; }
 body:has([data-division-site]) [data-tg-chrome] { display: none; }

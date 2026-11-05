@@ -25,7 +25,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <>
       <SmoothScroll />
       {/* (a division's own pages hide the club's nav and footer and draw their own: see divisions/[slug]/layout.tsx and globals.css) */}
-      <div data-tg-chrome style={{ display: 'contents' }}>
+      <div data-tg-chrome>
         <NavBar
           ticker={
             <Suspense fallback={null}>
@@ -40,7 +40,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         />
       </div>
       <main>{children}</main>
-      <div data-tg-chrome style={{ display: 'contents' }}>
+      <div data-tg-chrome>
         <Suspense fallback={null}>
           <Footer />
         </Suspense>
