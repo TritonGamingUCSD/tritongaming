@@ -515,3 +515,8 @@
 .rungNow::after { content: 'You are here'; position: absolute; top: -1.15rem; left: 0; font-size: 0.67rem; letter-spacing: 0.01em;  font-weight: 700; color: var(--pp-ink); white-space: nowrap; }
 .heroNote { margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .heroNote strong { color: var(--pp-ink); }
+
+/* The management tools: the view toggle sits left under the title, and each tool is one flat card, so the page reads as a single block and not scattered pieces. */
+.manageTab { max-width: 64rem; gap: 1rem; }
+.manageSection { display: grid; gap: 0.8rem; padding: 1.2rem 1.4rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 14px; background: var(--pp-card); }
+.sectionLabel { margin: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.15rem; text-transform: none; letter-spacing: 0; }

@@ -24,7 +24,7 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
       .order('created_at', { ascending: false }),
     supabase
       .from('events')
-      .select('id, title, start_date, end_date, location, ticket_price, audience, points_value, is_online')
+      .select('id, title, start_date, end_date, location, flyer_url, ticket_price, audience, points_value, is_online')
       .eq('is_published', true)
       // Joinable until the event ends (same rule as check-in), not just
       // before it starts — someone arriving partway through should still be

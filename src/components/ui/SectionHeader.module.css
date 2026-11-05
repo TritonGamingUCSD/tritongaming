@@ -21,3 +21,6 @@
 .header::before { content: ''; position: absolute; z-index: -1; inset: -1.2rem -1rem -0.6rem; pointer-events: none; background-image: radial-gradient(rgba(var(--pp-ink-rgb), 0.09) 1.6px, transparent 1.7px); background-size: 16px 16px; -webkit-mask-image: linear-gradient(90deg, #000, transparent 70%); mask-image: linear-gradient(90deg, #000, transparent 70%); animation: pixelDrift 40s linear infinite; }
 @keyframes pixelDrift { to { background-position: 160px 80px; } }
 @media (prefers-reduced-motion: reduce) { .title, .header::before { animation: none; } }
+
+/* The section's name, small, above the open tab's name. */
+.kicker { margin: 0; font-size: 0.95rem; font-weight: 600; color: rgba(var(--pp-ink-rgb), 0.7); }

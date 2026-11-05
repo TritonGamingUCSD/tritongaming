@@ -122,7 +122,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
 
   return (
     <div className={styles.page}>
-      <SectionHeader title="Admin" sub="Platform management" />
+      <SectionHeader title="Admin" />
 
       {/* One row of tabs; only System has sub-views. Each view keeps its own id in the address (tab=roles, tab=audit …), so every old link still works. */}
       <SectionTabs<Group>
@@ -211,10 +211,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
 
       {tab === 'audit-log' && isAdmin && (
         <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionLabel}>Audit Log</h2>
-            <span className={styles.sectionHint}>Who changed what across the portal</span>
-          </div>
+          <p className={styles.sectionHint}>Who changed what across the portal.</p>
           <AuditLogClient />
         </section>
       )}
@@ -223,8 +220,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       {tab === 'members' && isAdmin && (
         <section className={styles.section}>
           <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionLabel}>Member Management</h2>
-            <span className={styles.sectionHint}>Search any user and change their role instantly</span>
+            <span className={styles.sectionHint}>Search any user and change their role instantly.</span>
             <div className={styles.sectionActions}>
               <Button size="sm" variant="secondary" onClick={() => setPasteOpen(true)}>
                 <MailPlus size={14} aria-hidden="true" /> Give A Role By Email

@@ -135,9 +135,9 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
     <div className={styles.page}>
       <SectionHeader
         title="Events"
-        sub={canEdit ? 'Create, run and review events.' : 'What’s coming up and what you’ve been to.'}
+        sub={canEdit ? undefined : 'What’s coming up and what you’ve been to.'}
         actions={
-          canEdit ? (
+          canEdit && tab === 'list' ? (
             <ButtonLink href="/portal/events/new">
               <Plus size={15} strokeWidth={2} aria-hidden="true" /> Create Event
             </ButtonLink>

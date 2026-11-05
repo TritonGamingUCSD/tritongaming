@@ -34,7 +34,7 @@ import { hasCapability, isVerifiedMember, isRewardsEligible, isTgMember, require
 import { resolveAvatarUrl, hasBasicProfileInfo, getMissingProfileFields } from '@/lib/members/profile';
 import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/site/content-blocks';
-import { PACIFIC_TZ, pacificDaysUntil, pacificToday } from '@/lib/core/timezone';
+import { PACIFIC_TZ, pacificDayKey, pacificDaysUntil, pacificToday } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { sectionLabel } from '@/lib/portal/sections';
 import { getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
@@ -78,6 +78,7 @@ import NewspaperSectionContent from './newspaper/NewspaperSectionContent';
 import QuarterStatusContent from './quarters/QuarterStatusContent';
 import InactiveNote from './quarters/InactiveNote';
 import { currentQuarter, loadQuarters, quarterName } from '@/lib/members/quarters';
+import { termInfo } from '@/lib/members/termInfo';
 import { isInactiveMember } from '@/lib/meetings/meetingAudience';
 import { isTracked, mySummary } from '@/lib/members/strikes';
 import HelpSectionContent from './help/HelpSectionContent';
@@ -218,7 +219,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     logisticsToday,
     meetingNow,
     helpWaiting,
-    inactiveQuarter,
+    quarters,
     myStrikes,
     todoItems,
     homeLinks,
@@ -234,11 +235,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     loadLogisticsToday(),
     loadMeetingNow(),
     loadHelpWaiting(),
-    isInactiveMember(roles)
-      ? loadQuarters(createServiceClient())
-          .then((qs) => currentQuarter(qs))
-          .catch(() => null)
-      : Promise.resolve(null),
+    loadQuarters(createServiceClient()).catch(() => []),
     isTracked(roles) ? mySummary(createServiceClient(), profile.id).catch(() => null) : Promise.resolve(null),
     loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings }),
     canViewDocs ? getDashboardLinks(profile.id).catch(() => []) : Promise.resolve([]),
@@ -781,8 +778,17 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const homeEyebrow = `${termNow} · Home`;
   const ticketEvent = nextTicket?.event ?? null;
   const featured = ticketEvent ?? unregisteredUpcomingEvents[0] ?? null;
+  const inactiveQuarter = isInactiveMember(roles) ? currentQuarter(quarters) : null;
   const homeEvent = featured
-    ? { id: featured.id, title: featured.title, start_date: featured.start_date, location: featured.location, hasTicket: !!ticketEvent, ticketId: nextTicket?.id }
+    ? {
+        id: featured.id,
+        title: featured.title,
+        start_date: featured.start_date,
+        location: featured.location,
+        hasTicket: !!ticketEvent,
+        ticketId: nextTicket?.id,
+        flyer: (ticketEvent as { flyer_url?: string | null } | null)?.flyer_url ?? (featured as { flyer_url?: string | null }).flyer_url ?? null,
+      }
     : null;
   const pinnedDoc = docsSummary?.pinned ?? null;
   const homeNote = pinnedDoc ? { title: pinnedDoc.title, href: `/portal/docs?id=${pinnedDoc.id}` } : null;
@@ -905,6 +911,11 @@ export default async function PortalDashboard({ searchParams }: Props) {
             body={
               <DashboardBody
                 event={homeEvent}
+                term={termInfo(
+                  quarters,
+                  pacificToday(),
+                  ticketsData.upcomingEvents.map((e) => ({ title: e.title, start_date: e.start_date, day: pacificDayKey(new Date(e.start_date)) })),
+                )}
                 note={homeNote}
                 links={homeLinks}
                 stats={homeStats}

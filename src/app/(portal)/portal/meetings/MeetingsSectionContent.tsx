@@ -85,9 +85,9 @@ export default function MeetingsSectionContent({
       <SectionHeader
         title="Meetings"
         flush
-        sub={canAttend ? 'Check in with the code in the room.' : 'Attendance for every meeting.'}
+        sub={tab === 'mine' ? (canAttend ? 'Check in with the code in the room.' : 'Attendance for every meeting.') : undefined}
         actions={
-          canManage ? (
+          canManage && (tab === 'mine' || tab === 'planning' || tab === 'host') ? (
             <Button
               size="sm"
               onClick={() => {

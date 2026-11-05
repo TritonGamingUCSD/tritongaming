@@ -11,10 +11,15 @@ import RoleAsk from './RoleAsk';
 import LogisticsDayCard from './LogisticsDayCard';
 import TodayCards from './TodayCards';
 import HomeCards, { type HomeCard } from './HomeCards';
+import NextEventHero from './NextEventHero';
+import TermProgress from './TermProgress';
+import type { TermInfoData } from '@/lib/members/termInfo';
+import heroStyles from './homeHero.module.css';
 import { RequiredBanner } from './docs/DocRequired';
 import styles from './dashboardHome.module.css';
 
 export interface HomeEvent {
+  flyer?: string | null;
   id: string;
   title: string;
   start_date: string;
@@ -77,7 +82,9 @@ export function DashboardBody({
   compact = false,
   logistics = false,
   cards = [],
+  term = null,
 }: {
+  term?: TermInfoData | null;
   cards?: HomeCard[];
   logistics?: boolean;
   showRoleAsk?: boolean;
@@ -95,6 +102,10 @@ export function DashboardBody({
       <RequiredBanner hrefBase="/portal/docs?id=" />
       <TodayCards />
       {logistics && <LogisticsDayCard />}
+      <div className={heroStyles.row}>
+        <NextEventHero event={event} />
+        {term && <TermProgress term={term} />}
+      </div>
       <HomeCards cards={cards} />
       <DashboardCode />
       <div className={styles.deskGrid}>

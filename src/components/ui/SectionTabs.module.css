@@ -140,7 +140,7 @@
 .bar:not(.segmented) { border-bottom-width: 2px; }
 
 /* The small toggle is only as wide as its options, at the right edge of the row it sits in. */
-.segmented { width: fit-content; max-width: 100%; align-self: flex-end; margin-left: auto; }
+.segmented { width: fit-content; max-width: 100%; align-self: flex-start; margin-left: 0; }
 @media (max-width: 640px) { .segmented { width: 100%; align-self: stretch; margin-left: 0; } }
 
 /* The small toggle: the pill behind the open option slides (with a little overshoot) to the one that was clicked. */

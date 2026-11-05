@@ -301,7 +301,7 @@ export default function ProfileClient({
 
   return (
     <div className={styles.page}>
-      <SectionHeader title="My Profile" sub="Your details, notifications and sign-in." />
+      <SectionHeader title="My Profile" />
 
       {promptedForTicket && (
         <Notice tone="warning" className={styles.pageNotice}>
