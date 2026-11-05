@@ -15,6 +15,8 @@ export interface DivisionEventRow {
   start_date: string;
   end_date: string | null;
   is_published: boolean;
+  /** Owned by this division (it can invite co-hosts), not just co-hosted. */
+  owned: boolean;
   slug: string | null;
   self_checkin_mode: 'off' | 'until_end' | 'forever';
   registered: number;
@@ -42,7 +44,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   q = coIds.length ? q.or(`division_id.eq.${id},id.in.(${coIds.join(',')})`) : q.eq('division_id', id);
   const { data: events } = await q;
   const ids = (events ?? []).map((e) => e.id as string);
-  if (!ids.length) return NextResponse.json({ events: [] });
+  // The other divisions an event of this one could invite as co-hosts (Triton Gaming is offered by the screen).
+  const { data: all } = await svc.from('divisions').select('id, name').neq('id', id).order('name');
+  const partners = (all ?? []).map((d) => ({ id: d.id as string, name: d.name as string }));
+  if (!ids.length) return NextResponse.json({ events: [], partners });
 
   const [{ data: tickets }, { data: cohosts }, { data: divisions }] = await Promise.all([
     svc.from('tickets').select('event_id, status').in('event_id', ids).neq('status', 'cancelled').limit(50000),
@@ -71,11 +76,12 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     start_date: e.start_date as string,
     end_date: (e.end_date as string | null) ?? null,
     is_published: !!e.is_published,
+    owned: e.division_id === id,
     slug: (e.slug as string | null) ?? null,
     self_checkin_mode: cleanSelfCheckinMode(e.self_checkin_mode as string | null),
     registered: count.get(e.id as string)?.registered ?? 0,
     checkedIn: count.get(e.id as string)?.checkedIn ?? 0,
     hosts: hostsOf(e.id as string, (e.division_id as string | null) ?? null),
   }));
-  return NextResponse.json({ events: rows });
+  return NextResponse.json({ events: rows, partners });
 }
