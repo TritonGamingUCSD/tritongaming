@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { ListTree, Pin, PinOff } from 'lucide-react';
 import Spotlight from './Spotlight';
@@ -9,7 +9,7 @@ import CodeBox from '@/components/portal/CodeBox';
 import NotificationBell from './NotificationBell';
 import PortalCrumbs from './PortalCrumbs';
 import styles from './PortalHub.module.css';
-import ByteMini from '@/components/Bytecode/ByteMini';
+import Image from 'next/image';
 import AccountMenu from './AccountMenu';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { familyOf } from '@/lib/portal/families';
@@ -70,30 +70,6 @@ export function DesktopShell({
     });
   // Every area shows all of its pages, always (the sidebar scrolls if a future list gets longer than the screen).
   const isFolded = () => false;
-  // Byte cheers for a couple of seconds when a code worked (CodeBox sends the signal).
-  const [cheer, setCheer] = useState(false);
-  useEffect(() => {
-    let t: number | undefined;
-    const on = () => {
-      setCheer(true);
-      window.clearTimeout(t);
-      t = window.setTimeout(() => setCheer(false), 2600);
-    };
-    window.addEventListener('tg:checkin-ok', on);
-    return () => {
-      window.removeEventListener('tg:checkin-ok', on);
-      window.clearTimeout(t);
-    };
-  }, []);
-  // Byte sleeps at night (the person's own clock; the server's page always draws him awake, so there is no mismatch).
-  const asleep = useSyncExternalStore(
-    () => () => {},
-    () => {
-      const h = new Date().getHours();
-      return h >= 23 || h < 6;
-    },
-    () => false,
-  );
   // The white highlight on the open page glides to the next page (placed by measuring the open item, set straight on the element).
   const navRef = useRef<HTMLElement>(null);
   const glideRef = useRef<HTMLSpanElement>(null);
@@ -204,7 +180,7 @@ export function DesktopShell({
           title="Home"
         >
           <span className={styles.railLogoByte} aria-hidden="true">
-            <ByteMini pose={cheer ? 'happy' : asleep ? 'sleep' : 'awake'} />
+            <Image src="/logos/tg_logo.png" alt="" width={80} height={80} priority />
           </span>
           <span className={styles.railLogoText}>
             Triton Gaming

@@ -179,7 +179,10 @@ export default function PortalHub({
   }, [paramsKey]);
   const isDesktop = useIsDesktop();
 
+  // The server's idea of the address can be an old one after a refresh (Next brings back the address the page was first loaded with), so while a refresh is going on, and right after it, the section the person was on is kept.
+  const refreshing = useRef(false);
   useEffect(() => {
+    if (refreshing.current) return;
     setOpenId(validRequested);
   }, [validRequested]);
 
@@ -277,6 +280,8 @@ export default function PortalHub({
   const keepUrl = useRef(''); // the address when a refresh began: Next's refresh brings back the address the page was first loaded with (it does not know the portal moved the address itself), so it is put back
   useEffect(() => {
     const on = () => {
+      refreshing.current = true;
+      window.setTimeout(() => (refreshing.current = false), 10_000); // never stuck if the answer is lost
       keepScroll.current = window.scrollY;
       keepUrl.current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
       startRefresh(() => router.refresh());
@@ -291,9 +296,13 @@ export default function PortalHub({
     }
     if (!wasPending.current) return;
     wasPending.current = false; // the server's answer has been applied: rebuild the open section with it
+    refreshing.current = false;
     // First the address goes back to where the person was (the rebuilt section reads it to know which page, tab and view to show).
     const url = keepUrl.current;
     if (url && `${window.location.pathname}${window.location.search}${window.location.hash}` !== url) window.history.replaceState(window.history.state, '', url);
+    // Stay on the page the refresh began on (home included), whatever the server thought the address was.
+    const here = mergedPortalParams(window.location.pathname, window.location.search).get('section');
+    setOpenId(here && sectionIdsRef.current.has(here) ? here : null);
     setNavNonce((n) => n + 1);
     // The rebuilt section is shorter for a moment while it loads, which would drop the page back to the top: keep putting it where it was until it has grown tall enough.
     const y = keepScroll.current;
