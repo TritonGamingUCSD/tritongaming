@@ -1104,3 +1104,11 @@
 .navLine[data-running]::after { animation: navSweep 0.9s ease-in-out both; }
 @keyframes navSweep { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
 @media (prefers-reduced-motion: reduce) { .navLine[data-running]::after { animation: none; width: 100%; transform: none; } }
+
+/* The top bar names the area before the page ("Club / TG Members"), so it adds something to the page title under it. Badges keep room at the right edge. */
+@media (min-width: 900px) {
+  .topArea { font-size: 0.95rem; font-weight: 500; color: #ffd966; white-space: nowrap; } /* theme-ok */
+  .topArea > span { opacity: 0.6; margin: 0 0.15rem; }
+  .rail .railNav .railItem { padding-right: 1.1rem !important; }
+  .rail .railNav .railBadge { margin-right: 0.1rem; }
+}

@@ -231,6 +231,12 @@ export function DesktopShell({
             <div className={styles.topTitle}>
               <span className={styles.topTab} aria-hidden="true" />
 
+              {GROUP_LABEL[openSection.group] !== openSection.label && (
+                <span className={styles.topArea}>
+                  {GROUP_LABEL[openSection.group]}
+                  <span aria-hidden="true"> / </span>
+                </span>
+              )}
               <span className={styles.topName}>
                 <PortalCrumbs section={openSection.id} sectionLabel={openSection.label} />
               </span>

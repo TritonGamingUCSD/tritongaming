@@ -349,7 +349,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: 'Earn points for showing up, spend them on perks',
             // Members of the team have their own work to surface; Rewards is for attendees.
             homeExclude: runsRewards || roles.some((r) => ['recruit', 'officer', 'lead', 'exec', 'admin'].includes(r.role)),
-            badge: pointsData?.balance || undefined,
             group: 'Yours' as const,
             content: (
               <PointsSectionContent
@@ -575,7 +574,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
             // verified-student accounts who never joined anything, which the
             // Members page itself excludes. This badge would otherwise promise a
             // much bigger roster than the page actually shows.
-            badge: memberCount || undefined,
             homeExclude: true,
             dockExclude: true,
             group: 'Team' as const,
@@ -607,7 +605,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
             dockExclude: true,
             group: 'Team' as const,
             description: 'How-to guides for officers, leads, and execs',
-            badge: docsSummary.count || undefined,
             content: <DocsLazy scope={scope} userId={profile.id} canEdit={canManageDocs} />,
           },
         ]

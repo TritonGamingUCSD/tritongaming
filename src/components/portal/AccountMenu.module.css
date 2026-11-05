@@ -43,3 +43,17 @@
 .signOut:hover { background: color-mix(in srgb, var(--pp-bad) 9%, transparent); }
 
 .xp > span { transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+
+/* Rounder and softer: a floating card inside a rounded menu, pill rows, gentler colors. */
+.menu { border-radius: 20px; padding: 0.55rem; overflow: visible; }
+.card { border-radius: 16px; border-bottom: 0; background: linear-gradient(145deg, #34588a, #243f63); box-shadow: inset 0 -3px 0 var(--yellow); } /* theme-ok */
+:global([data-pp-theme='dark']) .card { background: linear-gradient(145deg, #2a4468, #1a2c47); } /* theme-ok */
+.role { border-radius: 999px; padding: 0.1rem 0.7rem; font-weight: 600; }
+.section { padding: 0.9rem 0.6rem 0.7rem; }
+.modes { border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.05); }
+.links { border-top: 0; padding: 0.1rem 0; }
+.row { border-radius: 14px; padding: 0.7rem 0.9rem; }
+.row:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
+.signOut { margin: 0.2rem 0 0; padding: 0.7rem 0.9rem; border-top: 0; border-radius: 14px; }
+.viewAs button, .viewAs [role='button'], .viewAs select { border-radius: 999px; }
+.dot { border-color: #34588a; } /* theme-ok */

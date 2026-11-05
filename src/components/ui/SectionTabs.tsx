@@ -179,5 +179,7 @@ export default function SectionTabs<T extends string>({
       </div>
     </>
   );
+  // One tab (or one option) says nothing: a bar with fewer than two is left out.
+  if (tabs.length < 2) return null;
   return slot ? createPortal(out, slot) : out;
 }

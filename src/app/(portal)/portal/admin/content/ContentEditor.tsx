@@ -296,6 +296,7 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
         />
       )}
       <SectionTabs
+        top
         label="Site areas"
         value={tabCategory}
         onChange={selectCategory}
