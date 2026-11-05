@@ -44,6 +44,7 @@ const nextConfig: NextConfig = {
         // A division's pages: /portal/<division address>/<page>. Last, so every real page and section above wins; the address is looked up by the portal (an unknown one says so).
         { source: '/portal/:slug', destination: '/portal?section=division&tab=:slug' },
         { source: '/portal/:slug/:page', destination: '/portal?section=division&tab=:slug&subtab=:page' },
+        { source: '/portal/:slug/:page/:detail', destination: '/portal?section=division&tab=:slug&subtab=:page&detail=:detail' },
       ],
     };
   },

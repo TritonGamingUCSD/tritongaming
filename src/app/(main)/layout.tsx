@@ -23,17 +23,22 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
   return (
     <>
       <SmoothScroll />
-      <NavBar
-        announcement={
-          <Suspense fallback={null}>
-            <AnnouncementBanner />
-          </Suspense>
-        }
-      />
+      {/* (a division's own pages hide the club's nav and footer and draw their own: see divisions/[slug]/layout.tsx and globals.css) */}
+      <div data-tg-chrome style={{ display: 'contents' }}>
+        <NavBar
+          announcement={
+            <Suspense fallback={null}>
+              <AnnouncementBanner />
+            </Suspense>
+          }
+        />
+      </div>
       <main>{children}</main>
-      <Suspense fallback={null}>
-        <Footer />
-      </Suspense>
+      <div data-tg-chrome style={{ display: 'contents' }}>
+        <Suspense fallback={null}>
+          <Footer />
+        </Suspense>
+      </div>
       <ConnectivityBanner />
       <AttributionCapture />
     </>

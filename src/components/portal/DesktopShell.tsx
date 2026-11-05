@@ -151,6 +151,20 @@ export function DesktopShell({
   const openFamily = openSection ? familyOf(openSection.id) : undefined;
   const openKids = openFamily && openSection ? kidsOf(openFamily.id, openSection.id) : [];
   const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
+  // With a division's hat on, the whole portal wears the division's color: the yellow accents (buttons, chips, tape), the frame accent and the tinted text (mixed with the theme's ink so it stays readable on light and dark).
+  const hatColor = divisionHat?.accent;
+  const frameStyle = {
+    ['--frame-accent' as string]: hatColor ?? accent,
+    ...(hatColor
+      ? {
+          ['--yellow' as string]: hatColor,
+          ['--yellow-text' as string]: `color-mix(in srgb, ${hatColor} 75%, white)`,
+          ['--p-accent' as string]: hatColor,
+          ['--p-accent-text' as string]: `color-mix(in srgb, ${hatColor} 55%, var(--pp-ink))`,
+          ['--pp-chrome-accent' as string]: `color-mix(in srgb, ${hatColor} 55%, var(--pp-chrome-fg))`,
+        }
+      : {}),
+  } as React.CSSProperties;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
   // the whole frame is on screen without scrolling the page. Re-measured when the window or the page above changes.
   const frameRef = useRef<HTMLDivElement>(null);
@@ -172,7 +186,7 @@ export function DesktopShell({
     };
   }, []);
   return (
-    <div ref={frameRef} className={`${styles.desktopShell} ${styles.appFrame}`} data-app-frame style={{ ['--frame-accent' as string]: accent }}>
+    <div ref={frameRef} className={`${styles.desktopShell} ${styles.appFrame}`} data-app-frame style={frameStyle}>
       <aside
         className={`${styles.rail} ${collapsed ? styles.railCollapsed : ''}`}
         // A mouse click leaves focus on the button, and :focus-within would keep the rail open after the pointer leaves.
@@ -289,7 +303,7 @@ export function DesktopShell({
               ))}
           </nav>
         )}
-        {groupedSections.some((g) => g.items.some((s) => s.id === 'all')) && (
+        {!divisionHat && groupedSections.some((g) => g.items.some((s) => s.id === 'all')) && (
           <button type="button" className={`${styles.railPin} ${styles.railAll}`} onClick={() => open('all')} aria-current={openId === 'all' ? 'page' : undefined}>
             <ListTree size={16} aria-hidden="true" />
             <span>All Functions</span>

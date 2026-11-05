@@ -1,5 +1,6 @@
 'use client';
 
+import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
 import { useCallback, useEffect, useState } from 'react';
 import { Lock, Pencil, Plus } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -19,6 +20,7 @@ export async function startGame(quiz: string): Promise<{ code: string } | { erro
 }
 
 export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, view?: 'questions' | 'games') => void; onHost: (code: string) => void }) {
+  const division = useEmbeddedDivision();
   const [quizzes, setQuizzes] = useState<QuizRow[] | null>(null);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -36,7 +38,7 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, 
     if (!name.trim() || busy) return;
     setBusy('new');
     setError('');
-    const r = await call<{ quiz: QuizRow }>('POST', '/api/trivia/quizzes', { name });
+    const r = await call<{ quiz: QuizRow }>('POST', '/api/trivia/quizzes', { name, division_id: division });
     setBusy('');
     if (!r.ok) {
       setError(r.error);

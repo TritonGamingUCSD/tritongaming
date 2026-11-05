@@ -1,5 +1,6 @@
 'use client';
 
+import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
 import EventSelect from '@/components/portal/EventSelect';
 import EmptyState from '@/components/ui/EmptyState';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -117,13 +118,14 @@ function NewPoll({ onClose, onMade }: { onClose: () => void; onMade: (slug: stri
   const [reveal, setReveal] = useState<PollReveal>('hidden');
   const [eventId, setEventId] = useState('');
   const [busy, setBusy] = useState(false);
+  const division = useEmbeddedDivision();
   const [error, setError] = useState('');
   const dirty = useDirty({ name, mode, reveal, eventId });
   const make = async () => {
     if (!name.trim() || busy) return;
     setBusy(true);
     setError('');
-    const r = await call<{ poll: { slug: string } }>('/api/polls', 'POST', { name, mode, reveal, event_id: eventId || undefined });
+    const r = await call<{ poll: { slug: string } }>('/api/polls', 'POST', { name, mode, reveal, event_id: eventId || undefined, division_id: division });
     setBusy(false);
     if (r.ok) onMade(r.data.poll.slug);
     else setError(r.error);

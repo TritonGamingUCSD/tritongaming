@@ -35,7 +35,7 @@ export default async function DivisionTeamPage({ params }: Params) {
   const empty = hub.leads.length + hub.members.length + hub.alumni.length === 0;
   return (
     <div className={styles.page}>
-      <DivisionSubHero division={division} current="team" title="Team" />
+      <DivisionSubHero division={division} title="Team" />
       <ZineBand tone="ink" edge={false} label="Team">
         {hub.leads.length > 0 && (
           <>

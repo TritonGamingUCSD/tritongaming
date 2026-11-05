@@ -1,37 +1,53 @@
 'use client';
 
+import dynamic from 'next/dynamic';
 import { Camera, Gamepad2, MessagesSquare, Vote } from 'lucide-react';
-import Link from '@/components/portal/PortalLink';
+import SectionTabs from '@/components/ui/SectionTabs';
+import Loading from '@/components/Loading/Loading';
 import type { DivisionHat } from '@/components/portal/hubTypes';
+import { EmbeddedPortalContext, usePortalParams } from '@/lib/portal/usePortalParams';
 import styles from './divisionLive.module.css';
 
-// A division's Live Tools: Trivia, Polls, Q&A and the Photo Booth, the same tools as the club's. What a Member or Head makes there belongs to their division, and they only see and run their division's.
-// (Staffle stays the club's.) Each card opens the tool's own page.
-const TOOLS = [
-  { href: '/portal/trivia', icon: Gamepad2, name: 'Trivia', text: 'Write quizzes and host games for your division’s events.' },
-  { href: '/portal/polls', icon: Vote, name: 'Polls', text: 'Run a vote on a big screen: a contest, a favorite, a choice on stage.' },
-  { href: '/portal/qa', icon: MessagesSquare, name: 'Q&A', text: 'A live question wall: the room asks, you pick what goes on screen.' },
-  { href: '/portal/photobooth', icon: Camera, name: 'Photo Booth', text: 'Set up and run a photo booth at your event.' },
-] as const;
+// The club's tools, loaded only when opened.
+const loading = () => <Loading variant="inline" label="Loading…" />;
+const TriviaSectionContent = dynamic(() => import('../trivia/TriviaSectionContent'), { loading });
+const PollsSectionContent = dynamic(() => import('../polls/PollsSectionContent'), { loading });
+const QaSectionContent = dynamic(() => import('../qa/QaSectionContent'), { loading });
+const PhotoBoothSectionContent = dynamic(() => import('../photobooth/PhotoBoothSectionContent'), { loading });
 
-export default function DivisionLive({ hat }: { hat: DivisionHat }) {
+const TOOLS = [
+  { id: 'trivia', label: 'Trivia', icon: <Gamepad2 size={15} /> },
+  { id: 'polls', label: 'Polls', icon: <Vote size={15} /> },
+  { id: 'qa', label: 'Q&A', icon: <MessagesSquare size={15} /> },
+  { id: 'photobooth', label: 'Photo Booth', icon: <Camera size={15} /> },
+] as const;
+type ToolId = (typeof TOOLS)[number]['id'];
+
+// A division's Live Tools: the same Trivia, Polls, Q&A and Photo Booth as the club's, shown right here so the division stays the open hat (Staffle stays the club's). What a Member or Head makes belongs to their
+// division and they only see their division's. Which tool is open is in the address (/portal/<division>/live/<tool>); the place inside a tool is not (it starts from the tool's list when the page is reloaded).
+export default function DivisionLive({ hat, tool }: { hat: DivisionHat; tool: string | null }) {
+  const setParams = usePortalParams();
+  const open: ToolId = TOOLS.some((t) => t.id === tool) ? (tool as ToolId) : 'trivia';
   return (
     <section className={styles.wrap} aria-label={`${hat.name} Live Tools`}>
-      <ul className={styles.grid}>
-        {TOOLS.map((t) => (
-          <li key={t.href}>
-            <Link href={t.href} className={styles.card}>
-              <t.icon size={26} strokeWidth={1.5} aria-hidden="true" />
-              <strong>{t.name}</strong>
-              <span>{t.text}</span>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <SectionTabs
+        top
+        value={open}
+        onChange={(id) => {
+          setParams({ detail: id === 'trivia' ? null : id });
+          window.dispatchEvent(new Event('tg:division-nav'));
+        }}
+        tabs={TOOLS.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))}
+      />
       <p className={styles.note}>
-        Everything you make there belongs to {hat.name}. If you are in more than one division, say which one when you make something. Trivia, Polls, Q&amp;A and Photo Booth lists
-        show only {hat.name}’s own work and the club’s work you may run.
+        What you make here belongs to {hat.name}, and you see only {hat.name}’s own work. If you are in more than one division, say which one when you make something.
       </p>
+      <EmbeddedPortalContext.Provider value={{ division: hat.id }}>
+        {open === 'trivia' && <TriviaSectionContent key="t" canHost />}
+        {open === 'polls' && <PollsSectionContent key="p" />}
+        {open === 'qa' && <QaSectionContent key="q" />}
+        {open === 'photobooth' && <PhotoBoothSectionContent key="b" />}
+      </EmbeddedPortalContext.Provider>
     </section>
   );
 }

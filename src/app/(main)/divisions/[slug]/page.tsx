@@ -14,7 +14,6 @@ import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import { ZineBand, BandHeader } from '@/components/ZineBand/ZineBand';
 import EditDivisionLink from './EditDivisionLink';
 import DivisionPeople from './DivisionPeople';
-import DivisionSubNav from './DivisionSubNav';
 import { getDivisionHubData } from './getDivisionHubData';
 import styles from './division.module.css';
 
@@ -112,7 +111,6 @@ export default async function DivisionPage({ params }: Params) {
             </div>
           </div>
         </div>
-        <DivisionSubNav slug={division.slug} current="home" />
       </header>
 
       <ZineBand tone="navy" edge={false} label="About">

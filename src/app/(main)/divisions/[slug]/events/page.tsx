@@ -34,7 +34,7 @@ export default async function DivisionEventsPage({ params }: Params) {
   const { upcoming, previous } = await getDivisionEvents(division.id);
   return (
     <div className={styles.page}>
-      <DivisionSubHero division={division} current="events" title="Events" />
+      <DivisionSubHero division={division} title="Events" />
       {upcoming.length > 0 && (
         <ZineBand tone="ink" edge={false} label="Upcoming events">
           <BandHeader label="Coming soon" title="Upcoming" />

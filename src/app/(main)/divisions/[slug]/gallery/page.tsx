@@ -37,7 +37,7 @@ export default async function DivisionGalleryPage({ params }: Params) {
   const previews = await Promise.all(albums.map((a) => getAlbumPreview(a.url)));
   return (
     <div className={styles.page}>
-      <DivisionSubHero division={division} current="gallery" title="Gallery" />
+      <DivisionSubHero division={division} title="Gallery" />
       <ZineBand tone="ink" edge={false} label="Gallery">
         {albums.length > 0 ? (
           <div className={styles.albumGrid}>

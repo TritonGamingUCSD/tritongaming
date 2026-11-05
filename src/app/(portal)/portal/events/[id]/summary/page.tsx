@@ -140,11 +140,16 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
     peakNote: peak ? `Busiest ${multiDay ? 'day' : 'hour'}: ${peak.label} (${plural(peak.count, 'check-in')}). Times are Pacific.` : null,
   };
 
+  // A division's event goes back to that division's own Events page, not the club's.
+  const divisionSlug = event.division_id
+    ? (((await supabase.from('divisions').select('slug').eq('id', event.division_id).maybeSingle()).data?.slug as string | undefined) ?? null)
+    : null;
+
   return (
     <ReportShell
       report={report}
       back={
-        <Link href="/portal/events" className={styles.back}>
+        <Link href={divisionSlug ? `/portal/${divisionSlug}/events` : '/portal/events'} className={styles.back}>
           ← Back to Events
         </Link>
       }

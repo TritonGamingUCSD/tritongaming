@@ -1,5 +1,6 @@
 'use client';
 
+import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
 import EventSelect from '@/components/portal/EventSelect';
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
@@ -29,6 +30,7 @@ const frameOf = (preset: Preset, colour: string, words: string): FrameSpec => ({
 // The quick way to a booth, on a page of its own: a name, the words for under the photos, a ready-made look and an accent colour, with a big drawing of what guests will get beside it. A matching frame is drawn and
 // added for you, the booth is made, and you either open it at once or go on to fine-tune it.
 export function NewBoothPage({ onBack, onMade }: { onBack: () => void; onMade: (slug: string, open: boolean) => void }) {
+  const division = useEmbeddedDivision();
   const [name, setName] = useState('');
   const [words, setWords] = useState('');
   const [eventId, setEventId] = useState('');
@@ -49,6 +51,7 @@ export function NewBoothPage({ onBack, onMade }: { onBack: () => void; onMade: (
       name: name.trim(),
       config: preview,
       event_id: eventId || undefined,
+      division_id: division,
     });
     if (!r.ok) {
       setBusy(false);

@@ -2,11 +2,10 @@ import Link from 'next/link';
 import { divisionLogoSrc } from '@/lib/members/divisions';
 import type { Division } from '@/types/database';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
-import DivisionSubNav, { type DivisionSubPage } from './DivisionSubNav';
 import styles from './division.module.css';
 
 // The short header of a division's inner pages: logo, "Club / Division › Page" and the page links.
-export default function DivisionSubHero({ division, current, title }: { division: Division; current: DivisionSubPage; title: string }) {
+export default function DivisionSubHero({ division, title }: { division: Division; title: string }) {
   const logoUrl = divisionLogoSrc(division.logo_url);
   return (
     <header className={styles.subHero}>
@@ -25,7 +24,6 @@ export default function DivisionSubHero({ division, current, title }: { division
           <h1 className={styles.subTitle}>{title}</h1>
         </div>
       </div>
-      <DivisionSubNav slug={division.slug} current={current} />
     </header>
   );
 }

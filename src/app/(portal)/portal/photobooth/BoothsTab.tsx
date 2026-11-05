@@ -1,5 +1,6 @@
 'use client';
 
+import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
 import { useCallback, useEffect, useState } from 'react';
 import { Camera, Copy, Plus, Settings2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -13,6 +14,7 @@ import styles from './photobooth.module.css';
 
 // The booths. Each is its own thing (not tied to an event): Set Up opens its settings, Open Booth runs it on this screen.
 export function BoothsTab({ onNew, onOpen, onRun }: { onNew: () => void; onOpen: (booth: string) => void; onRun: (booth: string) => void }) {
+  const division = useEmbeddedDivision();
   const [booths, setBooths] = useState<BoothRow[] | null>(null);
   const [error, setError] = useState('');
   const load = useCallback(async () => {
@@ -25,7 +27,7 @@ export function BoothsTab({ onNew, onOpen, onRun }: { onNew: () => void; onOpen:
   }, [load]);
 
   const copy = async (b: BoothRow) => {
-    const r = await call<{ booth: { slug: string } }>('/api/photobooth/booths', 'POST', { name: `${b.name} copy`.slice(0, 80), from: b.slug });
+    const r = await call<{ booth: { slug: string } }>('/api/photobooth/booths', 'POST', { name: `${b.name} copy`.slice(0, 80), from: b.slug, division_id: division });
     if (r.ok) await load();
     else setError(r.error);
   };

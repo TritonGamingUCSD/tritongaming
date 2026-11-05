@@ -1172,7 +1172,6 @@
 
 /* In a division the top left is the division's own: its logo and name, with a line in its color under it. */
 @media (min-width: 900px) {
-  .railLogoDivision { box-shadow: inset 0 -3px 0 var(--hat, #ffc72c); }
   .railLogoDivision .railLogoByte img { border-radius: 8px; background: #fff; object-fit: contain; } /* theme-ok: a logo sits on white */
   .railLogoLetter { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 8px; background: var(--hat, #ffc72c); color: #011941; font-weight: 700; font-size: 1.2rem; } /* theme-ok */
 }

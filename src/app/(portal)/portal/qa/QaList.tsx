@@ -1,5 +1,6 @@
 'use client';
 
+import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
 import EventSelect from '@/components/portal/EventSelect';
 import EmptyState from '@/components/ui/EmptyState';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -94,6 +95,7 @@ export default function QaList({ onOpen }: { onOpen: (slug: string) => void }) {
 }
 
 function NewQa({ onClose, onMade }: { onClose: () => void; onMade: (slug: string) => void }) {
+  const division = useEmbeddedDivision();
   const [name, setName] = useState('');
   const [eventId, setEventId] = useState('');
   const [busy, setBusy] = useState(false);
@@ -103,7 +105,7 @@ function NewQa({ onClose, onMade }: { onClose: () => void; onMade: (slug: string
     if (!name.trim() || busy) return;
     setBusy(true);
     setError('');
-    const r = await call<{ session: { slug: string } }>('/api/qa', 'POST', { name, event_id: eventId || undefined });
+    const r = await call<{ session: { slug: string } }>('/api/qa', 'POST', { name, event_id: eventId || undefined, division_id: division });
     setBusy(false);
     if (r.ok) onMade(r.data.session.slug);
     else setError(r.error);

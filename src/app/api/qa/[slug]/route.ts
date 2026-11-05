@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { authorizePolls, broadcast, freshCode } from '@/lib/polls/server';
 import { cleanText, nextQuestion } from '@/lib/qa/rank';
-import { QA_COLUMNS, hostView, loadQuestions, loadSession, loadSessionFor } from '@/lib/qa/server';
+import { QA_COLUMNS, hostView, loadQuestions, loadSessionFor } from '@/lib/qa/server';
 
 export const dynamic = 'force-dynamic';
 

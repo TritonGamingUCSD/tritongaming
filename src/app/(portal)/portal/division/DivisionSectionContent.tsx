@@ -31,11 +31,15 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
   const setParams = usePortalParams();
   // Which division and page is read from the address bar and followed as it changes: a switch rewrites the address with the history API and Next reports that late, so waiting for it left the old page showing.
   const startParams = useLiveParams();
-  const [loc, setLoc] = useState<{ tab: string | null; subtab: string | null }>(() => ({ tab: startParams.get('tab'), subtab: startParams.get('subtab') }));
+  const [loc, setLoc] = useState<{ tab: string | null; subtab: string | null; detail: string | null }>(() => ({
+    tab: startParams.get('tab'),
+    subtab: startParams.get('subtab'),
+    detail: startParams.get('detail'),
+  }));
   useEffect(() => {
     const read = () => {
       const p = mergedPortalParams(window.location.pathname, window.location.search);
-      setLoc({ tab: p.get('tab'), subtab: p.get('subtab') });
+      setLoc({ tab: p.get('tab'), subtab: p.get('subtab'), detail: p.get('detail') });
     };
     read();
     for (const ev of ['tg:division-nav', 'tg:portal-nav', 'popstate']) window.addEventListener(ev, read);
@@ -97,7 +101,7 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
       {page === 'members' && <Roster hat={hat} />}
       {page === 'events' && <DivisionEvents hat={hat} />}
       {page === 'check-in' && <DivisionCheckIn hat={hat} />}
-      {page === 'live' && <DivisionLive hat={hat} />}
+      {page === 'live' && <DivisionLive hat={hat} tool={loc.detail} />}
       {page !== 'home' && page !== 'members' && page !== 'events' && page !== 'check-in' && page !== 'live' && (
         <div className={styles.soon}>
           <p>
