@@ -1009,7 +1009,19 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 {nudge.missing.length > 0 && hasBasicProfileInfo({ ...profile, gender: myGender.gender }, isVerifiedMember(roles)) && <ProfileNudge nudge={nudge} />}
               </>
             }
-            identity={{ name: profile.display_name || 'Triton', avatarUrl, roleLabel: primaryRoleLabel, roles: roleChips }}
+            identity={{
+              name: profile.display_name || 'Triton',
+              avatarUrl,
+              roleLabel: primaryRoleLabel,
+              roles: roleChips,
+              level: memberTier?.name,
+              progress:
+                pointsData && memberTier
+                  ? memberNext
+                    ? Math.min(100, Math.max(4, ((pointsData.lifetimeEarned - memberTier.min) / Math.max(1, memberNext.min - memberTier.min)) * 100))
+                    : 100
+                  : undefined,
+            }}
             railFooter={
               <>
                 <Link href="/" className={styles.railFooterLink}>

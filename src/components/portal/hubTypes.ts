@@ -27,6 +27,9 @@ export interface HubIdentity {
   name: string;
   avatarUrl: string | null;
   roleLabel: string;
+  /** The member level (e.g. "Silver") and how far to the next one (0 to 100), shown as a ring around the picture. */
+  level?: string;
+  progress?: number;
   roles?: { label: string; color: string }[];
 }
 

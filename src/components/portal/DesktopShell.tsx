@@ -16,6 +16,8 @@ import CodeButton from './CodeButton';
 import PortalCrumbs from './PortalCrumbs';
 import styles from './PortalHub.module.css';
 import { smallIcon } from './smallIcon';
+import AreaPixelIcon from './AreaPixelIcon';
+import ByteMini from '@/components/Bytecode/ByteMini';
 import { DASHBOARD_ACCENT, GROUP_ACCENT, GROUP_LABEL } from './hubConstants';
 import { GroupedSection, HubFrame, HubIdentity, HubSection } from './hubTypes';
 import { HomeGroups } from './HomeGroups';
@@ -78,6 +80,12 @@ export function DesktopShell({
   useEffect(() => setExpanded(null), [openGroup]);
   const isFolded = (g: string, count: number) => count > 1 && g !== openGroup && g !== expanded;
   const toggleGroup = (g: string) => setExpanded((cur) => (cur === g ? null : g));
+  // Byte sleeps at night (the person's own clock, read after the page loads so the server's page matches).
+  const [asleep, setAsleep] = useState(false);
+  useEffect(() => {
+    const h = new Date().getHours();
+    setAsleep(h >= 23 || h < 6);
+  }, []);
   const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
   // the whole frame is on screen without scrolling the page. Re-measured when the window or the page above changes.
@@ -116,15 +124,18 @@ export function DesktopShell({
             aria-label={`${identity.name}${identity.roles?.length ? ` ${identity.roles.map((r) => r.label).join(' ')}` : ''}, open your profile`}
             title="Your profile"
           >
-            {identity.avatarUrl ? (
-              <Image src={identity.avatarUrl} alt="" width={40} height={40} className={styles.railAvatar} unoptimized referrerPolicy="no-referrer" />
-            ) : (
-              <span className={styles.railAvatarFallback} aria-hidden="true" data-letter={identity.name[0]?.toUpperCase() ?? 'T'} />
-            )}
+            <span className={styles.railRing} style={{ ['--xp' as string]: `${identity.progress ?? 0}%` }}>
+              {identity.avatarUrl ? (
+                <Image src={identity.avatarUrl} alt="" width={40} height={40} className={styles.railAvatar} unoptimized referrerPolicy="no-referrer" />
+              ) : (
+                <span className={styles.railAvatarFallback} aria-hidden="true" data-letter={identity.name[0]?.toUpperCase() ?? 'T'} />
+              )}
+            </span>
             <span className={styles.railIdentityText}>
               <span className={styles.railName}>{identity.name}</span>{' '}
               {identity.roles && identity.roles.length > 0 ? (
                 <span className={styles.railRoles}>
+                  {identity.level && <span className={styles.railLevel}>{identity.level}</span>}
                   {identity.roles.map((r) => (
                     <span
                       key={r.label}
@@ -138,6 +149,9 @@ export function DesktopShell({
               ) : (
                 <span className={styles.railRole}>{identity.roleLabel}</span>
               )}
+            </span>
+            <span className={styles.railByte} aria-hidden="true">
+              <ByteMini pose={asleep ? 'sleep' : 'awake'} />
             </span>
           </button>
         )}
@@ -180,7 +194,9 @@ export function DesktopShell({
                     aria-expanded={!isFolded(group, items.length)}
                     title={isFolded(group, items.length) ? `Show ${GROUP_LABEL[group]}` : `Hide ${GROUP_LABEL[group]}`}
                   >
-                    <span className={styles.railGroupDot} aria-hidden="true" />
+                    <span className={styles.railGroupPixel} aria-hidden="true">
+                      <AreaPixelIcon group={group} />
+                    </span>
                     <span className={styles.railGroupText}>
                       {GROUP_LABEL[group]}
                       {/* A closed area names its pages, so nobody has to open it to find out what is inside. */}
@@ -226,6 +242,7 @@ export function DesktopShell({
           </button>
           {openSection ? (
             <div className={styles.topTitle}>
+              <span className={styles.topTab} aria-hidden="true" />
               <span className={styles.topIcon} aria-hidden="true">
                 {smallIcon(openSection.icon, 18)}
               </span>
