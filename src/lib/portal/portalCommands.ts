@@ -146,3 +146,11 @@ export function lockedCommandsFor(roles: RoleGrant[]): PortalCommand[] {
     return lowest ? [{ id: d.id, label: d.label, hint: d.hint, href: d.href, kind: d.kind, keywords: d.keywords, needs: ROLE_LABELS[lowest] }] : [];
   });
 }
+
+/** The lowest role that opens a section (e.g. "Executive"), or null when the section has no plain rule to name. */
+export function roleNeededFor(sectionId: string): string | null {
+  const caps = SECTIONS.find((s) => s.id === sectionId)?.search?.caps as Capability[] | undefined;
+  if (!caps?.length) return null;
+  const lowest = caps.flatMap((c) => CAPABILITY_ROLES[c]).sort((a, b) => ROLE_DISPLAY_RANK[a] - ROLE_DISPLAY_RANK[b])[0];
+  return lowest ? ROLE_LABELS[lowest] : null;
+}

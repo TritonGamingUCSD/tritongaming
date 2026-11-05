@@ -222,12 +222,12 @@
 
 .roleChip {
   display: inline-block;
-  font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.1em;
-  padding: 0.2rem 0.6rem;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0;
+  padding: 0.1rem 0.65rem;
   border-radius: var(--radius-pill);
-  text-transform: uppercase;
   border: 1px solid;
   white-space: nowrap;
 }

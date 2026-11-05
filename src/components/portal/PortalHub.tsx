@@ -17,6 +17,7 @@ import { pickDock, readUsage, recordUse } from './dockPicker';
 import GlassDock, { DockEntry } from './GlassDock';
 import styles from './PortalHub.module.css';
 import mob from './PortalMobile.module.css';
+import { roleNeededFor } from '@/lib/portal/portalCommands';
 import { CLEAR_NAV, DOCK_ICON_SIZE, GROUP_ACCENT, GROUP_LABEL, GROUP_ORDER, SECTION_ORDER, SPRING } from './hubConstants';
 import { smallIcon } from './smallIcon';
 import { GroupedSection, HubFrame, HubIdentity, HubSection } from './hubTypes';
@@ -224,12 +225,16 @@ export default function PortalHub({
   // A link to a page this person's roles don't include (a UCSD student or someone with no role following a shared
   // link, say) used to just land on home with no explanation. Point them to Help, which explains how to get the role.
   const lockedSection = requestedSection && !validRequested && SECTION_ORDER.includes(requestedSection) && requestedSection !== 'help' ? sectionLabel(requestedSection) : null;
+  const neededRole = lockedSection && requestedSection ? roleNeededFor(requestedSection) : null;
   const [lockedDismissed, setLockedDismissed] = useState(false);
   const lockedNotice =
     lockedSection && !lockedDismissed ? (
       <div className={styles.lockedNotice} role="status">
         <span>
-          <strong>{lockedSection}</strong> needs a role your account doesn’t have yet. Open Help to see which role it is and how to get it.
+          <strong>{lockedSection}</strong>{' '}
+          {neededRole
+            ? `is for ${neededRole}s and above. If you think you should have it, open Help and ask.`
+            : 'needs a role your account doesn’t have yet. Open Help to see which role it is and how to get it.'}
         </span>
         <span className={styles.lockedActions}>
           <button type="button" className={styles.lockedHelp} onClick={() => open('help')}>

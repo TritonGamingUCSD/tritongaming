@@ -97,9 +97,12 @@
 }
 
 .chip {
-  font-size: 0.68rem;
-  font-family: var(--font-futura-medium);
-  padding: 0.2rem 0.55rem;
+  font-family: var(--font-dm-sans), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0;
+  padding: 0.1rem 0.65rem;
+
   border-radius: var(--radius-pill);
   border: 1px solid;
   white-space: nowrap;
