@@ -185,6 +185,18 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
           <Image src="/logos/tg_logo.png" alt="Triton Gaming" width={80} height={80} className={styles.logoImg} loading="eager" fetchPriority="high" />
         </Link>
 
+        {/* A laptop or desktop gets a regular navbar with every page in view; phones and tablets keep the Menu button and the poster menu below. */}
+        <nav className={styles.deskNav} aria-label="Site pages">
+          {NAV_LINKS.map(({ href, label }) => {
+            const on = pathname.startsWith(href);
+            return (
+              <Link key={href} href={href} className={`${styles.deskLink} ${on ? styles.deskLinkOn : ''}`} aria-current={on ? 'page' : undefined}>
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+
         {announcement && <div className={`${styles.announce}${open ? ` ${styles.announceHidden}` : ''}`}>{announcement}</div>}
 
         <div className={styles.right}>

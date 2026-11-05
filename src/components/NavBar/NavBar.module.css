@@ -91,3 +91,15 @@
 @media (prefers-reduced-motion: reduce) {
   .menu, .menuOpen, .links > li, .side { transition: none; transform: none; }
 }
+
+/* Laptop and desktop: a regular navbar with every page in view (a paper strip between the logo and the portal sticker). Phones and tablets keep the Menu button and the poster menu. */
+.deskNav { display: none; }
+@media (min-width: 1100px) {
+  .deskNav { display: flex; align-items: center; flex-wrap: wrap; gap: 0.1rem 0.15rem; margin-inline: auto; padding: 0.3rem 0.5rem; background: var(--paper); border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); transform: rotate(-0.4deg); }
+  .deskLink { padding: 0.45rem 0.7rem; color: var(--ink); text-decoration: none; font-family: var(--font-futura-heavy); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; border-radius: 3px; transition: background 0.15s ease, transform 0.15s ease; }
+  .deskLink:hover { background: var(--yellow); transform: translateY(-1px) rotate(-1deg); }
+  .deskLinkOn { background: var(--ink); color: var(--yellow); }
+  .deskLinkOn:hover { background: var(--ink); }
+  .menuBtn { display: none; }
+  .announce { order: 3; flex-basis: 100%; }
+}

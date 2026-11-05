@@ -74,7 +74,7 @@ export const GROUP_LABEL: Record<string, string> = {
   Events: 'Events',
   Run: 'Live Tools',
   Team: 'Club',
-  Outreach: 'Outreach',
+  Outreach: 'Content',
   Admin: 'Admin',
 };
 
