@@ -1,0 +1,4 @@
+-- Fix for 20261105220000 and 20261105230000: the helper functions the events and tickets rules call were granted to signed-in users only, but the public pages read events as a signed-out visitor, and the rules are checked for that
+-- role too. The rule then failed with "permission denied for function is_division_head" (42501) instead of just saying no, which broke public event queries. These functions only answer yes or no about the signed-in person
+-- (auth.uid(), empty for a visitor, so the answer is no) or whether an event belongs to a division, so a visitor may run them. Safe to run once.
+grant execute on function public.is_division_head(uuid), public.is_division_member(uuid), public.is_tg_staff(), public.is_division_member_of_event(uuid), public.event_belongs_to_division(uuid) to anon;

@@ -1,6 +1,7 @@
 // Checks the database rules for a division's events with throwaway accounts, one throwaway ZZ division and ZZ events, as each kind of person (through the same rules the browser is under). Removes everything.
 // Run (no dev server needed, after the migration 20261105220000_division_events.sql is applied): node scripts/checks/division-events.mjs
-import { svc, tracker, accounts } from './lib.mjs';
+import { createClient } from '@supabase/supabase-js';
+import { svc, tracker, accounts, env, url } from './lib.mjs';
 
 const t = tracker();
 const { user, made, cleanup } = accounts('divev');
@@ -106,6 +107,11 @@ try {
   t.ok('a plain student does not see a division draft', !(await seen(plain, evId)));
   t.ok('another division’s Head does not see it', !(await seen(otherHead, evId)));
   t.ok('everyone sees a published Triton Gaming event', await seen(plain, tgEv));
+
+  // a signed-out visitor (what the public pages are): reading events must not fail on the division rules (it once said "permission denied for function is_division_head")
+  const visitor = createClient(url, env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+  const pubRead = await visitor.from('events').select('id').eq('is_published', false).limit(3);
+  t.ok('a signed-out visitor can read events without an error and sees no drafts', !pubRead.error && (pubRead.data ?? []).length === 0, pubRead.error?.message);
 
   // tickets and check-in
   const tk = (await svc.from('tickets').insert({ event_id: evId, user_id: plain.id }).select('id').single()).data.id;
