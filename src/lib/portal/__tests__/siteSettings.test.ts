@@ -15,7 +15,13 @@ describe('site settings', () => {
       { key: 'banner_until', value: '2026-11-02' },
       { key: 'something_else', value: 'x' },
     ]);
-    expect(s).toEqual({ codeStyle: 'byte', codeStyles: {}, banner: { on: true, text: 'Check-in is at the Price Center', until: '2026-11-02' }, divisionsOpen: false });
+    expect(s).toEqual({
+      codeStyle: 'byte',
+      codeStyles: {},
+      banner: { on: true, text: 'Check-in is at the Price Center', until: '2026-11-02' },
+      divisionsOpen: false,
+      divisionsPreview: [],
+    });
     expect(parseSettings([{ key: 'code_style', value: 'bytecode??' }]).codeStyle).toBe('qr');
     expect(parseSettings([{ key: 'code_style', value: 'tg' }]).codeStyle).toBe('tg');
     expect(parseSettings([{ key: 'banner_until', value: 'tomorrow' }]).banner.until).toBe('');
@@ -57,5 +63,7 @@ describe('site settings', () => {
     expect(divisionsVisible(false, preview, '11111111-1111-1111-1111-111111111111')).toBe(true);
     expect(divisionsVisible(false, preview, '22222222-2222-2222-2222-222222222222')).toBe(false);
     expect(divisionsVisible(false, preview)).toBe(false);
+    expect(parseSettings([{ key: 'divisions_preview', value: '[{"id":"11111111-1111-1111-1111-111111111111","name":"A Head"},{"id":"bad"}]' }]).divisionsPreview).toHaveLength(1);
+    expect(parseSettings([{ key: 'divisions_preview', value: 'not json' }]).divisionsPreview).toEqual([]);
   });
 });
