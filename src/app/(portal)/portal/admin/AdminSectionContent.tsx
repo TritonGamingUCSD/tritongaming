@@ -5,7 +5,7 @@ import SectionTabs from '@/components/ui/SectionTabs';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ReactNode } from 'react';
-import { LayoutDashboard, BarChart3, Activity, X, Server, Users as UsersIcon, MailPlus, KeyRound, ScrollText } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Activity, X, Server, Users as UsersIcon, MailPlus, KeyRound, ScrollText, Link2 } from 'lucide-react';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
@@ -15,7 +15,6 @@ import Button from '@/components/ui/Button';
 import AccessPanel from './AccessPanel';
 import SettingsPanel from './SettingsPanel';
 import PreviewsPanel from './preview/PreviewsPanel';
-import EmailBlastPanel from './EmailBlastPanel';
 import SystemStats from './SystemStats';
 import AdminOverviewPanels from './AdminOverviewPanels';
 import StatsClient from './stats/StatsClient';
@@ -38,16 +37,17 @@ interface Props {
   initialTab?: string;
 }
 
-type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system' | 'settings' | 'preview' | 'email';
-const VALID_TABS: Tab[] = ['overview', 'members', 'access', 'analytics', 'audit-log', 'short-links', 'system', 'settings', 'preview', 'email'];
-type Group = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'system';
+type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system' | 'settings' | 'preview';
+const VALID_TABS: Tab[] = ['overview', 'members', 'access', 'analytics', 'audit-log', 'short-links', 'system', 'settings', 'preview'];
+type Group = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system';
 const GROUPS: Record<Group, { label: string; icon: ReactNode; views: Tab[] }> = {
   overview: { label: 'Overview', icon: <LayoutDashboard />, views: ['overview'] },
   members: { label: 'Members', icon: <UsersIcon />, views: ['members'] },
   access: { label: 'Access', icon: <KeyRound />, views: ['access'] },
   analytics: { label: 'Analytics', icon: <BarChart3 />, views: ['analytics'] },
   'audit-log': { label: 'Audit Log', icon: <ScrollText />, views: ['audit-log'] },
-  system: { label: 'System', icon: <Server />, views: ['system', 'settings', 'preview', 'short-links', 'email'] },
+  'short-links': { label: 'Short Links', icon: <Link2 />, views: ['short-links'] },
+  system: { label: 'System', icon: <Server />, views: ['system', 'settings', 'preview'] },
 };
 const VIEW_LABELS: Record<Tab, string> = {
   overview: 'Overview',
@@ -59,7 +59,6 @@ const VIEW_LABELS: Record<Tab, string> = {
   system: 'System Health',
   settings: 'Settings',
   preview: 'Previews',
-  email: 'Email (Test)',
 };
 const groupOf = (t: Tab): Group => (Object.keys(GROUPS) as Group[]).find((g) => GROUPS[g].views.includes(t)) ?? 'overview';
 
@@ -248,8 +247,6 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       {tab === 'system' && isAdmin && <SystemStats />}
       {tab === 'settings' && isAdmin && <SettingsPanel />}
       {tab === 'preview' && isAdmin && <PreviewsPanel />}
-
-      {tab === 'email' && isAdmin && <EmailBlastPanel />}
 
       {historyOpen && roleHistoryEntries && (
         <div className={styles.historyOverlay} onClick={() => setHistoryOpen(false)}>

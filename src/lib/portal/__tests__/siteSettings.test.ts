@@ -2,7 +2,7 @@ import { describe, expect, test } from 'vitest';
 import { BANNER_MAX, DEFAULT_SETTINGS, bannerShown, parseSettings, styleFor } from '../siteSettings';
 
 describe('site settings', () => {
-  test('nothing saved means the defaults: TGcode and no banner', () => {
+  test('nothing saved means the defaults: QR code and no banner', () => {
     expect(parseSettings([])).toEqual(DEFAULT_SETTINGS);
     expect(parseSettings(null)).toEqual(DEFAULT_SETTINGS);
   });
@@ -16,8 +16,8 @@ describe('site settings', () => {
       { key: 'something_else', value: 'x' },
     ]);
     expect(s).toEqual({ codeStyle: 'byte', codeStyles: {}, banner: { on: true, text: 'Check-in is at the Price Center', until: '2026-11-02' } });
-    expect(parseSettings([{ key: 'code_style', value: 'bytecode??' }]).codeStyle).toBe('tg');
-    expect(parseSettings([{ key: 'code_style', value: 'qr' }]).codeStyle).toBe('qr');
+    expect(parseSettings([{ key: 'code_style', value: 'bytecode??' }]).codeStyle).toBe('qr');
+    expect(parseSettings([{ key: 'code_style', value: 'tg' }]).codeStyle).toBe('tg');
     expect(parseSettings([{ key: 'banner_until', value: 'tomorrow' }]).banner.until).toBe('');
     expect(parseSettings([{ key: 'banner_text', value: 'x'.repeat(500) }]).banner.text).toHaveLength(BANNER_MAX);
   });

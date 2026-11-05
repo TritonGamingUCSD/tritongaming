@@ -73,9 +73,13 @@ function CodeStyleCard({ saved, onSaved, onError }: CardProps) {
       <div className={styles.choices} role="radiogroup" aria-label="Code everyone shows">
         {(
           [
-            ['tg', 'TGcode', 'The circular code (the default).'],
+            ['tg', 'TGcode', 'The circular code.'],
             ['byte', 'Bytecode', 'Byte, with his wink after a scan. Reads from a larger size than the TGcode.'],
-            ['qr', 'QR code', 'A standard QR code in the Triton Gaming design. A phone’s own camera opens a portal page for it, and the Scan page reads it like the others.'],
+            [
+              'qr',
+              'QR code',
+              'A standard QR code in the Triton Gaming design (the default). A phone’s own camera opens a portal page for it, and the Scan page reads it like the others.',
+            ],
           ] as const
         ).map(([id, name, about]) => (
           <label key={id} className={`${styles.choice} ${value === id ? styles.on : ''}`}>
@@ -93,7 +97,7 @@ function CodeStyleCard({ saved, onSaved, onError }: CardProps) {
         </Button>
         <Button
           variant="secondary"
-          onClick={() => send({ setting: 'code_style', reset: true }, 'Back to TGcode')}
+          onClick={() => send({ setting: 'code_style', reset: true }, 'Back to QR code')}
           disabled={busy || saved.codeStyle === DEFAULT_SETTINGS.codeStyle}
         >
           Reset To Default

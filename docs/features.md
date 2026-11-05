@@ -269,5 +269,5 @@ The Scan screen is pulled up from the bottom by Byte, who rides its top edge up 
 
 **Admin › System › Settings** (`/portal/admin/settings`, Admins only) holds what an Admin can change for the whole site; each setting saves on its own with a toast, has a **Reset To Default**, and every change goes in the Audit Log with what it was and what it is. They are kept as text in the `team_settings` key/value table (no table of their own; `src/lib/portal/siteSettings.ts`, API `/api/admin/settings`) and read by the portal layout on every request, then handed to the pages by `SiteSettingsProvider`.
 
-- **Code Everyone Shows:** TGcode (default) or Bytecode for every ticket, meeting check-in and reward pickup. A device can still choose for itself in Previews (that wins on that device).
+- **Code Everyone Shows:** QR code (default), TGcode or Bytecode for every ticket, meeting check-in and reward pickup. A device can still choose for itself in Previews (that wins on that device).
 - **Portal Banner:** a short notice (160 characters) at the top of every portal page, with an on/off and an optional last day (Pacific time) after which it goes away by itself.

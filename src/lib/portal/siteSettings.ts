@@ -24,7 +24,7 @@ export interface SiteSettings {
   banner: PortalBanner;
 }
 
-export const DEFAULT_SETTINGS: SiteSettings = { codeStyle: 'tg', codeStyles: {}, banner: { on: false, text: '', until: '' } };
+export const DEFAULT_SETTINGS: SiteSettings = { codeStyle: 'qr', codeStyles: {}, banner: { on: false, text: '', until: '' } };
 export const BANNER_MAX = 160;
 export const codeStyleKey = (use: CodeUse) => `code_style_${use}`;
 export const SETTING_KEYS = ['code_style', ...CODE_USES.map(codeStyleKey), 'banner_on', 'banner_text', 'banner_until'] as const;
@@ -34,7 +34,7 @@ export function parseSettings(rows: { key: string; value: string }[] | null | un
   const v = new Map((rows ?? []).map((r) => [r.key, r.value]));
   const until = v.get('banner_until') ?? '';
   return {
-    codeStyle: isStyle(v.get('code_style')) ? (v.get('code_style') as CodeStyle) : 'tg',
+    codeStyle: isStyle(v.get('code_style')) ? (v.get('code_style') as CodeStyle) : 'qr',
     codeStyles: Object.fromEntries(CODE_USES.map((u) => [u, v.get(codeStyleKey(u))]).filter(([, s]) => isStyle(s))),
     banner: {
       on: v.get('banner_on') === 'on',

@@ -37,6 +37,8 @@ import { CONTENT_BLOCKS } from '@/lib/site/content-blocks';
 import { PACIFIC_TZ, pacificDayKey, pacificDaysUntil, pacificToday } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { sectionLabel } from '@/lib/portal/sections';
+import { bannerShown, loadSiteSettings } from '@/lib/portal/siteSettings';
+import PortalBanner from '@/components/portal/PortalBanner';
 import AllFunctions from './all/AllFunctions';
 import { getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
 import type { HubSection } from '@/components/portal/hubTypes';
@@ -227,6 +229,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     homeActivity,
     homePins,
     homeShoutout,
+    siteSettings,
   ] = await Promise.all([
     getTicketsData(profile.id, roles),
     canCheckin ? getCheckinData() : Promise.resolve(null),
@@ -244,6 +247,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     loadHomeActivity(createServiceClient(), canViewDocs).catch(() => []),
     loadHomePins(createServiceClient(), profile.id).catch(() => [] as string[]),
     loadShoutout(createServiceClient()).catch(() => null),
+    loadSiteSettings(createServiceClient()),
   ]);
   // Who is looking, and as whom: the lazy sections keep their data per view, so a changed "view as" never shows another view's data.
   const scope = `${profile.id}|${viewAs ?? ''}|${viewingUser?.id ?? ''}`;
@@ -752,6 +756,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const missingOnlyOfficerTab = missingProfileFields.length > 0 && getMissingProfileFields({ ...profile, gender: myGender.gender }, isVerifiedMember(roles)).length === 0;
   const frameBanners = (
     <>
+      {/* The admins' notice (Admin → Settings): on a computer the layout's own copy is not drawn, so it is shown here, inside the frame. */}
+      {bannerShown(siteSettings, pacificDayKey()) && <PortalBanner text={siteSettings.banner.text} />}
       {viewAs && <ViewAsBanner active={viewAs} />}
       {viewingUser && <ViewingUserBanner name={profile.display_name || profile.google_first_name || 'this person'} />}
       <Suspense fallback={null}>

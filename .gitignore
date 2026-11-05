@@ -69,3 +69,6 @@ next-env.d.ts
 # Second dev server used for testing (NEXT_DIST_DIR=.next-qa)
 /.next-qa/
 /backups/
+
+# editor settings
+.vscode/
