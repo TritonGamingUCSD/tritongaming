@@ -189,3 +189,11 @@
 .hello { display: block; font-family: var(--font-futura-heavy); font-weight: 400; text-transform: uppercase; letter-spacing: 0.01em; font-size: clamp(1.7rem, 3.4vw, 2.6rem); }
 .hello .name { margin-left: 0.3em; }
 .pinChip { box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); }
+
+/* "Your divisions": a card for each division the person belongs to, to jump into its pages. */
+.divCards { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.divCard { display: flex; align-items: center; gap: 0.7rem; flex: 1 1 15rem; max-width: 24rem; padding: 0.6rem 0.9rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-left: 5px solid var(--hat, var(--yellow)); border-radius: 0.6rem; background: var(--pp-card); color: var(--pp-ink); text-decoration: none; box-shadow: var(--hard-shadow-sm); }
+.divCard span { display: grid; flex: 1; min-width: 0; line-height: 1.2; }
+.divCard small { font-size: 0.78rem; opacity: 0.75; }
+.divLogo, .divLogoFallback { flex: none; width: 40px; height: 40px; border-radius: 8px; object-fit: contain; background: #fff; } /* theme-ok: a logo sits on white */
+.divLogoFallback { display: grid; place-items: center; font-weight: 700; color: #011941; background: var(--hat, #ffc72c); } /* theme-ok */

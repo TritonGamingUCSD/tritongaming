@@ -242,6 +242,7 @@ export default function PortalHub({
       setOpenId('division');
       setParams({ section: 'division', ...CLEAR_NAV, tab: slug, subtab: page && page !== 'home' ? page : null });
       setDivLoc({ tab: slug, subtab: page && page !== 'home' ? page : null });
+      window.dispatchEvent(new Event('tg:division-nav')); // the open division page redraws (it reads the address bar too)
     },
     [setParams],
   );

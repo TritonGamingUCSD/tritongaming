@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Link from '@/components/portal/PortalLink';
 import CodeIcon from '@/components/portal/CodeIcon';
 import CodeName from '@/components/portal/CodeName';
@@ -85,10 +86,13 @@ export function DashboardBody({
   cards = [],
   term = null,
   pins = [],
+  myDivisions = [],
   shoutout = null,
   canShout = false,
 }: {
   pins?: { id: string; label: string }[];
+  /** The divisions this person belongs to (not just the ones an admin can see): a card each, to jump into. */
+  myDivisions?: { slug: string; name: string; logoUrl: string | null; accent: string; level: string }[];
   shoutout?: HomeShoutout | null;
   canShout?: boolean;
   term?: TermInfoData | null;
@@ -114,6 +118,24 @@ export function DashboardBody({
         <NextEventHero event={event} />
         {term && <TermProgress term={term} />}
       </div>
+      {myDivisions.length > 0 && (
+        <section className={styles.divCards} aria-label="Your divisions">
+          {myDivisions.map((d) => (
+            <Link key={d.slug} href={`/portal/${d.slug}`} className={styles.divCard} style={{ ['--hat' as string]: d.accent }}>
+              {d.logoUrl ? (
+                <Image src={d.logoUrl} alt="" width={40} height={40} className={styles.divLogo} unoptimized />
+              ) : (
+                <span className={styles.divLogoFallback}>{d.name.slice(0, 1)}</span>
+              )}
+              <span>
+                <strong>{d.name}</strong>
+                <small>{d.level}</small>
+              </span>
+              <b aria-hidden="true">→</b>
+            </Link>
+          ))}
+        </section>
+      )}
       {pins.length > 0 && (
         <nav className={styles.pins} aria-label="Pinned pages">
           <span className={styles.pinsLabel}>Your pins</span>

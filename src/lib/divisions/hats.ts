@@ -33,6 +33,7 @@ export async function loadDivisionHats(svc: SupabaseClient, roles: RoleGrant[]):
     logoUrl: (d.logo_url as string | null) ?? null,
     accent: accentOf(d.accent as string | null).hex,
     level: staff ? 'staff' : (divisionLevel(roles, d.id as string) ?? 'alumni'),
+    myLevel: divisionLevel(roles, d.id as string),
     counts: counts.get(d.id as string) ?? { heads: 0, members: 0, alumni: 0 },
   }));
 }

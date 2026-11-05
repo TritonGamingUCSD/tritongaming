@@ -8,6 +8,7 @@ import SectionHeader from '@/components/ui/SectionHeader';
 import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import { useLiveParams, usePortalParams } from '@/lib/portal/usePortalParams';
+import { mergedPortalParams } from '@/lib/portal/portalPath';
 import type { DivisionHat } from '@/components/portal/hubTypes';
 import { DIVISION_PAGES, divisionPagesFor, isDivisionPageId } from '@/lib/divisions/pages';
 import styles from './division.module.css';
@@ -24,8 +25,22 @@ const ROLE_NAME = { division: 'Head', division_member: 'Member', division_alumni
 // A division's pages in the portal. The address says which: /portal/division/<division address>/<page>. The division's sidebar (DesktopShell) lists the pages; this draws the open one.
 // Home and Members are real; the rest arrive in the next steps of the division project (events, check-in and Live Tools for the division; page, docs and settings).
 export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }) {
-  const params = useLiveParams();
   const setParams = usePortalParams();
+  // Which division and page is read from the address bar and followed as it changes: a switch rewrites the address with the history API and Next reports that late, so waiting for it left the old page showing.
+  const startParams = useLiveParams();
+  const [loc, setLoc] = useState<{ tab: string | null; subtab: string | null }>(() => ({ tab: startParams.get('tab'), subtab: startParams.get('subtab') }));
+  useEffect(() => {
+    const read = () => {
+      const p = mergedPortalParams(window.location.pathname, window.location.search);
+      setLoc({ tab: p.get('tab'), subtab: p.get('subtab') });
+    };
+    read();
+    for (const ev of ['tg:division-nav', 'tg:portal-nav', 'popstate']) window.addEventListener(ev, read);
+    return () => {
+      for (const ev of ['tg:division-nav', 'tg:portal-nav', 'popstate']) window.removeEventListener(ev, read);
+    };
+  }, []);
+  const params = { get: (k: string) => (k === 'tab' ? loc.tab : k === 'subtab' ? loc.subtab : null) };
   const hat = hats.find((h) => h.slug === params.get('tab')) ?? null;
   const asked = params.get('subtab');
   if (!hat) {
@@ -66,7 +81,10 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
             type="button"
             className={p.id === page ? styles.tabOn : ''}
             aria-current={p.id === page ? 'page' : undefined}
-            onClick={() => setParams({ subtab: p.id === 'home' ? null : p.id })}
+            onClick={() => {
+              setParams({ subtab: p.id === 'home' ? null : p.id });
+              window.dispatchEvent(new Event('tg:division-nav'));
+            }}
           >
             {p.label}
           </button>

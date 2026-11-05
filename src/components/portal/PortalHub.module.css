@@ -1169,3 +1169,7 @@
 
 /* On a phone the division switcher is the first thing in the More sheet. */
 .sheetSwitch { padding: 0 0.9rem 0.6rem; }
+
+@media (min-width: 900px) {
+  .topHat { flex: none; margin-left: 1rem; }
+}

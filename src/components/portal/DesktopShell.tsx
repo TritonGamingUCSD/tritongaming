@@ -196,11 +196,6 @@ export function DesktopShell({
             <small>Member portal</small>
           </span>
         </button>
-        {identity?.divisions && identity.divisions.length > 0 && (
-          <div className={styles.railSwitch}>
-            <DivisionSwitcher hats={identity.divisions} current={divisionHat?.slug ?? null} onPick={(slug) => (slug ? openDivision(slug) : close())} />
-          </div>
-        )}
         {divisionHat ? (
           <nav className={styles.railNav} aria-label={`${divisionHat.name} pages`} style={{ ['--hat' as string]: divisionHat.accent }}>
             <div className={styles.divNav}>
@@ -304,6 +299,11 @@ export function DesktopShell({
           ) : (
             <div className={styles.topTitle}>
               <span className={styles.topName}>Home</span>
+            </div>
+          )}
+          {identity?.divisions && identity.divisions.length > 0 && (
+            <div className={styles.topHat}>
+              <DivisionSwitcher variant="bar" hats={identity.divisions} current={divisionHat?.slug ?? null} onPick={(slug) => (slug ? openDivision(slug) : close())} />
             </div>
           )}
           <div className={styles.topRight}>

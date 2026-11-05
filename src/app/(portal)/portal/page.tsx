@@ -969,6 +969,15 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 compact={!isTgMember(roles)}
                 logistics={hasCapability(roles, 'view_logistics') || canManageLogistics}
                 cards={homeCards}
+                myDivisions={divisionHats
+                  .filter((h) => h.myLevel)
+                  .map((h) => ({
+                    slug: h.slug,
+                    name: h.name,
+                    logoUrl: h.logoUrl,
+                    accent: h.accent,
+                    level: ROLE_LABELS[h.myLevel === 'head' ? 'division' : h.myLevel === 'member' ? 'division_member' : 'division_alumni'],
+                  }))}
                 pins={sections.filter((s) => homePins.includes(s.id)).map((s) => ({ id: s.id, label: s.label }))}
                 shoutout={homeShoutout}
                 canShout={roles.some((r) => r.role === 'exec' || r.role === 'admin')}

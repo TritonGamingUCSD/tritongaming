@@ -20,3 +20,13 @@
 /* On a phone the picker sits on the paper background. */
 .compact .btn { border-color: rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); }
 .compact .btn:hover { background: var(--pp-card); }
+
+/* In the top bar: a slim chip (several divisions) or a two-button toggle (one division). */
+.barVariant { width: auto; min-width: 12rem; max-width: 18rem; }
+.barVariant .btn { padding: 0.25rem 0.5rem; }
+.barVariant .list { left: 0; right: auto; min-width: 16rem; }
+.toggle { display: inline-flex; border: 1px solid rgba(255, 255, 255, 0.3); border-radius: 999px; overflow: hidden; } /* theme-ok: on the navy bar */
+.toggle button { display: inline-flex; align-items: center; gap: 0.4rem; border: 0; background: none; color: rgba(255, 255, 255, 0.85); font: inherit; font-size: 0.82rem; font-weight: 600; padding: 0.3rem 0.75rem; cursor: pointer; white-space: nowrap; } /* theme-ok */
+.toggle button:hover { background: rgba(255, 255, 255, 0.12); } /* theme-ok */
+.toggle .toggleOn { background: var(--hat, #ffc72c); color: #011941; } /* theme-ok: the open hat is filled with its color */
+.toggleLogo { width: 18px; height: 18px; border-radius: 4px; object-fit: contain; background: #fff; } /* theme-ok */

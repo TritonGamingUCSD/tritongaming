@@ -33,6 +33,8 @@ export interface DivisionHat {
   accent: string;
   /** Their level there; 'staff' is exec and admin, who can act in every division. */
   level: 'head' | 'member' | 'alumni' | 'staff';
+  /** The role they actually hold in this division, if any (exec and admin may hold none and still see every division). */
+  myLevel: 'head' | 'member' | 'alumni' | null;
   counts: { heads: number; members: number; alumni: number };
 }
 

@@ -15,11 +15,14 @@ export default function DivisionSwitcher({
   current,
   onPick,
   compact = false,
+  variant = 'list',
 }: {
   hats: DivisionHat[];
   current: string | null;
   onPick: (slug: string | null) => void;
   compact?: boolean;
+  /** 'bar': a slim chip for the top bar; with one division it is a two-way toggle instead of a menu. */
+  variant?: 'list' | 'bar';
 }) {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -39,6 +42,27 @@ export default function DivisionSwitcher({
     };
   }, [open]);
   if (!hats.length) return null;
+  // One division: no menu to open, just two buttons (Triton Gaming | the division).
+  if (variant === 'bar' && hats.length === 1) {
+    const only = hats[0];
+    return (
+      <div className={styles.toggle} role="group" aria-label="Switch between Triton Gaming and your division" style={{ ['--hat' as string]: only.accent } as React.CSSProperties}>
+        <button type="button" className={current === null ? styles.toggleOn : ''} aria-pressed={current === null} onClick={() => current !== null && onPick(null)}>
+          <Image src="/logos/tg_logo.png" alt="" width={18} height={18} className={styles.toggleLogo} />
+          <span>Triton Gaming</span>
+        </button>
+        <button
+          type="button"
+          className={current === only.slug ? styles.toggleOn : ''}
+          aria-pressed={current === only.slug}
+          onClick={() => current !== only.slug && onPick(only.slug)}
+        >
+          {only.logoUrl ? <Image src={only.logoUrl} alt="" width={18} height={18} className={styles.toggleLogo} unoptimized /> : null}
+          <span>{only.name}</span>
+        </button>
+      </div>
+    );
+  }
   const hat = hats.find((h) => h.slug === current) ?? null;
   const mark = (logo: string | null, name: string) =>
     logo ? <Image src={logo} alt="" width={28} height={28} className={styles.logo} unoptimized /> : <span className={styles.logoFallback}>{name.slice(0, 1)}</span>;
@@ -47,7 +71,11 @@ export default function DivisionSwitcher({
     if (slug !== current) onPick(slug);
   };
   return (
-    <div className={`${styles.wrap} ${compact ? styles.compact : ''}`} ref={box} style={hat ? ({ ['--hat' as string]: hat.accent } as React.CSSProperties) : undefined}>
+    <div
+      className={`${styles.wrap} ${compact ? styles.compact : ''} ${variant === 'bar' ? styles.barVariant : ''}`}
+      ref={box}
+      style={hat ? ({ ['--hat' as string]: hat.accent } as React.CSSProperties) : undefined}
+    >
       <button
         type="button"
         className={styles.btn}
