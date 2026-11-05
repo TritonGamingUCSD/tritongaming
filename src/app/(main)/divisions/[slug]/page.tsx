@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import { ExternalLink } from 'lucide-react';
 import { divisionLogoSrc, getDivisionBySlug, getDivisions } from '@/lib/members/divisions';
-import { resolveAvatarUrl, isVisible, SOCIAL_PLATFORMS, socialHref } from '@/lib/members/profile';
+import { SOCIAL_PLATFORMS, socialHref } from '@/lib/members/profile';
 import { markdownToDescription } from '@/lib/docs/markdown';
 import EventSocialEmbeds from '@/components/EventSocialEmbeds/EventSocialEmbeds';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
@@ -13,6 +13,8 @@ import { cleanBlocks } from '@/lib/site/pageBlocks';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import { ZineBand, BandHeader } from '@/components/ZineBand/ZineBand';
 import EditDivisionLink from './EditDivisionLink';
+import DivisionPeople from './DivisionPeople';
+import DivisionSubNav from './DivisionSubNav';
 import { getDivisionHubData } from './getDivisionHubData';
 import styles from './division.module.css';
 
@@ -40,7 +42,7 @@ export async function generateMetadata({ params }: Params) {
   return {
     title,
     description,
-    alternates: { canonical: `/divisions/${slug}` },
+    alternates: { canonical: `/${slug}` },
     openGraph: {
       title,
       description,
@@ -110,6 +112,7 @@ export default async function DivisionPage({ params }: Params) {
             </div>
           </div>
         </div>
+        <DivisionSubNav slug={division.slug} current="home" />
       </header>
 
       <ZineBand tone="navy" edge={false} label="About">
@@ -129,27 +132,9 @@ export default async function DivisionPage({ params }: Params) {
       )}
 
       {hub.leads.length > 0 && (
-        <ZineBand tone="ink" label="Division leads">
+        <ZineBand tone="ink" label="Division Heads">
           <BandHeader label="Say hi" title="Led by" />
-          <ul className={styles.rosterGrid}>
-            {hub.leads.map((lead, i) => {
-              const avatarUrl = resolveAvatarUrl(lead);
-              return (
-                <li key={lead.id} className={`${styles.rosterCard} ${i % 2 ? styles.tiltR : styles.tiltL}`}>
-                  {avatarUrl ? (
-                    <Image src={avatarUrl} alt="" width={56} height={56} className={styles.rosterAvatar} unoptimized referrerPolicy="no-referrer" style={{ objectFit: 'cover' }} />
-                  ) : (
-                    <span className={styles.rosterAvatar}>{(lead.display_name || '?')[0].toUpperCase()}</span>
-                  )}
-                  <span>
-                    <span className={styles.rosterName}>{lead.display_name || 'Anonymous'}</span>
-                    <span className={styles.rosterRole}>Division lead</span>
-                    {isVisible(lead.board_visibility, 'pronouns') && lead.pronouns && <span className={styles.rosterTag}>{lead.pronouns}</span>}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+          <DivisionPeople people={hub.leads} roleLabel="Division Head" />
         </ZineBand>
       )}
 

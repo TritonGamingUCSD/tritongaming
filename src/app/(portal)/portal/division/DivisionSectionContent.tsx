@@ -70,7 +70,7 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
         flush
         sub={page === 'home' ? 'The division’s home.' : hat.name}
         actions={
-          <Link href={`/divisions/${hat.slug}`} className={styles.publicLink}>
+          <Link href={`/${hat.slug}`} className={styles.publicLink}>
             Public page <ExternalLink size={13} aria-hidden="true" />
           </Link>
         }

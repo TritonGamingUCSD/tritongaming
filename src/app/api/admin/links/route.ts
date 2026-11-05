@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { logAudit } from '@/lib/notifications/audit';
 import { validateSlug, validateDestination, RESERVED_SLUGS } from '@/lib/site/shortLinks';
+import { isDivisionAddress } from '@/lib/divisions/slugConflicts';
 import { strictUser } from '@/lib/supabase/localAuth';
 
 async function authorize() {
@@ -40,6 +41,7 @@ export async function POST(request: Request) {
       .toLowerCase();
     return NextResponse.json({ error: RESERVED_SLUGS.has(raw) ? `"${raw}" is already used by the site.` : 'Use 1–48 letters, numbers, dashes or underscores.' }, { status: 400 });
   }
+  if (slug && (await isDivisionAddress(createServiceClient(), slug))) return NextResponse.json({ error: `"${slug}" is a division’s address.` }, { status: 409 });
   if (!destination) return NextResponse.json({ error: 'Destination must be a full http(s) link or a path starting with /.' }, { status: 400 });
 
   const svc = createServiceClient();
@@ -76,6 +78,7 @@ export async function PUT(request: Request) {
   if (body.slug !== undefined) {
     const slug = validateSlug(String(body.slug));
     if (!slug) return NextResponse.json({ error: 'Invalid or reserved short link name.' }, { status: 400 });
+    if (await isDivisionAddress(createServiceClient(), slug)) return NextResponse.json({ error: `"${slug}" is a division’s address.` }, { status: 409 });
     patch.slug = slug;
   }
   if (body.destination !== undefined) {

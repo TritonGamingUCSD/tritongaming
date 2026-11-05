@@ -6,6 +6,7 @@ import { hasCapability } from '@/lib/portal/capabilities';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { removeUnreferencedFiles, storageUrlsIn } from '@/lib/storage/removeFiles';
 import { slugify } from '@/lib/core/slug';
+import { divisionSlugProblem } from '@/lib/divisions/slugConflicts';
 import type { SocialEmbed } from '@/types/database';
 
 // Same shape as profiles.social_links (see lib/profile.ts) — a plain
@@ -96,6 +97,8 @@ export async function POST(request: Request) {
 
   const finalSlug = slugify(slug?.trim() || name);
   if (!finalSlug) return NextResponse.json({ error: 'Slug cannot be empty' }, { status: 400 });
+  const slugProblem = await divisionSlugProblem(createServiceClient(), finalSlug);
+  if (slugProblem) return NextResponse.json({ error: slugProblem }, { status: 409 });
 
   const { data, error } = await supabase
     .from('divisions')
@@ -163,6 +166,8 @@ export async function PATCH(request: Request) {
   if (slug !== undefined) {
     const finalSlug = slugify(slug);
     if (!finalSlug) return NextResponse.json({ error: 'Slug cannot be empty' }, { status: 400 });
+    const slugProblem = await divisionSlugProblem(createServiceClient(), finalSlug);
+    if (slugProblem) return NextResponse.json({ error: slugProblem }, { status: 409 });
     update.slug = finalSlug;
   }
 

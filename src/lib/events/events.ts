@@ -97,6 +97,28 @@ export async function getAllEvents(limit = DEFAULT_LIMIT): Promise<Event[]> {
   }
 }
 
+// A division's public events: the published ones it owns plus the ones it co-hosts (accepted invitations), newest first. Cached with the other event lists.
+export async function getDivisionEvents(divisionId: string): Promise<{ upcoming: Event[]; previous: Event[] }> {
+  try {
+    return await cachedEvents(['division', divisionId], async () => {
+      const { data: co, error: coErr } = await createServiceClient().from('event_cohosts').select('event_id').eq('division_id', divisionId).eq('status', 'accepted');
+      if (coErr) throw coErr;
+      const coIds = (co ?? []).map((c) => c.event_id as string);
+      const supabase = createPublicClient();
+      let q = supabase.from('events').select('*').eq('is_published', true).order('start_date', { ascending: false }).limit(100);
+      q = coIds.length ? q.or(`division_id.eq.${divisionId},id.in.(${coIds.join(',')})`) : q.eq('division_id', divisionId);
+      const { data, error } = await q;
+      if (error) throw error;
+      const all = (data ?? []).map(mapSupabaseEvent);
+      const now = Date.now();
+      const isUpcoming = (e: Event) => new Date(e.end_date || e.start_date).getTime() >= now;
+      return { upcoming: all.filter(isUpcoming).reverse(), previous: all.filter((e) => !isUpcoming(e)) };
+    });
+  } catch {
+    return { upcoming: [], previous: [] };
+  }
+}
+
 export async function getEventById(id: string): Promise<Event | null> {
   try {
     return await cachedEvents(['id', id], async () => {

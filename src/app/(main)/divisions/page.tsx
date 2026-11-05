@@ -67,7 +67,7 @@ export default async function DivisionsPage() {
                     )}
                   </div>
                   {/* Stretched link: the whole card opens the division; the Discord button sits above it. */}
-                  <Link href={`/divisions/${div.slug}`} className={styles.cardLink} aria-label={`View ${div.name}`} />
+                  <Link href={`/${div.slug}`} className={styles.cardLink} aria-label={`View ${div.name}`} />
                 </li>
               );
             })}

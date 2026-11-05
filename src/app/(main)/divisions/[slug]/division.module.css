@@ -46,3 +46,25 @@
 }
 
 .socialBtn img { filter: invert(1) brightness(0.1); }
+
+/* The division's inner pages: a short header with the page links */
+.subNav { display: flex; flex-wrap: wrap; gap: 0.5rem; max-width: 1000px; margin: 1.1rem auto 0; }
+.subLink { font-family: var(--font-futura-heavy); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; text-decoration: none; color: var(--paper); border: 2px solid var(--paper); border-radius: var(--radius-sm); padding: 0.4rem 0.8rem; }
+.subLink:hover { background: rgba(255, 255, 255, 0.12); }
+.subLinkOn { background: var(--yellow); color: var(--ink); border-color: var(--ink); }
+.subHero { position: relative; background: var(--navy); padding: var(--hero-padding-top) clamp(1rem, 5vw, 4rem) clamp(2rem, 4vw, 2.75rem); }
+.subHero::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 10px; background: repeating-linear-gradient(-45deg, var(--yellow) 0 14px, var(--ink) 14px 28px); }
+.subHeroInner { max-width: 1000px; margin: 0 auto; display: flex; align-items: center; gap: 1.2rem; }
+.subPlate { width: 4.5rem; height: 4.5rem; padding: 0.5rem; border-radius: 1rem; flex-shrink: 0; }
+.subLogoFallback { display: grid; place-items: center; width: 4.5rem; height: 4.5rem; flex-shrink: 0; border-radius: 1rem; background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); font-family: var(--font-brick); font-size: 2rem; }
+.subHeroText { min-width: 0; }
+.crumb { margin: 0 0 0.3rem; font-family: var(--font-renegare); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--yellow-text); }
+.crumb a { color: inherit; }
+.subTitle { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: clamp(1.6rem, 4.5vw, 2.6rem); line-height: 1.15; overflow-wrap: anywhere; }
+.eventGrid, .albumGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; }
+.albumCard { display: block; background: var(--paper); color: var(--ink); text-decoration: none; box-shadow: var(--hard-shadow-sm); overflow: hidden; }
+.albumImg { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.albumLabel { display: block; padding: 0.7rem 0.9rem; font-family: var(--font-futura-heavy); font-size: 0.9rem; }
+.albumEvent { display: block; font-family: var(--font-renegare); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #3a4764; margin-top: 0.2rem; }
+.emptyNote { margin: 0; text-align: center; opacity: 0.85; }
+.groupTitle { margin: 1.6rem 0 0.6rem; font-family: var(--font-renegare); font-size: 0.8rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--yellow-text); }

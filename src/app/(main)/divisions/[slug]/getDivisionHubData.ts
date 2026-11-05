@@ -15,6 +15,7 @@ export interface DivisionLead {
 
 interface LeadRow {
   user_id: string;
+  role: string;
   profile:
     | {
         id: string;
@@ -51,6 +52,8 @@ export function getDivisionHubData(divisionId: string) {
   // Cached briefly and shared between visitors; failures throw so they aren't cached.
   return unstable_cache(() => fetchDivisionHubData(divisionId), ['division-hub', divisionId], { revalidate: 3600, tags: ['divisions', 'board'] })().catch(() => ({
     leads: [] as DivisionLead[],
+    members: [] as DivisionLead[],
+    alumni: [] as DivisionLead[],
   }));
 }
 
@@ -60,29 +63,34 @@ async function fetchDivisionHubData(divisionId: string) {
   const [{ data: leadRows, error: leadsErr }] = await Promise.all([
     supabase
       .from('user_roles')
-      .select('user_id, profile:profiles(id, display_name, avatar_url, custom_avatar_url, org_title, gamer_tag, pronouns, show_on_board, board_visibility)')
-      .eq('role', 'division')
+      .select('user_id, role, profile:profiles(id, display_name, avatar_url, custom_avatar_url, org_title, gamer_tag, pronouns, show_on_board, board_visibility)')
+      .in('role', ['division', 'division_member', 'division_alumni'])
       .eq('division_id', divisionId),
   ]);
 
   if (leadsErr) throw leadsErr;
 
-  const leads: DivisionLead[] = ((leadRows ?? []) as unknown as LeadRow[])
-    .map((r) => (Array.isArray(r.profile) ? r.profile[0] : r.profile))
-    .filter((p): p is NonNullable<typeof p> => Boolean(p) && p!.show_on_board)
-    .map((p) => ({
-      id: p.id,
-      display_name: p.display_name,
-      avatar_url: p.avatar_url,
-      custom_avatar_url: p.custom_avatar_url,
-      org_title: p.org_title,
-      gamer_tag: p.gamer_tag,
-      pronouns: p.pronouns,
-      board_visibility: p.board_visibility,
-    }));
+  const rows = (leadRows ?? []) as unknown as LeadRow[];
+  const pick = (role: string): DivisionLead[] =>
+    rows
+      .filter((r) => r.role === role)
+      .map((r) => (Array.isArray(r.profile) ? r.profile[0] : r.profile))
+      .filter((p): p is NonNullable<typeof p> => Boolean(p) && p!.show_on_board)
+      .map((p) => ({
+        id: p.id,
+        display_name: p.display_name,
+        avatar_url: p.avatar_url,
+        custom_avatar_url: p.custom_avatar_url,
+        org_title: p.org_title,
+        gamer_tag: p.gamer_tag,
+        pronouns: p.pronouns,
+        board_visibility: p.board_visibility,
+      }));
 
   return {
-    leads,
+    leads: pick('division'),
+    members: pick('division_member'),
+    alumni: pick('division_alumni'),
   };
 }
 

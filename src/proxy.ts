@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { updateSession } from '@/lib/supabase/middleware-client';
 import { VIEW_USER_COOKIE } from '@/lib/portal/viewAs';
+import { RESERVED_SLUGS } from '@/lib/site/shortLinks';
+import { isDivisionSlug } from '@/lib/divisions/slugLookup';
 
 // While an admin is viewing the portal as another person it is view only: every request that would change something is refused here,
 // before it reaches any route. (The cookie is only honoured for a real admin; for anyone else a copied cookie just blocks their own edits.)
@@ -18,6 +20,11 @@ export async function proxy(request: NextRequest) {
   ) {
     return NextResponse.json({ error: 'View only: changes are turned off while you view the portal as someone else.' }, { status: 403 });
   }
+  // A division's public address: tritongaming.org/<division> (and /events, /team, /gallery under it) is served by the pages under /divisions/<division>. A short link or any other address passes straight through.
+  const pub = pathname.match(/^\/([a-z0-9][a-z0-9_-]*)(?:\/(events|team|gallery))?$/);
+  if (pub && !RESERVED_SLUGS.has(pub[1]) && (await isDivisionSlug(pub[1]))) {
+    return NextResponse.rewrite(new URL(`/divisions/${pub[1]}${pub[2] ? `/${pub[2]}` : ''}`, request.url));
+  }
   // Only the portal, sign-in and the APIs need the session checked and refreshed here. Public pages never read the login on the server
   // (the nav and the edit links check it in the browser), so they skip the Supabase round trip and can be cached.
   if (!NEEDS_SESSION.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
@@ -28,5 +35,5 @@ export async function proxy(request: NextRequest) {
 // invocation limits. So it is only attached to the paths that need it (the portal, sign-in and the APIs); every public page, picture and file
 // is served without running it at all. Keep this list in step with NEEDS_SESSION above.
 export const config = {
-  matcher: ['/portal/:path*', '/login', '/auth/:path*', '/api/:path*'],
+  matcher: ['/portal/:path*', '/login', '/auth/:path*', '/api/:path*', '/:slug([a-z0-9][a-z0-9_-]*)', '/:slug([a-z0-9][a-z0-9_-]*)/:page(events|team|gallery)'],
 };

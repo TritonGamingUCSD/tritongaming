@@ -36,11 +36,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.6,
     }));
 
-  const divisionRoutes: MetadataRoute.Sitemap = divisions.map((d) => ({
-    url: `${SITE_URL}/divisions/${d.slug}`,
-    changeFrequency: 'monthly',
-    priority: 0.6,
-  }));
+  // A division's address is /<slug>, with its events, team and gallery under it.
+  const divisionRoutes: MetadataRoute.Sitemap = divisions.flatMap((d) => [
+    { url: `${SITE_URL}/${d.slug}`, changeFrequency: 'monthly' as const, priority: 0.6 },
+    ...['events', 'team', 'gallery'].map((p) => ({ url: `${SITE_URL}/${d.slug}/${p}`, changeFrequency: 'weekly' as const, priority: 0.4 })),
+  ]);
 
   return [...staticRoutes, ...eventRoutes, ...divisionRoutes];
 }
