@@ -11,6 +11,9 @@ export interface HomeCard {
   action: string;
   /** Something this person cannot use yet: shown dashed, so they know it exists and who it is for. */
   locked?: boolean;
+  /** A big number in the pixel face (points) and, with `progress` (0 to 100), a bar to the next level. */
+  figure?: string;
+  progress?: number;
 }
 
 // Home's cards, all one pattern: the title on the left and a small status on the right, a hairline, one line of what is going on, and one link at the bottom.
@@ -24,6 +27,12 @@ export default function HomeCards({ cards }: { cards: HomeCard[] }) {
         <h2 className={styles.title}>{c.title}</h2>
         {c.status && <span className={styles.status}>{c.status}</span>}
       </div>
+      {c.figure && <p className={styles.figure}>{c.figure}</p>}
+      {c.progress !== undefined && (
+        <span className={styles.xp} role="img" aria-label={`${Math.round(c.progress)} percent of the way to the next level`}>
+          <span style={{ width: `${c.progress}%` }} />
+        </span>
+      )}
       <p className={styles.body}>{c.body}</p>
       <Link href={c.href} className={styles.action}>
         {c.action} →

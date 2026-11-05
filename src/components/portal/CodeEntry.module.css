@@ -1,4 +1,4 @@
-.wrap { position: relative; width: 100%; font-family: var(--font-mono, ui-monospace, monospace); font-size: 2rem; font-weight: 700; }
+.wrap { position: relative; width: 100%; font-family: var(--font-pixel), var(--font-mono, ui-monospace, monospace); font-size: 2rem; font-weight: 700; }
 .dark { font-size: 1.5rem; color: #fff; }   /* theme-ok */
 /* the real input: it keeps the site's box look and takes the typing, but its own text and caret are hidden (the six places drawn over it show the code) */
 .box { width: 100%; padding: 0.8rem 1rem; border-radius: 0.8rem; font: inherit; color: transparent; caret-color: transparent; text-align: center; letter-spacing: normal; }

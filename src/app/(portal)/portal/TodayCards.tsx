@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CalendarCheck, Hash, MessagesSquare, Newspaper } from 'lucide-react';
 import Link from '@/components/portal/PortalLink';
 import { formatPacificTime } from '@/lib/core/timezone';
 import { call } from '@/lib/ui/apiCall';
@@ -15,7 +14,6 @@ interface Today {
 interface Card {
   key: string;
   href: string;
-  icon: React.ReactNode;
   title: string;
   sub: string;
   tone?: 'now' | 'done';
@@ -50,23 +48,19 @@ export default function TodayCards() {
       cards.push({
         key: m.id,
         href: '/portal/meetings',
-        icon: <CalendarCheck />,
         title: 'You’re checked in',
         sub: `${m.title} · ${formatPacificTime(m.checked_in_at)}${place}`,
         tone: 'done',
       });
-    else if (m.accepting)
-      cards.push({ key: m.id, href: '/portal/meetings', icon: <Hash />, title: `Check in to ${m.title}`, sub: 'Type the code from the screen in the code box.', tone: 'now' });
-    else if (m.open)
-      cards.push({ key: m.id, href: '/portal/meetings', icon: <CalendarCheck />, title: m.title, sub: `Check-in opens at ${formatPacificTime(m.opens_at)}${place}` });
-    else cards.push({ key: m.id, href: '/portal/meetings', icon: <CalendarCheck />, title: m.title, sub: `Today at ${formatPacificTime(m.starts_at)}${place}` });
+    else if (m.accepting) cards.push({ key: m.id, href: '/portal/meetings', title: `Check in to ${m.title}`, sub: 'Type the code from the screen in the code box.', tone: 'now' });
+    else if (m.open) cards.push({ key: m.id, href: '/portal/meetings', title: m.title, sub: `Check-in opens at ${formatPacificTime(m.opens_at)}${place}` });
+    else cards.push({ key: m.id, href: '/portal/meetings', title: m.title, sub: `Today at ${formatPacificTime(m.starts_at)}${place}` });
   }
   const n = data.newspaper;
   if (n && n.waiting > 0)
     cards.push({
       key: 'news',
       href: n.first ? `/portal/newspaper/${n.first}/send` : '/portal/newspaper',
-      icon: <Newspaper />,
       title: `${n.waiting} ${n.waiting === 1 ? 'issue is' : 'issues are'} waiting for your check`,
       sub: 'Read it, send a test, then send it or send it back.',
       tone: 'now',
@@ -75,7 +69,6 @@ export default function TodayCards() {
     cards.push({
       key: 'news-mine',
       href: '/portal/newspaper',
-      icon: <Newspaper />,
       title: `${n.mine} of your ${n.mine === 1 ? 'issue is' : 'issues are'} with a sender`,
       sub: 'It goes out once someone else checks and sends it.',
     });
@@ -83,26 +76,31 @@ export default function TodayCards() {
     cards.push({
       key: `qa-${q.slug}`,
       href: `/portal/qa/${q.slug}`,
-      icon: <MessagesSquare />,
       title: `${q.pending} ${q.pending === 1 ? 'question' : 'questions'} waiting in ${q.name}`,
       sub: 'Approve them so the room can see them.',
       tone: 'now',
     });
   if (!cards.length) return null;
+  const open = cards.filter((c) => c.tone !== 'done').length;
+  // A quest list: each thing waiting is a row with a box to tick; a finished one (checked in) is ticked off.
   return (
-    <section className={styles.today} aria-label="Today">
-      <h2 className={styles.heading}>Today</h2>
-      <ul className={styles.cards}>
+    <section className={styles.today} aria-label="Needs you">
+      <div className={styles.head}>
+        <h2 className={styles.heading}>Needs you</h2>
+        <span className={styles.count}>{open === 0 ? 'All done' : `${open} open`}</span>
+      </div>
+      <ul className={styles.rows}>
         {cards.map((c) => (
           <li key={c.key}>
-            <Link href={c.href} className={`${styles.card} ${c.tone === 'now' ? styles.now : ''} ${c.tone === 'done' ? styles.done : ''}`}>
-              <span className={styles.icon} aria-hidden="true">
-                {c.icon}
+            <Link href={c.href} className={`${styles.row} ${c.tone === 'now' ? styles.now : ''} ${c.tone === 'done' ? styles.done : ''}`}>
+              <span className={styles.box} aria-hidden="true">
+                {c.tone === 'done' ? '✓' : ''}
               </span>
               <span className={styles.text}>
                 <b>{c.title}</b>
                 <small>{c.sub}</small>
               </span>
+              <span className={styles.go}>{c.tone === 'done' ? 'Details' : 'Open'} →</span>
             </Link>
           </li>
         ))}
