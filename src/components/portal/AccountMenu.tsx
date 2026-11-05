@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from '@/components/portal/PortalLink';
-import { saveTheme } from '@/lib/portal/themeScript';
+import { Monitor, Moon, Sun } from 'lucide-react';
+import { getThemeChoice, setThemeChoice, type ThemeChoice } from '@/lib/portal/themeScript';
 import SignOutButton from './SignOutButton';
 import type { HubIdentity } from './hubTypes';
 import styles from './AccountMenu.module.css';
@@ -11,10 +12,10 @@ import styles from './AccountMenu.module.css';
 // The picture in the top bar and what opens from it, in plain groups: who you are (picture, level, points, roles), a few quick settings, admin tools, then where to go (profile, help, the public site) and Sign out apart at the bottom.
 export default function AccountMenu({ identity, viewAs, onProfile }: { identity: HubIdentity; viewAs?: ReactNode; onProfile: () => void }) {
   const [open, setOpen] = useState(false);
-  const [dark, setDark] = useState(true);
+  const [mode, setMode] = useState<ThemeChoice>('system');
   const box = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    setDark(document.documentElement.getAttribute('data-pp-theme') !== 'light');
+    setMode(getThemeChoice());
   }, [open]);
   useEffect(() => {
     if (!open) return;
@@ -92,22 +93,33 @@ export default function AccountMenu({ identity, viewAs, onProfile }: { identity:
           </div>
 
           <p className={styles.group}>Settings</p>
-          <button
-            type="button"
-            role="menuitemcheckbox"
-            aria-checked={dark}
-            className={styles.row}
-            onClick={() => {
-              const next = dark ? 'light' : 'dark';
-              setDark(!dark);
-              saveTheme(next);
-            }}
-          >
-            <span>Dark mode</span>
-            <span className={`${styles.switch} ${dark ? styles.on : ''}`} aria-hidden="true">
-              <span />
+          <div className={styles.row} role="group" aria-label="Appearance">
+            <span>Appearance</span>
+            <span className={styles.modes}>
+              {(
+                [
+                  ['light', 'Light', Sun],
+                  ['system', 'Match device', Monitor],
+                  ['dark', 'Dark', Moon],
+                ] as const
+              ).map(([id, label, Icon]) => (
+                <button
+                  key={id}
+                  type="button"
+                  className={`${styles.mode} ${mode === id ? styles.modeOn : ''}`}
+                  aria-pressed={mode === id}
+                  aria-label={label}
+                  title={label}
+                  onClick={() => {
+                    setMode(id);
+                    setThemeChoice(id);
+                  }}
+                >
+                  <Icon size={16} strokeWidth={2} aria-hidden="true" />
+                </button>
+              ))}
             </span>
-          </button>
+          </div>
           <Link href="/portal/profile/notifications" className={styles.row} onClick={() => setOpen(false)}>
             <span>Notifications</span>
             <span className={styles.hint}>Manage</span>

@@ -26,11 +26,10 @@
 .hint { font-size: 0.88rem; font-weight: 500; color: var(--p-accent-text); }
 :global([data-pp-theme='dark']) .hint { color: var(--pp-chrome-accent); }
 .badge { min-width: 1.4rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--yellow); color: #011941; font-size: 0.8rem; font-weight: 700; text-align: center; } /* theme-ok */
-.switch { position: relative; width: 2.5rem; height: 1.4rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.28); flex-shrink: 0; transition: background 0.15s; }
-.switch > span { position: absolute; top: 3px; left: 3px; width: calc(1.4rem - 6px); height: calc(1.4rem - 6px); border-radius: 50%; background: #fff; transition: transform 0.15s; } /* theme-ok */
-.switch.on { background: var(--pp-ok); }
-.switch.on > span { transform: translateX(1.1rem); }
+.modes { display: inline-flex; gap: 0.15rem; padding: 0.2rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 999px; }
+.mode { display: grid; place-items: center; width: 2.1rem; height: 1.8rem; padding: 0; border: 0; border-radius: 999px; background: none; color: rgba(var(--pp-ink-rgb), 0.75); cursor: pointer; }
+.mode:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
+.modeOn { background: rgba(var(--pp-ink-rgb), 0.16); color: var(--pp-ink); }
 .viewAs { padding: 0.2rem 0.4rem; }
 .signOut { display: block; width: calc(100% - 0.8rem); margin: 0.7rem 0.4rem 0.2rem; padding: 0.6rem 0.7rem; border: 1px solid color-mix(in srgb, var(--pp-bad) 55%, transparent); border-radius: 6px; background: none; color: var(--pp-bad); font: inherit; font-size: 0.97rem; font-weight: 700; text-align: center; cursor: pointer; }
 .signOut:hover { background: color-mix(in srgb, var(--pp-bad) 10%, transparent); }
-@media (prefers-reduced-motion: reduce) { .switch, .switch > span { transition: none; } }
