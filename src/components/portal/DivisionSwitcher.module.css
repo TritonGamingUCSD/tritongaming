@@ -1,0 +1,22 @@
+/* The hat picker, drawn for the navy sidebar (and, with .compact, for the paper phone screen). */
+.wrap { position: relative; }
+.btn { display: flex; align-items: center; gap: 0.6rem; width: 100%; padding: 0.4rem 0.55rem; border: 1px solid rgba(255, 255, 255, 0.22); border-radius: 8px; background: rgba(255, 255, 255, 0.06); color: #fff; font: inherit; cursor: pointer; text-align: left; } /* theme-ok: on the navy sidebar */
+.btn:hover { background: rgba(255, 255, 255, 0.12); } /* theme-ok */
+.logo, .logoFallback { flex: none; width: 28px; height: 28px; border-radius: 6px; object-fit: contain; background: #fff; } /* theme-ok: a logo sits on white */
+.logoFallback { display: grid; place-items: center; color: #011941; font-weight: 700; background: var(--hat, #ffc72c); } /* theme-ok */
+.text { display: grid; min-width: 0; flex: 1; line-height: 1.15; }
+.text strong { font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.text small { font-size: 0.72rem; opacity: 0.7; }
+.chev { flex: none; opacity: 0.7; }
+.list { position: absolute; z-index: 60; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 0.3rem; list-style: none; display: grid; gap: 2px; border-radius: 10px; background: var(--pp-card); color: var(--pp-ink); border: 1px solid rgba(var(--pp-ink-rgb), 0.25); box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35); max-height: 60vh; overflow: auto; }
+.item { display: flex; align-items: center; gap: 0.55rem; width: 100%; padding: 0.4rem 0.5rem; border: 0; border-radius: 6px; background: none; color: inherit; font: inherit; font-size: 0.88rem; cursor: pointer; text-align: left; }
+.item:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
+.item span { display: grid; flex: 1; min-width: 0; line-height: 1.15; }
+.item small { font-size: 0.72rem; opacity: 0.7; }
+.on { background: rgba(var(--pp-ink-rgb), 0.1); font-weight: 600; }
+.logoSm, .logoFallbackSm { flex: none; width: 24px; height: 24px; border-radius: 5px; object-fit: contain; background: #fff; } /* theme-ok */
+.logoFallbackSm { display: grid; place-items: center; color: #011941; font-weight: 700; font-size: 0.8rem; background: #ffc72c; } /* theme-ok */
+.dot { flex: none; width: 10px; height: 10px; border-radius: 50%; }
+/* On a phone the picker sits on the paper background. */
+.compact .btn { border-color: rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); }
+.compact .btn:hover { background: var(--pp-card); }

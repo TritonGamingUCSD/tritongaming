@@ -23,6 +23,19 @@ export interface HubSection {
   railHidden?: boolean;
 }
 
+/** A division the person can act in (the switcher's "hats"): its look, their level in it, and how big it is. */
+export interface DivisionHat {
+  id: string;
+  slug: string;
+  name: string;
+  logoUrl: string | null;
+  /** The division's accent color (a hex from the palette). */
+  accent: string;
+  /** Their level there; 'staff' is exec and admin, who can act in every division. */
+  level: 'head' | 'member' | 'alumni' | 'staff';
+  counts: { heads: number; members: number; alumni: number };
+}
+
 export interface HubIdentity {
   name: string;
   avatarUrl: string | null;
@@ -36,6 +49,8 @@ export interface HubIdentity {
   /** The help entry of the account menu: its name ("Help inbox" for people who answer) and how many are waiting. */
   help?: { label: string; waiting: number };
   roles?: { label: string; color: string }[];
+  /** The divisions this person can switch to (none: no switcher). Only filled while the division features are visible to them. */
+  divisions?: DivisionHat[];
 }
 
 export interface GroupedSection {

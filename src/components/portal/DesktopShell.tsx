@@ -10,12 +10,14 @@ import NotificationBell from './NotificationBell';
 import PortalCrumbs from './PortalCrumbs';
 import styles from './PortalHub.module.css';
 import Image from 'next/image';
+import DivisionSwitcher from './DivisionSwitcher';
+import { divisionPagesFor } from '@/lib/divisions/pages';
 import AccountMenu from './AccountMenu';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { familyOf } from '@/lib/portal/families';
 import AreaPixelIcon from './AreaPixelIcon';
 import { DASHBOARD_ACCENT, GROUP_ACCENT, GROUP_LABEL } from './hubConstants';
-import { GroupedSection, HubFrame, HubIdentity, HubSection } from './hubTypes';
+import { GroupedSection, HubFrame, HubIdentity, HubSection, DivisionHat } from './hubTypes';
 import { HomeGroups } from './HomeGroups';
 
 // The desktop layout: a sidebar that's on screen at all times — for the
@@ -37,6 +39,9 @@ export function DesktopShell({
   frame,
   navNonce,
   forYou,
+  divisionHat = null,
+  divisionPage = 'home',
+  openDivision = () => {},
 }: {
   frame?: HubFrame;
   identity?: HubIdentity;
@@ -48,6 +53,10 @@ export function DesktopShell({
   close: () => void;
   navNonce: number;
   forYou: Set<string>;
+  /** The division whose pages are open (its sidebar shows instead of the club's), or null for Triton Gaming. */
+  divisionHat?: DivisionHat | null;
+  divisionPage?: string;
+  openDivision?: (slug: string, page?: string) => void;
 }) {
   // Icon-only sidebar: remembered per browser. Read after mount so server and first client render match.
   const [collapsed, setCollapsed] = useState(false);
@@ -187,55 +196,78 @@ export function DesktopShell({
             <small>Member portal</small>
           </span>
         </button>
-        <nav ref={navRef} className={styles.railNav} aria-label="Portal sections">
-          <span ref={glideRef} className={styles.railGlide} aria-hidden="true" />
-          {groupedSections
-            .map(({ group, items: all }) => ({ group, items: collapseFamilies(all.filter((s) => !s.railHidden)) }))
-            .filter(({ items }) => items.length > 0)
-            .map(({ group, items }) => (
-              <div
-                key={group}
-                className={`${styles.railGroup} ${isFolded() ? styles.railGroupFolded : ''}`}
-                style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: isFolded() ? 0 : items.length }}
-              >
-                {groupedSections.length > 1 && group !== 'Overview' && items.length > 1 && (
-                  <div className={styles.railGroupLabel}>
-                    <span className={styles.railGroupPixel} aria-hidden="true">
-                      <AreaPixelIcon group={group} />
-                    </span>
-                    <span className={styles.railGroupText}>{GROUP_LABEL[group]}</span>
-                  </div>
-                )}
-                {!isFolded() &&
-                  items.map((s) => (
-                    <button
-                      key={s.id}
-                      data-rail-active={isOpen(s) ? '' : undefined}
-                      className={`${styles.railItem} ${isOpen(s) ? styles.railItemActive : ''} ${groupedSections.length > 1 && group !== 'Overview' && items.length > 1 ? styles.railItemNested : ''}`}
-                      onClick={() => open(s.id)}
-                      aria-current={isOpen(s) ? 'page' : undefined}
-                      title={s.label}
-                      aria-label={collapsed ? s.label : undefined}
-                    >
-                      {items.length === 1 && group !== 'Overview' && group !== 'Admin' ? (
-                        <span className={styles.railGroupPixel} aria-hidden="true">
-                          <AreaPixelIcon group={group} />
-                        </span>
-                      ) : (
-                        <span className={styles.railMono} aria-hidden="true">
-                          {s.label.charAt(0)}
-                        </span>
-                      )}
-                      <span className={styles.railLabel}>
-                        {s.label}
-                        {peekOf(s) && <small className={styles.railPeekLine}>{peekOf(s)}</small>}
+        {identity?.divisions && identity.divisions.length > 0 && (
+          <div className={styles.railSwitch}>
+            <DivisionSwitcher hats={identity.divisions} current={divisionHat?.slug ?? null} onPick={(slug) => (slug ? openDivision(slug) : close())} />
+          </div>
+        )}
+        {divisionHat ? (
+          <nav className={styles.railNav} aria-label={`${divisionHat.name} pages`} style={{ ['--hat' as string]: divisionHat.accent }}>
+            <div className={styles.divNav}>
+              {divisionPagesFor(divisionHat.level).map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className={`${styles.railItem} ${styles.divItem} ${divisionPage === p.id ? styles.railItemActive : ''} ${divisionPage === p.id ? styles.divItemOn : ''}`}
+                  onClick={() => openDivision(divisionHat.slug, p.id)}
+                  aria-current={divisionPage === p.id ? 'page' : undefined}
+                >
+                  <span className={styles.railLabel}>{p.label}</span>
+                </button>
+              ))}
+            </div>
+          </nav>
+        ) : (
+          <nav ref={navRef} className={styles.railNav} aria-label="Portal sections">
+            <span ref={glideRef} className={styles.railGlide} aria-hidden="true" />
+            {groupedSections
+              .map(({ group, items: all }) => ({ group, items: collapseFamilies(all.filter((s) => !s.railHidden)) }))
+              .filter(({ items }) => items.length > 0)
+              .map(({ group, items }) => (
+                <div
+                  key={group}
+                  className={`${styles.railGroup} ${isFolded() ? styles.railGroupFolded : ''}`}
+                  style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: isFolded() ? 0 : items.length }}
+                >
+                  {groupedSections.length > 1 && group !== 'Overview' && items.length > 1 && (
+                    <div className={styles.railGroupLabel}>
+                      <span className={styles.railGroupPixel} aria-hidden="true">
+                        <AreaPixelIcon group={group} />
                       </span>
-                      {s.badge !== undefined && s.badge !== 0 && <span className={styles.railBadge}>{s.badge}</span>}
-                    </button>
-                  ))}
-              </div>
-            ))}
-        </nav>
+                      <span className={styles.railGroupText}>{GROUP_LABEL[group]}</span>
+                    </div>
+                  )}
+                  {!isFolded() &&
+                    items.map((s) => (
+                      <button
+                        key={s.id}
+                        data-rail-active={isOpen(s) ? '' : undefined}
+                        className={`${styles.railItem} ${isOpen(s) ? styles.railItemActive : ''} ${groupedSections.length > 1 && group !== 'Overview' && items.length > 1 ? styles.railItemNested : ''}`}
+                        onClick={() => open(s.id)}
+                        aria-current={isOpen(s) ? 'page' : undefined}
+                        title={s.label}
+                        aria-label={collapsed ? s.label : undefined}
+                      >
+                        {items.length === 1 && group !== 'Overview' && group !== 'Admin' ? (
+                          <span className={styles.railGroupPixel} aria-hidden="true">
+                            <AreaPixelIcon group={group} />
+                          </span>
+                        ) : (
+                          <span className={styles.railMono} aria-hidden="true">
+                            {s.label.charAt(0)}
+                          </span>
+                        )}
+                        <span className={styles.railLabel}>
+                          {s.label}
+                          {peekOf(s) && <small className={styles.railPeekLine}>{peekOf(s)}</small>}
+                        </span>
+                        {s.badge !== undefined && s.badge !== 0 && <span className={styles.railBadge}>{s.badge}</span>}
+                      </button>
+                    ))}
+                </div>
+              ))}
+          </nav>
+        )}
         {groupedSections.some((g) => g.items.some((s) => s.id === 'all')) && (
           <button type="button" className={`${styles.railPin} ${styles.railAll}`} onClick={() => open('all')} aria-current={openId === 'all' ? 'page' : undefined}>
             <ListTree size={16} aria-hidden="true" />

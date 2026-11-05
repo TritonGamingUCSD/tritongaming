@@ -37,8 +37,10 @@ import { CONTENT_BLOCKS } from '@/lib/site/content-blocks';
 import { PACIFIC_TZ, pacificDayKey, pacificDaysUntil, pacificToday } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { sectionLabel } from '@/lib/portal/sections';
-import { bannerShown, loadSiteSettings } from '@/lib/portal/siteSettings';
+import { bannerShown, divisionsVisible, loadSiteSettings } from '@/lib/portal/siteSettings';
 import PortalBanner from '@/components/portal/PortalBanner';
+import { loadDivisionHats } from '@/lib/divisions/hats';
+import DivisionSectionContent from './division/DivisionSectionContent';
 import AllFunctions from './all/AllFunctions';
 import { getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
 import type { HubSection } from '@/components/portal/hubTypes';
@@ -249,6 +251,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
     loadShoutout(createServiceClient()).catch(() => null),
     loadSiteSettings(createServiceClient()),
   ]);
+  // The divisions this person can switch to. Until an admin turns the division features on, only admins (really, not when viewing as someone) get any; exec and admin see every division.
+  const divisionHats = divisionsVisible(
+    realRoles.some((r) => r.role === 'admin'),
+    siteSettings,
+  )
+    ? await loadDivisionHats(createServiceClient(), roles).catch(() => [])
+    : [];
   // Who is looking, and as whom: the lazy sections keep their data per view, so a changed "view as" never shows another view's data.
   const scope = `${profile.id}|${viewAs ?? ''}|${viewingUser?.id ?? ''}`;
 
@@ -711,6 +720,20 @@ export default async function PortalDashboard({ searchParams }: Props) {
     content: <AllFunctions items={sections.map((s) => ({ id: s.id, label: s.label, description: s.description }))} pinned={homePins} />,
   });
 
+  if (divisionHats.length > 0) {
+    sections.push({
+      id: 'division',
+      icon: <CircleHelp size={28} strokeWidth={1.5} aria-hidden="true" />,
+      label: sectionLabel('division'),
+      railHidden: true,
+      homeExclude: true,
+      dockExclude: true,
+      description: 'Your division’s pages',
+      group: 'Team',
+      content: <DivisionSectionContent hats={divisionHats} />,
+    });
+  }
+
   const avatarUrl = resolveAvatarUrl(profile);
   // Every role the person holds (shown as chips in the sidebar), highest first.
   // Roles for display only: permissions granted straight to the person (Admin → Access) are not roles.
@@ -1046,6 +1069,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
               avatarUrl,
               roleLabel: primaryRoleLabel,
               roles: roleChips,
+              divisions: divisionHats,
               level: memberTier?.name,
               points: pointsData?.balance,
               toNext: pointsData && memberNext ? `${(memberNext.min - pointsData.lifetimeEarned).toLocaleString()} points to ${memberNext.name}` : undefined,

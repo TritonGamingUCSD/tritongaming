@@ -1157,3 +1157,15 @@
   .railPeekLine { white-space: nowrap !important; overflow: hidden; text-overflow: ellipsis; max-width: 11.5rem; }
   .rail .railNav .railItem:has(.railPeekLine) .railLabel { white-space: nowrap; }
 }
+
+/* The division switcher under the logo, and a division's own page list in the sidebar (a thin line in the division's color marks the hat). */
+@media (min-width: 900px) {
+  .railSwitch { padding: 0.15rem 0.1rem 0.35rem; }
+  .divNav { display: grid; gap: 2px; border-left: 3px solid var(--hat, #ffc72c); margin-left: 0.2rem; padding-left: 0.3rem; }
+  .divItem { width: 100%; }
+  .rail .railNav .divItem.divItemOn { background: #fff !important; color: #011941; box-shadow: inset 4px 0 0 var(--hat, #ffc72c); } /* theme-ok: the open page is a light bar on the navy, like the club's pages */
+  .rail .railNav .divItem.divItemOn .railLabel { color: #011941; } /* theme-ok */
+}
+
+/* On a phone the division switcher is the first thing in the More sheet. */
+.sheetSwitch { padding: 0 0.9rem 0.6rem; }

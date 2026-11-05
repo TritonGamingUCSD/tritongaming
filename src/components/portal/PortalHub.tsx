@@ -24,6 +24,7 @@ import { GroupedSection, HubFrame, HubIdentity, HubSection } from './hubTypes';
 import { useIsDesktop } from './useIsDesktop';
 import { DesktopShell } from './DesktopShell';
 import { PlainShell } from './PlainShell';
+import DivisionSwitcher from './DivisionSwitcher';
 
 export default function PortalHub({
   sections: sectionsProp,
@@ -217,6 +218,16 @@ export default function PortalHub({
     [setParams, openId],
   );
 
+  // A division's pages: /portal/division/<slug>/<page> (the first page, home, has no page word). Opening one is opening the Division section with that address.
+  const openDivision = useCallback(
+    (slug: string, page?: string) => {
+      if (!confirmDiscardUnsaved()) return;
+      setOpenId('division');
+      setParams({ section: 'division', ...CLEAR_NAV, tab: slug, subtab: page && page !== 'home' ? page : null });
+    },
+    [setParams],
+  );
+
   const close = useCallback(() => {
     if (!confirmDiscardUnsaved()) return;
     setOpenId(null);
@@ -224,6 +235,9 @@ export default function PortalHub({
   }, [setParams]);
 
   const openSection = sections.find((s) => s.id === openId) ?? null;
+  // Which division's pages are open (the address is /portal/division/<slug>/<page>), if any.
+  const divisionHat = openId === 'division' ? ((identity?.divisions ?? []).find((h) => h.slug === searchParams.get('tab')) ?? null) : null;
+  const divisionPage = searchParams.get('subtab') || 'home';
 
   // A link to a page this person's roles don't include (a UCSD student or someone with no role following a shared
   // link, say) used to just land on home with no explanation. Point them to Help, which explains how to get the role.
@@ -413,6 +427,9 @@ export default function PortalHub({
         frame={frameWithNotice}
         navNonce={navNonce}
         forYou={forYou}
+        divisionHat={divisionHat}
+        divisionPage={divisionPage}
+        openDivision={openDivision}
       />
     );
   }
@@ -548,6 +565,20 @@ export default function PortalHub({
               </div>
               {/* The list scrolls inside the sheet; the sheet itself (handle included) is what moves when it is swiped down. */}
               <div className={styles.moreSheetScroll} ref={sheetEl}>
+                {identity?.divisions && identity.divisions.length > 0 && (
+                  <div className={styles.sheetSwitch}>
+                    <DivisionSwitcher
+                      compact
+                      hats={identity.divisions}
+                      current={divisionHat?.slug ?? null}
+                      onPick={(slug) => {
+                        setMoreOpen(false);
+                        if (slug) openDivision(slug);
+                        else close();
+                      }}
+                    />
+                  </div>
+                )}
                 {railFooter && <div className={styles.sheetFooter}>{railFooter}</div>}
                 <div className={mob.list}>{tilesInOrder(moreSections).map((s) => renderTile(s, true))}</div>
               </div>

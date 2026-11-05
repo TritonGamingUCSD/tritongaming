@@ -108,6 +108,8 @@ export const SECTIONS: SectionDef[] = [
   },
   { id: 'docs', label: 'Documentation', search: { hint: 'How-to guides', keywords: ['guide', 'help', 'how to', 'docs'], caps: ['view_docs'] } },
   { id: 'qrcode', label: 'QR Studio', search: { id: 'qr', hint: 'Design branded QR codes', keywords: ['qr', 'code', 'generator'], caps: ['generate_qr_codes'] } },
+  // A division's own pages: /portal/division/<division address>/<page>. Opened with the switcher, never listed with the club's pages; admin-only until the division features are turned on.
+  { id: 'division', label: 'Division' },
   { id: 'all', label: 'All Functions', search: { hint: 'Every page you can open, A to Z', keywords: ['all', 'pages', 'list', 'a-z', 'index', 'everything'] } },
   { id: 'help', label: 'Help', search: { hint: 'Ask a question or report a problem', keywords: ['support', 'question', 'bug', 'problem', 'ticket'] } },
   {
