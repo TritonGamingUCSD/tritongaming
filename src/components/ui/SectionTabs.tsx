@@ -65,6 +65,11 @@ export default function SectionTabs<T extends string>({
     (bar.current?.querySelector('[aria-selected="true"]') as HTMLElement | null)?.scrollIntoView({ inline: 'center', block: 'nearest' });
   }, [overflow, value]);
 
+  const slot = useSyncExternalStore(
+    () => () => {},
+    () => (top && variant !== 'segmented' ? document.querySelector<HTMLElement>('[data-top-tabs]') : null),
+    () => null,
+  );
   // The line under the open tab (or, on the small toggle, the pill behind the open option) slides to the next one (set straight on the element, so no extra render).
   const line = useRef<HTMLSpanElement>(null);
   useLayoutEffect(() => {
@@ -76,7 +81,7 @@ export default function SectionTabs<T extends string>({
       ln.style.height = `${el.offsetHeight}px`;
       ln.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop}px)`;
     } else ln.style.transform = `translateX(${el.offsetLeft}px)`;
-  }, [value, tabs, overflow, variant]);
+  }, [value, tabs, overflow, variant, slot]);
 
   // Changing tab slides the page content a few pixels in the direction of travel; changing a view (the small toggle) fades it in with a small rise. The content is what comes after the bar (or, when the tabs sit in the strip under the top bar, the page below it).
   function slideTo(id: T, index: number) {
@@ -126,11 +131,6 @@ export default function SectionTabs<T extends string>({
   }
 
   const picker = variant !== 'segmented' && tabs.length > 3;
-  const slot = useSyncExternalStore(
-    () => () => {},
-    () => (top && variant !== 'segmented' ? document.querySelector<HTMLElement>('[data-top-tabs]') : null),
-    () => null,
-  );
   const out = (
     <>
       {picker && (

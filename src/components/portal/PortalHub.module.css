@@ -1078,14 +1078,6 @@
 }
 @media (prefers-reduced-motion: reduce) { .railGlide { transition: none; } }
 
-/* A page's own tabs sit in a strip under the top bar (the same navy), so they stay in view while the page scrolls. Empty when a page has none. */
-@media (min-width: 900px) {
-  .tabStrip { display: block; padding: 0 clamp(1.5rem, 3vw, 3rem); background: #243f63; border-bottom: 1px solid rgba(255, 255, 255, 0.14); --pp-ink: #ffffff; --pp-ink-rgb: 255, 255, 255; --pp-card: #243f63; --frame-accent: #ffc72c; --tab-line: #ffc72c; } /* theme-ok: the navy bar */
-  :global([data-pp-theme='dark']) .tabStrip { background: #17263d; --pp-card: #17263d; } /* theme-ok */
-  .tabStrip:empty { display: none; }
-  .tabStrip > div { margin-bottom: 0; border-bottom: 0; }
-  .tabStrip .picker { display: none; }
-}
 
 /* Yellow back in (the club's own color) so the portal is not only blue: yellow area headings in the sidebar, a yellow line under the top bar, yellow on the open page's marker. The area's own color stays on the small tab beside the page name. */
 @media (min-width: 900px) {
@@ -1119,4 +1111,11 @@
   .tabStrip { padding-inline: clamp(1.5rem, 3vw, 3rem); }
   .tabStrip > div { max-width: 1440px; margin-inline: auto; }
   .tabStrip > div > button:first-of-type { margin-left: -1rem; }
+}
+
+/* A page's own tabs sit in a light strip under the top bar (the page's own paper, with a thin line under it), so they read as part of the page and not as a second navy bar. */
+@media (min-width: 900px) {
+  .tabStrip { display: block; padding-top: 0.3rem; padding-bottom: 0; background: var(--pp-paper); position: relative; z-index: 2; }
+  .tabStrip:empty { display: none; }
+  .tabStrip > div { margin-bottom: 0; }
 }
