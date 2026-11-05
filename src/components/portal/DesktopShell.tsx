@@ -96,6 +96,24 @@ export function DesktopShell({
   const navRef = useRef<HTMLElement>(null);
   const glideRef = useRef<HTMLSpanElement>(null);
   const activeId = openSection?.id;
+  // A yellow line runs under the top bar for a moment when the page changes (one loading signal for every move).
+  const [running, setRunning] = useState(false);
+  useEffect(() => {
+    let t: number | undefined;
+    const on = () => {
+      setRunning(true);
+      window.clearTimeout(t);
+      t = window.setTimeout(() => setRunning(false), 900);
+    };
+    window.addEventListener('tg:nav-start', on);
+    return () => {
+      window.removeEventListener('tg:nav-start', on);
+      window.clearTimeout(t);
+    };
+  }, []);
+  useEffect(() => {
+    window.dispatchEvent(new Event('tg:nav-start'));
+  }, [activeId]);
   useLayoutEffect(() => {
     const nav = navRef.current;
     const g = glideRef.current;
@@ -231,6 +249,7 @@ export function DesktopShell({
             {identity && <AccountMenu identity={identity} viewAs={frame?.viewAs} onProfile={() => open('profile')} />}
           </div>
         </header>
+        <div className={styles.navLine} data-running={running ? '' : undefined} aria-hidden="true" />
         <div className={styles.tabStrip} data-top-tabs />
         {frame?.banners && <div className={styles.frameBanners}>{frame.banners}</div>}
         <div

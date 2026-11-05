@@ -13,3 +13,11 @@
 @media (max-width: 640px) { .sub { display: none; } }
 .phoneFold { display: none; }
 @media (max-width: 640px) { .phoneFold { display: block; margin-top: 0.35rem; } }
+
+/* The page title reveals with a quick pixel wipe (stepped, once); faint pixels drift slowly behind the header. */
+.title { animation: titleWipe 0.55s steps(14, end) both; }
+@keyframes titleWipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+.header { position: relative; isolation: isolate; }
+.header::before { content: ''; position: absolute; z-index: -1; inset: -1.2rem -1rem -0.6rem; pointer-events: none; background-image: radial-gradient(rgba(var(--pp-ink-rgb), 0.09) 1.6px, transparent 1.7px); background-size: 16px 16px; -webkit-mask-image: linear-gradient(90deg, #000, transparent 70%); mask-image: linear-gradient(90deg, #000, transparent 70%); animation: pixelDrift 40s linear infinite; }
+@keyframes pixelDrift { to { background-position: 160px 80px; } }
+@media (prefers-reduced-motion: reduce) { .title, .header::before { animation: none; } }

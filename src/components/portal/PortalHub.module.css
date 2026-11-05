@@ -1096,3 +1096,11 @@
   .railLogo .railLogoText small { color: #ffd966; opacity: 1; } /* theme-ok */
   .railLogoOn .railLogoText small { color: #8a6500; } /* theme-ok: darker yellow on the white highlight */
 }
+
+/* The loading line: a thin yellow bar under the top bar that sweeps across once when the page changes. */
+.navLine { height: 3px; margin-bottom: -3px; position: relative; z-index: 6; overflow: hidden; pointer-events: none; opacity: 0; }
+.navLine::after { content: ''; position: absolute; inset: 0; width: 40%; background: var(--yellow); transform: translateX(-100%); } /* theme-ok */
+.navLine[data-running] { opacity: 1; }
+.navLine[data-running]::after { animation: navSweep 0.9s ease-in-out both; }
+@keyframes navSweep { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+@media (prefers-reduced-motion: reduce) { .navLine[data-running]::after { animation: none; width: 100%; transform: none; } }
