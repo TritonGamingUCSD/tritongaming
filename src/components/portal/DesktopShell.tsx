@@ -3,11 +3,10 @@
 import { ReactNode } from 'react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Hash } from 'lucide-react';
+import { ChevronDown, Pin, PinOff } from 'lucide-react';
 import CodeBox from '@/components/portal/CodeBox';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
-import CodeButton from './CodeButton';
 import PortalCrumbs from './PortalCrumbs';
 import styles from './PortalHub.module.css';
 import { smallIcon } from './smallIcon';
@@ -68,6 +67,45 @@ export function DesktopShell({
       }
       return n;
     });
+  // The last pages opened, kept in this browser: the three before the current one are listed under the areas.
+  const recentRaw = useSyncExternalStore(
+    (cb) => {
+      window.addEventListener('tg:recent', cb);
+      return () => window.removeEventListener('tg:recent', cb);
+    },
+    () => {
+      try {
+        return localStorage.getItem('tg_recent_sections') ?? '[]';
+      } catch {
+        return '[]';
+      }
+    },
+    () => '[]',
+  );
+  const openId0 = openSection?.id;
+  useEffect(() => {
+    if (!openId0) return;
+    try {
+      const cur = JSON.parse(localStorage.getItem('tg_recent_sections') ?? '[]') as string[];
+      const next = [openId0, ...cur.filter((x) => x !== openId0)].slice(0, 6);
+      localStorage.setItem('tg_recent_sections', JSON.stringify(next));
+      window.dispatchEvent(new Event('tg:recent'));
+    } catch {
+      /* not remembered */
+    }
+  }, [openId0]);
+  const allItems = groupedSections.flatMap((g) => g.items).filter((x) => !x.railHidden);
+  const recent = (() => {
+    try {
+      return (JSON.parse(recentRaw) as string[])
+        .filter((id) => id !== openId0)
+        .map((id) => allItems.find((x) => x.id === id))
+        .filter((x): x is HubSection => !!x)
+        .slice(0, 3);
+    } catch {
+      return [];
+    }
+  })();
   // One area open at a time keeps the sidebar short: the area of the open page, or the one just clicked. Single-page groups have nothing to fold.
   const [expanded, setExpanded] = useState<string | null>(null);
   const openGroup = openSection?.group ?? null;
@@ -129,15 +167,6 @@ export function DesktopShell({
             <small>Member portal</small>
           </span>
         </button>
-        {/* the code box: a meeting's, a ticket's, a Trivia game's or a poll's code can be typed on any page */}
-        <div className={styles.railCode} title="Enter a code: a meeting check-in, a ticket, a Trivia game or a poll">
-          <span className={styles.railCodeIcon} aria-hidden="true">
-            <Hash />
-          </span>
-          <div className={styles.railCodeBox}>
-            <CodeBox compact />
-          </div>
-        </div>
         <nav className={styles.railNav} aria-label="Portal sections">
           {groupedSections
             .map(({ group, items: all }) => ({ group, items: all.filter((s) => !s.railHidden) }))
@@ -187,20 +216,24 @@ export function DesktopShell({
               </div>
             ))}
         </nav>
+        {recent.length > 0 && (
+          <div className={styles.railRecent}>
+            <p className={styles.railRecentLabel}>Recent</p>
+            {recent.map((r) => (
+              <button key={r.id} type="button" className={styles.railRecentItem} onClick={() => open(r.id)}>
+                {r.label}
+              </button>
+            ))}
+          </div>
+        )}
+        <button type="button" className={styles.railPin} onClick={toggleCollapsed} aria-pressed={!collapsed} title={collapsed ? 'Pin the menu open' : 'Let the menu hide'}>
+          {collapsed ? <Pin size={16} aria-hidden="true" /> : <PinOff size={16} aria-hidden="true" />}
+          <span>{collapsed ? 'Pin menu' : 'Unpin menu'}</span>
+        </button>
       </aside>
 
       <div className={styles.frameMain}>
         <header className={styles.topBar}>
-          <button
-            type="button"
-            className={styles.topToggle}
-            onClick={toggleCollapsed}
-            aria-pressed={collapsed}
-            aria-label={collapsed ? 'Show menu' : 'Hide menu'}
-            title={collapsed ? 'Show menu' : 'Hide menu'}
-          >
-            {collapsed ? 'Menu' : 'Hide menu'}
-          </button>
           {openSection ? (
             <div className={styles.topTitle}>
               <span className={styles.topTab} aria-hidden="true" />
@@ -217,10 +250,12 @@ export function DesktopShell({
             </div>
           )}
           <div className={styles.topRight}>
+            <div className={styles.topCode} title="Enter a code: a meeting check-in, a ticket, a Trivia game or a poll">
+              <CodeBox compact />
+            </div>
             <div className={styles.topSearch}>
               <PortalSearch compact />
             </div>
-            {collapsed && <CodeButton />}
             <NotificationBell inline />
             {identity && <AccountMenu identity={identity} viewAs={frame?.viewAs} onProfile={() => open('profile')} />}
           </div>
