@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getDivisionBySlug, getDivisions } from '@/lib/members/divisions';
-import { ZineBand, BandHeader } from '@/components/ZineBand/ZineBand';
+import { ZineBand } from '@/components/ZineBand/ZineBand';
 import DivisionSubHero from '../DivisionSubHero';
 import { Camera } from 'lucide-react';
 import { getDivisionEvents } from '@/lib/events/events';
