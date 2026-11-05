@@ -111,3 +111,24 @@
   .bar { margin-bottom: 0.9rem; }
   .segmented { margin-bottom: 0.75rem; }
 }
+
+/* Tabs: flat text with a colored line under the open one (the area's color), a quiet baseline, and the line slides between tabs. */
+.bar:not(.segmented) { position: relative; gap: 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.22); }
+.bar:not(.segmented) .tab { border: 0; border-radius: 0; margin-bottom: 0; background: none; padding: 0.75rem 1rem; color: rgba(var(--pp-ink-rgb), 0.72); }
+.bar:not(.segmented) .tab:hover { background: none; color: var(--pp-ink); }
+.bar:not(.segmented) .active { background: none; border: 0; color: var(--pp-ink); }
+.bar:not(.segmented) .active::after, .bar:not(.segmented) .tab::after { display: none; }
+.line { position: absolute; left: 0; bottom: -1px; height: 3px; width: 0; background: var(--frame-accent, var(--p-accent)); transition: transform 0.22s ease, width 0.22s ease; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .line { transition: none; } }
+.picker { display: none; }
+
+/* Toggles (Grid and List, Coming up and History): a small light pill, clearly a view switch and not a page. */
+.segmented { border-width: 1px; border-color: rgba(var(--pp-ink-rgb), 0.28); border-radius: 999px; background: transparent; padding: 0.15rem; }
+.segmented .tab { border-radius: 999px; padding: 0.25rem 0.85rem; font-size: 0.88rem; font-weight: 600; color: rgba(var(--pp-ink-rgb), 0.75); }
+.segmented .active { background: rgba(var(--pp-ink-rgb), 0.12); color: var(--pp-ink); }
+
+/* Phones: a bar with more than three tabs becomes one dropdown showing the open tab (nothing hidden off the edge). */
+@media (max-width: 640px) {
+  .picker { display: block; width: 100%; margin-bottom: 0.9rem; padding: 0.7rem 0.9rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 6px; background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 1rem; font-weight: 700; }
+  .hasPicker { display: none; }
+}

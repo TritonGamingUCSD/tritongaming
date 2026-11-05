@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import styles from './SectionTabs.module.css';
 
 export interface SectionTab<T extends string = string> {
@@ -61,6 +61,16 @@ export default function SectionTabs<T extends string>({
     (bar.current?.querySelector('[aria-selected="true"]') as HTMLElement | null)?.scrollIntoView({ inline: 'center', block: 'nearest' });
   }, [overflow, value]);
 
+  // The line under the open tab slides to the next one (set straight on the element, so no extra render).
+  const line = useRef<HTMLSpanElement>(null);
+  useLayoutEffect(() => {
+    const el = bar.current?.querySelector<HTMLElement>('[aria-selected="true"]');
+    const ln = line.current;
+    if (!el || !ln) return;
+    ln.style.width = `${el.offsetWidth}px`;
+    ln.style.transform = `translateX(${el.offsetLeft}px)`;
+  }, [value, tabs, overflow, variant]);
+
   function onKeyDown(e: React.KeyboardEvent, index: number) {
     let next = index;
     if (e.key === 'ArrowRight') next = (index + 1) % tabs.length;
@@ -73,33 +83,53 @@ export default function SectionTabs<T extends string>({
     (e.currentTarget.parentElement?.children[next] as HTMLElement | undefined)?.focus();
   }
 
+  const picker = variant !== 'segmented' && tabs.length > 3;
   return (
-    <div ref={bar} data-overflow={overflow ? '1' : undefined} className={`${styles.bar} ${variant === 'segmented' ? styles.segmented : ''}`} role="tablist" aria-label={label}>
-      {tabs.map((t, i) => {
-        const active = t.id === value;
-        return (
-          <button
-            key={t.id}
-            type="button"
-            role="tab"
-            id={`tab-${t.id}`}
-            aria-selected={active}
-            tabIndex={active ? 0 : -1}
-            className={`${styles.tab} ${active ? styles.active : ''}`}
-            onClick={() => onChange(t.id)}
-            onKeyDown={(e) => onKeyDown(e, i)}
-          >
-            {t.icon && variant !== 'segmented' && (
-              <span className={styles.icon} aria-hidden="true">
-                {t.icon}
-              </span>
-            )}
-            <span>{titleCase(t.label)}</span>
-            {t.badge !== undefined && t.badge > 0 && <span className={styles.badge}>{t.badge}</span>}
-            {t.count !== undefined && <span className={styles.count}>{t.count}</span>}
-          </button>
-        );
-      })}
-    </div>
+    <>
+      {picker && (
+        <select className={styles.picker} aria-label={label} value={value} onChange={(e) => onChange(e.target.value as T)}>
+          {tabs.map((t) => (
+            <option key={t.id} value={t.id}>
+              {titleCase(t.label)}
+              {t.badge ? ` (${t.badge})` : ''}
+            </option>
+          ))}
+        </select>
+      )}
+      <div
+        ref={bar}
+        data-overflow={overflow ? '1' : undefined}
+        className={`${styles.bar} ${variant === 'segmented' ? styles.segmented : ''} ${picker ? styles.hasPicker : ''}`}
+        role="tablist"
+        aria-label={label}
+      >
+        {tabs.map((t, i) => {
+          const active = t.id === value;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              id={`tab-${t.id}`}
+              aria-selected={active}
+              tabIndex={active ? 0 : -1}
+              className={`${styles.tab} ${active ? styles.active : ''}`}
+              onClick={() => onChange(t.id)}
+              onKeyDown={(e) => onKeyDown(e, i)}
+            >
+              {t.icon && variant !== 'segmented' && (
+                <span className={styles.icon} aria-hidden="true">
+                  {t.icon}
+                </span>
+              )}
+              <span>{titleCase(t.label)}</span>
+              {t.badge !== undefined && t.badge > 0 && <span className={styles.badge}>{t.badge}</span>}
+              {t.count !== undefined && <span className={styles.count}>{t.count}</span>}
+            </button>
+          );
+        })}
+        {variant !== 'segmented' && <span ref={line} className={styles.line} aria-hidden="true" />}
+      </div>
+    </>
   );
 }
