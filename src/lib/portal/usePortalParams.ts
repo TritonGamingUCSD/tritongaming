@@ -71,3 +71,15 @@ export function useLiveParams(): URLSearchParams {
   if (embedded) return empty;
   return hydrated ? mergedPortalParams(window.location.pathname, window.location.search) : new URLSearchParams(server ?? subscribed.toString());
 }
+
+/** Which Live Tools items belong on this screen: inside a division's page only that division's, in the club's own pages only the club's (even for exec and admin, who may open both). */
+export function useLiveSide(): (row: object) => boolean {
+  const division = useEmbeddedDivision();
+  return useCallback(
+    (row) => {
+      const owner = (row as { division_id?: string | null }).division_id;
+      return division ? owner === division : !owner;
+    },
+    [division],
+  );
+}

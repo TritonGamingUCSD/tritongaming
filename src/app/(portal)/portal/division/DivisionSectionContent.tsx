@@ -13,7 +13,7 @@ import type { DivisionHat } from '@/components/portal/hubTypes';
 import { DIVISION_PAGES, divisionPagesFor, isDivisionPageId } from '@/lib/divisions/pages';
 import DivisionEvents from './DivisionEvents';
 import DivisionCheckIn from './DivisionCheckIn';
-import DivisionLive from './DivisionLive';
+import DivisionLive, { isLiveTool } from './DivisionLive';
 import DivisionPageEditor from './DivisionPageEditor';
 import DivisionQr from './DivisionQr';
 import styles from './division.module.css';
@@ -51,7 +51,8 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
   }, []);
   const params = { get: (k: string) => (k === 'tab' ? loc.tab : k === 'subtab' ? loc.subtab : null) };
   const hat = hats.find((h) => h.slug === params.get('tab')) ?? null;
-  const asked = params.get('subtab');
+  // (the old address /<division>/live[/<tool>] opens the tool)
+  const asked = params.get('subtab') === 'live' ? (isLiveTool(loc.detail) ? loc.detail : 'trivia') : params.get('subtab');
   if (!hat) {
     return (
       <div className={styles.page}>
@@ -72,16 +73,19 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
   const label = DIVISION_PAGES.find((p) => p.id === page)?.label ?? 'Home';
   return (
     <div className={styles.page} style={{ ['--hat' as string]: hat.accent }}>
-      <SectionHeader
-        title={page === 'home' ? hat.name : `${label}`}
-        flush
-        sub={page === 'home' ? 'The division’s home.' : hat.name}
-        actions={
-          <Link href={`/${hat.slug}`} className={styles.publicLink}>
-            Public page <ExternalLink size={13} aria-hidden="true" />
-          </Link>
-        }
-      />
+      {/* The Live Tools bring a title of their own, so the division's is left out there (it would read twice). */}
+      {!isLiveTool(page) && (
+        <SectionHeader
+          title={page === 'home' ? hat.name : `${label}`}
+          flush
+          sub={page === 'home' ? 'The division’s home.' : hat.name}
+          actions={
+            <Link href={`/${hat.slug}`} className={styles.publicLink}>
+              Public page <ExternalLink size={13} aria-hidden="true" />
+            </Link>
+          }
+        />
+      )}
       {/* A phone has no sidebar: the division's pages are a row of buttons under the title. */}
       <nav className={styles.phoneTabs} aria-label={`${hat.name} pages`}>
         {allowed.map((p) => (
@@ -103,10 +107,10 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
       {page === 'members' && <Roster hat={hat} />}
       {page === 'events' && <DivisionEvents hat={hat} />}
       {page === 'check-in' && <DivisionCheckIn hat={hat} />}
-      {page === 'live' && <DivisionLive hat={hat} tool={loc.detail} />}
+      {isLiveTool(page) && <DivisionLive hat={hat} tool={page} />}
       {page === 'page' && <DivisionPageEditor hat={hat} />}
       {page === 'qr' && <DivisionQr hat={hat} />}
-      {page !== 'home' && page !== 'members' && page !== 'events' && page !== 'check-in' && page !== 'live' && page !== 'page' && page !== 'qr' && (
+      {page !== 'home' && page !== 'members' && page !== 'events' && page !== 'check-in' && !isLiveTool(page) && page !== 'page' && page !== 'qr' && (
         <div className={styles.soon}>
           <p>
             <strong>{label}</strong> for {hat.name} is coming in a later step of the division project. It is only visible to admins until everything is finished.

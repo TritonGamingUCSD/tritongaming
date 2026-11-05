@@ -1,5 +1,6 @@
 'use client';
 
+import { useLiveSide } from '@/lib/portal/usePortalParams';
 import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
 import { useCallback, useEffect, useState } from 'react';
 import { Camera, Copy, Plus, Settings2 } from 'lucide-react';
@@ -16,10 +17,11 @@ import styles from './photobooth.module.css';
 export function BoothsTab({ onNew, onOpen, onRun }: { onNew: () => void; onOpen: (booth: string) => void; onRun: (booth: string) => void }) {
   const division = useEmbeddedDivision();
   const [booths, setBooths] = useState<BoothRow[] | null>(null);
+  const side = useLiveSide();
   const [error, setError] = useState('');
   const load = useCallback(async () => {
     const r = await call<{ booths: BoothRow[] }>('/api/photobooth/booths');
-    if (r.ok) setBooths(r.data.booths);
+    if (r.ok) setBooths(r.data.booths.filter(side));
     else setError(r.error);
   }, []);
   useEffect(() => {

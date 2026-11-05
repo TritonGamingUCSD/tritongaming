@@ -1,5 +1,6 @@
 'use client';
 
+import { useLiveSide } from '@/lib/portal/usePortalParams';
 import { useLiveOwner } from '@/components/portal/LiveOwnerPicker';
 import EventSelect from '@/components/portal/EventSelect';
 import EmptyState from '@/components/ui/EmptyState';
@@ -20,11 +21,12 @@ import polls from '../polls/polls.module.css';
 // The Q&A sessions. A card shows how it stands (waiting, shown, answered) and its code; clicking it opens the console where questions are approved.
 export default function QaList({ onOpen }: { onOpen: (slug: string) => void }) {
   const [list, setList] = useState<QaCard[] | null>(null);
+  const side = useLiveSide();
   const [error, setError] = useState('');
   const [making, setMaking] = useState(false);
   const load = useCallback(async () => {
     const r = await call<{ sessions: QaCard[] }>('/api/qa');
-    if (r.ok) setList(r.data.sessions);
+    if (r.ok) setList(r.data.sessions.filter(side));
     else setError(r.error);
   }, []);
   useEffect(() => {

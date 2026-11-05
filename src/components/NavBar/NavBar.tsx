@@ -11,6 +11,9 @@ import { resolveAvatarUrl } from '@/lib/members/profile';
 import styles from './NavBar.module.css';
 import { DISCORD_URL } from '@/lib/site/links';
 
+// One color per cartridge (the site's accent palette).
+const CART_COLORS = ['#ffc72c', '#7db4ea', '#ef6a5a', '#5dbb8a', '#b48be8', '#f08a24', '#4fb3e8', '#e870a8']; // theme-ok
+
 const NAV_HINT_KEY = 'tg_nav_portal_hint';
 
 const NAV_LINKS = [
@@ -200,15 +203,26 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
 
         {/* A laptop or desktop gets a regular navbar with every page in view; phones and tablets keep the Menu button and the poster menu below. */}
         <nav className={styles.deskNav} aria-label="Site pages">
-          {NAV_LINKS.map(({ href, label }, i) => {
-            const on = pathname.startsWith(href);
-            return (
-              <Link key={href} href={href} className={`${styles.deskLink} ${on ? styles.deskLinkOn : ''}`} aria-current={on ? 'page' : undefined} title={`Press ${i + 1}`}>
-                <kbd className={styles.key}>{i + 1}</kbd>
-                {label}
-              </Link>
-            );
-          })}
+          <span className={styles.shelf}>
+            {NAV_LINKS.map(({ href, label }, i) => {
+              const on = pathname.startsWith(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`${styles.cart} ${on ? styles.cartOn : ''}`}
+                  style={{ '--cart': CART_COLORS[i % CART_COLORS.length] } as React.CSSProperties}
+                  aria-current={on ? 'page' : undefined}
+                  title={`Press ${i + 1}`}
+                >
+                  <span className={styles.cartNum} aria-hidden="true">
+                    {i + 1}
+                  </span>
+                  <span className={styles.cartName}>{label}</span>
+                </Link>
+              );
+            })}
+          </span>
           {ticker && <span className={styles.deskTicker}>{ticker}</span>}
         </nav>
 

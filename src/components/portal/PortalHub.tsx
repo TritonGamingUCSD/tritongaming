@@ -420,7 +420,7 @@ export default function PortalHub({
   // With a division's hat on, the phone's bottom bar and More sheet are that division's: Home (its home), the two pages this person uses most (check-in, events, Live Tools or the roster, by what their level may open),
   // Scan in the middle for Members and Heads, and More with the rest of its pages. The club's sections and the other hats are one tap away in the switcher at the top of More.
   const hatPages = divisionHat ? divisionPagesFor(divisionHat.level).filter((p) => p.id !== 'home') : [];
-  const hatDockPages = (['check-in', 'events', 'live', 'members'] as const)
+  const hatDockPages = (['check-in', 'events', 'trivia', 'members'] as const)
     .map((id) => hatPages.find((p) => p.id === id))
     .filter((p): p is (typeof hatPages)[number] => !!p)
     .slice(0, 2);
@@ -428,7 +428,7 @@ export default function PortalHub({
   const HAT_ICON: Record<string, React.ReactNode> = {
     events: <CalendarDays size={20} strokeWidth={1.9} aria-hidden="true" />,
     'check-in': <CheckCheck size={20} strokeWidth={1.9} aria-hidden="true" />,
-    live: <Gamepad2 size={20} strokeWidth={1.9} aria-hidden="true" />,
+    trivia: <Gamepad2 size={20} strokeWidth={1.9} aria-hidden="true" />,
     members: <Users size={20} strokeWidth={1.9} aria-hidden="true" />,
     docs: <FileText size={20} strokeWidth={1.9} aria-hidden="true" />,
     page: <Globe size={20} strokeWidth={1.9} aria-hidden="true" />,

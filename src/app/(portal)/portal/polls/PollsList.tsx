@@ -1,5 +1,6 @@
 'use client';
 
+import { useLiveSide } from '@/lib/portal/usePortalParams';
 import { useLiveOwner } from '@/components/portal/LiveOwnerPicker';
 import EventSelect from '@/components/portal/EventSelect';
 import EmptyState from '@/components/ui/EmptyState';
@@ -20,11 +21,12 @@ import styles from './polls.module.css';
 // The polls. A card shows a poll's pictures, how it is voted, its state and how many people have voted; Run It opens it on the big screen, Set Up changes it.
 export default function PollsList({ onOpen, onRun }: { onOpen: (slug: string) => void; onRun: (slug: string) => void }) {
   const [polls, setPolls] = useState<PollCard[] | null>(null);
+  const side = useLiveSide();
   const [error, setError] = useState('');
   const [making, setMaking] = useState(false);
   const load = useCallback(async () => {
     const r = await call<{ polls: PollCard[] }>('/api/polls');
-    if (r.ok) setPolls(r.data.polls);
+    if (r.ok) setPolls(r.data.polls.filter(side));
     else setError(r.error);
   }, []);
   useEffect(() => {

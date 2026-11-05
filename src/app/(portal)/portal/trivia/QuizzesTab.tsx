@@ -1,5 +1,6 @@
 'use client';
 
+import { useLiveSide } from '@/lib/portal/usePortalParams';
 import { useLiveOwner } from '@/components/portal/LiveOwnerPicker';
 import { useCallback, useEffect, useState } from 'react';
 import { Lock, Pencil, Plus } from 'lucide-react';
@@ -22,12 +23,13 @@ export async function startGame(quiz: string): Promise<{ code: string } | { erro
 export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, view?: 'questions' | 'games') => void; onHost: (code: string) => void }) {
   const { owner: division, picker } = useLiveOwner();
   const [quizzes, setQuizzes] = useState<QuizRow[] | null>(null);
+  const side = useLiveSide();
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState('');
   const load = useCallback(async () => {
     const r = await call<{ quizzes: QuizRow[] }>('GET', '/api/trivia/quizzes');
-    if (r.ok) setQuizzes(r.data.quizzes);
+    if (r.ok) setQuizzes(r.data.quizzes.filter(side));
     else setError(r.error);
   }, []);
   useEffect(() => {
