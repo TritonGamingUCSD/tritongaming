@@ -18,5 +18,3 @@
 :global([data-pp-theme='dark']) .go { color: var(--pp-chrome-accent); }
 @media (max-width: 520px) { .row { grid-template-columns: auto minmax(0, 1fr); } .go { grid-column: 2; } }
 
-.today { border-top: 3px solid var(--yellow); } /* theme-ok */
-.head { border-bottom-color: color-mix(in srgb, var(--yellow) 85%, transparent); }

@@ -42,10 +42,7 @@
 @keyframes cardUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .grid > li { animation: none; } }
 
-/* Cards that open something tilt a degree or so on hover; and below the first screen they fade up as they scroll into view (where the browser supports scroll-driven animation). */
-.link { transition: transform 0.18s ease, border-color 0.15s ease; }
-.card.link:hover { transform: perspective(800px) rotateX(1.2deg) rotateY(-1.5deg) translateY(-1px); }
-@media (max-width: 899px), (prefers-reduced-motion: reduce) { .card.link:hover { transform: none; } }
+.link { transition: border-color 0.15s ease; }
 @supports (animation-timeline: view()) {
   .grid > li { animation: cardUp linear both; animation-timeline: view(); animation-range: entry 0% entry 40%; animation-delay: 0ms !important; }
 }

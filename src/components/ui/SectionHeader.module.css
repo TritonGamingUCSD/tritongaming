@@ -3,7 +3,7 @@
 .flush { margin-bottom: 0; }
 .text { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; flex: 1 1 18rem; }
 .title { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: clamp(1.7rem, 3.6vw, 2.6rem); line-height: 1.05; color: var(--pp-ink); text-wrap: balance; }
-.title::after { content: ''; display: block; width: 3.6rem; height: 0.3rem; margin-top: 0.55rem; background: repeating-linear-gradient(90deg, var(--yellow) 0 0.3rem, transparent 0.3rem 0.4rem); } /* a short line of pixels */
+.title::after { content: ''; display: block; width: 3.6rem; height: 0.3rem; margin-top: 0.55rem; background: var(--yellow); border-radius: 2px; }
 .sub { margin: 0; display: flex; align-items: flex-start; gap: 0.4rem; font-size: 0.95rem; line-height: 1.45; color: rgba(var(--pp-ink-rgb), 0.85); }
 .actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; flex: none; }
 @media (max-width: 640px) { .actions { width: 100%; } .title { font-size: 1.6rem; } }

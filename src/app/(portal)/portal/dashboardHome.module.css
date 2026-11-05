@@ -178,5 +178,3 @@
 .name { margin-left: 0.3em; }
 .term { display: inline-block; margin-left: 1rem; }
 
-/* The panels on Home share the yellow top edge. */
-.panel, .note { border-top: 3px solid var(--yellow); } /* theme-ok */
