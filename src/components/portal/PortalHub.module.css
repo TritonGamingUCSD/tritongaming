@@ -1143,7 +1143,7 @@
 }
 
 @media (min-width: 900px) {
-  .rail .railNav .railItem:has(.railPeekLine) { max-height: none !important; flex: 0 0 auto !important; min-height: 44px; }
+  .rail .railNav .railItem:has(.railPeekLine) { height: auto !important; max-height: none !important; flex: 0 0 auto !important; min-height: 46px !important; overflow: visible; }
   .rail .railNav .railItem:has(.railPeekLine) .railLabel { overflow: visible; white-space: normal; line-height: 1.25; }
 }
 
