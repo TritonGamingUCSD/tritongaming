@@ -9,3 +9,9 @@
 .row:hover { border-color: rgba(var(--pp-ink-rgb), 0.35); }
 .row strong { font-size: 0.95rem; }
 .row span { font-size: 0.82rem; opacity: 0.75; }
+
+.item { position: relative; }
+.item .row { padding-right: 3rem; }
+.star { position: absolute; top: 50%; right: 0.5rem; transform: translateY(-50%); display: grid; place-items: center; width: 2.2rem; height: 2.2rem; border: 0; border-radius: 50%; background: none; color: var(--pp-ink); opacity: 0.55; cursor: pointer; }
+.star:hover { opacity: 1; }
+.starOn { opacity: 1; color: #b8860b; }

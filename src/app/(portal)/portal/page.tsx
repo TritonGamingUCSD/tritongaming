@@ -63,7 +63,7 @@ import { getTier, nextTier } from '@/lib/members/tiers';
 import QRStudioClient from './qrcode/QRStudioClient';
 import MeetingsSectionContent from './meetings/MeetingsSectionContent';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { loadHomeActivity, loadHomeAttention } from '@/lib/portal/homeExtras';
+import { loadHomeActivity, loadHomeAttention, loadHomePins, loadShoutout } from '@/lib/portal/homeExtras';
 import { fetchLinkedEmails } from '@/lib/members/linkedEmails';
 import { loadTodos } from '@/lib/portal/todos';
 import TodoCard from './TodoCard';
@@ -225,6 +225,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
     homeLinks,
     homeAttention,
     homeActivity,
+    homePins,
+    homeShoutout,
   ] = await Promise.all([
     getTicketsData(profile.id, roles),
     canCheckin ? getCheckinData() : Promise.resolve(null),
@@ -240,6 +242,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
     canViewDocs ? getDashboardLinks(profile.id).catch(() => []) : Promise.resolve([]),
     loadHomeAttention(createServiceClient(), profile.id).catch(() => []),
     loadHomeActivity(createServiceClient(), canViewDocs).catch(() => []),
+    loadHomePins(createServiceClient(), profile.id).catch(() => [] as string[]),
+    loadShoutout(createServiceClient()).catch(() => null),
   ]);
   // Who is looking, and as whom: the lazy sections keep their data per view, so a changed "view as" never shows another view's data.
   const scope = `${profile.id}|${viewAs ?? ''}|${viewingUser?.id ?? ''}`;
@@ -700,7 +704,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     dockExclude: true,
     description: 'Every page you can open, A to Z',
     group: 'Yours',
-    content: <AllFunctions items={sections.map((s) => ({ id: s.id, label: s.label, description: s.description }))} />,
+    content: <AllFunctions items={sections.map((s) => ({ id: s.id, label: s.label, description: s.description }))} pinned={homePins} />,
   });
 
   const avatarUrl = resolveAvatarUrl(profile);
@@ -936,6 +940,9 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 compact={!isTgMember(roles)}
                 logistics={hasCapability(roles, 'view_logistics') || canManageLogistics}
                 cards={homeCards}
+                pins={sections.filter((s) => homePins.includes(s.id)).map((s) => ({ id: s.id, label: s.label }))}
+                shoutout={homeShoutout}
+                canShout={roles.some((r) => r.role === 'exec' || r.role === 'admin')}
               />
             }
             desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}

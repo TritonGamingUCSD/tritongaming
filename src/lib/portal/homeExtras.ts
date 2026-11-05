@@ -52,3 +52,21 @@ export async function loadHomeActivity(svc: SupabaseClient, canViewDocs: boolean
   ];
   return items.sort((a, b) => b.at.localeCompare(a.at)).slice(0, 6);
 }
+
+// The pages this person starred on All Functions, oldest first.
+export async function loadHomePins(svc: SupabaseClient, userId: string): Promise<string[]> {
+  const { data } = await svc.from('portal_pins').select('section_id').eq('user_id', userId).order('created_at', { ascending: true });
+  return (data ?? []).map((r) => r.section_id as string);
+}
+
+// The one message from exec that is showing on everyone's Home (the newest that has not run out).
+export interface HomeShoutout {
+  id: string;
+  message: string;
+  link_url: string | null;
+}
+export async function loadShoutout(svc: SupabaseClient): Promise<HomeShoutout | null> {
+  const { data } = await svc.from('home_shoutouts').select('id, message, link_url').gt('expires_at', new Date().toISOString()).order('created_at', { ascending: false }).limit(1);
+  const r = data?.[0];
+  return r ? { id: r.id as string, message: r.message as string, link_url: (r.link_url as string | null) ?? null } : null;
+}

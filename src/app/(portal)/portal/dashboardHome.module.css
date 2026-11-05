@@ -178,3 +178,8 @@
 .name { margin-left: 0.3em; }
 .term { display: inline-block; margin-left: 1rem; }
 
+
+.pins { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.pinsLabel { font-size: 0.8rem; font-weight: 700; color: var(--pp-ink); opacity: 0.7; margin-right: 0.2rem; }
+.pinChip { padding: 0.3rem 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 999px; background: var(--pp-card); color: var(--pp-ink); font-size: 0.88rem; font-weight: 600; text-decoration: none; }
+.pinChip:hover { border-color: rgba(var(--pp-ink-rgb), 0.5); }

@@ -6,8 +6,9 @@ import { PACIFIC_TZ, formatPacificTime } from '@/lib/core/timezone';
 import PortalSearch from '@/components/portal/PortalSearch';
 import DashboardCode from './DashboardCode';
 import EventCountdown from './EventCountdown';
-import type { HomeActivity, HomeAttention } from '@/lib/portal/homeExtras';
+import type { HomeActivity, HomeAttention, HomeShoutout } from '@/lib/portal/homeExtras';
 import RoleAsk from './RoleAsk';
+import ShoutoutCard from './ShoutoutCard';
 import LogisticsDayCard from './LogisticsDayCard';
 import TodayCards from './TodayCards';
 import HomeCards, { type HomeCard } from './HomeCards';
@@ -83,7 +84,13 @@ export function DashboardBody({
   logistics = false,
   cards = [],
   term = null,
+  pins = [],
+  shoutout = null,
+  canShout = false,
 }: {
+  pins?: { id: string; label: string }[];
+  shoutout?: HomeShoutout | null;
+  canShout?: boolean;
   term?: TermInfoData | null;
   cards?: HomeCard[];
   logistics?: boolean;
@@ -99,6 +106,7 @@ export function DashboardBody({
   return (
     <div className={styles.body}>
       {showRoleAsk && !compact && <RoleAsk />}
+      <ShoutoutCard shoutout={shoutout} canPost={canShout} />
       <RequiredBanner hrefBase="/portal/docs?id=" />
       <TodayCards />
       {logistics && <LogisticsDayCard />}
@@ -106,6 +114,16 @@ export function DashboardBody({
         <NextEventHero event={event} />
         {term && <TermProgress term={term} />}
       </div>
+      {pins.length > 0 && (
+        <nav className={styles.pins} aria-label="Pinned pages">
+          <span className={styles.pinsLabel}>Your pins</span>
+          {pins.map((p) => (
+            <Link key={p.id} href={`/portal/${p.id}`} className={styles.pinChip}>
+              {p.label}
+            </Link>
+          ))}
+        </nav>
+      )}
       <HomeCards cards={cards} />
       <DashboardCode />
       <div className={styles.deskGrid}>

@@ -1,0 +1,16 @@
+.card { border: 1px solid rgba(var(--pp-ink-rgb), 0.18); border-left: 4px solid var(--yellow); border-radius: 0.7rem; background: var(--pp-card); padding: 0.7rem 0.9rem; }
+.row { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.icon { color: var(--pp-ink); flex: none; }
+.text { margin: 0; flex: 1 1 14rem; color: var(--pp-ink); font-weight: 600; line-height: 1.35; }
+.link { color: var(--pp-ink); text-decoration: underline; }
+.actions { display: flex; gap: 0.4rem; }
+.small, .add { border: 0; background: none; color: var(--pp-ink); font: inherit; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-decoration: underline; padding: 0.2rem; }
+.add { display: inline-flex; align-items: center; gap: 0.4rem; text-decoration: none; opacity: 0.8; }
+.add:hover { opacity: 1; }
+.form { display: grid; gap: 0.6rem; }
+.fieldRow { display: grid; grid-template-columns: 1fr 9rem; gap: 0.6rem; }
+.field { display: grid; gap: 0.2rem; font-size: 0.8rem; font-weight: 600; color: var(--pp-ink); }
+.field textarea, .field input, .field select { font: inherit; font-weight: 400; color: var(--pp-ink); background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 0.5rem; padding: 0.45rem 0.6rem; min-width: 0; }
+.buttons { display: flex; gap: 0.5rem; }
+.error { margin: 0; color: #b3261e; font-size: 0.85rem; }
+@media (max-width: 600px) { .fieldRow { grid-template-columns: 1fr; } }
