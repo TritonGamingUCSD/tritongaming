@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from '@/components/portal/NoPrefetchLink';
 import { getUserRoles } from '@/lib/core/auth';
-import { hasCapability } from '@/lib/portal/capabilities';
+import { canCheckInEvent, canManageEvent } from '@/lib/events/eventAccess';
 import { createClient } from '@/lib/supabase/server';
 import { formatEventDateRange, eventDayCount, PACIFIC_TZ } from '@/lib/core/timezone';
 import { getEventSummary } from '@/lib/events/eventSummary';
@@ -47,15 +47,15 @@ const plural = (n: number, one: string, many = `${one}s`) => `${n.toLocaleString
 export default async function EventSummaryPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const roles = await getUserRoles();
-  if (!hasCapability(roles, 'checkin')) redirect('/portal');
-
   const supabase = await createClient();
   const { data: event } = await supabase
     .from('events')
-    .select('id, title, start_date, end_date, location, requires_checkin_form, ticket_price, audience, sponsors, page_blocks, report_social, flyer_url, theme')
+    .select('id, title, start_date, end_date, location, requires_checkin_form, ticket_price, audience, sponsors, page_blocks, report_social, flyer_url, theme, division_id')
     .eq('id', id)
     .maybeSingle();
   if (!event) notFound();
+  // Whoever may run the event's check-in may read its results: Triton Gaming's by the club's permission, a division's by its own people (Members and Heads).
+  if (!canCheckInEvent(roles, { division_id: (event.division_id as string | null) ?? null })) redirect('/portal');
 
   const s = await getEventSummary(id, event);
   const multiDay = eventDayCount(event.start_date, event.end_date) > 1;
@@ -133,7 +133,7 @@ export default async function EventSummaryPage({ params }: { params: Promise<{ i
     sponsors: ((event.sponsors ?? []) as EventSponsor[]).filter((x) => x.name),
     photos,
     social: (event.report_social ?? []) as ReportMetric[],
-    canEditSocial: hasCapability(roles, 'manage_events'),
+    canEditSocial: canManageEvent(roles, { division_id: (event.division_id as string | null) ?? null }),
     highlights,
     poster,
     stickers,

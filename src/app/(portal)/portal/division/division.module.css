@@ -1,12 +1,13 @@
 .page { display: flex; flex-direction: column; gap: 1rem; max-width: 860px; margin-inline: 0; }
 .publicLink { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; font-weight: 600; color: var(--pp-ink); text-decoration: underline; }
-.banner { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); border-left: 5px solid var(--hat, var(--yellow)); border-radius: 0.7rem; background: var(--pp-card); color: var(--pp-ink); }
-.logo, .logoFallback { flex: none; width: 64px; height: 64px; border-radius: 10px; object-fit: contain; background: #fff; } /* theme-ok: a logo sits on white */
+.banner { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 0.7rem; background: var(--pp-card); color: var(--pp-ink); }
+.logo, .logoFallback { flex: none; width: 64px; height: 64px; border-radius: 10px; object-fit: contain; background: #fff; box-shadow: 0 0 0 3px var(--hat, var(--yellow)); margin: 3px; } /* theme-ok: a logo sits on white */
 .logoFallback { display: grid; place-items: center; font-size: 1.6rem; font-weight: 700; color: #011941; background: var(--hat, #ffc72c); } /* theme-ok */
 .name { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.5rem; }
 .tag { margin: 0.1rem 0 0; font-size: 0.85rem; opacity: 0.75; }
 .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-.stat { display: grid; justify-items: start; gap: 0.1rem; padding: 0.8rem 1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); border-top: 3px solid var(--hat, var(--yellow)); border-radius: 0.6rem; background: var(--pp-card); color: var(--pp-ink); }
+.stat { display: grid; justify-items: start; gap: 0.1rem; padding: 0.8rem 1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 0.6rem; background: var(--pp-card); color: var(--pp-ink); }
+.stat svg { padding: 0.3rem; width: 1.9rem; height: 1.9rem; border-radius: 6px; background: var(--hat, var(--yellow)); color: #011941; } /* theme-ok: the accent chip */
 .stat b { font-size: 1.6rem; font-family: var(--font-futura-heavy); font-weight: 400; }
 .stat span { font-size: 0.8rem; opacity: 0.75; }
 .note { margin: 0; color: var(--pp-ink); opacity: 0.8; font-size: 0.9rem; }

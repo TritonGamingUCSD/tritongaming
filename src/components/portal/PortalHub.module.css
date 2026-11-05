@@ -1161,10 +1161,6 @@
 /* The division switcher under the logo, and a division's own page list in the sidebar (a thin line in the division's color marks the hat). */
 @media (min-width: 900px) {
   .railSwitch { padding: 0.15rem 0.1rem 0.35rem; }
-  .divNav { display: grid; gap: 2px; border-left: 3px solid var(--hat, #ffc72c); margin-left: 0.2rem; padding-left: 0.3rem; }
-  .divItem { width: 100%; }
-  .rail .railNav .divItem.divItemOn { background: #fff !important; color: #011941; box-shadow: inset 4px 0 0 var(--hat, #ffc72c); } /* theme-ok: the open page is a light bar on the navy, like the club's pages */
-  .rail .railNav .divItem.divItemOn .railLabel { color: #011941; } /* theme-ok */
 }
 
 /* On a phone the division switcher is the first thing in the More sheet. */
@@ -1172,4 +1168,11 @@
 
 @media (min-width: 900px) {
   .topHat { flex: none; margin-left: 1rem; }
+}
+
+/* In a division the top left is the division's own: its logo and name, with a line in its color under it. */
+@media (min-width: 900px) {
+  .railLogoDivision { box-shadow: inset 0 -3px 0 var(--hat, #ffc72c); }
+  .railLogoDivision .railLogoByte img { border-radius: 8px; background: #fff; object-fit: contain; } /* theme-ok: a logo sits on white */
+  .railLogoLetter { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 8px; background: var(--hat, #ffc72c); color: #011941; font-weight: 700; font-size: 1.2rem; } /* theme-ok */
 }

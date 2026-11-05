@@ -15,9 +15,9 @@ const TOOL = {
 } as const;
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeWorkspace();
-  if (auth.error) return auth.error;
   const { id } = await params;
+  const auth = await authorizeWorkspace(id);
+  if (auth.error) return auth.error;
   if (!UUID.test(id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const { svc, caps } = auth;
   const { data: event } = await svc.from('events').select('id, title, slug, start_date, end_date, location, is_published, is_online, points_value').eq('id', id).maybeSingle();
@@ -71,9 +71,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await authorizeWorkspace();
-  if (auth.error) return auth.error;
   const { id } = await params;
+  const auth = await authorizeWorkspace(id);
+  if (auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));
   const kind = typeof b.kind === 'string' && b.kind in TOOL ? (b.kind as keyof typeof TOOL) : null;
   if (!UUID.test(id) || !kind || typeof b.id !== 'string' || !UUID.test(b.id)) return NextResponse.json({ error: 'Pick what to tie to the event.' }, { status: 400 });

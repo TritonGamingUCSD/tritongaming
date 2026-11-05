@@ -2,6 +2,9 @@ import { getCreditPeople } from '@/lib/members/creditPeople';
 import { redirect, notFound } from 'next/navigation';
 import { getUserRoles } from '@/lib/core/auth';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { canActInDivision } from '@/lib/portal/divisionAccess';
+import { canCheckInEvent, canManageEvent } from '@/lib/events/eventAccess';
 import { createClient } from '@/lib/supabase/server';
 import { utcToPacificDatetimeLocal } from '@/lib/core/timezone';
 import EditEventClient from './EditEventClient';
@@ -23,10 +26,16 @@ interface Params {
 export default async function EditEventPage({ params }: Params) {
   const { id } = await params;
   const roles = await getUserRoles();
-  // The page is the event's workspace (tabs for its details, tickets, logistics, emails, live tools and results): open to anyone who can use one of them. Only people who manage events get the Details tab.
-  if (!(['manage_events', 'checkin', 'view_logistics', 'host_trivia', 'run_photobooth', 'write_newsletter', 'send_newsletter'] as const).some((c) => hasCapability(roles, c)))
-    redirect('/portal');
-  if (!hasCapability(roles, 'manage_events')) return <EventWorkspace eventId={id} details={null} />;
+  // Whose event it is decides who may open it: Triton Gaming's follow the club's permissions, a division's its own people's (see lib/events/eventAccess.ts).
+  const { data: owner } = await createServiceClient().from('events').select('division_id').eq('id', id).maybeSingle();
+  const ev = { division_id: (owner?.division_id as string | null | undefined) ?? null };
+  const manages = canManageEvent(roles, ev);
+  // The page is the event's workspace (tabs for its details, tickets, logistics, emails, live tools and results): open to anyone who can use one of them. Only people who manage the event get the Details tab.
+  const usesWorkspace = ev.division_id
+    ? manages || canCheckInEvent(roles, ev) || canActInDivision(roles, ev.division_id, 'member')
+    : (['manage_events', 'checkin', 'view_logistics', 'host_trivia', 'run_photobooth', 'write_newsletter', 'send_newsletter'] as const).some((c) => hasCapability(roles, c));
+  if (!usesWorkspace) redirect('/portal');
+  if (!manages) return <EventWorkspace eventId={id} details={null} />;
 
   const supabase = await createClient();
   const [{ data: event }, seedCheckinFormConfig, previewViewer, creditPeople] = await Promise.all([

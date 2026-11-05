@@ -16,8 +16,11 @@ export default function NewEventClient({
   seedCheckinFormConfig,
   previewViewer,
   creditPeople,
+  division = null,
 }: {
   initial?: EventFormValues;
+  /** The division that hosts the new event (empty: Triton Gaming). */
+  division?: { id: string; slug: string; name: string } | null;
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
   creditPeople?: import('@/lib/members/creditPeople').CreditPerson[];
   previewViewer?: { year: string | null; classOf?: number | null; roles: import('@/types/database').AppRole[] };
@@ -72,6 +75,7 @@ export default function NewEventClient({
       checkin_form_event_name: form.checkin_form_event_name.trim() || null,
       checkin_form_override: form.checkin_form_override,
       created_by: user.id,
+      division_id: division?.id ?? null,
     });
 
     if (error) {
@@ -79,13 +83,13 @@ export default function NewEventClient({
       return 'Failed to create event. Please try again.';
     }
     refreshPublicCache('events');
-    router.push('/portal/events');
+    router.push(division ? `/portal/${division.slug}/events` : '/portal/events');
   }
 
   return (
     <EventForm
       creditPeople={creditPeople}
-      heading="Create Event"
+      heading={division ? `Create Event for ${division.name}` : 'Create Event'}
       initial={initial}
       submitLabel="Create Event"
       onSubmit={handleCreate}

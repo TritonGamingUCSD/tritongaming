@@ -11,7 +11,7 @@ import PortalCrumbs from './PortalCrumbs';
 import styles from './PortalHub.module.css';
 import Image from 'next/image';
 import DivisionSwitcher from './DivisionSwitcher';
-import { divisionPagesFor } from '@/lib/divisions/pages';
+import { divisionSidebar } from '@/lib/divisions/pages';
 import AccountMenu from './AccountMenu';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { familyOf } from '@/lib/portal/families';
@@ -114,7 +114,7 @@ export function DesktopShell({
     g.style.width = `${el.offsetWidth}px`;
     g.style.height = `${el.offsetHeight}px`;
     g.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop}px)`;
-  }, [activeId, groupedSections]);
+  }, [activeId, groupedSections, divisionHat?.slug, divisionPage]);
   // Pages that belong together are one entry in the list (People, Live Tools, Standing, Events): the entry opens the first page of its family, and the family's pages are the tabs under the top bar.
   const allRail = groupedSections.flatMap((g) => g.items).filter((x) => !x.railHidden);
   const kidsOf = (fid: string | undefined, sid: string) => {
@@ -182,35 +182,61 @@ export function DesktopShell({
       >
         <button
           type="button"
-          className={`${styles.railLogo} ${!openSection ? styles.railLogoOn : ''}`}
-          onClick={close}
-          aria-current={!openSection ? 'page' : undefined}
-          aria-label="Triton Gaming portal, go to Home"
+          className={`${styles.railLogo} ${!openSection || (divisionHat && divisionPage === 'home') ? styles.railLogoOn : ''} ${divisionHat ? styles.railLogoDivision : ''}`}
+          onClick={() => (divisionHat ? openDivision(divisionHat.slug) : close())}
+          aria-current={!openSection || (divisionHat && divisionPage === 'home') ? 'page' : undefined}
+          aria-label={divisionHat ? `${divisionHat.name}, go to its home` : 'Triton Gaming portal, go to Home'}
           title="Home"
+          style={divisionHat ? ({ ['--hat' as string]: divisionHat.accent } as React.CSSProperties) : undefined}
         >
           <span className={styles.railLogoByte} aria-hidden="true">
-            <Image src="/logos/tg_logo.png" alt="" width={80} height={80} priority />
+            {divisionHat ? (
+              divisionHat.logoUrl ? (
+                <Image src={divisionHat.logoUrl} alt="" width={80} height={80} priority unoptimized />
+              ) : (
+                <span className={styles.railLogoLetter}>{divisionHat.name.slice(0, 1)}</span>
+              )
+            ) : (
+              <Image src="/logos/tg_logo.png" alt="" width={80} height={80} priority />
+            )}
           </span>
           <span className={styles.railLogoText}>
-            Triton Gaming
-            <small>Member portal</small>
+            {divisionHat ? divisionHat.name : 'Triton Gaming'}
+            <small>{divisionHat ? 'A Triton Gaming division' : 'Member portal'}</small>
           </span>
         </button>
         {divisionHat ? (
-          <nav className={styles.railNav} aria-label={`${divisionHat.name} pages`} style={{ ['--hat' as string]: divisionHat.accent }}>
-            <div className={styles.divNav}>
-              {divisionPagesFor(divisionHat.level).map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={`${styles.railItem} ${styles.divItem} ${divisionPage === p.id ? styles.railItemActive : ''} ${divisionPage === p.id ? styles.divItemOn : ''}`}
-                  onClick={() => openDivision(divisionHat.slug, p.id)}
-                  aria-current={divisionPage === p.id ? 'page' : undefined}
-                >
-                  <span className={styles.railLabel}>{p.label}</span>
-                </button>
-              ))}
-            </div>
+          <nav ref={navRef} className={styles.railNav} aria-label={`${divisionHat.name} pages`} style={{ ['--hat' as string]: divisionHat.accent }}>
+            <span ref={glideRef} className={styles.railGlide} aria-hidden="true" />
+            {divisionSidebar(divisionHat.level).map(({ group, label, items }) => (
+              <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: items.length }}>
+                {items.length > 1 && (
+                  <div className={styles.railGroupLabel}>
+                    <span className={styles.railGroupPixel} aria-hidden="true">
+                      <AreaPixelIcon group={group} />
+                    </span>
+                    <span className={styles.railGroupText}>{label}</span>
+                  </div>
+                )}
+                {items.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    data-rail-active={divisionPage === p.id ? '' : undefined}
+                    className={`${styles.railItem} ${divisionPage === p.id ? styles.railItemActive : ''} ${items.length > 1 ? styles.railItemNested : ''}`}
+                    onClick={() => openDivision(divisionHat.slug, p.id)}
+                    aria-current={divisionPage === p.id ? 'page' : undefined}
+                  >
+                    {items.length === 1 && (
+                      <span className={styles.railGroupPixel} aria-hidden="true">
+                        <AreaPixelIcon group={group} />
+                      </span>
+                    )}
+                    <span className={styles.railLabel}>{p.label}</span>
+                  </button>
+                ))}
+              </div>
+            ))}
           </nav>
         ) : (
           <nav ref={navRef} className={styles.railNav} aria-label="Portal sections">
