@@ -444,7 +444,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             icon: <ShieldAlert size={28} strokeWidth={1.5} aria-hidden="true" />,
             label: sectionLabel('strikes'),
             description: 'Private strike tracker',
-            group: 'Admin' as const,
+            group: 'Team' as const,
             content: <StrikesSectionContent />,
           },
         ]
@@ -457,7 +457,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             icon: <CalendarRange size={28} strokeWidth={1.5} aria-hidden="true" />,
             label: sectionLabel('quarters'),
             description: 'Who is active each quarter',
-            group: 'Admin' as const,
+            group: 'Team' as const,
             content: <QuarterStatusContent />,
           },
         ]
@@ -503,7 +503,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: hasCapability(roles, 'send_newspaper') ? 'Write, check and send the club’s email' : 'Write the club’s email',
             homeExclude: true,
             dockExclude: true,
-            group: 'Events' as const,
+            group: 'Outreach' as const,
             content: <NewspaperSectionContent />,
           },
         ]
@@ -626,7 +626,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             icon: <QrCode size={28} strokeWidth={1.5} aria-hidden="true" />,
             label: sectionLabel('qrcode'),
             description: 'Design branded QR codes',
-            group: 'Events' as const,
+            group: 'Outreach' as const,
             content: (
               <QRStudioClient
                 divisions={divisions
@@ -679,7 +679,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             icon: <Pencil size={28} strokeWidth={1.5} aria-hidden="true" />,
             label: sectionLabel('site-content'),
             description: 'Page banners, text and images on the public site',
-            group: 'Admin' as const,
+            group: 'Outreach' as const,
             content: <SiteContentLazy scope={scope} canEditContent={canEditContent} contentBlocks={CONTENT_BLOCKS} />,
           },
         ]

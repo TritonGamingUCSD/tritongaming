@@ -15,16 +15,16 @@ export const DOCK_ICON_SIZE: Record<string, number> = { meetings: 19, events: 19
 // 'Tools' used to be its own group with exactly one card (QR Studio) in
 // it — a group that never clusters more than a single item isn't helping
 // anyone scan faster, it's just an extra label to read past. QR Studio
-// moved into Events instead (see portal/page.tsx) — it's usable by any
+// moved into Outreach instead (see portal/page.tsx) — it's usable by any
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
 // 'Overview' is the unlabeled group right under Dashboard (Profile and Help, which have no sidebar entry of their own).
-export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Run', 'Team', 'Admin'] as const;
+export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Run', 'Team', 'Outreach', 'Admin'] as const;
 
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
 // The order and the names of the sections are defined once, in lib/portal/sections.ts.
-// (Grouped by job: Events plans an event, Live Tools holds what runs while it happens, Club is meetings and people, Admin is the officer and exec tools.)
+// (Grouped by job: Events plans an event, Live Tools holds what runs while it happens, Club is meetings, people and standing, Outreach is how the club reaches people (email, QR codes, the public website), Admin is the portal's own settings.)
 const WANTED_ORDER = [
   'tickets',
   'points',
@@ -42,14 +42,14 @@ const WANTED_ORDER = [
   'members',
   'division-members',
   'divisions',
-  'strikes',
   'quarters',
-  'newspaper',
+  'strikes',
   'docs',
-  'qr',
+  'newspaper',
+  'qrcode',
+  'site-content',
   'help',
   'admin',
-  'site-content',
 ];
 export const SECTION_ORDER = [...WANTED_ORDER, ...SECTION_IDS.filter((id) => !WANTED_ORDER.includes(id))];
 
@@ -63,6 +63,7 @@ export const GROUP_ACCENT: Record<string, string> = {
   Events: '#e8912d',
   Run: '#d9573a',
   Team: '#8b6cdc',
+  Outreach: '#3aa6c9',
   Admin: '#d9487f',
 };
 
@@ -73,6 +74,7 @@ export const GROUP_LABEL: Record<string, string> = {
   Events: 'Events',
   Run: 'Live Tools',
   Team: 'Club',
+  Outreach: 'Outreach',
   Admin: 'Admin',
 };
 
