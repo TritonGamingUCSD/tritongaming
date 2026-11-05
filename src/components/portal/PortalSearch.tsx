@@ -63,10 +63,27 @@ function Highlight({ text, q }: { text: string; q: string }) {
 // inside the desktop rail (a fixed 220px column) rather than centered
 // above the wide content pane, drops the centered max-width box in favor
 // of filling its container.
-export default function PortalSearch({ compact, large, placeholder }: { compact?: boolean; large?: boolean; placeholder?: string } = {}) {
-  const [query, setQuery] = useState('');
+export default function PortalSearch({
+  compact,
+  large,
+  placeholder,
+  spotlight,
+  onClose,
+  onCode,
+  initial,
+}: {
+  compact?: boolean;
+  large?: boolean;
+  placeholder?: string;
+  /** The pop-up (Spotlight) form: always open, focused at once, closes itself after a jump, and treats six digits as a code. */ spotlight?: boolean;
+  onClose?: () => void;
+  onCode?: (code: string) => void;
+  /** Text to start with (a page asked for "docs " for example). */ initial?: string;
+} = {}) {
+  const [query, setQuery] = useState(initial ?? '');
   const [results, setResults] = useState<SearchResponse>(EMPTY);
-  const [open, setOpen] = useState(false);
+  const [openState, setOpen] = useState(false);
+  const open = openState || !!spotlight;
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
@@ -132,6 +149,14 @@ export default function PortalSearch({ compact, large, placeholder }: { compact?
     return () => window.removeEventListener('tg:search', onAsk);
   }, []);
 
+  useEffect(() => {
+    if (spotlight) {
+      inputRef.current?.focus();
+      ensureCommands();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spotlight]);
+
   // ⌘K / Ctrl+K (or "/" when not typing somewhere) jumps straight to the box.
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -181,6 +206,7 @@ export default function PortalSearch({ compact, large, placeholder }: { compact?
     if (e.key === 'Escape') {
       setQuery('');
       inputRef.current?.blur();
+      onClose?.();
       return;
     }
     if (!flat.length) return;
@@ -196,6 +222,7 @@ export default function PortalSearch({ compact, large, placeholder }: { compact?
       if (r) {
         setQuery('');
         inputRef.current?.blur();
+        onClose?.();
         if (!navigatePortal(r.href)) {
           router.push(r.href);
           window.dispatchEvent(new Event('tg:portal-nav'));
@@ -208,14 +235,28 @@ export default function PortalSearch({ compact, large, placeholder }: { compact?
   const showDropdown = open && (query.trim().length >= 1 ? true : jump.length > 0) && (query.trim().length >= 2 || jump.length > 0);
 
   return (
-    <div className={`${styles.wrap} ${compact ? styles.compact : ''} ${large ? styles.large : ''}`}>
+    <div
+      className={`${styles.wrap} ${compact ? styles.compact : ''} ${large ? styles.large : ''} ${spotlight ? `${styles.large} ${styles.spot}` : ''}`}
+      onClick={(e) => {
+        if (spotlight && (e.target as HTMLElement).closest('a')) onClose?.();
+      }}
+    >
       <div className={`${styles.inputWrap} ${open ? styles.inputFocus : ''}`}>
         <Search size={16} strokeWidth={1.75} className={styles.icon} aria-hidden="true" />
         <input
           ref={inputRef}
           className={styles.input}
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            const v = e.target.value;
+            if (spotlight && /^\d{6}$/.test(v.trim())) {
+              setQuery('');
+              onCode?.(v.trim());
+              onClose?.();
+              return;
+            }
+            setQuery(v);
+          }}
           onKeyDown={onKeyDown}
           onFocus={() => {
             setOpen(true);
@@ -239,6 +280,20 @@ export default function PortalSearch({ compact, large, placeholder }: { compact?
 
       {showDropdown && (
         <div className={styles.dropdown} ref={dropdownRef}>
+          {spotlight && /^\d{1,6}$/.test(query.trim()) && (
+            <div className={styles.codeHint} aria-live="polite">
+              <span className={styles.codeCells}>
+                {Array.from({ length: 6 }, (_, i) => (
+                  <span key={i} className={i < query.trim().length ? styles.codeOn : undefined}>
+                    {query.trim()[i] ?? '0'}
+                  </span>
+                ))}
+              </span>
+              <span>
+                Keep typing: {6 - query.trim().length} more digit{6 - query.trim().length === 1 ? '' : 's'} sends it as a code
+              </span>
+            </div>
+          )}
           {jump.length > 0 && (
             <div className={styles.group} style={{ ['--accent' as string]: '#7db4ea' }}>
               <div className={styles.groupLabel}>{query.trim() ? 'Jump to' : 'Quick actions'}</div>

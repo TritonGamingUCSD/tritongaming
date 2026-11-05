@@ -4,8 +4,7 @@ import { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Pin, PinOff } from 'lucide-react';
-import CodeBox from '@/components/portal/CodeBox';
-import PortalSearch from './PortalSearch';
+import Spotlight from './Spotlight';
 import NotificationBell from './NotificationBell';
 import PortalCrumbs from './PortalCrumbs';
 import styles from './PortalHub.module.css';
@@ -226,12 +225,7 @@ export function DesktopShell({
             </div>
           )}
           <div className={styles.topRight}>
-            <div className={styles.topCode} title="Enter a code: a meeting check-in, a ticket, a Trivia game or a poll">
-              <CodeBox compact />
-            </div>
-            <div className={styles.topSearch}>
-              <PortalSearch compact />
-            </div>
+            <Spotlight />
             <NotificationBell inline />
             {identity && <AccountMenu identity={identity} viewAs={frame?.viewAs} onProfile={() => open('profile')} />}
           </div>

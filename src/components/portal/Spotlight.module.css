@@ -1,0 +1,10 @@
+/* The top bar's search icon and the panel it opens: navy, in the middle of the screen over a dimmed page. */
+.btn { display: grid; place-items: center; width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.08); color: #fff; cursor: pointer; transition: background 0.12s, border-color 0.12s; } /* theme-ok: on the navy top bar */
+.btn:hover { background: rgba(255, 255, 255, 0.16); border-color: var(--yellow); }
+.veil { position: fixed; inset: 0; z-index: 3000; display: flex; justify-content: center; align-items: flex-start; padding: 14vh 1rem 1rem; background: rgba(4, 10, 22, 0.55); backdrop-filter: blur(3px); animation: spotVeil 0.15s ease-out both; }
+.panel { --pp-chrome: #243f63; --pp-chrome-2: #2f4d77; --pp-chrome-fg: #ffffff; --pp-chrome-rgb: 255, 255, 255; --pp-chrome-edge: #14233a; --pp-chrome-accent: #a9cdf2; --pp-ink: #ffffff; --pp-ink-rgb: 255, 255, 255; width: min(640px, 100%); padding: 0.9rem; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.25); border-top: 3px solid var(--yellow); background: #1b3050; color: #fff; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5); animation: spotPanel 0.2s cubic-bezier(0.22, 1, 0.36, 1) both; } /* theme-ok: the panel is navy in light and dark alike */
+.foot { margin: 0.7rem 0.3rem 0; font-size: 0.8rem; color: rgba(255, 255, 255, 0.65); }
+.foot kbd { padding: 0 0.35rem; border: 1px solid rgba(255, 255, 255, 0.35); border-radius: 4px; font: inherit; font-size: 0.75rem; }
+@keyframes spotVeil { from { opacity: 0; } to { opacity: 1; } }
+@keyframes spotPanel { from { opacity: 0; transform: translateY(-10px) scale(0.98); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .veil, .panel { animation: none; } }
