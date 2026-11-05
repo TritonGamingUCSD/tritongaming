@@ -1037,14 +1037,10 @@
   .topBar .topName, .topBar .topName * { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: 0; text-transform: none; }
 }
 
-/* The code field in the top bar; recent pages and the pin button at the bottom of the sidebar. */
+/* The code field in the top bar; the pin button at the bottom of the sidebar. */
 @media (min-width: 900px) {
   .topCode { flex: 0 1 13rem; min-width: 9rem; }
-  .railRecent { display: grid; gap: 0.1rem; margin-top: auto; padding-top: 0.6rem; border-top: 1px solid rgba(255, 255, 255, 0.14); } /* theme-ok: on the navy panel */
-  .railRecentLabel { margin: 0; padding: 0 0.7rem 0.2rem; font-size: 0.82rem; font-weight: 700; color: #a9cdf2; } /* theme-ok */
-  .railRecentItem { padding: 0.4rem 0.7rem; border: 0; border-radius: 6px; background: none; color: var(--pp-chrome-fg); font: inherit; font-size: 0.95rem; font-weight: 500; text-align: left; cursor: pointer; }
-  .railRecentItem:hover { background: rgba(255, 255, 255, 0.08); }
-  .railPin { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem; padding: 0.45rem 0.7rem; border: 0; border-radius: 6px; background: none; color: rgba(255, 255, 255, 0.75); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; } /* theme-ok */
+  .railPin { display: flex; align-items: center; gap: 0.5rem; margin-top: auto; padding: 0.45rem 0.7rem; border: 0; border-radius: 6px; background: none; color: rgba(255, 255, 255, 0.75); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; } /* theme-ok */
   .railPin:hover { background: rgba(255, 255, 255, 0.08); color: #fff; } /* theme-ok */
 }
 @media (min-width: 900px) {
