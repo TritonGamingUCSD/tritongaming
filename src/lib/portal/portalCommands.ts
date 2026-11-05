@@ -1,6 +1,8 @@
 import { hasCapability, isRewardsEligible, type RoleGrant } from '@/lib/portal/capabilities';
 import type { Capability } from '@/types/database';
 import { SECTIONS } from '@/lib/portal/sections';
+import { CAPABILITY_ROLES } from '@/lib/portal/capabilities';
+import { ROLE_DISPLAY_RANK, ROLE_LABELS } from '@/types/database';
 
 // Sections and actions the portal search can jump to. Filtered by what the person can actually open, so the
 // search never offers something that would just say "no access".
@@ -11,6 +13,8 @@ export interface PortalCommand {
   href: string;
   kind: 'Go to' | 'Do';
   keywords: string[];
+  /** Only on a locked result: the lowest role that opens it (e.g. "Executive"). */
+  needs?: string;
 }
 
 interface Def extends PortalCommand {
@@ -130,4 +134,15 @@ export function matchCommands(list: PortalCommand[], query: string, limit = 7): 
     .sort((a, b) => b.score - a.score)
     .slice(0, limit)
     .map((x) => x.c);
+}
+
+// What the person cannot open yet, so the search can still say it exists and who it is for ("Strikes · needs Executive"). Only entries with a plain capability rule are offered: a special rule (like Rewards) has no single role to name.
+export function lockedCommandsFor(roles: RoleGrant[]): PortalCommand[] {
+  const open = new Set(commandsFor(roles).map((c) => c.id));
+  return DEFS.flatMap((d) => {
+    const caps = d.cap ? (Array.isArray(d.cap) ? d.cap : [d.cap]) : [];
+    if (open.has(d.id) || caps.length === 0 || d.test) return [];
+    const lowest = caps.flatMap((c) => CAPABILITY_ROLES[c]).sort((a, b) => ROLE_DISPLAY_RANK[a] - ROLE_DISPLAY_RANK[b])[0];
+    return lowest ? [{ id: d.id, label: d.label, hint: d.hint, href: d.href, kind: d.kind, keywords: d.keywords, needs: ROLE_LABELS[lowest] }] : [];
+  });
 }

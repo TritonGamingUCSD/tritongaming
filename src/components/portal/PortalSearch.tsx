@@ -75,13 +75,17 @@ export default function PortalSearch({ compact, large, placeholder }: { compact?
   const requestId = useRef(0);
   // Sections and actions to jump to: loaded once, the first time the bar is focused.
   const [commands, setCommands] = useState<PortalCommand[] | null>(null);
+  const [locked, setLocked] = useState<PortalCommand[]>([]);
   const loadingCommands = useRef(false);
   function ensureCommands() {
     if (commands || loadingCommands.current) return;
     loadingCommands.current = true;
     fetch('/api/portal/commands')
       .then((r) => r.json())
-      .then((d) => setCommands(d.commands ?? []))
+      .then((d) => {
+        setCommands(d.commands ?? []);
+        setLocked(d.locked ?? []);
+      })
       .catch(() => setCommands([]))
       .finally(() => {
         loadingCommands.current = false;
@@ -152,7 +156,11 @@ export default function PortalSearch({ compact, large, placeholder }: { compact?
           : SUGGESTED.map((id) => commands!.find((c) => c.id === id))
               .filter((c): c is PortalCommand => !!c)
               .slice(0, 5)
-        ).map((c) => ({ id: c.id, title: c.label, subtitle: c.hint, href: c.href, kind: c.kind }) as SearchResult & { kind: string });
+        ).map((c) => ({ id: c.id, title: c.label, subtitle: c.hint, href: c.href, kind: c.kind }) as SearchResult & { kind: string; needs?: string });
+  // Things above this person's role still show (after the ones they can open), tagged with who they are for, so nobody thinks a function does not exist.
+  const lockedJump: (SearchResult & { kind: string; needs?: string })[] =
+    query.trim().length >= 1 ? matchCommands(locked, query.trim(), 3).map((c) => ({ id: c.id, title: c.label, subtitle: c.hint, href: c.href, kind: c.kind, needs: c.needs })) : [];
+  jump.push(...lockedJump);
   const flat = [...jump, ...orderedKeys(results).flatMap((k) => results[k])];
   useEffect(() => {
     setActive(0);
@@ -261,7 +269,11 @@ export default function PortalSearch({ compact, large, placeholder }: { compact?
                       </span>
                       {r.subtitle && <span className={styles.resultSubtitle}>{r.subtitle}</span>}
                     </span>
-                    <CornerDownLeft size={13} className={styles.resultEnter} aria-hidden="true" />
+                    {(r as SearchResult & { needs?: string }).needs ? (
+                      <span className={styles.needsTag}>Needs {(r as SearchResult & { needs?: string }).needs}</span>
+                    ) : (
+                      <CornerDownLeft size={13} className={styles.resultEnter} aria-hidden="true" />
+                    )}
                   </Link>
                 );
               })}

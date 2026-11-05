@@ -312,11 +312,11 @@
 .railAvatarFallback::before { content: attr(data-letter); }
 .railIdentityText { display: flex; flex-direction: column; min-width: 0; }
 .railName { font-family: var(--font-futura-heavy); font-size: 0.92rem; color: var(--pp-chrome-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.railRole { font-size: 0.7rem; color: rgba(var(--pp-chrome-rgb), 0.65); letter-spacing: 0.04em; text-transform: uppercase; }
+.railRole { font-size: 0.7rem; color: rgba(var(--pp-chrome-rgb), 0.65);  }
 
 .railNav { display: flex; flex-direction: column; gap: 0.9rem; overflow-y: auto; min-height: 0; padding-right: 2px; scrollbar-width: thin; }
 .railGroup { --accent: var(--p-accent); display: flex; flex-direction: column; gap: 0.1rem; }
-.railGroupLabel { display: flex; align-items: center; gap: 0.45rem; padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.67rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(var(--pp-chrome-rgb), 0.6); }
+.railGroupLabel { display: flex; align-items: center; gap: 0.45rem; padding: 0.15rem 0.6rem 0.35rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 0.78rem; letter-spacing: 0.01em; color: rgba(var(--pp-chrome-rgb), 0.6); }
 .railGroupDot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 
 .railItem {
@@ -517,14 +517,14 @@
 
 /* Role chips under the name in the sidebar */
 .railRoles { display: flex; flex-wrap: wrap; gap: 0.2rem; margin-top: 0.2rem; }
-.railRoleChip { font-size: 0.67rem; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.05rem 0.4rem; border-radius: 6px; border: 1px solid; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 1.35; }
+.railRoleChip { font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 0.74rem; font-weight: 600; letter-spacing: 0; padding: 0.08rem 0.6rem; border-radius: 999px; border: 1px solid; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 1.4; }
 
 /* Back to Site / Sign Out: two real buttons sharing the footer, not faint text links. */
 .railFooter, .sheetFooter { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
 .railFooter > *, .sheetFooter > * { min-width: 0; }
 .railFooter a, .sheetFooter a {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; padding: 0.5rem 0.8rem; border-radius: 0.65rem; white-space: nowrap;
-  font-family: var(--font-futura-heavy); font-size: 0.74rem; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none;
+  font-family: var(--font-futura-heavy); font-size: 0.82rem; letter-spacing: 0.01em; text-decoration: none;
   color: var(--pp-chrome-fg); background: transparent; border: 2px solid rgba(var(--pp-chrome-rgb), 0.55); border-radius: 6px; box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45);
   transition: background 0.15s, transform 0.1s, box-shadow 0.1s;
 }
@@ -837,11 +837,11 @@
    Wide display face for titles with the yellow hand-drawn line, yellow tilted sticker labels, a and the open page as a paper sticker in the sidebar. ═══ */
 @media (min-width: 900px) {
   .topName { font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.15rem; letter-spacing: 0.02em; text-transform: none; }
-  .railGroupLabel { display: inline-flex; align-self: flex-start; margin: 0.4rem 0 0.35rem 0.5rem; padding: 0.28rem 0.6rem; font-family: var(--font-renegare); font-size: 0.67rem; letter-spacing: 0.16em; color: #011941 !important; background: var(--yellow); border-radius: 4px; transform: rotate(-1.5deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); } /* theme-ok */
+  .railGroupLabel { display: inline-flex; align-self: flex-start; margin: 0.4rem 0 0.35rem 0.5rem; padding: 0.28rem 0.6rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 0.8rem; letter-spacing: 0.01em; color: #011941 !important; background: var(--yellow); border-radius: 4px; transform: rotate(-1.5deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); } /* theme-ok */
   .railGroup:nth-of-type(even) .railGroupLabel { transform: rotate(1.2deg); }
   .railGroupDot { display: none; }
-  .railItem { font-family: var(--font-futura-heavy); }
-  .railLabel { font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.03em; text-transform: uppercase; }
+  .railItem { font-family: var(--font-dm-sans), system-ui, sans-serif; }
+  .railLabel { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 0.9rem; letter-spacing: 0; }
   .railItemActive { transform: rotate(-0.8deg); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.45); }
 }
 .panelTitle { font-family: var(--font-soulmaze); font-weight: 400; text-transform: none; }

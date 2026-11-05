@@ -15,11 +15,11 @@ export const DOCK_ICON_SIZE: Record<string, number> = { meetings: 19, events: 19
 // 'Tools' used to be its own group with exactly one card (QR Studio) in
 // it — a group that never clusters more than a single item isn't helping
 // anyone scan faster, it's just an extra label to read past. QR Studio
-// moved into Resources instead (see portal/page.tsx) — it's usable by any
+// moved into Communications instead (see portal/page.tsx) — it's usable by any
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
 // 'Overview' is the unlabeled group right under Dashboard (Profile and Help, which have no sidebar entry of their own).
-export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Run', 'Team', 'Resources', 'Admin'] as const;
+export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Run', 'Meetings', 'Comms', 'Team', 'Admin'] as const;
 
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
@@ -62,13 +62,23 @@ export const GROUP_ACCENT: Record<string, string> = {
   Yours: '#4a90d9',
   Events: '#e8912d',
   Run: '#d9573a',
+  Meetings: '#2fae86',
+  Comms: '#3aa6c9',
   Team: '#8b6cdc',
-  Resources: '#2fae86',
   Admin: '#d9487f',
 };
 
 // Names shown for each group: what you are doing, not who is allowed.
-export const GROUP_LABEL: Record<string, string> = { Overview: 'Portal', Yours: 'Me', Events: 'Events', Run: 'Run An Event', Team: 'Team', Resources: 'Library', Admin: 'Manage' };
+export const GROUP_LABEL: Record<string, string> = {
+  Overview: 'Portal',
+  Yours: 'Me',
+  Events: 'Events',
+  Run: 'Run An Event',
+  Meetings: 'Meetings',
+  Comms: 'Communications',
+  Team: 'Team',
+  Admin: 'Admin',
+};
 
 // Params that belong to whatever was open, cleared when switching sections.
 export const CLEAR_NAV = { tab: null, subtab: null, block: null, id: null, q: null, status: null, view: null, atype: null, aq: null, ticket: null, plan: null };

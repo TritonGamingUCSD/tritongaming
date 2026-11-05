@@ -335,7 +335,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
       badge: helpWaiting || undefined,
       // Staff get Help on the bar while members are waiting on a reply.
       dockBoost: canHandleHelp && helpWaiting > 0 ? 45 : 0,
-      group: 'Resources',
+      group: 'Yours',
       content: <HelpSectionContent isStaff={canHandleHelp} userId={profile.id} />,
     },
     ...((canUseRewards && pointsData) || runsRewards
@@ -421,7 +421,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             // While a meeting is on (or about to start) this is the thing to have under your thumb.
             dockBoost: (meetingNow ? 100 : 0) + (canManageMeetings ? 10 : 0),
             dockExclude: logisticsToday,
-            group: 'Team' as const,
+            group: 'Meetings' as const,
             content: (
               <MeetingsSectionContent
                 canHost={canHostMeetings}
@@ -501,7 +501,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: hasCapability(roles, 'send_newspaper') ? 'Write, check and send the club’s email' : 'Write the club’s email',
             homeExclude: true,
             dockExclude: true,
-            group: 'Team' as const,
+            group: 'Comms' as const,
             content: <NewspaperSectionContent />,
           },
         ]
@@ -603,7 +603,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             label: sectionLabel('docs'),
             homeExclude: true,
             dockExclude: true,
-            group: 'Resources' as const,
+            group: 'Team' as const,
             description: 'How-to guides for officers, leads, and execs',
             badge: docsSummary.count || undefined,
             content: <DocsLazy scope={scope} userId={profile.id} canEdit={canManageDocs} />,
@@ -624,7 +624,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             icon: <QrCode size={28} strokeWidth={1.5} aria-hidden="true" />,
             label: sectionLabel('qrcode'),
             description: 'Design branded QR codes',
-            group: 'Resources' as const,
+            group: 'Comms' as const,
             content: (
               <QRStudioClient
                 divisions={divisions

@@ -72,3 +72,5 @@
 /* The ring belongs to the whole field (.inputWrap:focus-within), so the bare input inside shows none of its own: otherwise a square blue box
    sits inside the rounded field. */
 .input:focus, .input:focus-visible { outline: none; border: 0; box-shadow: none; background: none; }
+
+.needsTag { flex-shrink: 0; font-size: 0.7rem; font-weight: 600; padding: 0.1rem 0.55rem; border-radius: 999px; color: rgba(var(--pp-chrome-rgb), 0.85); background: rgba(var(--pp-chrome-rgb), 0.14); white-space: nowrap; }
