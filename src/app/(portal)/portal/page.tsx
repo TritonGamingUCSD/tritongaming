@@ -442,7 +442,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             icon: <ShieldAlert size={28} strokeWidth={1.5} aria-hidden="true" />,
             label: sectionLabel('strikes'),
             description: 'Private strike tracker',
-            group: 'Team' as const,
+            group: 'Admin' as const,
             content: <StrikesSectionContent />,
           },
         ]
@@ -455,7 +455,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             icon: <CalendarRange size={28} strokeWidth={1.5} aria-hidden="true" />,
             label: sectionLabel('quarters'),
             description: 'Who is active each quarter',
-            group: 'Team' as const,
+            group: 'Admin' as const,
             content: <QuarterStatusContent />,
           },
         ]
@@ -471,7 +471,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: canManageLogistics ? 'Equipment catalog and event setups' : 'Find equipment and see event setups',
             dockBoost: logisticsToday ? 100 : 0,
             dockLabel: 'Logistics',
-            group: 'Run' as const,
+            group: 'Events' as const,
             content: <LogisticsSectionContent canManage={canManageLogistics} />,
           },
         ]
@@ -501,7 +501,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             description: hasCapability(roles, 'send_newspaper') ? 'Write, check and send the club’s email' : 'Write the club’s email',
             homeExclude: true,
             dockExclude: true,
-            group: 'Comms' as const,
+            group: 'Events' as const,
             content: <NewspaperSectionContent />,
           },
         ]
@@ -624,7 +624,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             icon: <QrCode size={28} strokeWidth={1.5} aria-hidden="true" />,
             label: sectionLabel('qrcode'),
             description: 'Design branded QR codes',
-            group: 'Comms' as const,
+            group: 'Events' as const,
             content: (
               <QRStudioClient
                 divisions={divisions

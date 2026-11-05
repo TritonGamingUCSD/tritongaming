@@ -15,16 +15,16 @@ export const DOCK_ICON_SIZE: Record<string, number> = { meetings: 19, events: 19
 // 'Tools' used to be its own group with exactly one card (QR Studio) in
 // it — a group that never clusters more than a single item isn't helping
 // anyone scan faster, it's just an extra label to read past. QR Studio
-// moved into Communications instead (see portal/page.tsx) — it's usable by any
+// moved into Events instead (see portal/page.tsx) — it's usable by any
 // officer-tier member, the same audience as Members/Docs, not Admin's
 // actually-restricted stuff.
 // 'Overview' is the unlabeled group right under Dashboard (Profile and Help, which have no sidebar entry of their own).
-export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Run', 'Comms', 'Team', 'Admin'] as const;
+export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Run', 'Team', 'Admin'] as const;
 
 // Order inside each group (and so in the sidebar, the "More" sheet and the home grid). Anything not
 // listed goes last, in the order it was given.
 // The order and the names of the sections are defined once, in lib/portal/sections.ts.
-// (Grouped by job: Events plans an event, Run An Event holds the tools used while it happens, Team is people and meetings.)
+// (Grouped by job: Events plans an event, Live Tools holds what runs while it happens, Club is meetings and people, Admin is the officer and exec tools.)
 const WANTED_ORDER = [
   'tickets',
   'points',
@@ -62,7 +62,6 @@ export const GROUP_ACCENT: Record<string, string> = {
   Yours: '#4a90d9',
   Events: '#e8912d',
   Run: '#d9573a',
-  Comms: '#3aa6c9',
   Team: '#8b6cdc',
   Admin: '#d9487f',
 };
@@ -72,10 +71,8 @@ export const GROUP_LABEL: Record<string, string> = {
   Overview: 'Portal',
   Yours: 'Me',
   Events: 'Events',
-  Run: 'Run An Event',
-  Meetings: 'Meetings',
-  Comms: 'Communications',
-  Team: 'Team',
+  Run: 'Live Tools',
+  Team: 'Club',
   Admin: 'Admin',
 };
 

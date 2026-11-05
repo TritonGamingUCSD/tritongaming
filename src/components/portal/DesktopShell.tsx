@@ -181,7 +181,11 @@ export function DesktopShell({
                     title={isFolded(group, items.length) ? `Show ${GROUP_LABEL[group]}` : `Hide ${GROUP_LABEL[group]}`}
                   >
                     <span className={styles.railGroupDot} aria-hidden="true" />
-                    {GROUP_LABEL[group]}
+                    <span className={styles.railGroupText}>
+                      {GROUP_LABEL[group]}
+                      {/* A closed area names its pages, so nobody has to open it to find out what is inside. */}
+                      {isFolded(group, items.length) && <span className={styles.railGroupPeek}>{items.map((x) => x.label).join(' · ')}</span>}
+                    </span>
                     <ChevronDown className={styles.railGroupChevron} size={13} aria-hidden="true" />
                   </button>
                 )}
