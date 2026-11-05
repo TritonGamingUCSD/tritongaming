@@ -661,7 +661,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
     // its own click and made "Admin" a mix of unrelated concerns (roles,
     // stats, AND content editing). See SiteContentSectionContent for the
     // tabbed layout, matching AdminSectionContent's own tab bar.
-    ...(canManageDivisions || isDivisionLead
+    // A Head edits their division's page inside the division's own portal (Page), so the club's Divisions section is just the directory for exec and admin: a Head only keeps it while division pages are not open to them yet.
+    ...(canManageDivisions || (isDivisionLead && divisionHats.length === 0)
       ? [
           {
             id: 'divisions',

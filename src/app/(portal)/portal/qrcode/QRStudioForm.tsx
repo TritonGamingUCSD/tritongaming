@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Upload, X } from 'lucide-react';
 import type { QRCodeOptions, QRDotsType, QRCornersSquareType, QRCornersDotType } from '@/lib/qr/qrCodeStyling';
 import { QR_PRESETS, matchingPreset } from '@/lib/qr/qrPresets';
@@ -194,7 +194,18 @@ function Fold({ title, hint, children }: { title: string; hint?: string; childre
   );
 }
 
-export default function QRStudioForm({ options, setOptions, divisions = [] }: { options: QRCodeOptions; setOptions: (o: QRCodeOptions) => void; divisions?: QRDivisionLogo[] }) {
+export default function QRStudioForm({
+  options,
+  setOptions,
+  divisions = [],
+  startWith,
+}: {
+  options: QRCodeOptions;
+  setOptions: (o: QRCodeOptions) => void;
+  divisions?: QRDivisionLogo[];
+  /** Opened inside a division's portal: begin with this division's logo (and its color on the dots). */
+  startWith?: { id: string; color?: string };
+}) {
   const [loadingDivision, setLoadingDivision] = useState<string | null>(null);
   const [divisionError, setDivisionError] = useState('');
   const [chosenDivision, setChosenDivision] = useState<string | null>(null);
@@ -223,6 +234,17 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
       setLoadingDivision(null);
     }
   }
+
+  // Inside a division's own portal the code starts as that division's: its logo in the middle and its color on the dots.
+  const started = useRef(false);
+  useEffect(() => {
+    if (started.current || !startWith) return;
+    const d = divisions.find((x) => x.id === startWith.id);
+    if (!d) return;
+    started.current = true;
+    void applyDivisionLogo(d, startWith.color ? { dotsColor: startWith.color, cornersSquareColor: startWith.color, cornersDotColor: startWith.color } : {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const activePreset = matchingPreset(options);
 

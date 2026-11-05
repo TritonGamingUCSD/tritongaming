@@ -13,11 +13,11 @@ export const DIVISION_PAGES: readonly DivisionPage[] = [
   { id: 'home', label: 'Home', needs: 'alumni' },
   { id: 'events', label: 'Events', needs: 'head', group: 'Events' },
   { id: 'check-in', label: 'Check-In', needs: 'member', group: 'Events' },
+  { id: 'qr', label: 'QR Codes', needs: 'member', group: 'Events' },
   { id: 'live', label: 'Live Tools', needs: 'member', group: 'Run' },
   { id: 'members', label: 'Members', needs: 'alumni', group: 'Team' },
   { id: 'docs', label: 'Docs', needs: 'alumni', group: 'Team' },
   { id: 'page', label: 'Page', needs: 'head', group: 'Team' },
-  { id: 'settings', label: 'Settings', needs: 'head', group: 'Team' },
 ];
 const RANK: Record<DivisionLevel, number> = { alumni: 1, member: 2, head: 3 };
 /** The pages a person at this level sees ('staff' is exec and admin: every page). */

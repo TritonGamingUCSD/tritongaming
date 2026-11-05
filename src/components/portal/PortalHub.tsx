@@ -11,7 +11,7 @@ import { REFRESH_EVENT, REFRESHED_EVENT } from '@/lib/ui/refreshPortal';
 import { sectionLabel } from '@/lib/portal/sections';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { motion, AnimatePresence } from 'motion/react';
-import { Home, MoreHorizontal, ChevronRight, ChevronLeft, CalendarDays, CheckCheck, Gamepad2, Users, FileText, Globe, Settings } from 'lucide-react';
+import { Home, MoreHorizontal, ChevronRight, ChevronLeft, CalendarDays, CheckCheck, Gamepad2, Users, FileText, Globe, Settings, QrCode } from 'lucide-react';
 import { divisionPagesFor } from '@/lib/divisions/pages';
 import CodeIcon from '@/components/portal/CodeIcon';
 import { pickDock, readUsage, recordUse } from './dockPicker';
@@ -432,6 +432,7 @@ export default function PortalHub({
     members: <Users size={20} strokeWidth={1.9} aria-hidden="true" />,
     docs: <FileText size={20} strokeWidth={1.9} aria-hidden="true" />,
     page: <Globe size={20} strokeWidth={1.9} aria-hidden="true" />,
+    qr: <QrCode size={20} strokeWidth={1.9} aria-hidden="true" />,
     settings: <Settings size={20} strokeWidth={1.9} aria-hidden="true" />,
   };
   const hatDockItems: DockEntry[] = [];

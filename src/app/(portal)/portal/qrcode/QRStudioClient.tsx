@@ -18,7 +18,15 @@ export interface QRDivisionLogo {
   logo: string;
 }
 
-export default function QRStudioClient({ divisions = [] }: { divisions?: QRDivisionLogo[] }) {
+export default function QRStudioClient({
+  divisions = [],
+  startWith,
+  embedded = false,
+}: {
+  divisions?: QRDivisionLogo[];
+  startWith?: { id: string; color?: string };
+  embedded?: boolean;
+}) {
   // Starts empty (the field shows example.com as a placeholder, so nothing has to be deleted first).
   // The preview draws a sample code from the placeholder until a real link is entered.
   const [options, setOptions] = useState<QRCodeOptions>({ ...DEFAULT_QR_OPTIONS, data: '' });
@@ -41,9 +49,9 @@ export default function QRStudioClient({ divisions = [] }: { divisions?: QRDivis
 
   return (
     <>
-      <SectionHeader title="QR Studio" sub="Paste a link, pick a look, download. Everything else is optional." />
+      {!embedded && <SectionHeader title="QR Studio" sub="Paste a link, pick a look, download. Everything else is optional." />}
       <div className={styles.layout}>
-        <QRStudioForm options={options} setOptions={setOptions} divisions={divisions} />
+        <QRStudioForm options={options} setOptions={setOptions} divisions={divisions} startWith={startWith} />
 
         <aside className={styles.previewPanel}>
           <div>

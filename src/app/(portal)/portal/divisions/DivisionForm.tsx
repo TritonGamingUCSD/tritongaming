@@ -81,6 +81,7 @@ export default function DivisionForm({
   canRename = true,
   divisionId,
   creditPeople = [],
+  embedded = false,
 }: {
   heading: string;
   /** The division being edited: lets the live preview lay the unsaved form over it. */
@@ -91,6 +92,8 @@ export default function DivisionForm({
   backHref: string;
   canRename?: boolean;
   creditPeople?: import('@/lib/members/creditPeople').CreditPerson[];
+  /** Shown inside a division's own portal page: no back link or title of its own (the page has them). */
+  embedded?: boolean;
 }) {
   const [form, setForm] = useState<DivisionFormValues>(initial);
   const { dirty, markSaved, saved: savedForm } = useUnsavedChanges(form);
@@ -116,10 +119,12 @@ export default function DivisionForm({
 
   return (
     <div className={styles.page} data-wide-page>
-      <Link href={backHref} className={styles.back}>
-        ← Back to Divisions
-      </Link>
-      <SectionHeader title={heading} />
+      {!embedded && (
+        <Link href={backHref} className={styles.back}>
+          ← Back to Divisions
+        </Link>
+      )}
+      {!embedded && <SectionHeader title={heading} />}
       <EditingNow room={divisionId ? `division:${divisionId}` : null} what="this division" />
 
       <div className={styles.editLayout}>
@@ -238,11 +243,13 @@ export default function DivisionForm({
 
           {error && <Notice tone="error">{error}</Notice>}
 
-          <div className={styles.actions}>
-            <Link href={backHref} className={styles.cancelBtn}>
-              Back
-            </Link>
-          </div>
+          {!embedded && (
+            <div className={styles.actions}>
+              <Link href={backHref} className={styles.cancelBtn}>
+                Back
+              </Link>
+            </div>
+          )}
           <SaveBar
             dirty={dirty}
             saving={saving}
