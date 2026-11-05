@@ -10,5 +10,10 @@ export const dynamic = 'force-dynamic';
 export default async function ScanPage() {
   const [profile, roles] = await Promise.all([getProfile(), getUserRoles()]);
   if (!profile) redirect(`/login?next=${encodeURIComponent('/portal/scan')}`);
-  return <ScanScreen staff={hasCapability(roles, 'checkin')} redemptions={hasCapability(roles, 'scan_redemptions')} />;
+  return (
+    <ScanScreen
+      staff={hasCapability(roles, 'checkin') || roles.some((r) => !!r.division_id && ['division', 'division_member'].includes(r.role))}
+      redemptions={hasCapability(roles, 'scan_redemptions')}
+    />
+  );
 }

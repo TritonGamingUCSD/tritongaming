@@ -319,7 +319,11 @@ export function DesktopShell({
                 </span>
               )}
               <span className={styles.topName}>
-                <PortalCrumbs section={openSection.id} sectionLabel={openSection.label} />
+                <PortalCrumbs
+                  section={openSection.id}
+                  sectionLabel={openSection.label}
+                  tabLabel={openSection.id === 'division' && divisionHat ? { slug: divisionHat.slug, label: divisionHat.name } : undefined}
+                />
               </span>
             </div>
           ) : (

@@ -73,7 +73,7 @@ export default function DivisionEvents({ hat }: { hat: DivisionHat }) {
               </span>
               <span className={styles.actions}>
                 <Link href={`/portal/events/${e.id}`}>Edit</Link>
-                <Link href={`/portal/events/${e.id}`}>Check-in</Link>
+                <Link href={`/portal/${hat.slug}/check-in`}>Check-in</Link>
                 <Link href={`/portal/events/${e.id}/summary`}>Results</Link>
               </span>
             </li>

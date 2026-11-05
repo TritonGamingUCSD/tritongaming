@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
+import { canCheckInEvent } from '@/lib/events/eventAccess';
 import { rotatingCode, qrToken, currentWindow, scanWindows } from '@/lib/events/rotatingCode';
 import { performCheckin } from '@/lib/events/performCheckin';
 import { openEventsFilter, isHappeningNow } from '@/lib/events/checkinWindow';
@@ -19,7 +20,9 @@ export async function POST(request: Request) {
   // The person at the door is waiting on this answer, so what does not depend on something else is asked together: who may scan and what was scanned.
   const [{ data: roles }, body] = await Promise.all([supabase.from('user_roles').select('role, division_id').eq('user_id', user.id), request.json()]);
 
-  if (!hasCapability(roles ?? [], 'checkin')) {
+  // Club check-in staff, or someone in a division (its Members and Heads scan their own division's events; which events is settled below, ticket by ticket).
+  const mayScanSomething = hasCapability(roles ?? [], 'checkin') || (roles ?? []).some((r) => !!r.division_id && ['division', 'division_member'].includes(r.role));
+  if (!mayScanSomething) {
     return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
   }
 
@@ -45,7 +48,7 @@ export async function POST(request: Request) {
       id, ticket_code, status, checked_in_at, checked_in_by, checkin_form_completed_at, event_id, user_id,
       user:profiles!tickets_user_id_fkey(display_name),
       event:events`;
-  const eventColumns = '(title, points_value, start_date, end_date, requires_checkin_form, checkin_windows)';
+  const eventColumns = '(title, points_value, start_date, end_date, requires_checkin_form, checkin_windows, division_id)';
   // The membership tiers (for the result) are asked while the tickets are looked up, so neither waits for the other.
   const tiersPromise = preview === true ? null : fetchTiers(supabase);
   tiersPromise?.catch(() => {});
@@ -61,6 +64,7 @@ export async function POST(request: Request) {
     end_date: string | null;
     requires_checkin_form: boolean | null;
     checkin_windows: unknown;
+    division_id: string | null;
   }[] = [];
   type Candidate = Record<string, unknown> & { id: string; ticket_code: string; event_id: string; user_id: string; status: string; user?: unknown; event?: unknown };
   let eventTickets = null as Candidate[] | null;
@@ -68,7 +72,7 @@ export async function POST(request: Request) {
   if (anyEvent) {
     // Both at once: the events on right now, and their tickets with the holder's name and the event alongside (one round trip, not three).
     const [ev, tk] = await Promise.all([
-      serviceClient.from('events').select('id, title, points_value, start_date, end_date, requires_checkin_form, checkin_windows').or(openEventsFilter()),
+      serviceClient.from('events').select('id, title, points_value, start_date, end_date, requires_checkin_form, checkin_windows, division_id').or(openEventsFilter()),
       serviceClient
         .from('tickets')
         .select(
@@ -77,7 +81,7 @@ export async function POST(request: Request) {
         .or(openEventsFilter(), { referencedTable: 'events' }),
     ]);
     candidatesError = ev.error ?? tk.error;
-    openEvents = (ev.data ?? []) as typeof openEvents;
+    openEvents = ((ev.data ?? []) as typeof openEvents).filter((e) => canCheckInEvent(roles ?? [], e));
     eventTickets = (tk.data ?? []) as unknown as Candidate[];
   } else {
     const q = await supabase.from('tickets').select(`${columns}${eventColumns}`).eq('event_id', pickedEvent);
@@ -108,7 +112,13 @@ export async function POST(request: Request) {
     matches = (t) => rotatingCode(t.ticket_code, windowIndex) === normalizedCode || rotatingCode(t.ticket_code, windowIndex - 1) === normalizedCode;
   }
 
-  const ticket = (eventTickets ?? []).find(matches);
+  // Only the tickets of events this person may check in (a club officer: the club's; a Division Member or Head: their division's; exec and admin: all).
+  const ownerOf = (t: Candidate) => {
+    const e = (Array.isArray(t.event) ? t.event[0] : t.event) as { division_id?: string | null } | null | undefined;
+    return { division_id: e?.division_id ?? null };
+  };
+  const scannable = (eventTickets ?? []).filter((t) => canCheckInEvent(roles ?? [], ownerOf(t)));
+  const ticket = scannable.find(matches);
   const event_id = pickedEvent ?? ticket?.event_id;
 
   if (!ticket && anyEvent) return NextResponse.json({ error: 'Code not recognized — ask them to reopen their ticket and try again' }, { status: 404 });

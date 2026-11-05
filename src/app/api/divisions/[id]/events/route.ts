@@ -5,6 +5,7 @@ import { strictUser } from '@/lib/supabase/localAuth';
 import { canDivisionAction } from '@/lib/portal/divisionAccess';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import { withGrantedCapabilities } from '@/lib/portal/capabilities';
+import { cleanSelfCheckinMode } from '@/lib/events/selfCheckin';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,8 @@ export interface DivisionEventRow {
   start_date: string;
   end_date: string | null;
   is_published: boolean;
+  slug: string | null;
+  self_checkin_mode: 'off' | 'until_end' | 'forever';
   registered: number;
   checkedIn: number;
   /** Everyone who hosts it: the owner first. A division has a name and logo; Triton Gaming is `tg: true`. */
@@ -35,7 +38,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
   const { data: co } = await svc.from('event_cohosts').select('event_id').eq('division_id', id).eq('status', 'accepted');
   const coIds = (co ?? []).map((c) => c.event_id as string);
-  let q = svc.from('events').select('id, title, start_date, end_date, is_published, division_id').order('start_date', { ascending: false }).limit(100);
+  let q = svc.from('events').select('id, title, slug, self_checkin_mode, start_date, end_date, is_published, division_id').order('start_date', { ascending: false }).limit(100);
   q = coIds.length ? q.or(`division_id.eq.${id},id.in.(${coIds.join(',')})`) : q.eq('division_id', id);
   const { data: events } = await q;
   const ids = (events ?? []).map((e) => e.id as string);
@@ -68,6 +71,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     start_date: e.start_date as string,
     end_date: (e.end_date as string | null) ?? null,
     is_published: !!e.is_published,
+    slug: (e.slug as string | null) ?? null,
+    self_checkin_mode: cleanSelfCheckinMode(e.self_checkin_mode as string | null),
     registered: count.get(e.id as string)?.registered ?? 0,
     checkedIn: count.get(e.id as string)?.checkedIn ?? 0,
     hosts: hostsOf(e.id as string, (e.division_id as string | null) ?? null),
