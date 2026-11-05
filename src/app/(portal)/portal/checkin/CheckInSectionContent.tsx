@@ -45,6 +45,7 @@ export default function CheckInSectionContent({ events, canControlSelfCheckin }:
       ) : (
         <>
           <SectionTabs
+            top
             value={tab ?? available[0]}
             onChange={selectTab}
             tabs={[

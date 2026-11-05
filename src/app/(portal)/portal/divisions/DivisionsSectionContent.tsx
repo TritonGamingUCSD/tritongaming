@@ -37,7 +37,7 @@ export default function DivisionsSectionContent({ canManageDivisions, allDivisio
   return (
     <div className={styles.page}>
       <SectionHeader title="Divisions" sub="The divisions directory and each division’s public page" />
-      {tabs.length > 1 && <SectionTabs value={tab} onChange={select} tabs={tabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))} />}
+      {tabs.length > 1 && <SectionTabs top value={tab} onChange={select} tabs={tabs.map((t) => ({ id: t.id, label: t.label, icon: t.icon }))} />}
       {tab === 'all' && canManageDivisions && allDivisions && <DivisionsManager divisions={allDivisions} />}
       {tab === 'my-division' && isDivisionLead && myDivisions && <MyDivisionsEditor divisions={myDivisions} />}
     </div>

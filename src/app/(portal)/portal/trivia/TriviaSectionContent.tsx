@@ -68,7 +68,7 @@ export default function TriviaSectionContent({ canHost }: { canHost: boolean }) 
           }
         />
       )}
-      {!inQuiz && canHost && <SectionTabs label="Trivia" value={route.tab} onChange={pick} tabs={tabs} />}
+      {!inQuiz && canHost && <SectionTabs top label="Trivia" value={route.tab} onChange={pick} tabs={tabs} />}
       {route.tab === 'quizzes' &&
         (route.quiz ? (
           <QuizEditor

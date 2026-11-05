@@ -136,5 +136,9 @@
 /* The open tab must be obvious: full-strength text and a thick line in the area's color darkened with ink (so a pale area color still shows), while the others are quieter. */
 .bar:not(.segmented) .tab { font-weight: 600; color: rgba(var(--pp-ink-rgb), 0.6); }
 .bar:not(.segmented) .active { font-weight: 800; color: var(--pp-ink); }
-.line { height: 4px; bottom: -2px; border-radius: 2px 2px 0 0; background: color-mix(in srgb, var(--frame-accent, #4a90d9) 40%, var(--pp-ink)); }
+.line { height: 4px; bottom: -2px; border-radius: 2px 2px 0 0; background: var(--tab-line, color-mix(in srgb, var(--frame-accent, #4a90d9) 40%, var(--pp-ink))); }
 .bar:not(.segmented) { border-bottom-width: 2px; }
+
+/* The small toggle is only as wide as its options, at the right edge of the row it sits in. */
+.segmented { width: fit-content; max-width: 100%; align-self: flex-end; margin-left: auto; }
+@media (max-width: 640px) { .segmented { width: 100%; align-self: stretch; margin-left: 0; } }

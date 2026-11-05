@@ -73,6 +73,7 @@ export default function QuarterStatusContent() {
         sub={tab === 'status' ? 'Who is sitting out this quarter, and who sat out earlier ones.' : 'Who was exec, a lead or an officer each year.'}
       />
       <SectionTabs<'status' | 'years'>
+        top
         label="Quarter status"
         value={tab}
         onChange={setTab}

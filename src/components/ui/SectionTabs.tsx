@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import styles from './SectionTabs.module.css';
 
 export interface SectionTab<T extends string = string> {
@@ -35,12 +36,15 @@ export default function SectionTabs<T extends string>({
   onChange,
   variant = 'underline',
   label = 'Sections',
+  top = false,
 }: {
   tabs: SectionTab<T>[];
   value: T;
   onChange: (id: T) => void;
   variant?: 'underline' | 'segmented';
   label?: string;
+  /** A page's own tabs: on a computer inside the app frame they sit in the strip under the top bar, always in view; elsewhere they stay in the page. */
+  top?: boolean;
 }) {
   // The row only scrolls (and only fades at its edge) when the tabs really do not fit; the active tab is kept in view then.
   const bar = useRef<HTMLDivElement>(null);
@@ -107,7 +111,12 @@ export default function SectionTabs<T extends string>({
   }
 
   const picker = variant !== 'segmented' && tabs.length > 3;
-  return (
+  const slot = useSyncExternalStore(
+    () => () => {},
+    () => (top && variant !== 'segmented' ? document.querySelector<HTMLElement>('[data-top-tabs]') : null),
+    () => null,
+  );
+  const out = (
     <>
       {picker && (
         <select className={styles.picker} aria-label={label} value={value} onChange={(e) => onChange(e.target.value as T)}>
@@ -155,4 +164,5 @@ export default function SectionTabs<T extends string>({
       </div>
     </>
   );
+  return slot ? createPortal(out, slot) : out;
 }

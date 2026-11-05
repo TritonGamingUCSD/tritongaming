@@ -339,6 +339,7 @@ export default function ProfileClient({
       {/* Above the two-column layout, not inside it: the columns change width and
           content from tab to tab, which used to drag the tab bar around with them. */}
       <SectionTabs
+        top
         value={tab}
         onChange={selectTab}
         tabs={[

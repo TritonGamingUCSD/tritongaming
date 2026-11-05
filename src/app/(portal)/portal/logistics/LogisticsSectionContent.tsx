@@ -91,7 +91,7 @@ export default function LogisticsSectionContent({ canManage }: { canManage: bool
           }
         />
       )}
-      {!inPlan && !requestOnly && <SectionTabs<Tab> label="Event Logistics" value={route.tab} onChange={pick} tabs={tabs} />}
+      {!inPlan && !requestOnly && <SectionTabs<Tab> top label="Event Logistics" value={route.tab} onChange={pick} tabs={tabs} />}
       {error && (
         <div role="alert" onClick={() => setError('')}>
           <Notice tone="error">{error}</Notice>

@@ -147,6 +147,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
 
       {(canEdit || canEmail) && (
         <SectionTabs
+          top
           value={tab}
           onChange={selectTab}
           tabs={[

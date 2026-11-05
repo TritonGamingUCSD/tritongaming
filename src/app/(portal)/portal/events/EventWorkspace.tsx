@@ -113,7 +113,7 @@ export default function EventWorkspace({ eventId, details }: { eventId: string; 
           ) : undefined
         }
       />
-      <SectionTabs<Tab> label="Event" value={tab} onChange={setTab} tabs={shown.map((t) => ({ id: t, label: LABEL[t] }))} />
+      <SectionTabs<Tab> top label="Event" value={tab} onChange={setTab} tabs={shown.map((t) => ({ id: t, label: LABEL[t] }))} />
       {tab === 'details' && details}
       {tab === 'tickets' && <EventCheckinsPage embedded eventKey={event.slug || event.id} onBack={() => setTab('details')} canManagePoints={caps.details} />}
       {tab === 'logistics' && <Logistics data={data} />}

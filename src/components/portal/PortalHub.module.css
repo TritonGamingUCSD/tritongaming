@@ -1077,3 +1077,12 @@
   [data-app-frame][data-scrolled] .topBar { box-shadow: 0 8px 16px -10px rgba(0, 0, 0, 0.6); position: relative; z-index: 5; }
 }
 @media (prefers-reduced-motion: reduce) { .railGlide { transition: none; } }
+
+/* A page's own tabs sit in a strip under the top bar (the same navy), so they stay in view while the page scrolls. Empty when a page has none. */
+@media (min-width: 900px) {
+  .tabStrip { display: block; padding: 0 clamp(1.5rem, 3vw, 3rem); background: #243f63; border-bottom: 1px solid rgba(255, 255, 255, 0.14); --pp-ink: #ffffff; --pp-ink-rgb: 255, 255, 255; --pp-card: #243f63; --frame-accent: #ffc72c; --tab-line: #ffc72c; } /* theme-ok: the navy bar */
+  :global([data-pp-theme='dark']) .tabStrip { background: #17263d; --pp-card: #17263d; } /* theme-ok */
+  .tabStrip:empty { display: none; }
+  .tabStrip > div { margin-bottom: 0; border-bottom: 0; }
+  .tabStrip .picker { display: none; }
+}

@@ -267,3 +267,6 @@
 .tabsRow > :first-child { flex: 1 1 14rem; width: auto; min-width: 0; }
 .tabsRow > :last-child:not(:first-child) { flex: none; }
 .closeBtn { position: absolute; top: 0.875rem; right: 0.875rem; }
+
+/* With the tabs up in the strip under the top bar, the view toggle is the only thing left in the row: small, at the right. */
+.tabsRow > :first-child:last-child { flex: none; width: fit-content; margin-left: auto; }

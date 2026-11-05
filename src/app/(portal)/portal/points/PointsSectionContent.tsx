@@ -102,6 +102,7 @@ export default function PointsSectionContent({
       <SectionHeader title="Rewards" sub="Earn points for showing up, spend them on perks" />
 
       <SectionTabs
+        top
         value={tab}
         onChange={selectTab}
         tabs={[

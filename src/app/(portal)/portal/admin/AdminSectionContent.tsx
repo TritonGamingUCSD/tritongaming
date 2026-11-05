@@ -126,6 +126,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
 
       {/* One row of tabs; only System has sub-views. Each view keeps its own id in the address (tab=roles, tab=audit …), so every old link still works. */}
       <SectionTabs<Group>
+        top
         label="Admin"
         value={groupOf(tab)}
         onChange={(g) => selectTab(lastIn.current[g] && GROUPS[g].views.includes(lastIn.current[g]!) ? lastIn.current[g]! : GROUPS[g].views.filter((v) => viewOk(v))[0])}

@@ -236,6 +236,7 @@ export function DesktopShell({
             {identity && <AccountMenu identity={identity} viewAs={frame?.viewAs} onProfile={() => open('profile')} />}
           </div>
         </header>
+        <div className={styles.tabStrip} data-top-tabs />
         {frame?.banners && <div className={styles.frameBanners}>{frame.banners}</div>}
         <div
           className={styles.frameBody}

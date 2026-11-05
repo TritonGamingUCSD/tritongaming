@@ -176,6 +176,7 @@ export default function MembersSectionContent({
       <div className={styles.tabsRow}>
         {teams || canOrder ? (
           <SectionTabs<MembersTab>
+            top
             label="TG Members"
             value={tab}
             onChange={(t) => {

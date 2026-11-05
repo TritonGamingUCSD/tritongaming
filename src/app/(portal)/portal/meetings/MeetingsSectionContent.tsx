@@ -109,6 +109,7 @@ export default function MeetingsSectionContent({
         }
       />
       <SectionTabs<Tab>
+        top
         label="Meetings"
         value={tab}
         onChange={pick}

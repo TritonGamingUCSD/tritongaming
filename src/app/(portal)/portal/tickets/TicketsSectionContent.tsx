@@ -20,6 +20,7 @@ export default function TicketsSectionContent({
   return (
     <div>
       <SectionTabs<Tab>
+        top
         label="My tickets"
         value={tab}
         onChange={(t) => {

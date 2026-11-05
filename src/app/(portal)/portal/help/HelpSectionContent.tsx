@@ -137,6 +137,7 @@ export default function HelpSectionContent({ isStaff, userId }: { isStaff: boole
         sub={isStaff ? 'Answer questions and problems from members.' : 'Stuck on something, or found a bug? Tell the exec team and we’ll get back to you here.'}
       />
       <SectionTabs<Tab>
+        top
         label="Help"
         value={tab}
         onChange={pick}
