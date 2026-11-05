@@ -101,7 +101,7 @@ export function DashboardBody({
   /** Someone not on the team: their member pass (a student) or welcome ticket (a guest) opens the page. */
   pass?: PassData | null;
   /** Divisions to explore (when division pages are open to everyone): a card each, opening its public page. */
-  explore?: { slug: string; name: string; logoUrl: string | null; accent: string }[];
+  explore?: { slug: string; name: string; logoUrl: string | null; accent: string; joinUrl: string | null }[];
   term?: TermInfoData | null;
   cards?: HomeCard[];
   logistics?: boolean;
@@ -167,18 +167,24 @@ export function DashboardBody({
       {explore.length > 0 && (
         <section className={`${styles.divCards} ${styles.m6}`} aria-label="Explore the divisions">
           {explore.map((d) => (
-            <a key={d.slug} href={`/${d.slug}`} className={styles.divCard} style={{ ['--hat' as string]: d.accent }}>
-              {d.logoUrl ? (
-                <Image src={d.logoUrl} alt="" width={40} height={40} className={styles.divLogo} unoptimized />
-              ) : (
-                <span className={styles.divLogoFallback}>{d.name.slice(0, 1)}</span>
+            <div key={d.slug} className={styles.divCard} style={{ ['--hat' as string]: d.accent }}>
+              <a href={`/${d.slug}`} className={styles.exploreMain}>
+                {d.logoUrl ? (
+                  <Image src={d.logoUrl} alt="" width={40} height={40} className={styles.divLogo} unoptimized />
+                ) : (
+                  <span className={styles.divLogoFallback}>{d.name.slice(0, 1)}</span>
+                )}
+                <span>
+                  <strong>{d.name}</strong>
+                  <small>Visit the division</small>
+                </span>
+              </a>
+              {d.joinUrl && (
+                <a href={d.joinUrl} className={styles.joinBtn} target="_blank" rel="noopener noreferrer">
+                  Join
+                </a>
               )}
-              <span>
-                <strong>{d.name}</strong>
-                <small>Visit the division</small>
-              </span>
-              <b aria-hidden="true">→</b>
-            </a>
+            </div>
           ))}
         </section>
       )}

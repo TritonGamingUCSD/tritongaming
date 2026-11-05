@@ -28,3 +28,15 @@
 .phoneTabs button { flex: none; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 999px; background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.85rem; padding: 0.3rem 0.8rem; cursor: pointer; }
 .phoneTabs .tabOn { background: var(--hat, var(--yellow)); color: #011941; border-color: #011941; font-weight: 700; } /* theme-ok: the accent fill */
 @media (max-width: 899px) { .phoneTabs { display: flex; } }
+
+/* The division Home's next-event card. */
+.next { position: relative; display: grid; gap: 0.4rem; padding: 1rem 1.1rem; border: 2px solid var(--pp-ink); border-radius: 8px; background: var(--pp-card); color: var(--pp-ink); box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.8); }
+.nextTag { justify-self: start; padding: 0.2rem 0.6rem; background: var(--hat, var(--yellow)); color: #011941; border: 2px solid #011941; border-radius: 4px; font-family: var(--font-renegare); font-size: 0.66rem; letter-spacing: 0.16em; text-transform: uppercase; transform: rotate(-2deg); } /* theme-ok: a sticker keeps its own color with ink text */
+.nextTitle { margin: 0.2rem 0 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.3rem; line-height: 1.2; }
+.nextMeta { margin: 0; display: flex; align-items: center; gap: 0.4rem; font-size: 0.92rem; }
+.nextNone { margin: 0; opacity: 0.85; }
+.nextActions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.3rem; }
+.nextBtn, .nextBtnAlt { display: inline-flex; align-items: center; padding: 0.4rem 0.9rem; border: 2px solid var(--pp-ink); border-radius: 6px; font-weight: 700; font-size: 0.9rem; text-decoration: none; color: var(--pp-ink); }
+.nextBtn { background: var(--hat, var(--yellow)); color: #011941; box-shadow: 2px 2px 0 rgba(var(--pp-ink-rgb), 0.8); } /* theme-ok */
+.nextBtnAlt { background: transparent; }
+.nextBtn:hover, .nextBtnAlt:hover { transform: translateY(-1px); }

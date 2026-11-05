@@ -15,6 +15,7 @@ import DivisionLive, { isLiveTool } from './DivisionLive';
 import DivisionPageEditor from './DivisionPageEditor';
 import DivisionQr from './DivisionQr';
 import DivisionRoster from './DivisionRoster';
+import DivisionNextEvent from './DivisionNextEvent';
 import styles from './division.module.css';
 
 // A division's pages in the portal. The address says which: /portal/division/<division address>/<page>. The division's sidebar (DesktopShell) lists the pages; this draws the open one.
@@ -130,6 +131,7 @@ function Home({ hat }: { hat: DivisionHat }) {
           <p className={styles.tag}>A Triton Gaming division</p>
         </div>
       </div>
+      <DivisionNextEvent hat={hat} />
       <div className={styles.stats}>
         {cards.map((c) => (
           <div key={c.label} className={styles.stat}>
@@ -139,7 +141,6 @@ function Home({ hat }: { hat: DivisionHat }) {
           </div>
         ))}
       </div>
-      <p className={styles.note}>Upcoming events, announcements and join requests will show here once they are built (the next steps of the division project).</p>
     </>
   );
 }

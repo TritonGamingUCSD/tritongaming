@@ -1002,7 +1002,13 @@ export default async function PortalDashboard({ searchParams }: Props) {
                   !isTgMember(roles) && siteSettings.divisionsOpen
                     ? divisions
                         .filter((d) => d.logo_url || d.name)
-                        .map((d) => ({ slug: d.slug, name: d.name, logoUrl: divisionLogoSrc(d.logo_url), accent: accentOf(d.accent).hex }))
+                        .map((d) => ({
+                          slug: d.slug,
+                          name: d.name,
+                          logoUrl: divisionLogoSrc(d.logo_url),
+                          accent: accentOf(d.accent).hex,
+                          joinUrl: d.discord_url || d.application_url || null,
+                        }))
                     : []
                 }
               />
