@@ -746,7 +746,7 @@
 
 /* Page intros (SectionHeader) now show on desktop too, so every page opens like the dashboard. */
 @media (min-width: 900px) {
-  .frameBody { padding-top: 1rem; }
+  .frameBody { padding-top: 2.4rem; }
 }
 
 /* The footer rows used to clip their icon tile by a pixel top and bottom (an invisible 1px border shrank the row's inside, and the row hides overflow),
