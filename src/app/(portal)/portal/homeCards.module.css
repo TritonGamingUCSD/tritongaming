@@ -39,3 +39,12 @@
 
 /* The public site's hard offset shadow. */
 .card { box-shadow: var(--hard-shadow-sm); }
+
+/* The main site's look: titles in the site's heading face, the number in the pixel face with a little pop when pointed at, and the open-status as a tilted yellow sticker. */
+.title { font-family: var(--font-soulmaze); font-weight: 400; font-size: 1rem; }
+.live { transform: rotate(-2deg); }
+.card { transition: transform 0.18s ease; }
+.card:not(.locked):hover { transform: translateY(-2px) rotate(-0.3deg); }
+.card:not(.locked):hover .figure { transform: scale(1.05); transform-origin: left center; }
+.figure { transition: transform 0.2s ease; }
+@media (prefers-reduced-motion: reduce) { .card, .figure { transition: none; } .card:not(.locked):hover, .card:not(.locked):hover .figure { transform: none; } }

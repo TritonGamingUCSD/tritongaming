@@ -32,3 +32,10 @@
 .spin { width: 0.95em; height: 0.95em; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: btnSpin 0.7s linear infinite; }
 @keyframes btnSpin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .spin { animation-duration: 2s; } }
+
+/* Playful: a button hops up a little when pointed at and the main one gets a hard ink shadow like the main site's buttons. */
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
+.primary { box-shadow: 2px 2px 0 #011941; } /* theme-ok */
+.primary:hover:not(:disabled) { box-shadow: 3px 3px 0 #011941; } /* theme-ok */
+.btn:active:not(:disabled) { transform: translate(1px, 1px); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .btn:hover:not(:disabled) { transform: none; } }

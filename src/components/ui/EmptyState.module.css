@@ -10,3 +10,8 @@
 .byte { transform-origin: 50% 100%; animation: byteBreathe 4.5s ease-in-out infinite; }
 @keyframes byteBreathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.015, 1.045); } }
 @media (prefers-reduced-motion: reduce) { .byte { animation: none; } }
+
+/* A sheet of paper with a taped corner, and a title in the site's heading face. */
+.box { position: relative; background: var(--pp-card); border: 2px dashed rgba(var(--pp-ink-rgb), 0.3); }
+.box::before { content: ''; position: absolute; top: -0.5rem; left: 50%; width: 3rem; height: 1rem; transform: translateX(-50%) rotate(2deg); background: color-mix(in srgb, var(--yellow) 55%, transparent); }
+.title { font-family: var(--font-soulmaze); font-weight: 400; font-size: 1rem; }

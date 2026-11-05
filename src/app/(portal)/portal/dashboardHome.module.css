@@ -206,3 +206,15 @@
   .m0 { order: 0; } .m1 { order: 1; } .m2 { order: 2; } .m3 { order: 3; } .m4 { order: 4; } .m5 { order: 5; } .m6 { order: 6; } .m7 { order: 7; } .m9 { order: 9; }
   .pinsDesk { display: none; }
 }
+
+/* The main site's look on Home: the site's heading face for the welcome and the panel titles, the pixel face for big numbers, a taped corner on panels, and a small tilt when pointed at. */
+.hello { font-family: var(--font-soulmaze); text-transform: none; font-weight: 400; }
+.panelTitle, .h { font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.15rem; }
+.statValue { font-family: var(--font-pixel), var(--font-dm-sans), monospace; font-weight: 400; font-size: 1.5rem; letter-spacing: 0.02em; }
+.panel { position: relative; }
+.panel::before { content: ''; position: absolute; top: -0.5rem; right: 1.2rem; width: 2.8rem; height: 0.95rem; transform: rotate(3deg); background: color-mix(in srgb, var(--yellow) 55%, transparent); pointer-events: none; }
+.stat { transition: transform 0.18s ease; }
+.stat:hover { transform: translateY(-2px) rotate(-0.6deg); }
+.divCard { transition: transform 0.18s ease; }
+.divCard:hover { transform: translateY(-2px) rotate(-0.5deg); }
+@media (prefers-reduced-motion: reduce) { .stat, .divCard { transition: none; } .stat:hover, .divCard:hover { transform: none; } }
