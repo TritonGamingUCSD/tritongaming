@@ -1175,3 +1175,12 @@
   .railLogoDivision .railLogoByte img { border-radius: 8px; background: #fff; object-fit: contain; } /* theme-ok: a logo sits on white */
   .railLogoLetter { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 8px; background: var(--hat, #ffc72c); color: #011941; font-weight: 700; font-size: 1.2rem; } /* theme-ok */
 }
+
+/* The sidebar in the main site's look (a few small touches): the logo as a tilted sticker, group names as small stickers in the group's color, and the open page held to the sidebar by a piece of tape. */
+.railLogo { transform: rotate(-1.5deg); transition: transform 0.2s ease; }
+.railLogo:hover { transform: rotate(1deg) scale(1.02); }
+.railGroupText { padding: 0.12rem 0.5rem; background: var(--accent); color: #011941; border-radius: 3px; font-family: var(--font-renegare); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; transform: rotate(-1deg); } /* theme-ok: a sticker keeps its own color with ink text */
+.railItem { position: relative; }
+.railItemActive::after { content: ''; position: absolute; top: -0.32rem; right: 0.8rem; width: 1.9rem; height: 0.7rem; transform: rotate(4deg); background: color-mix(in srgb, var(--yellow) 70%, transparent); border-left: 2px dotted rgba(0, 0, 0, 0.3); border-right: 2px dotted rgba(0, 0, 0, 0.3); pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .railLogo { transition: none; } .railLogo:hover { transform: rotate(-1.5deg); } }
+.rail .railGroupLabel .railGroupText { flex: 0 0 auto; align-self: center; }

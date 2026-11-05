@@ -40,6 +40,7 @@ import { sectionLabel } from '@/lib/portal/sections';
 import { bannerShown, divisionsVisible, loadSiteSettings } from '@/lib/portal/siteSettings';
 import PortalBanner from '@/components/portal/PortalBanner';
 import { loadDivisionHats } from '@/lib/divisions/hats';
+import { accentOf } from '@/lib/divisions/accent';
 import DivisionSectionContent from './division/DivisionSectionContent';
 import AllFunctions from './all/AllFunctions';
 import { getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
@@ -985,6 +986,25 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 pins={sections.filter((s) => homePins.includes(s.id)).map((s) => ({ id: s.id, label: s.label }))}
                 shoutout={homeShoutout}
                 canShout={roles.some((r) => r.role === 'exec' || r.role === 'admin')}
+                pass={
+                  isTgMember(roles)
+                    ? null
+                    : {
+                        name: profile.display_name || 'Triton',
+                        role: primaryRoleLabel,
+                        avatarUrl,
+                        points: pointsData && memberTier ? { balance: pointsData.balance.toLocaleString(), tier: memberTier.name } : null,
+                        guest: heldRoles.length === 0,
+                        nextHref: homeEvent ? '/portal/tickets' : '/events',
+                      }
+                }
+                explore={
+                  !isTgMember(roles) && siteSettings.divisionsOpen
+                    ? divisions
+                        .filter((d) => d.logo_url || d.name)
+                        .map((d) => ({ slug: d.slug, name: d.name, logoUrl: divisionLogoSrc(d.logo_url), accent: accentOf(d.accent).hex }))
+                    : []
+                }
               />
             }
             desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}

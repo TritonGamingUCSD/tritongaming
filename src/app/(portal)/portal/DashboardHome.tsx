@@ -15,6 +15,7 @@ import TodayCards from './TodayCards';
 import HomeCards, { type HomeCard } from './HomeCards';
 import NextEventHero from './NextEventHero';
 import TermProgress from './TermProgress';
+import MemberPass, { type PassData } from './MemberPass';
 import type { TermInfoData } from '@/lib/members/termInfo';
 import heroStyles from './homeHero.module.css';
 import { RequiredBanner } from './docs/DocRequired';
@@ -89,12 +90,18 @@ export function DashboardBody({
   myDivisions = [],
   shoutout = null,
   canShout = false,
+  pass = null,
+  explore = [],
 }: {
   pins?: { id: string; label: string }[];
   /** The divisions this person belongs to (not just the ones an admin can see): a card each, to jump into. */
   myDivisions?: { slug: string; name: string; logoUrl: string | null; accent: string; level: string }[];
   shoutout?: HomeShoutout | null;
   canShout?: boolean;
+  /** Someone not on the team: their member pass (a student) or welcome ticket (a guest) opens the page. */
+  pass?: PassData | null;
+  /** Divisions to explore (when division pages are open to everyone): a card each, opening its public page. */
+  explore?: { slug: string; name: string; logoUrl: string | null; accent: string }[];
   term?: TermInfoData | null;
   cards?: HomeCard[];
   logistics?: boolean;
@@ -111,6 +118,11 @@ export function DashboardBody({
     <div className={styles.body}>
       {/* On a phone the order is what to act on first: a request or a required doc, what is on today, the next event, the code to show, this person's cards and divisions, then the note and links; the club shoutout comes last
           and the term bar and pins (the bottom bar has those) are left out. On a laptop the order below is the order on screen. */}
+      {pass && (
+        <div className={styles.m0}>
+          <MemberPass pass={pass} />
+        </div>
+      )}
       {showRoleAsk && !compact && (
         <div className={styles.m0}>
           <RoleAsk />
@@ -149,6 +161,24 @@ export function DashboardBody({
               </span>
               <b aria-hidden="true">→</b>
             </Link>
+          ))}
+        </section>
+      )}
+      {explore.length > 0 && (
+        <section className={`${styles.divCards} ${styles.m6}`} aria-label="Explore the divisions">
+          {explore.map((d) => (
+            <a key={d.slug} href={`/${d.slug}`} className={styles.divCard} style={{ ['--hat' as string]: d.accent }}>
+              {d.logoUrl ? (
+                <Image src={d.logoUrl} alt="" width={40} height={40} className={styles.divLogo} unoptimized />
+              ) : (
+                <span className={styles.divLogoFallback}>{d.name.slice(0, 1)}</span>
+              )}
+              <span>
+                <strong>{d.name}</strong>
+                <small>Visit the division</small>
+              </span>
+              <b aria-hidden="true">→</b>
+            </a>
           ))}
         </section>
       )}
