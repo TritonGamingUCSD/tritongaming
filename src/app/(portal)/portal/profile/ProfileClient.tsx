@@ -6,7 +6,7 @@ import Notice from '@/components/ui/Notice';
 import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Bell, ShieldCheck, User, Users, Lock, X as XIcon, Globe, EyeOff, GraduationCap } from 'lucide-react';
+import { ShieldCheck, User, Users, Lock, X as XIcon, Globe, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { canSetOrgTitle, requiresOrgTitle, type RoleGrant } from '@/lib/portal/capabilities';
@@ -48,7 +48,7 @@ import styles from './profile.module.css';
 import Select from '@/components/ui/Select';
 import SectionHeader from '@/components/ui/SectionHeader';
 
-type Tab = 'info' | 'school' | 'card' | 'notifications' | 'strikes' | 'security';
+type Tab = 'info' | 'card' | 'notifications' | 'strikes' | 'security';
 
 export default function ProfileClient({
   profile,
@@ -84,11 +84,12 @@ export default function ProfileClient({
   const showBoardTab = isBoardEligible || canEditOrgTitle || isRecruitOnly;
   // Strikes are tracked for officers, leads and exec: they can always look at their own here (quietly; nothing pushes it at them).
   const showStrikesTab = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer');
-  const VALID_TABS: Tab[] = [...(showBoardTab ? ['info', 'school', 'card'] : ['info', 'school']), 'notifications', ...(showStrikesTab ? ['strikes'] : []), 'security'] as Tab[];
+  const VALID_TABS: Tab[] = [...(showBoardTab ? ['info', 'card'] : ['info']), ...(showStrikesTab ? ['strikes'] : []), 'security'] as Tab[];
   const gender = privateInfo.gender;
   // The tab used to be called "board" — old links/bookmarks still land on it.
   const initialTabParam = useUrlNav().tab;
-  const initialTab = initialTabParam;
+  // Notifications now sit with Login & Security on one Settings tab; old links to it still land there.
+  const initialTab = initialTabParam === 'notifications' ? 'security' : initialTabParam === 'school' ? 'info' : initialTabParam;
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'info');
   const syncUrl = usePortalTabSync('profile');
   function selectTab(t: Tab) {
@@ -162,8 +163,7 @@ export default function ProfileClient({
     const stillMissing = getMissingProfileFields({ ...profile, ...form, year: yearLabelOfChoice(form.year) }, isUcsd, { requireOrgTitle: requiresOrgTitle(roles) });
     if (stillMissing.length > 0) {
       setError(`Please fill in: ${stillMissing.join(', ')}.`);
-      const aboutStillMissing = stillMissing.some((m) => ['Name', 'Gender', 'Pronouns'].includes(m));
-      setTab(stillMissing.every((m) => m === 'Officer title') ? 'card' : aboutStillMissing ? 'info' : 'school');
+      setTab(stillMissing.every((m) => m === 'Officer title') ? 'card' : 'info');
       return;
     }
     setSaving(true);
@@ -312,7 +312,7 @@ export default function ProfileClient({
                 About Me
               </button>{' '}
               (name, gender, pronouns) and{' '}
-              <button type="button" className={styles.noticeLink} onClick={() => setTab('school')}>
+              <button type="button" className={styles.noticeLink} onClick={() => setTab('info')}>
                 School
               </button>{' '}
               (year, college, major), then save.
@@ -344,18 +344,16 @@ export default function ProfileClient({
         onChange={selectTab}
         tabs={[
           { id: 'info', label: 'About Me', icon: <User /> },
-          { id: 'school', label: 'School', icon: <GraduationCap /> },
           ...(showBoardTab ? [{ id: 'card' as const, label: isRecruitOnly ? 'TG Members Card' : 'Public Officer Card', icon: <Users /> }] : []),
-          { id: 'notifications', label: 'Notifications', icon: <Bell /> },
           ...(showStrikesTab ? [{ id: 'strikes' as const, label: 'Strikes', icon: <ShieldCheck /> }] : []),
-          { id: 'security', label: 'Login & Security', icon: <Lock /> },
+          { id: 'security', label: 'Settings', icon: <Lock /> },
         ]}
       />
 
       <div
-        className={`${styles.layout} ${tab === 'card' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' || tab === 'notifications' || tab === 'strikes' || tab === 'school' ? styles.layoutSingle : ''}`}
+        className={`${styles.layout} ${tab === 'card' && isBoardEligible ? styles.layoutOfficer : ''} ${tab === 'security' || tab === 'notifications' || tab === 'strikes' ? styles.layoutSingle : ''}`}
       >
-        {tab !== 'security' && tab !== 'notifications' && tab !== 'strikes' && tab !== 'school' && (
+        {tab !== 'security' && tab !== 'notifications' && tab !== 'strikes' && (
           <div className={styles.avatarSection}>
             {tab === 'card' && isBoardEligible ? (
               <p className={styles.pictureNote}>Your picture is edited on the About Me tab — the preview below uses it.</p>
@@ -394,9 +392,9 @@ export default function ProfileClient({
         )}
 
         <div className={styles.formCol}>
-          {(tab === 'info' || tab === 'school' || tab === 'card') && (
-            <form id="profile-form" className={styles.form} onSubmit={handleSave} data-sub={tab} noValidate>
-              {(tab === 'info' || tab === 'school') && (
+          {(tab === 'info' || tab === 'card') && (
+            <form id="profile-form" className={styles.form} onSubmit={handleSave} data-sub={tab === 'info' ? 'all' : tab} noValidate>
+              {tab === 'info' && (
                 <>
                   <section className={styles.requiredGroup} aria-label="Required information">
                     <h2 className={styles.groupHeading}>
@@ -888,13 +886,6 @@ export default function ProfileClient({
             </form>
           )}
 
-          {tab === 'notifications' && (
-            <div className={styles.securityTab}>
-              <PushSettings />
-              <EmailSettings />
-            </div>
-          )}
-
           {tab === 'strikes' && showStrikesTab && (
             <div className={styles.securityTab}>
               <MyStrikes />
@@ -903,6 +894,8 @@ export default function ProfileClient({
 
           {tab === 'security' && (
             <div className={styles.securityTab}>
+              <PushSettings />
+              <EmailSettings />
               <LinkGoogleSection />
               <div className={styles.signOutSection}>
                 <div className={styles.signOutText}>
