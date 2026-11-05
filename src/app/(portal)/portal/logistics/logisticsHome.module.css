@@ -1,9 +1,9 @@
 /* The Logistics overview: a two-column board on a laptop, one column on a phone. */
 .home { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; align-items: start; }
-.hero, .card { background: var(--pp-card); border: 2px solid var(--pp-ink); border-radius: 0.9rem; padding: 1rem 1.1rem; min-width: 0; }
+.hero, .card { background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 0.9rem; padding: 1rem 1.1rem; min-width: 0; }
 .hero { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 0.8rem; }
 .wide { grid-column: 1 / -1; }
-.kicker { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.75); }
+.kicker { font-size: 0.72rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.75); }
 .heroHead h3 { margin: 0.1rem 0 0.2rem; font-size: 1.5rem; line-height: 1.15; color: var(--pp-ink); overflow-wrap: anywhere; }
 .heroHead p { margin: 0; display: flex; align-items: center; gap: 0.35rem; font-size: 0.9rem; color: rgba(var(--pp-ink-rgb), 0.85); }
 .tiles { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr)); gap: 0.6rem; }
@@ -15,11 +15,11 @@
 .progress i { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--pp-ok) 45%, var(--pp-card)); }
 .progress span { position: relative; display: block; padding: 0 0.8rem; line-height: 1.7rem; font-size: 0.8rem; color: var(--pp-ink); }
 .actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.primary, .secondary { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 40px; padding: 0 1rem; border-radius: 0.6rem; font: inherit; font-size: 0.9rem; font-weight: 700; text-decoration: none; cursor: pointer; border: 2px solid var(--pp-ink); }
+.primary, .secondary { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 40px; padding: 0 1rem; border-radius: 0.6rem; font: inherit; font-size: 0.9rem; font-weight: 700; text-decoration: none; cursor: pointer; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); }
 .primary { background: var(--yellow); color: #111c33; }   /* theme-ok: the portal's yellow button reads in both themes */
 .secondary { background: var(--pp-card); color: var(--pp-ink); }
 .empty { display: flex; flex-direction: column; align-items: flex-start; gap: 0.4rem; color: var(--pp-ink); }
-.card h3 { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.7rem; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-ink); }
+.card h3 { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.7rem; font-size: 0.8rem; letter-spacing: 0.01em;  color: var(--pp-ink); }
 .ok { margin: 0; font-size: 0.88rem; color: rgba(var(--pp-ink-rgb), 0.85); }
 .fixes { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
 .fixes li { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.6rem; border-radius: 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); font-size: 0.88rem; }

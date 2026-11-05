@@ -1,6 +1,6 @@
 .body { display: flex; flex-direction: column; gap: 0.8rem; text-align: left; max-height: 60vh; overflow-y: auto; padding-right: 0.2rem; }
 .field { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; flex: 1 1 12rem; }
-.label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pp-ink); }
+.label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.01em;  color: var(--pp-ink); }
 .row { display: flex; gap: 0.7rem; flex-wrap: wrap; }
 .hint { margin: 0; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .result { display: flex; flex-direction: column; gap: 0.6rem; }

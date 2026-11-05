@@ -103,9 +103,9 @@
 
 .bucketName {
   font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
+  letter-spacing: 0.01em;
+  
   color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
@@ -140,10 +140,10 @@
 }
 
 .vercelName {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
   font-size: 0.95rem;
   color: var(--pp-ink);
-  text-transform: uppercase;
+  
   letter-spacing: 0.02em;
 }
 
@@ -179,10 +179,10 @@
 }
 
 .deployState {
-  font-family: var(--font-renegare);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
   font-size: 0.67rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  
   padding: 0.15rem 0.5rem;
   border-radius: var(--radius-pill);
   background: rgba(var(--pp-ink-rgb), 0.06);

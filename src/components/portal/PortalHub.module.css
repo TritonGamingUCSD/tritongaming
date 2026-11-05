@@ -1045,7 +1045,9 @@
 }
 @media (min-width: 900px) {
   .topCode, .topCode * { color: #fff; } /* theme-ok: the code digits on the navy bar */
-  .topCode [class*='cell'] { opacity: 0.7; }
+  .topCode input { color: transparent !important; caret-color: transparent; } /* the real input stays invisible: the six places draw the digits */
+  .topCode [class*='cell']:not([class*='filled']) { opacity: 0.55; }
+  .topCode [class*='filled'] { opacity: 1; }
 }
 
 /* With every page always shown, the list is made compact so most people see all of it without scrolling (it scrolls when a future list is longer). */
@@ -1056,4 +1058,12 @@
   .rail .railNav { gap: 0.1rem; }
   .rail .railGroup { padding-top: 0; }
   .rail .railPin { margin-top: 0.3rem; padding: 0.35rem 0.7rem; }
+}
+
+/* Every page in the frame keeps room at the left and right (more on bigger screens), and a page is no wider than 1440px and sits in the middle of very wide screens. Pages that mark themselves wide (big tables) keep the full width but still keep the side room. */
+@media (min-width: 900px) {
+  .frameBody { padding-left: clamp(1.5rem, 3vw, 3rem); padding-right: clamp(1.5rem, 3vw, 3rem); }
+  .frameBody:has([data-wide]) { padding-left: clamp(1.25rem, 2vw, 2rem); padding-right: clamp(1.25rem, 2vw, 2rem); }
+  .frameBody > .desktopContent { max-width: 1440px; margin-inline: auto; }
+  .frameBody:has([data-wide]) > .desktopContent { max-width: none; }
 }

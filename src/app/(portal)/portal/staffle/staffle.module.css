@@ -32,7 +32,7 @@
 .itemBody { display: flex; flex-direction: column; align-items: flex-start; gap: 0.3rem; min-width: 0; flex: 1; }
 .itemName { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.05rem; line-height: 1.2; overflow-wrap: anywhere; }
 .itemMeta { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.8); }
-.enter { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 40px; padding: 0 1.1rem; border-radius: 999px; border: 2px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+.enter { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 40px; padding: 0 1.1rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
 .enter:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.07); }
 .enter:disabled { opacity: 0.5; cursor: default; }
 .entered { background: var(--pp-ok); border-color: var(--pp-ok); color: #fff; }   /* theme-ok */
@@ -63,7 +63,7 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .fWin button:disabled { opacity: 0.4; cursor: default; }
 .fWin > span { min-width: 4.8rem; text-align: center; }
 .fLine { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.8rem; }
-.fLine > span { flex: 0 0 8rem; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.75); }
+.fLine > span { flex: 0 0 8rem; font-size: 0.72rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.75); }
 .fChips { flex: 1 1 14rem; display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; min-width: 0; }
 .fChip { min-height: 34px; padding: 0 0.8rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.84rem; cursor: pointer; }
 .fChipOut { background: color-mix(in srgb, var(--pp-bad) 22%, var(--pp-card)); border-color: var(--pp-bad); font-weight: 700; }
@@ -76,7 +76,7 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .draw { position: fixed; inset: 0; z-index: 3500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.2rem 1.5rem; background: radial-gradient(circle at 50% 30%, #1a2f6b 0%, #0a1230 70%); color: #f2f1f0; overflow: hidden; text-align: center; }   /* theme-ok */
 .drawClose { position: absolute; top: 1rem; right: 1rem; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255, 255, 255, 0.4); background: rgba(0, 0, 0, 0.3); color: #fff; cursor: pointer; }   /* theme-ok */
 .drawIntro, .drawEnd { display: flex; flex-direction: column; align-items: center; gap: 1rem; max-width: 46rem; width: 100%; }
-.drawIntro small, .drawEnd small, .drawPrize small { letter-spacing: 0.2em; text-transform: uppercase; font-size: 0.85rem; color: #ffc72c; }   /* theme-ok */
+.drawIntro small, .drawEnd small, .drawPrize small { letter-spacing: 0.01em;  font-size: 0.85rem; color: #ffc72c; }   /* theme-ok */
 .drawIntro h1, .drawEnd h1 { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: clamp(2.4rem, 7vw, 5rem); line-height: 1.05; }
 .drawIntro p { margin: 0; font-size: 1.2rem; opacity: 0.85; }
 .drawEnd ul { list-style: none; margin: 0.5rem 0; padding: 0; width: 100%; display: flex; flex-direction: column; gap: 0.5rem; max-height: 50vh; overflow-y: auto; }
@@ -90,7 +90,7 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .drawPrize p { margin: 0; font-size: 1.25rem; opacity: 0.85; }
 .drawArena { position: relative; display: grid; place-items: center; min-height: 22rem; width: 100%; }
 .drawFoot { grid-column: 1 / -1; display: flex; justify-content: center; align-items: center; min-height: 3.5rem; }
-.drawHint { font-size: 1.1rem; letter-spacing: 0.2em; text-transform: uppercase; opacity: 0.7; }
+.drawHint { font-size: 1.1rem; letter-spacing: 0.01em;  opacity: 0.7; }
 
 
 .confetti { position: absolute; inset: -50vh -50vw; pointer-events: none; overflow: hidden; }
@@ -114,7 +114,7 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 .spinBox[data-state='spin'] { border-color: #ffc72c; box-shadow: 0 0 36px rgba(255, 199, 44, 0.45); }   /* theme-ok */
 .spinBox[data-state='landed'], .spinBox[data-state='shown'] { border-color: #ffc72c; }   /* theme-ok */
 .spinBox[data-state='landed'] { background: #ffc72c; color: #0a1230; animation: landPop 0.55s ease; }   /* theme-ok */
-.spinHint { font-size: 0.55em; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.75; }
+.spinHint { font-size: 0.55em; letter-spacing: 0.01em;  opacity: 0.75; }
 .spinWon { animation: nameIn 0.5s ease both; }
 @keyframes nameIn { from { opacity: 0; transform: scale(0.7); } to { opacity: 1; transform: scale(1); } }
 @keyframes landPop { 0% { transform: scale(0.94); } 55% { transform: scale(1.07); } 100% { transform: scale(1); } }
@@ -129,12 +129,12 @@ span.entered { display: inline-flex; align-items: center; gap: 0.3rem; padding: 
 /* How It Works */
 .howLink { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0; border: 0; background: none; font: inherit; font-weight: 700; color: var(--p-accent-text, var(--pp-ink)); text-decoration: underline; cursor: pointer; }
 .how { display: grid; gap: 1rem; font-size: 0.9rem; line-height: 1.45; }
-.how h4 { margin: 0 0 0.3rem; font-size: 0.78rem; letter-spacing: 0.1em; text-transform: uppercase; }
+.how h4 { margin: 0 0 0.3rem; font-size: 0.78rem; letter-spacing: 0.01em;  }
 .how p { margin: 0 0 0.4rem; }
 .how ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.4rem; }
 .howTable { width: 100%; border-collapse: collapse; margin: 0.4rem 0; font-size: 0.85rem; }
 .howTable th, .howTable td { padding: 0.35rem 0.5rem; text-align: left; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15); }
-.howTable th { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+.howTable th { font-size: 0.72rem; letter-spacing: 0.01em;  }
 .howNote { font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.7); }
 
 .wheel { width: min(52rem, 100%, 64vh); aspect-ratio: 1; filter: drop-shadow(0 10px 26px rgba(0, 0, 0, 0.5)); }

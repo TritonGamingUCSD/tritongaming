@@ -24,10 +24,10 @@
 .masthead { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
 .brand { display: flex; align-items: center; gap: 0.9rem; }
 .logo { width: 56px; height: 56px; object-fit: contain; }
-.brandName { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.3rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--navy); }
+.brandName { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.3rem; letter-spacing: 0.01em;  color: var(--navy); }
 .brandTag { margin: 0.1rem 0 0; font-size: 0.82rem; letter-spacing: 0.04em; color: rgba(1, 25, 65, 0.75); }
 .docMeta { text-align: right; }
-.docType { margin: 0; font-family: var(--font-futura-heavy); font-size: 0.82rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gold-deep); }
+.docType { margin: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 0.82rem; letter-spacing: 0.01em;  color: var(--gold-deep); }
 .docDate { margin: 0.15rem 0 0; font-size: 0.82rem; color: rgba(1, 25, 65, 0.75); }
 .rule { height: 4px; margin-top: -0.6rem; background: linear-gradient(90deg, var(--gold) 0 5.5rem, var(--navy) 5.5rem 100%); }
 .titleBlock { display: flex; flex-direction: column; gap: 0.35rem; }
@@ -35,7 +35,7 @@
 .when { margin: 0; font-size: 1rem; color: rgba(1, 25, 65, 0.82); }
 
 /* section headings */
-.sectionTitle { display: flex; align-items: baseline; gap: 0.7rem; margin: 0; padding-bottom: 0.45rem; border-bottom: 1px solid var(--pp-line); font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.2rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--navy); break-after: avoid; }
+.sectionTitle { display: flex; align-items: baseline; gap: 0.7rem; margin: 0; padding-bottom: 0.45rem; border-bottom: 1px solid var(--pp-line); font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.2rem; letter-spacing: 0.01em;  color: var(--navy); break-after: avoid; }
 .sectionNum { font-size: 0.85rem; letter-spacing: 0.1em; color: var(--gold-deep); }
 .section { display: flex; flex-direction: column; gap: 0.8rem; }
 .lead { margin: 0; font-size: 0.88rem; color: rgba(1, 25, 65, 0.8); max-width: 52rem; break-after: avoid; }
@@ -64,7 +64,7 @@
 .gauge svg { width: 100%; height: 100%; }
 .gaugeText { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 .gaugeValue { font-family: var(--font-futura-heavy); font-size: 2rem; color: var(--navy); line-height: 1; }
-.gaugeLabel { font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(1, 25, 65, 0.78); margin-top: 0.2rem; }
+.gaugeLabel { font-size: 0.72rem; letter-spacing: 0.01em;  color: rgba(1, 25, 65, 0.78); margin-top: 0.2rem; }
 .gaugeTrack { stroke: #e3e7ee; }
 
 .donutWrap { display: flex; align-items: center; gap: 1.1rem; flex-wrap: wrap; }
@@ -107,7 +107,7 @@
 
 /* team-only numbers, below the sheet */
 .internal { padding: 1rem 1.2rem; border-radius: 0.8rem; border: 1px dashed var(--pp-line); background: var(--pp-card); color: var(--pp-ink); }
-.internalTitle { margin: 0 0 0.6rem; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-accent-text); }
+.internalTitle { margin: 0 0 0.6rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-weight: 400; font-size: 0.85rem; letter-spacing: 0.01em;  color: var(--p-accent-text); }
 .internalList { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.6rem; margin: 0; }
 .internalList div { display: flex; flex-direction: column; gap: 0.1rem; }
 .internalList dt { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.8); }
@@ -137,7 +137,7 @@
 
 /* prepared-for line, hand-typed numbers, photos and thank-you */
 .preparedFor { display: flex; align-items: center; gap: 0.6rem; margin: 0.5rem 0 0; font-size: 0.95rem; color: rgba(1, 25, 65, 0.85); }
-.preparedFor span { font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; color: #b8860b; font-family: var(--font-futura-heavy); }
+.preparedFor span { font-size: 0.74rem; letter-spacing: 0.01em;  color: #b8860b; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; }
 .preparedFor strong { font-family: var(--font-futura-heavy); font-weight: 400; color: #011941; }
 .preparedLogo { height: 44px; width: auto; max-width: 170px; object-fit: contain; }
 .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 0.7rem; margin: 0; }
@@ -153,7 +153,7 @@
 .thanks img { height: 46px; width: auto; max-width: 150px; object-fit: contain; }
 .thanks span { font-size: 0.78rem; color: rgba(1, 25, 65, 0.85); }
 .reportEditor { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border-radius: 0.8rem; border: 1px solid var(--pp-line); background: var(--pp-card); color: var(--pp-ink); }
-.reportEditor h2 { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-accent-text); }
+.reportEditor h2 { margin: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-weight: 400; font-size: 0.85rem; letter-spacing: 0.01em;  color: var(--p-accent-text); }
 .editorRow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
 .editorRow label { font-size: 0.85rem; }
 .metricRow { display: grid; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; }

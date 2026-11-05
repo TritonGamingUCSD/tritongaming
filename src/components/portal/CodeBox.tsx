@@ -60,7 +60,14 @@ export default function CodeBox({ compact = false }: { compact?: boolean }) {
     <>
       <CodeEntry onSubmit={(c) => void submit(c)} busy={busy} compact={compact} icon={compact ? <Hash /> : undefined} status={status} />
       {busy && (
-        <p role="status" style={{ margin: '0.4rem 0 0', fontSize: '0.85rem', textAlign: 'center', opacity: 0.8 }}>
+        <p
+          role="status"
+          style={
+            compact
+              ? { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)' }
+              : { margin: '0.4rem 0 0', fontSize: '0.85rem', textAlign: 'center', opacity: 0.8 }
+          }
+        >
           Checking the code…
         </p>
       )}

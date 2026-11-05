@@ -17,7 +17,7 @@
   position: relative; display: flex; flex-direction: column; align-items: center; gap: 0.9rem; padding: 2.2rem 1rem 1.5rem; text-align: center;
   border-radius: 1.1rem; background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.12);   /* the same colour as full screen and as the code's plate */
 }
-.codeLabel { font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.88); }
+.codeLabel { font-size: 0.72rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.88); }
 .bigCode { font-family: var(--font-mono, ui-monospace, monospace); font-size: clamp(3rem, 14vw, 5.5rem); font-weight: 700; letter-spacing: 0.12em; color: var(--pp-ink); line-height: 1; text-shadow: 0 0 18px rgba(125, 180, 234, 0.65), 0 0 42px rgba(125, 180, 234, 0.3); }
 .timer { width: min(320px, 80%); height: 5px; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); overflow: hidden; }
 .timer > span { display: block; height: 100%; border-radius: 999px; background: var(--p-accent); transition: width 0.25s linear; }
@@ -40,7 +40,7 @@
 
 .runActions { display: flex; justify-content: flex-end; }
 .lists { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-.listTitle { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.6rem; font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.89); }
+.listTitle { display: flex; align-items: baseline; gap: 0.5rem; margin-bottom: 0.6rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 0.8rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.89); }
 .listTitle span { font-size: 0.78rem; letter-spacing: 0; text-transform: none; color: rgba(var(--pp-ink-rgb), 0.87); }
 .people { list-style: none; display: flex; flex-direction: column; gap: 0.35rem; margin: 0; padding: 0; }
 .person {
@@ -82,7 +82,7 @@
 .exportBtns .docBtn { align-self: auto; }
 
 .nextCard { display: flex; flex-direction: column; gap: 0.2rem; padding: 0.9rem 1.1rem; border-radius: 0.9rem; border: 1px dashed rgba(var(--pp-ink-rgb), 0.32); color: var(--pp-ink); }
-.nextLabel { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.88); }
+.nextLabel { font-size: 0.68rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.88); }
 
 .meter { height: 8px; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.1); overflow: hidden; }
 .meter > span { display: block; height: 100%; background: #34d399; border-radius: 999px; }
@@ -109,7 +109,7 @@
 .cardOpen { border-color: rgba(52, 211, 153, 0.5); background: rgba(52, 211, 153, 0.06); }
 .meetingMain { display: flex; align-items: center; gap: 0.85rem; min-width: 0; }
 .dateBlock { display: flex; flex-direction: column; align-items: stretch; width: 44px; flex-shrink: 0; overflow: hidden; border-radius: 0.6rem; background: rgba(var(--pp-ink-rgb), 0.06); border: 1px solid rgba(var(--pp-ink-rgb), 0.23); text-align: center; }
-.dateBlock small { padding: 0.12rem 0; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.87); background: rgba(var(--pp-ink-rgb), 0.1); }
+.dateBlock small { padding: 0.12rem 0; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.87); background: rgba(var(--pp-ink-rgb), 0.1); }
 .dateBlock b { padding: 0.15rem 0 0.25rem; font-family: var(--font-futura-heavy); font-size: 1.2rem; line-height: 1.1; color: var(--pp-ink); }
 .dateToday { border-color: rgba(125, 180, 234, 0.5); }
 .dateToday small { background: var(--p-accent); color: #111c33; }
@@ -167,7 +167,7 @@
 /* ── Question of the meeting, answers, reactions ── */
 .funBox { display: flex; flex-direction: column; gap: 0.9rem; width: 100%; margin-top: 0.4rem; text-align: left; }
 .questionBox { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.95rem 1rem; border-radius: 0.9rem; background: rgba(125, 180, 234, 0.08); border: 1px solid rgba(125, 180, 234, 0.3); }
-.questionLabel { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--p-accent-text); }
+.questionLabel { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.7rem; letter-spacing: 0.01em;  color: var(--p-accent-text); }
 .questionText { font-family: var(--font-futura-heavy); font-size: 1.05rem; line-height: 1.35; color: var(--pp-ink); }
 .answerForm { display: flex; gap: 0.5rem; align-items: center; }
 .answerForm > :first-child { flex: 1; min-width: 0; }
@@ -361,7 +361,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .metaSub { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .metaSub > .metaAudience { color: var(--pp-violet); }
 
-.sectionHead { margin: 0.4rem 0 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.88); }
+.sectionHead { margin: 0.4rem 0 0; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.88); }
 
 .seriesForm { flex-basis: 100%; width: 100%; padding-top: 0.8rem; }
 .seriesForm .formActions { gap: 0.5rem; }
@@ -549,7 +549,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .pickRowIdle { border-style: dashed; border-color: rgba(148, 163, 184, 0.5); background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.12) 0 8px, transparent 8px 16px); }
 .pickRowIdle:hover { background: repeating-linear-gradient(135deg, rgba(148, 163, 184, 0.18) 0 8px, transparent 8px 16px); }
 .pickRowIdle .personName { color: rgba(var(--pp-ink-rgb), 0.89); }
-.idleTag { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; padding: 0.1rem 0.55rem; border-radius: 999px; background: #94a3b8; color: #0b1426; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.idleTag { display: inline-flex; align-items: center; gap: 0.25rem; flex: none; padding: 0.1rem 0.55rem; border-radius: 999px; background: #94a3b8; color: #0b1426; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.01em;  white-space: nowrap; }
 
 /* A team's full member list, shown when "Show all" is pressed */
 .linkBtn { align-self: flex-start; padding: 0; border: 0; background: none; color: var(--p-accent-text); font: inherit; font-size: 0.8rem; font-weight: 600; text-decoration: underline; cursor: pointer; }
@@ -591,7 +591,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .openRow { display: flex; align-items: flex-start; gap: 0.6rem; font-size: 0.85rem; line-height: 1.4; color: var(--pp-ink); cursor: pointer; padding-top: 0.2rem; }
 .openRow input { margin-top: 1px; }
 .openRow em { display: block; font-style: normal; font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.85); }
-.guestTag { display: inline-flex; align-items: center; margin-left: 0.4rem; padding: 0 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.12); color: var(--pp-ink); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; vertical-align: middle; }
+.guestTag { display: inline-flex; align-items: center; margin-left: 0.4rem; padding: 0 0.5rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.12); color: var(--pp-ink); font-size: 0.67rem; font-weight: 700; letter-spacing: 0.01em;  vertical-align: middle; }
 
 .inviteWrap { display: flex; flex-direction: column; gap: 0.6rem; }
 .accessBox { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.7rem 0.85rem; border-radius: 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); }
@@ -603,7 +603,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .accessText strong { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.95rem; color: var(--pp-ink); }
 
 .endBanner { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; padding: 0.7rem 0.85rem; border-radius: 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); }
-.endSoon { border: 2px solid var(--pp-ink); background: rgba(255, 199, 44, 0.18); }
+.endSoon { border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: rgba(255, 199, 44, 0.18); }
 .endIcon { flex: none; width: 2.2rem; height: 2.2rem; border-radius: 50%; display: grid; place-items: center; background: rgba(var(--pp-ink-rgb), 0.09); color: var(--pp-ink); }
 .endText { flex: 1 1 14rem; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; font-size: 0.8rem; line-height: 1.4; color: rgba(var(--pp-ink-rgb), 0.9); }
 .endText strong { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 0.95rem; color: var(--pp-ink); }
@@ -612,7 +612,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .wrapUp strong { font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.5rem; line-height: 1; color: var(--pp-ink); }
 .wrapUp span { font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.9); }
 
-.accessChip { display: inline-flex; align-items: center; margin-left: 0.4rem; padding: 0 0.55rem; border-radius: 999px; font-style: normal; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; white-space: nowrap; border: 1px solid var(--pp-ok); color: var(--pp-ok); vertical-align: middle; }
+.accessChip { display: inline-flex; align-items: center; margin-left: 0.4rem; padding: 0 0.55rem; border-radius: 999px; font-style: normal; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.01em;  white-space: nowrap; border: 1px solid var(--pp-ok); color: var(--pp-ok); vertical-align: middle; }
 .accessChipLimited { border-color: var(--pp-ink); color: var(--pp-ink); }
 .endedSeries { margin-top: 0.8rem; }
 .endedSeries summary { cursor: pointer; font-family: var(--font-futura-heavy); font-size: 0.95rem; color: var(--pp-ink); display: flex; align-items: center; gap: 0.5rem; min-height: 36px; }
@@ -669,7 +669,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 .moreOptions { border: 1px solid rgba(var(--pp-ink-rgb), 0.18); border-radius: 0.7rem; background: rgba(var(--pp-ink-rgb), 0.03); }
 .moreOptions > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.75rem; padding: 0.6rem 0.8rem; cursor: pointer; list-style: none; }
 .moreOptions > summary::-webkit-details-marker { display: none; }
-.moreOptions > summary span { font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--pp-ink); }
+.moreOptions > summary span { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 0.8rem; letter-spacing: 0.01em;  color: var(--pp-ink); }
 .moreOptions > summary span::before { content: '+'; display: inline-block; width: 1rem; font-weight: 700; }
 .moreOptions[open] > summary span::before { content: '–'; }
 .moreOptions > summary em { font-style: normal; font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.8); min-width: 0; overflow-wrap: anywhere; }
@@ -768,7 +768,7 @@ input[type='checkbox'].checkInput:disabled { cursor: default; }
 /* The host's check-in frame: the typed code and its QR side by side in one ring (the ring fills as people check in), the QR in the code's own colour. */
 .duo { display: flex; align-items: stretch; justify-content: center; gap: 1.2rem; padding: 1rem 1.4rem; max-width: 100%; background: var(--pp-card); border-radius: 1.4rem; }   /* the same colour as the TGcode's own plate, so the code sits on a matching ground in both themes */
 .duoCode, .duoQr { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.6rem; position: relative; }
-.duoCode small, .duoQr small { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.85); text-align: center; }
+.duoCode small, .duoQr small { font-size: 0.7rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.85); text-align: center; }
 .duoDivider { width: 2px; align-self: stretch; border-radius: 2px; background: rgba(var(--pp-ink-rgb), 0.18); }
 .duo .bigCode { font-size: clamp(2.4rem, 4.6vw, 3.6rem); }
 .presenting .duo .bigCode { font-size: clamp(3rem, 6vw, 6rem); }

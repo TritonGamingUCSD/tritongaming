@@ -11,11 +11,11 @@
 .back:hover { opacity: 1; }
 
 .title {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
   color: var(--pp-ink);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  
+  letter-spacing: 0.01em;
 }
 
 .form {
@@ -40,9 +40,9 @@
 
 .label {
   font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
+  letter-spacing: 0.01em;
+  
   color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
@@ -95,9 +95,9 @@
 
 .sectionLabel {
   font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
+  letter-spacing: 0.01em;
+  
   color: var(--p-accent-text);
 }
 

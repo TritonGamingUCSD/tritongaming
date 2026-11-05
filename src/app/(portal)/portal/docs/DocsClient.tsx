@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PanelLeft, X } from 'lucide-react';
 import Notice from '@/components/ui/Notice';
+import SectionHeader from '@/components/ui/SectionHeader';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
 import { useLiveParams } from '@/lib/portal/usePortalParams';
@@ -613,6 +614,7 @@ export default function DocsClient({
 
   return (
     <div className={styles.page}>
+      {!editing && <SectionHeader title="Documentation" sub="How-to guides, onboarding and the club's working notes, all in one place." />}
       <div className={`${styles.shell} ${editing ? styles.shellEditing : ''}`}>
         <aside className={`${styles.treeCol} ${treeOpen ? styles.treeColOpen : ''}`} aria-label="All docs">
           {treeOpen && <button type="button" className={styles.treeBackdrop} aria-label="Close the doc list" onClick={() => setTreeOpen(false)} />}

@@ -11,7 +11,7 @@
   padding: 1rem 1.25rem;
 }
 .itemHead { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
-.badge { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 0.2rem 0.6rem; border-radius: 999px; background: rgba(125, 180, 234, 0.14); color: var(--p-accent-text); border: 1px solid rgba(125, 180, 234, 0.3); white-space: nowrap; }
+.badge { font-size: 0.68rem;  letter-spacing: 0.01em; padding: 0.2rem 0.6rem; border-radius: 999px; background: rgba(125, 180, 234, 0.14); color: var(--p-accent-text); border: 1px solid rgba(125, 180, 234, 0.3); white-space: nowrap; }
 .type { font-size: 0.75rem; text-transform: capitalize; color: rgba(var(--pp-ink-rgb), 0.88); }
 .meta { margin-left: auto; font-size: 0.75rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .summary { font-size: 0.95rem; color: var(--pp-ink); line-height: 1.4; overflow-wrap: anywhere; }

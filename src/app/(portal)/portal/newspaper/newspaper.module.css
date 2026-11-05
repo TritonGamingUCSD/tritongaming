@@ -31,12 +31,12 @@
 .chip[aria-pressed='true'] { background: var(--pp-ink); color: var(--pp-card); border-color: var(--pp-ink); }
 .chipRemove { padding-right: 0.4rem; }
 .group { display: grid; gap: 0.4rem; }
-.group h3 { margin: 0; font-size: 0.9rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.78); }
-.count { display: grid; gap: 0.2rem; padding: 0.8rem 1rem; border-radius: 12px; border: 2px solid var(--pp-ink); background: var(--pp-card); box-shadow: 4px 4px 0 var(--yellow); }
+.group h3 { margin: 0; font-size: 0.9rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.78); }
+.count { display: grid; gap: 0.2rem; padding: 0.8rem 1rem; border-radius: 12px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); box-shadow: none; }
 .count b { font-family: var(--font-futura-heavy); font-size: 1.6rem; font-weight: 400; }
-.countWarn { border-color: var(--pp-bad); box-shadow: 4px 4px 0 var(--pp-bad); }
+.countWarn { border-color: var(--pp-bad); box-shadow: none; }
 .check { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.6rem; align-items: start; }
-.tick { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; border: 2px solid rgba(var(--pp-ink-rgb), 0.4); }
+.tick { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); }
 .tickOk { background: var(--yellow); border-color: #011941; color: #011941; }   /* theme-ok: the yellow stays yellow with ink text */
 .thread { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
 .thread li { padding: 0.5rem 0.7rem; border-radius: 10px; background: rgba(var(--pp-ink-rgb), 0.07); }
@@ -45,7 +45,7 @@
 .bar span { display: block; height: 100%; background: var(--pp-ink); transition: width 0.4s ease; }
 .table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
 .table th, .table td { text-align: left; padding: 0.35rem 0.5rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15); overflow-wrap: anywhere; }
-.frame { display: block; width: 100%; height: min(78vh, 52rem); border: 2px solid var(--pp-ink); border-radius: 10px; background: #fff; }   /* theme-ok: an email is always on white */
+.frame { display: block; width: 100%; height: min(78vh, 52rem); border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 10px; background: #fff; }   /* theme-ok: an email is always on white */
 .frameWrap { display: grid; gap: 0.5rem; }
 .frameNote { margin: 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.72); }
 .textarea { min-height: 7rem; }

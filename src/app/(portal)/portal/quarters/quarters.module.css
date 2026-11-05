@@ -59,7 +59,7 @@
 .yearHead h2 { margin: 0; font-family: var(--font-futura-heavy); font-size: 1.25rem; color: var(--pp-ink); }
 .stamp { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); margin-right: auto; }
 .stampDone { color: var(--pp-ok); }
-.tierBlock h3 { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.35rem; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.88); }
+.tierBlock h3 { display: flex; align-items: center; gap: 0.4rem; margin: 0 0 0.35rem; font-size: 0.72rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.88); }
 .tierBlock h3 span, .alumni h2 span { color: rgba(var(--pp-ink-rgb), 0.87); font-weight: 400; }
 .memberList { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.4rem 1rem; }
 .member { display: flex; align-items: center; gap: 0.6rem; padding: 0.35rem 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.16); min-width: 0; }
@@ -129,6 +129,6 @@
 .personRow { display: flex; align-items: center; gap: 0.6rem; padding: 0.5rem 0; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.16); min-width: 0; }
 .personRow:last-child { border-bottom: 0; }
 .personRow .name { flex: 1; }
-.carriedTag { margin-left: 0.4rem; font-style: normal; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.05rem 0.45rem; border-radius: 999px; background: rgba(251, 191, 36, 0.2); color: var(--pp-warn); white-space: nowrap; }
+.carriedTag { margin-left: 0.4rem; font-style: normal; font-size: 0.67rem; font-weight: 700; letter-spacing: 0.01em;  padding: 0.05rem 0.45rem; border-radius: 999px; background: rgba(251, 191, 36, 0.2); color: var(--pp-warn); white-space: nowrap; }
 
 @media (pointer: coarse), (max-width: 1024px) { .pickBox, .pick input { width: 1.4rem; height: 1.4rem; } }

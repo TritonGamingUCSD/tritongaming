@@ -1,6 +1,5 @@
 'use client';
 
-import SectionHeader from '@/components/ui/SectionHeader';
 import { useEffect, useState } from 'react';
 import { ChevronDown, Upload, X } from 'lucide-react';
 import type { QRCodeOptions, QRDotsType, QRCornersSquareType, QRCornersDotType } from '@/lib/qr/qrCodeStyling';
@@ -237,8 +236,6 @@ export default function QRStudioForm({ options, setOptions, divisions = [] }: { 
 
   return (
     <div className={styles.formPanel}>
-      <SectionHeader title="QR Studio" sub="Paste a link, pick a look, download. Everything else is optional." />
-
       <label className={styles.field}>
         <span className={styles.label}>1 · Where should it go?</span>
         <input className={styles.input} value={options.data} onChange={(e) => set({ data: e.target.value })} placeholder="https://www.example.com" inputMode="url" />

@@ -79,9 +79,9 @@
   align-items: center;
   gap: 0.4rem;
   font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
+  letter-spacing: 0.01em;
+  
   color: rgba(var(--pp-ink-rgb), 0.88);
 }
 
@@ -121,8 +121,8 @@
 
 .eventDateBlockSmall span:first-child {
   font-size: 0.67rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  
 }
 
 .eventDateBlockSmall span:last-child {
@@ -289,7 +289,7 @@
   transition: background 0.15s, border-color 0.15s;
 }
 .tile:hover { background: color-mix(in srgb, var(--tile-accent) 14%, var(--pp-card)); border-color: var(--pp-ink); }
-.tileTop { grid-area: top; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.67rem; letter-spacing: 0.06em; text-transform: uppercase; color: color-mix(in srgb, var(--tile-accent) 55%, var(--pp-ink)); }
+.tileTop { grid-area: top; display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.67rem; letter-spacing: 0.01em;  color: color-mix(in srgb, var(--tile-accent) 55%, var(--pp-ink)); }
 .tileValue { grid-area: value; justify-self: end; font-family: var(--font-futura-heavy); font-size: 1.05rem; color: var(--pp-ink); line-height: 1.1; }
 .tileUnit { font-size: 0.68rem; font-family: var(--font-futura-medium); color: rgba(var(--pp-ink-rgb), 0.88); }
 .tileTier { grid-area: tier; font-size: 0.7rem; color: rgba(var(--pp-ink-rgb), 0.88); }
@@ -471,7 +471,7 @@ a.railFooterHelp.railFooterHelp .railFooterHelpBadge {
 
 /* To do: what is waiting on this person, at the top of the home screen. */
 .todoCard { border-radius: 1rem; border: 1px solid rgba(125, 180, 234, 0.4); background: rgba(125, 180, 234, 0.07); padding: 0.75rem 0.85rem 0.6rem; }
-.todoHead { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.4rem; font-family: var(--font-futura-heavy); font-size: 0.82rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-accent-text); }
+.todoHead { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.4rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 0.82rem; letter-spacing: 0.01em;  color: var(--p-accent-text); }
 .todoCount { min-width: 20px; height: 20px; padding: 0 0.4rem; display: inline-grid; place-items: center; border-radius: 999px; background: var(--yellow); color: #0b1426; font-size: 0.72rem; letter-spacing: 0; white-space: nowrap; }
 .todoList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
 .todoRow { display: flex; align-items: center; gap: 0.65rem; padding: 0.6rem 0.2rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.18); text-decoration: none; color: var(--pp-ink); }

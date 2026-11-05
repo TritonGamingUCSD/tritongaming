@@ -24,9 +24,13 @@ export default function CodeEntry({
   /** How the last code went: a flash for 'ok', a shake for 'bad'. */ status?: 'ok' | 'bad' | null;
 }) {
   const [value, setValue] = useState('');
+  // The six digits just sent stay on screen (with a wave over them) while the code is being checked, then the box empties.
+  const [sent, setSent] = useState('');
   const [focused, setFocused] = useState(false);
   return (
-    <div className={`${styles.wrap} ${dark ? styles.dark : ''} ${compact ? styles.compact : ''} ${status === 'ok' ? styles.ok : ''} ${status === 'bad' ? styles.bad : ''}`}>
+    <div
+      className={`${styles.wrap} ${dark ? styles.dark : ''} ${compact ? styles.compact : ''} ${status === 'ok' ? styles.ok : ''} ${status === 'bad' ? styles.bad : ''} ${busy ? styles.busy : ''}`}
+    >
       <input
         className={`${styles.box} ${dark ? styles.darkBox : ''}`}
         value={value}
@@ -34,6 +38,7 @@ export default function CodeEntry({
           const v = e.target.value.replace(/\D/g, '').slice(0, 6);
           setValue(v);
           if (v.length === 6) {
+            setSent(v);
             onSubmit(v);
             setValue('');
           }
@@ -54,11 +59,18 @@ export default function CodeEntry({
         </span>
       )}
       <span className={styles.cells} aria-hidden="true">
-        {Array.from({ length: 6 }, (_, i) => (
-          <span key={i} className={`${styles.cell} ${i < value.length ? styles.filled : ''} ${focused && i === value.length ? styles.next : ''}`}>
-            {value[i] ?? '0'}
-          </span>
-        ))}
+        {Array.from({ length: 6 }, (_, i) => {
+          const shown = busy ? sent : value;
+          return (
+            <span
+              key={i}
+              style={{ ['--i' as string]: i }}
+              className={`${styles.cell} ${i < shown.length ? styles.filled : ''} ${!busy && focused && i === value.length ? styles.next : ''}`}
+            >
+              {shown[i] ?? '0'}
+            </span>
+          );
+        })}
       </span>
     </div>
   );

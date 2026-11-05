@@ -43,7 +43,7 @@
 .rowMain { display: flex; flex-direction: column; gap: 0.2rem; flex: 1; min-width: 0; }
 .rowSubject { font-weight: 600; color: var(--pp-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rowMeta { font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.88); }
-.attn { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--p-accent-text); white-space: nowrap; }
+.attn { font-size: 0.68rem; font-weight: 700;  letter-spacing: 0.01em; color: var(--p-accent-text); white-space: nowrap; }
 .pill { font-size: 0.7rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 999px; border: 1px solid; white-space: nowrap; }
 .pill_open { color: var(--pp-info); border-color: rgba(96, 165, 250, 0.4); background: rgba(96, 165, 250, 0.1); }
 .pill_in_progress { color: var(--pp-warn); border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.1); }
@@ -66,7 +66,7 @@
 .msgStaff { border-color: rgba(74, 144, 226, 0.4); background: rgba(74, 144, 226, 0.08); }
 .msgHead { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.88); margin-bottom: 0.3rem; }
 .msgHead strong { color: var(--pp-ink); font-size: 0.8rem; }
-.staffTag { font-size: 0.67rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--pp-info); }
+.staffTag { font-size: 0.67rem; font-weight: 700;  letter-spacing: 0.01em; color: var(--pp-info); }
 .msgBody { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.92rem; line-height: 1.5; color: rgba(var(--pp-ink-rgb), 1.00); }
 .shots { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.6rem; }
 .shots img { display: block; max-width: 220px; max-height: 160px; border-radius: 0.5rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.32); }

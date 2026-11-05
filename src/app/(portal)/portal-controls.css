@@ -35,7 +35,7 @@
 :where(.pp-root) :where(input[type='checkbox'], input[type='radio']) {
   appearance: none; -webkit-appearance: none; flex-shrink: 0; vertical-align: middle;
   width: 1.2rem; height: 1.2rem; margin: 0; cursor: pointer;
-  background: var(--pp-card); border: 2px solid var(--pp-ink); border-radius: 4px;
+  background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 4px;
   display: inline-grid; place-content: center; transition: background 0.1s, box-shadow 0.1s;
 }
 :where(.pp-root) :where(input[type='radio']) { border-radius: 50%; }
@@ -54,25 +54,25 @@
 
 /* Sliders */
 :where(.pp-root) :where(input[type='range']) { appearance: none; -webkit-appearance: none; width: 100%; height: 1.2rem; background: transparent; cursor: pointer; }
-:where(.pp-root) :where(input[type='range'])::-webkit-slider-runnable-track { height: 6px; background: rgba(var(--pp-ink-rgb), 0.25); border: 2px solid var(--pp-ink); border-radius: 4px; }
-:where(.pp-root) :where(input[type='range'])::-moz-range-track { height: 6px; background: rgba(var(--pp-ink-rgb), 0.25); border: 2px solid var(--pp-ink); border-radius: 4px; }
-:where(.pp-root) :where(input[type='range'])::-webkit-slider-thumb { -webkit-appearance: none; width: 1.1rem; height: 1.1rem; margin-top: -7px; background: var(--yellow); border: 2px solid #011941; border-radius: 4px; box-shadow: 2px 2px 0 rgba(1, 25, 65, 0.85); }
-:where(.pp-root) :where(input[type='range'])::-moz-range-thumb { width: 1rem; height: 1rem; background: var(--yellow); border: 2px solid #011941; border-radius: 4px; box-shadow: 2px 2px 0 rgba(1, 25, 65, 0.85); }
+:where(.pp-root) :where(input[type='range'])::-webkit-slider-runnable-track { height: 6px; background: rgba(var(--pp-ink-rgb), 0.25); border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 4px; }
+:where(.pp-root) :where(input[type='range'])::-moz-range-track { height: 6px; background: rgba(var(--pp-ink-rgb), 0.25); border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 4px; }
+:where(.pp-root) :where(input[type='range'])::-webkit-slider-thumb { -webkit-appearance: none; width: 1.1rem; height: 1.1rem; margin-top: -7px; background: var(--yellow); border: 2px solid #011941; border-radius: 4px; box-shadow: none; }
+:where(.pp-root) :where(input[type='range'])::-moz-range-thumb { width: 1rem; height: 1rem; background: var(--yellow); border: 2px solid #011941; border-radius: 4px; box-shadow: none; }
 
 /* File and color pickers */
 :where(.pp-root) :where(input[type='file']) { font: inherit; font-size: 0.88rem; color: var(--pp-ink); max-width: 100%; }
 :where(.pp-root) :where(input[type='file'])::file-selector-button {
-  margin-right: 0.7rem; padding: 0.4rem 0.85rem; cursor: pointer; font-family: var(--font-futura-heavy); font-size: 0.72rem; letter-spacing: 0.05em; text-transform: uppercase;
-  color: var(--pp-ink); background: var(--pp-card); border: 2px solid var(--pp-ink); border-radius: 6px; box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.8);
+  margin-right: 0.7rem; padding: 0.4rem 0.85rem; cursor: pointer; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 0.72rem; letter-spacing: 0.01em; 
+  color: var(--pp-ink); background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; box-shadow: none;
 }
-:where(.pp-root) :where(input[type='color']) { appearance: none; -webkit-appearance: none; width: 2.6rem; height: 2.2rem; padding: 2px; background: var(--pp-card); border: 2px solid var(--pp-ink); border-radius: 6px; cursor: pointer; }
+:where(.pp-root) :where(input[type='color']) { appearance: none; -webkit-appearance: none; width: 2.6rem; height: 2.2rem; padding: 2px; background: var(--pp-card); border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; cursor: pointer; }
 :where(.pp-root) :where(input[type='color'])::-webkit-color-swatch-wrapper { padding: 0; }
 :where(.pp-root) :where(input[type='color'])::-webkit-color-swatch { border: 0; border-radius: 3px; }
 :where(.pp-root) :where(input[type='color'])::-moz-color-swatch { border: 0; border-radius: 3px; }
 
 /* Plain buttons that no component styled */
 :where(.pp-root) :where(button) { font: inherit; }
-:where(.pp-root) :where(progress) { appearance: none; -webkit-appearance: none; height: 0.7rem; border: 2px solid var(--pp-ink); border-radius: 4px; background: var(--pp-card); overflow: hidden; }
+:where(.pp-root) :where(progress) { appearance: none; -webkit-appearance: none; height: 0.7rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 4px; background: var(--pp-card); overflow: hidden; }
 :where(.pp-root) :where(progress)::-webkit-progress-bar { background: var(--pp-card); }
 :where(.pp-root) :where(progress)::-webkit-progress-value { background: var(--p-accent); }
 :where(.pp-root) :where(progress)::-moz-progress-bar { background: var(--p-accent); }

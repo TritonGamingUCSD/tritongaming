@@ -7,11 +7,11 @@
 }
 
 .title {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
   color: var(--pp-ink);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  
+  letter-spacing: 0.01em;
 }
 
 /* ── Hero card (next event) ──────────────────────── */
@@ -22,9 +22,9 @@
   border-radius: 8px;
   overflow: hidden;
   background: var(--pp-card);
-  border: 2px solid rgba(var(--pp-ink-rgb), 0.7);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.3);
   border-left: 10px solid var(--yellow);
-  box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.22);
+  box-shadow: none;
   padding: 1.5rem;
 }
 
@@ -51,10 +51,10 @@
 
 .heroLabel {
   font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.15em;
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
+  letter-spacing: 0.01em;
   color: var(--p-accent-text);
-  text-transform: uppercase;
+  
 }
 
 .heroEvent {
@@ -136,10 +136,10 @@
 
 /* ── Section titles ───────────────────────────────── */
 .sectionTitle {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
   font-size: 0.72rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  
   color: rgba(var(--pp-ink-rgb), 0.87);
   margin-bottom: 0.75rem;
 }
@@ -224,9 +224,9 @@
 
 .statusBadge {
   font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
+  letter-spacing: 0.01em;
+  
   padding: 0.2rem 0.5rem;
   border-radius: var(--radius-pill);
   border: 1px solid;
@@ -300,9 +300,9 @@
 
 .eventMon {
   font-size: 0.67rem;
-  text-transform: uppercase;
+  
   color: rgba(var(--pp-ink-rgb), 0.9);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.01em;
 }
 
 .eventDay {
@@ -424,7 +424,7 @@
   font-family: var(--font-futura-medium);
   font-size: 0.85rem;
   width: 120px;
-  text-transform: uppercase;
+  
 }
 
 .onlineCheckinFormCompact .onlineCheckinInput {

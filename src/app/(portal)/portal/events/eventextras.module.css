@@ -7,7 +7,7 @@
   padding: 1rem 1.1rem 1.1rem;
   min-width: 0;
 }
-.legend { padding: 0 0.4rem; font-family: var(--font-futura-heavy); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.89); }
+.legend { padding: 0 0.4rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 0.78rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.89); }
 .field { display: flex; flex-direction: column; gap: 0.35rem; }
 .label { font-size: 0.75rem; color: rgba(var(--pp-ink-rgb), 0.87); }
 .hint { font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.87); }
@@ -32,7 +32,7 @@
 .colorRow { display: flex; gap: 0.5rem; align-items: center; }
 .swatch { width: 44px; height: 38px; flex-shrink: 0; padding: 0; border: 1px solid rgba(var(--pp-ink-rgb), 0.30); border-radius: var(--radius-sm); background: none; cursor: pointer; }
 .swatchEmpty { opacity: 0.3; }
-.cap { font-family: var(--font-renegare); font-size: var(--fs-label); letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.88); }
+.cap { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: var(--fs-label); letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.88); }
 .hex { min-width: 0; font-variant-numeric: tabular-nums; }
 .fontGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 0.75rem; }
 .stickerRow { display: flex; gap: 0.5rem; align-items: flex-start; }

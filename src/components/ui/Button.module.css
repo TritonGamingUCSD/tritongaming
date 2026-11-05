@@ -1,12 +1,12 @@
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
-  font-family: var(--font-futura-heavy); letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; white-space: nowrap;
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; letter-spacing: 0; text-transform: none; text-decoration: none; white-space: nowrap;
   border-radius: 6px; cursor: pointer; min-height: var(--btn-h); border: 1.5px solid var(--pp-ink);
   transition: background 0.12s, border-color 0.12s;
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.md { padding: 0.55rem 1.3rem; font-size: 0.8rem; }
-.sm { padding: 0.35rem 0.85rem; font-size: 0.72rem; min-height: var(--btn-h-sm); }
+.md { padding: 0.55rem 1.3rem; font-size: 0.97rem; }
+.sm { padding: 0.35rem 0.85rem; font-size: 0.88rem; min-height: var(--btn-h-sm); }
 
 /* Yellow is the one main action on a screen. */
 .primary { background: var(--yellow); color: #011941; border-color: #011941; } /* theme-ok */
@@ -14,7 +14,7 @@
 .secondary { background: var(--pp-card); color: var(--pp-ink); border-color: rgba(var(--pp-ink-rgb), 0.25); }
 .secondary:hover:not(:disabled) { background: rgba(125, 180, 234, 0.28); }
 
-.ghost { background: transparent; color: var(--pp-ink); border-color: rgba(var(--pp-ink-rgb), 0.35); text-transform: none; letter-spacing: 0; font-family: var(--font-futura-medium); font-size: 0.86rem; }
+.ghost { background: transparent; color: var(--pp-ink); border-color: rgba(var(--pp-ink-rgb), 0.35); text-transform: none; letter-spacing: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 0.92rem; }
 .ghost:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.08); border-color: var(--pp-ink); }
 
 .danger { background: var(--pp-card); color: var(--pp-bad); border-color: var(--pp-bad); }

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from '@/components/portal/PortalLink';
+import { Monitor, Moon, Sun } from 'lucide-react';
 import { getThemeChoice, setThemeChoice, type ThemeChoice } from '@/lib/portal/themeScript';
 import SignOutButton from './SignOutButton';
 import type { HubIdentity } from './hubTypes';
@@ -93,26 +94,28 @@ export default function AccountMenu({ identity, viewAs, onProfile }: { identity:
 
           <div className={styles.section}>
             <p className={styles.label}>Appearance</p>
-            <div className={styles.modes} role="group" aria-label="Appearance">
+            <div className={styles.modes} role="group" aria-label="Appearance" style={{ ['--i' as string]: ['light', 'system', 'dark'].indexOf(mode) }}>
+              <span className={styles.bubble} aria-hidden="true" />
               {(
                 [
-                  ['light', 'Light', 'Always light'],
-                  ['system', 'Auto', 'Match this device'],
-                  ['dark', 'Dark', 'Always dark'],
+                  ['light', 'Light', 'Always light', Sun],
+                  ['system', 'Auto', 'Match this device', Monitor],
+                  ['dark', 'Dark', 'Always dark', Moon],
                 ] as const
-              ).map(([id, text, hint]) => (
+              ).map(([id, text, hint, Icon]) => (
                 <button
                   key={id}
                   type="button"
                   className={`${styles.mode} ${mode === id ? styles.modeOn : ''}`}
                   aria-pressed={mode === id}
-                  title={hint}
+                  aria-label={`${text}: ${hint}`}
+                  title={`${text}: ${hint}`}
                   onClick={() => {
                     setMode(id);
                     setThemeChoice(id);
                   }}
                 >
-                  {text}
+                  <Icon size={18} strokeWidth={2} aria-hidden="true" />
                 </button>
               ))}
             </div>

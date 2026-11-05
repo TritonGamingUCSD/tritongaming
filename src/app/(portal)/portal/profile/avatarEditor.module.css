@@ -24,7 +24,7 @@
 
 .overlay {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.25rem;
-  background: rgba(var(--pp-ink-rgb), 0.72); color: var(--pp-card); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase;
+  background: rgba(var(--pp-ink-rgb), 0.72); color: var(--pp-card); font-size: 0.78rem; letter-spacing: 0.01em; 
   opacity: 0; transition: opacity 0.15s;
 }
 .avatar:hover .overlay, .avatar:focus-visible .overlay, .dragging .overlay, .avatar:disabled .overlay { opacity: 1; }

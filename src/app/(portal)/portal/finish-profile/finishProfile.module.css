@@ -7,5 +7,5 @@
 .submit { width: 100%; min-height: 48px; }
 .optional { background: transparent; border-style: dashed; }
 .optionalHead { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
-.skipPill { font-size: 0.74rem; font-family: var(--font-futura-heavy); letter-spacing: 0.04em; text-transform: uppercase; padding: 0.15rem 0.6rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.4); color: var(--pp-ink); }
+.skipPill { font-size: 0.74rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; letter-spacing: 0.01em;  padding: 0.15rem 0.6rem; border-radius: 999px; border: 1px solid rgba(var(--pp-ink-rgb), 0.4); color: var(--pp-ink); }
 .progressCard { composes: card from '../../../../components/ui/Surface.module.css'; padding: 1.6rem 1.3rem; margin-top: 3rem; }

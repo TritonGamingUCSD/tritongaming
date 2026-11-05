@@ -3,7 +3,7 @@
 .question { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem 0.8rem; padding: 0.7rem 0.8rem; border-radius: 10px; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); background: var(--pp-card); color: var(--pp-ink); }
 .question p { margin: 0; overflow-wrap: anywhere; line-height: 1.35; }
 .question small { display: block; margin-top: 0.2rem; color: rgba(var(--pp-ink-rgb), 0.72); font-size: 0.82rem; }
-.onScreen { border-color: var(--pp-ink); box-shadow: 4px 4px 0 var(--yellow); }
+.onScreen { border-color: var(--pp-ink); box-shadow: none; }
 .answered { opacity: 0.75; }
 .acts { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-end; }
 .likes { justify-self: start; display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.5rem; padding: 0 0.8rem; border-radius: 999px; border: 2px solid rgba(var(--pp-ink-rgb), 0.35); background: transparent; color: var(--pp-ink); font: inherit; font-weight: 700; cursor: pointer; }
@@ -15,7 +15,7 @@
 .codeLine { display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 700; }
 .codeLine b { font-family: var(--font-mono, ui-monospace, monospace); letter-spacing: 0.15em; }
 .group { display: grid; gap: 0.5rem; }
-.ask { display: grid; gap: 0.6rem; width: 100%; padding: 0.9rem; border-radius: 10px; border: 3px solid var(--pp-ink); background: var(--pp-card); box-shadow: 5px 5px 0 rgba(var(--pp-ink-rgb), 0.85); text-align: left; }
+.ask { display: grid; gap: 0.6rem; width: 100%; padding: 0.9rem; border-radius: 10px; border: 3px solid var(--pp-ink); background: var(--pp-card); box-shadow: none; text-align: left; }
 .ask textarea, .ask input { width: 100%; padding: 0.6rem 0.7rem; border-radius: 8px; border: 2px solid rgba(var(--pp-ink-rgb), 0.35); background: transparent; color: var(--pp-ink); font: inherit; font-size: 1rem; resize: vertical; }
 .ask textarea:focus, .ask input:focus { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
 .askFoot { display: flex; justify-content: space-between; gap: 0.6rem; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.75); }
@@ -23,7 +23,7 @@
 .section { display: grid; gap: 0.5rem; width: 100%; }
 .section h2 { margin: 0; font-family: var(--font-futura-heavy); font-weight: 400; font-size: 1.15rem; text-align: left; }
 .qaPlay { display: grid; gap: 1.1rem; width: min(100%, 40rem); padding-bottom: 2rem; }
-.spot { display: grid; gap: 1.2rem; justify-items: center; text-align: center; width: min(100%, 64rem); padding: 2rem 2rem 2.2rem; border-radius: 8px; border: 4px solid var(--pp-ink); background: var(--pp-card); box-shadow: 8px 8px 0 var(--yellow); }
+.spot { display: grid; gap: 1.2rem; justify-items: center; text-align: center; width: min(100%, 64rem); padding: 2rem 2rem 2.2rem; border-radius: 8px; border: 4px solid var(--pp-ink); background: var(--pp-card); box-shadow: none; }
 .spot blockquote { margin: 0; font-family: var(--font-futura-heavy); font-size: clamp(1.8rem, 4.6vw, 3.4rem); line-height: 1.2; text-wrap: balance; overflow-wrap: anywhere; }
 .spot cite { font-style: normal; font-size: clamp(1.1rem, 2vw, 1.6rem); color: rgba(var(--pp-ink-rgb), 0.8); }
 .next { display: grid; gap: 0.5rem; width: min(100%, 64rem); }

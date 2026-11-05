@@ -25,9 +25,9 @@
 
 .eyebrow {
   font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
+  letter-spacing: 0.01em;
+  
   color: var(--p-accent-text);
 }
 
@@ -66,9 +66,9 @@
 
 .label {
   font-size: var(--fs-label);
-  font-family: var(--font-renegare);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
+  letter-spacing: 0.01em;
+  
   color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
@@ -231,8 +231,8 @@
 
 .statLabel {
   font-size: 0.67rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  
   color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
@@ -314,7 +314,7 @@
 .hexDot { width: 22px; height: 22px; border-radius: 0.45rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.48); flex-shrink: 0; }
 .hexInput { width: 110px; padding: 0.35rem 0.6rem; border-radius: 0.55rem; background: rgba(var(--pp-ink-rgb), 0.05); border: 1px solid rgba(var(--pp-ink-rgb), 0.26); color: var(--pp-ink); font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.82rem; text-transform: lowercase; }
 .hexInput:focus { outline: none; border-color: var(--pp-ink); box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.55); }
-.darkTag { font-size: 0.67rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pp-violet); background: rgba(167, 139, 250, 0.14); border-radius: 999px; padding: 0.02rem 0.4rem; white-space: nowrap; }
+.darkTag { font-size: 0.67rem; letter-spacing: 0.01em;  color: var(--pp-violet); background: rgba(167, 139, 250, 0.14); border-radius: 999px; padding: 0.02rem 0.4rem; white-space: nowrap; }
 .presetGrid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
 
 @media (max-width: 480px) {
@@ -351,4 +351,19 @@
 .divChip:disabled { opacity: 0.6; cursor: wait; }
 .divChipActive { background: rgba(125, 180, 234, 0.16); border-color: var(--p-accent); color: var(--p-accent-text); }
 .divLogo { width: 24px; height: 24px; border-radius: 50%; object-fit: contain; background: #fff; padding: 2px; }
-.groupLabel { margin-top: 0.4rem; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.88); }
+.groupLabel { margin-top: 0.4rem; font-size: 0.7rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.88); }
+
+/* QR Studio in the portal's flat look: the title sits above, two flat cards (settings and preview), labels in plain words, flat chips. */
+.formPanel, .previewPanel { border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 6px; box-shadow: none; background: var(--pp-card); }
+.formPanel { padding: 1.4rem 1.5rem; gap: 1.4rem; }
+.eyebrow, .label { font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 0.92rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--pp-ink); }
+.previewTitle, .foldTitle { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 1.1rem; }
+.foldTitle { font-size: 1rem; }
+.previewHint, .hint, .foldHint, .checkboxRow { font-size: 0.88rem; }
+.input, .hexInput { border-radius: 6px; font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 0.97rem; }
+.fold { border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); box-shadow: none; }
+.preset, .iconChip, .radioOption { border-radius: 6px; box-shadow: none; }
+.presetActive, .iconChipActive, .radioOptionActive { border: 2px solid var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.06); box-shadow: none; color: var(--pp-ink); }
+.presetName { font-size: 0.85rem; font-weight: 600; }
+.darkTag { text-transform: none; letter-spacing: 0; font-size: 0.78rem; }
+.statLabel { text-transform: none; letter-spacing: 0; font-size: 0.85rem; }

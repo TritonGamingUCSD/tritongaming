@@ -19,3 +19,9 @@
 .actionsWide { grid-template-columns: 1fr 1fr; }
 .actionsWide > :first-child { grid-column: 1 / -1; }
 @media (prefers-reduced-motion: reduce) { .card { transition: none; } }
+
+/* Item cards in the portal's flat look: a thin border, no lift or shadow, a plain small label instead of a sticker, a title in plain words. */
+.card { border: 1px solid rgba(var(--pp-ink-rgb), 0.28); border-radius: 6px; box-shadow: none; transition: border-color 0.15s ease, background 0.15s ease; }
+.card:hover { transform: none; box-shadow: none; border-color: rgba(var(--pp-ink-rgb), 0.6); }
+.kicker { margin: 0; padding: 0; background: none; color: rgba(var(--pp-ink-rgb), 0.72); border: 0; border-radius: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 0.85rem; font-weight: 600; letter-spacing: 0; text-transform: none; transform: none; }
+.title { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.2rem; line-height: 1.25; }

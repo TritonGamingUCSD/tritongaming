@@ -35,7 +35,7 @@
 
 /* The spreadsheet-style grid (computers) */
 .grid { width: 100%; border-collapse: collapse; font-size: 0.86rem; min-width: 60rem; }
-.grid th { position: sticky; top: 0; text-align: left; padding: 0.55rem 0.7rem; font-family: var(--font-renegare); font-weight: 400; font-size: 0.67rem; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.85); background: rgba(var(--pp-ink-rgb), 0.05); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.22); white-space: nowrap; }
+.grid th { position: sticky; top: 0; text-align: left; padding: 0.55rem 0.7rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-weight: 400; font-size: 0.67rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.85); background: rgba(var(--pp-ink-rgb), 0.05); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.22); white-space: nowrap; }
 .grid td { padding: 0.25rem 0.5rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); vertical-align: middle; color: var(--pp-ink); }
 .grid tbody tr:hover { background: rgba(var(--pp-ink-rgb), 0.035); }
 .rowBad td:first-child { box-shadow: inset 3px 0 0 var(--pp-bad); }
@@ -76,7 +76,7 @@
 @media (max-width: 560px) { .row2, .row3 { grid-template-columns: minmax(0, 1fr); } }
 .check { display: flex; align-items: center; gap: 0.5rem; font-size: 0.86rem; padding-top: 1.7rem; }
 @media (max-width: 560px) { .check { padding-top: 0; } }
-.fieldLabel { font-family: var(--font-renegare); font-size: 0.68rem; color: rgba(var(--pp-ink-rgb), 0.89); letter-spacing: 0.12em; text-transform: uppercase; }
+.fieldLabel { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 0.68rem; color: rgba(var(--pp-ink-rgb), 0.89); letter-spacing: 0.01em;  }
 .kitBlock { display: flex; flex-direction: column; gap: 0.45rem; }
 .kitList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
 .kitLine { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.5rem; border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.18); background: rgba(var(--pp-ink-rgb), 0.03); }
@@ -145,7 +145,7 @@
 .stepChip small { font-variant-numeric: tabular-nums; color: rgba(var(--pp-ink-rgb), 0.75); }
 .stepChip i { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--pp-ok); }
 .dayForm { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-.dayInput { flex: 1; min-width: 0; min-height: 40px; padding: 0.4rem 0.8rem; border-radius: 8px; border: 2px solid var(--pp-ink); background: var(--pp-card); color: var(--pp-ink); font-family: var(--font-futura-heavy); font-size: 1.05rem; letter-spacing: 0.03em; }
+.dayInput { flex: 1; min-width: 0; min-height: 40px; padding: 0.4rem 0.8rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink); font-family: var(--font-futura-heavy); font-size: 1.05rem; letter-spacing: 0.03em; }
 .dayInput:focus { outline: none; box-shadow: 0 0 0 3px rgba(125, 180, 234, 0.6); }
 .dayInput::placeholder { font-family: var(--font-futura-medium); font-size: 0.92rem; letter-spacing: 0; color: rgba(var(--pp-ink-rgb), 0.5); }
 .dayForm button { min-height: var(--btn-h); }
@@ -258,7 +258,7 @@
 .cell:hover:not(:disabled) { background: rgba(var(--pp-ink-rgb), 0.08); }
 .cell:disabled { cursor: not-allowed; opacity: 0.6; }
 .cellNa { display: grid; place-items: center; min-height: 40px; color: rgba(var(--pp-ink-rgb), 0.35); cursor: default; }
-.cellBox { display: inline-block; width: 20px; height: 20px; border-radius: 5px; border: 2px solid rgba(var(--pp-ink-rgb), 0.45); }
+.cellBox { display: inline-block; width: 20px; height: 20px; border-radius: 5px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); }
 .cellDone { color: var(--pp-ok); font-weight: 700; }
 .cellMark { position: relative; display: inline-grid; place-items: center; min-width: 18px; min-height: 18px; }
 .cellWait { cursor: progress; }
@@ -330,13 +330,13 @@
 .prizeRow { display: grid; grid-template-columns: var(--cols); align-items: center; column-gap: 0.8rem; padding: 0.5rem 0.8rem; font-size: 0.86rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
 .prizeRow:last-child { border-bottom: none; }
 .prizeRow > span { min-width: 0; overflow-wrap: anywhere; }
-.prizeHeadRow { font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.65); background: rgba(var(--pp-ink-rgb), 0.05); }
+.prizeHeadRow { font-size: 0.74rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.65); background: rgba(var(--pp-ink-rgb), 0.05); }
 .prizeName small { font-size: 0.74rem; }
 .prizeTools { text-align: right; }
 @media (max-width: 899px) {
   .prizeHeadRow { display: none; }
   .prizeRow > .prizeName { grid-column: 1 / -1; font-size: 0.92rem; }
-  .prizeRow > span[data-label]::before { content: attr(data-label); display: block; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.6); }
+  .prizeRow > span[data-label]::before { content: attr(data-label); display: block; font-size: 0.74rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.6); }
   .prizeRow > .prizeTools { grid-column: 1 / -1; text-align: left; }
 }
 
@@ -393,7 +393,7 @@
 .reqRow { align-items: start; }
 .reqRow > span { overflow-wrap: anywhere; }
 .reqItem { display: block; }
-.colHead { padding-block: 0.25rem; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.65); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15); }
+.colHead { padding-block: 0.25rem; font-size: 0.74rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.65); border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.15); }
 @media (max-width: 899px) { .colHead { display: none; } .sponsorRow, .reqRow { grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); } }
 
 /* Something that has no place yet is easy to spot: amber */
@@ -552,7 +552,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
   .prizeRow, .borrowRow, .sponsorRow, .reqRow { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 0.9rem; row-gap: 0.7rem; align-items: start; justify-items: stretch; padding: 0.85rem 1rem; }
   .prizeRow > :first-child, .prizeRow > .prizeTools, .borrowRow > :first-child, .reqRow > :first-child, .sponsorRow > :first-child { grid-column: 1 / -1; }
   .prizeRow > :first-child, .reqRow > :first-child { font-size: 0.98rem; }
-  .prizeRow > span[data-label]::before, .borrowRow > span[data-label]::before, .sponsorRow > span[data-label]::before, .reqRow > span[data-label]::before { content: attr(data-label); display: block; margin-bottom: 0.15rem; font-size: 0.74rem; letter-spacing: 0.04em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.6); }
+  .prizeRow > span[data-label]::before, .borrowRow > span[data-label]::before, .sponsorRow > span[data-label]::before, .reqRow > span[data-label]::before { content: attr(data-label); display: block; margin-bottom: 0.15rem; font-size: 0.74rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.6); }
   .prizeRow > .prizeTools, .reqRow > .prizeTools, .sponsorRow > .prizeTools { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: flex-start; padding-top: 0.6rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.1); }
   .iconBtn { width: var(--btn-h); height: var(--btn-h); }
   .reqRow > span[data-label="Notes"], .reqRow > span[data-label="Devices"], .reqRow > span[data-label="Prizes"], .borrowRow > span[data-label="Installed games"] { grid-column: 1 / -1; }
@@ -831,7 +831,7 @@ button.finderHit:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
 .evStats > div, .evStats > button { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; padding: 0.7rem 0.9rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 8px; background: var(--pp-card); color: var(--pp-ink); font: inherit; text-align: left; }
 .evStats > button { cursor: pointer; }
 .evStats > button:hover { border-color: var(--pp-ink); background: rgba(var(--pp-ink-rgb), 0.05); }
-.evStats dt { font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.75); }
+.evStats dt { font-size: 0.72rem; letter-spacing: 0.01em;  color: rgba(var(--pp-ink-rgb), 0.75); }
 .evStats dd { margin: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.5rem; font-size: 1.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .evStats dd small { font-size: 0.78rem; font-weight: 600; }
 .evSection { display: flex; flex-direction: column; gap: 0.5rem; }

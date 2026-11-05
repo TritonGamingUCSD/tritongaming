@@ -7,7 +7,7 @@
 }
 .panel {
   background: var(--pp-card);
-  border: 2px solid rgba(var(--pp-ink-rgb), 0.7);
+  border: 1px solid rgba(var(--pp-ink-rgb), 0.3);
   border-radius: 8px;
-  box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.25);
+  box-shadow: none;
 }

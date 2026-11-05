@@ -1,11 +1,11 @@
 .page { max-width: 1320px; margin-inline: auto; }
 
 .title {
-  font-family: var(--font-futura-heavy);
+  font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
   font-size: clamp(1.25rem, 2.5vw, 1.6rem);
   color: var(--pp-ink);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  
+  letter-spacing: 0.01em;
   margin-bottom: 0.2rem;
 }
 
@@ -37,8 +37,8 @@
 
 .totalLabel {
   font-size: 0.7rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  letter-spacing: 0.01em;
+  
   color: rgba(var(--pp-ink-rgb), 0.87);
 }
 
