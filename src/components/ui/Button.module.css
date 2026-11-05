@@ -2,7 +2,7 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
   font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; letter-spacing: 0; text-transform: none; text-decoration: none; white-space: nowrap;
   border-radius: 6px; cursor: pointer; min-height: var(--btn-h); border: 1.5px solid var(--pp-ink);
-  transition: background 0.12s, border-color 0.12s;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s, filter 0.12s;
 }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .md { padding: 0.55rem 1.3rem; font-size: 0.97rem; }
@@ -23,3 +23,7 @@
 .btn:focus-visible { outline: 3px solid rgba(125, 180, 234, 0.95); outline-offset: 2px; }
 
 .primary:hover:not(:disabled) { filter: brightness(0.96); }
+
+/* Pressing sinks the button a pixel; nothing lifts. */
+.btn:active:not(:disabled) { transform: translateY(1px); }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active:not(:disabled) { transform: none; } }

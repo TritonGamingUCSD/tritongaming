@@ -1,4 +1,5 @@
 import Link from '@/components/portal/PortalLink';
+import CountUp from '@/components/ui/CountUp';
 import styles from './homeCards.module.css';
 
 export interface HomeCard {
@@ -27,7 +28,11 @@ export default function HomeCards({ cards }: { cards: HomeCard[] }) {
         <h2 className={styles.title}>{c.title}</h2>
         {c.status && <span className={styles.status}>{c.status}</span>}
       </div>
-      {c.figure && <p className={styles.figure}>{c.figure}</p>}
+      {c.figure && (
+        <p className={styles.figure}>
+          <CountUp text={c.figure} />
+        </p>
+      )}
       {c.progress !== undefined && (
         <span className={styles.xp} role="img" aria-label={`${Math.round(c.progress)} percent of the way to the next level`}>
           <span style={{ width: `${c.progress}%` }} />

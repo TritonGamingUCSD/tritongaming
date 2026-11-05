@@ -19,3 +19,13 @@
 .figure { margin: 0; font-family: var(--font-pixel), var(--font-dm-sans), monospace; font-size: 1.9rem; line-height: 1; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
 .xp { display: block; height: 0.6rem; border-radius: 2px; background: rgba(var(--pp-ink-rgb), 0.14); overflow: hidden; }
 .xp > span { display: block; height: 100%; background: var(--yellow); }
+
+.band > .card { animation: homeUp 0.3s ease-out both; }
+.band > .card:nth-child(2) { animation-delay: 30ms; }
+.band > .card:nth-child(3) { animation-delay: 60ms; }
+.band > .card:nth-child(4) { animation-delay: 90ms; }
+.band > .card:nth-child(5) { animation-delay: 120ms; }
+.band > .card:nth-child(6) { animation-delay: 150ms; }
+@keyframes homeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.xp > span { transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
+@media (prefers-reduced-motion: reduce) { .band > .card { animation: none; } .xp > span { transition: none; } }

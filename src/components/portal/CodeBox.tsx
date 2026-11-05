@@ -23,6 +23,7 @@ export function useCodeFlow(): { submit: (code: string) => Promise<void>; busy: 
     const kind = o.kind === 'error' ? 'bad' : 'ok';
     setStatus(kind);
     playFeedback(kind);
+    if (kind === 'ok') window.dispatchEvent(new Event('tg:checkin-ok')); // Byte in the sidebar cheers
     window.clearTimeout(reset.current);
     reset.current = window.setTimeout(() => setStatus(null), 900);
     if (o.kind === 'trivia') return router.push(`/portal/trivia/play/${o.code}`);

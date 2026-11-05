@@ -20,6 +20,21 @@ export default function Loading({ variant = 'section', label = 'Loading…' }: {
       </div>
     );
   }
+  // A panel or sub-page waiting for its data shows the shape of what is coming (a title and a row of cards) instead of the mascot, so the page does not jump when the data arrives.
+  if (variant === 'section') {
+    return (
+      <div className={styles.skeleton} role="status" aria-live="polite" aria-label={label}>
+        <span className={`${styles.skBar} ${styles.skTitle}`} />
+        <span className={`${styles.skBar} ${styles.skLine}`} />
+        <div className={styles.skRow}>
+          {[0, 1, 2].map((i) => (
+            <span key={i} className={`${styles.skBar} ${styles.skCard}`} style={{ animationDelay: `${i * 0.12}s` }} />
+          ))}
+        </div>
+        <span className={styles.skSr}>{label}</span>
+      </div>
+    );
+  }
   const size = variant === 'page' ? 104 : 56;
   return (
     <div className={`${styles.wrap} ${variant === 'page' ? styles.page : styles.section}`} role="status" aria-live="polite">

@@ -15,7 +15,7 @@
   font-weight: 800;
   letter-spacing: 0.01em;
   box-shadow: 0 12px 32px -8px rgba(22, 163, 74, 0.7), 0 0 0 4px rgba(22, 163, 74, 0.25);
-  animation: saveToastIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: saveToastIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), saveToastOut 0.3s ease-in 2.85s forwards;
   pointer-events: none;
 }
 /* A warning (not a save): amber, for a move that was stopped. */
@@ -25,3 +25,9 @@
   to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
 }
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
+
+/* It slides out before the host removes it (3.2s), and the check pops in as it arrives. */
+@keyframes saveToastOut { to { opacity: 0; transform: translate(-50%, -20px) scale(0.95); } }
+.toast svg { animation: saveToastCheck 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) 0.15s both; }
+@keyframes saveToastCheck { from { transform: scale(0); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .toast, .toast svg { animation: none; } }

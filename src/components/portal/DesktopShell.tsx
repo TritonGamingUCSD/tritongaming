@@ -69,6 +69,21 @@ export function DesktopShell({
     });
   // Every area shows all of its pages, always (the sidebar scrolls if a future list gets longer than the screen).
   const isFolded = () => false;
+  // Byte cheers for a couple of seconds when a code worked (CodeBox sends the signal).
+  const [cheer, setCheer] = useState(false);
+  useEffect(() => {
+    let t: number | undefined;
+    const on = () => {
+      setCheer(true);
+      window.clearTimeout(t);
+      t = window.setTimeout(() => setCheer(false), 2600);
+    };
+    window.addEventListener('tg:checkin-ok', on);
+    return () => {
+      window.removeEventListener('tg:checkin-ok', on);
+      window.clearTimeout(t);
+    };
+  }, []);
   // Byte sleeps at night (the person's own clock; the server's page always draws him awake, so there is no mismatch).
   const asleep = useSyncExternalStore(
     () => () => {},
@@ -117,7 +132,7 @@ export function DesktopShell({
           title="Home"
         >
           <span className={styles.railLogoByte} aria-hidden="true">
-            <ByteMini pose={asleep ? 'sleep' : 'awake'} />
+            <ByteMini pose={cheer ? 'happy' : asleep ? 'sleep' : 'awake'} />
           </span>
           <span className={styles.railLogoText}>
             Triton Gaming
@@ -209,8 +224,8 @@ export function DesktopShell({
                 <motion.div
                   key={openSection.id}
                   className={styles.desktopPanel}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1, transition: { duration: 0.15 } }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0, transition: { duration: 0.18 } }}
                   exit={{ opacity: 0, transition: { duration: 0.08 } }}
                 >
                   <div className={styles.panelBody} key={navNonce}>
@@ -221,8 +236,8 @@ export function DesktopShell({
                 <motion.div
                   key="home"
                   className={styles.gridWrap}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1, transition: { duration: 0.15 } }}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0, transition: { duration: 0.18 } }}
                   exit={{ opacity: 0, transition: { duration: 0.08 } }}
                 >
                   {frame?.tiles && <div className={styles.homeTiles}>{frame.tiles}</div>}

@@ -31,3 +31,14 @@
 .areaSite, .areaAuto { background: #080d1a; color: #f2f1f0; } /* the public site's navy */
 .areaPortal, :global(html[data-area='portal']) .areaAuto { background: var(--pp-paper); color: var(--pp-ink); }
 .inPage { min-height: 70svh; background: var(--navy, #080d1a); }
+
+/* The skeleton: gray blocks in the shape of the page, with a soft shimmer. */
+.skeleton { display: grid; gap: 0.9rem; width: 100%; padding: 0.5rem 0 1rem; }
+.skBar { display: block; border-radius: 6px; background: linear-gradient(90deg, color-mix(in srgb, currentColor 9%, transparent) 25%, color-mix(in srgb, currentColor 18%, transparent) 50%, color-mix(in srgb, currentColor 9%, transparent) 75%); background-size: 200% 100%; animation: skShimmer 1.3s ease-in-out infinite; }
+.skTitle { width: min(18rem, 60%); height: 2rem; }
+.skLine { width: min(30rem, 85%); height: 0.9rem; }
+.skRow { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; margin-top: 0.6rem; }
+.skCard { height: 8.5rem; }
+.skSr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+@keyframes skShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skBar { animation: none; } }

@@ -41,3 +41,5 @@
 .badge { min-width: 1.4rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--yellow); color: #011941; font-size: 0.8rem; font-weight: 700; text-align: center; } /* theme-ok */
 .signOut { display: block; width: 100%; padding: 0.75rem 1.1rem; border: 0; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.14); background: none; color: var(--pp-bad); font: inherit; font-size: 0.95rem; font-weight: 700; text-align: left; cursor: pointer; }
 .signOut:hover { background: color-mix(in srgb, var(--pp-bad) 9%, transparent); }
+
+.xp > span { transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1); }
