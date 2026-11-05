@@ -5,6 +5,7 @@ import { hasCapability } from '@/lib/portal/capabilities';
 import { createClient } from '@/lib/supabase/server';
 import { utcToPacificDatetimeLocal } from '@/lib/core/timezone';
 import EditEventClient from './EditEventClient';
+import EventWorkspace from '../EventWorkspace';
 import type { EventFormValues } from '../EventForm';
 import { EMPTY_CHECKIN_FORM_CONFIG } from '../CheckinFormFieldsEditor';
 import { getCheckinFormSeed, getFormPreviewViewer } from '../getEventsData';
@@ -12,7 +13,7 @@ import type { SocialEmbed, PhotoAlbumEntry, ScheduleItem, EventSponsor } from '@
 import { cleanTheme, EMPTY_THEME } from '@/lib/events/eventTheme';
 import { cleanBlocks } from '@/lib/site/pageBlocks';
 
-export const metadata = { title: 'Edit Event' };
+export const metadata = { title: 'Event' };
 export const dynamic = 'force-dynamic';
 
 interface Params {
@@ -22,7 +23,10 @@ interface Params {
 export default async function EditEventPage({ params }: Params) {
   const { id } = await params;
   const roles = await getUserRoles();
-  if (!hasCapability(roles, 'manage_events')) redirect('/portal');
+  // The page is the event's workspace (tabs for its details, tickets, logistics, emails, live tools and results): open to anyone who can use one of them. Only people who manage events get the Details tab.
+  if (!(['manage_events', 'checkin', 'view_logistics', 'host_trivia', 'run_photobooth', 'write_newspaper', 'send_newspaper'] as const).some((c) => hasCapability(roles, c)))
+    redirect('/portal');
+  if (!hasCapability(roles, 'manage_events')) return <EventWorkspace eventId={id} details={null} />;
 
   const supabase = await createClient();
   const [{ data: event }, seedCheckinFormConfig, previewViewer, creditPeople] = await Promise.all([
@@ -74,5 +78,10 @@ export default async function EditEventPage({ params }: Params) {
     checkin_form_override: event.checkin_form_override ? { ...EMPTY_CHECKIN_FORM_CONFIG, ...event.checkin_form_override } : null,
   };
 
-  return <EditEventClient eventId={event.id} initial={initial} seedCheckinFormConfig={seedCheckinFormConfig} previewViewer={previewViewer} creditPeople={creditPeople} />;
+  return (
+    <EventWorkspace
+      eventId={event.id}
+      details={<EditEventClient eventId={event.id} initial={initial} seedCheckinFormConfig={seedCheckinFormConfig} previewViewer={previewViewer} creditPeople={creditPeople} />}
+    />
+  );
 }

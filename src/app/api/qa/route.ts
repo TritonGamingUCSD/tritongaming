@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
 import { logAudit } from '@/lib/notifications/audit';
 import { authorizePolls } from '@/lib/polls/server';
 import { cleanText } from '@/lib/qa/rank';
@@ -44,8 +45,14 @@ export async function POST(request: Request) {
   const b = await request.json().catch(() => ({}));
   const name = cleanText(b.name, 80);
   if (!name) return NextResponse.json({ error: 'Give the Q&A a name.' }, { status: 400 });
+  const link = await eventLink(auth.svc, b.event_id);
+  if (!link.ok) return NextResponse.json({ error: NO_SUCH_EVENT }, { status: 404 });
   const slug = await freshQaSlug(auth.svc, name);
-  const { data, error } = await auth.svc.from('qa_sessions').insert({ slug, name, created_by: auth.user.id }).select(QA_COLUMNS).single();
+  const { data, error } = await auth.svc
+    .from('qa_sessions')
+    .insert({ slug, name, created_by: auth.user.id, event_id: link.id ?? null })
+    .select(QA_COLUMNS)
+    .single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t make the Q&A.' }, { status: 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'qa', entityId: data.id as string, summary: `Made the Q&A “${name}”` });
   return NextResponse.json({ session: data }, { status: 201 });

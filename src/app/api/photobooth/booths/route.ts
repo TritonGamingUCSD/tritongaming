@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
 import { slugify } from '@/lib/core/slug';
 import { DEFAULT_BOOTH, cleanBooth, splitConfig } from '@/lib/photobooth/booth';
 import { copyLook } from '@/lib/photobooth/looks';
@@ -36,6 +37,8 @@ export async function POST(request: Request) {
   const b = await request.json().catch(() => ({}));
   const name = typeof b.name === 'string' ? b.name.trim().slice(0, 80) : '';
   if (!name) return NextResponse.json({ error: 'Give the booth a name.' }, { status: 400 });
+  const link = await eventLink(auth.svc, b.event_id);
+  if (!link.ok) return NextResponse.json({ error: NO_SUCH_EVENT }, { status: 404 });
   const source = typeof b.from === 'string' ? await loadBooth(auth.svc, b.from) : null;
   const { settings, style } = splitConfig(cleanBooth(b.config, { ...DEFAULT_BOOTH, ...source?.config, ...source?.looks[0]?.style }));
   let base = slugify(name).slice(0, 50) || 'booth';
@@ -44,7 +47,7 @@ export async function POST(request: Request) {
     const slug = i === 0 ? base : `${base}-${i + 1}`;
     const { data, error } = await auth.svc
       .from('photobooths')
-      .insert({ ...settings, slug, name, created_by: auth.user.id })
+      .insert({ ...settings, slug, name, created_by: auth.user.id, event_id: link.id ?? null })
       .select(BOOTH_COLUMNS)
       .single();
     if (data) {

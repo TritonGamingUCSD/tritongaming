@@ -152,6 +152,10 @@ The free Vercel plan allows two scheduled jobs, each at most once a day, so `ver
 Both are called with `Authorization: Bearer $CRON_SECRET`. `daily-maintenance?only=notifications|photos|quarters|teams|help|signups|usage|storage` runs a single step; on a dev machine `x-cron-dev: 1` may run only the quarters and teams steps. Don't add a third job to `vercel.json`; add a step to one of these two instead.
 
 
+## Event workspace (Events)
+
+An event's page (`/portal/events/<id>`) is its workspace: tabs for Details (the edit form), Tickets (registered and checked in), Logistics (its plan), Email (Newspaper issues about it), Tools (polls, Q&A, Trivia games, photo booths and Staffles tied to it) and Results. The tab is in the address (`?w=`). Each tab shows only to people who may use it; the data comes from `/api/events/<id>/workspace`. Polls, Q&A, Staffle, Photo Booth and Trivia can be made for an event (`event_id`), and an existing one can be tied to or taken off an event.
+
 ## Event check-ins page (Events)
 An event's ticket list is its own page, **Events › the ticket count on an event's row** (`/portal/events/check-ins/<event slug>`, not a pop up): counts, a search box (name or gamer tag), **Sort** (Registered, Name, Checked-in time, Status, with an up/down arrow) and **Group** (None, Status, AS form for events that have it). Search, sort and group are in the address (`q`, `sort`, `dir`, `view`). People who can manage points get **Check In** (no scan) and **Undo** on each row. `EventCheckinsPage.tsx`; data from `GET /api/events/<slug or id>/checkins`.
 

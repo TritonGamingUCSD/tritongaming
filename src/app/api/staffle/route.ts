@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { logAudit } from '@/lib/notifications/audit';
 import { cleanRules, NO_RULES, rulesEmpty } from '@/lib/staffle/rules';
@@ -71,12 +72,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'A prize can be in a Staffle only once. Give it more winners instead.' }, { status: 400 });
   const short = items.length ? await notEnough(auth.svc, items) : null;
   if (short) return NextResponse.json({ error: short }, { status: 409 });
+  const link = await eventLink(auth.svc, b.event_id);
+  if (!link.ok) return NextResponse.json({ error: NO_SUCH_EVENT }, { status: 404 });
   const slug = await freshSlug(auth.svc, name);
   const { data, error } = await auth.svc
     .from('staffles')
     .insert({
       slug,
       name,
+      event_id: link.id ?? null,
       notes:
         String(b.notes ?? '')
           .trim()

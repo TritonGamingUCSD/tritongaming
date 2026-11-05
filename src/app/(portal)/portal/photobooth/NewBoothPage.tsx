@@ -1,5 +1,6 @@
 'use client';
 
+import EventSelect from '@/components/portal/EventSelect';
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
 import DetailHeader from '@/components/ui/DetailHeader';
@@ -30,6 +31,7 @@ const frameOf = (preset: Preset, colour: string, words: string): FrameSpec => ({
 export function NewBoothPage({ onBack, onMade }: { onBack: () => void; onMade: (slug: string, open: boolean) => void }) {
   const [name, setName] = useState('');
   const [words, setWords] = useState('');
+  const [eventId, setEventId] = useState('');
   const [presetId, setPresetId] = useState(PRESETS[0].id);
   const preset = findPreset(presetId);
   const [accent, setAccent] = useState<string | null>(null);
@@ -43,7 +45,11 @@ export function NewBoothPage({ onBack, onMade }: { onBack: () => void; onMade: (
     if (!name.trim() || busy) return;
     setBusy(true);
     setError('');
-    const r = await call<{ booth: { slug: string }; look: string | null }>('/api/photobooth/booths', 'POST', { name: name.trim(), config: preview });
+    const r = await call<{ booth: { slug: string }; look: string | null }>('/api/photobooth/booths', 'POST', {
+      name: name.trim(),
+      config: preview,
+      event_id: eventId || undefined,
+    });
     if (!r.ok) {
       setBusy(false);
       return setError(r.error);
@@ -72,6 +78,7 @@ export function NewBoothPage({ onBack, onMade }: { onBack: () => void; onMade: (
             <Field label="Booth name">
               <Input value={name} maxLength={80} autoFocus onChange={(e) => setName(e.target.value)} placeholder="Costume Party booth" />
             </Field>
+            <EventSelect value={eventId} onChange={setEventId} />
             <Field label="Words under the photos" hint="The event name, date or hashtag. Optional.">
               <Input value={words} maxLength={40} onChange={(e) => setWords(e.target.value)} placeholder="Costume Party · Oct 31 · #TritonGaming" />
             </Field>

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
 import { logAudit } from '@/lib/notifications/audit';
 import { POLL_MODES, POLL_REVEALS } from '@/lib/polls/tally';
 import { POLL_COLUMNS, authorizePolls, freshSlug, type PollRow } from '@/lib/polls/server';
@@ -51,8 +52,14 @@ export async function POST(request: Request) {
   if (!name) return NextResponse.json({ error: 'Give the poll a name.' }, { status: 400 });
   const mode = (POLL_MODES as readonly string[]).includes(b.mode) ? b.mode : 'one';
   const reveal = (POLL_REVEALS as readonly string[]).includes(b.reveal) ? b.reveal : 'live';
+  const link = await eventLink(auth.svc, b.event_id);
+  if (!link.ok) return NextResponse.json({ error: NO_SUCH_EVENT }, { status: 404 });
   const slug = await freshSlug(auth.svc, name);
-  const { data, error } = await auth.svc.from('polls').insert({ slug, name, mode, reveal, created_by: auth.user.id }).select(POLL_COLUMNS).single();
+  const { data, error } = await auth.svc
+    .from('polls')
+    .insert({ slug, name, mode, reveal, created_by: auth.user.id, event_id: link.id ?? null })
+    .select(POLL_COLUMNS)
+    .single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t make the poll.' }, { status: 500 });
   await logAudit(auth.svc, { actorId: auth.user.id, action: 'create', entityType: 'poll', entityId: data.id as string, summary: `Made the poll “${name}”` });
   return NextResponse.json({ poll: data }, { status: 201 });

@@ -1,5 +1,6 @@
 'use client';
 
+import EventSelect from '@/components/portal/EventSelect';
 import EmptyState from '@/components/ui/EmptyState';
 import SectionHeader from '@/components/ui/SectionHeader';
 import { useCallback, useEffect, useState } from 'react';
@@ -114,14 +115,15 @@ function NewPoll({ onClose, onMade }: { onClose: () => void; onMade: (slug: stri
   const [name, setName] = useState('');
   const [mode, setMode] = useState<PollMode>('one');
   const [reveal, setReveal] = useState<PollReveal>('hidden');
+  const [eventId, setEventId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const dirty = useDirty({ name, mode, reveal });
+  const dirty = useDirty({ name, mode, reveal, eventId });
   const make = async () => {
     if (!name.trim() || busy) return;
     setBusy(true);
     setError('');
-    const r = await call<{ poll: { slug: string } }>('/api/polls', 'POST', { name, mode, reveal });
+    const r = await call<{ poll: { slug: string } }>('/api/polls', 'POST', { name, mode, reveal, event_id: eventId || undefined });
     setBusy(false);
     if (r.ok) onMade(r.data.poll.slug);
     else setError(r.error);
@@ -152,6 +154,7 @@ function NewPoll({ onClose, onMade }: { onClose: () => void; onMade: (slug: stri
           ))}
         </div>
       </Field>
+      <EventSelect value={eventId} onChange={setEventId} />
       {error && <Notice tone="error">{error}</Notice>}
       <DialogActions>
         <DialogCancel onClick={onClose} />

@@ -1,5 +1,6 @@
 'use client';
 
+import EventSelect from '@/components/portal/EventSelect';
 import EmptyState from '@/components/ui/EmptyState';
 import SectionHeader from '@/components/ui/SectionHeader';
 import { useCallback, useEffect, useState } from 'react';
@@ -94,14 +95,15 @@ export default function QaList({ onOpen }: { onOpen: (slug: string) => void }) {
 
 function NewQa({ onClose, onMade }: { onClose: () => void; onMade: (slug: string) => void }) {
   const [name, setName] = useState('');
+  const [eventId, setEventId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const dirty = useDirty({ name });
+  const dirty = useDirty({ name, eventId });
   const make = async () => {
     if (!name.trim() || busy) return;
     setBusy(true);
     setError('');
-    const r = await call<{ session: { slug: string } }>('/api/qa', 'POST', { name });
+    const r = await call<{ session: { slug: string } }>('/api/qa', 'POST', { name, event_id: eventId || undefined });
     setBusy(false);
     if (r.ok) onMade(r.data.session.slug);
     else setError(r.error);
@@ -111,6 +113,7 @@ function NewQa({ onClose, onMade }: { onClose: () => void; onMade: (slug: string
       <Field label="Name" hint="Guests see this above the questions.">
         <Input value={name} maxLength={80} placeholder="Ask The Officers" autoFocus onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void make()} />
       </Field>
+      <EventSelect value={eventId} onChange={setEventId} />
       {error && <Notice tone="error">{error}</Notice>}
       <DialogActions>
         <DialogCancel onClick={onClose} />

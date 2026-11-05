@@ -72,7 +72,17 @@ const userOf = (t: TicketRow) => (Array.isArray(t.user) ? t.user[0] : t.user);
 
 // One event's tickets, as its own page in Events (/portal/events/check-ins/<event>): search, sort, group, and the manual check-in and undo for whoever can manage points.
 // `eventKey` is the event's slug (or its id when it has none). Search, sort and group are in the address, so a copied link reopens the same view.
-export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }: { eventKey: string; onBack: () => void; canManagePoints: boolean }) {
+export default function EventCheckinsPage({
+  eventKey,
+  onBack,
+  canManagePoints,
+  embedded = false,
+}: {
+  eventKey: string;
+  onBack: () => void;
+  canManagePoints: boolean;
+  /** Inside the event's workspace, which has its own header. */ embedded?: boolean;
+}) {
   // The search, sort and group are in the address (lib/portal/usePageState), so a refresh or a shared link brings them back.
   const [query, setQuery] = useAddressState('q', textCodec);
   const [sort, setSort] = useAddressState('sort', sortWords);
@@ -216,11 +226,13 @@ export default function EventCheckinsPage({ eventKey, onBack, canManagePoints }:
 
   return (
     <div className={styles.page}>
-      <DetailHeader
-        back={{ label: 'All Events', onClick: onBack }}
-        title={event?.title ?? 'Check-Ins'}
-        sub={event ? `${formatEventDateRange(event.start_date, event.end_date, { weekday: true })}${event.location ? ` · ${event.location}` : ''}` : undefined}
-      />
+      {!embedded && (
+        <DetailHeader
+          back={{ label: 'All Events', onClick: onBack }}
+          title={event?.title ?? 'Check-Ins'}
+          sub={event ? `${formatEventDateRange(event.start_date, event.end_date, { weekday: true })}${event.location ? ` · ${event.location}` : ''}` : undefined}
+        />
+      )}
       <div>
         {error ? (
           <Notice tone="error">{error}</Notice>

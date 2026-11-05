@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
 import { authorizeTrivia, findQuiz, lockedQuizIds, publicState, quizGate } from '@/lib/trivia/server';
 import { createGame } from '@/lib/trivia/gameServer';
 
@@ -97,7 +98,10 @@ export async function POST(request: Request) {
     .order('created_at', { ascending: false })
     .limit(1);
   if (open?.[0]) return NextResponse.json({ code: open[0].code as string, reused: true }, { status: 200 });
+  const link = await eventLink(auth.svc, b.event_id);
+  if (!link.ok) return NextResponse.json({ error: NO_SUCH_EVENT }, { status: 404 });
   const game = await createGame(auth.svc, quiz, auth.user.id);
   if (!game) return NextResponse.json({ error: 'Couldn’t open a game. Try again.' }, { status: 500 });
+  if (link.id) await auth.svc.from('trivia_games').update({ event_id: link.id }).eq('id', game.id);
   return NextResponse.json({ code: game.code, state: await publicState(auth.svc, game) }, { status: 201 });
 }
