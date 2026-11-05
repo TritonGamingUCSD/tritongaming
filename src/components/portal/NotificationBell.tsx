@@ -114,8 +114,14 @@ export default function NotificationBell({ inline = false }: { inline?: boolean 
         aria-label={unreadCount > 0 ? `Notifications, ${unreadCount} unread` : 'Notifications'}
         aria-expanded={open}
       >
-        <Bell size={17} strokeWidth={1.5} aria-hidden="true" />
-        {unreadCount > 0 && <span className={styles.badge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+        <span key={`bell-${unreadCount}`} className={unreadCount > 0 ? styles.ring : undefined}>
+          <Bell size={17} strokeWidth={1.5} aria-hidden="true" />
+        </span>
+        {unreadCount > 0 && (
+          <span key={unreadCount} className={`${styles.badge} ${styles.badgePop}`}>
+            {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        )}
       </button>
 
       {open && (

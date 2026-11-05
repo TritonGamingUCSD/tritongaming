@@ -74,3 +74,16 @@
 .input:focus, .input:focus-visible { outline: none; border: 0; box-shadow: none; background: none; }
 
 .needsTag { flex-shrink: 0; font-size: 0.7rem; font-weight: 600; padding: 0.1rem 0.55rem; border-radius: 999px; color: rgba(var(--pp-chrome-rgb), 0.85); background: rgba(var(--pp-chrome-rgb), 0.14); white-space: nowrap; }
+
+/* Results fade in line by line (25ms apart). */
+.result { animation: srIn 0.18s ease-out both; }
+.result:nth-child(2) { animation-delay: 25ms; }
+.result:nth-child(3) { animation-delay: 50ms; }
+.result:nth-child(4) { animation-delay: 75ms; }
+.result:nth-child(5) { animation-delay: 100ms; }
+.result:nth-child(6) { animation-delay: 125ms; }
+.result:nth-child(7) { animation-delay: 150ms; }
+.result:nth-child(8) { animation-delay: 175ms; }
+.result:nth-child(9) { animation-delay: 200ms; }
+@keyframes srIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .result { animation: none; } }

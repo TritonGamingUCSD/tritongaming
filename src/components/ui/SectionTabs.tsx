@@ -71,6 +71,29 @@ export default function SectionTabs<T extends string>({
     ln.style.transform = `translateX(${el.offsetLeft}px)`;
   }, [value, tabs, overflow, variant]);
 
+  // Changing tab slides the page content a few pixels in the direction of travel (the elements after the bar, once the new tab has drawn).
+  function slideTo(id: T, index: number) {
+    const from = tabs.findIndex((x) => x.id === value);
+    onChange(id);
+    if (variant === 'segmented' || from < 0 || from === index || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const dir = index > from ? 1 : -1;
+    const host = bar.current?.parentElement;
+    window.setTimeout(() => {
+      let el = bar.current?.nextElementSibling;
+      while (el) {
+        if (el !== host && 'animate' in el)
+          (el as HTMLElement).animate(
+            [
+              { opacity: 0, transform: `translateX(${dir * 14}px)` },
+              { opacity: 1, transform: 'none' },
+            ],
+            { duration: 220, easing: 'ease-out' },
+          );
+        el = el.nextElementSibling;
+      }
+    }, 40);
+  }
+
   function onKeyDown(e: React.KeyboardEvent, index: number) {
     let next = index;
     if (e.key === 'ArrowRight') next = (index + 1) % tabs.length;
@@ -114,7 +137,7 @@ export default function SectionTabs<T extends string>({
               aria-selected={active}
               tabIndex={active ? 0 : -1}
               className={`${styles.tab} ${active ? styles.active : ''}`}
-              onClick={() => onChange(t.id)}
+              onClick={() => slideTo(t.id, i)}
               onKeyDown={(e) => onKeyDown(e, i)}
             >
               {t.icon && variant !== 'segmented' && (

@@ -1067,3 +1067,13 @@
   .frameBody > .desktopContent { max-width: 1440px; margin-inline: auto; }
   .frameBody:has([data-wide]) > .desktopContent { max-width: none; }
 }
+
+/* The glide: a white block that slides under the open page's name; the item itself is see-through. A soft shadow under the top bar once the page has scrolled. */
+@media (min-width: 900px) {
+  .rail .railNav { position: relative; }
+  .railGlide { position: absolute; left: 0; top: 0; z-index: 0; width: 0; height: 0; border-radius: 0 6px 6px 0; background: #ffffff; box-shadow: inset 3px 0 0 var(--yellow); transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1), width 0.28s, height 0.28s, opacity 0.2s; pointer-events: none; } /* theme-ok */
+  .rail .railNav .railItem { position: relative; z-index: 1; }
+  .rail .railNav .railItemActive, .rail .railNav .railItemNested.railItemActive { background: transparent !important; box-shadow: none !important; }
+  [data-app-frame][data-scrolled] .topBar { box-shadow: 0 8px 16px -10px rgba(0, 0, 0, 0.6); position: relative; z-index: 5; }
+}
+@media (prefers-reduced-motion: reduce) { .railGlide { transition: none; } }

@@ -159,3 +159,10 @@
 /* Sitting inside the desktop app frame's top bar instead of floating over the page. */
 .wrapInline { position: relative; top: auto; right: auto; z-index: 7; }
 
+
+/* A new notification: the bell rings once and the number pops. */
+.ring { display: inline-grid; transform-origin: 50% 10%; animation: bellRing 0.7s ease-in-out 1; }
+.badgePop { animation: badgePop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 1; }
+@keyframes bellRing { 0%, 100% { transform: rotate(0); } 15% { transform: rotate(14deg); } 30% { transform: rotate(-12deg); } 45% { transform: rotate(8deg); } 60% { transform: rotate(-5deg); } 75% { transform: rotate(2deg); } }
+@keyframes badgePop { from { transform: scale(0.3); } to { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .ring, .badgePop { animation: none; } }

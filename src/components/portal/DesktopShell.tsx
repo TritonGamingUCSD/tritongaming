@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Pin, PinOff } from 'lucide-react';
 import CodeBox from '@/components/portal/CodeBox';
@@ -93,6 +93,24 @@ export function DesktopShell({
     },
     () => false,
   );
+  // The white highlight on the open page glides to the next page (placed by measuring the open item, set straight on the element).
+  const navRef = useRef<HTMLElement>(null);
+  const glideRef = useRef<HTMLSpanElement>(null);
+  const activeId = openSection?.id;
+  useLayoutEffect(() => {
+    const nav = navRef.current;
+    const g = glideRef.current;
+    if (!nav || !g) return;
+    const el = nav.querySelector<HTMLElement>('[data-rail-active]');
+    if (!el) {
+      g.style.opacity = '0';
+      return;
+    }
+    g.style.opacity = '1';
+    g.style.width = `${el.offsetWidth}px`;
+    g.style.height = `${el.offsetHeight}px`;
+    g.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop}px)`;
+  }, [activeId, groupedSections]);
   const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
   // the whole frame is on screen without scrolling the page. Re-measured when the window or the page above changes.
@@ -139,7 +157,8 @@ export function DesktopShell({
             <small>Member portal</small>
           </span>
         </button>
-        <nav className={styles.railNav} aria-label="Portal sections">
+        <nav ref={navRef} className={styles.railNav} aria-label="Portal sections">
+          <span ref={glideRef} className={styles.railGlide} aria-hidden="true" />
           {groupedSections
             .map(({ group, items: all }) => ({ group, items: all.filter((s) => !s.railHidden) }))
             .filter(({ items }) => items.length > 0)
@@ -161,6 +180,7 @@ export function DesktopShell({
                   items.map((s) => (
                     <button
                       key={s.id}
+                      data-rail-active={s.id === openId ? '' : undefined}
                       className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''} ${groupedSections.length > 1 && group !== 'Overview' && items.length > 1 ? styles.railItemNested : ''}`}
                       onClick={() => open(s.id)}
                       aria-current={s.id === openId ? 'page' : undefined}
@@ -217,7 +237,13 @@ export function DesktopShell({
           </div>
         </header>
         {frame?.banners && <div className={styles.frameBanners}>{frame.banners}</div>}
-        <div className={styles.frameBody} data-save-anchor>
+        <div
+          className={styles.frameBody}
+          data-save-anchor
+          onScroll={(e) => {
+            frameRef.current?.toggleAttribute('data-scrolled', e.currentTarget.scrollTop > 4);
+          }}
+        >
           <div className={styles.desktopContent}>
             <AnimatePresence mode="wait" initial={false}>
               {openSection ? (
