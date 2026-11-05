@@ -83,7 +83,7 @@ export default function AccountMenu({ identity, viewAs, onProfile }: { identity:
                   <span
                     key={r.label}
                     className={styles.role}
-                    style={{ color: `color-mix(in srgb, ${r.color} 55%, var(--pp-ink))`, background: `${r.color}22`, borderColor: `${r.color}66` }}
+                    style={{ color: `color-mix(in srgb, ${r.color} 35%, var(--pp-ink))`, background: `${r.color}22`, borderColor: `${r.color}66` }}
                   >
                     {r.label}
                   </span>
@@ -93,7 +93,7 @@ export default function AccountMenu({ identity, viewAs, onProfile }: { identity:
           </div>
 
           <p className={styles.group}>Settings</p>
-          <div className={styles.row} role="group" aria-label="Appearance">
+          <div className={`${styles.row} ${styles.rowStatic}`} role="group" aria-label="Appearance">
             <span>Appearance</span>
             <span className={styles.modes}>
               {(
