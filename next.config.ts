@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
   async rewrites() {
     const sections = SECTION_IDS.join('|'); // every portal section, defined once in src/lib/portal/sections.ts
     // A division's public address: tritongaming.org/<division> (and /events, /team, /gallery under it) shows the pages under /divisions/<division>. These are plain rewrites made when the site is built, so they cost
-    // no function run per visit. A division created or renamed since the last build is caught by the short-link route, which sends its address on to /divisions/<division> until the next build.
+    // no function run per visit. A division created or renamed since the last build is caught by the short-link route, which sends its address on to /divisions/<division> until the next build (its events, team and gallery pages wait for the build too).
     const divisionSlugs = await divisionAddresses();
     return {
       // Events and Divisions also have /portal/<section>/<id> record pages; their tab names are matched first so a tab is never mistaken for an id.
