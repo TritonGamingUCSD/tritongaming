@@ -37,6 +37,7 @@ import { CONTENT_BLOCKS } from '@/lib/site/content-blocks';
 import { PACIFIC_TZ, pacificDayKey, pacificDaysUntil, pacificToday } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { sectionLabel } from '@/lib/portal/sections';
+import AllFunctions from './all/AllFunctions';
 import { getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
 import type { HubSection } from '@/components/portal/hubTypes';
 import SignOutButton from '@/components/portal/SignOutButton';
@@ -689,6 +690,18 @@ export default async function PortalDashboard({ searchParams }: Props) {
         ]
       : []),
   ];
+  // A to Z of everything this person can open (built from the list above, so it can never offer a page they lack).
+  sections.push({
+    id: 'all',
+    icon: <CircleHelp size={28} strokeWidth={1.5} aria-hidden="true" />,
+    label: sectionLabel('all'),
+    railHidden: true,
+    homeExclude: true,
+    dockExclude: true,
+    description: 'Every page you can open, A to Z',
+    group: 'Yours',
+    content: <AllFunctions items={sections.map((s) => ({ id: s.id, label: s.label, description: s.description }))} />,
+  });
 
   const avatarUrl = resolveAvatarUrl(profile);
   // Every role the person holds (shown as chips in the sidebar), highest first.

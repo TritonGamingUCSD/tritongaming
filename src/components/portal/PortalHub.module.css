@@ -1041,6 +1041,8 @@
 @media (min-width: 900px) {
   .topCode { flex: 0 1 13rem; min-width: 9rem; }
   .railPin { display: flex; align-items: center; gap: 0.5rem; margin-top: auto; padding: 0.45rem 0.7rem; border: 0; border-radius: 6px; background: none; color: rgba(255, 255, 255, 0.75); font: inherit; font-size: 0.9rem; font-weight: 600; cursor: pointer; } /* theme-ok */
+  .railAll { margin-top: auto; }
+  .railAll + .railPin { margin-top: 0; }
   .railPin:hover { background: rgba(255, 255, 255, 0.08); color: #fff; } /* theme-ok */
 }
 @media (min-width: 900px) {

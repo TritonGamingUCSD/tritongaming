@@ -3,7 +3,7 @@
 import { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Pin, PinOff } from 'lucide-react';
+import { ListTree, Pin, PinOff } from 'lucide-react';
 import Spotlight from './Spotlight';
 import CodeBox from '@/components/portal/CodeBox';
 import NotificationBell from './NotificationBell';
@@ -260,6 +260,12 @@ export function DesktopShell({
               </div>
             ))}
         </nav>
+        {groupedSections.some((g) => g.items.some((s) => s.id === 'all')) && (
+          <button type="button" className={`${styles.railPin} ${styles.railAll}`} onClick={() => open('all')} aria-current={openId === 'all' ? 'page' : undefined}>
+            <ListTree size={16} aria-hidden="true" />
+            <span>All Functions</span>
+          </button>
+        )}
         <button type="button" className={styles.railPin} onClick={toggleCollapsed} aria-pressed={!collapsed} title={collapsed ? 'Pin the menu open' : 'Let the menu hide'}>
           {collapsed ? <Pin size={16} aria-hidden="true" /> : <PinOff size={16} aria-hidden="true" />}
           <span>{collapsed ? 'Pin menu' : 'Unpin menu'}</span>

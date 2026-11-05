@@ -104,6 +104,7 @@ export const SECTIONS: SectionDef[] = [
   { id: 'division-members', label: 'Division Members', search: { hint: 'Who leads each division', keywords: ['leads', 'division'], caps: ['view_division_members'] } },
   { id: 'docs', label: 'Documentation', search: { hint: 'How-to guides', keywords: ['guide', 'help', 'how to', 'docs'], caps: ['view_docs'] } },
   { id: 'qrcode', label: 'QR Studio', search: { id: 'qr', hint: 'Design branded QR codes', keywords: ['qr', 'code', 'generator'], caps: ['generate_qr_codes'] } },
+  { id: 'all', label: 'All Functions', search: { hint: 'Every page you can open, A to Z', keywords: ['all', 'pages', 'list', 'a-z', 'index', 'everything'] } },
   { id: 'help', label: 'Help', search: { hint: 'Ask a question or report a problem', keywords: ['support', 'question', 'bug', 'problem', 'ticket'] } },
   {
     id: 'admin',

@@ -120,6 +120,7 @@ Every portal section is defined once in `src/lib/portal/sections.ts` (its addres
 | `/portal/division-members` | Division Members | - | Who leads each division (needs view_division_members) |
 | `/portal/docs` | Documentation | - | How-to guides (needs view_docs) |
 | `/portal/qrcode` | QR Studio | - | Design branded QR codes (needs generate_qr_codes) |
+| `/portal/all` | All Functions | - | Every page you can open, A to Z |
 | `/portal/help` | Help | - | Ask a question or report a problem |
 | `/portal/admin` | Admin | overview | Stats, roles, analytics and audit history (needs view_admin_dashboard) |
 | `/portal/site-content` | Site Content | - | Edit the public website (needs manage_site_content) |
