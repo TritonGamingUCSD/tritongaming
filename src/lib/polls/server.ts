@@ -2,14 +2,15 @@ import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilities';
+import { withGrantedCapabilities } from '@/lib/portal/capabilities';
+import { canUseLive, hasLiveAccess, liveScope, type LiveScope } from '@/lib/divisions/liveAccess';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import { slugify } from '@/lib/core/slug';
 import { tally, voterCount, type EntryInfo, type PollMode, type PollReveal, type PollStatus, type Standing } from '@/lib/polls/tally';
 
 export const UUID = /^[0-9a-f-]{36}$/i;
 export const CODE = /^[0-9]{6}$/;
-export const POLL_COLUMNS = 'id, slug, name, mode, reveal, status, code, created_by, created_at, opened_at, closed_at';
+export const POLL_COLUMNS = 'id, slug, name, mode, reveal, status, code, created_by, created_at, opened_at, closed_at, division_id';
 export const ENTRY_COLUMNS = 'id, number, name, subtitle, image';
 export const POLL_BUCKET = 'poll-images';
 export const MAX_ENTRIES = 60;
@@ -26,6 +27,7 @@ export interface PollRow {
   created_at: string;
   opened_at: string | null;
   closed_at: string | null;
+  division_id: string | null;
 }
 
 // Who may do what. 'host' (officers and above, the same permission as hosting Trivia): make polls, set up their entries, open, close and reveal them, see the live counts. 'vote' (anyone with a session, which includes a guest signed in
@@ -38,13 +40,15 @@ export async function authorizePolls(mode: 'host' | 'vote', what = 'polls') {
   if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
   const guest = !!user.is_anonymous;
   const svc = createServiceClient();
+  let scope: LiveScope = { staff: false, tg: false, divisions: [] }; // what a host may run (nothing for a voter)
   if (mode === 'host') {
     if (guest) return { error: NextResponse.json({ error: `Hosting ${what} is for officers and above.` }, { status: 403 }) };
     const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
     const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
-    if (!hasCapability(grants, 'host_trivia')) return { error: NextResponse.json({ error: `Hosting ${what} is for officers and above.` }, { status: 403 }) };
+    scope = liveScope(grants);
+    if (!hasLiveAccess(scope)) return { error: NextResponse.json({ error: `Hosting ${what} is for officers and above.` }, { status: 403 }) };
   }
-  return { user, svc, guest };
+  return { user, svc, guest, scope };
 }
 
 /** A poll by its address word, its id or (while it is open or closed) its 6-digit code. */
@@ -53,6 +57,12 @@ export async function loadPoll(svc: SupabaseClient, key: string): Promise<PollRo
   const { data, error } = await svc.from('polls').select(POLL_COLUMNS).eq(col, key).maybeSingle();
   if (error) throw new Error(`poll read failed: ${error.message}`);
   return (data as PollRow | null) ?? null;
+}
+
+/** A poll for its host: gone (null) when it belongs to someone else's side (another division's, or the club's to a division's Member). */
+export async function loadPollFor(auth: { svc: SupabaseClient; scope: LiveScope }, key: string): Promise<PollRow | null> {
+  const poll = await loadPoll(auth.svc, key);
+  return poll && canUseLive(auth.scope, poll.division_id) ? poll : null;
 }
 
 export async function loadEntries(svc: SupabaseClient, pollId: string): Promise<EntryInfo[]> {

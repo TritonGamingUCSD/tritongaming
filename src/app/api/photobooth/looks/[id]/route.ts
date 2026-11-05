@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cleanBooth } from '@/lib/photobooth/booth';
-import { authorizePhotoBooth, loadLook, removeUnusedOverlayFiles } from '@/lib/photobooth/server';
+import { authorizePhotoBooth, loadLookFor, removeUnusedOverlayFiles } from '@/lib/photobooth/server';
 import { LOOK_STYLE_KEYS } from '@/lib/photobooth/booth';
 
 export const dynamic = 'force-dynamic';
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const found = await loadLook(auth.svc, (await params).id);
+  const found = await loadLookFor(auth, (await params).id);
   if (!found) return NextResponse.json({ error: 'That look is gone.' }, { status: 404 });
   const b = await request.json().catch(() => ({}));
   const name = typeof b.name === 'string' ? b.name.trim().slice(0, 40) : found.look.name;
@@ -29,7 +29,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const found = await loadLook(auth.svc, (await params).id);
+  const found = await loadLookFor(auth, (await params).id);
   if (!found) return NextResponse.json({ ok: true });
   const { count } = await auth.svc.from('photobooth_looks').select('id', { count: 'exact', head: true }).eq('booth_id', found.boothId);
   if ((count ?? 0) <= 1) return NextResponse.json({ error: 'A booth needs at least one look.' }, { status: 409 });

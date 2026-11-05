@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { removeUnreferencedFiles } from '@/lib/storage/removeFiles';
-import { POLL_BUCKET, UUID, authorizePolls, loadPoll } from '@/lib/polls/server';
+import { POLL_BUCKET, UUID, authorizePolls, loadPollFor } from '@/lib/polls/server';
 
 export const dynamic = 'force-dynamic';
 const MAX_IMAGE_BYTES = 250 * 1024; // the browser makes pictures about 120 KB; the bucket refuses anything over 256 KB too
@@ -9,7 +9,7 @@ const isWebp = (b: Uint8Array) => b.length > 12 && String.fromCharCode(...b.slic
 async function find(slug: string, eid: string) {
   const auth = await authorizePolls('host');
   if (auth.error) return { error: auth.error } as const;
-  const poll = await loadPoll(auth.svc, slug);
+  const poll = await loadPollFor(auth, slug);
   if (!poll) return { error: NextResponse.json({ error: 'That poll is gone.' }, { status: 404 }) } as const;
   if (poll.status === 'revealed') return { error: NextResponse.json({ error: 'The results are already shown.' }, { status: 409 }) } as const;
   if (!UUID.test(eid)) return { error: NextResponse.json({ error: 'Not found.' }, { status: 404 }) } as const;

@@ -50,4 +50,16 @@ describe('who may do what with an event', () => {
     expect(canCreateEventFor([g('lead')], null)).toBe(true);
     expect(canCreateEventFor([g('lead')], A)).toBe(false);
   });
+
+  test('a co-hosting division’s Members and Heads check people in, but do not manage', () => {
+    const co = { division_id: A, cohost_division_ids: [B] };
+    expect(canCheckInEvent([g('division_member', B)], co)).toBe(true);
+    expect(canCheckInEvent([g('division', B)], co)).toBe(true);
+    expect(canManageEvent([g('division', B)], co)).toBe(false);
+    expect(canCheckInEvent([g('division_alumni', B)], co)).toBe(false);
+    expect(canCheckInEvent([g('lead')], co)).toBe(false);
+    // a Triton Gaming event co-hosted by a division
+    expect(canCheckInEvent([g('division_member', B)], { division_id: null, cohost_division_ids: [B] })).toBe(true);
+    expect(canCheckInEvent([g('officer')], { division_id: null, cohost_division_ids: [B] })).toBe(true);
+  });
 });

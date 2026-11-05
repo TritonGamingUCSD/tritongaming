@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { DEFAULT_BOOTH, cleanBooth, splitConfig } from '@/lib/photobooth/booth';
-import { PHOTO_BUCKET, authorizePhotoBooth, loadBooth, removeUnusedOverlayFiles } from '@/lib/photobooth/server';
+import { PHOTO_BUCKET, authorizePhotoBooth, loadBoothFor, removeUnusedOverlayFiles } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const found = await loadBooth(auth.svc, (await params).slug);
+  const found = await loadBoothFor(auth, (await params).slug);
   if (!found) return NextResponse.json({ error: 'That booth is gone.' }, { status: 404 });
   return NextResponse.json(found);
 }
@@ -19,7 +19,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ slu
 export async function PUT(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const found = await loadBooth(auth.svc, (await params).slug);
+  const found = await loadBoothFor(auth, (await params).slug);
   if (!found) return NextResponse.json({ error: 'That booth is gone.' }, { status: 404 });
   const b = await request.json().catch(() => ({}));
   const config = splitConfig(cleanBooth(b, { ...DEFAULT_BOOTH, ...found.config })).settings;
@@ -34,7 +34,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slug
 export async function DELETE(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const found = await loadBooth(auth.svc, (await params).slug);
+  const found = await loadBoothFor(auth, (await params).slug);
   if (!found) return NextResponse.json({ ok: true });
   const { data: photos } = await auth.svc.from('photobooth_photos').select('path, gif_path').eq('booth_id', found.booth.id).limit(5000);
   const paths = (photos ?? []).flatMap((p) => [p.path as string, ...(p.gif_path ? [p.gif_path as string] : [])]);

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { cleanFrameSpec } from '@/lib/photobooth/booth';
-import { MAX_OVERLAY_BYTES, OVERLAY_BUCKET, authorizePhotoBooth, isWebp, loadLook, pathInBucket, removeUnusedOverlayFiles } from '@/lib/photobooth/server';
+import { MAX_OVERLAY_BYTES, OVERLAY_BUCKET, authorizePhotoBooth, isWebp, loadLookFor, pathInBucket, removeUnusedOverlayFiles } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,7 +33,7 @@ async function save(svc: SupabaseClient, file: File) {
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const found = await loadLook(auth.svc, (await params).id);
+  const found = await loadLookFor(auth, (await params).id);
   if (!found) return NextResponse.json({ error: 'That look is gone.' }, { status: 404 });
   const form = await request.formData().catch(() => null);
   const frame = form?.get('frame');
@@ -74,7 +74,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const found = await loadLook(auth.svc, (await params).id);
+  const found = await loadLookFor(auth, (await params).id);
   if (!found) return NextResponse.json({ ok: true });
   await auth.svc.from('photobooth_looks').update({ frame_image: '', frame_design: null }).eq('id', found.look.id);
   await removeUnusedOverlayFiles(auth.svc, [found.look.frame.image, found.look.frame.spec?.logoUrl]);

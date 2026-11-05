@@ -13,6 +13,7 @@ import type { DivisionHat } from '@/components/portal/hubTypes';
 import { DIVISION_PAGES, divisionPagesFor, isDivisionPageId } from '@/lib/divisions/pages';
 import DivisionEvents from './DivisionEvents';
 import DivisionCheckIn from './DivisionCheckIn';
+import DivisionLive from './DivisionLive';
 import styles from './division.module.css';
 
 interface RosterPerson {
@@ -96,7 +97,8 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
       {page === 'members' && <Roster hat={hat} />}
       {page === 'events' && <DivisionEvents hat={hat} />}
       {page === 'check-in' && <DivisionCheckIn hat={hat} />}
-      {page !== 'home' && page !== 'members' && page !== 'events' && page !== 'check-in' && (
+      {page === 'live' && <DivisionLive hat={hat} />}
+      {page !== 'home' && page !== 'members' && page !== 'events' && page !== 'check-in' && page !== 'live' && (
         <div className={styles.soon}>
           <p>
             <strong>{label}</strong> for {hat.name} is coming in a later step of the division project. It is only visible to admins until everything is finished.

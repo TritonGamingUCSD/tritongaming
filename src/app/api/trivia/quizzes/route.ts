@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authorizeTrivia, lockedQuizIds, QUIZ_COLUMNS } from '@/lib/trivia/server';
 import { isAskable } from '@/lib/trivia/game';
+import { liveListFilter, newItemOwner } from '@/lib/divisions/liveAccess';
 import { slugify } from '@/lib/core/slug';
 
 export const dynamic = 'force-dynamic';
@@ -9,8 +10,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const auth = await authorizeTrivia('host');
   if (auth.error) return auth.error;
+  const filter = liveListFilter(auth.scope);
+  const quizQuery = auth.svc.from('trivia_quizzes').select(QUIZ_COLUMNS).order('created_at', { ascending: false }).limit(500);
   const [quizzes, questions, locked, played] = await Promise.all([
-    auth.svc.from('trivia_quizzes').select(QUIZ_COLUMNS).order('created_at', { ascending: false }).limit(500),
+    filter ? quizQuery.or(filter) : quizQuery,
     auth.svc.from('trivia_questions').select('quiz_id, category, text, choices, correct').limit(20000),
     lockedQuizIds(auth),
     auth.svc.from('trivia_games').select('quiz_id, created_at').neq('status', 'lobby').order('created_at', { ascending: false }).limit(5000),
@@ -65,10 +68,12 @@ export async function POST(request: Request) {
   const b = await request.json().catch(() => ({}));
   const name = typeof b.name === 'string' ? b.name.trim().slice(0, 80) : '';
   if (!name) return NextResponse.json({ error: 'Give the quiz a name.' }, { status: 400 });
+  const owner = newItemOwner(auth.scope, b.division_id);
+  if (!owner.ok) return NextResponse.json({ error: owner.error }, { status: 403 });
   const base = slugify(name).slice(0, 50) || 'quiz';
   for (let i = 0; i < 6; i++) {
     const slug = i === 0 ? base : `${base}-${i + 1}`;
-    const { data, error } = await auth.svc.from('trivia_quizzes').insert({ slug, name, created_by: auth.user.id }).select(QUIZ_COLUMNS).single();
+    const { data, error } = await auth.svc.from('trivia_quizzes').insert({ slug, name, created_by: auth.user.id, division_id: owner.division_id }).select(QUIZ_COLUMNS).single();
     if (data) {
       const { created_by: _by, ...quiz } = data as typeof data & { created_by: string | null };
       return NextResponse.json({ quiz: { ...quiz, locked: false, questions: 0, ready: 0, games: 0, last_played: null } }, { status: 201 });

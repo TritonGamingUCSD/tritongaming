@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { removeUnreferencedFiles } from '@/lib/storage/removeFiles';
-import { UUID, authorizePolls, loadEntries, loadPoll } from '@/lib/polls/server';
+import { UUID, authorizePolls, loadEntries, loadPollFor } from '@/lib/polls/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,7 @@ const clean = (v: unknown, max: number) =>
 async function find(slug: string, eid: string) {
   const auth = await authorizePolls('host');
   if (auth.error) return { error: auth.error } as const;
-  const poll = await loadPoll(auth.svc, slug);
+  const poll = await loadPollFor(auth, slug);
   if (!poll) return { error: NextResponse.json({ error: 'That poll is gone.' }, { status: 404 }) } as const;
   if (!UUID.test(eid)) return { error: NextResponse.json({ error: 'Not found.' }, { status: 404 }) } as const;
   const { data: entry } = await auth.svc.from('poll_entries').select('id, number, name, subtitle, image').eq('id', eid).eq('poll_id', poll.id).maybeSingle();

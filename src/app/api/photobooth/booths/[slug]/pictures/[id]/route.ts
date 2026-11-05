@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PHOTO_BUCKET, UUID, authorizePhotoBooth, loadBooth } from '@/lib/photobooth/server';
+import { PHOTO_BUCKET, UUID, authorizePhotoBooth, loadBoothFor } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,7 +7,7 @@ async function find(slug: string, id: string) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return { error: auth.error } as const;
   if (!UUID.test(id)) return { error: NextResponse.json({ error: 'Not found.' }, { status: 404 }) } as const;
-  const found = await loadBooth(auth.svc, slug);
+  const found = await loadBoothFor(auth, slug);
   if (!found) return { error: NextResponse.json({ error: 'That booth is gone.' }, { status: 404 }) } as const;
   const { data } = await auth.svc.from('photobooth_photos').select('id, path, gif_path').eq('id', id).eq('booth_id', found.booth.id).maybeSingle();
   if (!data) return { error: NextResponse.json({ error: 'That picture is gone.' }, { status: 404 }) } as const;

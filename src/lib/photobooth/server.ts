@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilities';
+import { withGrantedCapabilities } from '@/lib/portal/capabilities';
+import { canUseLive, hasLiveAccess, liveScope, type LiveScope } from '@/lib/divisions/liveAccess';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import {
   MAX_LOOKS_PER_BOOTH,
@@ -23,7 +24,7 @@ export const MAX_OVERLAY_BYTES = 600 * 1024; // the bucket refuses anything over
 export const MAX_PHOTO_BYTES = 2 * 1024 * 1024;
 export const OVERLAY_COLUMNS = 'id, name, kind, image, placements';
 export const BOOTH_COLUMNS =
-  'id, slug, name, gallery_token, countdown, accent, screen_bg, screen_ink, welcome_title, welcome_text, prompts, sounds, flash, qr_seconds, auto_adjust';
+  'id, slug, name, gallery_token, division_id, countdown, accent, screen_bg, screen_ink, welcome_title, welcome_text, prompts, sounds, flash, qr_seconds, auto_adjust';
 
 // Who may set up and run a booth: officers and above (the capability can also be granted in Admin → Access). The guests' download page needs no sign-in and has its own routes.
 export async function authorizePhotoBooth() {
@@ -35,8 +36,9 @@ export async function authorizePhotoBooth() {
   const svc = createServiceClient();
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
-  if (!hasCapability(grants, 'run_photobooth')) return { error: NextResponse.json({ error: 'Running the Photo Booth is for officers and above.' }, { status: 403 }) };
-  return { user, svc };
+  const scope = liveScope(grants, 'run_photobooth');
+  if (!hasLiveAccess(scope)) return { error: NextResponse.json({ error: 'Running the Photo Booth is for officers and above.' }, { status: 403 }) };
+  return { user, svc, scope };
 }
 
 export interface BoothInfo {
@@ -45,6 +47,8 @@ export interface BoothInfo {
   name: string;
   /** The address word of the booth's public gallery (/gallery/<this>). */
   gallery_token: string;
+  /** The division it belongs to (empty: Triton Gaming). */
+  division_id: string | null;
 }
 
 /** Words that are other addresses under /portal/photobooth, so a booth cannot take them as its own. */
@@ -103,7 +107,17 @@ export async function loadBooth(svc: SupabaseClient, key: string): Promise<{ boo
       ((stickers ?? []) as unknown as (Overlay & { look_id: string })[]).filter((o) => o.look_id === r.id).map(({ look_id: _l, ...o }) => o),
     ),
   );
-  return { booth: { id: data.id as string, slug: data.slug as string, name: data.name as string, gallery_token: data.gallery_token as string }, config, looks };
+  return {
+    booth: {
+      id: data.id as string,
+      slug: data.slug as string,
+      name: data.name as string,
+      gallery_token: data.gallery_token as string,
+      division_id: (data.division_id as string | null) ?? null,
+    },
+    config,
+    looks,
+  };
 }
 
 /** The first look of each of the given booths, with its stickers (for the cards on the booths page). */
@@ -139,12 +153,12 @@ export async function loadLook(svc: SupabaseClient, lookId: string): Promise<{ l
   if (!UUID.test(lookId)) return null;
   const { data: row } = await svc.from('photobooth_looks').select(LOOK_COLUMNS).eq('id', lookId).maybeSingle();
   if (!row) return null;
-  const { data: b } = await svc.from('photobooths').select('id, slug, name, gallery_token').eq('id', row.booth_id).maybeSingle();
+  const { data: b } = await svc.from('photobooths').select('id, slug, name, gallery_token, division_id').eq('id', row.booth_id).maybeSingle();
   if (!b) return null;
   const overlays = await lookStickers(svc, lookId);
   return {
     look: toLook(row, overlays),
-    booth: { id: b.id as string, slug: b.slug as string, name: b.name as string, gallery_token: b.gallery_token as string },
+    booth: { id: b.id as string, slug: b.slug as string, name: b.name as string, gallery_token: b.gallery_token as string, division_id: (b.division_id as string | null) ?? null },
     boothId: b.id as string,
   };
 }
@@ -187,3 +201,15 @@ export function pathInBucket(url: string, bucket: string): string | null {
 export const isWebp = (b: Uint8Array) => b.length > 12 && String.fromCharCode(...b.slice(0, 4)) === 'RIFF' && String.fromCharCode(...b.slice(8, 12)) === 'WEBP';
 export const isGif = (b: Uint8Array) => b.length > 6 && String.fromCharCode(...b.slice(0, 4)) === 'GIF8';
 export const isJpeg = (b: Uint8Array) => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+
+type HostAuth = { svc: SupabaseClient; scope: LiveScope };
+/** A booth for its host: gone (null) when it belongs to another side (another division's, or the club's to a division's Member). */
+export async function loadBoothFor(auth: HostAuth, key: string) {
+  const found = await loadBooth(auth.svc, key);
+  return found && canUseLive(auth.scope, found.booth.division_id) ? found : null;
+}
+/** The same for a look, through its booth. */
+export async function loadLookFor(auth: HostAuth, lookId: string) {
+  const found = await loadLook(auth.svc, lookId);
+  return found && canUseLive(auth.scope, found.booth.division_id) ? found : null;
+}

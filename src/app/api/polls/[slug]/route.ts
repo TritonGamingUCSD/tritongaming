@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { removeUnreferencedFiles } from '@/lib/storage/removeFiles';
 import { POLL_MODES, POLL_REVEALS } from '@/lib/polls/tally';
-import { POLL_COLUMNS, authorizePolls, broadcast, freshCode, loadEntries, loadPoll, results } from '@/lib/polls/server';
+import { POLL_COLUMNS, authorizePolls, broadcast, freshCode, loadEntries, loadPollFor, results } from '@/lib/polls/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +14,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePolls('host');
   if (auth.error) return auth.error;
-  const poll = await loadPoll(auth.svc, (await params).slug);
+  const poll = await loadPollFor(auth, (await params).slug);
   if (!poll) return NextResponse.json({ error: 'That poll is gone.' }, { status: 404 });
   const entries = await loadEntries(auth.svc, poll.id);
   const r = await results(auth.svc, poll, entries);
@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
 export async function PATCH(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePolls('host');
   if (auth.error) return auth.error;
-  const poll = await loadPoll(auth.svc, (await params).slug);
+  const poll = await loadPollFor(auth, (await params).slug);
   if (!poll) return NextResponse.json({ error: 'That poll is gone.' }, { status: 404 });
   const b = await request.json().catch(() => ({}));
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
@@ -105,7 +105,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
 export async function DELETE(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePolls('host');
   if (auth.error) return auth.error;
-  const poll = await loadPoll(auth.svc, (await params).slug);
+  const poll = await loadPollFor(auth, (await params).slug);
   if (!poll) return NextResponse.json({ ok: true });
   if (poll.status === 'open') return NextResponse.json({ error: 'Voting is open. Close it first.' }, { status: 409 });
   const entries = await loadEntries(auth.svc, poll.id);

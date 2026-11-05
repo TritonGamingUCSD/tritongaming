@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { UUID, authorizePhotoBooth, loadLook, removeUnusedOverlayFiles } from '@/lib/photobooth/server';
+import { UUID, authorizePhotoBooth, loadLookFor, removeUnusedOverlayFiles } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,7 +9,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   if (auth.error) return auth.error;
   const { id, sid } = await params;
   if (!UUID.test(sid)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
-  const found = await loadLook(auth.svc, id);
+  const found = await loadLookFor(auth, id);
   const cur = found?.look.overlays.find((o) => o.id === sid);
   if (!cur) return NextResponse.json({ ok: true });
   await auth.svc.from('photobooth_overlays').delete().eq('id', sid);

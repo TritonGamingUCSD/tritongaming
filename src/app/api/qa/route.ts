@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
+import { liveListFilter, newItemOwner } from '@/lib/divisions/liveAccess';
 import { logAudit } from '@/lib/notifications/audit';
 import { authorizePolls } from '@/lib/polls/server';
 import { cleanText } from '@/lib/qa/rank';
@@ -13,7 +14,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const auth = await authorizePolls('host', 'Q&A');
   if (auth.error) return auth.error;
-  const { data } = await auth.svc.from('qa_sessions').select(QA_COLUMNS).order('created_at', { ascending: false }).limit(200);
+  const filter = liveListFilter(auth.scope);
+  let q = auth.svc.from('qa_sessions').select(QA_COLUMNS).order('created_at', { ascending: false }).limit(200);
+  if (filter) q = q.or(filter);
+  const { data } = await q;
   const sessions = (data ?? []) as QaSessionRow[];
   const ids = sessions.map((s) => s.id);
   const { data: qs } = ids.length
@@ -30,6 +34,7 @@ export async function GET() {
         status: s.status,
         code: s.code,
         created_at: s.created_at,
+        division_id: s.division_id,
         pending: n('pending'),
         approved: n('approved'),
         answered: n('answered'),
@@ -45,12 +50,14 @@ export async function POST(request: Request) {
   const b = await request.json().catch(() => ({}));
   const name = cleanText(b.name, 80);
   if (!name) return NextResponse.json({ error: 'Give the Q&A a name.' }, { status: 400 });
+  const owner = newItemOwner(auth.scope, b.division_id);
+  if (!owner.ok) return NextResponse.json({ error: owner.error }, { status: 403 });
   const link = await eventLink(auth.svc, b.event_id);
   if (!link.ok) return NextResponse.json({ error: NO_SUCH_EVENT }, { status: 404 });
   const slug = await freshQaSlug(auth.svc, name);
   const { data, error } = await auth.svc
     .from('qa_sessions')
-    .insert({ slug, name, created_by: auth.user.id, event_id: link.id ?? null })
+    .insert({ slug, name, created_by: auth.user.id, event_id: link.id ?? null, division_id: owner.division_id })
     .select(QA_COLUMNS)
     .single();
   if (error || !data) return NextResponse.json({ error: 'Couldn’t make the Q&A.' }, { status: 500 });

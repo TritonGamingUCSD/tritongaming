@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { UUID, authorizePolls, broadcast } from '@/lib/polls/server';
-import { hostView, loadSession } from '@/lib/qa/server';
+import { hostView, loadSession, loadSessionFor } from '@/lib/qa/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +12,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
   const auth = await authorizePolls('host', 'Q&A');
   if (auth.error) return auth.error;
   const { slug, qid } = await params;
-  const session = UUID.test(qid) ? await loadSession(auth.svc, slug) : null;
+  const session = UUID.test(qid) ? await loadSessionFor(auth, slug) : null;
   if (!session) return NextResponse.json({ error: 'That question is gone.' }, { status: 404 });
   const { data: q } = await auth.svc.from('qa_questions').select('id, status').eq('id', qid).eq('session_id', session.id).maybeSingle();
   if (!q) return NextResponse.json({ error: 'That question is gone.' }, { status: 404 });
@@ -43,7 +43,7 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ slug
   const auth = await authorizePolls('host', 'Q&A');
   if (auth.error) return auth.error;
   const { slug, qid } = await params;
-  const session = UUID.test(qid) ? await loadSession(auth.svc, slug) : null;
+  const session = UUID.test(qid) ? await loadSessionFor(auth, slug) : null;
   if (!session) return NextResponse.json({ ok: true });
   await auth.svc.from('qa_questions').delete().eq('id', qid).eq('session_id', session.id);
   await broadcast(session.id, 'state', {});

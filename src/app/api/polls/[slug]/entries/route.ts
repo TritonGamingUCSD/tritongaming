@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { MAX_ENTRIES, authorizePolls, loadEntries, loadPoll } from '@/lib/polls/server';
+import { MAX_ENTRIES, authorizePolls, loadEntries, loadPollFor } from '@/lib/polls/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,7 @@ const clean = (v: unknown, max: number) =>
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePolls('host');
   if (auth.error) return auth.error;
-  const poll = await loadPoll(auth.svc, (await params).slug);
+  const poll = await loadPollFor(auth, (await params).slug);
   if (!poll) return NextResponse.json({ error: 'That poll is gone.' }, { status: 404 });
   if (poll.status !== 'draft') return NextResponse.json({ error: 'Entries can only be added before voting opens.' }, { status: 409 });
   const b = await request.json().catch(() => ({}));

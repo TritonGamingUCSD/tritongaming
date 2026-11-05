@@ -81,7 +81,7 @@ export async function POST(request: Request) {
         .or(openEventsFilter(), { referencedTable: 'events' }),
     ]);
     candidatesError = ev.error ?? tk.error;
-    openEvents = ((ev.data ?? []) as typeof openEvents).filter((e) => canCheckInEvent(roles ?? [], e));
+    openEvents = (ev.data ?? []) as typeof openEvents;
     eventTickets = (tk.data ?? []) as unknown as Candidate[];
   } else {
     const q = await supabase.from('tickets').select(`${columns}${eventColumns}`).eq('event_id', pickedEvent);
@@ -113,9 +113,12 @@ export async function POST(request: Request) {
   }
 
   // Only the tickets of events this person may check in (a club officer: the club's; a Division Member or Head: their division's; exec and admin: all).
+  // (the divisions that accepted co-hosting an event may check in at it too)
+  const { data: coRows } = await serviceClient.from('event_cohosts').select('event_id, division_id').eq('status', 'accepted').not('division_id', 'is', null);
+  const cohostsOf = (eventId: string) => (coRows ?? []).filter((c) => c.event_id === eventId).map((c) => c.division_id as string);
   const ownerOf = (t: Candidate) => {
     const e = (Array.isArray(t.event) ? t.event[0] : t.event) as { division_id?: string | null } | null | undefined;
-    return { division_id: e?.division_id ?? null };
+    return { division_id: e?.division_id ?? null, cohost_division_ids: cohostsOf(t.event_id) };
   };
   const scannable = (eventTickets ?? []).filter((t) => canCheckInEvent(roles ?? [], ownerOf(t)));
   const ticket = scannable.find(matches);
@@ -148,7 +151,7 @@ export async function POST(request: Request) {
   // From the portal's one scanner (no event chosen): a ticket for an event that is not the one on right now is not checked in until staff say so, so a ticket for tomorrow's (or last week's) event
   // shown by mistake does not quietly check someone into it. Nothing is asked when no event is on right now, or when this ticket's event is one of those on.
   if (anyEvent && confirmEvent !== true) {
-    const live = openEvents.filter((e) => isHappeningNow(e));
+    const live = openEvents.filter((e) => isHappeningNow(e) && canCheckInEvent(roles ?? [], { division_id: e.division_id, cohost_division_ids: cohostsOf(e.id) }));
     if (live.length > 0 && !live.some((e) => e.id === ticket.event_id)) {
       return NextResponse.json(
         {

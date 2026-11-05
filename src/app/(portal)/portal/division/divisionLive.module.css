@@ -1,0 +1,6 @@
+.wrap { display: flex; flex-direction: column; gap: 0.9rem; }
+.grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 0.7rem; }
+.card { display: grid; gap: 0.35rem; align-content: start; padding: 1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 0.7rem; background: var(--pp-card); color: var(--pp-ink); text-decoration: none; height: 100%; }
+.card:hover { border-color: rgba(var(--pp-ink-rgb), 0.5); }
+.card span { font-size: 0.85rem; opacity: 0.8; line-height: 1.35; }
+.note { margin: 0; font-size: 0.82rem; opacity: 0.75; }

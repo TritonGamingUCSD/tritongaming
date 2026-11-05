@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
+import { liveListFilter, newItemOwner } from '@/lib/divisions/liveAccess';
 import { slugify } from '@/lib/core/slug';
 import { DEFAULT_BOOTH, cleanBooth, splitConfig } from '@/lib/photobooth/booth';
 import { copyLook } from '@/lib/photobooth/looks';
-import { BOOTH_COLUMNS, RESERVED_SLUGS, authorizePhotoBooth, firstLooks, loadBooth } from '@/lib/photobooth/server';
+import { BOOTH_COLUMNS, RESERVED_SLUGS, authorizePhotoBooth, firstLooks, loadBoothFor } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,8 +14,10 @@ export const dynamic = 'force-dynamic';
 export async function GET() {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
+  const filter = liveListFilter(auth.scope);
+  const boothQuery = auth.svc.from('photobooths').select('id, slug, name, created_at, division_id').order('created_at', { ascending: false }).limit(200);
   const [{ data: booths }, { data: photos }, { data: lookRows }] = await Promise.all([
-    auth.svc.from('photobooths').select('id, slug, name, created_at').order('created_at', { ascending: false }).limit(200),
+    filter ? boothQuery.or(filter) : boothQuery,
     auth.svc.from('photobooth_photos').select('booth_id').gt('expires_at', new Date().toISOString()).limit(5000),
     auth.svc.from('photobooth_looks').select('booth_id').limit(2000),
   ]);
@@ -37,9 +40,11 @@ export async function POST(request: Request) {
   const b = await request.json().catch(() => ({}));
   const name = typeof b.name === 'string' ? b.name.trim().slice(0, 80) : '';
   if (!name) return NextResponse.json({ error: 'Give the booth a name.' }, { status: 400 });
+  const owner = newItemOwner(auth.scope, b.division_id);
+  if (!owner.ok) return NextResponse.json({ error: owner.error }, { status: 403 });
   const link = await eventLink(auth.svc, b.event_id);
   if (!link.ok) return NextResponse.json({ error: NO_SUCH_EVENT }, { status: 404 });
-  const source = typeof b.from === 'string' ? await loadBooth(auth.svc, b.from) : null;
+  const source = typeof b.from === 'string' ? await loadBoothFor(auth, b.from) : null;
   const { settings, style } = splitConfig(cleanBooth(b.config, { ...DEFAULT_BOOTH, ...source?.config, ...source?.looks[0]?.style }));
   let base = slugify(name).slice(0, 50) || 'booth';
   if (RESERVED_SLUGS.includes(base)) base = `${base}-booth`;
@@ -47,7 +52,7 @@ export async function POST(request: Request) {
     const slug = i === 0 ? base : `${base}-${i + 1}`;
     const { data, error } = await auth.svc
       .from('photobooths')
-      .insert({ ...settings, slug, name, created_by: auth.user.id, event_id: link.id ?? null })
+      .insert({ ...settings, slug, name, created_by: auth.user.id, event_id: link.id ?? null, division_id: owner.division_id })
       .select(BOOTH_COLUMNS)
       .single();
     if (data) {

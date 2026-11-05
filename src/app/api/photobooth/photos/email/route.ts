@@ -1,3 +1,4 @@
+import { canUseLive } from '@/lib/divisions/liveAccess';
 import { NextResponse } from 'next/server';
 import { sendOne } from '@/lib/email/mailer';
 import { siteUrl, emailHtml, emailText } from '@/lib/email/template';
@@ -31,8 +32,11 @@ export async function POST(request: Request) {
   if (emails.length > MAX_PER_REQUEST) return NextResponse.json({ error: `Send to ${MAX_PER_REQUEST} people at a time, then add more.` }, { status: 400 });
   const bad = emails.find((e) => !EMAIL.test(e));
   if (bad) return NextResponse.json({ error: `“${bad}” doesn’t look like an email address.` }, { status: 400 });
-  const { data } = await auth.svc.from('photobooth_photos').select('id, expires_at, emails_sent, photobooths(name)').eq('token', b.token).maybeSingle();
-  if (!data || new Date(data.expires_at as string).getTime() <= Date.now()) return NextResponse.json({ error: 'That picture is gone.' }, { status: 404 });
+  const { data } = await auth.svc.from('photobooth_photos').select('id, expires_at, emails_sent, photobooths(name, division_id)').eq('token', b.token).maybeSingle();
+  const owner = data?.photobooths as unknown as { division_id: string | null } | { division_id: string | null }[] | null | undefined;
+  const ownerId = (Array.isArray(owner) ? owner[0]?.division_id : owner?.division_id) ?? null;
+  if (!data || !canUseLive(auth.scope, ownerId) || new Date(data.expires_at as string).getTime() <= Date.now())
+    return NextResponse.json({ error: 'That picture is gone.' }, { status: 404 });
   const room = MAX_EMAILS - (data.emails_sent as number);
   if (room <= 0) return NextResponse.json({ error: 'The link for this picture has been emailed enough times.' }, { status: 429 });
   if (emails.length > room) return NextResponse.json({ error: `Only ${room} more ${room === 1 ? 'email' : 'emails'} can be sent for this picture.` }, { status: 429 });

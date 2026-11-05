@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { PHOTO_BUCKET, authorizePhotoBooth, loadBooth } from '@/lib/photobooth/server';
+import { PHOTO_BUCKET, authorizePhotoBooth, loadBoothFor } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(_request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const found = await loadBooth(auth.svc, (await params).slug);
+  const found = await loadBoothFor(auth, (await params).slug);
   if (!found) return NextResponse.json({ error: 'That booth is gone.' }, { status: 404 });
   const { data } = await auth.svc
     .from('photobooth_photos')

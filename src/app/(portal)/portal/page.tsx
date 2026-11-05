@@ -143,6 +143,9 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canViewEvents = hasCapability(roles, 'view_events');
   const canManageEvents = hasCapability(roles, 'manage_events');
   const canCheckin = hasCapability(roles, 'checkin');
+  // Live Tools (Trivia, Polls, Q&A, Photo Booth): officers and above for the club's, and a division's Members and Heads for their division's. The lists and every action are limited to what the person may run.
+  const inADivision = roles.some((r) => (r.role === 'division' || r.role === 'division_member') && !!r.division_id);
+  const canRunLive = (cap: 'host_trivia' | 'run_photobooth') => hasCapability(roles, cap) || inADivision;
   const canViewMembers = hasCapability(roles, 'view_members');
   // Division leads and the whole team can see who leads each division; emails come with view_members, so recruits and alumni see them too, same as officers.
   const canSeeDivisionMembers = hasCapability(roles, 'view_division_members');
@@ -525,14 +528,14 @@ export default async function PortalDashboard({ searchParams }: Props) {
       id: 'trivia',
       icon: <Gamepad2 size={28} strokeWidth={1.5} aria-hidden="true" />,
       label: sectionLabel('trivia'),
-      description: hasCapability(roles, 'host_trivia') ? 'Write quizzes and host games' : 'Join a quiz game',
+      description: canRunLive('host_trivia') ? 'Write quizzes and host games' : 'Join a quiz game',
       homeExclude: true,
       dockExclude: true,
       group: 'Run' as const,
-      content: <TriviaSectionContent canHost={hasCapability(roles, 'host_trivia')} />,
+      content: <TriviaSectionContent canHost={canRunLive('host_trivia')} />,
     },
     // Polls for events (a cosplay contest, a favourite, a choice on stage): officers and above run them on a big screen; anyone votes with a code, no account needed.
-    ...(hasCapability(roles, 'host_trivia')
+    ...(canRunLive('host_trivia')
       ? [
           {
             id: 'polls',
@@ -547,7 +550,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         ]
       : []),
     // Q&A for events (a panel, a keynote, an open mic): officers and above approve the questions guests send and put them on a big screen; anyone asks with a code, no account needed.
-    ...(hasCapability(roles, 'host_trivia')
+    ...(canRunLive('host_trivia')
       ? [
           {
             id: 'qa',
@@ -562,7 +565,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         ]
       : []),
     // The photo booth for events: officers and above set one up for an event, keep the overlay library and run it on a screen at the event.
-    ...(hasCapability(roles, 'run_photobooth')
+    ...(canRunLive('run_photobooth')
       ? [
           {
             id: 'photobooth',

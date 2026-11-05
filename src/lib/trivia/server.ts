@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilities';
+import { withGrantedCapabilities } from '@/lib/portal/capabilities';
+import { canUseLive, hasLiveAccess, liveScope, type LiveScope } from '@/lib/divisions/liveAccess';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import type { PlannedQuestion } from './game';
 import type { GameStatus, PublicState, Reveal } from './types';
@@ -24,7 +25,15 @@ export interface GameRow {
   reveal: Reveal | null;
   created_at: string;
   finished_at: string | null;
-  trivia_quizzes?: { name: string; slug: string; block_winners: boolean; restricted: boolean; created_by: string | null; open_to_guests: boolean } | null;
+  trivia_quizzes?: {
+    name: string;
+    slug: string;
+    block_winners: boolean;
+    restricted: boolean;
+    created_by: string | null;
+    open_to_guests: boolean;
+    division_id: string | null;
+  } | null;
 }
 
 // Who may do what: 'host' (officers and above: write quizzes, host games, see every result) or 'play' (anyone signed in).
@@ -37,11 +46,12 @@ export async function authorizeTrivia(mode: 'host' | 'play') {
   const svc = createServiceClient();
   const { data: roles } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
-  const canHost = hasCapability(grants, 'host_trivia');
+  const scope = liveScope(grants);
+  const canHost = hasLiveAccess(scope); // officers and above (the club's quizzes) or a division's Members and Heads (their division's)
   const isAdmin = (roles ?? []).some((r) => r.role === 'admin');
   const guest = !!user.is_anonymous; // a player with no account, signed in anonymously for one game
   if (mode === 'host' && !canHost) return { error: NextResponse.json({ error: 'Hosting Trivia is for officers and above.' }, { status: 403 }) };
-  return { user, svc, canHost, isAdmin, guest };
+  return { user, svc, canHost, isAdmin, guest, scope };
 }
 
 export async function displayName(svc: SupabaseClient, userId: string): Promise<string> {
@@ -55,7 +65,7 @@ export async function loadGame(svc: SupabaseClient, code: string, only: 'id'): P
 export async function loadGame(svc: SupabaseClient, code: string, only?: 'id'): Promise<GameRow | { id: string } | null> {
   const { data, error } = await svc
     .from('trivia_games')
-    .select(only ? 'id' : `${GAME_COLUMNS}, trivia_quizzes(name, slug, block_winners, restricted, created_by, open_to_guests)`)
+    .select(only ? 'id' : `${GAME_COLUMNS}, trivia_quizzes(name, slug, block_winners, restricted, created_by, open_to_guests, division_id)`)
     .eq('code', code)
     .maybeSingle();
   if (error) throw new Error(`trivia game read failed: ${error.message}`);
@@ -120,8 +130,9 @@ export interface QuizRec {
   open_to_guests: boolean;
   created_by: string | null;
   created_at: string;
+  division_id: string | null;
 }
-export const QUIZ_COLUMNS = 'id, slug, name, per_game, block_winners, restricted, open_to_guests, created_by, created_at';
+export const QUIZ_COLUMNS = 'id, slug, name, per_game, block_winners, restricted, open_to_guests, created_by, created_at, division_id';
 
 // A quiz by its address (the slug) or its id.
 export async function findQuiz(svc: SupabaseClient, idOrSlug: string): Promise<QuizRec | null> {
@@ -135,25 +146,35 @@ export async function findQuiz(svc: SupabaseClient, idOrSlug: string): Promise<Q
   return quiz as QuizRec | null;
 }
 
-type Who = { user: { id: string }; svc: SupabaseClient; isAdmin: boolean };
+type Who = { user: { id: string }; svc: SupabaseClient; isAdmin: boolean; scope: LiveScope };
 
 // The ids of the restricted quizzes a person may not open (everything else is open to every officer). Admins and a quiz's creator always can; so can anyone on its list.
 export async function lockedQuizIds(auth: Who): Promise<string[]> {
   if (auth.isAdmin) return [];
+  // (and every quiz of another side: the club's for a division's Member, another division's, a division's for a club officer)
+  const { data: owned } = await auth.svc.from('trivia_quizzes').select('id, division_id').limit(2000);
+  const otherSide = (owned ?? []).filter((q) => !canUseLive(auth.scope, q.division_id as string | null)).map((q) => q.id as string);
   const { data: restricted } = await auth.svc.from('trivia_quizzes').select('id, created_by').eq('restricted', true).limit(500);
   const list = (restricted ?? []).filter((q) => q.created_by !== auth.user.id);
-  if (!list.length) return [];
+  if (!list.length) return otherSide;
   const { data: mine } = await auth.svc.from('trivia_quiz_access').select('quiz_id').eq('user_id', auth.user.id).limit(500);
   const have = new Set((mine ?? []).map((m) => m.quiz_id as string));
-  return list.map((q) => q.id as string).filter((id) => !have.has(id));
+  return [...new Set([...otherSide, ...list.map((q) => q.id as string).filter((id) => !have.has(id))])];
 }
 
 // Null when the person may open this quiz, otherwise the answer to send.
-export async function quizGate(auth: Who, quiz: { id: string; restricted: boolean; created_by: string | null }): Promise<NextResponse | null> {
+export async function quizGate(auth: Who, quiz: { id: string; restricted: boolean; created_by: string | null; division_id?: string | null }): Promise<NextResponse | null> {
+  if (!canUseLive(auth.scope, quiz.division_id ?? null)) return NextResponse.json({ error: 'This quiz belongs to another team.', locked: true }, { status: 403 });
   if (!quiz.restricted || auth.isAdmin || quiz.created_by === auth.user.id) return null;
   const { data } = await auth.svc.from('trivia_quiz_access').select('user_id').eq('quiz_id', quiz.id).eq('user_id', auth.user.id).maybeSingle();
   return data ? null : NextResponse.json({ error: 'This quiz is shared with only some officers.', locked: true }, { status: 403 });
 }
 
 // The same check for a game, through its quiz.
-export const gameGate = (auth: Who, g: GameRow) => quizGate(auth, { id: g.quiz_id, restricted: !!g.trivia_quizzes?.restricted, created_by: g.trivia_quizzes?.created_by ?? null });
+export const gameGate = (auth: Who, g: GameRow) =>
+  quizGate(auth, {
+    id: g.quiz_id,
+    restricted: !!g.trivia_quizzes?.restricted,
+    created_by: g.trivia_quizzes?.created_by ?? null,
+    division_id: g.trivia_quizzes?.division_id ?? null,
+  });

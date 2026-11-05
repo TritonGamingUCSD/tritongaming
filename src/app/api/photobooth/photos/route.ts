@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { expiresAt } from '@/lib/photobooth/booth';
 import { photoToken } from '@/lib/photobooth/token';
-import { MAX_PHOTO_BYTES, PHOTO_BUCKET, authorizePhotoBooth, isGif, isJpeg, isWebp, loadBooth } from '@/lib/photobooth/server';
+import { MAX_PHOTO_BYTES, PHOTO_BUCKET, authorizePhotoBooth, isGif, isJpeg, isWebp, loadBoothFor } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     gifBytes = new Uint8Array(await gif.arrayBuffer());
     if (!isGif(gifBytes)) return NextResponse.json({ error: 'The animated picture has to be a GIF file.' }, { status: 415 });
   }
-  const booth = await loadBooth(auth.svc, key);
+  const booth = await loadBoothFor(auth, key);
   if (!booth) return NextResponse.json({ error: 'That booth is gone.' }, { status: 404 });
   const token = photoToken();
   const path = `${booth.booth.id}/${crypto.randomUUID()}.${jpeg ? 'jpg' : 'webp'}`;

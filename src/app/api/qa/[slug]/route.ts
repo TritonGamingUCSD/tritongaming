@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { authorizePolls, broadcast, freshCode } from '@/lib/polls/server';
 import { cleanText, nextQuestion } from '@/lib/qa/rank';
-import { QA_COLUMNS, hostView, loadQuestions, loadSession } from '@/lib/qa/server';
+import { QA_COLUMNS, hostView, loadQuestions, loadSession, loadSessionFor } from '@/lib/qa/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePolls('host', 'Q&A');
   if (auth.error) return auth.error;
-  const session = await loadSession(auth.svc, (await params).slug);
+  const session = await loadSessionFor(auth, (await params).slug);
   if (!session) return NextResponse.json({ error: 'That Q&A is gone.' }, { status: 404 });
   return NextResponse.json(await hostView(auth.svc, session));
 }
@@ -24,7 +24,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ slug: s
 export async function PATCH(request: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePolls('host', 'Q&A');
   if (auth.error) return auth.error;
-  const session = await loadSession(auth.svc, (await params).slug);
+  const session = await loadSessionFor(auth, (await params).slug);
   if (!session) return NextResponse.json({ error: 'That Q&A is gone.' }, { status: 404 });
   const b = await request.json().catch(() => ({}));
   const now = new Date().toISOString();
@@ -87,7 +87,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ sl
 export async function DELETE(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   const auth = await authorizePolls('host', 'Q&A');
   if (auth.error) return auth.error;
-  const session = await loadSession(auth.svc, (await params).slug);
+  const session = await loadSessionFor(auth, (await params).slug);
   if (!session) return NextResponse.json({ ok: true });
   if (session.status === 'open') return NextResponse.json({ error: 'It is taking questions. Close it first.' }, { status: 409 });
   await auth.svc.from('qa_sessions').delete().eq('id', session.id); // its questions and likes go with it

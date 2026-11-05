@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { MAX_STICKERS_PER_LOOK, cleanSticker, type Overlay } from '@/lib/photobooth/booth';
-import { MAX_OVERLAY_BYTES, OVERLAY_BUCKET, OVERLAY_COLUMNS, authorizePhotoBooth, isWebp, loadLook } from '@/lib/photobooth/server';
+import { MAX_OVERLAY_BYTES, OVERLAY_BUCKET, OVERLAY_COLUMNS, authorizePhotoBooth, isWebp, loadLookFor } from '@/lib/photobooth/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const found = await loadLook(auth.svc, (await params).id);
+  const found = await loadLookFor(auth, (await params).id);
   if (!found) return NextResponse.json({ error: 'That look is gone.' }, { status: 404 });
   if (found.look.overlays.length >= MAX_STICKERS_PER_LOOK) return NextResponse.json({ error: `A look can have up to ${MAX_STICKERS_PER_LOOK} stickers.` }, { status: 409 });
   const form = await request.formData().catch(() => null);
@@ -49,7 +49,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
-  const found = await loadLook(auth.svc, (await params).id);
+  const found = await loadLookFor(auth, (await params).id);
   if (!found) return NextResponse.json({ error: 'That look is gone.' }, { status: 404 });
   const b = await request.json().catch(() => ({}));
   const items: Record<string, unknown>[] = Array.isArray(b.stickers) ? b.stickers : [];

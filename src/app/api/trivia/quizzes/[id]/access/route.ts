@@ -1,3 +1,4 @@
+import { canUseLive } from '@/lib/divisions/liveAccess';
 import { NextResponse } from 'next/server';
 import { authorizeTrivia, findQuiz, UUID } from '@/lib/trivia/server';
 import { CAPABILITY_ROLES } from '@/lib/portal/capabilities';
@@ -10,6 +11,7 @@ async function manager(id: string) {
   if (auth.error) return { error: auth.error };
   const quiz = await findQuiz(auth.svc, id);
   if (!quiz) return { error: NextResponse.json({ error: 'That quiz is gone.' }, { status: 404 }) };
+  if (!canUseLive(auth.scope, quiz.division_id)) return { error: NextResponse.json({ error: 'That quiz is gone.' }, { status: 404 }) };
   if (!auth.isAdmin && quiz.created_by !== auth.user.id)
     return { error: NextResponse.json({ error: 'Only the quiz’s creator or an Admin can change who it is shared with.' }, { status: 403 }) };
   return { auth, quiz };

@@ -1,11 +1,13 @@
+import { canUseLive, type LiveScope } from '@/lib/divisions/liveAccess';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { slugify } from '@/lib/core/slug';
 import { CODE, UUID } from '@/lib/polls/server';
 import type { QaSessionStatus, QaStatus, QuestionInfo } from '@/lib/qa/rank';
 
-export const QA_COLUMNS = 'id, slug, name, status, code, spotlight_id, created_by, created_at, opened_at, closed_at';
+export const QA_COLUMNS = 'id, slug, name, status, code, spotlight_id, created_by, created_at, opened_at, closed_at, division_id';
 
 export interface QaSessionRow {
+  division_id: string | null;
   id: string;
   slug: string;
   name: string;
@@ -24,6 +26,12 @@ export async function loadSession(svc: SupabaseClient, key: string): Promise<QaS
   const { data, error } = await svc.from('qa_sessions').select(QA_COLUMNS).eq(col, key).maybeSingle();
   if (error) throw new Error(`Q&A read failed: ${error.message}`);
   return (data as QaSessionRow | null) ?? null;
+}
+
+/** A session for its host: gone (null) when it belongs to another side (another division's, or the club's to a division's Member). */
+export async function loadSessionFor(auth: { svc: SupabaseClient; scope: LiveScope }, key: string): Promise<QaSessionRow | null> {
+  const s = await loadSession(auth.svc, key);
+  return s && canUseLive(auth.scope, s.division_id) ? s : null;
 }
 
 /** Every question of a session with how many likes it has, and the ids the given person has liked. */
