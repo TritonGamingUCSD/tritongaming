@@ -218,12 +218,30 @@ export default function PortalHub({
     [setParams, openId],
   );
 
-  // A division's pages: /portal/division/<slug>/<page> (the first page, home, has no page word). Opening one is opening the Division section with that address.
+  // Which division's pages are open is read from the address bar itself: a switch rewrites the address with the history API, which Next reports a moment late, so the sidebar must not wait for it.
+  const [divLoc, setDivLoc] = useState<{ tab: string | null; subtab: string | null }>(() => ({ tab: searchParams.get('tab'), subtab: searchParams.get('subtab') }));
+  useEffect(() => {
+    setDivLoc({ tab: searchParams.get('tab'), subtab: searchParams.get('subtab') });
+  }, [searchParams]);
+  useEffect(() => {
+    const read = () => {
+      const p = mergedPortalParams(window.location.pathname, window.location.search);
+      setDivLoc({ tab: p.get('tab'), subtab: p.get('subtab') });
+    };
+    window.addEventListener('tg:portal-nav', read);
+    window.addEventListener('popstate', read);
+    return () => {
+      window.removeEventListener('tg:portal-nav', read);
+      window.removeEventListener('popstate', read);
+    };
+  }, []);
+  // A division's pages: /portal/<division address>/<page> (the first page, home, has no page word). Opening one is opening the Division section with that address.
   const openDivision = useCallback(
     (slug: string, page?: string) => {
       if (!confirmDiscardUnsaved()) return;
       setOpenId('division');
       setParams({ section: 'division', ...CLEAR_NAV, tab: slug, subtab: page && page !== 'home' ? page : null });
+      setDivLoc({ tab: slug, subtab: page && page !== 'home' ? page : null });
     },
     [setParams],
   );
@@ -235,9 +253,8 @@ export default function PortalHub({
   }, [setParams]);
 
   const openSection = sections.find((s) => s.id === openId) ?? null;
-  // Which division's pages are open (the address is /portal/division/<slug>/<page>), if any.
-  const divisionHat = openId === 'division' ? ((identity?.divisions ?? []).find((h) => h.slug === searchParams.get('tab')) ?? null) : null;
-  const divisionPage = searchParams.get('subtab') || 'home';
+  const divisionHat = openId === 'division' ? ((identity?.divisions ?? []).find((h) => h.slug === divLoc.tab) ?? null) : null;
+  const divisionPage = divLoc.subtab || 'home';
 
   // A link to a page this person's roles don't include (a UCSD student or someone with no role following a shared
   // link, say) used to just land on home with no explanation. Point them to Help, which explains how to get the role.
