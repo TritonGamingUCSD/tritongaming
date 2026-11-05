@@ -30,7 +30,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
   const { data: current } = await auth.svc.from('user_roles').select('role, division_id').eq('user_id', t.user_id);
   const next = withRole(current ?? [], role, divisionId);
-  const label = role === 'division' ? `Division Lead (${divisionName})` : role === 'officer' ? 'Officer' : role === 'lead' ? 'Lead' : 'alumni';
+  const label = role === 'division' ? `Division Head (${divisionName})` : role === 'officer' ? 'Officer' : role === 'lead' ? 'Lead' : 'alumni';
   if (next) {
     const { error } = await auth.svc.rpc('admin_set_user_roles', { _user_id: t.user_id, _roles: next, _granted_by: auth.user.id });
     if (error) return NextResponse.json({ error: 'Couldn’t give the role.' }, { status: 500 });

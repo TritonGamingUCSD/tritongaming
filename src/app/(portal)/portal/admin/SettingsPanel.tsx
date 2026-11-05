@@ -43,6 +43,7 @@ export default function SettingsPanel() {
       <CodeStyleCard saved={saved} onSaved={setSaved} onError={setError} />
       <CodeUsesCard saved={saved} onSaved={setSaved} onError={setError} />
       <BannerCard saved={saved} onSaved={setSaved} onError={setError} />
+      <DivisionsCard saved={saved} onSaved={setSaved} onError={setError} />
     </div>
   );
 }
@@ -149,6 +150,39 @@ function CodeUsesCard({ saved, onSaved, onError }: CardProps) {
           </div>
         );
       })}
+    </section>
+  );
+}
+
+// The division features are built behind this switch: off means only admins see them (to build and test), on shows them to everyone. It is turned on once, when everything is finished.
+function DivisionsCard({ saved, onSaved, onError }: CardProps) {
+  const [busy, setBusy] = useState(false);
+  const set = async (on: boolean) => {
+    setBusy(true);
+    onError('');
+    const { ok, json } = await api({ method: 'POST', body: { setting: 'divisions_open', on } });
+    setBusy(false);
+    if (ok && json.settings) {
+      onSaved(json.settings);
+      showToast(on ? 'Division features are on for everyone' : 'Division features are admin-only');
+    } else onError(json.error || 'Could not save.');
+  };
+  return (
+    <section className={styles.card} aria-labelledby="set-divisions">
+      <h2 id="set-divisions">Division Features</h2>
+      <p className={styles.about}>
+        The division switcher, division pages and division roles in use. While this is off, only admins can see them, so they can be built and tested without anyone else noticing.
+        Turn it on when everything is finished.
+      </p>
+      <div className={styles.actions}>
+        <Button variant={saved.divisionsOpen ? 'secondary' : 'primary'} onClick={() => set(false)} disabled={busy || !saved.divisionsOpen} aria-pressed={!saved.divisionsOpen}>
+          Admins only
+        </Button>
+        <Button variant={saved.divisionsOpen ? 'primary' : 'secondary'} onClick={() => set(true)} disabled={busy || saved.divisionsOpen} aria-pressed={saved.divisionsOpen}>
+          Everyone
+        </Button>
+        <span className={styles.state}>Now: {saved.divisionsOpen ? 'everyone' : 'admins only'}</span>
+      </div>
     </section>
   );
 }

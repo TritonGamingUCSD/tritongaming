@@ -1,3 +1,4 @@
+import { isDivisionRole } from '@/types/database';
 import type { Profile, AppRole } from '@/types/database';
 
 // A profile counts as an org member for the portal's Members roster if it
@@ -10,7 +11,8 @@ import type { Profile, AppRole } from '@/types/database';
 // Division leads aren't TG members on their own either: a person whose only roles are ucsd and/or
 // division doesn't count (someone who is also an officer, lead, exec, etc. still does).
 export function isOrgMember(userRoles: Array<{ role: AppRole }> | null | undefined): boolean {
-  return (userRoles ?? []).some((r) => r.role !== 'ucsd' && r.role !== 'division');
+  // Division roles (Head, Member, Alumni) belong to a division, not to the Triton Gaming roster.
+  return (userRoles ?? []).some((r) => r.role !== 'ucsd' && !isDivisionRole(r.role));
 }
 
 // ── Class year ───────────────────────────────────────────────────────────────

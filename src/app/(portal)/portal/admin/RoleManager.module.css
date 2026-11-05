@@ -402,3 +402,7 @@
 /* Search and sort are the same height; on a phone sort drops under search and fills the width. */
 .searchRow .sortSelect { align-self: stretch; display: flex; align-items: center; min-height: 44px; padding-inline: 1rem; }
 @media (max-width: 560px) { .searchRow .sortSelect { width: 100%; } }
+
+.divisionRoleGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(17rem, 1fr)); gap: 0.4rem 1rem; }
+.divisionRoleRow { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; font-size: 0.88rem; color: var(--pp-ink); }
+.divisionRoleSelect { min-width: 9.5rem; }

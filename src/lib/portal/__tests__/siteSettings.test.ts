@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { BANNER_MAX, DEFAULT_SETTINGS, bannerShown, parseSettings, styleFor } from '../siteSettings';
+import { BANNER_MAX, DEFAULT_SETTINGS, bannerShown, parseSettings, styleFor, divisionsVisible } from '../siteSettings';
 
 describe('site settings', () => {
   test('nothing saved means the defaults: QR code and no banner', () => {
@@ -15,7 +15,7 @@ describe('site settings', () => {
       { key: 'banner_until', value: '2026-11-02' },
       { key: 'something_else', value: 'x' },
     ]);
-    expect(s).toEqual({ codeStyle: 'byte', codeStyles: {}, banner: { on: true, text: 'Check-in is at the Price Center', until: '2026-11-02' } });
+    expect(s).toEqual({ codeStyle: 'byte', codeStyles: {}, banner: { on: true, text: 'Check-in is at the Price Center', until: '2026-11-02' }, divisionsOpen: false });
     expect(parseSettings([{ key: 'code_style', value: 'bytecode??' }]).codeStyle).toBe('qr');
     expect(parseSettings([{ key: 'code_style', value: 'tg' }]).codeStyle).toBe('tg');
     expect(parseSettings([{ key: 'banner_until', value: 'tomorrow' }]).banner.until).toBe('');
@@ -44,5 +44,14 @@ describe('site settings', () => {
     expect(bannerShown(on('Hello', '2026-11-01'), '2026-11-01')).toBe(true); // the last day still shows it
     expect(bannerShown(on('Hello', '2026-10-31'), '2026-11-01')).toBe(false);
     expect(bannerShown({ ...on('Hello'), banner: { on: false, text: 'Hello', until: '' } }, '2026-11-01')).toBe(false);
+  });
+
+  test('the division features are admin-only until an admin turns them on', () => {
+    expect(parseSettings([]).divisionsOpen).toBe(false);
+    expect(parseSettings([{ key: 'divisions_open', value: 'on' }]).divisionsOpen).toBe(true);
+    expect(parseSettings([{ key: 'divisions_open', value: 'yes' }]).divisionsOpen).toBe(false);
+    expect(divisionsVisible(true, DEFAULT_SETTINGS)).toBe(true);
+    expect(divisionsVisible(false, DEFAULT_SETTINGS)).toBe(false);
+    expect(divisionsVisible(false, { ...DEFAULT_SETTINGS, divisionsOpen: true })).toBe(true);
   });
 });

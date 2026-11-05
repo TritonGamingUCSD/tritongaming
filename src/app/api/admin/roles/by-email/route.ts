@@ -4,7 +4,7 @@ import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { logAudit } from '@/lib/notifications/audit';
 import { withRole, type RoleRow } from '@/lib/portal/roleGrant';
-import { ASSIGNABLE_ROLES } from '@/types/database';
+import { ASSIGNABLE_ROLES, isDivisionRole } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import { strictUser } from '@/lib/supabase/localAuth';
 import { MAX_PASTED_EMAILS, parseEmails, planByEmail } from '@/lib/members/roleByEmail';
@@ -23,9 +23,9 @@ export async function POST(request: Request) {
 
   const b = await request.json().catch(() => ({}));
   const role = b.role as AppRole;
-  const divisionId = role === 'division' ? String(b.divisionId ?? '') || null : null;
+  const divisionId = isDivisionRole(role) ? String(b.divisionId ?? '') || null : null;
   if (!ASSIGNABLE_ROLES.includes(role)) return NextResponse.json({ error: 'Pick a role.' }, { status: 400 });
-  if (role === 'division' && !divisionId) return NextResponse.json({ error: 'Pick a division for the division role.' }, { status: 400 });
+  if (isDivisionRole(role) && !divisionId) return NextResponse.json({ error: 'Pick a division for the division role.' }, { status: 400 });
   const emails = parseEmails(String(b.text ?? ''));
   if (emails.length === 0) return NextResponse.json({ error: 'No email addresses found in what you pasted.' }, { status: 400 });
   if (emails.length > MAX_PASTED_EMAILS) return NextResponse.json({ error: `That is ${emails.length} addresses. Paste up to ${MAX_PASTED_EMAILS} at a time.` }, { status: 400 });

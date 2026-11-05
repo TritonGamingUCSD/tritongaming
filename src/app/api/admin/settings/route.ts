@@ -35,6 +35,7 @@ async function authorize() {
 //   POST { setting: 'code_style', value: 'tg' | 'byte' | 'qr' }                          the default for every use
 //   POST { setting: 'code_style', use: 'ticket' | 'meeting' | 'reward', value: 'tg' | 'byte' | 'qr' | 'default' }   one use's own (or back to following the default)
 //   POST { setting: 'banner', on: boolean, text: string, until: 'YYYY-MM-DD' | '' }
+//   POST { setting: 'divisions_open', on: boolean }       show the division features to everyone (off: admins only)
 //   POST { setting: 'code_style' | 'banner', reset: true }   back to the default
 export async function GET() {
   const auth = await authorize();
@@ -110,6 +111,22 @@ export async function POST(request: Request) {
             ? 'Turned the portal banner off'
             : 'Changed the portal banner text',
         details: { setting: 'banner', from: before.banner, to: next },
+      });
+    return NextResponse.json({ settings: await loadSiteSettings(auth.svc) });
+  }
+
+  if (b.setting === 'divisions_open') {
+    const on = b.on === true;
+    const { error } = await save([{ key: 'divisions_open', value: on ? 'on' : 'off' }]);
+    if (error) return NextResponse.json({ error: 'Could not save. Try again.' }, { status: 500 });
+    if (on !== before.divisionsOpen)
+      await logAudit(auth.svc, {
+        actorId: auth.user.id,
+        action: 'update',
+        entityType: 'site setting',
+        entityId: null,
+        summary: on ? 'Turned the division features on for everyone' : 'Made the division features admin-only',
+        details: { setting: 'divisions_open', from: before.divisionsOpen, to: on },
       });
     return NextResponse.json({ settings: await loadSiteSettings(auth.svc) });
   }

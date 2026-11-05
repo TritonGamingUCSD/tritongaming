@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { logAudit } from '@/lib/notifications/audit';
-import { ASSIGNABLE_ROLES } from '@/types/database';
+import { ASSIGNABLE_ROLES, isDivisionRole } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import { notifyRoleChange } from '@/lib/notifications/memberNotices';
 import { strictUser } from '@/lib/supabase/localAuth';
@@ -36,8 +36,11 @@ export async function PUT(request: Request) {
     if (!ASSIGNABLE_ROLES.includes(r.role)) {
       return NextResponse.json({ error: `Invalid role: ${r.role}` }, { status: 400 });
     }
-    if (r.role === 'division' && !r.division_id) {
-      return NextResponse.json({ error: 'A division must be selected for the division role' }, { status: 400 });
+    if (isDivisionRole(r.role) && !r.division_id) {
+      return NextResponse.json({ error: 'A division must be selected for a division role' }, { status: 400 });
+    }
+    if (!isDivisionRole(r.role) && r.division_id) {
+      return NextResponse.json({ error: 'Only division roles belong to a division' }, { status: 400 });
     }
   }
 

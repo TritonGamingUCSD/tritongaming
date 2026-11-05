@@ -1,6 +1,10 @@
 import type { PageBlock } from '@/lib/site/pageBlocks';
 // 'inactive' is a marker that sits next to someone's real roles while they sit out a quarter (see src/lib/quarters.ts); it is never assigned by hand.
-export type AppRole = 'ucsd' | 'division' | 'officer' | 'lead' | 'exec' | 'admin' | 'alumni' | 'recruit' | 'inactive';
+export type AppRole = 'ucsd' | 'division' | 'division_member' | 'division_alumni' | 'officer' | 'lead' | 'exec' | 'admin' | 'alumni' | 'recruit' | 'inactive';
+// The three roles that belong to one division (user_roles.division_id says which). 'division' is the Division Head (it used to be called Division Lead; the stored value did not change).
+export const DIVISION_ROLES = ['division', 'division_member', 'division_alumni'] as const;
+export type DivisionRole = (typeof DIVISION_ROLES)[number];
+export const isDivisionRole = (role: string): role is DivisionRole => (DIVISION_ROLES as readonly string[]).includes(role);
 // 'guest' is never stored — it just means zero rows in user_roles.
 export type UserRole = 'guest' | AppRole;
 export type TicketStatus = 'active' | 'used' | 'cancelled' | 'expired';
@@ -460,6 +464,8 @@ export const ROLE_DISPLAY_RANK: Record<UserRole, number> = {
   recruit: 1.8,
   officer: 2,
   division: 2,
+  division_member: 1.5,
+  division_alumni: 0.5,
   lead: 3,
   exec: 4,
   admin: 5,
@@ -469,7 +475,9 @@ export const ROLE_DISPLAY_RANK: Record<UserRole, number> = {
 export const ROLE_LABELS: Record<UserRole, string> = {
   guest: 'Guest',
   ucsd: 'UCSD Student',
-  division: 'Division Lead',
+  division: 'Division Head',
+  division_member: 'Division Member',
+  division_alumni: 'Division Alumni',
   officer: 'Officer',
   lead: 'Lead',
   exec: 'Executive',
@@ -483,6 +491,8 @@ export const ROLE_COLORS: Record<UserRole, string> = {
   guest: '#6b7280',
   ucsd: '#0ea5e9',
   division: '#7c3aed',
+  division_member: '#a78bfa',
+  division_alumni: '#b08968',
   officer: '#2563eb',
   lead: '#059669',
   exec: '#dc2626',
@@ -495,4 +505,4 @@ export const ROLE_COLORS: Record<UserRole, string> = {
 // Roles assignable via the Role Manager UI (excludes 'guest', which is the
 // implicit zero-roles state, not something you grant).
 // Listed from the least to the most access: UCSD Student, Alumni, Recruit, Officer (with Division Lead beside it, its peer), Lead, Executive, Admin.
-export const ASSIGNABLE_ROLES: AppRole[] = ['ucsd', 'alumni', 'recruit', 'officer', 'division', 'lead', 'exec', 'admin'];
+export const ASSIGNABLE_ROLES: AppRole[] = ['ucsd', 'alumni', 'recruit', 'officer', 'division', 'division_member', 'division_alumni', 'lead', 'exec', 'admin'];

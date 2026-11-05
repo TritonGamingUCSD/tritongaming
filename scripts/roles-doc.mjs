@@ -7,14 +7,19 @@ import { execFileSync } from 'node:child_process';
 import { CAPABILITY_ROLES, GRANTABLE_CAPABILITIES, isInactiveStripped } from '../src/lib/portal/capabilities.ts';
 import { ROLE_LABELS, ROLE_DISPLAY_RANK } from '../src/types/database.ts';
 
-const ROLES = ['guest', 'ucsd', 'recruit', 'alumni', 'officer', 'division', 'lead', 'exec', 'admin'];
+const ROLES = ['guest', 'ucsd', 'recruit', 'alumni', 'officer', 'division', 'division_member', 'division_alumni', 'lead', 'exec', 'admin'];
 const ROLE_NOTE = {
   guest: 'Signed in with no role yet (for example a personal email that is not linked to UCSD).',
   ucsd: 'A verified UCSD student (given automatically for an @ucsd.edu sign-in).',
   recruit: 'A prospective officer going through onboarding. Can see and take part in team things, but has no position yet.',
   alumni: 'A former team member. Read-only: can open TG Members, Documentation, Events and Division Heads. No check-in, no Rewards.',
   officer: 'A team member. Can look at most things and staff check-in, but not create or edit events or docs.',
-  division: 'Leads one or more divisions (a role scoped to a division). Edits only their own division’s page.',
+  division:
+    'Heads one or more divisions (a role scoped to a division; it used to be called Division Lead). Edits only their own division’s page. Heads, Members and Alumni of a division are not Triton Gaming members and earn no Rewards points.',
+  division_member:
+    'A member of one division (a role scoped to a division). Part of the division, not of the Triton Gaming roster. The division features that use this role are being built and are admin-only for now.',
+  division_alumni:
+    'A graduated member of one division (a role scoped to a division). Read-only in the division. The division features that use this role are being built and are admin-only for now.',
   lead: 'Runs a committee. Creates and edits events, docs and meetings they plan.',
   exec: 'The executive board. Org-wide decisions: site content, points, rewards, strikes, quarters, every meeting.',
   admin: 'Platform admin. Passes every capability check, and is the only role that can change roles or delete events.',
@@ -62,7 +67,7 @@ const CAPS = {
   manage_division: [
     'Divisions',
     'Edit a division',
-    'Edit a division’s public page: logo, description, links, socials, posts (not its name or address; that is “Manage all divisions”). A Division Lead can only edit the division they lead; exec and admin can edit any.',
+    'Edit a division’s public page: logo, description, links, socials, posts (not its name or address; that is “Manage all divisions”). A Division Head can only edit the division they lead; exec and admin can edit any.',
     'database + routes',
   ],
   view_docs: ['Documentation', 'Read documentation', 'Open the Documentation section and read the guides.', 'database + pages'],
@@ -185,7 +190,7 @@ L.push(
   '',
 );
 L.push(
-  'A **role** is a label on a person (someone can hold several, for example Officer and Division Lead). A **capability** is one thing that can be done. Every page and route asks `hasCapability()` whether the person may.',
+  'A **role** is a label on a person (someone can hold several, for example Officer and Division Head). A **capability** is one thing that can be done. Every page and route asks `hasCapability()` whether the person may.',
   '',
 );
 L.push(
@@ -227,7 +232,7 @@ function tick2(r, c) {
 L.push(
   '## Portal sections by role',
   '',
-  '✔ = opens it · ◐ = a limited version (Rewards: exec and admin see only the Leaderboard and Tools, to run it; Divisions: a Division Lead sees only their own division) · · = does not see it.',
+  '✔ = opens it · ◐ = a limited version (Rewards: exec and admin see only the Leaderboard and Tools, to run it; Divisions: a Division Head sees only their own division) · · = does not see it.',
   '',
 );
 L.push(`| Section | ${ROLES.map((r) => ROLE_LABELS[r]).join(' | ')} |`, `|---|${ROLES.map(() => ':-:').join('|')}|`);
@@ -250,7 +255,7 @@ L.push('## Rules', '');
 L.push('**How a check works**', '');
 L.push('1. Admin passes every check, whether or not Admin is listed for that capability.');
 L.push('2. Otherwise the person needs at least one role listed for it. Roles add up.');
-L.push('3. **Division Lead is scoped:** for division capabilities the check can name one division, and a Division Lead only qualifies for the division they lead.');
+L.push('3. **Division Head is scoped:** for division capabilities the check can name one division, and a Division Head only qualifies for the division they lead.');
 L.push(
   '4. **Inactive:** someone marked Inactive keeps every viewing permission but loses: ' +
     caps
@@ -294,7 +299,7 @@ const w = [
   'Check-In: Recruits, Officers and Leads can scan tickets, but checking someone in **by hand** or undoing a check-in needs “Change points”, which only Exec and Admin have.',
   'Rewards are student-only on purpose: a team member earns no points even if they check in to an event, and a guest with no role earns none either. Exec and Admin keep a management-only Rewards section.',
   'Alumni can open Events and an event’s check-in list (names and times), the same view Officers have. They still cannot check anyone in.',
-  'Division Leads cannot open TG Members (`view_members` does not include them). They get Division Heads and their own division’s page.',
+  'Division Heads cannot open TG Members (`view_members` does not include them). They get Division Heads and their own division’s page.',
   'Exec cannot open the Admin dashboard (`view_admin_dashboard` is Admin only), and only Admin can change roles or delete events.',
   'Only Exec and Admin can run **every** meeting. Leads can plan meetings but only manage their own.',
   'Anyone marked Inactive loses check-in, scanning and every `manage_`, `host_` and `delete_` capability, but keeps viewing and meeting attendance.',

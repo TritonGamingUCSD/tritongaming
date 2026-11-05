@@ -4,7 +4,7 @@ import SectionHeader from '@/components/ui/SectionHeader';
 import { useState } from 'react';
 import { roleInk } from '@/lib/portal/roleColors';
 import { History, ChevronDown } from 'lucide-react';
-import { ROLE_LABELS, ROLE_COLORS } from '@/types/database';
+import { ROLE_LABELS, ROLE_COLORS, isDivisionRole } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import type { RoleChangeEntry } from './getRoleHistoryData';
@@ -26,7 +26,7 @@ function diff(before: Grant[], after: Grant[]) {
 }
 
 function RoleChip({ grant, divisionNameById }: { grant: Grant; divisionNameById: Map<string, string> }) {
-  const label = grant.role === 'division' && grant.division_id ? `${ROLE_LABELS.division} — ${divisionNameById.get(grant.division_id) ?? 'Unknown'}` : ROLE_LABELS[grant.role];
+  const label = isDivisionRole(grant.role) && grant.division_id ? `${ROLE_LABELS[grant.role]} — ${divisionNameById.get(grant.division_id) ?? 'Unknown'}` : ROLE_LABELS[grant.role];
   return (
     <span className={styles.chip} style={{ background: ROLE_COLORS[grant.role] + '18', color: roleInk(ROLE_COLORS[grant.role]), borderColor: ROLE_COLORS[grant.role] + '44' }}>
       {label}

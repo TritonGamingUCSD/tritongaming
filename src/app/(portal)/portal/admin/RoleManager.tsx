@@ -11,8 +11,8 @@ import { showToast } from '@/lib/ui/toast';
 import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Search, Gamepad2, X, Pencil } from 'lucide-react';
-import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, ASSIGNABLE_ROLES } from '@/types/database';
-import type { AppRole } from '@/types/database';
+import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, ASSIGNABLE_ROLES, DIVISION_ROLES, isDivisionRole } from '@/types/database';
+import type { AppRole, DivisionRole } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import type { LinkedEmail } from '@/lib/members/linkedEmails';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
@@ -217,10 +217,11 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
   // several divisions at once) — each division is its own draft entry rather
   // than a single {role, division_id} pair, so it gets its own add/remove
   // instead of toggleDraftRole's "at most one of this role" logic above.
-  function toggleDraftDivision(divisionId: string, checked: boolean) {
+  function setDraftDivisionRole(divisionId: string, role: DivisionRole | '') {
     setDraft((prev) => {
-      if (checked) return [...prev, { role: 'division', division_id: divisionId }];
-      return prev.filter((r) => !(r.role === 'division' && r.division_id === divisionId));
+      // One division role per person per division: Head, Member or Alumni (or none).
+      const rest = prev.filter((r) => !(isDivisionRole(r.role) && r.division_id === divisionId));
+      return role ? [...rest, { role, division_id: divisionId }] : rest;
     });
   }
 
@@ -270,7 +271,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
 
   async function applyBulkRole() {
     if (selectedIds.size === 0) return;
-    if (bulkRole === 'division' && !bulkDivisionId) {
+    if (isDivisionRole(bulkRole) && !bulkDivisionId) {
       setBulkError('Pick a division first.');
       return;
     }
@@ -283,7 +284,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
         body: JSON.stringify({
           userIds: [...selectedIds],
           role: bulkRole,
-          divisionId: bulkRole === 'division' ? bulkDivisionId : null,
+          divisionId: isDivisionRole(bulkRole) ? bulkDivisionId : null,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -387,7 +388,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
               </option>
             ))}
           </Select>
-          {bulkRole === 'division' && (
+          {isDivisionRole(bulkRole) && (
             <Select className={styles.bulkSelect} value={bulkDivisionId} onChange={(e) => setBulkDivisionId(e.target.value)}>
               <option value="">Choose division…</option>
               {divisions.map((d) => (
@@ -493,7 +494,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                           {/* A user can lead more than one division at once now — name it
                               on the badge itself, otherwise two "Division Lead" badges in a
                               row look like a duplicate/bug rather than two real grants. */}
-                          {r.role === 'division' && r.division_id ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}` : ROLE_LABELS[r.role]}
+                          {isDivisionRole(r.role) && r.division_id ? `${ROLE_LABELS[r.role]} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}` : ROLE_LABELS[r.role]}
                         </span>
                       ))
                     )}
@@ -512,7 +513,7 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                       {/* 'division' is excluded here — it gets its own multi-select
                           list below instead of a plain on/off toggle, since someone
                           can lead more than one division at once. */}
-                      {ASSIGNABLE_ROLES.filter((r) => r !== 'division').map((r) => (
+                      {ASSIGNABLE_ROLES.filter((r) => !isDivisionRole(r)).map((r) => (
                         <label key={r} className={styles.checkboxLabel}>
                           <input type="checkbox" checked={draft.some((d) => d.role === r)} onChange={(e) => toggleDraftRole(r, e.target.checked)} />
                           <span style={{ color: roleInk(ROLE_COLORS[r]) }}>{ROLE_LABELS[r]}</span>
@@ -521,17 +522,25 @@ export default function RoleManager({ users: initialUsers, divisions }: { users:
                     </div>
                     <div className={styles.divisionPicker}>
                       <span className={styles.divisionPickerLabel} style={{ color: ROLE_COLORS.division }}>
-                        {ROLE_LABELS.division} (any number)
+                        Division roles (one per division: Head, Member or Alumni)
                       </span>
-                      <div className={styles.checkboxGrid}>
+                      <div className={styles.divisionRoleGrid}>
                         {divisions.map((d) => (
-                          <label key={d.id} className={styles.checkboxLabel}>
-                            <input
-                              type="checkbox"
-                              checked={draft.some((r) => r.role === 'division' && r.division_id === d.id)}
-                              onChange={(e) => toggleDraftDivision(d.id, e.target.checked)}
-                            />
+                          <label key={d.id} className={styles.divisionRoleRow}>
                             <span>{d.name}</span>
+                            <Select
+                              className={styles.divisionRoleSelect}
+                              value={draft.find((r) => isDivisionRole(r.role) && r.division_id === d.id)?.role ?? ''}
+                              onChange={(e) => setDraftDivisionRole(d.id, e.target.value as DivisionRole | '')}
+                              aria-label={`Role in ${d.name}`}
+                            >
+                              <option value="">None</option>
+                              {DIVISION_ROLES.map((r) => (
+                                <option key={r} value={r}>
+                                  {ROLE_LABELS[r]}
+                                </option>
+                              ))}
+                            </Select>
                           </label>
                         ))}
                       </div>

@@ -9,7 +9,7 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import IconButton from '@/components/ui/IconButton';
 import { showToast } from '@/lib/ui/toast';
-import { ROLE_LABELS, ASSIGNABLE_ROLES } from '@/types/database';
+import { ROLE_LABELS, ASSIGNABLE_ROLES, isDivisionRole } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import styles from './PasteEmailsDialog.module.css';
 
@@ -54,7 +54,7 @@ export default function PasteEmailsDialog({ divisions, onClose }: { divisions: {
     if (changed) router.refresh();
     onClose();
   };
-  const body = (apply: boolean) => JSON.stringify({ text, role, divisionId: role === 'division' ? divisionId : null, apply });
+  const body = (apply: boolean) => JSON.stringify({ text, role, divisionId: isDivisionRole(role) ? divisionId : null, apply });
 
   async function check() {
     setBusy(true);
@@ -151,7 +151,7 @@ export default function PasteEmailsDialog({ divisions, onClose }: { divisions: {
               ))}
             </Select>
           </label>
-          {role === 'division' && (
+          {isDivisionRole(role) && (
             <label className={styles.field}>
               <span className={styles.label}>Division</span>
               <Select
@@ -225,7 +225,7 @@ export default function PasteEmailsDialog({ divisions, onClose }: { divisions: {
           {changed ? 'Done' : 'Cancel'}
         </DialogCancel>
         {!plan || nothingToDo ? (
-          <Button onClick={check} loading={busy} disabled={!text.trim() || (role === 'division' && !divisionId)}>
+          <Button onClick={check} loading={busy} disabled={!text.trim() || (isDivisionRole(role) && !divisionId)}>
             Check The List
           </Button>
         ) : (

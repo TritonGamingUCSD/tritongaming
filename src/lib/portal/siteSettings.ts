@@ -22,12 +22,14 @@ export interface SiteSettings {
   /** A use's own choice; one that is missing follows `codeStyle`. */
   codeStyles: Partial<Record<CodeUse, CodeStyle>>;
   banner: PortalBanner;
+  /** The division features (switcher, division roles in use, division pages) are shown to everyone. Until an admin turns this on they are admin-only. */
+  divisionsOpen: boolean;
 }
 
-export const DEFAULT_SETTINGS: SiteSettings = { codeStyle: 'qr', codeStyles: {}, banner: { on: false, text: '', until: '' } };
+export const DEFAULT_SETTINGS: SiteSettings = { codeStyle: 'qr', codeStyles: {}, banner: { on: false, text: '', until: '' }, divisionsOpen: false };
 export const BANNER_MAX = 160;
 export const codeStyleKey = (use: CodeUse) => `code_style_${use}`;
-export const SETTING_KEYS = ['code_style', ...CODE_USES.map(codeStyleKey), 'banner_on', 'banner_text', 'banner_until'] as const;
+export const SETTING_KEYS = ['code_style', ...CODE_USES.map(codeStyleKey), 'banner_on', 'banner_text', 'banner_until', 'divisions_open'] as const;
 
 /** The settings from the rows of team_settings (any other rows are ignored). */
 export function parseSettings(rows: { key: string; value: string }[] | null | undefined): SiteSettings {
@@ -36,6 +38,7 @@ export function parseSettings(rows: { key: string; value: string }[] | null | un
   return {
     codeStyle: isStyle(v.get('code_style')) ? (v.get('code_style') as CodeStyle) : 'qr',
     codeStyles: Object.fromEntries(CODE_USES.map((u) => [u, v.get(codeStyleKey(u))]).filter(([, s]) => isStyle(s))),
+    divisionsOpen: v.get('divisions_open') === 'on',
     banner: {
       on: v.get('banner_on') === 'on',
       text: (v.get('banner_text') ?? '').slice(0, BANNER_MAX),
@@ -57,3 +60,6 @@ export const styleFor = (s: SiteSettings, use?: CodeUse): CodeStyle => (use && s
 
 /** Whether the banner shows on a day (`today`: YYYY-MM-DD, Pacific): it is on, has words, and its last day has not passed. */
 export const bannerShown = (s: SiteSettings, today: string): boolean => s.banner.on && s.banner.text.trim().length > 0 && (!s.banner.until || s.banner.until >= today);
+
+/** Whether the division features are visible to this person: admins always (to build and test them), everyone else only once an admin has turned the division features on. */
+export const divisionsVisible = (isAdmin: boolean, s: SiteSettings): boolean => isAdmin || s.divisionsOpen;

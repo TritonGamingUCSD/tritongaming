@@ -32,7 +32,7 @@ import { ViewAsSwitcher, ViewAsBanner, ViewingUserBanner } from '@/components/po
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
 import { hasCapability, isVerifiedMember, isRewardsEligible, isTgMember, requiresOrgTitle } from '@/lib/portal/capabilities';
 import { resolveAvatarUrl, hasBasicProfileInfo, getMissingProfileFields } from '@/lib/members/profile';
-import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK } from '@/types/database';
+import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, isDivisionRole } from '@/types/database';
 import { CONTENT_BLOCKS } from '@/lib/site/content-blocks';
 import { PACIFIC_TZ, pacificDayKey, pacificDaysUntil, pacificToday } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
@@ -718,7 +718,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const roleChips = (
     heldRoles.length === 0 ? [{ role: 'guest' as const, division_id: null as string | null }] : [...heldRoles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])
   ).map((r) => ({
-    label: r.role === 'division' && r.division_id ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}` : ROLE_LABELS[r.role],
+    label: isDivisionRole(r.role) && r.division_id ? `${ROLE_LABELS[r.role]} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}` : ROLE_LABELS[r.role],
     color: ROLE_COLORS[r.role],
   }));
   const primaryRoleLabel = heldRoles.length === 0 ? ROLE_LABELS.guest : ROLE_LABELS[[...heldRoles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])[0].role];
@@ -995,7 +995,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                               >
                                 {/* A person can lead more than one division — name it on the chip so two
                               "Division Lead" chips don't read as a duplicate. */}
-                                {r.role === 'division' && r.division_id ? `${ROLE_LABELS.division} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}` : ROLE_LABELS[r.role]}
+                                {isDivisionRole(r.role) && r.division_id ? `${ROLE_LABELS[r.role]} — ${divisionNameById.get(r.division_id) ?? 'Unknown'}` : ROLE_LABELS[r.role]}
                               </span>
                             ))
                         )}

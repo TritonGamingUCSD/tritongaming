@@ -5,7 +5,7 @@ import { hasCapability } from '@/lib/portal/capabilities';
 import { notifyRoleChange } from '@/lib/notifications/memberNotices';
 import { logAudit } from '@/lib/notifications/audit';
 import { withRole } from '@/lib/portal/roleGrant';
-import { ASSIGNABLE_ROLES } from '@/types/database';
+import { ASSIGNABLE_ROLES, isDivisionRole } from '@/types/database';
 import type { AppRole } from '@/types/database';
 import { strictUser } from '@/lib/supabase/localAuth';
 
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
   if (!Array.isArray(userIds) || userIds.length === 0 || !ASSIGNABLE_ROLES.includes(role)) {
     return NextResponse.json({ error: 'Missing userIds or invalid role' }, { status: 400 });
   }
-  if (role === 'division' && !divisionId) {
+  if (isDivisionRole(role) && !divisionId) {
     return NextResponse.json({ error: 'A division must be selected for the division role' }, { status: 400 });
   }
 
