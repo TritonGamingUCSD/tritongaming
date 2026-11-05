@@ -1112,3 +1112,11 @@
   .rail .railNav .railItem { padding-right: 1.1rem !important; }
   .rail .railNav .railBadge { margin-right: 0.1rem; }
 }
+
+/* One left edge: the top bar's page name, the tabs and the page's own title and cards all start at the same distance from the sidebar (the page padding), and on very wide screens they sit in the same centered column. */
+@media (min-width: 900px) {
+  .topBar { padding-left: clamp(1.5rem, 3vw, 3rem); padding-right: clamp(1rem, 2vw, 2rem); }
+  .tabStrip { padding-inline: clamp(1.5rem, 3vw, 3rem); }
+  .tabStrip > div { max-width: 1440px; margin-inline: auto; }
+  .tabStrip > div > button:first-of-type { margin-left: -1rem; }
+}

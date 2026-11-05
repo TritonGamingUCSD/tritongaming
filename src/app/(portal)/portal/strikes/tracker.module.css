@@ -1,4 +1,4 @@
-.page { display: flex; flex-direction: column; gap: 1rem; max-width: 1240px; margin-inline: auto; width: 100%; }
+.page { display: flex; flex-direction: column; gap: 1rem; max-width: none; margin-inline: 0; width: 100%; }
 .title { font-family: var(--font-futura-heavy); font-size: 1.6rem; color: var(--pp-ink); }
 .sub { display: flex; align-items: flex-start; gap: 0.4rem; margin: 0; font-size: 0.86rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .sub svg { flex: none; margin-top: 0.2rem; color: var(--pp-teal); }

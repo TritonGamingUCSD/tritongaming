@@ -1,6 +1,6 @@
 .page {
-  max-width: 700px;
-  margin-inline: auto;
+  max-width: 860px;
+  margin-inline: 0;
 }
 
 /* Matches the ~1100px width most other portal pages settled on for the
@@ -407,7 +407,7 @@
 .majorOther .input { flex: 1; min-width: 160px; }
 
 /* Login & Security has no side column: two stacked cards, full width up to a readable cap. */
-.layoutSingle { grid-template-columns: minmax(0, 1fr) !important; max-width: 720px; margin-inline: auto; }
+.layoutSingle { grid-template-columns: minmax(0, 1fr) !important; max-width: 860px; margin-inline: 0; }
 .securityTab .backupLoginSection,
 .securityTab .signOutSection {
   margin: 0; padding: 1.25rem 1.4rem;

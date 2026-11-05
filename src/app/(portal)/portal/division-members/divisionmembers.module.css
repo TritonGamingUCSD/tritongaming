@@ -1,4 +1,4 @@
-.page { display: flex; flex-direction: column; gap: 1.4rem; width: 100%; max-width: 1240px; margin-inline: auto; }
+.page { display: flex; flex-direction: column; gap: 1.4rem; width: 100%; max-width: none; margin-inline: 0; }
 .title { font-family: var(--font-futura-heavy); font-size: 1.6rem; color: var(--pp-ink); }
 .sub { font-size: 0.88rem; color: rgba(var(--pp-ink-rgb), 0.88); }
 .search { display: flex; align-items: center; gap: 0.5rem; width: min(320px, 100%); color: rgba(var(--pp-ink-rgb), 0.88); }

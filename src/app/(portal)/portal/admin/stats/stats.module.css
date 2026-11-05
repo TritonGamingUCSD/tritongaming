@@ -1,4 +1,4 @@
-.page { max-width: 1320px; margin-inline: auto; }
+.page { max-width: none; margin-inline: 0; }
 
 .title {
   font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600;
