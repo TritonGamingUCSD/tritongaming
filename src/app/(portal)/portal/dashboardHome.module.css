@@ -197,3 +197,12 @@
 .divCard small { font-size: 0.78rem; opacity: 0.75; }
 .divLogo, .divLogoFallback { flex: none; width: 40px; height: 40px; border-radius: 8px; object-fit: contain; background: #fff; box-shadow: 0 0 0 3px var(--hat, var(--yellow)); margin: 3px; } /* theme-ok: a logo sits on white */
 .divLogoFallback { display: grid; place-items: center; font-weight: 700; color: #011941; background: var(--hat, #ffc72c); } /* theme-ok */
+
+/* Phone order of Home (see DashboardBody): act first, then today and the next event, the code, my cards, my divisions, the note and links, the shoutout last. Pins are on the bottom bar.
+   The wrappers m0, m1, m2, m4, m5 and m9 add no box of their own on a laptop (display: contents), so the laptop layout is unchanged. */
+.m0, .m1, .m2, .m4, .m5, .m9 { display: contents; }
+@media (max-width: 899px) {
+  .m0, .m1, .m2, .m4, .m5, .m9 { display: flex; flex-direction: column; gap: 0.6rem; }
+  .m0 { order: 0; } .m1 { order: 1; } .m2 { order: 2; } .m3 { order: 3; } .m4 { order: 4; } .m5 { order: 5; } .m6 { order: 6; } .m7 { order: 7; } .m9 { order: 9; }
+  .pinsDesk { display: none; }
+}

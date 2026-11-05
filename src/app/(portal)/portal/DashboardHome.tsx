@@ -109,17 +109,33 @@ export function DashboardBody({
 }) {
   return (
     <div className={styles.body}>
-      {showRoleAsk && !compact && <RoleAsk />}
-      <ShoutoutCard shoutout={shoutout} canPost={canShout} />
-      <RequiredBanner hrefBase="/portal/docs?id=" />
-      <TodayCards />
-      {logistics && <LogisticsDayCard />}
-      <div className={heroStyles.row}>
+      {/* On a phone the order is what to act on first: a request or a required doc, what is on today, the next event, the code to show, this person's cards and divisions, then the note and links; the club shoutout comes last
+          and the term bar and pins (the bottom bar has those) are left out. On a laptop the order below is the order on screen. */}
+      {showRoleAsk && !compact && (
+        <div className={styles.m0}>
+          <RoleAsk />
+        </div>
+      )}
+      <div className={styles.m9}>
+        <ShoutoutCard shoutout={shoutout} canPost={canShout} />
+      </div>
+      <div className={styles.m1}>
+        <RequiredBanner hrefBase="/portal/docs?id=" />
+      </div>
+      <div className={styles.m2}>
+        <TodayCards />
+        {logistics && <LogisticsDayCard />}
+      </div>
+      <div className={`${heroStyles.row} ${styles.m3}`}>
         <NextEventHero event={event} />
-        {term && <TermProgress term={term} />}
+        {term && (
+          <div className={styles.deskOnly}>
+            <TermProgress term={term} />
+          </div>
+        )}
       </div>
       {myDivisions.length > 0 && (
-        <section className={styles.divCards} aria-label="Your divisions">
+        <section className={`${styles.divCards} ${styles.m6}`} aria-label="Your divisions">
           {myDivisions.map((d) => (
             <Link key={d.slug} href={`/portal/${d.slug}`} className={styles.divCard} style={{ ['--hat' as string]: d.accent }}>
               {d.logoUrl ? (
@@ -137,7 +153,7 @@ export function DashboardBody({
         </section>
       )}
       {pins.length > 0 && (
-        <nav className={styles.pins} aria-label="Pinned pages">
+        <nav className={`${styles.pins} ${styles.pinsDesk}`} aria-label="Pinned pages">
           <span className={styles.pinsLabel}>Your pins</span>
           {pins.map((p) => (
             <Link key={p.id} href={`/portal/${p.id}`} className={styles.pinChip}>
@@ -146,9 +162,13 @@ export function DashboardBody({
           ))}
         </nav>
       )}
-      <HomeCards cards={cards} />
-      <DashboardCode />
-      <div className={styles.deskGrid}>
+      <div className={styles.m5}>
+        <HomeCards cards={cards} />
+      </div>
+      <div className={styles.m4}>
+        <DashboardCode />
+      </div>
+      <div className={`${styles.deskGrid} ${styles.m7}`}>
         <div className={styles.deskMain}>
           {event && cards.length === 0 && (
             <article className={styles.ticket} aria-label="Next up">
