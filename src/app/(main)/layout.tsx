@@ -4,6 +4,7 @@ import Footer from '@/components/Footer/Footer';
 import AnnouncementBanner from '@/components/AnnouncementBanner/AnnouncementBanner';
 import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
+import NextEventTicker from '@/components/NextEventTicker/NextEventTicker';
 import SmoothScroll from '@/components/SmoothScroll/SmoothScroll';
 
 // The announcement is a pill in the nav row (see NavBar), passed in as a prop.
@@ -26,6 +27,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
       {/* (a division's own pages hide the club's nav and footer and draw their own: see divisions/[slug]/layout.tsx and globals.css) */}
       <div data-tg-chrome style={{ display: 'contents' }}>
         <NavBar
+          ticker={
+            <Suspense fallback={null}>
+              <NextEventTicker />
+            </Suspense>
+          }
           announcement={
             <Suspense fallback={null}>
               <AnnouncementBanner />

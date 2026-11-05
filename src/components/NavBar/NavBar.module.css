@@ -92,14 +92,20 @@
   .menu, .menuOpen, .links > li, .side { transition: none; transform: none; }
 }
 
-/* Laptop and desktop: a regular navbar with every page in view (a paper strip between the logo and the portal sticker). Phones and tablets keep the Menu button and the poster menu. */
+/* Laptop and desktop: a game HUD. A dark bar between the logo and the portal sticker, every page a tab with its hotkey as a little keycap (press 1 to 8), and the next event as a blinking NEXT ticker at the end.
+   Phones and tablets keep the Menu button and the poster menu. */
 .deskNav { display: none; }
 @media (min-width: 1100px) {
-  .deskNav { display: flex; align-items: center; flex-wrap: wrap; gap: 0.1rem 0.15rem; margin-inline: auto; padding: 0.3rem 0.5rem; background: var(--paper); border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); transform: rotate(-0.4deg); }
-  .deskLink { padding: 0.45rem 0.7rem; color: var(--ink); text-decoration: none; font-family: var(--font-futura-heavy); font-size: 0.74rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; border-radius: 3px; transition: background 0.15s ease, transform 0.15s ease; }
-  .deskLink:hover { background: var(--yellow); transform: translateY(-1px) rotate(-1deg); }
-  .deskLinkOn { background: var(--ink); color: var(--yellow); }
-  .deskLinkOn:hover { background: var(--ink); }
+  .deskNav { display: flex; align-items: center; flex-wrap: wrap; gap: 0.1rem 0.2rem; margin-inline: auto; padding: 0.3rem 0.5rem; background: var(--ink); border: 3px solid var(--paper); border-radius: var(--radius-sm); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); }
+  .deskLink { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.6rem; color: var(--white); text-decoration: none; font-family: var(--font-futura-heavy); font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; white-space: nowrap; border-radius: 3px; transition: background 0.15s ease; }
+  .key { display: inline-grid; place-items: center; min-width: 1.15rem; height: 1.15rem; padding: 0 0.2rem; border: 1px solid rgba(255, 255, 255, 0.45); border-bottom-width: 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.08); color: var(--sky-text); font-family: var(--font-renegare); font-size: 0.62rem; letter-spacing: 0; transition: transform 0.1s ease; }
+  .deskLink:hover { background: rgba(255, 255, 255, 0.1); }
+  .deskLink:hover .key { transform: translateY(2px); border-bottom-width: 1px; }
+  .deskLinkOn { background: var(--yellow); color: var(--ink); }
+  .deskLinkOn:hover { background: var(--yellow); }
+  .deskLinkOn .key { border-color: var(--ink); background: transparent; color: var(--ink); }
+  .deskTicker { display: inline-flex; margin-left: 0.4rem; padding-left: 0.6rem; border-left: 2px dashed rgba(255, 255, 255, 0.3); min-width: 0; }
   .menuBtn { display: none; }
   .announce { order: 3; flex-basis: 100%; }
 }
+@media (prefers-reduced-motion: reduce) { .deskLink, .key { transition: none; } }

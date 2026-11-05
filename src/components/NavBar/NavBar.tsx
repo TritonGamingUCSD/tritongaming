@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ArrowUpRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
@@ -25,7 +25,7 @@ const NAV_LINKS = [
 ];
 
 // `announcement` is the (server-rendered) announcement pill; it sits in the same row as the logo and the Portal / Menu stickers.
-export default function NavBar({ announcement }: { announcement?: React.ReactNode }) {
+export default function NavBar({ announcement, ticker }: { announcement?: React.ReactNode; ticker?: React.ReactNode }) {
   const [offset, setOffset] = useState(0);
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
@@ -37,6 +37,19 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
   const [hint, setHint] = useState<{ avatar: string | null; letter: string } | null>(null);
   const prevScrollY = useRef(0);
   const pathname = usePathname();
+  const router = useRouter();
+  // Number keys 1 to 8 jump to a page on a laptop or desktop (like hotkeys in a game); not while typing, and not with a modifier key held.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || window.innerWidth < 1100) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      const n = Number(e.key);
+      if (Number.isInteger(n) && n >= 1 && n <= NAV_LINKS.length) router.push(NAV_LINKS[n - 1].href);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [router]);
   // Deliberately NOT next=<current page> — clicking the nav's own login
   // link is "take me into the portal," not a deep link back to whatever
   // public page you happened to be on, so it lands on /portal (the
@@ -187,14 +200,16 @@ export default function NavBar({ announcement }: { announcement?: React.ReactNod
 
         {/* A laptop or desktop gets a regular navbar with every page in view; phones and tablets keep the Menu button and the poster menu below. */}
         <nav className={styles.deskNav} aria-label="Site pages">
-          {NAV_LINKS.map(({ href, label }) => {
+          {NAV_LINKS.map(({ href, label }, i) => {
             const on = pathname.startsWith(href);
             return (
-              <Link key={href} href={href} className={`${styles.deskLink} ${on ? styles.deskLinkOn : ''}`} aria-current={on ? 'page' : undefined}>
+              <Link key={href} href={href} className={`${styles.deskLink} ${on ? styles.deskLinkOn : ''}`} aria-current={on ? 'page' : undefined} title={`Press ${i + 1}`}>
+                <kbd className={styles.key}>{i + 1}</kbd>
                 {label}
               </Link>
             );
           })}
+          {ticker && <span className={styles.deskTicker}>{ticker}</span>}
         </nav>
 
         {announcement && <div className={`${styles.announce}${open ? ` ${styles.announceHidden}` : ''}`}>{announcement}</div>}
