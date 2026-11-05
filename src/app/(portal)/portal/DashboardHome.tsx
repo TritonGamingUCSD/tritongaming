@@ -51,16 +51,15 @@ const time = (iso: string) => formatPacificTime(iso);
 export function DashboardWelcome({ eyebrow, name, showSearch = true }: { eyebrow: string; name: string; showSearch?: boolean }) {
   return (
     <header className={styles.welcome}>
-      <p className={styles.eyebrow}>{eyebrow}</p>
       <h1 className={styles.hello} data-keep>
-        Welcome back, <span className={styles.name}>{name}</span>.
+        Welcome back, <span className={styles.name}>{name}</span>
+        <span className={styles.term}>{eyebrow}</span>
       </h1>
       {showSearch && (
         <div className={styles.search}>
           <PortalSearch large placeholder="Search anything: people, events, meetings, docs, pages…" />
         </div>
       )}
-      <DashboardCode />
     </header>
   );
 }
@@ -97,6 +96,7 @@ export function DashboardBody({
       <TodayCards />
       {logistics && <LogisticsDayCard />}
       <HomeCards cards={cards} />
+      <DashboardCode />
       <div className={styles.deskGrid}>
         <div className={styles.deskMain}>
           {event && cards.length === 0 && (

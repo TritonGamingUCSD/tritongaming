@@ -147,3 +147,19 @@
 .codeText p { margin: 0.15rem 0 0; font-size: 0.88rem; color: rgba(var(--pp-ink-rgb), 0.78); text-wrap: balance; }
 .codeBox { min-width: 0; }
 @media (max-width: 640px) { .code { grid-template-columns: auto minmax(0, 1fr); } .codeBox { grid-column: 1 / -1; } }
+
+/* Home, flat and quiet (the same language as the cards): a smaller welcome with the term beside it, thin borders, no tilt, no shadows. */
+.hello { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: clamp(1.6rem, 2.8vw, 2.1rem); display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.2rem 1rem; }
+.name { padding: 0; background: none; }
+.term { font-size: 0.95rem; font-weight: 500; color: rgba(var(--pp-ink-rgb), 0.7); padding-left: 1rem; border-left: 1px solid rgba(var(--pp-ink-rgb), 0.3); }
+.code { border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 6px; box-shadow: none; margin-top: 0; margin-bottom: 1.25rem; }
+.codeText h2 { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 1.1rem; text-transform: none; letter-spacing: 0; }
+.panel { border-radius: 6px; border-color: rgba(var(--pp-ink-rgb), 0.22); }
+.panelTitle { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 1.1rem; }
+.note { transform: none; background: var(--pp-card); color: var(--pp-ink); border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 6px; box-shadow: none; padding: 1.05rem 1.15rem; }
+.noteTape { display: none; }
+.noteKicker { font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 0.85rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: rgba(var(--pp-ink-rgb), 0.72); }
+.noteTitle { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 1.1rem; }
+.noteLink { color: var(--p-accent-text); text-decoration: none; font-weight: 600; font-size: 0.95rem; }
+:global([data-pp-theme='dark']) .noteLink { color: var(--pp-chrome-accent); }
+@media (max-width: 640px) { .note { flex-direction: column; align-items: flex-start; padding: 0.9rem 1rem; } .noteKicker { display: block; } .noteTitle { white-space: normal; font-size: 1rem; } .noteLink { font-size: 0.9rem; } }
