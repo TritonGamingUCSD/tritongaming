@@ -862,6 +862,10 @@
    with hard shadows. One slim header: the page's own title stays in the page for screen readers but is not drawn on phones. Tokens, not fixed
    colours, so it follows the person's theme. ═══ */
 @media (max-width: 899px) {
+  /* With no reminder banner above it, the title bar would sit under the round buttons at the top right: start it below them. */
+  :global([data-ptr-page]):not(:has([role='status'])) .panelHeader { margin-top: 2.3rem; }
+}
+@media (max-width: 899px) {
   .panel { border-top: 0 !important; }
   .panelHeader {
     position: sticky; flex-wrap: wrap; row-gap: 0.1rem; padding: 0.5rem 0.8rem 0.8rem; margin: 0 0 0.75rem; border: 0;
