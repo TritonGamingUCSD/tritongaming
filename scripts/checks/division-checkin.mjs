@@ -106,6 +106,14 @@ try {
   t.ok('the co-host can leave', (await co(headB, evA, 'DELETE', divB)).s === 200);
   const listed2 = await headB.call('GET', `/api/divisions/${divB}/events`);
   t.ok('and it is gone from their page', !(listed2.j.events ?? []).some((e) => e.id === evA));
+  // a co-host's Head checks people in at the event (and cannot edit it)
+  await co(headA, evA, 'POST', divB);
+  await co(headB, evA, 'PATCH', divB, { action: 'accept' });
+  const tk3 = await mkTicket(evA, memberA.id);
+  t.ok('a co-hosting division’s Head finds the ticket', (await headB.call('POST', '/api/tickets/checkin', { code: code(tk3.ticket_code), preview: true })).s === 200);
+  t.ok('but cannot change the event’s self check-in', (await mode(headB, evA)).s === 403);
+  await co(headB, evA, 'DELETE', divB);
+  t.ok('after leaving they no longer find it', (await headB.call('POST', '/api/tickets/checkin', { code: code(tk3.ticket_code), preview: true })).s === 404);
   const toTG = await co(headA, evA, 'POST', null);
   t.ok('a division can invite Triton Gaming', toTG.s === 200 && toTG.j.status === 'invited', JSON.stringify(toTG));
   t.ok('a TG officer cannot accept for Triton Gaming', (await co(officer, evA, 'PATCH', null, { action: 'accept' })).s === 403);
