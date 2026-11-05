@@ -31,7 +31,15 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
   if (!hat) {
     return (
       <div className={styles.page}>
-        <SectionHeader title="Division" flush sub="Pick one of your divisions in the switcher above the menu." />
+        <SectionHeader
+          title="Division"
+          flush
+          sub={
+            params.get('tab')
+              ? 'That division was not found, or you do not have access to it. Pick one of yours in the switcher above the menu.'
+              : 'Pick one of your divisions in the switcher above the menu.'
+          }
+        />
       </div>
     );
   }

@@ -126,6 +126,30 @@ export const SECTIONS: SectionDef[] = [
 ];
 
 export const SECTION_IDS = SECTIONS.map((s) => s.id);
+
+// A division's pages live at /portal/<division address>/<page>, so a division's address must never be a word the portal already uses: a section, or the folder of a page of its own (/portal/scan,
+// /portal/code/…). The folders under app/(portal)/portal are checked against this list by a test, so a new page cannot slip in unnoticed. Plain data.
+export const RESERVED_PORTAL_WORDS: readonly string[] = [
+  ...SECTION_IDS,
+  'activity',
+  'all',
+  'api',
+  'code',
+  'content',
+  'division',
+  'finish-profile',
+  'in',
+  'links',
+  'new',
+  'recap',
+  'scan',
+  'summary',
+  'check-ins',
+  'newsletter',
+  'login',
+  'logout',
+];
+export const isReservedPortalWord = (word: string): boolean => RESERVED_PORTAL_WORDS.includes(word.toLowerCase());
 export const sectionLabel = (id: string) => SECTIONS.find((s) => s.id === id)?.label ?? id;
 export const MAIN_TABS: Record<string, string> = Object.fromEntries(SECTIONS.filter((s) => s.mainTab).map((s) => [s.id, s.mainTab!]));
 

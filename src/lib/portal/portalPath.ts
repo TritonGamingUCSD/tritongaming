@@ -1,4 +1,4 @@
-import { SECTION_IDS } from '@/lib/portal/sections';
+import { SECTION_IDS, isReservedPortalWord } from '@/lib/portal/sections';
 
 // The portal's address: /portal/<section>/<tab>/<subtab>/<detail> (the last is used where a record has pages of its own, like a Logistics event's tabs). Everything else (an open doc, a search, a filter) stays in the
 // query string. next.config.ts rewrites these paths to the hub's /portal?section=…&tab=…&subtab=… on a fresh load, so the
@@ -16,7 +16,11 @@ export function parsePortalPath(pathname: string): { section: string; tab?: stri
     .split('/')
     .filter(Boolean)
     .map(decodeURIComponent);
-  if (!pathname.startsWith('/portal') || !parts.length || !SECTIONS.has(parts[0])) return null;
+  if (!pathname.startsWith('/portal') || !parts.length) return null;
+  // A division's pages are /portal/<division address>/<page>: a first word that is neither a section nor a page of the portal's own (those words are reserved, so a division can never take one).
+  // The hub reads it as the Division section, the address as its tab and the page as its subtab.
+  if (!SECTIONS.has(parts[0]) && !isReservedPortalWord(parts[0])) return { section: 'division', tab: parts[0], subtab: parts[1], detail: parts[2] };
+  if (!SECTIONS.has(parts[0])) return null;
   return { section: parts[0], tab: parts[1], subtab: parts[2], detail: parts[3] };
 }
 
@@ -42,7 +46,13 @@ export function portalHref(params: URLSearchParams): string {
   PATH_KEYS.forEach((k) => rest.delete(k));
   const section = params.get('section');
   let path = '/portal';
-  if (section && SECTIONS.has(section)) {
+  if (section === 'division' && params.get('tab')) {
+    // /portal/<division address>/<page>
+    const slug = params.get('tab') as string;
+    const page = params.get('subtab');
+    const detail = page ? params.get('detail') : null;
+    path += `/${encodeURIComponent(slug)}${page ? `/${encodeURIComponent(page)}` : ''}${detail ? `/${encodeURIComponent(detail)}` : ''}`;
+  } else if (section && SECTIONS.has(section)) {
     const tab = params.get('tab');
     const subtab = tab ? params.get('subtab') : null;
     const detail = subtab ? params.get('detail') : null;

@@ -20,6 +20,9 @@ const nextConfig: NextConfig = {
         { source: `/portal/:section(${sections})/:tab`, destination: '/portal?section=:section&tab=:tab' },
         { source: `/portal/:section(${sections})/:tab/:subtab`, destination: '/portal?section=:section&tab=:tab&subtab=:subtab' },
         { source: `/portal/:section(${sections})/:tab/:subtab/:detail`, destination: '/portal?section=:section&tab=:tab&subtab=:subtab&detail=:detail' },
+        // A division's pages: /portal/<division address>/<page>. Last, so every real page and section above wins; the address is looked up by the portal (an unknown one says so).
+        { source: '/portal/:slug', destination: '/portal?section=division&tab=:slug' },
+        { source: '/portal/:slug/:page', destination: '/portal?section=division&tab=:slug&subtab=:page' },
       ],
     };
   },
