@@ -16,6 +16,7 @@ import DivisionPageEditor from './DivisionPageEditor';
 import DivisionQr from './DivisionQr';
 import DivisionRoster from './DivisionRoster';
 import DivisionNextEvent from './DivisionNextEvent';
+import DivisionAnnouncements from './DivisionAnnouncements';
 import styles from './division.module.css';
 
 // A division's pages in the portal. The address says which: /portal/division/<division address>/<page>. The division's sidebar (DesktopShell) lists the pages; this draws the open one.
@@ -132,6 +133,7 @@ function Home({ hat }: { hat: DivisionHat }) {
         </div>
       </div>
       <DivisionNextEvent hat={hat} />
+      <DivisionAnnouncements hat={hat} />
       <div className={styles.stats}>
         {cards.map((c) => (
           <div key={c.label} className={styles.stat}>

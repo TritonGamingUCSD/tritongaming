@@ -1008,7 +1008,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
                           name: d.name,
                           logoUrl: divisionLogoSrc(d.logo_url),
                           accent: accentOf(d.accent).hex,
-                          joinUrl: d.discord_url || d.application_url || null,
+                          id: d.id,
+                          discordUrl: d.discord_url || null,
                         }))
                     : []
                 }

@@ -40,3 +40,13 @@
 .nextBtn { background: var(--hat, var(--yellow)); color: #011941; box-shadow: 2px 2px 0 rgba(var(--pp-ink-rgb), 0.8); } /* theme-ok */
 .nextBtnAlt { background: transparent; }
 .nextBtn:hover, .nextBtnAlt:hover { transform: translateY(-1px); }
+
+/* Announcements on the division Home. */
+.ann { display: grid; gap: 0.6rem; padding: 1rem 1.1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 8px; background: var(--pp-card); color: var(--pp-ink); }
+.annTitle { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.05rem; }
+.annList { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; }
+.annItem { display: flex; justify-content: space-between; gap: 0.8rem; padding: 0.55rem 0.7rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.15); border-radius: 6px; }
+.annItem small { display: block; opacity: 0.7; font-size: 0.78rem; }
+.annItem p { margin: 0.3rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.annForm { display: grid; gap: 0.5rem; }
+.annInput { width: 100%; padding: 0.5rem 0.7rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; background: var(--pp-paper); color: var(--pp-ink); font: inherit; box-sizing: border-box; }

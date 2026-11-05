@@ -16,6 +16,7 @@ import HomeCards, { type HomeCard } from './HomeCards';
 import NextEventHero from './NextEventHero';
 import TermProgress from './TermProgress';
 import MemberPass, { type PassData } from './MemberPass';
+import JoinDivision from './JoinDivision';
 import type { TermInfoData } from '@/lib/members/termInfo';
 import heroStyles from './homeHero.module.css';
 import { RequiredBanner } from './docs/DocRequired';
@@ -101,7 +102,7 @@ export function DashboardBody({
   /** Someone not on the team: their member pass (a student) or welcome ticket (a guest) opens the page. */
   pass?: PassData | null;
   /** Divisions to explore (when division pages are open to everyone): a card each, opening its public page. */
-  explore?: { slug: string; name: string; logoUrl: string | null; accent: string; joinUrl: string | null }[];
+  explore?: { slug: string; name: string; logoUrl: string | null; accent: string; id: string; discordUrl: string | null }[];
   term?: TermInfoData | null;
   cards?: HomeCard[];
   logistics?: boolean;
@@ -179,11 +180,7 @@ export function DashboardBody({
                   <small>Visit the division</small>
                 </span>
               </a>
-              {d.joinUrl && (
-                <a href={d.joinUrl} className={styles.joinBtn} target="_blank" rel="noopener noreferrer">
-                  Join
-                </a>
-              )}
+              <JoinDivision id={d.id} discordUrl={d.discordUrl} />
             </div>
           ))}
         </section>

@@ -18,6 +18,14 @@ interface Person {
   role: Role;
   since: string;
 }
+interface JoinRequest {
+  id: string;
+  user_id: string;
+  name: string;
+  avatarUrl: string | null;
+  message: string;
+  at: string;
+}
 interface Match {
   id: string;
   name: string;
@@ -36,6 +44,7 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
   const [matches, setMatches] = useState<Match[]>([]);
   const [addRole, setAddRole] = useState<Role>('division_member');
   const [removing, setRemoving] = useState<string | null>(null);
+  const [requests, setRequests] = useState<JoinRequest[]>([]);
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/divisions/${hat.id}/roster`, { cache: 'no-store' }).catch(() => null);
@@ -43,11 +52,32 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
     if (!r?.ok) setError(j.error || 'Could not load the roster.');
     else setPeople(j.people as Person[]);
   }, [hat.id]);
+  const loadRequests = useCallback(async () => {
+    if (!canManage) return;
+    const r = await fetch(`/api/divisions/${hat.id}/join-requests`, { cache: 'no-store' }).catch(() => null);
+    const j = r?.ok ? await r.json().catch(() => ({})) : {};
+    setRequests((j.requests as JoinRequest[]) ?? []);
+  }, [hat.id, canManage]);
   useEffect(() => {
     setPeople(null);
     setError('');
     void load();
-  }, [load]);
+    void loadRequests();
+  }, [load, loadRequests]);
+
+  async function answer(id: string, action: 'approve' | 'decline') {
+    setBusy(true);
+    setError('');
+    const r = await fetch(`/api/divisions/${hat.id}/join-requests`, {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ id, action }),
+    }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {};
+    setBusy(false);
+    if (!r?.ok) setError(j.error || 'That did not work.');
+    await Promise.all([load(), loadRequests()]);
+  }
 
   // Search as they type (after a short pause).
   useEffect(() => {
@@ -89,6 +119,27 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
   return (
     <div className={rosterStyles.wrap}>
       {error && <Notice tone="error">{error}</Notice>}
+      {canManage && requests.length > 0 && (
+        <section className={rosterStyles.add} aria-label="Join requests">
+          <strong>Join requests ({requests.length})</strong>
+          <ul className={rosterStyles.results}>
+            {requests.map((q) => (
+              <li key={q.id} className={rosterStyles.result}>
+                <span className={rosterStyles.pname}>
+                  {q.name}
+                  {q.message && <small style={{ display: 'block', fontWeight: 400, opacity: 0.8, whiteSpace: 'normal' }}>{q.message}</small>}
+                </span>
+                <Button size="sm" disabled={busy} onClick={() => void answer(q.id, 'approve')}>
+                  Approve
+                </Button>
+                <Button size="sm" variant="ghost" disabled={busy} onClick={() => void answer(q.id, 'decline')}>
+                  Decline
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       {canManage && (
         <section className={rosterStyles.add} aria-label="Add someone">
           <strong>Add someone</strong>
