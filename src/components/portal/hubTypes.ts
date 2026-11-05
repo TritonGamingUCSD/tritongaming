@@ -30,6 +30,11 @@ export interface HubIdentity {
   /** The member level (e.g. "Silver") and how far to the next one (0 to 100), shown as a ring around the picture. */
   level?: string;
   progress?: number;
+  /** Points, and what is left to the next level (e.g. "180 points to Gold"), for the player card in the account menu. */
+  points?: number;
+  toNext?: string;
+  /** The help entry of the account menu: its name ("Help inbox" for people who answer) and how many are waiting. */
+  help?: { label: string; waiting: number };
   roles?: { label: string; color: string }[];
 }
 

@@ -1013,3 +1013,26 @@
   .panelHeader .crumbGroup { padding: 0; margin: 0; background: none; box-shadow: none; transform: none; font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 0.82rem; font-weight: 600; letter-spacing: 0; text-transform: none; color: #a9cdf2; } /* theme-ok */
   .panelHeader .backBtn { box-shadow: none; border-width: 1px; }
 }
+
+/* Sidebar badges (member counts): whole, readable, with room before the edge. */
+@media (min-width: 900px) {
+  .rail .railNav .railItem { padding-right: 0.8rem; }
+  .rail .railNav .railBadge { flex-shrink: 0; margin-left: auto; min-width: 1.6rem; padding: 0.05rem 0.5rem; border-radius: 999px; font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 0.82rem; font-weight: 700; line-height: 1.4; }
+}
+
+/* The sidebar's top is the portal's name, not a person: Byte and "Triton Gaming" (the person is in the top bar). A thinner accent line under the header. */
+@media (min-width: 900px) {
+  .railLogo { display: flex; align-items: center; gap: 0.7rem; padding: 0.25rem 0.5rem; border: 0; border-radius: 6px; background: none; color: var(--pp-chrome-fg); cursor: pointer; text-align: left; }
+  .railLogo:hover { background: rgba(255, 255, 255, 0.07); }
+  .railLogoByte { flex: none; width: 2.7rem; --bc-edge: #fbf7e6; } /* theme-ok: cream outline on the navy panel */
+  .railLogoText { font-family: var(--font-futura-heavy); font-size: 1.1rem; line-height: 1.1; }
+  .railLogoText small { display: block; margin-top: 0.15rem; font-family: var(--font-dm-sans), system-ui, sans-serif; font-size: 0.8rem; font-weight: 500; opacity: 0.75; }
+  .frameBody { border-top-width: 3px; }
+}
+
+@media (min-width: 900px) {
+  .railLogoOn { background: #ffffff; color: #011941; } /* theme-ok: the open page is white, like the open page in the list */
+  .railLogoOn:hover { background: #ffffff; }
+  .railLogoOn .railLogoByte { --bc-edge: #483848; } /* theme-ok */
+  .topBar .topName, .topBar .topName * { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.15rem; letter-spacing: 0; text-transform: none; }
+}

@@ -379,7 +379,6 @@ export default function PortalHub({
     return (
       <PlainShell
         identity={identity}
-        railFooter={railFooter}
         homeExtras={homeExtras}
         groupedSections={groupedSections}
         openSection={openSection}
@@ -396,7 +395,6 @@ export default function PortalHub({
     return (
       <DesktopShell
         identity={identity}
-        railFooter={railFooter}
         homeExtras={homeExtras}
         groupedSections={groupedSections}
         openSection={openSection}

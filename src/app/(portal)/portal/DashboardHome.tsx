@@ -52,7 +52,7 @@ export function DashboardWelcome({ eyebrow, name, showSearch = true }: { eyebrow
   return (
     <header className={styles.welcome}>
       <h1 className={styles.hello} data-keep>
-        Welcome back, <span className={styles.name}>{name}</span>
+        Welcome back,<span className={styles.name}>{name}</span>
         <span className={styles.term}>{eyebrow}</span>
       </h1>
       {showSearch && (

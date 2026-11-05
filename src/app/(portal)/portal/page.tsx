@@ -1015,6 +1015,9 @@ export default async function PortalDashboard({ searchParams }: Props) {
               roleLabel: primaryRoleLabel,
               roles: roleChips,
               level: memberTier?.name,
+              points: pointsData?.balance,
+              toNext: pointsData && memberNext ? `${(memberNext.min - pointsData.lifetimeEarned).toLocaleString()} points to ${memberNext.name}` : undefined,
+              help: { label: canHandleHelp ? 'Help inbox' : 'Help & questions', waiting: helpWaiting },
               progress:
                 pointsData && memberTier
                   ? memberNext

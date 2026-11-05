@@ -165,3 +165,10 @@
 @media (max-width: 640px) { .note { flex-direction: column; align-items: flex-start; padding: 0.9rem 1rem; } .noteKicker { display: block; } .noteTitle { white-space: normal; font-size: 1rem; } .noteLink { font-size: 0.9rem; } }
 
 .code { margin-bottom: 0; }
+
+/* On a computer the sidebar has the code box and the top bar has the search, so Home does not repeat them (phones and the plain top bar keep both). A Welcome line with the term beside it, quick links as flat as the cards. */
+:global([data-app-frame]) .search, :global([data-app-frame]) .code { display: none; }
+.quickLink { border-width: 1px; border-color: rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; }
+.quickLink strong { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 0.97rem; }
+.h { font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 1.1rem; }
+.name { margin-left: 0.25rem; }

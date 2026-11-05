@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import styles from './SignOutButton.module.css';
 
-export default function SignOutButton() {
+export default function SignOutButton({ plain = false, className = '' }: { plain?: boolean; className?: string }) {
   const router = useRouter();
 
   async function handleSignOut() {
@@ -15,6 +15,12 @@ export default function SignOutButton() {
     router.refresh();
   }
 
+  if (plain)
+    return (
+      <button type="button" className={className} onClick={handleSignOut}>
+        Sign out
+      </button>
+    );
   return (
     <button className={styles.btn} onClick={handleSignOut}>
       <span aria-hidden="true" className={styles.icon}>

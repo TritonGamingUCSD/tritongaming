@@ -1,21 +1,19 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { useEffect, useRef, useState } from 'react';
-import Image from 'next/image';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Hash, Home } from 'lucide-react';
+import { ChevronDown, Hash } from 'lucide-react';
 import CodeBox from '@/components/portal/CodeBox';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
-import PortalThemeToggle from './PortalThemeToggle';
-import ScanLink from './ScanLink';
 import CodeButton from './CodeButton';
 import PortalCrumbs from './PortalCrumbs';
 import styles from './PortalHub.module.css';
 import { smallIcon } from './smallIcon';
-import AreaPixelIcon from './AreaPixelIcon';
 import ByteMini from '@/components/Bytecode/ByteMini';
+import AccountMenu from './AccountMenu';
+import AreaPixelIcon from './AreaPixelIcon';
 import { DASHBOARD_ACCENT, GROUP_ACCENT, GROUP_LABEL } from './hubConstants';
 import { GroupedSection, HubFrame, HubIdentity, HubSection } from './hubTypes';
 import { HomeGroups } from './HomeGroups';
@@ -30,7 +28,6 @@ import { HomeGroups } from './HomeGroups';
 // where it earns its keep — the first tap on mobile.
 export function DesktopShell({
   identity,
-  railFooter,
   homeExtras,
   groupedSections,
   openSection,
@@ -43,7 +40,6 @@ export function DesktopShell({
 }: {
   frame?: HubFrame;
   identity?: HubIdentity;
-  railFooter?: ReactNode;
   homeExtras?: ReactNode;
   groupedSections: GroupedSection[];
   openSection: HubSection | null;
@@ -76,30 +72,17 @@ export function DesktopShell({
   const [expanded, setExpanded] = useState<string | null>(null);
   const openGroup = openSection?.group ?? null;
   useEffect(() => setExpanded(null), [openGroup]);
-  const isFolded = (g: string, count: number) => count > 1 && g !== openGroup && g !== expanded;
-  const toggleGroup = (g: string) => setExpanded((cur) => (cur === g ? null : g));
-  // Byte sleeps at night (the person's own clock, read after the page loads so the server's page matches).
-  const [asleep, setAsleep] = useState(false);
-  useEffect(() => {
-    const h = new Date().getHours();
-    setAsleep(h >= 23 || h < 6);
-  }, []);
-  // The account menu (profile, help, back to the site, sign out) lives under the picture in the top bar; it closes on a click outside or Escape.
-  const [accountOpen, setAccountOpen] = useState(false);
-  const accountRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!accountOpen) return;
-    const away = (e: MouseEvent) => {
-      if (!accountRef.current?.contains(e.target as Node)) setAccountOpen(false);
-    };
-    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setAccountOpen(false);
-    document.addEventListener('mousedown', away);
-    document.addEventListener('keydown', esc);
-    return () => {
-      document.removeEventListener('mousedown', away);
-      document.removeEventListener('keydown', esc);
-    };
-  }, [accountOpen]);
+  const isFolded = (g: string, count: number) => count > 1 && g !== (expanded === '' ? null : (expanded ?? openGroup));
+  const toggleGroup = (g: string) => setExpanded((cur) => ((cur ?? openGroup) === g ? '' : g));
+  // Byte sleeps at night (the person's own clock; the server's page always draws him awake, so there is no mismatch).
+  const asleep = useSyncExternalStore(
+    () => () => {},
+    () => {
+      const h = new Date().getHours();
+      return h >= 23 || h < 6;
+    },
+    () => false,
+  );
   const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
   // the whole frame is on screen without scrolling the page. Re-measured when the window or the page above changes.
@@ -130,45 +113,22 @@ export function DesktopShell({
           if (collapsed && e.detail > 0 && (e.target as HTMLElement).closest('button, a')) (document.activeElement as HTMLElement | null)?.blur?.();
         }}
       >
-        {identity && (
-          <button
-            type="button"
-            className={styles.railIdentity}
-            onClick={() => open('profile')}
-            aria-label={`${identity.name}${identity.roles?.length ? ` ${identity.roles.map((r) => r.label).join(' ')}` : ''}, open your profile`}
-            title="Your profile"
-          >
-            <span className={styles.railRing} style={{ ['--xp' as string]: `${identity.progress ?? 0}%` }}>
-              {identity.avatarUrl ? (
-                <Image src={identity.avatarUrl} alt="" width={40} height={40} className={styles.railAvatar} unoptimized referrerPolicy="no-referrer" />
-              ) : (
-                <span className={styles.railAvatarFallback} aria-hidden="true" data-letter={identity.name[0]?.toUpperCase() ?? 'T'} />
-              )}
-            </span>
-            <span className={styles.railIdentityText}>
-              <span className={styles.railName}>{identity.name}</span>{' '}
-              {identity.roles && identity.roles.length > 0 ? (
-                <span className={styles.railRoles}>
-                  {identity.level && <span className={styles.railLevel}>{identity.level}</span>}
-                  {identity.roles.map((r) => (
-                    <span
-                      key={r.label}
-                      className={styles.railRoleChip}
-                      style={{ color: `color-mix(in srgb, ${r.color} 30%, var(--pp-chrome-fg))`, background: `${r.color}26`, borderColor: `${r.color}66` }}
-                    >
-                      {r.label}
-                    </span>
-                  ))}
-                </span>
-              ) : (
-                <span className={styles.railRole}>{identity.roleLabel}</span>
-              )}
-            </span>
-            <span className={styles.railByte} aria-hidden="true">
-              <ByteMini pose={asleep ? 'sleep' : 'awake'} />
-            </span>
-          </button>
-        )}
+        <button
+          type="button"
+          className={`${styles.railLogo} ${!openSection ? styles.railLogoOn : ''}`}
+          onClick={close}
+          aria-current={!openSection ? 'page' : undefined}
+          aria-label="Triton Gaming portal, go to Home"
+          title="Home"
+        >
+          <span className={styles.railLogoByte} aria-hidden="true">
+            <ByteMini pose={asleep ? 'sleep' : 'awake'} />
+          </span>
+          <span className={styles.railLogoText}>
+            Triton Gaming
+            <small>Member portal</small>
+          </span>
+        </button>
         {/* the code box: a meeting's, a ticket's, a Trivia game's or a poll's code can be typed on any page */}
         <div className={styles.railCode} title="Enter a code: a meeting check-in, a ticket, a Trivia game or a poll">
           <span className={styles.railCodeIcon} aria-hidden="true">
@@ -179,18 +139,6 @@ export function DesktopShell({
           </div>
         </div>
         <nav className={styles.railNav} aria-label="Portal sections">
-          <button
-            className={`${styles.railItem} ${!openSection ? styles.railItemActive : ''}`}
-            style={{ ['--accent' as string]: DASHBOARD_ACCENT }}
-            onClick={close}
-            aria-current={!openSection ? 'page' : undefined}
-            title="Home"
-          >
-            <span className={styles.railIcon} aria-hidden="true">
-              <Home />
-            </span>
-            <span className={styles.railLabel}>Home</span>
-          </button>
           {groupedSections
             .map(({ group, items: all }) => ({ group, items: all.filter((s) => !s.railHidden) }))
             .filter(({ items }) => items.length > 0)
@@ -265,48 +213,16 @@ export function DesktopShell({
             </div>
           ) : (
             <div className={styles.topTitle}>
-              <span className={styles.topName}>{frame?.greeting ?? 'Home'}</span>
+              <span className={styles.topName}>Home</span>
             </div>
           )}
           <div className={styles.topRight}>
-            {frame?.viewAs}
             <div className={styles.topSearch}>
               <PortalSearch compact />
             </div>
             {collapsed && <CodeButton />}
-            <ScanLink />
-            <PortalThemeToggle />
             <NotificationBell inline />
-            {identity && (
-              <div className={styles.account} ref={accountRef}>
-                <button
-                  type="button"
-                  className={styles.accountBtn}
-                  onClick={() => setAccountOpen((v) => !v)}
-                  aria-haspopup="menu"
-                  aria-expanded={accountOpen}
-                  aria-label="Your account menu"
-                  title={identity.name}
-                >
-                  {identity.avatarUrl ? (
-                    <Image src={identity.avatarUrl} alt="" width={32} height={32} className={styles.accountAvatar} unoptimized referrerPolicy="no-referrer" />
-                  ) : (
-                    <span className={styles.accountAvatar} data-letter={identity.name[0]?.toUpperCase() ?? 'T'}>
-                      {identity.name[0]?.toUpperCase() ?? 'T'}
-                    </span>
-                  )}
-                </button>
-                {accountOpen && (
-                  <div className={styles.accountMenu} role="menu" onClick={() => setAccountOpen(false)}>
-                    <p className={styles.accountName}>{identity.name}</p>
-                    <button type="button" role="menuitem" className={styles.accountItem} onClick={() => open('profile')}>
-                      Your profile
-                    </button>
-                    <div className={styles.accountItems}>{railFooter}</div>
-                  </div>
-                )}
-              </div>
-            )}
+            {identity && <AccountMenu identity={identity} viewAs={frame?.viewAs} onProfile={() => open('profile')} />}
           </div>
         </header>
         {frame?.banners && <div className={styles.frameBanners}>{frame.banners}</div>}
