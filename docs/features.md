@@ -9,6 +9,9 @@ How the main pieces work and where the code is. Each section names the files so 
 - **Pins:** the star on a row saves to `portal_pins` (per person, so it follows them across devices). Starred pages show as "Your pins" chips on Home.
 - **Shout-out:** one message (up to 280 characters, optional https or /portal link, 1 to 30 days) from exec or admin, shown at the top of everyone's Home. Posting a new one replaces the showing one. Stored in `home_shoutouts`; routes: `/api/portal/pins`, `/api/portal/shoutout`.
 
+## Events → Analytics → Table
+A table view next to the charts (`?view=table`, in the address): one row per past event (the latest 12, 24 or 48), one column for every number the event report has and for each answer in its breakdowns: attendance, first-time and returning, claim timing and sources, paid tickets and revenue, points and ratings, year, college, major and field, gender and pronouns, games and platforms. Counts or percent (`?stats=pct`), sortable by any column (`?sort=checkedIn`, `-checkedIn` for high to low), groups of columns can be hidden, a total row, and **Copy as text** (tab separated, for pasting into a sheet; there is no file download). Aggregates only, for people who can open event reports (`checkin`); the numbers come from `getEventSummary` through `/api/events/stats` (a few events at a time, kept five minutes).
+
 ## Meetings (live screen)
 
 Code: `src/app/(portal)/portal/meetings`, `src/app/api/meetings`, `src/lib/meetings`.

@@ -14,6 +14,8 @@ import type { EventTicketStat } from './getEventsData';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import EventCheckinsPage from './EventCheckinsPage';
 import EventEmailsTab from './EventEmailsTab';
+import EventStatsTable from './EventStatsTable';
+import { useAddressState, wordCodec } from '@/lib/portal/usePageState';
 import DeleteEventModal from './DeleteEventModal';
 import { ButtonLink } from '@/components/ui/Button';
 import styles from './events.module.css';
@@ -84,6 +86,8 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
   const [checkinsKey, setCheckinsKey] = useState<string | null>(initialTab === 'check-ins' && initialSub ? initialSub : null);
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'list');
   const syncUrl = usePortalTabSync('events');
+  // Analytics shows charts or the table of every event's numbers (in the address, so a link opens the right one).
+  const [view, setView] = useAddressState('view', wordCodec(['charts', 'table'] as const, 'charts'));
   function selectTab(t: Tab) {
     setTab(t);
     syncUrl(t);
@@ -160,8 +164,23 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
 
       {tab === 'emails' && canEmail && <EventEmailsTab />}
 
+      {tab === 'analytics' && canEdit && (
+        <SectionTabs<'charts' | 'table'>
+          variant="segmented"
+          label="Analytics view"
+          value={view}
+          onChange={setView}
+          tabs={[
+            { id: 'charts', label: 'Charts' },
+            { id: 'table', label: 'Table' },
+          ]}
+        />
+      )}
+      {tab === 'analytics' && canEdit && view === 'table' && <EventStatsTable />}
+
       {tab === 'analytics' &&
         canEdit &&
+        view === 'charts' &&
         (eventsPerMonth.length === 0 && ticketsPerMonth.length === 0 && eventStats.length === 0 ? (
           <div className={styles.empty}>
             <p>Not enough data yet to chart trends.</p>
