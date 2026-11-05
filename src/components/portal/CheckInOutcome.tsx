@@ -2,14 +2,69 @@
 
 import { Check, CircleAlert, Gift, Info, TriangleAlert } from 'lucide-react';
 import Button from '@/components/ui/Button';
+import ByteMini from '@/components/Bytecode/ByteMini';
+import type { ReactNode } from 'react';
 import { formatPacificTime } from '@/lib/core/timezone';
 import type { Outcome } from '@/lib/checkin/anyCode';
 import styles from './CheckInOutcome.module.css';
 
 const clock = (iso?: string) => (iso ? formatPacificTime(iso) : '');
 
+type Tone = 'ok' | 'warn' | 'bad' | 'info';
+
+// One flat result card for every outcome: a colored icon tile (Byte waves when it worked), what it was and the headline, the details in plain rows, any points that were earned, and the buttons.
+function Card({
+  tone,
+  icon,
+  kicker,
+  title,
+  bare,
+  points,
+  children,
+  actions,
+}: {
+  tone: Tone;
+  icon: ReactNode;
+  kicker?: string;
+  title: string;
+  bare?: boolean;
+  points?: number;
+  children?: ReactNode;
+  actions?: ReactNode;
+}) {
+  return (
+    <div className={`${styles.card} ${styles[tone]} ${bare ? styles.bare : ''}`}>
+      <div className={styles.head}>
+        <span className={styles.tile} aria-hidden="true">
+          {tone === 'ok' ? <ByteMini pose="happy" className={styles.byte} /> : icon}
+        </span>
+        <div className={styles.headText}>
+          {kicker && <span className={styles.kicker}>{kicker}</span>}
+          <strong className={styles.title}>{title}</strong>
+        </div>
+        {!!points && (
+          <span className={styles.pts} aria-label={`${points} points earned`}>
+            <span className={styles.ptsGhost} aria-hidden="true">
+              +{points}
+            </span>
+            +{points} pts
+          </span>
+        )}
+      </div>
+      {children && <div className={styles.rows}>{children}</div>}
+      {actions && <div className={styles.actions}>{actions}</div>}
+    </div>
+  );
+}
+const Row = ({ label, children }: { label: string; children: ReactNode }) => (
+  <p className={styles.row}>
+    <span>{label}</span>
+    <b>{children}</b>
+  </p>
+);
+
 // Says exactly what a check-in did, in the same words wherever it happened (the scanner, the code box, the Check-In page).
-// `bare` leaves out the big status icon, for where the scanner's own ring already shows it.
+// `bare` is the scanner's sheet, where its own ring already shows the outcome: lighter, and no big icon.
 export default function CheckInOutcome({
   outcome,
   onDone,
@@ -31,164 +86,147 @@ export default function CheckInOutcome({
 }) {
   if (outcome.kind === 'info') {
     return (
-      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
-        <span className={`${styles.icon} ${styles.info}`}>
-          <Info size={32} aria-hidden="true" />
-        </span>
-        <strong className={styles.title}>{outcome.title}</strong>
-        <span className={styles.detail}>{outcome.message}</span>
-        {!noButton && (
-          <Button variant="secondary" onClick={onDone}>
-            {doneLabel}
-          </Button>
-        )}
-      </div>
+      <Card
+        tone="info"
+        icon={<Info size={26} />}
+        title={outcome.title}
+        bare={bare}
+        actions={
+          !noButton && (
+            <Button variant="secondary" onClick={onDone}>
+              {doneLabel}
+            </Button>
+          )
+        }
+      >
+        <p className={styles.plain}>{outcome.message}</p>
+      </Card>
     );
   }
   if (outcome.kind === 'confirmEvent') {
     return (
-      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
-        <span className={`${styles.icon} ${styles.warn}`}>
-          <TriangleAlert size={34} strokeWidth={2} aria-hidden="true" />
-        </span>
-        <span className={styles.kicker}>Wrong event?</span>
-        <strong className={styles.title}>{outcome.userName}</strong>
-        <span className={styles.detail}>
+      <Card
+        tone="warn"
+        icon={<TriangleAlert size={26} />}
+        kicker="Wrong event?"
+        title={outcome.userName}
+        bare={bare}
+        actions={
+          <>
+            <Button variant="secondary" onClick={onDone} disabled={busy}>
+              Cancel, wrong ticket
+            </Button>
+            <Button variant="secondary" onClick={onConfirmEvent} loading={busy}>
+              Check in to {outcome.eventTitle || 'that event'}
+            </Button>
+          </>
+        }
+      >
+        <p className={styles.plain}>
           This ticket is for <b>{outcome.eventTitle || 'another event'}</b>, but <b>{outcome.nowEvent}</b> {outcome.nowEvent.includes(' and ') ? 'are' : 'is'} on right now. Nobody
           has been checked in.
-        </span>
-        <div className={styles.choices}>
-          <Button variant="secondary" onClick={onDone} disabled={busy}>
-            Cancel, Wrong Ticket
-          </Button>
-          <Button variant="secondary" onClick={onConfirmEvent} loading={busy}>
-            Check In To {outcome.eventTitle || 'That Event'}
-          </Button>
-        </div>
-      </div>
+        </p>
+      </Card>
     );
   }
   if (outcome.kind === 'meeting') {
     return (
-      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
-        <span className={`${styles.icon} ${styles.ok}`}>
-          <Check size={34} strokeWidth={2.5} aria-hidden="true" />
-        </span>
-        <span className={styles.kicker}>Meeting check-in</span>
-        <strong className={styles.title}>{outcome.already ? 'Already checked in' : 'You’re checked in'}</strong>
-        <span className={styles.detail}>
-          {outcome.title} · {clock(outcome.at)}
-        </span>
-        {bare && <span className={styles.note}>Taking you to the meeting’s question and doc…</span>}
-        <Button onClick={onDone}>{doneLabel}</Button>
-      </div>
+      <Card
+        tone="ok"
+        icon={<Check size={26} />}
+        kicker="Meeting check-in"
+        title={outcome.already ? 'Already checked in' : 'You’re checked in'}
+        bare={bare}
+        actions={<Button onClick={onDone}>{doneLabel}</Button>}
+      >
+        <Row label="Meeting">{outcome.title}</Row>
+        <Row label="Time">{clock(outcome.at)}</Row>
+        {bare && <p className={styles.note}>Taking you to the meeting’s question and doc…</p>}
+      </Card>
     );
   }
   if (outcome.kind === 'online') {
     return (
-      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
-        <span className={`${styles.icon} ${styles.ok}`}>
-          <Check size={34} strokeWidth={2.5} aria-hidden="true" />
-        </span>
-        <span className={styles.kicker}>Online check-in</span>
-        <strong className={styles.title}>You’re checked in</strong>
-        <span className={styles.detail}>{outcome.eventTitle}</span>
-        <Button onClick={onDone}>{doneLabel}</Button>
-      </div>
+      <Card tone="ok" icon={<Check size={26} />} kicker="Online check-in" title="You’re checked in" bare={bare} actions={<Button onClick={onDone}>{doneLabel}</Button>}>
+        <Row label="Event">{outcome.eventTitle}</Row>
+      </Card>
     );
   }
   if (outcome.kind === 'ticket') {
     const fresh = outcome.status === 'active';
+    const status = fresh
+      ? outcome.dayTotal && outcome.dayTotal > 1
+        ? `Checked in, day ${outcome.dayNumber ?? '?'} of ${outcome.dayTotal}`
+        : 'Checked in'
+      : outcome.status === 'used'
+        ? `Already checked in${outcome.at ? ` at ${clock(outcome.at)}` : ''}${outcome.selfCheckin ? ' (self check-in)' : ''}`
+        : `Ticket ${outcome.status}`;
     return (
-      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
-        <span className={`${styles.icon} ${fresh ? styles.ok : styles.warn}`}>
-          {fresh ? <Check size={34} strokeWidth={2.5} aria-hidden="true" /> : <TriangleAlert size={34} strokeWidth={2} aria-hidden="true" />}
-        </span>
-        <span className={styles.kicker}>Event ticket{outcome.eventTitle ? ` · ${outcome.eventTitle}` : ''}</span>
-        <strong className={styles.title}>{outcome.userName}</strong>
-        <span className={styles.detail}>
-          {fresh
-            ? outcome.dayTotal && outcome.dayTotal > 1
-              ? `Checked in — day ${outcome.dayNumber ?? '?'} of ${outcome.dayTotal}`
-              : 'Checked in'
-            : outcome.status === 'used'
-              ? `Already checked in${outcome.at ? ` at ${clock(outcome.at)}` : ''}${outcome.selfCheckin ? ' (self check-in)' : ''}`
-              : `Ticket ${outcome.status}`}
-        </span>
+      <Card
+        tone={fresh ? 'ok' : 'warn'}
+        icon={fresh ? <Check size={26} /> : <TriangleAlert size={26} />}
+        kicker="Event ticket"
+        title={outcome.userName}
+        bare={bare}
+        points={fresh ? outcome.points : undefined}
+        actions={!noButton && <Button onClick={onDone}>{doneLabel}</Button>}
+      >
+        {outcome.eventTitle && <Row label="Event">{outcome.eventTitle}</Row>}
+        <Row label="Status">{status}</Row>
+        {fresh && outcome.lifetime !== undefined && outcome.tier && <Row label="Level">{`${outcome.tier} · ${outcome.lifetime.toLocaleString()} pts`}</Row>}
         {fresh && outcome.requiresForm && (
-          <div className={styles.badge}>
+          <div className={styles.callout}>
             <strong>AS Form still to do</strong>
-            <span>Tell them: “Scanning isn’t check-in — finish your AS Form on your phone now.”</span>
+            <span>Tell them: “Scanning isn’t check-in. Finish your AS Form on your phone now.”</span>
           </div>
         )}
         {!fresh && outcome.status === 'used' && outcome.requiresForm && (
-          <div className={styles.badge}>{outcome.formCompleted ? 'AS Form opened — check their “response recorded” screen' : 'AS Form not opened yet'}</div>
+          <div className={styles.callout}>{outcome.formCompleted ? 'AS Form opened. Check their “response recorded” screen.' : 'AS Form not opened yet.'}</div>
         )}
-        {fresh && !!outcome.points && (
-          <span className={styles.points}>
-            +{outcome.points} pts{outcome.lifetime !== undefined && outcome.tier ? ` · ${outcome.lifetime.toLocaleString()} pts · ${outcome.tier}` : ''}
-          </span>
-        )}
-        {!noButton && <Button onClick={onDone}>{doneLabel}</Button>}
-      </div>
+      </Card>
     );
   }
   if (outcome.kind === 'reward') {
     const pending = outcome.status === 'pending';
     return (
-      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
-        <span className={`${styles.icon} ${styles.info}`}>
-          <Gift size={30} aria-hidden="true" />
-        </span>
-        <span className={styles.kicker}>Reward pickup</span>
-        <strong className={styles.title}>{outcome.title}</strong>
-        <span className={styles.detail}>
-          For {outcome.member} · {outcome.cost} pts
-        </span>
-        {pending ? (
-          <>
-            <span className={styles.note}>Nothing is marked as given until you confirm.</span>
-            <div className={styles.row}>
+      <Card
+        tone="info"
+        icon={<Gift size={26} />}
+        kicker="Reward pickup"
+        title={outcome.title}
+        bare={bare}
+        actions={
+          pending ? (
+            <>
               <Button variant="secondary" onClick={onDone} disabled={busy}>
                 Cancel
               </Button>
               <Button onClick={onConfirmReward} loading={busy}>
-                Confirm Given
+                Confirm given
               </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <span className={styles.note}>This reward is already {outcome.status}.</span>
+            </>
+          ) : (
             <Button onClick={onDone}>{doneLabel}</Button>
-          </>
-        )}
-      </div>
+          )
+        }
+      >
+        <Row label="For">{outcome.member}</Row>
+        <Row label="Cost">{outcome.cost} pts</Row>
+        <p className={styles.note}>{pending ? 'Nothing is marked as given until you confirm.' : `This reward is already ${outcome.status}.`}</p>
+      </Card>
     );
   }
   if (outcome.kind === 'rewardDone') {
     return (
-      <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
-        <span className={`${styles.icon} ${styles.ok}`}>
-          <Check size={34} strokeWidth={2.5} aria-hidden="true" />
-        </span>
-        <span className={styles.kicker}>Reward pickup</span>
-        <strong className={styles.title}>Marked as given</strong>
-        <span className={styles.detail}>
-          {outcome.title} · {outcome.member}
-        </span>
-        {!noButton && <Button onClick={onDone}>{doneLabel}</Button>}
-      </div>
+      <Card tone="ok" icon={<Check size={26} />} kicker="Reward pickup" title="Marked as given" bare={bare} actions={!noButton && <Button onClick={onDone}>{doneLabel}</Button>}>
+        <Row label="Reward">{outcome.title}</Row>
+        <Row label="Member">{outcome.member}</Row>
+      </Card>
     );
   }
   return (
-    <div className={`${styles.box} ${bare ? styles.bare : ''}`}>
-      <span className={`${styles.icon} ${styles.bad}`}>
-        <CircleAlert size={32} aria-hidden="true" />
-      </span>
-      <strong className={styles.title}>Didn’t work</strong>
-      <span className={styles.detail}>{outcome.kind === 'error' ? outcome.message : ''}</span>
-      <Button onClick={onDone}>Try Again</Button>
-    </div>
+    <Card tone="bad" icon={<CircleAlert size={26} />} title="Didn’t work" bare={bare} actions={<Button onClick={onDone}>Try again</Button>}>
+      <p className={styles.plain}>{outcome.kind === 'error' ? outcome.message : ''}</p>
+    </Card>
   );
 }
