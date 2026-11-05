@@ -10,3 +10,8 @@
 .action { margin-top: auto; padding-top: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--p-accent-text); text-decoration: none; }
 .action:hover { text-decoration: underline; }
 [data-pp-theme='dark'] .action { color: var(--pp-chrome-accent); }
+
+/* The band: the cards touch, split by a thin line, and fill the whole width however many there are. */
+.band { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 1px; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 6px; overflow: hidden; background: rgba(var(--pp-ink-rgb), 0.22); }
+.band > .card { border: 0; border-radius: 0; }
+.grid { margin: 0; }
