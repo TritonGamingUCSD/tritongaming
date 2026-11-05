@@ -637,7 +637,7 @@
   .topRight { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 1; min-width: 0; }
   .topSearch { flex: 0 1 240px; min-width: 90px; }   /* the page name (and its path) keeps more of the bar at laptop widths */
   .topSearch > * { margin: 0 !important; max-width: none !important; }
-  .frameBody { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; padding: 1.5rem 1rem 3rem; }
+  .frameBody { flex: 1; min-height: 0; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(255, 255, 255, 0.18) transparent; padding: 2.6rem 1rem 3rem; }
   .appFrame .desktopContent { padding: 0; }
   .homeTiles { margin-bottom: 1.1rem; }
   /* Reminder banners (finish your profile, "View as") sit as slim strips right under the top bar, inside the frame. */
@@ -927,4 +927,21 @@
   .rail .railItemNested { margin-left: 1.1rem; box-shadow: inset 2px 0 0 rgba(var(--pp-chrome-rgb), 0.18); border-radius: 0 6px 6px 0; }
   .rail .railItemNested .railLabel { font-weight: 500; }
   .rail .railItemNested.railItemActive { box-shadow: inset 3px 0 0 var(--accent), 3px 3px 0 rgba(0, 0, 0, 0.45); }
+}
+
+/* ── The sidebar in the public site's look: the royal blue of the website's bands with white text and sky-blue headings, the same in light and dark. Only its own colors are re-set here, so everything inside it (labels, code box, buttons) follows. ── */
+@media (min-width: 900px) {
+  .rail {
+    --pp-chrome: #004276; --pp-chrome-2: #0a5190; --pp-chrome-fg: #ffffff; --pp-chrome-rgb: 255, 255, 255; --pp-chrome-edge: #011941; --pp-chrome-accent: #a9cdf2; /* theme-ok: the website's navy */
+    --pp-paper: #f3f1ea; --pp-ink: #011941; --pp-ink-rgb: 1, 25, 65; --pp-card: #ffffff; /* theme-ok: light pieces inside the navy panel */
+    background: #004276; /* theme-ok: the website's royal blue band */
+  }
+  .rail .railGroupLabel { font-family: var(--font-futura-heavy), var(--font-dm-sans), sans-serif; font-weight: 400; font-size: 0.86rem; letter-spacing: 0.01em; color: #a9cdf2 !important; } /* theme-ok */
+  .rail .railGroupLabel .railGroupDot { background: var(--yellow); }
+  .rail .railItemNested { box-shadow: inset 2px 0 0 rgba(255, 255, 255, 0.22); }
+  .rail .railItemActive { background: #ffffff; } /* theme-ok */
+  .rail .railItemNested.railItemActive { box-shadow: inset 3px 0 0 var(--yellow); }
+}
+@media (min-width: 900px) {
+  .rail input { background: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255, 255, 255, 0.4) !important; } /* theme-ok: the code box on the navy panel */
 }
