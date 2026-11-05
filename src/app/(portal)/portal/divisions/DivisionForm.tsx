@@ -20,6 +20,7 @@ import type { SocialEmbed } from '@/types/database';
 import LivePreview from '@/components/portal/LivePreview';
 import PageBlocksEditor from '@/components/PageBlocksEditor/PageBlocksEditor';
 import type { PageBlock } from '@/lib/site/pageBlocks';
+import { ACCENTS } from '@/lib/divisions/accent';
 import styles from '../events/new/newevent.module.css';
 
 export interface DivisionFormValues {
@@ -32,6 +33,9 @@ export interface DivisionFormValues {
   social_links: Record<string, string>;
   social_embeds: SocialEmbed[];
   page_blocks: PageBlock[];
+  accent: string;
+  tagline: string;
+  banner_url: string;
 }
 
 // Same Write/Preview markdown field as EventForm.tsx's (not extracted to a
@@ -156,6 +160,51 @@ export default function DivisionForm({
             shape="logo"
             maxDimension={512}
           />
+
+          <ImageUploadField
+            label="Banner"
+            value={form.banner_url}
+            onChange={(v) => set('banner_url', v)}
+            bucket="division-logos"
+            pathPrefix={divisionId ? `${divisionId}/banner` : 'banner'}
+            maxDimension={1600}
+          />
+          <label className={styles.field}>
+            <span className={styles.label}>Tagline</span>
+            <input
+              className={styles.input}
+              value={form.tagline}
+              onChange={(e) => set('tagline', e.target.value)}
+              maxLength={120}
+              placeholder="One line under the name, like “Smash Fridays, 7pm, Price Center”"
+            />
+            <span className={styles.hint}>Shown in the hero of the division&apos;s page.</span>
+          </label>
+          <div className={styles.field}>
+            <span className={styles.label}>Color</span>
+            <div role="radiogroup" aria-label="Division color" style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+              {ACCENTS.map((a) => (
+                <button
+                  key={a.key}
+                  type="button"
+                  role="radio"
+                  aria-checked={(form.accent || 'yellow') === a.key}
+                  aria-label={a.label}
+                  title={a.label}
+                  onClick={() => set('accent', a.key)}
+                  style={{
+                    width: '2rem',
+                    height: '2rem',
+                    borderRadius: '50%',
+                    background: a.hex,
+                    border: (form.accent || 'yellow') === a.key ? '3px solid var(--pp-ink)' : '2px solid rgba(var(--pp-ink-rgb), 0.25)',
+                    cursor: 'pointer',
+                  }}
+                />
+              ))}
+            </div>
+            <span className={styles.hint}>The color of the division&apos;s public page and of its portal.</span>
+          </div>
 
           <MarkdownField
             label="Description"

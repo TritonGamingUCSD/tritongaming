@@ -159,6 +159,9 @@ export interface Database {
           social_links: Record<string, string>;
           social_embeds: SocialEmbed[];
           page_blocks: PageBlock[] | null;
+          accent: string | null;
+          tagline: string | null;
+          banner_url: string | null;
           created_at: string;
         };
         Insert: Omit<Database['public']['Tables']['divisions']['Row'], 'id' | 'created_at'>;

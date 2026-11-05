@@ -1,6 +1,6 @@
 'use client';
 
-import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
+import { useLiveOwner } from '@/components/portal/LiveOwnerPicker';
 import EventSelect from '@/components/portal/EventSelect';
 import EmptyState from '@/components/ui/EmptyState';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -95,7 +95,7 @@ export default function QaList({ onOpen }: { onOpen: (slug: string) => void }) {
 }
 
 function NewQa({ onClose, onMade }: { onClose: () => void; onMade: (slug: string) => void }) {
-  const division = useEmbeddedDivision();
+  const { owner: division, picker } = useLiveOwner();
   const [name, setName] = useState('');
   const [eventId, setEventId] = useState('');
   const [busy, setBusy] = useState(false);
@@ -115,6 +115,7 @@ function NewQa({ onClose, onMade }: { onClose: () => void; onMade: (slug: string
       <Field label="Name" hint="Guests see this above the questions.">
         <Input value={name} maxLength={80} placeholder="Ask The Officers" autoFocus onChange={(e) => setName(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && void make()} />
       </Field>
+      {picker}
       <EventSelect value={eventId} onChange={setEventId} />
       {error && <Notice tone="error">{error}</Notice>}
       <DialogActions>

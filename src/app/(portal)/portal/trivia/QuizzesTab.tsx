@@ -1,6 +1,6 @@
 'use client';
 
-import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
+import { useLiveOwner } from '@/components/portal/LiveOwnerPicker';
 import { useCallback, useEffect, useState } from 'react';
 import { Lock, Pencil, Plus } from 'lucide-react';
 import Button from '@/components/ui/Button';
@@ -20,7 +20,7 @@ export async function startGame(quiz: string): Promise<{ code: string } | { erro
 }
 
 export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, view?: 'questions' | 'games') => void; onHost: (code: string) => void }) {
-  const division = useEmbeddedDivision();
+  const { owner: division, picker } = useLiveOwner();
   const [quizzes, setQuizzes] = useState<QuizRow[] | null>(null);
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -58,6 +58,7 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, 
 
   return (
     <div className={styles.tab}>
+      {picker}
       <div className={styles.newRow}>
         <Field label="New Quiz">
           <Input

@@ -27,7 +27,7 @@ export default async function EditDivisionPage({ params }: Params) {
   const supabase = await createClient();
   const { data: division } = await supabase
     .from('divisions')
-    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks')
+    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks, accent, tagline, banner_url')
     .eq('id', id)
     .maybeSingle();
 
@@ -49,6 +49,9 @@ export default async function EditDivisionPage({ params }: Params) {
     social_links: division.social_links ?? {},
     social_embeds: division.social_embeds ?? [],
     page_blocks: cleanBlocks(division.page_blocks),
+    accent: division.accent ?? '',
+    tagline: division.tagline ?? '',
+    banner_url: division.banner_url ?? '',
   };
 
   return (

@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { removeUnreferencedFiles, storageUrlsIn } from '@/lib/storage/removeFiles';
+import { ACCENTS } from '@/lib/divisions/accent';
 import { slugify } from '@/lib/core/slug';
 import { divisionSlugProblem } from '@/lib/divisions/slugConflicts';
 import type { SocialEmbed } from '@/types/database';
@@ -77,12 +78,15 @@ async function requireDivisionAccess(supabase: Awaited<ReturnType<typeof createC
   return { canManageDirectory };
 }
 
+// Only a color of the fixed palette (or none: the club's yellow).
+const cleanAccent = (v: unknown): string | null => (typeof v === 'string' && ACCENTS.some((a) => a.key === v) ? v : null);
+
 export async function POST(request: Request) {
   const supabase = await createClient();
   const authError = await requireDivisionsManager(supabase);
   if (authError) return authError;
 
-  const { name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks } = (await request.json()) as {
+  const { name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks, accent, tagline, banner_url } = (await request.json()) as {
     name?: string;
     slug?: string;
     description?: string;
@@ -92,6 +96,9 @@ export async function POST(request: Request) {
     social_links?: unknown;
     social_embeds?: unknown;
     page_blocks?: unknown;
+    accent?: string;
+    tagline?: string;
+    banner_url?: string;
   };
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
 
@@ -112,8 +119,11 @@ export async function POST(request: Request) {
       social_links: cleanSocialLinks(social_links),
       social_embeds: cleanSocialEmbeds(social_embeds),
       page_blocks: cleanBlocks(page_blocks),
+      accent: cleanAccent(accent),
+      tagline: tagline?.trim().slice(0, 120) || null,
+      banner_url: banner_url?.trim() || null,
     })
-    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks')
+    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks, accent, tagline, banner_url')
     .single();
 
   if (error) {
@@ -132,7 +142,7 @@ export async function PATCH(request: Request) {
   const { error: authError, canManageDirectory } = await requireDivisionAccess(supabase);
   if (authError) return authError;
 
-  const { id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks } = (await request.json()) as {
+  const { id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks, accent, tagline, banner_url } = (await request.json()) as {
     id?: string;
     name?: string;
     slug?: string;
@@ -143,6 +153,9 @@ export async function PATCH(request: Request) {
     social_links?: unknown;
     social_embeds?: unknown;
     page_blocks?: unknown;
+    accent?: string;
+    tagline?: string;
+    banner_url?: string;
   };
   if (!id) return NextResponse.json({ error: 'Missing id' }, { status: 400 });
 
@@ -163,6 +176,9 @@ export async function PATCH(request: Request) {
   if (social_links !== undefined) update.social_links = cleanSocialLinks(social_links);
   if (social_embeds !== undefined) update.social_embeds = cleanSocialEmbeds(social_embeds);
   if (page_blocks !== undefined) update.page_blocks = cleanBlocks(page_blocks);
+  if (accent !== undefined) update.accent = cleanAccent(accent);
+  if (tagline !== undefined) update.tagline = tagline.trim().slice(0, 120) || null;
+  if (banner_url !== undefined) update.banner_url = banner_url.trim() || null;
   if (slug !== undefined) {
     const finalSlug = slugify(slug);
     if (!finalSlug) return NextResponse.json({ error: 'Slug cannot be empty' }, { status: 400 });
@@ -175,7 +191,7 @@ export async function PATCH(request: Request) {
     .from('divisions')
     .update(update)
     .eq('id', id)
-    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks')
+    .select('id, name, slug, description, logo_url, discord_url, application_url, social_links, social_embeds, page_blocks, accent, tagline, banner_url')
     .single();
 
   if (error) {

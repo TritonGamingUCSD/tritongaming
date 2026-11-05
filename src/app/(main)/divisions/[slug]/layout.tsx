@@ -14,7 +14,7 @@ export default async function DivisionLayout({ children, params }: { children: R
   const { slug } = await params;
   const division = await getDivisionBySlug(slug);
   if (!division) return <>{children}</>;
-  const hex = accentOf((division as { accent?: string | null }).accent).hex;
+  const hex = accentOf(division.accent).hex;
   const logo = divisionLogoSrc(division.logo_url);
   const socials = SOCIAL_PLATFORMS.filter((p) => p.key !== 'discord' && division.social_links[p.key]);
   const theme = { '--yellow': hex, '--yellow-text': `color-mix(in srgb, ${hex} 75%, white)`, '--hero-padding-top': '2.5rem' } as CSSProperties;

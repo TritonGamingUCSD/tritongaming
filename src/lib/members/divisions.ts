@@ -47,6 +47,9 @@ export async function getDivisionBySlug(slug: string): Promise<Division | null> 
       social_links: (d.social_links as Record<string, string>) ?? saved.social_links,
       social_embeds: (d.social_embeds as Division['social_embeds']) ?? saved.social_embeds,
       page_blocks: (d.page_blocks as Division['page_blocks']) ?? saved.page_blocks,
+      accent: (d.accent as string | null) ?? saved.accent,
+      tagline: (d.tagline as string | null) ?? saved.tagline,
+      banner_url: (d.banner_url as string | null) ?? saved.banner_url,
     };
   }
   return (await getDivisions()).find((d) => d.slug === slug) ?? null;

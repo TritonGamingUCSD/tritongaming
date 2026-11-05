@@ -1,6 +1,6 @@
 'use client';
 
-import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
+import { useLiveOwner } from '@/components/portal/LiveOwnerPicker';
 import EventSelect from '@/components/portal/EventSelect';
 import EmptyState from '@/components/ui/EmptyState';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -118,7 +118,7 @@ function NewPoll({ onClose, onMade }: { onClose: () => void; onMade: (slug: stri
   const [reveal, setReveal] = useState<PollReveal>('hidden');
   const [eventId, setEventId] = useState('');
   const [busy, setBusy] = useState(false);
-  const division = useEmbeddedDivision();
+  const { owner: division, picker } = useLiveOwner();
   const [error, setError] = useState('');
   const dirty = useDirty({ name, mode, reveal, eventId });
   const make = async () => {
@@ -156,6 +156,7 @@ function NewPoll({ onClose, onMade }: { onClose: () => void; onMade: (slug: stri
           ))}
         </div>
       </Field>
+      {picker}
       <EventSelect value={eventId} onChange={setEventId} />
       {error && <Notice tone="error">{error}</Notice>}
       <DialogActions>

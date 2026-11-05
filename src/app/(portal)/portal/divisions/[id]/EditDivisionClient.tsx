@@ -40,12 +40,16 @@ export default function EditDivisionClient({
         social_links: form.social_links,
         social_embeds: form.social_embeds,
         page_blocks: form.page_blocks,
+        accent: form.accent,
+        tagline: form.tagline,
+        banner_url: form.banner_url,
       }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) return data.error || 'Failed to save changes. Please try again.';
 
     deleteIfReplaced(initial.logo_url, form.logo_url.trim() || null);
+    deleteIfReplaced(initial.banner_url, form.banner_url.trim() || null);
     router.push(backHref);
   }
 

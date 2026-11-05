@@ -72,7 +72,10 @@ export default async function DivisionPage({ params }: Params) {
 
   return (
     <div className={styles.page}>
-      <header className={styles.hero}>
+      <header
+        className={`${styles.hero} ${division.banner_url ? styles.heroBanner : ''}`}
+        style={division.banner_url ? ({ '--banner': `url("${division.banner_url.replace(/"/g, '%22')}")` } as React.CSSProperties) : undefined}
+      >
         <ZineMotion />
         <div className={styles.heroInner}>
           <div className={styles.badge}>
@@ -87,7 +90,7 @@ export default async function DivisionPage({ params }: Params) {
           <div className={styles.heroText}>
             <p className={styles.kicker}>Division</p>
             <h1 className={styles.name}>{division.name}</h1>
-            {pitch && <p className={styles.pitch}>{pitch}</p>}
+            {(division.tagline?.trim() || pitch) && <p className={styles.pitch}>{division.tagline?.trim() || pitch}</p>}
             <div className={styles.ctaRow}>
               {division.discord_url && (
                 <a href={division.discord_url} target="_blank" rel="noopener noreferrer" className={styles.discordBtn}>
