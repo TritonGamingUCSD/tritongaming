@@ -106,7 +106,17 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // divisions is fetched unconditionally (cheap, publicly-readable table) —
   // needed to label a division-lead role chip with *which* division below,
   // regardless of whether this user themselves can manage the directory.
-  const [profile, roles, divisions, myGender, authUser] = await Promise.all([getProfile(), getUserRoles(), getDivisions(), getMyPrivateProfile(), getUser()]);
+  // One round trip for everything that only needs the session (each is cached per request, so the layout's own reads cost nothing twice).
+  const [profile, roles, divisions, myGender, authUser, realRoles, viewAs, viewingUser] = await Promise.all([
+    getProfile(),
+    getUserRoles(),
+    getDivisions(),
+    getMyPrivateProfile(),
+    getUser(),
+    getSessionRoles(),
+    getViewAs(),
+    getViewingUser(),
+  ]);
   // Every email they can sign in with: the choices for the email on their public officer card.
   const linkedEmails =
     authUser && requestedSection === 'profile'
@@ -119,7 +129,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
   if (!profile) return null;
   const divisionNameById = new Map(divisions.map((d) => [d.id, d.name]));
   // Admins (their REAL roles) get the "View as" menu.
-  const [realRoles, viewAs, viewingUser] = await Promise.all([getSessionRoles(), getViewAs(), getViewingUser()]);
   const canViewAs = realRoles.some((r) => r.role === 'admin') && !viewingUser;
   const canViewAsPerson = realRoles.some((r) => r.role === 'admin') && !viewingUser;
 
@@ -148,7 +157,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const canHostMeetings = hasCapability(roles, 'host_meetings'); // leads too: plan meetings, manage their own
   // Best-effort: if this lookup fails the bar just doesn't get the meeting boost.
   // The day of a Logistics event, officers (anyone who looks at Logistics) get Tickets and Logistics under their thumb on a phone instead of Tickets and Meetings.
-  const logisticsToday =
+  const loadLogisticsToday = async () =>
     hasCapability(roles, 'view_logistics') || canManageLogistics
       ? await (async () => {
           const today = pacificToday();
@@ -161,10 +170,10 @@ export default async function PortalDashboard({ searchParams }: Props) {
           return (count ?? 0) > 0;
         })().catch(() => false)
       : false;
-  const meetingNow = canAttendMeetings ? await meetingHappeningNow(createServiceClient(), { id: profile.id, roles }).catch(() => false) : false;
+  const loadMeetingNow = async () => (canAttendMeetings ? await meetingHappeningNow(createServiceClient(), { id: profile.id, roles }).catch(() => false) : false);
   // Help tickets: exec/admin see how many are waiting on them; everyone else how many have a new reply.
   const canHandleHelp = hasCapability(roles, 'manage_help');
-  const helpWaiting = await (async () => {
+  const loadHelpWaiting = async () => {
     try {
       const svc = createServiceClient();
       let q = svc.from('help_tickets').select('id', { count: 'exact', head: true }).neq('status', 'resolved');
@@ -173,7 +182,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     } catch {
       return 0;
     }
-  })();
+  };
   // Rewards (earning points at check-in, the shop) is
   // UCSD-students-only — see is_rewards_eligible() in
   // 20261015110000_rewards_students_only.sql, the actual enforcement
@@ -196,13 +205,43 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // re-fetched client-side when a card opens.
   // Only what the dashboard, the card badges and the next sections need loads here. The heavy sections (Events, TG Members, Documentation,
   // Divisions, Site Content, Admin) fetch their own data the first time they are opened (see lib/portalSectionData.ts).
-  const [ticketsData, checkinData, pointsData, memberTiers, memberCount, docsSummary] = await Promise.all([
+  // The home page's own reads (quarter, strikes, to-dos, links, what is waiting, recent activity) start in the same round trip, not after it: none of them depends on the others.
+  const [
+    ticketsData,
+    checkinData,
+    pointsData,
+    memberTiers,
+    memberCount,
+    docsSummary,
+    logisticsToday,
+    meetingNow,
+    helpWaiting,
+    inactiveQuarter,
+    myStrikes,
+    todoItems,
+    homeLinks,
+    homeAttention,
+    homeActivity,
+  ] = await Promise.all([
     getTicketsData(profile.id, roles),
     canCheckin ? getCheckinData() : Promise.resolve(null),
     canUseRewards ? getMyPointsData(profile.id) : Promise.resolve(null),
     getTiersCached(),
     canViewMembers ? getMemberCount().catch(() => 0) : Promise.resolve(0),
     canViewDocs ? getDocsSummary(canManageDocs).catch(() => ({ count: 0, pinned: null })) : Promise.resolve(null),
+    loadLogisticsToday(),
+    loadMeetingNow(),
+    loadHelpWaiting(),
+    isInactiveMember(roles)
+      ? loadQuarters(createServiceClient())
+          .then((qs) => currentQuarter(qs))
+          .catch(() => null)
+      : Promise.resolve(null),
+    isTracked(roles) ? mySummary(createServiceClient(), profile.id).catch(() => null) : Promise.resolve(null),
+    loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings }),
+    canViewDocs ? getDashboardLinks(profile.id).catch(() => []) : Promise.resolve([]),
+    loadHomeAttention(createServiceClient(), profile.id).catch(() => []),
+    loadHomeActivity(createServiceClient(), canViewDocs).catch(() => []),
   ]);
   // Who is looking, and as whom: the lazy sections keep their data per view, so a changed "view as" never shows another view's data.
   const scope = `${profile.id}|${viewAs ?? ''}|${viewingUser?.id ?? ''}`;
@@ -713,13 +752,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
   // Everything waiting on this person, together at the top of home: plans to answer, events to RSVP to, help replies, check-in today.
   // My own strikes (officers, leads and exec only): private, shown only to me.
   // Sitting the quarter out: a quiet note saying so.
-  const inactiveQuarter = isInactiveMember(roles)
-    ? await loadQuarters(createServiceClient())
-        .then((qs) => currentQuarter(qs))
-        .catch(() => null)
-    : null;
-  const myStrikes = isTracked(roles) ? await mySummary(createServiceClient(), profile.id).catch(() => null) : null;
-  const todoItems = await loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings });
   if (canHandleHelp && helpWaiting > 0)
     todoItems.push({
       id: 'help-inbox',
@@ -756,12 +788,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const pinnedDoc = docsSummary?.pinned ?? null;
   const homeNote = pinnedDoc ? { title: pinnedDoc.title, href: `/portal/docs?id=${pinnedDoc.id}` } : null;
   // The dashboard shows only the next event (the featured one above); the rest are under Events and Tickets.
-  const homeLinks = canViewDocs ? await getDashboardLinks(profile.id).catch(() => []) : [];
-  // The desktop dashboard's extra panels: a few numbers about me, what is waiting (unread notifications), and what has been going on lately.
-  const [homeAttention, homeActivity] = await Promise.all([
-    loadHomeAttention(createServiceClient(), profile.id).catch(() => []),
-    loadHomeActivity(createServiceClient(), canViewDocs).catch(() => []),
-  ]);
   const activeTickets = ticketsData.tickets.filter((t) => t.status === 'active' && t.event && new Date(t.event.start_date).getTime() > Date.now() - 6 * 3600e3).length;
   const homeStats = [
     ...(pointsData && memberTier
