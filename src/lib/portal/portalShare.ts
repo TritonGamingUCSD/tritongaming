@@ -3,7 +3,7 @@ import { parsePortalPath } from '@/lib/portal/portalPath';
 // What a shared portal link looks like in a chat preview. The portal needs a login, so an outsider (and a link-preview robot)
 // only ever reaches the sign-in page; it uses this to name the page the link points at, without showing anything private.
 export const PORTAL_PAGE_INFO: Record<string, { name: string; sub: string; accent: string }> = {
-  dashboard: { name: 'Dashboard', sub: 'Your tickets, events and to-dos.', accent: '#4a90d9' },
+  dashboard: { name: 'Home', sub: 'Your tickets, events and to-dos.', accent: '#4a90d9' },
   tickets: { name: 'My Tickets', sub: 'Your event tickets and history.', accent: '#4a90d9' },
   points: { name: 'Rewards', sub: 'Points, perks and the leaderboard.', accent: '#4a90d9' },
   profile: { name: 'Profile', sub: 'Your details and settings.', accent: '#4a90d9' },

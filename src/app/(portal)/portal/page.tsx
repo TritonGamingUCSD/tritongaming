@@ -48,6 +48,8 @@ import { PortalParamsProvider } from '@/components/portal/PortalParamsContext';
 import { AdminLazy, DivisionMembersLazy, DivisionsLazy, DocsLazy, EventsLazy, MembersLazy, SiteContentLazy } from './LazySections';
 import { getDocsSummary, getMemberCount, getTiersCached } from '@/lib/portal/portalCounts';
 import { DashboardWelcome, DashboardBody } from './DashboardHome';
+import type { HomeCard } from './HomeCards';
+import { roleNeededFor } from '@/lib/portal/portalCommands';
 import { getDashboardLinks } from './docs/getDocsData';
 import TicketsSectionContent from './tickets/TicketsSectionContent';
 import { getTicketsData } from './tickets/getTicketsData';
@@ -808,6 +810,77 @@ export default async function PortalDashboard({ searchParams }: Props) {
       : []),
   ];
 
+  // Home's cards: one pattern (title, status, one line, one link). A few cards for things this person cannot use yet are dashed, with the role they are for.
+  const nextTicketWhen = nextTicket?.event
+    ? `${nextTicket.event.title} · ${new Date(nextTicket.event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, weekday: 'short', month: 'short', day: 'numeric' })}`
+    : null;
+  const homeCards: HomeCard[] = [
+    {
+      id: 'tickets',
+      title: 'Tickets',
+      status: activeTickets > 0 ? `${activeTickets} upcoming` : 'None yet',
+      body: nextTicketWhen ?? (unregisteredUpcomingEvents[0] ? `Next event: ${unregisteredUpcomingEvents[0].title}` : 'No upcoming events right now.'),
+      href: '/portal/tickets',
+      action: nextTicket ? 'Show my ticket' : 'Find an event',
+    },
+    ...(canAttendMeetings
+      ? [
+          {
+            id: 'meetings',
+            title: 'Meetings',
+            status: meetingNow ? 'On now' : undefined,
+            body: meetingNow ? 'A meeting is on. Check in with the code from the room.' : 'Check in, see your history and what is coming up.',
+            href: '/portal/meetings',
+            action: 'Open meetings',
+          },
+        ]
+      : []),
+    ...(pointsData && memberTier
+      ? [
+          {
+            id: 'rewards',
+            title: 'Rewards',
+            status: memberTier.name,
+            body: `${pointsData.balance.toLocaleString()} points${memberNext ? ` · ${(memberNext.min - pointsData.lifetimeEarned).toLocaleString()} to ${memberNext.name}` : ' · top tier'}`,
+            href: '/portal/points/mine',
+            action: 'Open rewards',
+          },
+        ]
+      : []),
+    ...(myStrikes
+      ? [
+          {
+            id: 'strikes',
+            title: 'Strikes',
+            status: myStrikes.active === 0 ? 'All clear' : `${myStrikes.active} of ${myStrikes.limit}`,
+            body: myStrikes.active === 0 ? 'No strikes this quarter.' : 'Strikes count toward your standing this quarter.',
+            href: '/portal/profile',
+            action: 'See details',
+          },
+        ]
+      : []),
+    ...(roles.length > 0
+      ? (
+          [
+            ['polls', 'Polls & Q&A', 'host_trivia', 'Run a vote or a live question wall on a big screen.'],
+            ['members', 'TG Members', 'view_members', 'Everyone in the org.'],
+            ['docs', 'Documentation', 'view_docs', 'How-to guides for the club.'],
+          ] as const
+        )
+          .filter(([, , cap]) => !hasCapability(roles, cap))
+          .slice(0, 2)
+          .map(([id, title, , hint]) => ({
+            id: `locked-${id}`,
+            title,
+            status: roleNeededFor(id) ? `For ${roleNeededFor(id)}s` : 'Needs a role',
+            body: hint,
+            href: '/portal/help',
+            action: 'Ask how to get access',
+            locked: true,
+          }))
+      : []),
+  ];
+
   return (
     <PortalParamsProvider query={serverQuery}>
       <div className={styles.page}>
@@ -841,6 +914,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 showRoleAsk={!isTeamMember}
                 compact={!isTgMember(roles)}
                 logistics={hasCapability(roles, 'view_logistics') || canManageLogistics}
+                cards={homeCards}
               />
             }
             desktop={{ greeting: greetingLine, tiles: tilesNode, viewAs: viewAsNode, banners: frameBanners }}

@@ -156,12 +156,12 @@ export function DesktopShell({
             style={{ ['--accent' as string]: DASHBOARD_ACCENT }}
             onClick={close}
             aria-current={!openSection ? 'page' : undefined}
-            title="Dashboard"
+            title="Home"
           >
             <span className={styles.railIcon} aria-hidden="true">
               <Home />
             </span>
-            <span className={styles.railLabel}>Dashboard</span>
+            <span className={styles.railLabel}>Home</span>
           </button>
           {groupedSections
             .map(({ group, items: all }) => ({ group, items: all.filter((s) => !s.railHidden) }))
@@ -235,7 +235,7 @@ export function DesktopShell({
             </div>
           ) : (
             <div className={styles.topTitle}>
-              <span className={styles.topName}>{frame?.greeting ?? 'Dashboard'}</span>
+              <span className={styles.topName}>{frame?.greeting ?? 'Home'}</span>
             </div>
           )}
           <div className={styles.topRight}>

@@ -50,7 +50,7 @@ const SECTION_DEFS: Def[] = SECTIONS.filter((s) => s.search).map((s) =>
 );
 
 const DEFS: Def[] = [
-  { id: 'go-home', label: 'Dashboard', hint: 'Your home screen', href: '/portal', kind: 'Go to', keywords: ['home', 'overview'] },
+  { id: 'go-home', label: 'Home', hint: 'Your home screen', href: '/portal', kind: 'Go to', keywords: ['home', 'overview'] },
   ...SECTION_DEFS,
 
   A('help-new', 'Ask for help', 'Open a help ticket', '/portal/help/ask', ['support', 'question', 'bug', 'problem', 'report', 'ticket']),

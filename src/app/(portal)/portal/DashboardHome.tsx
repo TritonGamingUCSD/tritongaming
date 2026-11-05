@@ -10,6 +10,7 @@ import type { HomeActivity, HomeAttention } from '@/lib/portal/homeExtras';
 import RoleAsk from './RoleAsk';
 import LogisticsDayCard from './LogisticsDayCard';
 import TodayCards from './TodayCards';
+import HomeCards, { type HomeCard } from './HomeCards';
 import { RequiredBanner } from './docs/DocRequired';
 import styles from './dashboardHome.module.css';
 
@@ -76,7 +77,9 @@ export function DashboardBody({
   showRoleAsk = false,
   compact = false,
   logistics = false,
+  cards = [],
 }: {
+  cards?: HomeCard[];
   logistics?: boolean;
   showRoleAsk?: boolean;
   /** Guests and students on a desktop: the role request sits under the ticket. */ compact?: boolean;
@@ -93,9 +96,10 @@ export function DashboardBody({
       <RequiredBanner hrefBase="/portal/docs?id=" />
       <TodayCards />
       {logistics && <LogisticsDayCard />}
+      <HomeCards cards={cards} />
       <div className={styles.deskGrid}>
         <div className={styles.deskMain}>
-          {event && (
+          {event && cards.length === 0 && (
             <article className={styles.ticket} aria-label="Next up">
               <span className={styles.tape} aria-hidden="true" />
               <div className={styles.ticketMain}>
@@ -170,7 +174,7 @@ export function DashboardBody({
           )}
         </div>
         <div className={styles.deskSide}>
-          {stats.length > 0 && (
+          {stats.length > 0 && cards.length === 0 && (
             <section className={`${styles.panel} ${styles.deskOnly}`} aria-label="My numbers">
               <h2 className={styles.panelTitle}>My numbers</h2>
               <div className={styles.statGrid}>

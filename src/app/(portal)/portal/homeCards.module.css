@@ -1,0 +1,12 @@
+/* Home's cards: flat and quiet. A thin border on paper, a title with its status on the right, a hairline, one line, and a link at the bottom. A card for something this person cannot use yet is dashed. */
+.grid { list-style: none; margin: 0 0 1.25rem; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 1rem; }
+.card { display: flex; flex-direction: column; gap: 0.8rem; min-width: 0; padding: 1.05rem 1.15rem 1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 6px; background: var(--pp-card); color: var(--pp-ink); }
+.locked { border-style: dashed; background: transparent; }
+.head { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; padding-bottom: 0.65rem; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.18); }
+.title { margin: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 600; font-size: 1.1rem; line-height: 1.2; }
+.status { flex-shrink: 0; font-size: 0.85rem; font-weight: 600; color: rgba(var(--pp-ink-rgb), 0.72); text-align: right; }
+.body { margin: 0; font-size: 0.97rem; line-height: 1.45; color: rgba(var(--pp-ink-rgb), 0.9); }
+.locked .body, .locked .title { color: rgba(var(--pp-ink-rgb), 0.72); }
+.action { margin-top: auto; padding-top: 0.5rem; font-weight: 600; font-size: 0.95rem; color: var(--p-accent-text); text-decoration: none; }
+.action:hover { text-decoration: underline; }
+[data-pp-theme='dark'] .action { color: var(--pp-chrome-accent); }
