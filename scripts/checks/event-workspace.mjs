@@ -34,7 +34,7 @@ try {
   const poll = await exec.call('POST', '/api/polls', { name: 'ZZ WS Poll', event_id: evId });
   const qa = await exec.call('POST', '/api/qa', { name: 'ZZ WS QA', event_id: evId });
   const booth = await exec.call('POST', '/api/photobooth/booths', { name: 'ZZ WS Booth', config: {}, event_id: evId });
-  const issue = await exec.call('POST', '/api/newspaper', { type: 'event_announcement', event_id: evId });
+  const issue = await exec.call('POST', '/api/newsletter', { type: 'event_announcement', event_id: evId });
   t.ok('a poll, Q&A, booth and issue can be made for the event', poll.s === 201 && qa.s === 201 && booth.s === 201 && issue.s === 201);
   t.ok(
     'a poll for an event that does not exist is refused',
@@ -85,7 +85,7 @@ try {
   await svc.from('qa_sessions').delete().like('name', 'ZZ%');
   const { data: booths } = await svc.from('photobooths').select('id').like('name', 'ZZ%');
   for (const b of booths ?? []) await svc.from('photobooths').delete().eq('id', b.id);
-  await svc.from('newspaper_issues').delete().like('title', '%ZZ Workspace%');
+  await svc.from('newsletter_issues').delete().like('title', '%ZZ Workspace%');
   await svc.from('audit_log').delete().in('actor_id', made);
   await svc.from('audit_log').delete().like('summary', '%ZZ%');
   await svc.from('notifications').delete().or('title.ilike.%ZZ%,body.ilike.%ZZ%');

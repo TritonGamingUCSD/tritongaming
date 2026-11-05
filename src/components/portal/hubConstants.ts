@@ -45,7 +45,7 @@ const WANTED_ORDER = [
   'quarters',
   'strikes',
   'docs',
-  'newspaper',
+  'newsletter',
   'qrcode',
   'site-content',
   'help',

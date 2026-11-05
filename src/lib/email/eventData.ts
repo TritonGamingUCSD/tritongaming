@@ -2,7 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 import { siteUrl } from './template';
 
-// What an email needs to know about an event (loaded from the event page when the email is made, so a change to the event shows), how its time is written, and the addresses of people (kept in auth.users). Used by the Newspaper.
+// What an email needs to know about an event (loaded from the event page when the email is made, so a change to the event shows), how its time is written, and the addresses of people (kept in auth.users). Used by the Newsletter.
 
 export interface EventForEmail {
   title: string;

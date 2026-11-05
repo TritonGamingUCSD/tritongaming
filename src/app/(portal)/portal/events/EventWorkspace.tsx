@@ -12,7 +12,7 @@ import Notice from '@/components/ui/Notice';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { Select } from '@/components/ui/Field';
 import { formatEventDateRange } from '@/lib/core/timezone';
-import { ISSUE_TYPES, type IssueType } from '@/lib/newspaper/rules';
+import { ISSUE_TYPES, type IssueType } from '@/lib/newsletter/rules';
 import { useAddressState, wordCodec } from '@/lib/portal/usePageState';
 import { call } from '@/lib/ui/apiCall';
 import EventCheckinsPage from './EventCheckinsPage';
@@ -159,9 +159,9 @@ function EmailTab({ data }: { data: Work }) {
   const [error, setError] = useState('');
   const start = async (type: IssueType) => {
     setBusy(type);
-    const r = await call<{ issue: { slug: string } }>('/api/newspaper', 'POST', { type, event_id: data.event.id });
+    const r = await call<{ issue: { slug: string } }>('/api/newsletter', 'POST', { type, event_id: data.event.id });
     setBusy(null);
-    if (r.ok) router.push(`/portal/newspaper/${r.data.issue.slug}`);
+    if (r.ok) router.push(`/portal/newsletter/${r.data.issue.slug}`);
     else setError(r.error);
   };
   const issues = data.issues ?? [];
@@ -180,7 +180,7 @@ function EmailTab({ data }: { data: Work }) {
       ) : (
         <div className={card.grid}>
           {issues.map((i) => (
-            <Link key={i.slug} href={`/portal/newspaper/${i.slug}`} className={`${card.card} ${card.link}`}>
+            <Link key={i.slug} href={`/portal/newsletter/${i.slug}`} className={`${card.card} ${card.link}`}>
               <span className={card.kicker}>{ISSUE_TYPES[i.type].label}</span>
               <h3 className={card.title}>{i.title}</h3>
               <div className={card.meta}>

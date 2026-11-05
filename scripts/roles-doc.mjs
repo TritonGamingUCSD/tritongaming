@@ -81,15 +81,15 @@ const CAPS = {
     'See every meeting’s results, absences and reasons, check-in times, and download the HR CSV export. View only.',
     'routes',
   ],
-  write_newspaper: [
+  write_newsletter: [
     'Team',
-    'Write the Newspaper',
-    'Open Team → Newspaper, write and edit issues (the newspaper, event announcements, updates and reminders; blocks, audience, test emails), save audiences, and ask for an issue to be checked. Also opens the Events → Emails tab. Officers and above; lost while inactive. Can be granted.',
+    'Write the Newsletter',
+    'Open Team → Newsletter, write and edit issues (the newsletter, event announcements, updates and reminders; blocks, audience, test emails), save audiences, and ask for an issue to be checked. Also opens the Events → Emails tab. Officers and above; lost while inactive. Can be granted.',
     'pages + routes',
   ],
-  send_newspaper: [
+  send_newsletter: [
     'Team',
-    'Send the Newspaper',
+    'Send the Newsletter',
     'Read an issue sent for checking, send it to its audience (after a test email and a hold-to-confirm), see delivery and click results and manage subscribers. Cannot send an issue you asked to have checked yourself. Executive and Admin by default; can be granted.',
     'pages + routes',
   ],

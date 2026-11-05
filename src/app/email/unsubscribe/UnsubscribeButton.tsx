@@ -19,8 +19,8 @@ export default function UnsubscribeButton({ token }: { token: string }) {
           profile
         </a>
         , or sign up again on the{' '}
-        <Link className={styles.link} href="/newspaper">
-          newspaper page
+        <Link className={styles.link} href="/newsletter">
+          newsletter page
         </Link>
         .
       </p>

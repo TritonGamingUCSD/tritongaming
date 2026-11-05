@@ -9,6 +9,7 @@ import MemberCardBody from '@/components/MemberCard/MemberCardBody';
 import { PACIFIC_TZ } from '@/lib/core/timezone';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
+import { createPortal } from 'react-dom';
 import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { Eye, KeyRound, LayoutGrid, List, ListOrdered, Moon, Users, UsersRound } from 'lucide-react';
@@ -302,61 +303,63 @@ export default function MembersSectionContent({
           );
         })}
 
-      {selected && (
-        <div className={styles.overlay} onClick={() => setSelected(null)}>
-          <div className={styles.detailPanel} onClick={(e) => e.stopPropagation()}>
-            <IconButton kind="close" className={styles.closeBtn} onClick={() => setSelected(null)} />
-            {/* Everything a member filled in is shown here — this is the internal
+      {selected &&
+        createPortal(
+          <div className={styles.overlay} onClick={() => setSelected(null)}>
+            <div className={styles.detailPanel} onClick={(e) => e.stopPropagation()}>
+              <IconButton kind="close" className={styles.closeBtn} onClick={() => setSelected(null)} />
+              {/* Everything a member filled in is shown here — this is the internal
                 roster, not the public Team page, so the officer card's visibility
                 toggles don't apply. Same card component as the public Team page. */}
-            <MemberCardBody
-              copiedKey={copiedKey}
-              onCopy={copyHandle}
-              data={{
-                name: selected.display_name,
-                avatarUrl: resolveAvatarUrl(selected),
-                gamerTag: selected.gamer_tag,
-                orgTitle: selected.org_title,
-                pronouns: selected.pronouns,
-                major: selected.major,
-                minor: selected.minor,
-                year: selected.year,
-                college: selected.college,
-                divisionName: selected.divisionName,
-                teams: selected.teams?.map((name) => ({ name })),
-                emails: (selected.emails ?? []).map((e) => e.email),
-                socialLinks: selected.social_links,
-                portfolioLinks: selected.portfolio_links,
-                gameIds: selected.game_ids,
-                bio: selected.bio,
-                joinedLabel: selected.created_at
-                  ? `Joined ${new Date(selected.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}`
-                  : null,
-              }}
-            />
-            {canViewAsPerson && selected.id !== selfId && (
-              <div className={styles.detailKeys}>
-                <Button size="sm" variant="secondary" onClick={() => void viewAsPerson(selected.id)}>
-                  <Eye size={14} aria-hidden="true" /> View portal as {selected.display_name?.split(' ')[0] || 'them'}
-                </Button>
-              </div>
-            )}
-            {/* The profile popup also says which keys this person holds (never on the public Team page: this list is only sent to the key team). */}
-            {(keysByUser[selected.id]?.length ?? 0) > 0 && (
-              <div className={styles.detailKeys}>
-                <span className={styles.detailKeysLabel}>Storage {keysByUser[selected.id].length === 1 ? 'key' : 'keys'}</span>
-                <span className={styles.detailKeysList}>
-                  {keysByUser[selected.id].map((k) => (
-                    <span key={k.id} className={styles.keyPill} style={{ background: k.color }}>
-                      <KeyRound size={14} strokeWidth={2.5} aria-hidden="true" /> {k.name}
-                    </span>
-                  ))}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
+              <MemberCardBody
+                copiedKey={copiedKey}
+                onCopy={copyHandle}
+                data={{
+                  name: selected.display_name,
+                  avatarUrl: resolveAvatarUrl(selected),
+                  gamerTag: selected.gamer_tag,
+                  orgTitle: selected.org_title,
+                  pronouns: selected.pronouns,
+                  major: selected.major,
+                  minor: selected.minor,
+                  year: selected.year,
+                  college: selected.college,
+                  divisionName: selected.divisionName,
+                  teams: selected.teams?.map((name) => ({ name })),
+                  emails: (selected.emails ?? []).map((e) => e.email),
+                  socialLinks: selected.social_links,
+                  portfolioLinks: selected.portfolio_links,
+                  gameIds: selected.game_ids,
+                  bio: selected.bio,
+                  joinedLabel: selected.created_at
+                    ? `Joined ${new Date(selected.created_at).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short', year: 'numeric' })}`
+                    : null,
+                }}
+              />
+              {canViewAsPerson && selected.id !== selfId && (
+                <div className={styles.detailKeys}>
+                  <Button size="sm" variant="secondary" onClick={() => void viewAsPerson(selected.id)}>
+                    <Eye size={14} aria-hidden="true" /> View portal as {selected.display_name?.split(' ')[0] || 'them'}
+                  </Button>
+                </div>
+              )}
+              {/* The profile popup also says which keys this person holds (never on the public Team page: this list is only sent to the key team). */}
+              {(keysByUser[selected.id]?.length ?? 0) > 0 && (
+                <div className={styles.detailKeys}>
+                  <span className={styles.detailKeysLabel}>Storage {keysByUser[selected.id].length === 1 ? 'key' : 'keys'}</span>
+                  <span className={styles.detailKeysList}>
+                    {keysByUser[selected.id].map((k) => (
+                      <span key={k.id} className={styles.keyPill} style={{ background: k.color }}>
+                        <KeyRound size={14} strokeWidth={2.5} aria-hidden="true" /> {k.name}
+                      </span>
+                    ))}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

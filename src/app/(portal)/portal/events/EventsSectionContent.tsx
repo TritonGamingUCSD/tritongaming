@@ -68,7 +68,7 @@ interface Props {
   canManagePoints: boolean;
   // delete_events (admin-only) — separate from canEdit, which lead+ hold.
   canDelete?: boolean;
-  // write_newspaper / send_newspaper: the Emails tab (start an announcement, update or reminder about an event in the Newspaper).
+  // write_newsletter / send_newsletter: the Emails tab (start an announcement, update or reminder about an event in the Newsletter).
   canEmail?: boolean;
   initialTab?: string;
 }

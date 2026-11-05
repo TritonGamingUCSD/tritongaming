@@ -39,4 +39,4 @@ export function verifyConfirmToken(token: string): string | null {
   const [id, kind] = Buffer.from(body, 'base64url').toString().split('.');
   return id && kind === 'confirm' ? id : null;
 }
-export const confirmUrl = (subscriberId: string) => `${siteUrl()}/newspaper/confirm?t=${confirmToken(subscriberId)}`;
+export const confirmUrl = (subscriberId: string) => `${siteUrl()}/newsletter/confirm?t=${confirmToken(subscriberId)}`;

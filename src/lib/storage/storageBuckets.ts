@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 
-// The buckets whose rows keep each file's full public address (event flyers, stickers and fonts, division logos, profile pictures, site content, Trivia, prize and photobooth overlay pictures, doc attachments, poll and Newspaper pictures). Shared
+// The buckets whose rows keep each file's full public address (event flyers, stickers and fonts, division logos, profile pictures, site content, Trivia, prize and photobooth overlay pictures, doc attachments, poll and Newsletter pictures). Shared
 // by the weekly storage tidy-up (which buckets to sweep) and the system-stats route (which buckets to total up).
 export const MANAGED_BUCKETS: { bucket: string }[] = [
   { bucket: 'event-flyers' },
@@ -12,7 +12,7 @@ export const MANAGED_BUCKETS: { bucket: string }[] = [
   { bucket: 'photobooth-overlays' },
   { bucket: 'doc-attachments' },
   { bucket: 'poll-images' },
-  { bucket: 'newspaper-images' },
+  { bucket: 'newsletter-images' },
 ];
 
 export interface StorageObject {

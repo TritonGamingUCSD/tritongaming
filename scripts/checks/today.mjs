@@ -10,18 +10,18 @@ try {
   const member = await user('member', ['ucsd']);
   const get = (who) => who.call('GET', '/api/portal/today');
 
-  t.ok('signed-out visitors get nothing', (await fetch(`${BASE}/api/portal/today`).then((r) => r.json())).newspaper === null);
+  t.ok('signed-out visitors get nothing', (await fetch(`${BASE}/api/portal/today`).then((r) => r.json())).newsletter === null);
   const quiet = await get(member);
-  t.ok('an ordinary member has no Newspaper or Q&A cards', quiet.s === 200 && quiet.j.newspaper === null && quiet.j.qa.length === 0 && Array.isArray(quiet.j.meetings));
+  t.ok('an ordinary member has no Newsletter or Q&A cards', quiet.s === 200 && quiet.j.newsletter === null && quiet.j.qa.length === 0 && Array.isArray(quiet.j.meetings));
 
-  // a Newspaper issue waiting for a check
-  const mk = await writer.call('POST', '/api/newspaper', { title: 'ZZ Today Issue' });
-  await writer.call('PATCH', `/api/newspaper/${mk.j.issue.slug}`, { action: 'request_review' });
+  // a Newsletter issue waiting for a check
+  const mk = await writer.call('POST', '/api/newsletter', { title: 'ZZ Today Issue' });
+  await writer.call('PATCH', `/api/newsletter/${mk.j.issue.slug}`, { action: 'request_review' });
   const w = await get(writer);
-  t.ok('the writer sees their own issue is with a sender (not waiting for them)', w.j.newspaper?.mine === 1 && w.j.newspaper.waiting === 0, JSON.stringify(w.j.newspaper));
+  t.ok('the writer sees their own issue is with a sender (not waiting for them)', w.j.newsletter?.mine === 1 && w.j.newsletter.waiting === 0, JSON.stringify(w.j.newsletter));
   const s = await get(sender);
-  t.ok('a sender sees it waiting for their check, with a link to it', s.j.newspaper?.waiting >= 1 && typeof s.j.newspaper.first === 'string', JSON.stringify(s.j.newspaper));
-  t.ok('the member still sees none', (await get(member)).j.newspaper === null);
+  t.ok('a sender sees it waiting for their check, with a link to it', s.j.newsletter?.waiting >= 1 && typeof s.j.newsletter.first === 'string', JSON.stringify(s.j.newsletter));
+  t.ok('the member still sees none', (await get(member)).j.newsletter === null);
 
   // a Q&A with a question waiting
   const qa = await sender.call('POST', '/api/qa', { name: 'ZZ Today QA' });
@@ -40,7 +40,7 @@ try {
   console.log('ERR', String(e).slice(0, 500));
   t.fail();
 } finally {
-  await svc.from('newspaper_issues').delete().like('title', 'ZZ Today%');
+  await svc.from('newsletter_issues').delete().like('title', 'ZZ Today%');
   await svc.from('qa_sessions').delete().like('name', 'ZZ Today%');
   await svc.from('audit_log').delete().in('actor_id', made);
   await svc.from('audit_log').delete().like('summary', '%ZZ Today%');

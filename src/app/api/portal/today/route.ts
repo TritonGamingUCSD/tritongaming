@@ -11,14 +11,14 @@ export const dynamic = 'force-dynamic';
 
 // What needs this person today, for the Dashboard's Today cards. Each part is only worked out for people who may see it, and is null (or empty) for everyone else:
 //   meetings   today's meetings they are invited to (is check-in open, are they in)
-//   newspaper  senders: how many issues wait for their check (not ones they asked for); writers: how many of their own issues are waiting for a sender
+//   newsletter  senders: how many issues wait for their check (not ones they asked for); writers: how many of their own issues are waiting for a sender
 //   qa         hosts: the open Q&A sessions that have questions waiting for approval
 export async function GET() {
   const userClient = await createClient();
   const {
     data: { user },
   } = await strictUser(userClient);
-  if (!user || user.is_anonymous) return NextResponse.json({ meetings: [], newspaper: null, qa: [] });
+  if (!user || user.is_anonymous) return NextResponse.json({ meetings: [], newsletter: null, qa: [] });
   const svc = createServiceClient();
   const { data: roles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
@@ -47,10 +47,10 @@ export async function GET() {
       checked_in_at: inAt.get(m.id) ?? null,
     }));
   };
-  const newspaper = async () => {
-    const canSend = hasCapability(grants, 'send_newspaper');
-    if (!canSend && !hasCapability(grants, 'write_newspaper')) return null;
-    const { data } = await svc.from('newspaper_issues').select('slug, title, review_by, created_by').eq('status', 'review').limit(50);
+  const newsletter = async () => {
+    const canSend = hasCapability(grants, 'send_newsletter');
+    if (!canSend && !hasCapability(grants, 'write_newsletter')) return null;
+    const { data } = await svc.from('newsletter_issues').select('slug, title, review_by, created_by').eq('status', 'review').limit(50);
     const rows = data ?? [];
     return {
       waiting: canSend ? rows.filter((r) => r.review_by !== user.id && r.created_by !== user.id).length : 0,
@@ -75,6 +75,6 @@ export async function GET() {
       .map((s) => ({ slug: s.slug as string, name: s.name as string, pending: (pending ?? []).filter((p) => p.session_id === s.id).length }))
       .filter((s) => s.pending > 0);
   };
-  const [m, n, q] = await Promise.all([meetings(), newspaper(), qa()]);
-  return NextResponse.json({ meetings: m, newspaper: n, qa: q });
+  const [m, n, q] = await Promise.all([meetings(), newsletter(), qa()]);
+  return NextResponse.json({ meetings: m, newsletter: n, qa: q });
 }

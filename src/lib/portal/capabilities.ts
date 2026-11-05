@@ -91,10 +91,10 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // A division account sees only the Requests pages (its division's requests, and submitting new ones): nothing else in Logistics.
   request_logistics: ['recruit', 'officer', 'division', 'lead', 'exec', 'admin'],
   manage_logistics: ['exec', 'admin'],
-  // The Newspaper (Team → Newspaper): writing and editing issues, and asking for them to be checked, is open to every officer and above; approving and sending one (and the subscribers list) is exec and admin. Both can be handed to a person or group (Admin → Access).
+  // The Newsletter (Team → Newsletter): writing and editing issues, and asking for them to be checked, is open to every officer and above; approving and sending one (and the subscribers list) is exec and admin. Both can be handed to a person or group (Admin → Access).
   // A person can't send an issue they asked to have checked themselves (the send route checks that). UI/API gating only (the routes use the service role).
-  write_newspaper: ['officer', 'lead', 'exec', 'admin'],
-  send_newspaper: ['exec', 'admin'],
+  write_newsletter: ['officer', 'lead', 'exec', 'admin'],
+  send_newsletter: ['exec', 'admin'],
   // Trivia: writing quizzes and hosting games is open to every officer and above. Playing needs no permission, only an account (checked by the play routes themselves).
   host_trivia: ['officer', 'lead', 'exec', 'admin'],
   // Photo Booth: setting up an event's booth, keeping the overlay library and running the booth on a screen at the event. Officers and above; the guests' download page needs nothing.
@@ -108,8 +108,8 @@ export function isInactiveStripped(capability: string): boolean {
     /^(manage|host|delete)_/.test(capability) ||
     capability === 'checkin' ||
     capability === 'scan_redemptions' ||
-    capability === 'write_newspaper' ||
-    capability === 'send_newspaper'
+    capability === 'write_newsletter' ||
+    capability === 'send_newsletter'
   );
 }
 
@@ -193,14 +193,14 @@ export const GRANTABLE_CAPABILITIES: { id: Capability; label: string; descriptio
       'Add and edit equipment, prizes and sponsors, plan events and manage the Event Logistics lists. Every officer can already look at Logistics; this is what lets someone change it.',
   },
   {
-    id: 'write_newspaper',
-    label: 'Write the Newspaper',
+    id: 'write_newsletter',
+    label: 'Write the Newsletter',
     description:
-      'Write and edit Newspaper issues (blocks, audience, test emails) and ask for them to be checked. Every officer and above can already; this lets someone else do it too.',
+      'Write and edit Newsletter issues (blocks, audience, test emails) and ask for them to be checked. Every officer and above can already; this lets someone else do it too.',
   },
   {
-    id: 'send_newspaper',
-    label: 'Send the Newspaper',
+    id: 'send_newsletter',
+    label: 'Send the Newsletter',
     description:
       'Read an issue that was sent for checking, send it to its audience (after a test email and a hold-to-confirm), see the results and manage subscribers. A person can’t send an issue they asked to have checked.',
   },

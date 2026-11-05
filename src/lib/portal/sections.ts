@@ -47,12 +47,12 @@ export const SECTIONS: SectionDef[] = [
     search: { hint: 'Enter the staff raffle and see who won', keywords: ['raffle', 'lottery', 'draw', 'win', 'prizes', 'giveaway'], caps: ['view_logistics', 'manage_logistics'] },
   },
   {
-    id: 'newspaper',
-    label: 'Newspaper',
+    id: 'newsletter',
+    label: 'Newsletter',
     search: {
       hint: 'Write the club’s email, have it checked, and send it to the people you pick',
-      keywords: ['newspaper', 'newsletter', 'email', 'announcement', 'send', 'subscribers', 'issue', 'blast'],
-      caps: ['write_newspaper', 'send_newspaper'],
+      keywords: ['newsletter', 'newsletter', 'email', 'announcement', 'send', 'subscribers', 'issue', 'blast'],
+      caps: ['write_newsletter', 'send_newsletter'],
     },
   },
   {

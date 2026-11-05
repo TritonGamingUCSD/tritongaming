@@ -8,7 +8,7 @@ import styles from './today.module.css';
 
 interface Today {
   meetings: { id: string; title: string; location: string | null; starts_at: string; opens_at: string; accepting: boolean; open: boolean; checked_in_at: string | null }[];
-  newspaper: { waiting: number; mine: number; first: string | null } | null;
+  newsletter: { waiting: number; mine: number; first: string | null } | null;
   qa: { slug: string; name: string; pending: number }[];
 }
 interface Card {
@@ -19,7 +19,7 @@ interface Card {
   tone?: 'now' | 'done';
 }
 
-// The top of the Dashboard: what needs this person today, as a few cards, and nothing when nothing does. A meeting to check in to (or the one they are already in), issues of the Newspaper waiting for their check (or for a
+// The top of the Dashboard: what needs this person today, as a few cards, and nothing when nothing does. A meeting to check in to (or the one they are already in), issues of the Newsletter waiting for their check (or for a
 // sender, when they asked for it), and Q&A questions waiting for their OK. It is worked out by the server for what this person may see (see /api/portal/today) and refreshes while the page is open.
 export default function TodayCards() {
   const [data, setData] = useState<Today | null>(null);
@@ -56,11 +56,11 @@ export default function TodayCards() {
     else if (m.open) cards.push({ key: m.id, href: '/portal/meetings', title: m.title, sub: `Check-in opens at ${formatPacificTime(m.opens_at)}${place}` });
     else cards.push({ key: m.id, href: '/portal/meetings', title: m.title, sub: `Today at ${formatPacificTime(m.starts_at)}${place}` });
   }
-  const n = data.newspaper;
+  const n = data.newsletter;
   if (n && n.waiting > 0)
     cards.push({
       key: 'news',
-      href: n.first ? `/portal/newspaper/${n.first}/send` : '/portal/newspaper',
+      href: n.first ? `/portal/newsletter/${n.first}/send` : '/portal/newsletter',
       title: `${n.waiting} ${n.waiting === 1 ? 'issue is' : 'issues are'} waiting for your check`,
       sub: 'Read it, send a test, then send it or send it back.',
       tone: 'now',
@@ -68,7 +68,7 @@ export default function TodayCards() {
   else if (n && n.mine > 0)
     cards.push({
       key: 'news-mine',
-      href: '/portal/newspaper',
+      href: '/portal/newsletter',
       title: `${n.mine} of your ${n.mine === 1 ? 'issue is' : 'issues are'} with a sender`,
       sub: 'It goes out once someone else checks and sends it.',
     });

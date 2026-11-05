@@ -24,7 +24,7 @@ export default async function EditEventPage({ params }: Params) {
   const { id } = await params;
   const roles = await getUserRoles();
   // The page is the event's workspace (tabs for its details, tickets, logistics, emails, live tools and results): open to anyone who can use one of them. Only people who manage events get the Details tab.
-  if (!(['manage_events', 'checkin', 'view_logistics', 'host_trivia', 'run_photobooth', 'write_newspaper', 'send_newspaper'] as const).some((c) => hasCapability(roles, c)))
+  if (!(['manage_events', 'checkin', 'view_logistics', 'host_trivia', 'run_photobooth', 'write_newsletter', 'send_newsletter'] as const).some((c) => hasCapability(roles, c)))
     redirect('/portal');
   if (!hasCapability(roles, 'manage_events')) return <EventWorkspace eventId={id} details={null} />;
 

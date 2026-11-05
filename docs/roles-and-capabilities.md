@@ -82,8 +82,8 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | `attend_meetings` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
 | `host_meetings` | · | · | · | · | · | · | ✔ | ✔ | ✔ |
 | **Team** ||||||||||
-| `write_newspaper` | · | · | · | · | ✔ | · | ✔ | ✔ | ✔ |
-| `send_newspaper` | · | · | · | · | · | · | · | ✔ | ✔ |
+| `write_newsletter` | · | · | · | · | ✔ | · | ✔ | ✔ | ✔ |
+| `send_newsletter` | · | · | · | · | · | · | · | ✔ | ✔ |
 | **Logistics** ||||||||||
 | `view_logistics` | · | · | ✔ | · | ✔ | · | ✔ | ✔ | ✔ |
 | `request_logistics` | · | · | ✔ | · | ✔ | ✔ | ✔ | ✔ | ✔ |
@@ -108,8 +108,8 @@ Admin passes every check. Roles combine: a person has everything each of their r
 1. Admin passes every check, whether or not Admin is listed for that capability.
 2. Otherwise the person needs at least one role listed for it. Roles add up.
 3. **Division Lead is scoped:** for division capabilities the check can name one division, and a Division Lead only qualifies for the division they lead.
-4. **Inactive:** someone marked Inactive keeps every viewing permission but loses: `manage_events`, `delete_events`, `checkin`, `manage_site_content`, `manage_division`, `manage_divisions_directory`, `manage_roles`, `manage_docs`, `manage_rewards_shop`, `scan_redemptions`, `manage_points`, `manage_board_order`, `manage_meetings`, `manage_help`, `manage_strikes`, `manage_quarters`, `host_meetings`, `manage_logistics`, `write_newspaper`, `send_newspaper`, `host_trivia`. Meeting attendance and everything view-only stay. Admins are never affected.
-5. **Granted permissions:** an admin can give one person or a group an extra permission (Admin → Access), added on top of their roles. Only these can be granted: `manage_strikes`, `manage_logistics`, `write_newspaper`, `send_newspaper`, `view_attendance_reports`.
+4. **Inactive:** someone marked Inactive keeps every viewing permission but loses: `manage_events`, `delete_events`, `checkin`, `manage_site_content`, `manage_division`, `manage_divisions_directory`, `manage_roles`, `manage_docs`, `manage_rewards_shop`, `scan_redemptions`, `manage_points`, `manage_board_order`, `manage_meetings`, `manage_help`, `manage_strikes`, `manage_quarters`, `host_meetings`, `manage_logistics`, `write_newsletter`, `send_newsletter`, `host_trivia`. Meeting attendance and everything view-only stay. Admins are never affected.
+5. **Granted permissions:** an admin can give one person or a group an extra permission (Admin → Access), added on top of their roles. Only these can be granted: `manage_strikes`, `manage_logistics`, `write_newsletter`, `send_newsletter`, `view_attendance_reports`.
 6. **Where it is enforced:** the capabilities marked “database” in the table below are also enforced by the database (row level security). The rest are enforced by the page or API route that uses them, so the route’s own check is the boundary.
 
 **Other rules that are not capabilities**
@@ -151,8 +151,8 @@ Admin passes every check. Roles combine: a person has everything each of their r
 | **Attend meetings** · `attend_meetings` | Check in to meetings with the room code, see their own meeting history, answer plans and questions. | Recruit, Officer, Lead, Executive, Admin | routes |
 | **Plan meetings** · `host_meetings` | Create meetings, plans and teams, and run, edit and see results for the meetings they planned. | Lead, Executive, Admin | routes; lost while inactive |
 | **Team** | | | |
-| **Write the Newspaper** · `write_newspaper` | Open Team → Newspaper, write and edit issues (the newspaper, event announcements, updates and reminders; blocks, audience, test emails), save audiences, and ask for an issue to be checked. Also opens the Events → Emails tab. Officers and above; lost while inactive. Can be granted. | Officer, Lead, Executive, Admin | pages + routes; lost while inactive |
-| **Send the Newspaper** · `send_newspaper` | Read an issue sent for checking, send it to its audience (after a test email and a hold-to-confirm), see delivery and click results and manage subscribers. Cannot send an issue you asked to have checked yourself. Executive and Admin by default; can be granted. | Executive, Admin | pages + routes; lost while inactive |
+| **Write the Newsletter** · `write_newsletter` | Open Team → Newsletter, write and edit issues (the newsletter, event announcements, updates and reminders; blocks, audience, test emails), save audiences, and ask for an issue to be checked. Also opens the Events → Emails tab. Officers and above; lost while inactive. Can be granted. | Officer, Lead, Executive, Admin | pages + routes; lost while inactive |
+| **Send the Newsletter** · `send_newsletter` | Read an issue sent for checking, send it to its audience (after a test email and a hold-to-confirm), see delivery and click results and manage subscribers. Cannot send an issue you asked to have checked yourself. Executive and Admin by default; can be granted. | Executive, Admin | pages + routes; lost while inactive |
 | **Logistics** | | | |
 | **See Logistics** · `view_logistics` | Open Logistics and look at the equipment catalog (including device logins), sponsors and event setups. Cannot change anything. | Recruit, Officer, Lead, Executive, Admin | pages + routes |
 | **Send Logistics requests** · `request_logistics` | Open the Requests pages of Logistics and send a request for devices or prizes. A division account sees only these, for its own division. Once sent, only the Logistics team can change a request. | Recruit, Officer, Division Lead, Lead, Executive, Admin | pages + routes |
@@ -218,8 +218,8 @@ The files that ask for each capability, so a change can be traced. Page and rout
 - `view_logistics` (5): `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/page`, `lib/events/workspace.ts`, `lib/logistics/auth.ts`, `lib/portal/sections.ts`
 - `request_logistics` (2): `app/(portal)/portal/page`, `lib/logistics/auth.ts`
 - `manage_logistics` (4): `app/(portal)/portal/page`, `lib/logistics/auth.ts`, `lib/logistics/requestServer.ts`, `lib/portal/sections.ts`
-- `write_newspaper` (6): `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/page`, `app/api/portal/today/route`, `lib/events/workspace.ts`, `lib/newspaper/server.ts`, `lib/portal/sections.ts`
-- `send_newspaper` (6): `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/page`, `app/api/portal/today/route`, `lib/events/workspace.ts`, `lib/newspaper/server.ts`, `lib/portal/sections.ts`
+- `write_newsletter` (6): `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/page`, `app/api/portal/today/route`, `lib/events/workspace.ts`, `lib/newsletter/server.ts`, `lib/portal/sections.ts`
+- `send_newsletter` (6): `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/page`, `app/api/portal/today/route`, `lib/events/workspace.ts`, `lib/newsletter/server.ts`, `lib/portal/sections.ts`
 - `host_trivia` (7): `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/page`, `app/api/portal/today/route`, `lib/events/workspace.ts`, `lib/polls/server.ts`, `lib/portal/sections.ts`, `lib/trivia/server.ts`
 - `run_photobooth` (5): `app/(portal)/portal/events/[id]/page`, `app/(portal)/portal/page`, `lib/events/workspace.ts`, `lib/photobooth/server.ts`, `lib/portal/sections.ts`
 

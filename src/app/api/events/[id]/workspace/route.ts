@@ -4,7 +4,7 @@ import { UUID, authorizeWorkspace } from '@/lib/events/workspace';
 export const dynamic = 'force-dynamic';
 
 // An event's workspace: what is tied to it, for the tabs of its page. Every part is only worked out for people who may see it (see lib/events/workspace.ts).
-//   GET            the event, how many registered and checked in, its logistics plan, the Newspaper issues about it, and the polls, Q&A, Trivia games, photo booths and Staffles made for it
+//   GET            the event, how many registered and checked in, its logistics plan, the Newsletter issues about it, and the polls, Q&A, Trivia games, photo booths and Staffles made for it
 //   PUT { kind, id, on }   tie an existing poll | qa | trivia | booth | staffle to this event (on: true) or take it off (on: false)
 const TOOL = {
   poll: { table: 'polls', cap: 'polls' },
@@ -26,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     caps.tickets ? svc.from('tickets').select('status, checked_in_at').eq('event_id', id).neq('status', 'cancelled').limit(20000) : Promise.resolve({ data: null }),
     caps.logistics ? svc.from('logistics_plans').select('slug, name, status').eq('event_id', id).limit(5) : Promise.resolve({ data: null }),
     caps.email
-      ? svc.from('newspaper_issues').select('id, slug, number, title, type, status').eq('event_id', id).order('updated_at', { ascending: false }).limit(30)
+      ? svc.from('newsletter_issues').select('id, slug, number, title, type, status').eq('event_id', id).order('updated_at', { ascending: false }).limit(30)
       : Promise.resolve({ data: null }),
     caps.polls ? svc.from('polls').select('id, slug, name, status').eq('event_id', id).limit(30) : Promise.resolve({ data: null }),
     caps.polls ? svc.from('qa_sessions').select('id, slug, name, status').eq('event_id', id).limit(30) : Promise.resolve({ data: null }),
@@ -38,7 +38,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const t = tix.data as { status: string; checked_in_at: string | null }[] | null;
   const issueIds = (issues.data ?? []).map((i) => i.id as string);
   const { data: deliveries } = issueIds.length
-    ? await svc.from('newspaper_deliveries').select('issue_id, status').in('issue_id', issueIds).limit(50000)
+    ? await svc.from('newsletter_deliveries').select('issue_id, status').in('issue_id', issueIds).limit(50000)
     : { data: [] as { issue_id: string; status: string }[] };
   return NextResponse.json({
     event,

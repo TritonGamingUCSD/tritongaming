@@ -31,7 +31,7 @@ export async function authorizeWorkspace() {
     details: hasCapability(grants, 'manage_events'),
     tickets: hasCapability(grants, 'checkin') || hasCapability(grants, 'manage_events'),
     logistics: hasCapability(grants, 'view_logistics'),
-    email: hasCapability(grants, 'write_newspaper') || hasCapability(grants, 'send_newspaper'),
+    email: hasCapability(grants, 'write_newsletter') || hasCapability(grants, 'send_newsletter'),
     polls: hasCapability(grants, 'host_trivia'),
     booths: hasCapability(grants, 'run_photobooth'),
     staffles: hasCapability(grants, 'view_logistics'),

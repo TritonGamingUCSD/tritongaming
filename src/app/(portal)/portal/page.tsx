@@ -75,7 +75,7 @@ import TriviaSectionContent from './trivia/TriviaSectionContent';
 import PhotoBoothSectionContent from './photobooth/PhotoBoothSectionContent';
 import PollsSectionContent from './polls/PollsSectionContent';
 import QaSectionContent from './qa/QaSectionContent';
-import NewspaperSectionContent from './newspaper/NewspaperSectionContent';
+import NewsletterSectionContent from './newsletter/NewsletterSectionContent';
 import QuarterStatusContent from './quarters/QuarterStatusContent';
 import InactiveNote from './quarters/InactiveNote';
 import { currentQuarter, loadQuarters, quarterName } from '@/lib/members/quarters';
@@ -382,7 +382,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                 scope={scope}
                 canEdit={canManageEvents}
                 canDelete={hasCapability(roles, 'delete_events')}
-                canEmail={hasCapability(roles, 'write_newspaper') || hasCapability(roles, 'send_newspaper')}
+                canEmail={hasCapability(roles, 'write_newsletter') || hasCapability(roles, 'send_newsletter')}
                 canManagePoints={canManagePoints}
                 initialTab={requestedTab}
               />
@@ -492,18 +492,18 @@ export default async function PortalDashboard({ searchParams }: Props) {
           },
         ]
       : []),
-    // The Newspaper: the club's email written as an issue of blocks, checked by a second person and sent to an audience picked by rules. Officers and above write; exec and admins (or anyone granted it) send.
-    ...(hasCapability(roles, 'write_newspaper') || hasCapability(roles, 'send_newspaper')
+    // The Newsletter: the club's email written as an issue of blocks, checked by a second person and sent to an audience picked by rules. Officers and above write; exec and admins (or anyone granted it) send.
+    ...(hasCapability(roles, 'write_newsletter') || hasCapability(roles, 'send_newsletter')
       ? [
           {
-            id: 'newspaper',
+            id: 'newsletter',
             icon: <Newspaper size={28} strokeWidth={1.5} aria-hidden="true" />,
-            label: sectionLabel('newspaper'),
-            description: hasCapability(roles, 'send_newspaper') ? 'Write, check and send the club’s email' : 'Write the club’s email',
+            label: sectionLabel('newsletter'),
+            description: hasCapability(roles, 'send_newsletter') ? 'Write, check and send the club’s email' : 'Write the club’s email',
             homeExclude: true,
             dockExclude: true,
             group: 'Outreach' as const,
-            content: <NewspaperSectionContent />,
+            content: <NewsletterSectionContent />,
           },
         ]
       : []),
