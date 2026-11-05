@@ -1,5 +1,6 @@
 'use client';
 
+import { useAddressState, wordCodec } from '@/lib/portal/usePageState';
 import { useEffect, useMemo, useState } from 'react';
 import { Settings2 } from 'lucide-react';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
@@ -192,7 +193,7 @@ export default function DevicesPage({ api, data, route, go }: { api: LogisticsAp
 }
 
 function DevicesSettings({ api, data, onClose }: { api: LogisticsApi; data: Catalog; onClose: () => void }) {
-  const [tab, setTab] = useState<ToolsPart>('lists');
+  const [tab, setTab] = useAddressState('part', wordCodec(['event-steps', 'bundles', 'lists', 'sponsors', 'prizes'] as const, 'lists'));
   const n = (...k: (keyof Catalog['lists'])[]) => k.reduce((t, x) => t + data.lists[x].length, 0);
   return (
     <Dialog title="Device Settings" wide sheet onClose={onClose}>

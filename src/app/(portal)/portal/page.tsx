@@ -46,7 +46,7 @@ import PortalTopSection from './PortalTopSection';
 import PortalSearch from '@/components/portal/PortalSearch';
 import { PortalParamsProvider } from '@/components/portal/PortalParamsContext';
 import { AdminLazy, DivisionMembersLazy, DivisionsLazy, DocsLazy, EventsLazy, MembersLazy, SiteContentLazy } from './LazySections';
-import { getDocsSummary, getMemberCount, getTiersCached } from '@/lib/portal/portalCounts';
+import { getDocsSummary, getTiersCached } from '@/lib/portal/portalCounts';
 import { DashboardWelcome, DashboardBody } from './DashboardHome';
 import type { HomeCard } from './HomeCards';
 import { roleNeededFor } from '@/lib/portal/portalCommands';
@@ -214,7 +214,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
     checkinData,
     pointsData,
     memberTiers,
-    memberCount,
     docsSummary,
     logisticsToday,
     meetingNow,
@@ -230,7 +229,6 @@ export default async function PortalDashboard({ searchParams }: Props) {
     canCheckin ? getCheckinData() : Promise.resolve(null),
     canUseRewards ? getMyPointsData(profile.id) : Promise.resolve(null),
     getTiersCached(),
-    canViewMembers ? getMemberCount().catch(() => 0) : Promise.resolve(0),
     canViewDocs ? getDocsSummary(canManageDocs).catch(() => ({ count: 0, pinned: null })) : Promise.resolve(null),
     loadLogisticsToday(),
     loadMeetingNow(),

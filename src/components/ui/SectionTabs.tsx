@@ -67,7 +67,11 @@ export default function SectionTabs<T extends string>({
 
   const slot = useSyncExternalStore(
     () => () => {},
-    () => (top && variant !== 'segmented' ? document.querySelector<HTMLElement>('[data-top-tabs]') : null),
+    () => {
+      const strip = top && variant !== 'segmented' ? document.querySelector<HTMLElement>('[data-top-tabs]') : null;
+      // A group of pages (People, Live Tools…) already fills the strip with its own tabs: a page's own tabs stay in the page.
+      return strip && !strip.hasAttribute('data-family') ? strip : null;
+    },
     () => null,
   );
   // The line under the open tab (or, on the small toggle, the pill behind the open option) slides to the next one (set straight on the element, so no extra render).

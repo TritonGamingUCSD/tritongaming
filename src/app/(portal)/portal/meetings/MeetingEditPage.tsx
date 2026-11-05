@@ -1,5 +1,6 @@
 'use client';
 
+import { useAddressState, wordCodec } from '@/lib/portal/usePageState';
 import { useState } from 'react';
 import SectionTabs from '@/components/ui/SectionTabs';
 import DetailHeader from '@/components/ui/DetailHeader';
@@ -28,7 +29,7 @@ export function MeetingEditPage({
   onSaveSeries: (body: Record<string, unknown>) => Promise<boolean>;
   onChanged: () => void;
 }) {
-  const [scope, setScope] = useState<'week' | 'all'>(item ? 'week' : 'all');
+  const [scope, setScope] = useAddressState('scope', wordCodec(['week', 'all'] as const, item ? 'week' : 'all'));
   const title = (scope === 'all' ? series?.title : item?.title) ?? 'Meeting';
   return (
     <div className={styles.stack}>

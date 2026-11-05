@@ -11,6 +11,8 @@ import PortalCrumbs from './PortalCrumbs';
 import styles from './PortalHub.module.css';
 import ByteMini from '@/components/Bytecode/ByteMini';
 import AccountMenu from './AccountMenu';
+import SectionTabs from '@/components/ui/SectionTabs';
+import { familyOf } from '@/lib/portal/families';
 import AreaPixelIcon from './AreaPixelIcon';
 import { DASHBOARD_ACCENT, GROUP_ACCENT, GROUP_LABEL } from './hubConstants';
 import { GroupedSection, HubFrame, HubIdentity, HubSection } from './hubTypes';
@@ -128,6 +130,41 @@ export function DesktopShell({
     g.style.height = `${el.offsetHeight}px`;
     g.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop}px)`;
   }, [activeId, groupedSections]);
+  // Pages that belong together are one entry in the list (People, Live Tools, Standing, Events): the entry opens the first page of its family, and the family's pages are the tabs under the top bar.
+  const allRail = groupedSections.flatMap((g) => g.items).filter((x) => !x.railHidden);
+  const kidsOf = (fid: string | undefined, sid: string) => {
+    const f = familyOf(sid);
+    return f && f.id === fid ? f.children.filter((c) => allRail.some((x) => x.id === c.id)) : [];
+  };
+  const collapseFamilies = (list: HubSection[]) => {
+    const seen = new Set<string>();
+    const out: HubSection[] = [];
+    for (const s of list) {
+      const f = familyOf(s.id);
+      const kids = f ? f.children.filter((c) => allRail.some((x) => x.id === c.id)) : [];
+      if (!f || kids.length < 2) {
+        out.push(s);
+        continue;
+      }
+      if (seen.has(f.id)) continue;
+      seen.add(f.id);
+      const first = allRail.find((x) => x.id === kids[0].id) ?? s;
+      out.push({ ...first, label: f.label, badge: undefined });
+    }
+    return out;
+  };
+  const isOpen = (s: HubSection) =>
+    s.id === openId ||
+    (!!openId && familyOf(openId) !== undefined && familyOf(openId) === familyOf(s.id) && kidsOf(familyOf(s.id)?.id, s.id).length >= 2 && s.label === familyOf(s.id)?.label);
+  // The pages inside a group entry, named in small text under it so nothing has to be opened to find out what is in there.
+  const peekOf = (s: HubSection) => {
+    const f = familyOf(s.id);
+    if (!f || f.peek === false || s.label !== f.label) return null;
+    const kids = f.children.filter((c) => allRail.some((x) => x.id === c.id));
+    return kids.length >= 2 ? kids.map((k) => k.label).join(' · ') : null;
+  };
+  const openFamily = openSection ? familyOf(openSection.id) : undefined;
+  const openKids = openFamily && openSection ? kidsOf(openFamily.id, openSection.id) : [];
   const accent = openSection ? GROUP_ACCENT[openSection.group] : DASHBOARD_ACCENT;
   // The frame fills exactly what's left of the window below whatever banners sit above it (profile reminder, "View as"), so
   // the whole frame is on screen without scrolling the page. Re-measured when the window or the page above changes.
@@ -177,7 +214,7 @@ export function DesktopShell({
         <nav ref={navRef} className={styles.railNav} aria-label="Portal sections">
           <span ref={glideRef} className={styles.railGlide} aria-hidden="true" />
           {groupedSections
-            .map(({ group, items: all }) => ({ group, items: all.filter((s) => !s.railHidden) }))
+            .map(({ group, items: all }) => ({ group, items: collapseFamilies(all.filter((s) => !s.railHidden)) }))
             .filter(({ items }) => items.length > 0)
             .map(({ group, items }) => (
               <div
@@ -197,17 +234,26 @@ export function DesktopShell({
                   items.map((s) => (
                     <button
                       key={s.id}
-                      data-rail-active={s.id === openId ? '' : undefined}
-                      className={`${styles.railItem} ${s.id === openId ? styles.railItemActive : ''} ${groupedSections.length > 1 && group !== 'Overview' && items.length > 1 ? styles.railItemNested : ''}`}
+                      data-rail-active={isOpen(s) ? '' : undefined}
+                      className={`${styles.railItem} ${isOpen(s) ? styles.railItemActive : ''} ${groupedSections.length > 1 && group !== 'Overview' && items.length > 1 ? styles.railItemNested : ''}`}
                       onClick={() => open(s.id)}
-                      aria-current={s.id === openId ? 'page' : undefined}
+                      aria-current={isOpen(s) ? 'page' : undefined}
                       title={s.label}
                       aria-label={collapsed ? s.label : undefined}
                     >
-                      <span className={styles.railMono} aria-hidden="true">
-                        {s.label.charAt(0)}
+                      {items.length === 1 && group !== 'Overview' && group !== 'Admin' ? (
+                        <span className={styles.railGroupPixel} aria-hidden="true">
+                          <AreaPixelIcon group={group} />
+                        </span>
+                      ) : (
+                        <span className={styles.railMono} aria-hidden="true">
+                          {s.label.charAt(0)}
+                        </span>
+                      )}
+                      <span className={styles.railLabel}>
+                        {s.label}
+                        {peekOf(s) && <small className={styles.railPeekLine}>{peekOf(s)}</small>}
                       </span>
-                      <span className={styles.railLabel}>{s.label}</span>
                       {s.badge !== undefined && s.badge !== 0 && <span className={styles.railBadge}>{s.badge}</span>}
                     </button>
                   ))}
@@ -256,7 +302,11 @@ export function DesktopShell({
           </div>
         </header>
         <div className={styles.navLine} data-running={running ? '' : undefined} aria-hidden="true" />
-        <div className={styles.tabStrip} data-top-tabs />
+        <div className={styles.tabStrip} data-top-tabs data-family={openKids.length >= 2 ? '' : undefined}>
+          {openKids.length >= 2 && openSection && (
+            <SectionTabs value={openSection.id} onChange={(id) => open(id)} label={openFamily?.label ?? 'Pages'} tabs={openKids.map((k) => ({ id: k.id, label: k.label }))} />
+          )}
+        </div>
         {frame?.banners && <div className={styles.frameBanners}>{frame.banners}</div>}
         <div
           className={styles.frameBody}

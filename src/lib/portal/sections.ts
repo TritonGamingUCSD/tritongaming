@@ -58,11 +58,13 @@ export const SECTIONS: SectionDef[] = [
   {
     id: 'quarters',
     label: 'Quarter status',
+    mainTab: 'status',
     search: { hint: 'Who is active or inactive each quarter', keywords: ['quarter', 'inactive', 'active', 'officer', 'term', 'year'], caps: ['manage_quarters'] },
   },
   {
     id: 'strikes',
     label: 'Strikes',
+    mainTab: 'people',
     search: { hint: 'Private strike tracker (HR and exec)', keywords: ['strike', 'strikes', 'voucher', 'hr', 'attendance'], caps: ['manage_strikes'] },
   },
   { id: 'trivia', label: 'Trivia', search: { hint: 'Join a quiz game, or write and host one', keywords: ['quiz', 'kahoot', 'game', 'questions', 'play', 'join'] } },

@@ -1,5 +1,7 @@
 'use client';
 
+import { useAddressState, textCodec } from '@/lib/portal/usePageState';
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import Loading from '@/components/Loading/Loading';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarX, Users, Moon, Search, ShieldAlert, Ticket, X } from 'lucide-react';
@@ -21,8 +23,17 @@ export function Tracker() {
   const [me, setMe] = useState('');
   const [missed, setMissed] = useState(0);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<Tab>('people');
-  const [selected, setSelected] = useState<string | null>(null);
+  // The open view and the open person are in the address, so each can be copied and opened again.
+  const { tab: urlTab } = useUrlNav();
+  const syncUrl = usePortalTabSync('strikes');
+  const [tab, setTabState] = useState<Tab>(urlTab === 'missed' ? 'missed' : 'people');
+  const setTab = (t: Tab) => {
+    setTabState(t);
+    syncUrl(t);
+  };
+  const [selectedId, setSelectedId] = useAddressState('person', textCodec);
+  const selected: string | null = selectedId || null;
+  const setSelected = (v: string | null) => setSelectedId(v ?? '');
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<Filter>('all');
 

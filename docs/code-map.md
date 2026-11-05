@@ -110,8 +110,8 @@ Every portal section is defined once in `src/lib/portal/sections.ts` (its addres
 | `/portal/logistics` | Event Logistics | home | Equipment catalog, prizes and event setups (needs view_logistics or manage_logistics) |
 | `/portal/staffle` | Staffle | - | Enter the staff raffle and see who won (needs view_logistics or manage_logistics) |
 | `/portal/newspaper` | Newspaper | - | Write the club’s email, have it checked, and send it to the people you pick (needs write_newspaper or send_newspaper) |
-| `/portal/quarters` | Quarter status | - | Who is active or inactive each quarter (needs manage_quarters) |
-| `/portal/strikes` | Strikes | - | Private strike tracker (HR and exec) (needs manage_strikes) |
+| `/portal/quarters` | Quarter status | status | Who is active or inactive each quarter (needs manage_quarters) |
+| `/portal/strikes` | Strikes | people | Private strike tracker (HR and exec) (needs manage_strikes) |
 | `/portal/trivia` | Trivia | - | Join a quiz game, or write and host one |
 | `/portal/polls` | Polls | - | Run a vote on a big screen: a contest, a favourite, a choice on stage (needs host_trivia) |
 | `/portal/qa` | Q&A | - | A live question wall: guests ask, you approve, the room likes the best (needs host_trivia) |

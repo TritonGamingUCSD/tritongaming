@@ -1,5 +1,6 @@
 'use client';
 
+import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import { formatPacificDate } from '@/lib/core/timezone';
 import Loading from '@/components/Loading/Loading';
 import SaveBar from '@/components/portal/SaveBar';
@@ -64,7 +65,13 @@ const yearLabel = (y: number) => `${y}-${String((y + 1) % 100).padStart(2, '0')}
 // Quarter status: pick a quarter (back to the first one) and see who is Active and who is Inactive in it. Only the current quarter can be changed; a new
 // quarter starts as a copy of the last one's inactive list, so exec only edits who is different. Future quarters are never shown or planned.
 export default function QuarterStatusContent() {
-  const [tab, setTab] = useState<'status' | 'years'>('status');
+  const { tab: urlTab } = useUrlNav();
+  const syncUrl = usePortalTabSync('quarters');
+  const [tab, setTabState] = useState<'status' | 'years'>(urlTab === 'years' ? 'years' : 'status');
+  const setTab = (t: 'status' | 'years') => {
+    setTabState(t);
+    syncUrl(t);
+  };
   return (
     <div className={styles.page}>
       <SectionHeader

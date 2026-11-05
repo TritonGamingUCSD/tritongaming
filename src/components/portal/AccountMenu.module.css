@@ -57,3 +57,11 @@
 .signOut { margin: 0.2rem 0 0; padding: 0.7rem 0.9rem; border-top: 0; border-radius: 14px; }
 .viewAs button, .viewAs [role='button'], .viewAs select { border-radius: 999px; }
 .dot { border-color: #34588a; } /* theme-ok */
+
+/* View as: its drop-down was drawn for the navy bar; here it takes the card's own colors, with plain rows and sentence-case headings. */
+.viewAs { --pp-chrome: var(--pp-card); --pp-chrome-2: rgba(var(--pp-ink-rgb), 0.06); --pp-chrome-edge: rgba(var(--pp-ink-rgb), 0.25); }
+.viewAs button:not([aria-haspopup]), .viewAs [role='menuitem'] { border: 0 !important; border-radius: 10px !important; background: none !important; padding: 0.5rem 0.7rem !important; }
+.viewAs [role='menuitem']:hover { background: rgba(var(--pp-ink-rgb), 0.08) !important; }
+.viewAs [role='menu'] { border: 1px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 14px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28); }
+.viewAs [role='menu'] input { border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 10px; background: rgba(var(--pp-ink-rgb), 0.05); color: var(--pp-ink); }
+.viewAs [role='menu'] div[class*='menuHead'] { text-transform: none; letter-spacing: 0; font-size: 0.85rem; font-weight: 700; opacity: 0.75; }

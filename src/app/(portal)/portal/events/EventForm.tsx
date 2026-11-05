@@ -1,5 +1,6 @@
 'use client';
 
+import { useAddressState, wordCodec } from '@/lib/portal/usePageState';
 import { dayHoursComplete } from '@/lib/events/dayHours';
 import SectionHeader from '@/components/ui/SectionHeader';
 import Notice from '@/components/ui/Notice';
@@ -195,7 +196,7 @@ export default function EventForm({
   const draft = useDraft<EventFormValues>('event-new', form, (v) => !isNewEvent || JSON.stringify(v) === JSON.stringify(startForm.current));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
-  const [tab, setTab] = useState<EventTab>('basics');
+  const [tab, setTab] = useAddressState('form', wordCodec(['basics', 'page', 'tickets', 'after'] as const, 'basics'));
   const formRef = useRef<HTMLFormElement>(null);
   // A required field in a tab that is not showing: jump to that tab and show the browser's message there.
   function onInvalid(e: React.FormEvent) {
