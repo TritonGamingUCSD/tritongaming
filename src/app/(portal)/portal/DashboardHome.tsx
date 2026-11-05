@@ -57,9 +57,9 @@ const time = (iso: string) => formatPacificTime(iso);
 export function DashboardWelcome({ eyebrow, name, showSearch = true }: { eyebrow: string; name: string; showSearch?: boolean }) {
   return (
     <header className={styles.welcome}>
+      <p className={styles.sticker}>{eyebrow}</p>
       <h1 className={styles.hello} data-keep>
         Welcome back,<span className={styles.name}>{name}</span>
-        <span className={styles.term}>{eyebrow}</span>
       </h1>
       {showSearch && (
         <div className={styles.search}>

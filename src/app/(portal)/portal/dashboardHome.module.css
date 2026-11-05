@@ -183,3 +183,9 @@
 .pinsLabel { font-size: 0.8rem; font-weight: 700; color: var(--pp-ink); opacity: 0.7; margin-right: 0.2rem; }
 .pinChip { padding: 0.3rem 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 999px; background: var(--pp-card); color: var(--pp-ink); font-size: 0.88rem; font-weight: 600; text-decoration: none; }
 .pinChip:hover { border-color: rgba(var(--pp-ink-rgb), 0.5); }
+
+/* The public site's look, on Home only: a tilted yellow sticker above the title, the title in the site's heavy caps, and hard offset shadows instead of soft ones. */
+.sticker { align-self: flex-start; margin: 0 0 0.2rem; padding: 0.4rem 0.75rem; background: var(--yellow); color: #011941; border-radius: var(--radius-sm, 4px); font-family: var(--font-renegare); font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; transform: rotate(-1.5deg); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); } /* theme-ok: a yellow sticker is the same in light and dark */
+.hello { display: block; font-family: var(--font-futura-heavy); font-weight: 400; text-transform: uppercase; letter-spacing: 0.01em; font-size: clamp(1.7rem, 3.4vw, 2.6rem); }
+.hello .name { margin-left: 0.3em; }
+.pinChip { box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); }
