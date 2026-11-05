@@ -1047,3 +1047,13 @@
   .topCode, .topCode * { color: #fff; } /* theme-ok: the code digits on the navy bar */
   .topCode [class*='cell'] { opacity: 0.7; }
 }
+
+/* With every page always shown, the list is made compact so most people see all of it without scrolling (it scrolls when a future list is longer). */
+@media (min-width: 900px) {
+  .rail .railNav .railItem { min-height: 30px; padding-top: 0.1rem; padding-bottom: 0.1rem; }
+  .rail .railNav .railLabel { font-size: 0.95rem; }
+  .rail .railNav .railGroupLabel { margin: 0.35rem 0 0.1rem; padding: 0.2rem 0.7rem; font-size: 0.95rem; }
+  .rail .railNav { gap: 0.1rem; }
+  .rail .railGroup { padding-top: 0; }
+  .rail .railPin { margin-top: 0.3rem; padding: 0.35rem 0.7rem; }
+}

@@ -1,43 +1,40 @@
-/* The account menu: the picture (with its level ring) in the top bar, and a card with groups under it. */
+/* The account menu: the picture (with its level ring) in the top bar, and under it a navy player card, an appearance switch with words, a short list of places, and Sign out apart at the bottom. */
 .wrap { position: relative; flex-shrink: 0; }
 .trigger { position: relative; display: grid; place-items: center; padding: 0; border: 0; background: none; cursor: pointer; border-radius: 50%; }
 .ring { display: grid; place-items: center; padding: 3px; border-radius: 50%; background: conic-gradient(var(--yellow) var(--xp, 0%), rgba(255, 255, 255, 0.22) 0); } /* theme-ok */
 .trigger:hover .ring, .trigger[aria-expanded='true'] .ring { background: conic-gradient(var(--yellow) 100%, var(--yellow) 0); } /* theme-ok */
-.avatar { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; font-weight: 700; background: var(--pp-chrome-2, #2f4d77); color: #fff; } /* theme-ok */
+.avatar { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; font-weight: 700; background: #2f4d77; color: #fff; } /* theme-ok */
 .ring .avatar { width: 32px; height: 32px; }
 .ringBig .avatar { width: 56px; height: 56px; font-size: 1.4rem; }
 .dot { position: absolute; top: -1px; right: -1px; width: 11px; height: 11px; border-radius: 50%; background: var(--yellow); border: 2px solid #243f63; } /* theme-ok */
-.menu { --pp-chrome-fg: var(--pp-ink); --pp-chrome-rgb: var(--pp-ink-rgb); --pp-chrome-accent: var(--p-accent-text); position: absolute; right: 0; top: calc(100% + 10px); z-index: 40; width: 21rem; max-width: calc(100vw - 1.5rem); padding: 0.5rem; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.28); background: var(--pp-card); color: var(--pp-ink); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32); font-family: var(--font-dm-sans), system-ui, sans-serif; }
-.card { display: grid; grid-template-columns: auto 1fr; gap: 0.35rem 0.9rem; align-items: center; padding: 0.8rem 0.7rem 0.9rem; margin-bottom: 0.2rem; border-radius: 6px; background: rgba(var(--pp-ink-rgb), 0.06); }
-.who { min-width: 0; }
-.name { margin: 0; font-size: 1.1rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.level { margin: 0.2rem 0 0; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-.levelPill { padding: 0.08rem 0.65rem; border-radius: 999px; background: var(--yellow); color: #011941; font-size: 0.82rem; font-weight: 700; } /* theme-ok: a yellow tag keeps ink text */
-.points { font-size: 0.9rem; font-weight: 600; color: rgba(var(--pp-ink-rgb), 0.8); font-variant-numeric: tabular-nums; }
-.xpRow { grid-column: 1 / -1; display: grid; gap: 0.3rem; }
-.xp { display: block; height: 0.55rem; border-radius: 2px; background: rgba(var(--pp-ink-rgb), 0.16); overflow: hidden; }
+.menu { --pp-chrome-fg: var(--pp-ink); --pp-chrome-rgb: var(--pp-ink-rgb); --pp-chrome-accent: var(--p-accent-text); position: absolute; right: 0; top: calc(100% + 10px); z-index: 40; width: 21rem; max-width: calc(100vw - 1.5rem); overflow: hidden; border-radius: 8px; border: 1px solid rgba(var(--pp-ink-rgb), 0.28); background: var(--pp-card); color: var(--pp-ink); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.32); font-family: var(--font-dm-sans), system-ui, sans-serif; }
+/* The player card is navy in light and dark alike: it is the brand block of the menu. */
+.card { display: grid; grid-template-columns: auto 1fr; gap: 0.8rem 0.95rem; align-items: center; padding: 1rem 1rem 1.05rem; background: #243f63; color: #fff; border-bottom: 3px solid var(--yellow); } /* theme-ok */
+.who { min-width: 0; display: grid; gap: 0.45rem; }
+.name { margin: 0; font-size: 1.15rem; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.roles { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+.role { padding: 0.05rem 0.55rem; border-radius: 999px; border: 1px solid; font-size: 0.78rem; font-weight: 600; line-height: 1.45; }
+.stats { grid-column: 1 / -1; display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.7rem; padding-top: 0.8rem; border-top: 1px solid rgba(255, 255, 255, 0.2); } /* theme-ok */
+.levelPill { padding: 0.08rem 0.7rem; border-radius: 999px; background: var(--yellow); color: #011941; font-size: 0.84rem; font-weight: 700; } /* theme-ok */
+.points { font-size: 0.95rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.xp { flex: 1 1 100%; height: 0.5rem; border-radius: 2px; background: rgba(255, 255, 255, 0.22); overflow: hidden; } /* theme-ok */
 .xp > span { display: block; height: 100%; background: var(--yellow); } /* theme-ok */
-.toNext { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.75); }
-.roles { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 0.3rem; }
-.role { padding: 0.08rem 0.6rem; border-radius: 999px; border: 1px solid; font-size: 0.8rem; font-weight: 600; line-height: 1.4; }
-.group { margin: 0.7rem 0.7rem 0.25rem; font-size: 0.8rem; font-weight: 700; color: rgba(var(--pp-ink-rgb), 0.65); }
-.row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; width: 100%; padding: 0.6rem 0.7rem; border: 0; border-radius: 6px; background: none; color: inherit; font: inherit; font-size: 0.97rem; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
-.row:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
-.hint { font-size: 0.88rem; font-weight: 500; color: var(--p-accent-text); }
-:global([data-pp-theme='dark']) .hint { color: var(--pp-chrome-accent); }
-.badge { min-width: 1.4rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--yellow); color: #011941; font-size: 0.8rem; font-weight: 700; text-align: center; } /* theme-ok */
-.modes { display: inline-flex; gap: 0.15rem; padding: 0.2rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 999px; }
-.mode { display: grid; place-items: center; width: 2.1rem; height: 1.8rem; padding: 0; border: 0; border-radius: 999px; background: none; color: rgba(var(--pp-ink-rgb), 0.75); cursor: pointer; }
-.mode:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
-.modeOn { background: rgba(var(--pp-ink-rgb), 0.16); color: var(--pp-ink); }
-.viewAs { padding: 0.2rem 0.4rem; }
-.signOut { display: block; width: calc(100% - 0.8rem); margin: 0.7rem 0.4rem 0.2rem; padding: 0.6rem 0.7rem; border: 1px solid color-mix(in srgb, var(--pp-bad) 55%, transparent); border-radius: 6px; background: none; color: var(--pp-bad); font: inherit; font-size: 0.97rem; font-weight: 700; text-align: center; cursor: pointer; }
-.signOut:hover { background: color-mix(in srgb, var(--pp-bad) 10%, transparent); }
-
-/* A row that holds its own control (Appearance) is not a button: no hover fill. */
-.rowStatic { cursor: default; }
-.rowStatic:hover { background: none; }
-/* The View as control was drawn for the navy bar (white text): inside this light or dark card it takes the card's ink. */
+.toNext { flex: 1 1 100%; font-size: 0.82rem; opacity: 0.85; }
+.section { display: grid; gap: 0.4rem; padding: 0.9rem 1rem 0.8rem; }
+.label { margin: 0.2rem 0 0; font-size: 0.82rem; font-weight: 700; color: rgba(var(--pp-ink-rgb), 0.65); }
+.label:first-child { margin-top: 0; }
+.modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.2rem; padding: 0.2rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 999px; }
+.mode { padding: 0.4rem 0.3rem; border: 0; border-radius: 999px; background: none; color: rgba(var(--pp-ink-rgb), 0.75); font: inherit; font-size: 0.92rem; font-weight: 600; cursor: pointer; }
+.modeOn { background: var(--pp-ink); color: var(--pp-card); font-weight: 700; }
+.viewAs { padding: 0; }
 .viewAs, .viewAs * { color: var(--pp-ink) !important; }
 .viewAs button, .viewAs [role='button'], .viewAs select { border: 1px solid rgba(var(--pp-ink-rgb), 0.4) !important; background: transparent !important; border-radius: 999px; padding: 0.35rem 0.8rem; font: inherit; font-size: 0.92rem; font-weight: 600; cursor: pointer; }
 .viewAs button:hover { background: rgba(var(--pp-ink-rgb), 0.07) !important; }
+.links { display: grid; padding: 0.2rem 0.5rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.14); }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; width: 100%; padding: 0.6rem 0.5rem; border: 0; border-radius: 6px; background: none; color: inherit; font: inherit; font-size: 0.97rem; font-weight: 600; text-align: left; text-decoration: none; cursor: pointer; }
+.row:hover { background: rgba(var(--pp-ink-rgb), 0.07); }
+.go { color: rgba(var(--pp-ink-rgb), 0.45); font-weight: 500; }
+.row:hover .go { color: var(--pp-ink); }
+.badge { min-width: 1.4rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--yellow); color: #011941; font-size: 0.8rem; font-weight: 700; text-align: center; } /* theme-ok */
+.signOut { display: block; width: 100%; padding: 0.75rem 1.1rem; border: 0; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.14); background: none; color: var(--pp-bad); font: inherit; font-size: 0.95rem; font-weight: 700; text-align: left; cursor: pointer; }
+.signOut:hover { background: color-mix(in srgb, var(--pp-bad) 9%, transparent); }

@@ -3,7 +3,7 @@
 import { ReactNode } from 'react';
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ChevronDown, Pin, PinOff } from 'lucide-react';
+import { Pin, PinOff } from 'lucide-react';
 import CodeBox from '@/components/portal/CodeBox';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
@@ -67,12 +67,8 @@ export function DesktopShell({
       }
       return n;
     });
-  // One area open at a time keeps the sidebar short: the area of the open page, or the one just clicked. Single-page groups have nothing to fold.
-  const [expanded, setExpanded] = useState<string | null>(null);
-  const openGroup = openSection?.group ?? null;
-  useEffect(() => setExpanded(null), [openGroup]);
-  const isFolded = (g: string, count: number) => count > 1 && g !== (expanded === '' ? null : (expanded ?? openGroup));
-  const toggleGroup = (g: string) => setExpanded((cur) => ((cur ?? openGroup) === g ? '' : g));
+  // Every area shows all of its pages, always (the sidebar scrolls if a future list gets longer than the screen).
+  const isFolded = () => false;
   // Byte sleeps at night (the person's own clock; the server's page always draws him awake, so there is no mismatch).
   const asleep = useSyncExternalStore(
     () => () => {},
@@ -135,29 +131,18 @@ export function DesktopShell({
             .map(({ group, items }) => (
               <div
                 key={group}
-                className={`${styles.railGroup} ${isFolded(group, items.length) ? styles.railGroupFolded : ''}`}
-                style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: isFolded(group, items.length) ? 0 : items.length }}
+                className={`${styles.railGroup} ${isFolded() ? styles.railGroupFolded : ''}`}
+                style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: isFolded() ? 0 : items.length }}
               >
                 {groupedSections.length > 1 && group !== 'Overview' && items.length > 1 && (
-                  <button
-                    type="button"
-                    className={`${styles.railGroupLabel} ${styles.railGroupToggle}`}
-                    onClick={() => toggleGroup(group)}
-                    aria-expanded={!isFolded(group, items.length)}
-                    title={isFolded(group, items.length) ? `Show ${GROUP_LABEL[group]}` : `Hide ${GROUP_LABEL[group]}`}
-                  >
+                  <div className={styles.railGroupLabel}>
                     <span className={styles.railGroupPixel} aria-hidden="true">
                       <AreaPixelIcon group={group} />
                     </span>
-                    <span className={styles.railGroupText}>
-                      {GROUP_LABEL[group]}
-                      {/* A closed area names its pages, so nobody has to open it to find out what is inside. */}
-                      {isFolded(group, items.length) && <span className={styles.railGroupPeek}>{items.map((x) => x.label).join(' · ')}</span>}
-                    </span>
-                    <ChevronDown className={styles.railGroupChevron} size={13} aria-hidden="true" />
-                  </button>
+                    <span className={styles.railGroupText}>{GROUP_LABEL[group]}</span>
+                  </div>
                 )}
-                {!isFolded(group, items.length) &&
+                {!isFolded() &&
                   items.map((s) => (
                     <button
                       key={s.id}
@@ -185,6 +170,11 @@ export function DesktopShell({
 
       <div className={styles.frameMain}>
         <header className={styles.topBar}>
+          {collapsed && (
+            <button type="button" className={styles.topToggle} onClick={toggleCollapsed} aria-label="Show the menu" title="Show the menu (pin it open)">
+              Menu
+            </button>
+          )}
           {openSection ? (
             <div className={styles.topTitle}>
               <span className={styles.topTab} aria-hidden="true" />

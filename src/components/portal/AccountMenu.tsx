@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from '@/components/portal/PortalLink';
-import { Monitor, Moon, Sun } from 'lucide-react';
 import { getThemeChoice, setThemeChoice, type ThemeChoice } from '@/lib/portal/themeScript';
 import SignOutButton from './SignOutButton';
 import type { HubIdentity } from './hubTypes';
@@ -62,96 +61,96 @@ export default function AccountMenu({ identity, viewAs, onProfile }: { identity:
             </span>
             <div className={styles.who}>
               <p className={styles.name}>{identity.name}</p>
-              {identity.level && (
-                <p className={styles.level}>
-                  <span className={styles.levelPill}>{identity.level}</span>
-                  {identity.points !== undefined && <span className={styles.points}>{identity.points.toLocaleString()} points</span>}
-                </p>
+              {identity.roles && identity.roles.length > 0 && (
+                <div className={styles.roles}>
+                  {identity.roles.map((r) => (
+                    <span
+                      key={r.label}
+                      className={styles.role}
+                      style={{ color: `color-mix(in srgb, ${r.color} 30%, #fff)`, background: `${r.color}33`, borderColor: `${r.color}99` }}
+                    >
+                      {r.label}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
-            {identity.progress !== undefined && identity.toNext && (
-              <div className={styles.xpRow}>
-                <span className={styles.xp}>
-                  <span style={{ width: `${identity.progress}%` }} />
-                </span>
-                <span className={styles.toNext}>{identity.toNext}</span>
-              </div>
-            )}
-            {identity.roles && identity.roles.length > 0 && (
-              <div className={styles.roles}>
-                {identity.roles.map((r) => (
-                  <span
-                    key={r.label}
-                    className={styles.role}
-                    style={{ color: `color-mix(in srgb, ${r.color} 35%, var(--pp-ink))`, background: `${r.color}22`, borderColor: `${r.color}66` }}
-                  >
-                    {r.label}
-                  </span>
-                ))}
+            {identity.level && (
+              <div className={styles.stats}>
+                <span className={styles.levelPill}>{identity.level}</span>
+                {identity.points !== undefined && <span className={styles.points}>{identity.points.toLocaleString()} points</span>}
+                {identity.progress !== undefined && identity.toNext && (
+                  <>
+                    <span className={styles.xp}>
+                      <span style={{ width: `${identity.progress}%` }} />
+                    </span>
+                    <span className={styles.toNext}>{identity.toNext}</span>
+                  </>
+                )}
               </div>
             )}
           </div>
 
-          <p className={styles.group}>Settings</p>
-          <div className={`${styles.row} ${styles.rowStatic}`} role="group" aria-label="Appearance">
-            <span>Appearance</span>
-            <span className={styles.modes}>
+          <div className={styles.section}>
+            <p className={styles.label}>Appearance</p>
+            <div className={styles.modes} role="group" aria-label="Appearance">
               {(
                 [
-                  ['light', 'Light', Sun],
-                  ['system', 'Match device', Monitor],
-                  ['dark', 'Dark', Moon],
+                  ['light', 'Light', 'Always light'],
+                  ['system', 'Auto', 'Match this device'],
+                  ['dark', 'Dark', 'Always dark'],
                 ] as const
-              ).map(([id, label, Icon]) => (
+              ).map(([id, text, hint]) => (
                 <button
                   key={id}
                   type="button"
                   className={`${styles.mode} ${mode === id ? styles.modeOn : ''}`}
                   aria-pressed={mode === id}
-                  aria-label={label}
-                  title={label}
+                  title={hint}
                   onClick={() => {
                     setMode(id);
                     setThemeChoice(id);
                   }}
                 >
-                  <Icon size={16} strokeWidth={2} aria-hidden="true" />
+                  {text}
                 </button>
               ))}
-            </span>
+            </div>
+            {viewAs && (
+              <>
+                <p className={styles.label}>View the portal as</p>
+                <div className={styles.viewAs}>{viewAs}</div>
+              </>
+            )}
           </div>
-          <Link href="/portal/profile/notifications" className={styles.row} onClick={() => setOpen(false)}>
-            <span>Notifications</span>
-            <span className={styles.hint}>Manage</span>
-          </Link>
 
-          {viewAs && (
-            <>
-              <p className={styles.group}>Admin</p>
-              <div className={styles.viewAs}>{viewAs}</div>
-            </>
-          )}
-
-          <p className={styles.group}>Go to</p>
-          <button
-            type="button"
-            className={styles.row}
-            onClick={() => {
-              setOpen(false);
-              onProfile();
-            }}
-          >
-            <span>Your profile</span>
-          </button>
-          {identity.help && (
-            <Link href="/portal/help" className={styles.row} onClick={() => setOpen(false)}>
-              <span>{identity.help.label}</span>
-              {waiting > 0 && <span className={styles.badge}>{waiting}</span>}
+          <div className={styles.links}>
+            <button
+              type="button"
+              className={styles.row}
+              onClick={() => {
+                setOpen(false);
+                onProfile();
+              }}
+            >
+              <span>Your profile</span>
+              <span className={styles.go}>→</span>
+            </button>
+            <Link href="/portal/profile/notifications" className={styles.row} onClick={() => setOpen(false)}>
+              <span>Notifications</span>
+              <span className={styles.go}>→</span>
             </Link>
-          )}
-          <Link href="/" className={styles.row} onClick={() => setOpen(false)}>
-            <span>Back to site</span>
-          </Link>
+            {identity.help && (
+              <Link href="/portal/help" className={styles.row} onClick={() => setOpen(false)}>
+                <span>{identity.help.label}</span>
+                {waiting > 0 ? <span className={styles.badge}>{waiting}</span> : <span className={styles.go}>→</span>}
+              </Link>
+            )}
+            <Link href="/" className={styles.row} onClick={() => setOpen(false)}>
+              <span>Back to the website</span>
+              <span className={styles.go}>→</span>
+            </Link>
+          </div>
           <SignOutButton plain className={styles.signOut} />
         </div>
       )}
