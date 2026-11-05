@@ -22,7 +22,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
   if (!slug) return notFoundPage(request);
 
   const { data } = await createServiceClient().rpc('resolve_short_link', { p_slug: slug });
-  if (typeof data !== 'string' || !data) return notFoundPage(request);
+  if (typeof data !== 'string' || !data) {
+    // Not a short link: a division created since the last build (the build makes /<division> show its page; until then it is sent there).
+    const { data: division } = await createServiceClient().from('divisions').select('slug').eq('slug', slug).maybeSingle();
+    if (division) return NextResponse.redirect(new URL(`/divisions/${slug}`, request.url), 307);
+    return notFoundPage(request);
+  }
 
   // Internal destinations get a tag so "where did they come from" can credit this short link.
   const target = data.startsWith('/') ? new URL(`${data}${data.includes('?') ? '&' : '?'}utm_source=${encodeURIComponent(slug)}&utm_medium=shortlink`, request.url) : data;

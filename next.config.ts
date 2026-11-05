@@ -1,5 +1,19 @@
 import type { NextConfig } from 'next';
 import { SECTION_IDS } from './src/lib/portal/sections';
+import { RESERVED_SLUGS } from './src/lib/site/shortLinks';
+
+// The addresses of the divisions, read once when the site is built or started (no address, no rewrites, never a failed build).
+async function divisionAddresses(): Promise<string[]> {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/divisions?select=slug`, {
+      headers: { apikey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!, Authorization: `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!}` },
+    });
+    if (!res.ok) return [];
+    return ((await res.json()) as { slug: string }[]).map((d) => d.slug).filter((s) => /^[a-z0-9][a-z0-9_-]*$/.test(s) && !RESERVED_SLUGS.has(s));
+  } catch {
+    return [];
+  }
+}
 
 const nextConfig: NextConfig = {
   // A second copy of the dev server can run beside the first (for testing) with NEXT_DIST_DIR=.next-qa; normally this is just .next.
@@ -9,9 +23,16 @@ const nextConfig: NextConfig = {
   // are matched first, since these are fallback rewrites.
   async rewrites() {
     const sections = SECTION_IDS.join('|'); // every portal section, defined once in src/lib/portal/sections.ts
+    // A division's public address: tritongaming.org/<division> (and /events, /team, /gallery under it) shows the pages under /divisions/<division>. These are plain rewrites made when the site is built, so they cost
+    // no function run per visit. A division created or renamed since the last build is caught by the short-link route, which sends its address on to /divisions/<division> until the next build.
+    const divisionSlugs = await divisionAddresses();
     return {
       // Events and Divisions also have /portal/<section>/<id> record pages; their tab names are matched first so a tab is never mistaken for an id.
       beforeFiles: [
+        ...divisionSlugs.flatMap((slug) => [
+          { source: `/${slug}`, destination: `/divisions/${slug}` },
+          { source: `/${slug}/:page(events|team|gallery)`, destination: `/divisions/${slug}/:page` },
+        ]),
         { source: '/portal/events/:tab(list|analytics|emails|check-ins)', destination: '/portal?section=events&tab=:tab' },
         { source: '/portal/divisions/:tab(all|my-division)', destination: '/portal?section=divisions&tab=:tab' },
       ],
