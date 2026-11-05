@@ -932,9 +932,9 @@
 /* ── The sidebar in the public site's look: the royal blue of the website's bands with white text and sky-blue headings, the same in light and dark. Only its own colors are re-set here, so everything inside it (labels, code box, buttons) follows. ── */
 @media (min-width: 900px) {
   .rail {
-    --pp-chrome: #004276; --pp-chrome-2: #0a5190; --pp-chrome-fg: #ffffff; --pp-chrome-rgb: 255, 255, 255; --pp-chrome-edge: #011941; --pp-chrome-accent: #a9cdf2; /* theme-ok: the website's navy */
+    --pp-chrome: #243f63; --pp-chrome-2: #2f4d77; --pp-chrome-fg: #ffffff; --pp-chrome-rgb: 255, 255, 255; --pp-chrome-edge: #011941; --pp-chrome-accent: #a9cdf2; /* theme-ok: the website's navy */
     --pp-paper: #f3f1ea; --pp-ink: #011941; --pp-ink-rgb: 1, 25, 65; --pp-card: #ffffff; /* theme-ok: light pieces inside the navy panel */
-    background: #004276; /* theme-ok: the website's royal blue band */
+    background: #243f63; /* theme-ok: a muted navy from the website's blue, easy on the eyes */
   }
   .rail .railGroupLabel { font-family: var(--font-futura-heavy), var(--font-dm-sans), sans-serif; font-weight: 400; font-size: 0.86rem; letter-spacing: 0.01em; color: #a9cdf2 !important; } /* theme-ok */
   .rail .railGroupLabel .railGroupDot { background: var(--yellow); }
@@ -944,4 +944,19 @@
 }
 @media (min-width: 900px) {
   .rail input { background: rgba(255, 255, 255, 0.08) !important; border-color: rgba(255, 255, 255, 0.4) !important; } /* theme-ok: the code box on the navy panel */
+}
+/* Sidebar type sized to be read at a glance (the short-screen rules above shrink it, so these come last and are more specific). */
+@media (min-width: 900px) {
+  .rail .railNav .railLabel { font-size: 1rem; font-weight: 600; letter-spacing: 0; }
+  .rail .railNav .railItemNested .railLabel { font-weight: 500; }
+  .rail .railNav .railItem { min-height: 34px; padding-inline: 0.7rem; }
+  .rail .railNav .railGroupLabel { font-size: 1.02rem; padding: 0.35rem 0.7rem 0.2rem; }
+  .rail .railName { font-size: 1.05rem; }
+  .rail .railRoleChip { font-size: 0.8rem; }
+  .rail .railFooter a, .rail .railFooter button, .rail a.railFooterHelp b { font-size: 0.9rem; }
+}
+
+/* Dark mode: the same panel one step deeper, so it sits quietly beside the dark page. */
+@media (min-width: 900px) {
+  :global([data-pp-theme='dark']) .rail { --pp-chrome: #17263d; --pp-chrome-2: #21344f; --pp-chrome-edge: #0a1220; background: #17263d; } /* theme-ok */
 }
