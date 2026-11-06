@@ -70,18 +70,25 @@ export default function LoginClient({ next }: { next?: string }) {
         {loading === 'ucsd' ? <span className={styles.spinner} aria-hidden="true" /> : <GoogleIcon />}
         {loading === 'ucsd' ? 'Redirecting…' : 'Sign in with @ucsd.edu'}
       </button>
-      <p className={`${styles.who} ${styles.whoGuest}`}>
-        <strong>Guests</strong> at public events
+      <div className={styles.or} role="separator">
+        <span>or</span>
+      </div>
+      <p className={styles.who}>
+        <strong>Guests</strong> at public events, or another way in
       </p>
-      <button className={styles.guestBtn} onClick={() => handleSignIn('google', false)} disabled={loading !== null}>
-        {loading === 'guest' ? <span className={`${styles.spinner} ${styles.spinnerDark}`} aria-hidden="true" /> : <GoogleIcon />}
-        {loading === 'guest' ? 'Redirecting…' : 'Sign in with Google'}
-      </button>
-      <button className={styles.guestBtn} onClick={() => handleSignIn('discord', false)} disabled={loading !== null}>
-        {loading === 'discord' ? <span className={`${styles.spinner} ${styles.spinnerDark}`} aria-hidden="true" /> : <DiscordIcon />}
-        {loading === 'discord' ? 'Redirecting…' : 'Continue with Discord'}
-      </button>
-      <p className={styles.who}>After signing in with Discord you can link your @ucsd.edu Google account to get your member roles.</p>
+      <div className={styles.altRow}>
+        <button className={styles.guestBtn} onClick={() => handleSignIn('google', false)} disabled={loading !== null}>
+          {loading === 'guest' ? <span className={`${styles.spinner} ${styles.spinnerDark}`} aria-hidden="true" /> : <GoogleIcon />}
+          {loading === 'guest' ? 'Redirecting…' : 'Google'}
+        </button>
+        <button className={styles.guestBtn} onClick={() => handleSignIn('discord', false)} disabled={loading !== null}>
+          {loading === 'discord' ? <span className={`${styles.spinner} ${styles.spinnerDark}`} aria-hidden="true" /> : <DiscordIcon />}
+          {loading === 'discord' ? 'Redirecting…' : 'Discord'}
+        </button>
+      </div>
+      <p className={styles.tip}>
+        <strong>Used Discord?</strong> You can link your @ucsd.edu Google account afterward to get your member roles.
+      </p>
       {down && (
         <p className={styles.who} role="alert">
           Can&apos;t reach the sign-in service right now. Please try again in a minute.

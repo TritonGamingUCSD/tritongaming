@@ -128,7 +128,12 @@ export function generate(format: Format, entrants: Entrant[], opts: { thirdPlace
   if (format === 'single') matches = singleElimination(sorted, !!opts.thirdPlace);
   else if (format === 'double') matches = doubleElimination(sorted);
   else if (format === 'roundrobin') matches = roundRobin(sorted);
-  else matches = swissRound(sorted.map((e) => e.id), [], 1);
+  else
+    matches = swissRound(
+      sorted.map((e) => e.id),
+      [],
+      1,
+    );
   return settle(matches);
 }
 

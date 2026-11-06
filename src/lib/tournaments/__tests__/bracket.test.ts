@@ -91,7 +91,10 @@ describe('double elimination', () => {
       expect(placements(done)[0], `n=${n}`).toEqual({ id: 'p1', place: 1 });
       expect(find(done, 'GF2').status, `n=${n}`).toBe('skipped');
       // every real match reached a result
-      expect(done.filter((x) => x.status === 'ready' || x.status === 'pending'), `n=${n}`).toHaveLength(0);
+      expect(
+        done.filter((x) => x.status === 'ready' || x.status === 'pending'),
+        `n=${n}`,
+      ).toHaveLength(0);
     }
   });
   it('plays a reset when the losers-side finalist wins the first final', () => {
@@ -124,7 +127,10 @@ describe('round robin', () => {
   it('ranks by match points and allows draws when asked', () => {
     let m = generate('roundrobin', field(4));
     for (const x of m.filter((y) => y.status === 'ready')) m = report(m, x.key, 1, 1, { allowTie: true });
-    const t = standings(field(4).map((e) => e.id), m);
+    const t = standings(
+      field(4).map((e) => e.id),
+      m,
+    );
     expect(t.every((r) => r.points === 3 && r.draws === 3)).toBe(true);
   });
 });
