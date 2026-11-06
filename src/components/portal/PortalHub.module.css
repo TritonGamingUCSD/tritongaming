@@ -1186,3 +1186,13 @@
 @media (min-width: 900px) { .railGlide::after { content: ''; position: absolute; top: -0.32rem; right: 0.8rem; width: 1.9rem; height: 0.7rem; transform: rotate(4deg); background: color-mix(in srgb, var(--yellow) 70%, transparent); border-left: 2px dotted rgba(0, 0, 0, 0.3); border-right: 2px dotted rgba(0, 0, 0, 0.3); pointer-events: none; transition: opacity 0.2s; } }
 @media (prefers-reduced-motion: reduce) { .railLogo { transition: none; } .railLogo:hover { transform: rotate(-1.5deg); } }
 .rail .railGroupLabel .railGroupText { flex: 0 0 auto; align-self: center; }
+
+
+/* A division's hat: the sidebar and the top bar take the division's color (a deep shade of it, never a flat navy), with its own pattern, and a bar of its color along the edge. */
+@media (min-width: 900px) {
+  .appFrame[data-hat] .rail, .appFrame[data-hat] .topBar { --pp-chrome: color-mix(in srgb, var(--hat) 32%, #0f1c33); --pp-chrome-2: color-mix(in srgb, var(--hat) 40%, #182a4a); --pp-chrome-edge: color-mix(in srgb, var(--hat) 55%, #070e1b); --pp-chrome-accent: color-mix(in srgb, var(--hat) 40%, #ffffff); background-color: var(--pp-chrome); } /* theme-ok */
+  :global([data-pp-theme='dark']) .appFrame[data-hat] .rail, :global([data-pp-theme='dark']) .appFrame[data-hat] .topBar { --pp-chrome: color-mix(in srgb, var(--hat) 24%, #0a1220); --pp-chrome-2: color-mix(in srgb, var(--hat) 32%, #121e36); --pp-chrome-edge: color-mix(in srgb, var(--hat) 45%, #050a14); background-color: var(--pp-chrome); } /* theme-ok */
+  .appFrame[data-hat] .rail { background-image: radial-gradient(color-mix(in srgb, var(--hat) 22%, transparent) 1.4px, transparent 1.7px), linear-gradient(180deg, color-mix(in srgb, var(--hat) 28%, transparent), transparent 240px); background-size: 18px 18px, 100% 100%; border-right: 3px solid var(--hat); }
+  .appFrame[data-hat] .topBar { background-image: repeating-linear-gradient(115deg, color-mix(in srgb, var(--hat) 14%, transparent) 0 14px, transparent 14px 28px); border-bottom: 3px solid var(--hat); }
+  .appFrame[data-hat] .railItemActive { box-shadow: none; }
+}

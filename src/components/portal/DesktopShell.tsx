@@ -159,6 +159,7 @@ export function DesktopShell({
     ['--frame-accent' as string]: hatColor ?? accent,
     ...(hatColor
       ? {
+          ['--hat' as string]: hatColor,
           ['--yellow' as string]: hatColor,
           ['--yellow-text' as string]: `color-mix(in srgb, ${hatColor} 75%, white)`,
           ['--p-accent' as string]: hatColor,
@@ -188,7 +189,7 @@ export function DesktopShell({
     };
   }, []);
   return (
-    <div ref={frameRef} className={`${styles.desktopShell} ${styles.appFrame}`} data-app-frame style={frameStyle}>
+    <div ref={frameRef} className={`${styles.desktopShell} ${styles.appFrame}`} data-app-frame data-hat={divisionHat ? divisionHat.slug : undefined} style={frameStyle}>
       <aside
         className={`${styles.rail} ${collapsed ? styles.railCollapsed : ''}`}
         // A mouse click leaves focus on the button, and :focus-within would keep the rail open after the pointer leaves.
