@@ -8,7 +8,7 @@ import TournamentList from './TournamentList';
 import TournamentDetail from './TournamentDetail';
 
 // Tournaments (admin-only for now). The address says what is open: /portal/tournaments is the list, /portal/tournaments/<tournament>/<tab> one tournament.
-export default function TournamentsSectionContent({ divisions }: { divisions: { id: string; name: string }[] }) {
+export default function TournamentsSectionContent({ divisions }: { divisions: { id: string; name: string; slug?: string }[] }) {
   const start = useLiveParams();
   const [loc, setLoc] = useState<{ tab: string | null; subtab: string | null }>(() => ({ tab: start.get('tab'), subtab: start.get('subtab') }));
   useEffect(() => {
@@ -25,7 +25,7 @@ export default function TournamentsSectionContent({ divisions }: { divisions: { 
   if (loc.tab) return <TournamentDetail key={loc.tab} slug={loc.tab} subtab={loc.subtab} divisions={divisions} />;
   return (
     <div>
-      <SectionHeader title="Tournaments" sub="Brackets that update live, with overlays for your stream." />
+      <SectionHeader title="Tournaments" sub="Triton Gaming’s brackets, live. Each division’s tournaments are on its own page." />
       <TournamentList divisions={divisions} />
     </div>
   );

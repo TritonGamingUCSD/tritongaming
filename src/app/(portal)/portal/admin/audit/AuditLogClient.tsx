@@ -43,6 +43,36 @@ function rangeBounds(range: string, from: string, to: string): { from?: string; 
   return {};
 }
 
+const toneOf = (action: string): 'good' | 'bad' | 'info' | 'plain' => {
+  const a = action.toLowerCase();
+  if (/(create|grant|approve|add|publish|start|send)/.test(a)) return 'good';
+  if (/(delete|remove|revoke|deny|reject|strike|cancel)/.test(a)) return 'bad';
+  if (/(update|edit|change|set|move|rename)/.test(a)) return 'info';
+  return 'plain';
+};
+
+// Entries grouped by their Pacific day, newest day first, with a plain heading (Today, Yesterday, then the date).
+function groupByDay(entries: Entry[]): { day: string; label: string; items: Entry[] }[] {
+  const out: { day: string; label: string; items: Entry[] }[] = [];
+  const today = pacificToday();
+  for (const e of entries) {
+    const day = new Date(e.created_at).toLocaleDateString('en-CA', { timeZone: 'America/Los_Angeles' });
+    let g = out[out.length - 1];
+    if (!g || g.day !== day) {
+      const label =
+        day === today
+          ? 'Today'
+          : day === addDaysKey(today, -1)
+            ? 'Yesterday'
+            : new Date(`${day}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+      g = { day, label, items: [] };
+      out.push(g);
+    }
+    g.items.push(e);
+  }
+  return out;
+}
+
 function renderValue(v: unknown) {
   if (v === null || v === undefined || v === '') return '—';
   return typeof v === 'object' ? JSON.stringify(v) : String(v);
@@ -229,6 +259,18 @@ export default function AuditLogClient() {
           <Download size={14} strokeWidth={1.75} aria-hidden="true" /> Export CSV
         </a>
       </div>
+      {facets && facets.types.length > 0 && (
+        <div className={styles.typeChips} role="group" aria-label="Quick type filters">
+          <button type="button" className={!type ? styles.chipOn : ''} onClick={() => (setType(''), setParams({ atype: null }))}>
+            Everything
+          </button>
+          {facets.types.slice(0, 8).map((t) => (
+            <button key={t.value} type="button" className={type === t.value ? styles.chipOn : ''} onClick={() => (setType(t.value), setParams({ atype: t.value }))}>
+              {typeLabel(t.value)} <small>{t.n}</small>
+            </button>
+          ))}
+        </div>
+      )}
       {error && <Notice tone="error">{error}</Notice>}
       {!loading && entries.length === 0 && !error ? (
         <div className={styles.empty}>
@@ -236,24 +278,45 @@ export default function AuditLogClient() {
           <p>No matching activity yet.</p>
         </div>
       ) : (
-        <ul className={styles.list}>
-          {entries.map((e) => {
-            const hasDetails = !!e.details && Object.keys(e.details).length > 0;
-            return (
-              <li key={e.id} className={styles.item}>
-                <div className={styles.itemHead}>
-                  <span className={styles.badge}>{e.action}</span>
-                  <span className={styles.type}>{typeLabel(e.entity_type)}</span>
-                  <span className={styles.meta}>
-                    {e.actor_name || 'System'} · {formatPacificDateTime(e.created_at, { year: true })}
-                  </span>
-                </div>
-                <p className={styles.summary}>{e.summary}</p>
-                {hasDetails && e.details && <Changes details={e.details} />}
-              </li>
-            );
-          })}
-        </ul>
+        <div className={styles.timeline}>
+          {groupByDay(entries).map((g) => (
+            <section key={g.day} className={styles.day}>
+              <h3 className={styles.dayHead}>
+                {g.label} <span>{g.items.length}</span>
+              </h3>
+              <ul className={styles.rows}>
+                {g.items.map((e) => {
+                  const hasDetails = !!e.details && Object.keys(e.details).length > 0;
+                  return (
+                    <li key={e.id} className={`${styles.row} ${styles[`tone_${toneOf(e.action)}`]}`}>
+                      <span className={styles.who} aria-hidden="true" title={e.actor_name || 'System'}>
+                        {(e.actor_name || 'S')[0].toUpperCase()}
+                      </span>
+                      <div className={styles.rowMain}>
+                        <p className={styles.summary}>
+                          <span className={styles.badge}>{e.action}</span>
+                          {e.summary}
+                        </p>
+                        <p className={styles.meta}>
+                          <button
+                            type="button"
+                            className={styles.typeChip}
+                            onClick={() => (setType(e.entity_type), setParams({ atype: e.entity_type }))}
+                            title="Show only this type"
+                          >
+                            {typeLabel(e.entity_type)}
+                          </button>
+                          {e.actor_name || 'System'} · {formatPacificDateTime(e.created_at, {})}
+                        </p>
+                        {hasDetails && e.details && <Changes details={e.details} />}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
       )}
       {loading && <Loading variant="inline" label="Loading…" />}
       {hasMore && !loading && (

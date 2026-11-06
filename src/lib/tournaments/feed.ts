@@ -102,6 +102,8 @@ export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchR
       best_of: t.best_of,
       status: t.status,
       entrant_type: t.entrant_type,
+      team_size: t.team_size,
+      signups_open: t.signups_open && t.status === 'registration',
       starts_at: t.starts_at,
       swiss_rounds: cur?.format === 'swiss' ? (cur.settings.swiss_rounds ?? swissRounds(active)) : null,
     },

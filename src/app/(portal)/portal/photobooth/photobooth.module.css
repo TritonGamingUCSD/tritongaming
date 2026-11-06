@@ -358,3 +358,9 @@
 .cameraWarn { color: #b45309; font-weight: 700; }   /* theme-ok: an amber warning reads on both the paper and the dark screen */
 .cameraMenu { position: absolute; top: 0.8rem; left: 3.6rem; z-index: 7; }
 .liveStrip .previewFooter { font-size: clamp(0.8rem, 1.7vh, 1.3rem); }
+
+/* Photo booth: film strips have sprocket holes down both edges. */
+.filmstrip, .filmTile { position: relative; background: #111; border-radius: 4px; padding-inline: 1.1rem; }
+.filmstrip::before, .filmstrip::after, .filmTile::before, .filmTile::after { content: ''; position: absolute; top: 0; bottom: 0; width: 0.7rem; background: repeating-linear-gradient(180deg, transparent 0 0.45rem, #f5f0e6 0.45rem 0.95rem, transparent 0.95rem 1.4rem); opacity: 0.85; border-radius: 2px; } /* theme-ok */
+.filmstrip::before, .filmTile::before { left: 0.2rem; }
+.filmstrip::after, .filmTile::after { right: 0.2rem; }

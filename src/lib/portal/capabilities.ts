@@ -99,9 +99,9 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   host_trivia: ['officer', 'lead', 'exec', 'admin'],
   // Photo Booth: setting up an event's booth, keeping the overlay library and running the booth on a screen at the event. Officers and above; the guests' download page needs nothing.
   run_photobooth: ['officer', 'lead', 'exec', 'admin'],
-  // Tournaments and Broadcast are admin-only while they are new. An admin can hand any of these to a person or group (Admin → Access), for example the broadcast team. UI/API gating only (the routes use the service role).
-  manage_tournaments: ['admin'],
-  run_tournaments: ['admin'],
+  // Tournaments: leads and above manage them, officers and recruits can run them (division people follow their division's rules). Broadcast is admin-only while it is new; an admin can hand any of these to a person or group (Admin → Access), for example the broadcast team. UI/API gating only (the routes use the service role).
+  manage_tournaments: ['lead', 'exec', 'admin'],
+  run_tournaments: ['officer', 'lead', 'exec', 'admin', 'recruit'],
   manage_broadcast: ['admin'],
   manage_word_filter: ['admin'],
 };

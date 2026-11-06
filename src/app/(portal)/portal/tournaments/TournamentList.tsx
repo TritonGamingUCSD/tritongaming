@@ -26,15 +26,15 @@ type Row = {
   division_id: string | null;
 };
 
-export default function TournamentList({ divisions }: { divisions: { id: string; name: string }[] }) {
+export default function TournamentList({ divisions, divisionId }: { divisions: { id: string; name: string; slug?: string }[]; divisionId?: string }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const load = useCallback(async () => {
-    const r = await call<{ tournaments: Row[] }>('GET', '/api/tournaments');
+    const r = await call<{ tournaments: Row[] }>('GET', divisionId ? `/api/tournaments?division=${divisionId}` : '/api/tournaments?owner=club');
     if (r.ok) setRows(r.j.tournaments);
     else setError(r.j.error || 'Could not load.');
-  }, []);
+  }, [divisionId]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -70,14 +70,14 @@ export default function TournamentList({ divisions }: { divisions: { id: string;
           ))}
         </div>
       )}
-      {open && <NewDialog divisions={divisions} onClose={() => setOpen(false)} />}
+      {open && <NewDialog divisions={divisions} fixedDivision={divisionId} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function NewDialog({ divisions, onClose }: { divisions: { id: string; name: string }[]; onClose: () => void }) {
+function NewDialog({ fixedDivision, onClose }: { divisions: { id: string; name: string }[]; fixedDivision?: string; onClose: () => void }) {
   const [game, setGame] = useState<string>('');
-  const [f, setF] = useState({ name: '', game: '', template: 'single', best_of: '1', entrant_type: 'solo', team_size: '2', division_id: '', third_place: false });
+  const [f, setF] = useState({ name: '', game: '', template: 'single', best_of: '1', entrant_type: 'solo', team_size: '2', division_id: fixedDivision ?? '', third_place: false });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const preset = GAME_PRESETS.find((g) => g.id === game) ?? null;
@@ -157,16 +157,6 @@ function NewDialog({ divisions, onClose }: { divisions: { id: string; name: stri
         <Input value={f.name} maxLength={80} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder={`${f.game || 'Fall'} Bracket`} />
       </Field>
       <div className={styles.twoCol}>
-        <Field label="Run by">
-          <Select value={f.division_id} onChange={(e) => setF({ ...f, division_id: e.target.value })}>
-            <option value="">Triton Gaming</option>
-            {divisions.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name}
-              </option>
-            ))}
-          </Select>
-        </Field>
         <Field label="Matches are">
           <Select value={f.best_of} onChange={(e) => setF({ ...f, best_of: e.target.value })}>
             {(preset?.best_ofs ?? [1, 3, 5, 7]).map((n) => (

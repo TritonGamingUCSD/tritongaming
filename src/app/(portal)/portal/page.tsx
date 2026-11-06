@@ -80,6 +80,7 @@ import BroadcastSectionContent from './broadcast/BroadcastSectionContent';
 import { BROADCAST_ADMIN_ONLY } from '@/lib/broadcast/config';
 import TournamentsSectionContent from './tournaments/TournamentsSectionContent';
 import { TOURNAMENTS_ADMIN_ONLY } from '@/lib/tournaments/access';
+import { canActInAnyDivision } from '@/lib/portal/divisionAccess';
 import StaffleSectionContent from './staffle/StaffleSectionContent';
 import TriviaSectionContent from './trivia/TriviaSectionContent';
 import PhotoBoothSectionContent from './photobooth/PhotoBoothSectionContent';
@@ -495,7 +496,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         ]
       : []),
     // Tournaments: brackets that update live, with stream overlays. Admin-only for now (lib/tournaments/access.ts); it sits with Events & Check-In.
-    ...(hasCapability(roles, 'manage_tournaments') || hasCapability(roles, 'run_tournaments') || (!TOURNAMENTS_ADMIN_ONLY && hasCapability(roles, 'manage_events'))
+    ...(hasCapability(roles, 'manage_tournaments') || hasCapability(roles, 'run_tournaments') || (!TOURNAMENTS_ADMIN_ONLY && canActInAnyDivision(roles, 'member'))
       ? [
           {
             id: 'tournaments',
@@ -505,7 +506,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             homeExclude: true,
             dockExclude: true,
             group: 'Events' as const,
-            content: <TournamentsSectionContent divisions={divisions.map((d) => ({ id: d.id, name: d.name }))} />,
+            content: <TournamentsSectionContent divisions={divisions.map((d) => ({ id: d.id, name: d.name, slug: d.slug }))} />,
           },
         ]
       : []),

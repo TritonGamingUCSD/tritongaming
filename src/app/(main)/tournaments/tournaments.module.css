@@ -24,3 +24,12 @@
 
 .also { margin: 0; display: flex; gap: 0.8rem; flex-wrap: wrap; color: #9fb0c8; font-size: 0.9rem; }
 .also a { color: #f6c84c; font-weight: 700; }
+
+.join { display: grid; gap: 0.7rem; padding: 1rem 1.2rem; border: 2px solid #f6c84c; border-radius: 10px; }
+.join form { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.join input { flex: 1; min-width: 12rem; padding: 0.5rem 0.7rem; border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 8px; background: rgba(255, 255, 255, 0.06); color: #fff; font: inherit; }
+.join button, .join a { padding: 0.5rem 1rem; border: 2px solid #f6c84c; border-radius: 8px; background: #f6c84c; color: #011941; font: inherit; font-weight: 800; cursor: pointer; text-decoration: none; justify-self: start; }
+.join button:disabled { opacity: 0.5; cursor: default; }
+.join .link { background: none; color: #9fb0c8; border-color: transparent; padding: 0; font-weight: 600; text-decoration: underline; }
+.okMsg { margin: 0; color: #6ee7a0; }
+.errMsg { margin: 0; color: #ff8a8a; }

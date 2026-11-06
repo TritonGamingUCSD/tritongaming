@@ -6,6 +6,7 @@ import FeedBracket, { Standings } from '@/components/tournaments/FeedBracket';
 import { FORMAT_LABEL } from '@/components/tournaments/labels';
 import { useFeed, type Feed } from '@/components/tournaments/useFeed';
 import { PROVIDER_NAMES, type Provider } from '@/lib/tournaments/external';
+import JoinPanel from './JoinPanel';
 import styles from './tournaments.module.css';
 
 // The public page of a tournament: the bracket, standings and who plays now and next, updating by itself.
@@ -27,6 +28,7 @@ export default function LiveTournament({ slug, initial }: { slug: string; initia
           {t.status === 'live' ? 'Live' : t.status === 'complete' ? 'Finished' : 'Sign-ups open'}
         </span>
       </header>
+      {t.signups_open && <JoinPanel slug={slug} id={t.id} type={t.entrant_type} teamSize={t.team_size} onDone={() => undefined} />}
       {feed.links.length > 0 && (
         <p className={styles.also}>
           Also on:{' '}

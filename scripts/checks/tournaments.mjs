@@ -34,7 +34,10 @@ try {
   t.ok('a bad format is refused', (await head.call('POST', '/api/tournaments', { name: 'ZZ Bad', division_id: divId, format: 'nonsense' })).s === 400);
   const mk = async (name, format, extra = {}) => {
     const r = await head.call('POST', '/api/tournaments', { name, division_id: divId, format, ...extra });
-    if (r.j.id) made.push(r.j.id);
+    if (r.j.id) {
+      made.push(r.j.id);
+      if (name !== 'ZZ Single') await head.call('PATCH', `/api/tournaments/${r.j.id}`, { is_public: true });
+    }
     return r;
   };
   const single = await mk('ZZ Single', 'single', { best_of: 3 });
@@ -42,6 +45,8 @@ try {
   const A = `/api/tournaments/${single.j.id}`;
   t.ok('a draft is hidden from a stranger', (await stranger.call('GET', A)).s === 404);
   t.ok('a draft is hidden from the feed', (await fetch(`${BASE}${A}/feed`)).status === 404);
+  t.ok('while admin-only, a new tournament is not public', !ADMIN_ONLY || (await head.call('GET', A)).j.tournament.is_public === false);
+  await head.call('PATCH', A, { is_public: true });
 
   // Entrants
   const names = ['Ann', 'Bo', 'Cy', 'Di', 'Ed'];

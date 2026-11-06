@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import type { UserIdentity } from '@supabase/supabase-js';
 import { X } from 'lucide-react';
+import { showToast } from '@/lib/ui/toast';
 import { createClient } from '@/lib/supabase/client';
 import styles from './profile.module.css';
 import Button from '@/components/ui/Button';
@@ -109,6 +110,23 @@ export default function LinkGoogleSection() {
     }
   }
 
+  // Use the picture of a linked Discord account as the profile picture.
+  async function useDiscordPicture(identity: UserIdentity) {
+    const url = String(identity.identity_data?.avatar_url ?? '');
+    if (!/^https:\/\/cdn\.discordapp\.com\//.test(url)) {
+      setError('That Discord account has no picture to use.');
+      return;
+    }
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) return;
+    const { error: err } = await supabase.from('profiles').update({ custom_avatar_url: url }).eq('id', user.id);
+    setError(err ? 'Could not change your picture. Try again.' : '');
+    if (!err) showToast('Your Discord picture is now your profile picture');
+  }
+
   async function handleUnlink(identity: UserIdentity) {
     const email = emailOf(identity);
     if (!(await confirmHold({ title: `Unlink ${email}?`, message: "You'll no longer be able to sign in with that account.", confirmLabel: 'Hold to unlink' }))) return;
@@ -138,6 +156,11 @@ export default function LinkGoogleSection() {
           {identities.map((i) => (
             <li key={i.identity_id} className={styles.identityRow}>
               <span>{emailOf(i)}</span>
+              {i.provider === 'discord' && /^https:\/\/cdn\.discordapp\.com\//.test(String(i.identity_data?.avatar_url ?? '')) && (
+                <button type="button" className={styles.unlinkBtn} style={{ width: 'auto', padding: '0 0.6rem' }} onClick={() => useDiscordPicture(i)}>
+                  Use as my picture
+                </button>
+              )}
               {canUnlink && (
                 <button type="button" className={styles.unlinkBtn} onClick={() => handleUnlink(i)} disabled={unlinkingId === i.identity_id} aria-label={`Unlink ${emailOf(i)}`}>
                   {unlinkingId === i.identity_id ? '…' : <X size={13} strokeWidth={1.75} aria-hidden="true" />}

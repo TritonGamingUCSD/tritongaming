@@ -29,7 +29,7 @@ type Tab = 'bracket' | 'control' | 'structure' | 'entrants' | 'stream' | 'settin
 const TABS: Tab[] = ['bracket', 'control', 'structure', 'entrants', 'stream', 'settings'];
 
 // One tournament for its organizers: the bracket (enter scores, call stations), the entrants and seeds, the stream links, and the settings. The address says which tab: /portal/tournaments/<tournament>/<tab>.
-export default function TournamentDetail({ slug, subtab, divisions }: { slug: string; subtab: string | null; divisions: { id: string; name: string }[] }) {
+export default function TournamentDetail({ slug, subtab, divisions }: { slug: string; subtab: string | null; divisions: { id: string; name: string; slug?: string }[] }) {
   const { data, error, reload } = useTournament(slug);
   const setParams = usePortalParams();
   const [picked, setPicked] = useState<MatchRow | null>(null);
@@ -79,9 +79,15 @@ export default function TournamentDetail({ slug, subtab, divisions }: { slug: st
 
   return (
     <div className={styles.page}>
-      <Link href="/portal/tournaments" className={styles.back}>
-        <ArrowLeft size={14} aria-hidden="true" /> All tournaments
-      </Link>
+      {t.division_id && divisions.find((d) => d.id === t.division_id)?.slug ? (
+        <Link href={`/portal/${divisions.find((d) => d.id === t.division_id)!.slug}/tournaments`} className={styles.back}>
+          <ArrowLeft size={14} aria-hidden="true" /> {owner} tournaments
+        </Link>
+      ) : (
+        <Link href="/portal/tournaments" className={styles.back}>
+          <ArrowLeft size={14} aria-hidden="true" /> All tournaments
+        </Link>
+      )}
       <header className={styles.hero}>
         <div>
           <p className={styles.kicker}>

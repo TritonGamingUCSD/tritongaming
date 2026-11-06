@@ -19,6 +19,7 @@ import DivisionRoster from './DivisionRoster';
 import DivisionNextEvent from './DivisionNextEvent';
 import DivisionAnnouncements from './DivisionAnnouncements';
 import DivisionDocs from './DivisionDocs';
+import DivisionTournaments from './DivisionTournaments';
 import DivisionAttendance from './DivisionAttendance';
 import styles from './division.module.css';
 
@@ -107,13 +108,22 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
       {page === 'page' && <DivisionPageEditor hat={hat} />}
       {page === 'qr' && <DivisionQr hat={hat} />}
       {page === 'docs' && <DivisionDocs hat={hat} />}
-      {page !== 'home' && page !== 'members' && page !== 'events' && page !== 'check-in' && !isLiveTool(page) && page !== 'page' && page !== 'qr' && page !== 'docs' && (
-        <div className={styles.soon}>
-          <p>
-            <strong>{label}</strong> for {hat.name} is coming in a later step of the division project. It is only visible to admins until everything is finished.
-          </p>
-        </div>
-      )}
+      {page === 'tournaments' && <DivisionTournaments hat={hat} />}
+      {page !== 'home' &&
+        page !== 'members' &&
+        page !== 'events' &&
+        page !== 'check-in' &&
+        !isLiveTool(page) &&
+        page !== 'page' &&
+        page !== 'qr' &&
+        page !== 'docs' &&
+        page !== 'tournaments' && (
+          <div className={styles.soon}>
+            <p>
+              <strong>{label}</strong> for {hat.name} is coming in a later step of the division project. It is only visible to admins until everything is finished.
+            </p>
+          </div>
+        )}
     </div>
   );
 }

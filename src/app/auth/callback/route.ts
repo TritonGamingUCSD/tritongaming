@@ -56,6 +56,15 @@ export async function GET(request: Request) {
         // A linked Discord shows on the person's cards (the Discord line of their social links) so people can be found fast. It only fills an empty line: a handle typed by hand stays, and the card's own "show socials" choice still decides who sees it.
         const discord = (freshUser?.identities ?? []).find((i) => i.provider === 'discord');
         const handle = String(discord?.identity_data?.full_name ?? discord?.identity_data?.name ?? '').trim();
+        if (discord) {
+          // The account's id and name, for the day a bot or a server role sync needs to find this person.
+          const did = String(discord.identity_data?.provider_id ?? discord.identity_data?.sub ?? discord.id ?? '').slice(0, 40);
+          if (did)
+            await createServiceClient()
+              .from('profiles')
+              .update({ discord_id: did, discord_username: handle.slice(0, 64) || null })
+              .eq('id', data.user.id);
+        }
         if (handle) {
           const svc = createServiceClient();
           const { data: prof } = await svc.from('profiles').select('social_links').eq('id', data.user.id).maybeSingle();

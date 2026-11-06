@@ -5,8 +5,8 @@ import { canActInDivision } from '@/lib/portal/divisionAccess';
 //   manage  change settings, entrants and seeds, start it, delete it (Triton Gaming: whoever manages events; a division: its Heads; plus anyone added as an organizer of that tournament)
 //   run     enter scores, call matches to stations (manage, plus a division's Members, plus the club's check-in staff)
 // Exec and admin can do everything.
-// Until tournaments are ready for everyone, only admins can see or use them (the portal page, creating, running, the lists). Turn this off to hand them to Heads and organizers by the rules below.
-export const TOURNAMENTS_ADMIN_ONLY = true;
+// Tournaments are open: the club's leads, exec and admin manage them; officers and recruits can run them (scores, stream); a division's Heads manage theirs and its Members run them. Set this to true to limit them to admins and people given the permission in Admin → Access.
+export const TOURNAMENTS_ADMIN_ONLY = false;
 
 export interface TournamentOwner {
   division_id: string | null;

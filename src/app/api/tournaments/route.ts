@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { who, unauthorized, guardFeature } from '@/lib/tournaments/server';
-import { canCreateTournamentFor, canManageTournament } from '@/lib/tournaments/access';
+import { TOURNAMENTS_ADMIN_ONLY, canCreateTournamentFor, canManageTournament } from '@/lib/tournaments/access';
 import { slugify } from '@/lib/tournaments/store';
 import { TEMPLATES, type StageDef } from '@/lib/tournaments/stages';
 import { logAudit } from '@/lib/notifications/audit';
@@ -17,12 +17,14 @@ export async function GET(req: Request) {
   const me = await who();
   const svc = (await import('@/lib/supabase/admin')).createServiceClient();
   const division = new URL(req.url).searchParams.get('division');
+  const clubOnly = new URL(req.url).searchParams.get('owner') === 'club';
   let q = svc
     .from('tournaments')
     .select('id, slug, name, game, format, entrant_type, best_of, status, is_public, signups_open, starts_at, division_id, created_at')
     .order('created_at', { ascending: false })
     .limit(100);
   if (division) q = q.eq('division_id', division);
+  else if (clubOnly) q = q.is('division_id', null);
   const { data } = await q;
   const { data: staffRows } = me ? await svc.from('tournament_staff').select('tournament_id').eq('user_id', me.user.id) : { data: [] };
   const staff = new Set((staffRows ?? []).map((r) => r.tournament_id as string));
@@ -99,6 +101,8 @@ export async function POST(request: Request) {
       third_place: !!b.third_place && stages.some((x) => x.def.format === 'single'),
       max_entrants: max,
       starts_at: startsAt && !Number.isNaN(startsAt.getTime()) ? startsAt.toISOString() : null,
+      // While Tournaments are admin-only, a new one is not public either; an admin turns that on in its Settings when it is ready.
+      is_public: !TOURNAMENTS_ADMIN_ONLY,
       created_by: me.user.id,
     })
     .select('id, slug')

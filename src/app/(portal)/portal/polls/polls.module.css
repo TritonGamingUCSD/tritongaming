@@ -137,3 +137,22 @@
 .sendText { margin: 0; font-size: 0.95rem; text-align: center; text-wrap: balance; }
 .sendBar .bigBtn { width: min(100%, 24rem); }
 @media (prefers-reduced-motion: reduce) { .voteBtn { transition: none; } }
+
+/* Ballot box and bar race. The vote card has a ballot box slot on top; options are ballot slips with a bubble you fill in; the results are a race: bigger bars, rank numerals, and the leader in yellow with a stripe. */
+.voteCard, .join { position: relative; padding-top: 2.2rem; box-shadow: 5px 5px 0 var(--pp-ink); }
+.voteCard::before, .join::before { content: ''; position: absolute; top: 0.8rem; left: 50%; width: 46%; height: 0.55rem; transform: translateX(-50%); border-radius: 999px; background: var(--pp-ink); box-shadow: inset 0 2px 3px rgba(0, 0, 0, 0.5); }
+.voteBtn { position: relative; padding-left: 2.2rem; border: 2px solid var(--pp-ink); border-left: 2px dashed var(--pp-ink); background: var(--pp-card); }
+.voteBtn::before { content: ''; position: absolute; left: 0.6rem; top: 50%; width: 1.1rem; height: 1.1rem; transform: translateY(-50%); border: 2px solid var(--pp-ink); border-radius: 50%; background: transparent; transition: background 0.12s, transform 0.12s; }
+.voteOn .voteBtn::before { background: var(--pp-ink); transform: translateY(-50%) scale(1.05); box-shadow: inset 0 0 0 3px var(--pp-card); }
+.voteOn .voteBtn { background: color-mix(in srgb, var(--yellow) 22%, var(--pp-card)); } /* theme-ok */
+.bars { gap: 0.55rem; }
+.bar { position: relative; overflow: hidden; padding: 0.6rem 0.9rem; border: 2px solid var(--pp-ink); border-radius: 10px; box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.85); transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.34, 1.2, 0.64, 1); }
+.barPlace { display: grid; place-items: center; width: 2rem; height: 2rem; border: 2px solid var(--pp-ink); border-radius: 50%; font-size: 1rem; }
+.barTrack { height: 1.2rem; border: 2px solid var(--pp-ink); border-radius: 6px; background: repeating-linear-gradient(90deg, rgba(var(--pp-ink-rgb), 0.08) 0 10px, transparent 10px 20px); }
+.barFill { border-radius: 3px; background: repeating-linear-gradient(135deg, var(--pp-ink) 0 8px, color-mix(in srgb, var(--pp-ink) 80%, transparent) 8px 16px); }
+.barWin { background: color-mix(in srgb, var(--yellow) 30%, var(--pp-card)); box-shadow: 5px 5px 0 var(--pp-ink); } /* theme-ok */
+.barWin .barFill { background: repeating-linear-gradient(135deg, var(--yellow) 0 8px, color-mix(in srgb, var(--yellow) 70%, #fff) 8px 16px); box-shadow: inset 0 0 0 2px var(--pp-ink); } /* theme-ok */
+.barWin .barPlace { background: var(--yellow); color: #011941; } /* theme-ok */
+.barsBig .bar { padding: 0.9rem 1.2rem; }
+.barsBig .barTrack { height: 1.7rem; }
+@media (prefers-reduced-motion: reduce) { .voteBtn::before, .bar { transition: none; } }
