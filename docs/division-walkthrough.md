@@ -21,6 +21,9 @@ Mark each line done or write what looked wrong.
 ## Tickets
 1. A ticket for a division's event shows a small tag with the division's logo and color on My Tickets (next event and the list of events to join). The fullscreen ticket shows it too, and a staff scan result has a Division row. Club events show no tag.
 
+## Attendance
+1. Home shows an Attendance card for Heads and Members once an event with tickets is over: events held, check-ins, the share who showed up, and a bar per recent event (registered behind, checked in in front).
+
 ## Yearly handoff
 1. On the Members page, "Hand Over" opens three steps: pick the new Heads, pick who moves to Alumni, review and confirm. Nothing changes until Confirm.
 2. The division always keeps at least one Head. Someone who hands over to themselves as Alumni loses Head powers right away.
