@@ -105,11 +105,12 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, 
             ) : (
               <div
                 key={q.id}
-                className={`${card.card} ${card.link}`}
+                className={`${card.card} ${card.link} ${styles.showPoster}`}
                 onClick={(e) => {
                   if (!(e.target as HTMLElement).closest('button, a, input')) onOpen(q.slug);
                 }}
               >
+                <span className={styles.marquee}>Now showing</span>
                 <span className={card.kicker}>Quiz</span>
                 <h3 className={card.title}>
                   <button type="button" onClick={() => onOpen(q.slug)}>
