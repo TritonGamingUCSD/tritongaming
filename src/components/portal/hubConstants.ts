@@ -32,6 +32,7 @@ const WANTED_ORDER = [
   'profile',
   'events',
   'checkin',
+  'tournaments',
   'logistics',
   'trivia',
   'polls',

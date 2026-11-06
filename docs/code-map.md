@@ -105,6 +105,7 @@ Every portal section is defined once in `src/lib/portal/sections.ts` (its addres
 | `/portal/profile` | Profile | info | Your info and preferences |
 | `/portal/events` | Events | list | Create and manage events (needs view_events) |
 | `/portal/checkin` | Check-In | tickets | Enter a ticket code, the event QR, the online code (needs checkin) |
+| `/portal/tournaments` | Tournaments | - | Brackets that update live, with stream overlays (needs view_admin_dashboard) |
 | `/portal/members` | TG Members | members | Everyone in the org (needs view_members) |
 | `/portal/meetings` | Meetings | mine | Check in, history and results (needs attend_meetings or view_attendance_reports) |
 | `/portal/logistics` | Event Logistics | home | Equipment catalog, prizes and event setups (needs view_logistics or manage_logistics) |

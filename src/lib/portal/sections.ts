@@ -24,6 +24,15 @@ export const SECTIONS: SectionDef[] = [
     mainTab: 'tickets',
     search: { hint: 'Enter a ticket code, the event QR, the online code', keywords: ['scan', 'scanner', 'qr'], caps: ['checkin'] },
   },
+  {
+    id: 'tournaments',
+    label: 'Tournaments',
+    search: {
+      hint: 'Brackets that update live, with stream overlays',
+      keywords: ['tournament', 'bracket', 'seed', 'swiss', 'obs', 'stream', 'results'],
+      caps: ['view_admin_dashboard'],
+    },
+  },
   { id: 'members', label: 'TG Members', mainTab: 'members', search: { hint: 'Everyone in the org', keywords: ['people', 'directory', 'roster', 'team'], caps: ['view_members'] } },
   {
     id: 'meetings',
