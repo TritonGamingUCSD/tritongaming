@@ -270,3 +270,8 @@
 
 
 .discordLine { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.15rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.75); }
+
+/* TG Members: each person is a trading card: a role-colored top band, a corner shine, and a lift on hover. */
+.card { position: relative; overflow: hidden; border: 2px solid var(--pp-ink); border-top: 6px solid var(--role, var(--pp-ink)); box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.card::after { content: ''; position: absolute; top: -1.2rem; right: -1.2rem; width: 3rem; height: 3rem; background: linear-gradient(135deg, transparent 45%, color-mix(in srgb, var(--role, #fff) 35%, transparent) 45% 55%, transparent 55%); pointer-events: none; }
+.card:hover { box-shadow: 5px 5px 0 rgba(var(--pp-ink-rgb), 0.85); }

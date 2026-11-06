@@ -49,3 +49,9 @@
 .recent span { min-width: 0; overflow-wrap: anywhere; }
 .recent small { flex: none; color: rgba(var(--pp-ink-rgb), 0.75); white-space: nowrap; }
 @media (max-width: 899px) { .home { grid-template-columns: 1fr; } .twoCols { grid-template-columns: 1fr; } .recent li { flex-direction: column; gap: 0.1rem; } }
+
+/* Logistics: every card is a shipping label on a crate: a colored header strip, a barcode corner and a dashed cut line. */
+.card { position: relative; border: 2px solid var(--pp-ink); border-radius: 6px; background: var(--pp-card); box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); overflow: hidden; padding-top: 1.35rem; }
+.card::before { content: ''; position: absolute; inset: 0 0 auto 0; height: 0.7rem; background: repeating-linear-gradient(135deg, #c27a2c 0 10px, #8a5420 10px 20px); border-bottom: 2px solid var(--pp-ink); } /* theme-ok */
+.card::after { content: ''; position: absolute; right: 0.7rem; top: 0.95rem; width: 3rem; height: 0.8rem; opacity: 0.35; background: repeating-linear-gradient(90deg, var(--pp-ink) 0 2px, transparent 2px 4px, var(--pp-ink) 4px 5px, transparent 5px 8px); }
+.stat, .chips > * { border-radius: 4px; }

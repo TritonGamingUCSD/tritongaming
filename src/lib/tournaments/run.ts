@@ -1,7 +1,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Entrant, Match } from './bracket';
 import { buildStage, qualifiers, splitIntoGroups, stageComplete, stageRanking, type StageDef } from './stages';
-import { toMatch, toRow, type EntrantRow, type MatchRow, type StageEntrantRow, type StageRow, type TournamentRow } from './store';
+import { dealHeats } from './points';
+import { stageKey, toMatch, toRow, type EntrantRow, type MatchRow, type StageEntrantRow, type StageRow, type TournamentRow } from './store';
 
 export const defOf = (s: StageRow): StageDef => ({ format: s.format, settings: s.settings ?? {}, advance: s.advance ?? { mode: 'none' } });
 export const bestOfOf = (t: Pick<TournamentRow, 'best_of'>, s: Pick<StageRow, 'settings'> | undefined, m?: Pick<MatchRow, 'best_of'>) =>
@@ -52,6 +53,17 @@ export async function startStage(svc: SupabaseClient, t: TournamentRow, stage: S
     } else groups = splitIntoGroups(field, def.settings.group_count ?? 1, def.settings.seeding ?? 'seed');
   }
   const made = buildStage(def, field, groups);
+  let heatRows: Record<string, unknown>[] = [];
+  if (def.format === 'points')
+    heatRows = heatRowsFor(
+      t.id,
+      stage,
+      dealHeats(
+        field.map((e) => e.id),
+        def.settings.heat_size ?? 4,
+      ),
+      1,
+    );
   await svc.from('tournament_stage_entrants').delete().eq('stage_id', stage.id);
   await svc
     .from('tournament_stage_entrants')
@@ -60,10 +72,36 @@ export async function startStage(svc: SupabaseClient, t: TournamentRow, stage: S
     const { error } = await svc.from('tournament_matches').insert(made.map((m) => toRow(t.id, stage, m, { best_of: def.settings.best_of ?? null })));
     if (error) throw new Error('Could not build the bracket.');
   }
+  if (heatRows.length > 0) {
+    const { error } = await svc.from('tournament_matches').insert(heatRows);
+    if (error) throw new Error('Could not deal the heats.');
+  }
   const now = new Date().toISOString();
   await svc.from('tournament_stages').update({ status: 'live' }).eq('id', stage.id);
   await svc.from('tournaments').update({ status: 'live', signups_open: false, updated_at: now }).eq('id', t.id);
-  return made.length;
+  return made.length + heatRows.length;
+}
+
+// The rows for one round of heats: each is a match with no sides, only a list of who is in it (and, once scored, where they finished and what it earned).
+export function heatRowsFor(tournamentId: string, stage: Pick<StageRow, 'id' | 'position'>, heats: string[][], round: number) {
+  return heats.map((h, i) => ({
+    tournament_id: tournamentId,
+    stage_id: stage.id,
+    group_no: null,
+    key: stageKey(stage.position, `P${round}-${i + 1}`),
+    bracket: 'P',
+    round,
+    idx: i + 1,
+    a: null,
+    b: null,
+    score_a: null,
+    score_b: null,
+    winner: null,
+    status: 'ready',
+    win_to: null,
+    lose_to: null,
+    heat: h.map((entrant_id) => ({ entrant_id, placement: null, points: null })),
+  }));
 }
 
 // After a result: is this stage finished, and is the whole tournament? Writes the statuses and says what changed.

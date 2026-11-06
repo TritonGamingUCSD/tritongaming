@@ -47,7 +47,7 @@ export default function FeedBracket({ feed, stage, hideByes = true }: { feed: Fe
     (m) => m.stage === pos && m.status !== 'skipped' && !(hideByes && m.status === 'bye' && m.round === 1 && (m.a?.name === 'BYE' || m.b?.name === 'BYE')),
   );
   const blocks: { key: string; title: string; bracket: string; items: M[] }[] = [];
-  const order = ['W', 'GF', 'T', 'L', 'RR', 'S'];
+  const order = ['W', 'GF', 'T', 'L', 'RR', 'S', 'P'];
   const format = feed.stages.find((s) => s.position === pos)?.format;
   for (const b of order) {
     const all = mine.filter((m) => m.bracket === b);
@@ -68,7 +68,7 @@ export default function FeedBracket({ feed, stage, hideByes = true }: { feed: Fe
       {blocks.map((blk) => {
         const max = Math.max(...blk.items.map((m) => m.round));
         const rounds = [...new Set(blk.items.map((m) => m.round))].sort((x, y) => x - y);
-        const robin = blk.bracket === 'RR' || blk.bracket === 'S';
+        const robin = blk.bracket === 'RR' || blk.bracket === 'S' || blk.bracket === 'P';
         return (
           <section key={blk.key} className={styles.block}>
             {blk.title && <h3>{blk.title}</h3>}
@@ -79,9 +79,29 @@ export default function FeedBracket({ feed, stage, hideByes = true }: { feed: Fe
                   <div className={styles.cards}>
                     {blk.items
                       .filter((m) => m.round === r)
-                      .map((m) => (
-                        <MatchCard key={m.key} m={m} />
-                      ))}
+                      .map((m) =>
+                        m.heat ? (
+                          <div key={m.key} className={styles.heatBox}>
+                            <b>Heat {m.index}</b>
+                            <ol>
+                              {[...m.heat]
+                                .sort((x, y) => (x.placement ?? 99) - (y.placement ?? 99))
+                                .map((h) => (
+                                  <li key={h.name}>
+                                    <span>{h.name}</span>
+                                    {h.placement !== null && (
+                                      <em>
+                                        {h.placement}. +{h.points ?? 0}
+                                      </em>
+                                    )}
+                                  </li>
+                                ))}
+                            </ol>
+                          </div>
+                        ) : (
+                          <MatchCard key={m.key} m={m} />
+                        ),
+                      )}
                   </div>
                 </div>
               ))}

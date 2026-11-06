@@ -216,6 +216,47 @@ try {
   const qf = (await head.call('GET', Q)).j;
   t.ok('the finished match has its two games and a winner', qf.matches[0].winner === 'b' && qf.matches[0].games.length === 2);
 
+  // A points series (free for all): 6 players, heats of 3, two rounds, 5/3/1 points
+  const ps = await mk('ZZ Points', 'points', {
+    stages: [{ name: 'Series', format: 'points', settings: { rounds: 2, heat_size: 3, points_table: [5, 3, 1] }, advance: { mode: 'none' } }],
+  });
+  const PT = `/api/tournaments/${ps.j.id}`;
+  for (const n of ['A', 'B', 'C', 'D', 'E', 'F']) await head.call('POST', `${PT}/entrants`, { name: `ZZ ${n}` });
+  t.ok(
+    'a points series starts and deals two heats of three',
+    (await head.call('POST', `${PT}/bracket`, { action: 'start' })).s === 200 && (await head.call('GET', PT)).j.matches.filter((m) => m.bracket === 'P').length === 2,
+  );
+  let pd2 = (await head.call('GET', PT)).j;
+  const heat1 = pd2.matches.find((m) => m.key.endsWith('P1-1'));
+  t.ok('a heat needs everyone listed once', (await head.call('POST', `${PT}/bracket`, { action: 'report-heat', key: heat1.key, order: [heat1.heat[0].entrant_id] })).s === 400);
+  t.ok('the next round waits for every heat', (await head.call('POST', `${PT}/bracket`, { action: 'next-round' })).s === 409);
+  for (const m of pd2.matches.filter((x) => x.bracket === 'P'))
+    t.ok(`heat ${m.idx} is scored`, (await head.call('POST', `${PT}/bracket`, { action: 'report-heat', key: m.key, order: m.heat.map((h) => h.entrant_id) })).s === 200);
+  t.ok('round two is dealt from the standings', (await head.call('POST', `${PT}/bracket`, { action: 'next-round' })).j.round === 2);
+  pd2 = (await head.call('GET', PT)).j;
+  for (const m of pd2.matches.filter((x) => x.bracket === 'P' && x.round === 2))
+    await head.call('POST', `${PT}/bracket`, { action: 'report-heat', key: m.key, order: m.heat.map((h) => h.entrant_id) });
+  pd2 = (await head.call('GET', PT)).j;
+  t.ok('the series completes after the last round', pd2.tournament.status === 'complete', pd2.tournament.status);
+  const pfeed = await (await fetch(`${BASE}${PT}/feed`)).json();
+  t.ok('the feed has points standings', pfeed.standings?.length === 6 && pfeed.standings[0].points >= pfeed.standings[5].points);
+
+  // A custom stage: matches added by hand
+  const cu = await mk('ZZ Custom', 'custom', { stages: [{ name: 'Showmatches', format: 'custom', settings: {}, advance: { mode: 'none' } }] });
+  const CT = `/api/tournaments/${cu.j.id}`;
+  const cids = [];
+  for (const n of ['A', 'B', 'C']) cids.push((await head.call('POST', `${CT}/entrants`, { name: `ZZ ${n}` })).j.id);
+  await head.call('POST', `${CT}/bracket`, { action: 'start' });
+  t.ok('a custom stage starts with no matches', (await head.call('GET', CT)).j.matches.length === 0);
+  t.ok(
+    'two different entrants are needed for a match',
+    (await head.call('POST', `${CT}/bracket`, { action: 'add-match', stage_id: (await head.call('GET', CT)).j.stages[0].id, a: cids[0], b: cids[0] })).s === 400,
+  );
+  const cstage = (await head.call('GET', CT)).j.stages[0].id;
+  t.ok('a match is added by hand', (await head.call('POST', `${CT}/bracket`, { action: 'add-match', stage_id: cstage, a: cids[0], b: cids[1] })).s === 200);
+  const cm = (await head.call('GET', CT)).j.matches[0];
+  t.ok('and scored like any other', (await head.call('POST', `${CT}/bracket`, { action: 'report', key: cm.key, scoreA: 2, scoreB: 1 })).s === 200);
+
   // Editing the structure
   const ed = await mk('ZZ Edit', 'single');
   const E = `/api/tournaments/${ed.j.id}`;

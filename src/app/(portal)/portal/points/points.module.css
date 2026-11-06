@@ -520,3 +520,22 @@
 .manageTab { max-width: 64rem; gap: 1rem; }
 .manageSection { display: grid; gap: 0.8rem; padding: 1.2rem 1.4rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 14px; background: var(--pp-card); }
 .sectionLabel { margin: 0; font-family: var(--font-dm-sans), system-ui, sans-serif; font-weight: 700; font-size: 1.15rem; text-transform: none; letter-spacing: 0; }
+
+/* Prize counter: the balance is a lit-up arcade display, shop items are prize tickets with a notch and a cost token, the leaderboard has a podium for the top three. */
+.hero { position: relative; border: 2px solid var(--pp-ink); border-radius: 10px; background: #0b1730; color: #ffc72c; box-shadow: 5px 5px 0 var(--pp-ink); overflow: hidden; } /* theme-ok */
+.hero::after { content: ''; position: absolute; inset: 0; background: repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.04) 0 2px, transparent 2px 4px); pointer-events: none; } /* theme-ok */
+.heroNum { font-family: var(--font-jb-mono), monospace; text-shadow: 0 0 14px rgba(255, 199, 44, 0.55); letter-spacing: 0.04em; } /* theme-ok */
+.shopCard { position: relative; border: 2px solid var(--pp-ink); border-radius: 10px; background: var(--pp-card); box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); transition: transform 0.12s, box-shadow 0.12s; }
+.shopCard:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.shopCard::before, .shopCard::after { content: ''; position: absolute; top: 58%; width: 18px; height: 18px; border-radius: 50%; background: var(--pp-paper, #e8e5df); border: 2px solid var(--pp-ink); }
+.shopCard::before { left: -11px; }
+.shopCard::after { right: -11px; }
+.shopCardCost { display: inline-flex; align-items: center; justify-content: center; min-width: 2.6rem; padding: 0.15rem 0.6rem; border: 2px solid var(--pp-ink); border-radius: 999px; background: var(--yellow); color: #011941; font-weight: 800; } /* theme-ok */
+.shopCardFooter { border-top: 2px dashed rgba(var(--pp-ink-rgb), 0.4); }
+.boardRow { border: 2px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 8px; background: var(--pp-card); }
+.boardRow:nth-child(-n + 3) { border-color: var(--pp-ink); box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.boardRow:nth-child(1) { background: color-mix(in srgb, #ffc72c 30%, var(--pp-card)); } /* theme-ok */
+.boardRow:nth-child(2) { background: color-mix(in srgb, #cbd5e1 40%, var(--pp-card)); } /* theme-ok */
+.boardRow:nth-child(3) { background: color-mix(in srgb, #d89a5b 32%, var(--pp-card)); } /* theme-ok */
+.boardRank { font-weight: 800; }
+@media (prefers-reduced-motion: reduce) { .shopCard { transition: none; } }

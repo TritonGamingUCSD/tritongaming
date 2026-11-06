@@ -49,3 +49,9 @@
 .frameWrap { display: grid; gap: 0.5rem; }
 .frameNote { margin: 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.72); }
 .textarea { min-height: 7rem; }
+
+/* Newsletter: the editor is a newspaper page: a double rule on top, blocks as column boxes. */
+.editor, .pane { border-top: 4px double var(--pp-ink); }
+.block { border: 2px solid var(--pp-ink); border-radius: 2px; background: var(--pp-card); box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.blockHead { border-bottom: 2px solid var(--pp-ink); }
+.titleRow input { font-family: Georgia, 'Times New Roman', serif; font-weight: 800; letter-spacing: 0.01em; }

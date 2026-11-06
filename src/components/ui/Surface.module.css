@@ -1,13 +1,13 @@
 /* The portal's cut-paper surfaces, shared: sections compose these instead of repeating border / fill / shadow. */
 .card {
   background: var(--pp-card);
-  border: 2px solid rgba(var(--pp-ink-rgb), 0.55);
+  border: 2px solid rgba(var(--pp-ink-rgb), 0.8);
   border-radius: 8px;
-  box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.16);
+  box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.35);
 }
 .panel {
   background: var(--pp-card);
-  border: 2px solid rgba(var(--pp-ink-rgb), 0.6);
+  border: 2px solid rgba(var(--pp-ink-rgb), 0.8);
   border-radius: 8px;
-  box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.16);
+  box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.35);
 }

@@ -2,14 +2,15 @@ import { NextResponse } from 'next/server';
 import { withTournament } from '@/lib/tournaments/server';
 import { report, undo, swissRound, swissRounds, type Match } from '@/lib/tournaments/bracket';
 import { engineKey, saveMatches, toMatch, toRow } from '@/lib/tournaments/store';
-import { bestOfOf, currentStage, defOf, refreshStatus, stageEngineMatches, stageField, startStage } from '@/lib/tournaments/run';
+import { bestOfOf, currentStage, defOf, heatRowsFor, refreshStatus, stageEngineMatches, stageField, startStage } from '@/lib/tournaments/run';
+import { dealHeats, pointsStandings, scoreHeat, type HeatSlot } from '@/lib/tournaments/points';
 import { logAudit } from '@/lib/notifications/audit';
 
 export const dynamic = 'force-dynamic';
 
 type Game = { a: number; b: number; map?: string; pick_a?: string; pick_b?: string };
 type Body = {
-  action?: 'start' | 'start-stage' | 'report' | 'undo' | 'next-round' | 'station' | 'live' | 'reset' | 'game' | 'undo-game';
+  action?: 'start' | 'start-stage' | 'report' | 'undo' | 'next-round' | 'station' | 'live' | 'reset' | 'game' | 'undo-game' | 'report-heat' | 'add-match';
   key?: string;
   stage_id?: string;
   order?: string[];
@@ -20,6 +21,8 @@ type Body = {
   on?: boolean;
   winner?: 'a' | 'b';
   map?: string;
+  a?: string;
+  b?: string;
 };
 
 // Everything that moves a tournament: start it (the first stage), start a later stage from the results of the one before, enter or undo a result, deal the next Swiss round, call a match to a station, mark it live, or reset it back to registration.
@@ -39,7 +42,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     if (!first) return bad('Add a stage first.');
     const field = stageField(r.stages, first, r.entrants, r.matches, r.stageEntrants);
     if (field.length < 2) return bad('Add at least two entrants first.');
-    if (first.format === 'points') return bad('Points series are dealt heat by heat; that screen is coming.');
     await Promise.all(field.map((e) => r.svc.from('tournament_entrants').update({ seed: e.seed }).eq('id', e.id)));
     try {
       const n = await startStage(r.svc, t, first, field, r.stageEntrants);
@@ -105,7 +107,25 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   if (b.action === 'next-round') {
     const stage = r.stages.find((s) => s.id === b.stage_id) ?? currentStage(r.stages);
-    if (!stage || stage.format !== 'swiss') return bad('Only a Swiss stage has rounds to deal.');
+    if (stage && stage.format === 'points') {
+      const rows = r.matches.filter((m) => m.stage_id === stage.id);
+      const played = Math.max(0, ...rows.map((m) => m.round));
+      const total = stage.settings.rounds ?? 3;
+      if (rows.some((m) => m.status !== 'done')) return bad('Score every heat of this round first.', 409);
+      if (played >= total) return bad('That was the last round.', 409);
+      const ids = r.stageEntrants.filter((x) => x.stage_id === stage.id).map((x) => x.entrant_id);
+      const standing = pointsStandings(
+        ids,
+        rows.map((m) => (m.heat ?? []) as HeatSlot[]),
+      ).map((x) => x.id);
+      const heats = dealHeats(standing, stage.settings.heat_size ?? 4);
+      const { error } = await r.svc.from('tournament_matches').insert(heatRowsFor(t.id, stage, heats, played + 1));
+      if (error) return bad('Could not deal the next round.', 500);
+      await r.svc.from('tournament_stages').update({ status: 'live' }).eq('id', stage.id);
+      if (t.status === 'complete') await r.svc.from('tournaments').update({ status: 'live', updated_at: now() }).eq('id', t.id);
+      return NextResponse.json({ ok: true, round: played + 1 });
+    }
+    if (!stage || stage.format !== 'swiss') return bad('Only a Swiss or points stage has rounds to deal.');
     const mine = stageEngineMatches(r.matches, stage);
     const ids = r.stageEntrants.filter((x) => x.stage_id === stage.id).map((x) => x.entrant_id);
     const total = stage.settings.swiss_rounds ?? swissRounds(ids.length);
@@ -126,10 +146,56 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ ok: true, round: played + 1 });
   }
 
+  // A custom stage: add one match by hand, { stage_id, a, b } (two entrants of the tournament).
+  if (b.action === 'add-match') {
+    const stage = r.stages.find((s) => s.id === b.stage_id);
+    if (!stage || stage.format !== 'custom') return bad('Matches are added by hand only in a custom stage.');
+    const ids = new Set(r.entrants.filter((e) => !e.dropped).map((e) => e.id));
+    if (!b.a || !b.b || b.a === b.b || !ids.has(b.a) || !ids.has(b.b)) return bad('Pick two different entrants.');
+    const n = r.matches.filter((m) => m.stage_id === stage.id).length + 1;
+    const { error } = await r.svc.from('tournament_matches').insert({
+      tournament_id: t.id,
+      stage_id: stage.id,
+      group_no: null,
+      key: `s${stage.position}/C${n}`,
+      bracket: 'RR',
+      round: 1,
+      idx: n,
+      a: b.a,
+      b: b.b,
+      score_a: null,
+      score_b: null,
+      winner: null,
+      status: 'ready',
+      win_to: null,
+      lose_to: null,
+    });
+    if (error) return bad('Could not add the match.', 500);
+    // the stage and the tournament are playing now (they may have finished before this match was added)
+    await r.svc.from('tournament_stages').update({ status: 'live' }).eq('id', stage.id);
+    if (t.status === 'complete') await r.svc.from('tournaments').update({ status: 'live', updated_at: now() }).eq('id', t.id);
+    return NextResponse.json({ ok: true, key: `s${stage.position}/C${n}` });
+  }
+
   const row = r.matches.find((m) => m.key === b.key);
   if (!row) return bad('That match does not exist.', 404);
   const stage = r.stages.find((s) => s.id === row.stage_id);
   if (!stage) return bad('That match has no stage.', 409);
+
+  // A heat of a points series: { key, order: [entrant ids, first place first] }. Everyone in the heat must be listed once.
+  if (b.action === 'report-heat') {
+    if (stage.format !== 'points') return bad('That is not a points heat.');
+    const heat = (row.heat ?? []) as HeatSlot[];
+    const order = Array.isArray(b.order) ? b.order : [];
+    if (order.length !== heat.length || new Set(order).size !== order.length || order.some((x) => !heat.some((h) => h.entrant_id === x)))
+      return bad('List everyone in the heat once, in the order they finished.');
+    const scored = scoreHeat(order, stage.settings.points_table);
+    await r.svc.from('tournament_matches').update({ heat: scored, status: 'done', updated_at: now() }).eq('tournament_id', t.id).eq('key', row.key);
+    const mine = r.matches.filter((m) => m.stage_id === stage.id).map((m) => (m.key === row.key ? { ...m, status: 'done' as const } : m));
+    const players = r.stageEntrants.filter((x) => x.stage_id === stage.id).length;
+    const st = await refreshStatus(r.svc, t, r.stages, stage, mine.map(toMatch), players);
+    return NextResponse.json({ ok: true, complete: st.complete, stageDone: st.stageDone });
+  }
 
   if (b.action === 'station' || b.action === 'live') {
     const patch: Record<string, unknown> = { updated_at: now() };
@@ -197,7 +263,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       }
       const need = Math.ceil(bestOf / 2);
       if (bestOf > 1 && sa !== need && sb !== need) return bad(`A best of ${bestOf} ends when someone has won ${need} games.`);
-      if (Math.max(sa, sb) > need) return bad(`A best of ${bestOf} cannot go past ${need} wins.`);
+      if (bestOf > 1 && Math.max(sa, sb) > need) return bad(`A best of ${bestOf} cannot go past ${need} wins.`);
       const robin = stage.format === 'roundrobin' || stage.format === 'swiss' || stage.format === 'custom';
       next = report(mine, ekey, sa, sb, { allowTie: robin && bestOf === 1 });
     }

@@ -133,3 +133,18 @@
 .colorRow input[type='color'] { width: 2.6rem; height: 2.2rem; padding: 0; border: 2px solid var(--pp-ink); border-radius: 6px; background: none; cursor: pointer; }
 .previewBox { position: relative; aspect-ratio: 16 / 9; border: 2px solid var(--pp-ink); border-radius: 8px; overflow: hidden; background: conic-gradient(#3a4660 25%, #2b3550 0 50%, #3a4660 0 75%, #2b3550 0) 0 0 / 24px 24px; }
 .previewBox iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; transform: scale(0.3); background: transparent; pointer-events: none; }
+
+.heat { display: grid; gap: 0.5rem; padding: 0.7rem 0.8rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.55); border-radius: 8px; background: var(--pp-paper, var(--pp-card)); }
+.heatDone { border-color: var(--pp-ink); }
+.heatTitle { margin: 0; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.7); display: flex; justify-content: space-between; }
+.heat ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+.heatRow { display: grid; grid-template-columns: auto 1.4rem 1fr auto auto; align-items: center; gap: 0.4rem; padding: 0.3rem 0.5rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 6px; background: var(--pp-card); cursor: grab; }
+.heatRow[data-dragging] { opacity: 0.4; }
+.heatRow[data-drop='before'] { box-shadow: 0 -4px 0 var(--yellow); } /* theme-ok */
+.heatRow[data-drop='after'] { box-shadow: 0 4px 0 var(--yellow); } /* theme-ok */
+.heatRow em { font-style: normal; font-weight: 800; color: var(--pp-good); }
+.heatArrows { display: inline-flex; gap: 0.2rem; }
+.heatArrows button { width: 1.5rem; height: 1.5rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.4); border-radius: 4px; background: var(--pp-card); color: var(--pp-ink); cursor: pointer; line-height: 1; }
+.heatArrows button:disabled { opacity: 0.3; cursor: default; }
+.customAdd { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; padding: 0.7rem 0.9rem; border: 2px dashed rgba(var(--pp-ink-rgb), 0.4); border-radius: 8px; }
+.customAdd > * { min-width: 9rem; }

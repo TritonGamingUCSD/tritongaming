@@ -33,3 +33,12 @@
 .join .link { background: none; color: #9fb0c8; border-color: transparent; padding: 0; font-weight: 600; text-decoration: underline; }
 .okMsg { margin: 0; color: #6ee7a0; }
 .errMsg { margin: 0; color: #ff8a8a; }
+
+.board { max-width: 72rem; margin: 2rem auto 0; padding: 0 1.2rem; color: #fff; }
+.board h2 { margin: 0 0 0.7rem; font-size: 1.2rem; }
+.board ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.board li { display: grid; grid-template-columns: 2rem 1fr auto auto; gap: 0.8rem; align-items: center; padding: 0.55rem 0.9rem; border: 2px solid rgba(255, 255, 255, 0.35); border-radius: 8px; }
+.board li:nth-child(1) { border-color: #f6c84c; background: rgba(246, 200, 76, 0.1); }
+.board b { text-align: center; }
+.board small { color: #9fb0c8; }
+.board em { font-style: normal; font-weight: 800; color: #f6c84c; }

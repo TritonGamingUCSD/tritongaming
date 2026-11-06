@@ -2,6 +2,7 @@
 
 import { Check, Radio } from 'lucide-react';
 import type { MatchRow } from '@/lib/tournaments/store';
+import HeatCard from './HeatCard';
 import { roundName, type TEntrant } from './types';
 import styles from './tournaments.module.css';
 
@@ -12,16 +13,18 @@ export default function BracketView({
   format,
   onPick,
   canRun,
+  onHeat,
 }: {
   matches: MatchRow[];
   entrants: TEntrant[];
   format: string;
   onPick: (m: MatchRow) => void;
   canRun: boolean;
+  onHeat?: (m: MatchRow, order: string[]) => Promise<void>;
 }) {
   const byId = new Map(entrants.map((e) => [e.id, e]));
   const groups: { key: string; title: string; rounds: { round: number; title: string; items: MatchRow[] }[] }[] = [];
-  const order = ['W', 'GF', 'T', 'L', 'RR', 'S'];
+  const order = ['W', 'GF', 'T', 'L', 'RR', 'S', 'P'];
   // Pools: one block per pool; everything else is one block per bracket.
   const blocks: { b: string; pool: number | null; items: MatchRow[] }[] = [];
   for (const b of order) {
@@ -58,7 +61,7 @@ export default function BracketView({
   }
   const name = (slot: string | null) => (slot === null ? 'TBD' : slot === 'BYE' ? 'BYE' : (byId.get(slot)?.name ?? '?'));
   const seed = (slot: string | null) => (slot && slot !== 'BYE' ? byId.get(slot)?.seed : null);
-  const robin = format === 'roundrobin' || format === 'swiss';
+  const robin = format === 'roundrobin' || format === 'swiss' || format === 'points' || format === 'custom';
 
   return (
     <div className={styles.sheet}>
@@ -71,6 +74,16 @@ export default function BracketView({
                 <p className={styles.roundTitle}>{r.title}</p>
                 <div className={styles.roundCards}>
                   {r.items.map((m) => {
+                    if (m.bracket === 'P')
+                      return (
+                        <HeatCard
+                          key={m.key + (m.status === 'done' ? 'd' : '')}
+                          match={m}
+                          entrants={entrants}
+                          canRun={canRun}
+                          onSave={(order) => onHeat?.(m, order) ?? Promise.resolve()}
+                        />
+                      );
                     const bye = m.status === 'bye';
                     const playable = canRun && (m.status === 'ready' || m.status === 'live' || m.status === 'done');
                     return (

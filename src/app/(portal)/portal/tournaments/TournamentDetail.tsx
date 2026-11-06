@@ -9,6 +9,7 @@ import Button from '@/components/ui/Button';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { usePortalParams } from '@/lib/portal/usePortalParams';
 import { swissRounds, type Match } from '@/lib/tournaments/bracket';
+import { pointsStandings, type HeatSlot } from '@/lib/tournaments/points';
 import { rank, stageRanking, qualifiers } from '@/lib/tournaments/stages';
 import { bestOfOf, currentStage, defOf, stageEngineMatches, stageField } from '@/lib/tournaments/run';
 import type { MatchRow } from '@/lib/tournaments/store';
@@ -21,6 +22,7 @@ import TSettings from './TSettings';
 import StructurePanel from './StructurePanel';
 import ControlPanel from './ControlPanel';
 import NextStageBanner from './NextStageBanner';
+import CustomAdd from './CustomAdd';
 import { call, FORMAT_NAMES, STATUS_NAMES } from './types';
 import { useTournament } from './useTournament';
 import styles from './tournaments.module.css';
@@ -59,7 +61,9 @@ export default function TournamentDetail({ slug, subtab, divisions }: { slug: st
   const engine: Match[] = shown ? stageEngineMatches(data.matches, shown) : [];
   const shownRows = data.matches.filter((m) => m.stage_id === shown?.id);
   const field = shown ? stageField(data.stages, shown, data.entrants, data.matches, data.stageEntrants) : [];
-  const roundsTotal = shown?.format === 'swiss' ? (shown.settings.swiss_rounds ?? swissRounds(field.length || active.length)) : 0;
+  const roundsTotal =
+    shown?.format === 'swiss' ? (shown.settings.swiss_rounds ?? swissRounds(field.length || active.length)) : shown?.format === 'points' ? (shown.settings.rounds ?? 3) : 0;
+  const heatRoundDone = shownRows.length > 0 && shownRows.every((m) => m.status === 'done');
   const lastRound = Math.max(0, ...engine.map((m) => m.round));
   const roundDone = engine.length > 0 && !engine.some((m) => m.status === 'ready' || m.status === 'pending');
   const seeds = new Map(field.map((e) => [e.id, e.seed]));
@@ -72,6 +76,13 @@ export default function TournamentDetail({ slug, subtab, divisions }: { slug: st
         })
       : null;
   const nameOf = (id: string) => data.entrants.find((e) => e.id === id)?.name ?? '?';
+  const pointsTable =
+    shown?.format === 'points' && shownRows.length > 0
+      ? pointsStandings(
+          field.map((e) => e.id),
+          shownRows.map((m) => (m.heat ?? []) as HeatSlot[]),
+        )
+      : null;
   const nextStage = shown ? data.stages.find((x) => x.position === shown.position + 1) : undefined;
   const nextReady = !!shown && shown.status === 'complete' && !!nextStage && nextStage.status === 'pending';
   const ranking = shown ? stageRanking(defOf(shown), field, engine) : [];
@@ -150,12 +161,12 @@ export default function TournamentDetail({ slug, subtab, divisions }: { slug: st
               </nav>
             )}
             {nextReady && nextStage && data.can.manage && <NextStageBanner data={data} from={shown!} stage={nextStage} moving={moving} reload={reload} />}
-            {shown?.format === 'swiss' && shownRows.length > 0 && (
+            {(shown?.format === 'swiss' || shown?.format === 'points') && shownRows.length > 0 && (
               <div className={styles.swissBar}>
                 <span>
                   Round {lastRound} of {roundsTotal}
                 </span>
-                {roundDone && lastRound < roundsTotal && (
+                {(shown?.format === 'points' ? heatRoundDone : roundDone) && lastRound < roundsTotal && (
                   <Button disabled={busy} onClick={() => act({ action: 'next-round', stage_id: shown.id }, `Round ${lastRound + 1} dealt`)}>
                     Deal Round {lastRound + 1}
                   </Button>
@@ -167,7 +178,44 @@ export default function TournamentDetail({ slug, subtab, divisions }: { slug: st
                 {shown?.name} has not started yet. {shown && shown.position > 1 ? 'It starts when the stage before it is finished.' : ''}
               </Notice>
             ) : (
-              <BracketView matches={shownRows} entrants={data.entrants} format={shown?.format ?? t.format} canRun={data.can.run} onPick={setPicked} />
+              <BracketView
+                matches={shownRows}
+                entrants={data.entrants}
+                format={shown?.format ?? t.format}
+                canRun={data.can.run}
+                onPick={setPicked}
+                onHeat={async (m, order) => act({ action: 'report-heat', key: m.key, order })}
+              />
+            )}
+            {shown?.format === 'custom' && data.can.run && <CustomAdd data={data} stageId={shown.id} act={act} busy={busy} />}
+            {shown?.format === 'points' && pointsTable && (
+              <section className={styles.card}>
+                <h3 className={styles.cardTitle}>Points standings</h3>
+                <table className={styles.table}>
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Name</th>
+                      <th>Heats</th>
+                      <th>Wins</th>
+                      <th>Pts</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {pointsTable.map((r, i) => (
+                      <tr key={r.id}>
+                        <td>{i + 1}</td>
+                        <td>{nameOf(r.id)}</td>
+                        <td>{r.played}</td>
+                        <td>{r.wins}</td>
+                        <td>
+                          <b>{r.points}</b>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </section>
             )}
             {poolRows &&
               shownRows.length > 0 &&

@@ -5,6 +5,7 @@ import { getOffSwitches } from '@/lib/portal/featureServer';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { PageHero } from '@/components/ZineBand/ZineBand';
 import { FORMAT_LABEL } from '@/components/tournaments/labels';
+import { getLeaderboard } from '@/lib/tournaments/results';
 import styles from './tournaments.module.css';
 
 export const revalidate = 30;
@@ -20,10 +21,29 @@ export default async function TournamentsPage() {
     .neq('status', 'draft')
     .order('created_at', { ascending: false })
     .limit(60);
+  const board = await getLeaderboard(createServiceClient(), { divisionId: null, limit: 10 }).catch(() => []);
   const rows = (data ?? []).filter((t) => !(t.division_id && off.includes('div_tournaments')));
   return (
     <main>
       <PageHero label="Compete" title="Tournaments" sub="Brackets update live while the matches are played." />
+      {board.length > 0 && (
+        <section className={styles.board} aria-label="Leaderboard">
+          <h2>Leaderboard</h2>
+          <ol>
+            {board.map((r, i) => (
+              <li key={r.key}>
+                <b>{i + 1}</b>
+                <span>{r.name}</span>
+                <small>
+                  {r.titles > 0 ? `${r.titles} ${r.titles === 1 ? 'title' : 'titles'} · ` : ''}
+                  {r.played} played
+                </small>
+                <em>{r.points} pts</em>
+              </li>
+            ))}
+          </ol>
+        </section>
+      )}
       <section className={styles.list}>
         {rows.length === 0 && <p className={styles.empty}>No tournaments to show yet.</p>}
         {rows.map((t) => (

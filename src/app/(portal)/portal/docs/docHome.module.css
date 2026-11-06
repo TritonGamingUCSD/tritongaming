@@ -61,3 +61,8 @@
 .empty { padding: 2rem 0; text-align: center; color: rgba(var(--pp-ink-rgb), 0.85); }
 
 @media (pointer: coarse), (max-width: 1024px) { .quickEdit { width: 34px; height: 34px; } .quickLink { min-height: 44px; } }
+
+/* Documentation: a binder. Groups have folder tabs, cards have punched holes down the left edge. */
+.card { position: relative; padding-left: 1.9rem; border: 2px solid var(--pp-ink); border-radius: 4px 10px 10px 4px; box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.card::before { content: ''; position: absolute; left: 0.55rem; top: 0.8rem; bottom: 0.8rem; width: 0.55rem; background: radial-gradient(circle at 50% 50%, var(--pp-paper, #e8e5df) 0 0.22rem, transparent 0.24rem) 0 0 / 100% 1.6rem repeat-y; }
+.groupName { display: inline-block; padding: 0.2rem 0.8rem; border: 2px solid var(--pp-ink); border-bottom: 0; border-radius: 8px 8px 0 0; background: var(--pp-card); }

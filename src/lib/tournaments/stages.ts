@@ -246,6 +246,7 @@ export function stageComplete(def: StageDef, entrantCount: number, matches: Matc
   if (matches.length === 0) return false;
   if (matches.some((m) => m.status === 'ready' || m.status === 'pending')) return false;
   if (def.format === 'swiss') return Math.max(...matches.map((m) => m.round)) >= (def.settings.swiss_rounds ?? swissRounds(entrantCount));
+  if (def.format === 'points') return Math.max(...matches.map((m) => m.round)) >= (def.settings.rounds ?? 3);
   return true;
 }
 

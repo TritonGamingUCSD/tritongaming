@@ -1,6 +1,7 @@
 import { BYE, swissRounds, type Match } from './bracket';
 import { currentStage, defOf, stageEngineMatches, stageField } from './run';
 import { rank, stageRanking } from './stages';
+import { pointsStandings } from './points';
 import { toMatch, type EntrantRow, type MatchRow, type StageEntrantRow, type StageRow, type TournamentRow } from './store';
 
 // What a stream tool, the public page and the overlays read: names instead of ids, ordered matches, stages, standings or placements, and what is on now and next. No user ids, codes or tokens.
@@ -20,6 +21,7 @@ export type FeedMatch = {
   station: string | null;
   games: MatchRow['games'];
   best_of: number | null;
+  heat: { name: string; placement: number | null; points: number | null }[] | null;
 };
 
 export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchRow[], stages: StageRow[], stageEntrants: StageEntrantRow[]) {
@@ -56,6 +58,7 @@ export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchR
       station: r.station,
       games: r.games,
       best_of: r.best_of,
+      heat: r.heat ? r.heat.map((h) => ({ name: byId.get(h.entrant_id)?.name ?? '?', placement: h.placement, points: h.points })) : null,
     }));
   const cur = currentStage(stages);
   const nameOf = (id: string) => byId.get(id)?.name ?? '';
@@ -65,7 +68,13 @@ export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchR
     const field = stageField(stages, cur, entrants, rows, stageEntrants);
     const engine: Match[] = stageEngineMatches(rows, cur);
     const def = defOf(cur);
-    if (def.format === 'roundrobin' || def.format === 'swiss') {
+    if (def.format === 'points') {
+      const heats = rows.filter((r) => r.stage_id === cur.id).map((r) => r.heat ?? []);
+      standings = pointsStandings(
+        field.map((e) => e.id),
+        heats,
+      ).map((r, i) => ({ place: i + 1, name: nameOf(r.id), group: null, played: r.played, wins: r.wins, losses: 0, draws: 0, points: r.points, diff: 0 }));
+    } else if (def.format === 'roundrobin' || def.format === 'swiss') {
       const seeds = new Map(field.map((e) => [e.id, e.seed]));
       const groups = [...new Set(engine.map((m) => m.group ?? 0))];
       standings = groups.flatMap((g) => {
