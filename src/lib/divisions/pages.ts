@@ -21,6 +21,7 @@ export const DIVISION_PAGES: readonly DivisionPage[] = [
   { id: 'polls', label: 'Polls', needs: 'member', group: 'Run', switches: ['div_live', 'polls'] },
   { id: 'qa', label: 'Q&A', needs: 'member', group: 'Run', switches: ['div_live', 'qa'] },
   { id: 'photobooth', label: 'Photo Booth', needs: 'member', group: 'Run', switches: ['div_live', 'photobooth'] },
+  { id: 'broadcast', label: 'Broadcast', needs: 'member', group: 'Run', switches: ['div_broadcast', 'broadcast'] },
   { id: 'members', label: 'Members', needs: 'alumni', group: 'Team' },
   { id: 'docs', label: 'Docs', needs: 'alumni', group: 'Team' },
   { id: 'page', label: 'Page', needs: 'head', group: 'Outreach' },

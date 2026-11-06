@@ -1,5 +1,7 @@
 'use client';
 
+import { reportRefusal } from '@/lib/wordfilter/client';
+
 import { refreshPublicCache } from '@/lib/site/refreshPublicCache';
 import { useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
@@ -74,7 +76,11 @@ export default function EditEventClient({
 
     if (error) {
       if (error.code === '23505') return 'That URL slug is already taken by another event.';
-      if (/not allowed here/.test(error.message)) return 'The title, description or location has language that is not allowed here. Please reword it.';
+      if (/not allowed here/.test(error.message))
+        return (
+          'The title, description or location has language that is not allowed here. Please reword it.' +
+          (await reportRefusal('content', { Title: form.title, Location: form.location }))
+        );
       return 'Failed to save changes. Please try again.';
     }
 

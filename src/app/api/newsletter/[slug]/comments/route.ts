@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeNewsletter, loadIssue } from '@/lib/newsletter/server';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 import { issueView } from '@/lib/newsletter/view';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const b = await request.json().catch(() => ({}));
   const body = typeof b.body === 'string' ? b.body.trim().slice(0, 1000) : '';
   if (!body) return NextResponse.json({ error: 'Write something first.' }, { status: 400 });
+  const blocked = await refuseBlocked({ Comment: body });
+  if (blocked) return blocked;
   await auth.svc.from('newsletter_comments').insert({ issue_id: issue.id, user_id: auth.user.id, body });
   return NextResponse.json({ ...(await issueView(auth.svc, issue, auth.canSend)), canSend: auth.canSend, me: auth.user.id });
 }

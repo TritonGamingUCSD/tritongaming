@@ -29,6 +29,7 @@ export const FEATURE_SWITCHES: readonly FeatureSwitch[] = [
   { key: 'div_cohost', group: 'divisions', label: 'Co-Hosting', off: 'Divisions cannot invite other divisions to co-host.' },
   { key: 'div_live', group: 'divisions', label: 'Live Tools For Divisions', off: 'Hides Trivia, Polls, Q&A and Photo Booth on division pages and blocks them.' },
   { key: 'div_tournaments', group: 'divisions', label: 'Tournaments For Divisions', off: 'Divisions cannot create or run tournaments, and theirs are hidden.' },
+  { key: 'div_broadcast', group: 'divisions', label: 'Broadcast For Divisions', off: 'Divisions cannot schedule or run their own broadcasts, and theirs are hidden.' },
   { key: 'div_announce_notify', group: 'divisions', label: 'Announcement Notifications', off: 'Announcements still post on Home but send no notifications.' },
   { key: 'div_public_pages', group: 'divisions', label: 'Division Public Pages', off: 'Every division page, its sub pages and its Team and Events cards are hidden.' },
   { key: 'div_club_events', group: 'divisions', label: 'Club Events On Division Pages', off: 'The “Also at Triton Gaming” band is left out.' },

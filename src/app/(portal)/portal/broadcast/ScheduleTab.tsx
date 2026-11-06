@@ -15,18 +15,24 @@ import styles from './broadcast.module.css';
 const when = (iso: string) =>
   new Date(iso).toLocaleString('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'America/Los_Angeles' });
 
-export default function ScheduleTab() {
+// `divisionId` makes it a division's own schedule; `canManage` false (a division Member) shows it read-only.
+export default function ScheduleTab({ divisionId, divisionSlug }: { divisionId?: string; divisionSlug?: string }) {
+  const [canManage, setCanManage] = useState(true);
   const [rows, setRows] = useState<Broadcast[] | null>(null);
   const [tournaments, setTournaments] = useState<TournamentLite[]>([]);
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
   const load = useCallback(async () => {
-    const r = await call<{ broadcasts: Broadcast[]; tournaments: TournamentLite[] }>('GET', '/api/broadcasts');
+    const r = await call<{ broadcasts: Broadcast[]; tournaments: TournamentLite[]; canManage?: boolean }>(
+      'GET',
+      divisionId ? `/api/broadcasts?division=${divisionId}` : '/api/broadcasts',
+    );
     if (r.ok) {
+      setCanManage(r.j.canManage !== false);
       setRows(r.j.broadcasts);
       setTournaments(r.j.tournaments);
     } else setError(r.j.error || 'Could not load.');
-  }, []);
+  }, [divisionId]);
   useEffect(() => {
     void load();
   }, [load]);
@@ -37,15 +43,19 @@ export default function ScheduleTab() {
   const past = rows.filter((b) => !upcoming.includes(b)).slice(0, 12);
   return (
     <div className={styles.wrap}>
-      <div className={styles.toolbar}>
-        <Button onClick={() => setOpen(true)}>
-          <CalendarPlus size={15} aria-hidden="true" /> Schedule A Broadcast
-        </Button>
-      </div>
-      {upcoming.length === 0 && <p className={styles.empty}>Nothing scheduled. Add the next stream and give people roles.</p>}
+      {canManage && (
+        <div className={styles.toolbar}>
+          <Button onClick={() => setOpen(true)}>
+            <CalendarPlus size={15} aria-hidden="true" /> Schedule A Broadcast
+          </Button>
+        </div>
+      )}
+      {upcoming.length === 0 && <p className={styles.empty}>{canManage ? 'Nothing scheduled. Add the next stream and give people roles.' : 'Nothing scheduled yet.'}</p>}
       <div className={styles.cards}>
         {upcoming.map((b) => (
-          <Card key={b.id} b={b} tournaments={tournaments} reload={load} />
+          <div key={b.id} inert={!canManage}>
+            <Card b={b} tournaments={tournaments} reload={load} canManage={canManage} divisionSlug={divisionSlug} />
+          </div>
         ))}
       </div>
       {past.length > 0 && (
@@ -53,17 +63,19 @@ export default function ScheduleTab() {
           <h3 className={styles.sub}>Earlier</h3>
           <div className={styles.cards}>
             {past.map((b) => (
-              <Card key={b.id} b={b} tournaments={tournaments} reload={load} />
+              <div key={b.id} inert={!canManage}>
+                <Card b={b} tournaments={tournaments} reload={load} canManage={canManage} divisionSlug={divisionSlug} />
+              </div>
             ))}
           </div>
         </>
       )}
-      {open && <NewDialog tournaments={tournaments} onClose={() => setOpen(false)} onDone={load} />}
+      {open && <NewDialog tournaments={tournaments} divisionId={divisionId} onClose={() => setOpen(false)} onDone={load} />}
     </div>
   );
 }
 
-function Card({ b, tournaments, reload }: { b: Broadcast; tournaments: TournamentLite[]; reload: () => void }) {
+function Card({ b, tournaments, reload, canManage, divisionSlug }: { b: Broadcast; tournaments: TournamentLite[]; reload: () => void; canManage: boolean; divisionSlug?: string }) {
   const [role, setRole] = useState<string>(BROADCAST_ROLES[0]);
   const [who, setWho] = useState('');
   const [busy, setBusy] = useState(false);
@@ -85,7 +97,7 @@ function Card({ b, tournaments, reload }: { b: Broadcast; tournaments: Tournamen
           </p>
           <h3>{b.title}</h3>
           {t && (
-            <a className={styles.tLink} href={`/portal/tournaments/${t.slug}/stream`}>
+            <a className={styles.tLink} href={divisionSlug ? `/portal/${divisionSlug}/tournaments/${t.slug}?t=stream` : `/portal/tournaments/${t.slug}/stream`}>
               Covers: {t.name}
             </a>
           )}
@@ -189,7 +201,7 @@ function Card({ b, tournaments, reload }: { b: Broadcast; tournaments: Tournamen
   );
 }
 
-function NewDialog({ tournaments, onClose, onDone }: { tournaments: TournamentLite[]; onClose: () => void; onDone: () => void }) {
+function NewDialog({ tournaments, divisionId, onClose, onDone }: { tournaments: TournamentLite[]; divisionId?: string; onClose: () => void; onDone: () => void }) {
   const [f, setF] = useState({ title: '', starts_at: '', ends_at: '', platform: 'both', tournament_id: '', notes: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -238,6 +250,7 @@ function NewDialog({ tournaments, onClose, onDone }: { tournaments: TournamentLi
             setBusy(true);
             const r = await call('POST', '/api/broadcasts', {
               ...f,
+              division_id: divisionId,
               starts_at: new Date(f.starts_at).toISOString(),
               ends_at: f.ends_at ? new Date(f.ends_at).toISOString() : undefined,
             });

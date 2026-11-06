@@ -26,7 +26,16 @@ type Row = {
   division_id: string | null;
 };
 
-export default function TournamentList({ divisions, divisionId }: { divisions: { id: string; name: string; slug?: string }[]; divisionId?: string }) {
+// `home` is where a tournament opens: the club's page, or the division's own Tournaments page, so a division's tournaments never leave the division.
+export default function TournamentList({
+  divisions,
+  divisionId,
+  home = '/portal/tournaments',
+}: {
+  divisions: { id: string; name: string; slug?: string }[];
+  divisionId?: string;
+  home?: string;
+}) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState('');
   const [open, setOpen] = useState(false);
@@ -55,7 +64,7 @@ export default function TournamentList({ divisions, divisionId }: { divisions: {
       ) : (
         <div className={styles.cards}>
           {rows.map((t) => (
-            <Link key={t.id} href={`/portal/tournaments/${t.slug}`} className={`${styles.tCard} ${styles[`st_${t.status}`]}`}>
+            <Link key={t.id} href={`${home}/${t.slug}`} className={`${styles.tCard} ${styles[`st_${t.status}`]}`}>
               <span className={styles.tStatus}>
                 {t.status === 'live' && <i className={styles.pulse} />} {STATUS_NAMES[t.status]}
               </span>
@@ -70,12 +79,12 @@ export default function TournamentList({ divisions, divisionId }: { divisions: {
           ))}
         </div>
       )}
-      {open && <NewDialog divisions={divisions} fixedDivision={divisionId} onClose={() => setOpen(false)} />}
+      {open && <NewDialog divisions={divisions} fixedDivision={divisionId} home={home} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function NewDialog({ fixedDivision, onClose }: { divisions: { id: string; name: string }[]; fixedDivision?: string; onClose: () => void }) {
+function NewDialog({ fixedDivision, home, onClose }: { divisions: { id: string; name: string }[]; fixedDivision?: string; home: string; onClose: () => void }) {
   const [game, setGame] = useState<string>('');
   const [f, setF] = useState({ name: '', game: '', template: 'single', best_of: '1', entrant_type: 'solo', team_size: '2', division_id: fixedDivision ?? '', third_place: false });
   const [busy, setBusy] = useState(false);
@@ -98,7 +107,7 @@ function NewDialog({ fixedDivision, onClose }: { divisions: { id: string; name: 
       division_id: f.division_id || undefined,
     });
     setBusy(false);
-    if (r.ok) window.location.href = `/portal/tournaments/${r.j.slug}`;
+    if (r.ok) window.location.href = `${home}/${r.j.slug}`;
     else setError(r.j.error || 'Could not create it.');
   };
   return (

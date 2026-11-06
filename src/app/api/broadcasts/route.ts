@@ -6,17 +6,21 @@ import { refuseBlocked } from '@/lib/wordfilter/server';
 export const dynamic = 'force-dynamic';
 
 // The schedule: what is live or coming up, and the last few that happened, each with who has which role.
-export async function GET() {
-  const a = await broadcaster();
+export async function GET(request: Request) {
+  const division = new URL(request.url).searchParams.get('division');
+  const a = await broadcaster(division, false);
   if ('error' in a) return a.error;
-  const { data: rows } = await a.svc.from('broadcasts').select('*').order('starts_at', { ascending: false }).limit(60);
+  const q = a.svc.from('broadcasts').select('*').order('starts_at', { ascending: false }).limit(60);
+  const { data: rows } = await (division ? q.eq('division_id', division) : q.is('division_id', null));
   const ids = (rows ?? []).map((r) => r.id as string);
   const { data: roles } = ids.length ? await a.svc.from('broadcast_roles').select('id, broadcast_id, role, user_id, name').in('broadcast_id', ids) : { data: [] };
   const userIds = [...new Set((roles ?? []).map((r) => r.user_id as string | null).filter((x): x is string => !!x))];
   const { data: profs } = userIds.length ? await a.svc.from('profiles').select('id, display_name, google_first_name').in('id', userIds) : { data: [] };
   const nameOf = new Map((profs ?? []).map((p) => [p.id as string, (p.display_name as string) || (p.google_first_name as string) || 'Member']));
-  const { data: tourneys } = await a.svc.from('tournaments').select('id, name, slug').order('created_at', { ascending: false }).limit(40);
+  const tq = a.svc.from('tournaments').select('id, name, slug').order('created_at', { ascending: false }).limit(40);
+  const { data: tourneys } = await (division ? tq.eq('division_id', division) : tq.is('division_id', null));
   return NextResponse.json({
+    canManage: a.canManage,
     broadcasts: (rows ?? []).map((r) => ({
       ...r,
       roles: (roles ?? [])
@@ -27,11 +31,19 @@ export async function GET() {
   });
 }
 
-// { title, starts_at, ends_at?, platform?, tournament_id?, notes? }
+// { title, starts_at, ends_at?, platform?, tournament_id?, notes?, division_id? } (GET ?division=<id> for a division's own; without it the club's)
 export async function POST(request: Request) {
-  const a = await broadcaster();
+  const b = (await request.json().catch(() => ({}))) as {
+    division_id?: string;
+    title?: string;
+    starts_at?: string;
+    ends_at?: string;
+    platform?: string;
+    tournament_id?: string;
+    notes?: string;
+  };
+  const a = await broadcaster(b.division_id || null);
   if ('error' in a) return a.error;
-  const b = (await request.json().catch(() => ({}))) as { title?: string; starts_at?: string; ends_at?: string; platform?: string; tournament_id?: string; notes?: string };
   const title = String(b.title ?? '')
     .trim()
     .slice(0, 100);
@@ -46,6 +58,7 @@ export async function POST(request: Request) {
     .from('broadcasts')
     .insert({
       title,
+      division_id: b.division_id || null,
       starts_at: start.toISOString(),
       ends_at: end?.toISOString() ?? null,
       platform: ['twitch', 'youtube', 'both'].includes(b.platform ?? '') ? b.platform : 'both',

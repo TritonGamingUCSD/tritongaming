@@ -1,5 +1,7 @@
 'use client';
 
+import { reportRefusal } from '@/lib/wordfilter/client';
+
 import SectionTabs from '@/components/ui/SectionTabs';
 import { refreshPublicCache } from '@/lib/site/refreshPublicCache';
 import Notice from '@/components/ui/Notice';
@@ -228,7 +230,8 @@ export default function ProfileClient({
     if (err) {
       setError(
         /not allowed here/.test(err.message)
-          ? 'Something you wrote (name, tag, title or bio) has language that is not allowed here. Please reword it.'
+          ? 'Something you wrote (name, tag, title or bio) has language that is not allowed here. Please reword it.' +
+              (await reportRefusal('profiles', { Name: form.display_name, Tag: form.gamer_tag, Title: form.org_title, Bio: form.bio }))
           : 'Failed to save. Please try again.',
       );
       return;

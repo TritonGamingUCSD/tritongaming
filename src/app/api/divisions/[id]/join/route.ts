@@ -4,6 +4,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { strictUser } from '@/lib/supabase/localAuth';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 import { createNotifications } from '@/lib/notifications/notify';
 
 export const dynamic = 'force-dynamic';
@@ -54,6 +55,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (division.join_open === false) return NextResponse.json({ error: `${division.name} is not taking join requests right now.` }, { status: 403 });
   const { data: roles } = await svc.from('user_roles').select('role').eq('user_id', user.id).eq('division_id', id).limit(1);
   if ((roles ?? []).length) return NextResponse.json({ error: 'You are already in this division.' }, { status: 409 });
+  const blocked = await refuseBlocked({ Message: b.message });
+  if (blocked) return blocked;
   const { error } = await svc.from('division_join_requests').insert({ division_id: id, user_id: user.id, message: (b.message ?? '').trim().slice(0, 300) || null });
   if (error)
     return NextResponse.json(

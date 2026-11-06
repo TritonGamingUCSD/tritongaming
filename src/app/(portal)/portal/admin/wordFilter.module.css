@@ -18,3 +18,34 @@
 .verdict { margin: 0; padding: 0.5rem 0.8rem; border: 2px solid; border-radius: 6px; font-weight: 700; }
 .bad { color: var(--pp-bad); border-color: var(--pp-bad); }
 .good { color: var(--pp-good); border-color: var(--pp-good); }
+.cardHead { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; }
+.areas { display: grid; gap: 0.6rem; }
+.area { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; padding: 0.6rem 0.8rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 8px; }
+.area > div:first-child { display: grid; gap: 0.15rem; flex: 1 1 16rem; min-width: 0; }
+.seg { display: inline-flex; border: 2px solid var(--pp-ink); border-radius: 8px; overflow: hidden; }
+.seg button { padding: 0.35rem 0.8rem; border: 0; background: none; color: inherit; font: inherit; font-size: 0.85rem; font-weight: 700; cursor: pointer; min-height: 2.2rem; }
+.seg button + button { border-left: 2px solid var(--pp-ink); }
+.seg .segOn { background: var(--pp-ink); color: var(--pp-card); }
+.addCol { display: grid; gap: 0.5rem; }
+.addRow { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.linkBtn { background: none; border: 0; padding: 0; color: inherit; font: inherit; font-size: 0.85rem; text-decoration: underline; cursor: pointer; }
+.hint { font-size: 0.82rem; font-weight: 700; color: var(--pp-bad); }
+.bulk { width: 100%; box-sizing: border-box; padding: 0.6rem 0.7rem; border: 2px solid var(--pp-ink); border-radius: 8px; background: transparent; color: inherit; font: inherit; resize: vertical; }
+.preview { display: grid; gap: 0.6rem; padding: 0.7rem; border: 2px dashed rgba(var(--pp-ink-rgb), 0.45); border-radius: 8px; }
+.preview ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.preview li { padding: 0.15rem 0.5rem; border: 2px solid; border-radius: 6px; font-size: 0.85rem; }
+.preview li span { font-size: 0.75rem; opacity: 0.75; }
+.pNew { border-color: var(--pp-good); }
+.pSkip { border-color: rgba(var(--pp-ink-rgb), 0.35); opacity: 0.75; }
+.log { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.4rem; }
+.log li { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; padding: 0.45rem 0.6rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 8px; font-size: 0.88rem; }
+.log li.undone { opacity: 0.55; }
+.logMain { flex: 1 1 14rem; min-width: 0; overflow-wrap: anywhere; }
+.logActs { display: inline-flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+.logActs button { padding: 0.3rem 0.6rem; border: 2px solid var(--pp-ink); border-radius: 6px; background: none; color: inherit; font: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; min-height: 2rem; }
+.logActs button:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
+.badge { padding: 0.1rem 0.5rem; border: 2px solid; border-radius: 6px; font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+.badgeBad { color: var(--pp-bad); }
+.badgeWarn { color: #b8860b; }
+.badgeLog { color: rgba(var(--pp-ink-rgb), 0.7); }
+.warnV { color: #b8860b; border-color: #b8860b; }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ArrowLeft, ExternalLink, Play, Swords } from 'lucide-react';
 import Link from '@/components/portal/PortalLink';
 import Loading from '@/components/Loading/Loading';
@@ -31,19 +31,39 @@ type Tab = 'bracket' | 'control' | 'structure' | 'entrants' | 'stream' | 'settin
 const TABS: Tab[] = ['bracket', 'control', 'structure', 'entrants', 'stream', 'settings'];
 
 // One tournament for its organizers: the bracket (enter scores, call stations), the entrants and seeds, the stream links, and the settings. The address says which tab: /portal/tournaments/<tournament>/<tab>.
-export default function TournamentDetail({ slug, subtab, divisions }: { slug: string; subtab: string | null; divisions: { id: string; name: string; slug?: string }[] }) {
+// `home` is the list this tournament belongs to (the club's, or its division's Tournaments page) and `tabKey` the address part holding the open tab (the division's address has no room for it, so it uses ?t=).
+export default function TournamentDetail({
+  slug,
+  subtab,
+  divisions,
+  home = '/portal/tournaments',
+  tabKey = 'subtab',
+}: {
+  slug: string;
+  subtab: string | null;
+  divisions: { id: string; name: string; slug?: string }[];
+  home?: string;
+  tabKey?: string;
+}) {
   const { data, error, reload } = useTournament(slug);
   const setParams = usePortalParams();
   const [picked, setPicked] = useState<MatchRow | null>(null);
   const [stagePick, setStagePick] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
+  // A division's tournament belongs on the division's own page: an old link to it under the club's pages moves there.
+  const ownerSlug = data?.tournament.division_id
+    ? ((data.tournament as { division_slug?: string | null }).division_slug ?? divisions.find((d) => d.id === data.tournament.division_id)?.slug)
+    : undefined;
+  useEffect(() => {
+    if (home === '/portal/tournaments' && ownerSlug) window.location.replace(`/portal/${ownerSlug}/tournaments/${slug}${subtab ? `?t=${encodeURIComponent(subtab)}` : ''}`);
+  }, [home, ownerSlug, slug, subtab]);
   if (!data) return error ? <Notice tone="error">{error}</Notice> : <Loading label="Loading the tournament…" />;
   const t = data.tournament;
   const tab: Tab = TABS.includes(subtab as Tab) ? (subtab as Tab) : t.status === 'draft' || t.status === 'registration' ? 'structure' : 'bracket';
   const owner = t.division_id ? (divisions.find((d) => d.id === t.division_id)?.name ?? 'A division') : 'Triton Gaming';
   const goTab = (x: Tab) => {
-    setParams({ subtab: x });
+    setParams({ [tabKey]: x });
     window.dispatchEvent(new Event('tg:portal-nav'));
   };
   const act = async (body: object, done?: string) => {
@@ -90,15 +110,9 @@ export default function TournamentDetail({ slug, subtab, divisions }: { slug: st
 
   return (
     <div className={styles.page}>
-      {t.division_id && divisions.find((d) => d.id === t.division_id)?.slug ? (
-        <Link href={`/portal/${divisions.find((d) => d.id === t.division_id)!.slug}/tournaments`} className={styles.back}>
-          <ArrowLeft size={14} aria-hidden="true" /> {owner} tournaments
-        </Link>
-      ) : (
-        <Link href="/portal/tournaments" className={styles.back}>
-          <ArrowLeft size={14} aria-hidden="true" /> All tournaments
-        </Link>
-      )}
+      <Link href={home} className={styles.back}>
+        <ArrowLeft size={14} aria-hidden="true" /> {home === '/portal/tournaments' ? 'All tournaments' : `${owner} tournaments`}
+      </Link>
       <header className={styles.hero}>
         <div>
           <p className={styles.kicker}>
@@ -263,7 +277,7 @@ export default function TournamentDetail({ slug, subtab, divisions }: { slug: st
       {tab === 'structure' && <StructurePanel data={data} reload={reload} />}
       {tab === 'entrants' && <EntrantsPanel data={data} reload={reload} />}
       {tab === 'stream' && data.can.manage && <StreamPanel data={data} reload={reload} />}
-      {tab === 'settings' && data.can.manage && <TSettings data={data} reload={reload} onDeleted={() => (window.location.href = '/portal/tournaments')} />}
+      {tab === 'settings' && data.can.manage && <TSettings data={data} reload={reload} onDeleted={() => (window.location.href = home)} />}
       {picked && (
         <MatchDialog
           tid={t.id}

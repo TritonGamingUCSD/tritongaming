@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { createServiceClient } from '@/lib/supabase/admin';
 import { withTournament } from '@/lib/tournaments/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { cleanLinks } from '@/lib/tournaments/external';
@@ -12,7 +13,9 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const r = await withTournament(id, 'view');
   if ('error' in r) return r.error;
   const { tournament: t, entrants, matches, staff, stages, stageEntrants, manage, run } = r;
-  const publicT = { ...t, overlay_token: manage ? t.overlay_token : undefined, created_by: undefined };
+  // a division's tournament says which division page it belongs on
+  const divisionSlug = t.division_id ? ((await createServiceClient().from('divisions').select('slug').eq('id', t.division_id).maybeSingle()).data?.slug ?? null) : null;
+  const publicT = { ...t, overlay_token: manage ? t.overlay_token : undefined, created_by: undefined, division_slug: divisionSlug };
   return NextResponse.json({
     tournament: publicT,
     entrants: entrants.map((e) => ({

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 import { MAX_ENTRIES, authorizePolls, loadEntries, loadPollFor } from '@/lib/polls/server';
 
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
   const b = await request.json().catch(() => ({}));
   const name = clean(b.name, 80);
   if (!name) return NextResponse.json({ error: 'Give the entry a name.' }, { status: 400 });
+  const blocked = await refuseBlocked({ Name: name, Subtitle: clean(b.subtitle, 120) });
+  if (blocked) return blocked;
   const entries = await loadEntries(auth.svc, poll.id);
   if (entries.length >= MAX_ENTRIES) return NextResponse.json({ error: `A poll can have up to ${MAX_ENTRIES} entries.` }, { status: 409 });
   const wanted = Math.round(Number(b.number));

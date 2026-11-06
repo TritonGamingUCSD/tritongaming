@@ -4,6 +4,7 @@ import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
 import { liveListFilter, newItemOwner } from '@/lib/divisions/liveAccess';
 import { logAudit } from '@/lib/notifications/audit';
 import { POLL_MODES, POLL_REVEALS } from '@/lib/polls/tally';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 import { POLL_COLUMNS, authorizePolls, freshSlug, type PollRow } from '@/lib/polls/server';
 
 export const dynamic = 'force-dynamic';
@@ -58,6 +59,8 @@ export async function POST(request: Request) {
     .replace(/\s+/g, ' ')
     .slice(0, 80);
   if (!name) return NextResponse.json({ error: 'Give the poll a name.' }, { status: 400 });
+  const blocked = await refuseBlocked({ Name: name });
+  if (blocked) return blocked;
   const mode = (POLL_MODES as readonly string[]).includes(b.mode) ? b.mode : 'one';
   const reveal = (POLL_REVEALS as readonly string[]).includes(b.reveal) ? b.reveal : 'live';
   const divOff = await guardDivisionLive(b.division_id);

@@ -9,26 +9,27 @@ import { call } from './types';
 import styles from './broadcast.module.css';
 
 // The club's channel on each platform, used by the public Watch page to embed the live stream and chat. A Twitch name or link; for YouTube the channel ID (the @handle cannot be embedded).
-export default function SetupTab() {
+export default function SetupTab({ divisionId, divisionName, divisionSlug }: { divisionId?: string; divisionName?: string; divisionSlug?: string }) {
   const [twitch, setTwitch] = useState('');
   const [youtube, setYoutube] = useState('');
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   useEffect(() => {
     void (async () => {
-      const r = await call<{ twitch: string; youtube: string }>('GET', '/api/broadcast/channels');
+      const r = await call<{ twitch: string; youtube: string }>('GET', divisionId ? `/api/broadcast/channels?division=${divisionId}` : '/api/broadcast/channels');
       if (r.ok) {
         setTwitch(r.j.twitch);
         setYoutube(r.j.youtube);
       }
     })();
-  }, []);
+  }, [divisionId]);
+  const watch = divisionSlug ? `/watch/${divisionSlug}` : '/watch';
   return (
     <div className={styles.setup}>
       <section className={styles.card}>
-        <h3>Club channels</h3>
+        <h3>{divisionName ? `${divisionName} channels` : 'Club channels'}</h3>
         <p className={styles.muted}>
-          Viewers watch on the website at /watch, with the live stream and chat embedded. Nothing is connected to your accounts; only the public channel names are used.
+          Viewers watch on the website at {watch}, with the live stream and chat embedded. Nothing is connected to your accounts; only the public channel names are used.
         </p>
         {error && <Notice tone="error">{error}</Notice>}
         <Field label="Twitch channel" hint="A name like tritongaming, or the twitch.tv link.">
@@ -41,7 +42,7 @@ export default function SetupTab() {
           <Button
             onClick={async () => {
               setError('');
-              const r = await call<{ twitch: string; youtube: string }>('PUT', '/api/broadcast/channels', { twitch, youtube });
+              const r = await call<{ twitch: string; youtube: string }>('PUT', '/api/broadcast/channels', { twitch, youtube, division_id: divisionId });
               if (r.ok) {
                 setTwitch(r.j.twitch);
                 setYoutube(r.j.youtube);
@@ -52,7 +53,7 @@ export default function SetupTab() {
           >
             Save
           </Button>
-          <a className={styles.tLink} href="/watch" target="_blank" rel="noopener noreferrer">
+          <a className={styles.tLink} href={watch} target="_blank" rel="noopener noreferrer">
             Open the Watch page
           </a>
         </div>

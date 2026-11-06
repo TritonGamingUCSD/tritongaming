@@ -9,16 +9,17 @@ import { call, type TournamentLite } from './types';
 import styles from './broadcast.module.css';
 
 // One place to jump into the stream tools of a tournament: the producer's Control panel, the overlay links and OBS scenes, and its bracket.
-export default function ToolsTab() {
+export default function ToolsTab({ divisionId, divisionSlug }: { divisionId?: string; divisionSlug?: string }) {
   const [list, setList] = useState<(TournamentLite & { status: string })[] | null>(null);
   const [pick, setPick] = useState('');
   useEffect(() => {
     void (async () => {
-      const r = await call<{ tournaments: (TournamentLite & { status: string })[] }>('GET', '/api/tournaments');
+      const r = await call<{ tournaments: (TournamentLite & { status: string })[] }>('GET', divisionId ? `/api/tournaments?division=${divisionId}` : '/api/tournaments?owner=club');
       setList(r.ok ? r.j.tournaments : []);
       if (r.ok && r.j.tournaments[0]) setPick(r.j.tournaments.find((t) => t.status === 'live')?.slug ?? r.j.tournaments[0].slug);
     })();
-  }, []);
+  }, [divisionId]);
+  const tool = (tab: string) => (divisionSlug ? `/portal/${divisionSlug}/tournaments/${pick}?t=${tab}` : `/portal/tournaments/${pick}/${tab}`);
   if (!list) return <Loading label="Loading…" />;
   if (list.length === 0) return <Notice tone="info">No tournaments yet. Make one under Events → Tournaments, then its OBS tools show up here.</Notice>;
   return (
@@ -34,15 +35,15 @@ export default function ToolsTab() {
         </Select>
       </label>
       <div className={styles.toolGrid}>
-        <a className={styles.tool} href={`/portal/tournaments/${pick}/control`}>
+        <a className={styles.tool} href={tool('control')}>
           <b>Control panel</b>
           <span>Tap who won each game. The scoreboard overlay follows live.</span>
         </a>
-        <a className={styles.tool} href={`/portal/tournaments/${pick}/stream`}>
+        <a className={styles.tool} href={tool('stream')}>
           <b>Overlays and OBS scenes</b>
           <span>Pick the look, preview it, copy links or download the OBS scene file.</span>
         </a>
-        <a className={styles.tool} href={`/portal/tournaments/${pick}/bracket`}>
+        <a className={styles.tool} href={tool('bracket')}>
           <b>Bracket</b>
           <span>Enter full results, set stations, fix mistakes.</span>
         </a>

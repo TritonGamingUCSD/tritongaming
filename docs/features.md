@@ -311,3 +311,22 @@ A built-in list (stored rot13-encoded in the migration) plus words an admin bloc
 
 ## Discord
 Sign in or link with Discord (Supabase provider). A linked account fills the profile's `discord_id` and `discord_username`, fills an empty Discord line on the profile's social links (shown on TG Members cards, and on public cards that show socials), and can be used as the profile picture. A banner asks Discord-only members to link their UCSD Google account, and Google members to connect Discord.
+
+## Word filter, round two
+
+- **Two levels.** The block list refuses the save. The warning list lets it through and flags it in the log. A word on both is blocked. The built-in lists are never shown, only counted.
+- **Areas.** Profiles, Events/Divisions/Tournaments (titles, names), and Documents & Messages can each be Refuse, Log Only or Off (`team_settings` keys `wf_mode_<area>`). The routes pick the area from the field label (`areaOf`); the database triggers pass it to `wf_blocked(text, area)`.
+- **Everywhere.** The generic trigger `wf_row_guard` is on every table whose text other people read (migration 20261106184000), on top of the profile, event and division triggers. Routes call `refuseBlocked` first for the friendly message. A save from any page, route or script is covered. Pages that save straight to the database tell the server through `/api/wordfilter/report` so the log has the hit.
+- **Log.** `word_filter_log` keeps the matched word, area/field, who and the mode (never the text) for 90 days. From a row: Allow Word, or Allow For Them (`word_filter_person_allow`, one person only).
+- **Evasions.** Digits and symbols for letters (`b00b`, `sh1t`, `a$$`, `sh!t`), stretched letters, letters split by spaces or marks (`b o o b`, `b/oob`, `bo ob`, `f-u-c-k`), accents, invisible characters and look-alike Cyrillic/Greek letters. Short pieces are joined but never across an apostrophe (`he'll` is not `hell`). The same rules are in `src/lib/wordfilter/filter.ts` and the SQL `wf_match`.
+- **Panel extras.** Allowed words may be phrases (`cum laude`); add many words at once with a preview; search and sort; hover a word for who added it; an optional line shown after every refusal; Copy My Lists; the last change (a whole bulk add) can be undone.
+
+## Broadcast for divisions
+
+- A broadcast belongs to the club or to one division (`broadcasts.division_id`). A division has its own schedule, broadcast team (the roles on each show), checklist and channels (`broadcast_twitch:<division id>` and `broadcast_youtube:<division id>` in `team_settings`). Nothing is shared with the club's.
+- Division page **Broadcast** (Live Tools group; switch `div_broadcast`): Heads schedule, assign roles and set channels; Members see the schedule read-only. Public page: `/watch/<division address>`.
+- Check: `node scripts/checks/division-broadcast.mjs`.
+
+## Division tournaments stay on the division
+
+- A division's tournaments open at `/portal/<division>/tournaments/<tournament>` (the open tab is `?t=`). An old link to one under the club's Tournaments page moves to the division's. The club's list shows club tournaments only.

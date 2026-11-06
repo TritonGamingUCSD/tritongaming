@@ -46,6 +46,9 @@ export const CHECKLIST: { phase: string; steps: CheckStep[] }[] = [
 export const ALL_STEPS = CHECKLIST.flatMap((p) => p.steps.map((s) => s.id));
 
 export const CHANNEL_KEYS = { twitch: 'broadcast_twitch', youtube: 'broadcast_youtube' } as const;
+/** The settings keys holding the channels of the club (no division) or of one division. */
+export const channelKeys = (divisionId?: string | null) =>
+  divisionId ? { twitch: `${CHANNEL_KEYS.twitch}:${divisionId}`, youtube: `${CHANNEL_KEYS.youtube}:${divisionId}` } : CHANNEL_KEYS;
 
 /** A Twitch channel name from what someone typed ("twitch.tv/tritongaming" works), or '' if it is not one. */
 export function cleanTwitch(raw: string): string {

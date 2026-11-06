@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { createNotifications } from '@/lib/notifications/notify';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 import { UUID, authorizeDocs, bad, namesOf } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
@@ -46,6 +47,8 @@ export async function POST(request: Request) {
     .slice(0, MAX);
   if (!UUID.test(docId)) return bad('Doc not found.', 404);
   if (!body) return bad('Write a comment first.');
+  const blocked = await refuseBlocked({ Comment: body });
+  if (blocked) return blocked;
   const { data: doc } = await auth.svc.from('docs').select('title, created_by, updated_by, published').eq('id', docId).maybeSingle();
   if (!doc || (!doc.published && !hasCapability(auth.roles, 'manage_docs'))) return bad('Doc not found.', 404);
   const { count } = await auth.svc

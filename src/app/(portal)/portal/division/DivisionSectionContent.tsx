@@ -20,6 +20,7 @@ import DivisionNextEvent from './DivisionNextEvent';
 import DivisionAnnouncements from './DivisionAnnouncements';
 import DivisionDocs from './DivisionDocs';
 import DivisionTournaments from './DivisionTournaments';
+import DivisionBroadcast from '../broadcast/DivisionBroadcast';
 import DivisionAttendance from './DivisionAttendance';
 import styles from './division.module.css';
 
@@ -109,6 +110,7 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
       {page === 'qr' && <DivisionQr hat={hat} />}
       {page === 'docs' && <DivisionDocs hat={hat} />}
       {page === 'tournaments' && <DivisionTournaments hat={hat} />}
+      {page === 'broadcast' && <DivisionBroadcast hat={hat} />}
       {page !== 'home' &&
         page !== 'members' &&
         page !== 'events' &&
@@ -117,7 +119,8 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
         page !== 'page' &&
         page !== 'qr' &&
         page !== 'docs' &&
-        page !== 'tournaments' && (
+        page !== 'tournaments' &&
+        page !== 'broadcast' && (
           <div className={styles.soon}>
             <p>
               <strong>{label}</strong> for {hat.name} is coming in a later step of the division project. It is only visible to admins until everything is finished.

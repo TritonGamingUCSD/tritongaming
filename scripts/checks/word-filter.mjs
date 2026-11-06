@@ -20,6 +20,21 @@ try {
   t.ok('a normal name is saved', !(await dbError({ display_name: 'ZZ Mtg member', gamer_tag: 'Scunthorpe' })));
   t.ok('a sneaky spelling is also refused', !!(await dbError({ gamer_tag: BAD.replace('i', '1') })));
 
+  // evasions are read through, by the database and by the server
+  const B = w('obbo'); // the word, decoded only at run time
+  for (const form of [
+    B.replace(/o/g, '0'),
+    `${B[0]}/${B.slice(1)}`,
+    `${B.slice(0, 2)} ${B.slice(2)}`,
+    [...B].join(' '),
+    [...B].join('.'),
+    `${B.slice(0, 2)}\u200b${B.slice(2)}`,
+    BAD.replace('i', '!'),
+  ])
+    t.ok(`the database refuses the spelling “${form.replace('\u200b', '<zw>')}”`, !!(await dbError({ gamer_tag: `ZZ ${form}` })));
+  for (const fine of ["he'll be there", 'as soon as I can', 'a shirt for the class', 'ZZ Scunthorpe']) t.ok(`and keeps “${fine}” fine`, !(await dbError({ bio: fine })));
+  t.ok('the server reads a split spelling too', (await admin.call('PUT', '/api/admin/wordfilter', { text: `oh ${[...B].join(' ')}` })).j.blocked === true);
+
   // admin routes
   const lists = await admin.call('GET', '/api/admin/wordfilter');
   t.ok(
@@ -45,6 +60,61 @@ try {
   await admin.call('DELETE', '/api/admin/wordfilter', { term: custom, kind: 'block' });
   await admin.call('DELETE', '/api/admin/wordfilter', { term: custom, kind: 'allow' });
 
+  // second round: the warning list, the log, modes, phrases, one person, the undo
+  const warnWord = `zzwarn${'x'.repeat(2)}`;
+  t.ok('an admin puts a word on the warning list', (await admin.call('POST', '/api/admin/wordfilter', { term: warnWord, kind: 'warn' })).s === 200);
+  await new Promise((r) => setTimeout(r, 700));
+  t.ok('a warned word is saved by the database (and is not refused)', !(await dbError({ gamer_tag: warnWord })));
+  const warnTourney = await admin.call('POST', '/api/tournaments', { name: `ZZ ${warnWord} cup`, format: 'single' });
+  t.ok('and by the server', warnTourney.s === 200, JSON.stringify(warnTourney.j));
+  if (warnTourney.j.id) await svc.from('tournaments').delete().eq('id', warnTourney.j.id);
+  const dry = await admin.call('POST', '/api/admin/wordfilter', { text: `${BAD}, ${warnWord}, zzfresh`, kind: 'warn', dryRun: true });
+  const st = Object.fromEntries((dry.j.items ?? []).map((i) => [i.term, i.status]));
+  t.ok('a preview says what is covered, a duplicate and new', st[BAD] === 'built-in' || st[BAD] === 'covered', JSON.stringify(dry.j));
+  t.ok('and marks the repeat and the new one', st[warnWord] === 'duplicate' && st.zzfresh === 'new');
+  const lst = await admin.call('GET', '/api/admin/wordfilter');
+  t.ok(
+    'the warning list and the log are in the admin read',
+    Array.isArray(lst.j.warned) && lst.j.log.some((l) => l.term === warnWord && l.mode === 'warn'),
+    JSON.stringify(lst.j.log?.slice(0, 2)),
+  );
+  // personal allow: the member's own word is skipped, another person's is not
+  t.ok('an admin blocks a word then allows it for one person', (await admin.call('POST', '/api/admin/wordfilter', { term: 'zzblockedone', kind: 'block' })).s === 200);
+  await new Promise((r) => setTimeout(r, 700));
+  t.ok('refused for the member', !!(await dbError({ gamer_tag: 'zzblockedone' })));
+  await admin.call('POST', '/api/admin/wordfilter', { personal: { userId: member.id, term: 'zzblockedone' } });
+  t.ok('allowed for that member only', !(await dbError({ gamer_tag: 'zzblockedone' })));
+  t.ok('but still refused for the admin’s own save', (await admin.call('POST', '/api/tournaments', { name: 'ZZ zzblockedone cup', format: 'single' })).s === 422);
+  // a phrase
+  await admin.call('POST', '/api/admin/wordfilter', { term: 'zzblockedone fan', kind: 'allow' });
+  await new Promise((r) => setTimeout(r, 700));
+  const ph = await admin.call('PUT', '/api/admin/wordfilter', { text: 'a zzblockedone fan club' });
+  t.ok('an allowed phrase passes whole', ph.j.blocked === false, JSON.stringify(ph.j));
+  // modes
+  await admin.call('PATCH', '/api/admin/wordfilter', { mode: { area: 'profiles', value: 'log' } });
+  await new Promise((r) => setTimeout(r, 700));
+  t.ok('a profile area set to log only lets a blocked word through', !(await dbError({ gamer_tag: `${BAD} ok` })));
+  t.ok(
+    'and logs it',
+    ((await admin.call('GET', '/api/admin/wordfilter')).j.log ?? []).some((l) => l.mode === 'log' && l.term === BAD),
+  );
+  await admin.call('PATCH', '/api/admin/wordfilter', { mode: { area: 'profiles', value: 'on' } });
+  // the message
+  await admin.call('PATCH', '/api/admin/wordfilter', { message: 'ZZ ask an officer' });
+  await new Promise((r) => setTimeout(r, 700));
+  const withMsg = await admin.call('POST', '/api/tournaments', { name: `ZZ ${BAD} cup`, format: 'single' });
+  t.ok('the admins’ line follows the refusal', /ZZ ask an officer$/.test(String(withMsg.j.error)), JSON.stringify(withMsg.j));
+  await admin.call('PATCH', '/api/admin/wordfilter', { message: '' });
+  // undo
+  await admin.call('POST', '/api/admin/wordfilter', { text: 'zzundoone, zzundotwo', kind: 'block' });
+  const u = await admin.call('PATCH', '/api/admin/wordfilter', { undo: true });
+  t.ok('undo takes back the whole last batch', u.j.undone === 2, JSON.stringify(u.j));
+  const after = await admin.call('GET', '/api/admin/wordfilter');
+  t.ok('both words are gone', !after.j.custom.some((w) => w.term.startsWith('zzundo')));
+  // the database net on other tables: a poll name through the service role is also checked
+  const { error: pe } = await svc.from('polls').insert({ slug: 'zz-wf-poll', name: `ZZ ${BAD}`, created_by: admin.id });
+  t.ok('a table that is written by another route is checked by the database too', !!pe && /not allowed/.test(pe.message), pe?.message);
+
   // server routes
   const tn = await admin.call('POST', '/api/tournaments', { name: `ZZ ${BAD} Cup`, format: 'single' });
   t.ok('a blocked tournament name is refused with a plain message that does not repeat the word', tn.s === 422 && !String(tn.j.error).includes(BAD), JSON.stringify(tn.j));
@@ -61,7 +131,12 @@ try {
   t.ok('and refuses again when it is back on (a changed value)', !!(await dbError({ gamer_tag: `${BAD} again` })));
 } finally {
   await svc.from('tournaments').delete().like('slug', 'zz-%');
-  await svc.from('word_filter_terms').delete().eq('builtin', false).like('term', 'zzblocked%');
+  await svc.from('word_filter_terms').delete().eq('builtin', false).or('term.like.zzblocked%,term.like.zzwarn%,term.like.zzundo%,term.like.zzfresh%');
+  await svc.from('word_filter_person_allow').delete().like('term', 'zzblocked%');
+  await svc.from('word_filter_log').delete().in('user_id', made);
+  await svc.from('word_filter_history').delete().like('term', 'zz%');
+  await svc.from('team_settings').delete().in('key', ['wf_message', 'wf_mode_profiles', 'wf_mode_content', 'wf_mode_messages']);
+  await svc.from('polls').delete().eq('slug', 'zz-wf-poll');
   await svc.from('team_settings').delete().eq('key', 'sw_word_filter');
   await svc.from('audit_log').delete().in('actor_id', made);
   await svc.from('audit_log').delete().like('summary', '%ZZ %');

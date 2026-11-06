@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 import { strictUser } from '@/lib/supabase/localAuth';
 
 export const dynamic = 'force-dynamic';
@@ -25,6 +26,8 @@ export async function POST(req: Request) {
   let link = body?.link_url?.trim() || null;
   if (link && !/^(https:\/\/|\/portal\/)/.test(link)) return NextResponse.json({ error: 'The link must start with https:// or /portal/' }, { status: 400 });
   if (!message || message.length > 280) return NextResponse.json({ error: 'Write 1 to 280 characters' }, { status: 400 });
+  const blocked = await refuseBlocked({ Message: message });
+  if (blocked) return blocked;
   link = link || null;
   const svc = createServiceClient();
   const now = new Date().toISOString();
