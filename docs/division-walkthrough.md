@@ -21,6 +21,10 @@ Mark each line done or write what looked wrong.
 ## Tickets
 1. A ticket for a division's event shows a small tag with the division's logo and color on My Tickets (next event and the list of events to join). The fullscreen ticket shows it too, and a staff scan result has a Division row. Club events show no tag.
 
+## Yearly handoff
+1. On the Members page, "Hand Over" opens three steps: pick the new Heads, pick who moves to Alumni, review and confirm. Nothing changes until Confirm.
+2. The division always keeps at least one Head. Someone who hands over to themselves as Alumni loses Head powers right away.
+
 ## Docs
 1. The Docs page lists the docs you may read. "New Doc" asks for a title, who can read it (Heads only, Members and Heads, Everyone in the division, Public) and text.
 2. A Member sees no Heads-only docs and cannot make one. An Alumnus reads only the Everyone and Public docs and cannot write.

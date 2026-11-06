@@ -60,6 +60,18 @@ try {
   t.ok('a Head removes a Member', (await head.call('DELETE', path, { user_id: newbie.id })).s === 200 && (await rolesOf(newbie)).length === 0);
   t.ok('they keep their other roles', (await svc.from('user_roles').select('role').eq('user_id', newbie.id).eq('role', 'ucsd')).data?.length === 1);
   t.ok('removing someone who is not in it changes nothing', (await head.call('DELETE', path, { user_id: newbie.id })).j.unchanged === true);
+  // the yearly handoff
+  await head.call('POST', path, { user_id: newbie.id, role: 'division_member' });
+  t.ok('a Member cannot hand over', (await member.call('PUT', path, { heads: [member.id], alumni: [] })).s === 403);
+  t.ok('another division’s Head cannot', (await otherHead.call('PUT', path, { heads: [newbie.id], alumni: [] })).s === 403);
+  t.ok('an empty handoff is refused', (await head.call('PUT', path, { heads: [], alumni: [] })).s === 400);
+  t.ok('one person cannot be both', (await head.call('PUT', path, { heads: [newbie.id], alumni: [newbie.id] })).s === 400);
+  t.ok('the last Head cannot leave without a new one', (await head.call('PUT', path, { heads: [], alumni: [head.id] })).s === 409);
+  const handed = await head.call('PUT', path, { heads: [newbie.id], alumni: [head.id, member.id] });
+  t.ok('a Head hands over', handed.s === 200 && handed.j.heads === 1 && handed.j.alumni === 2, JSON.stringify(handed.j));
+  t.ok('the new Head is a Head', (await rolesOf(newbie)).join() === 'division');
+  t.ok('the old Head and the Member are Alumni', (await rolesOf(head)).join() === 'division_alumni' && (await rolesOf(member)).join() === 'division_alumni');
+  t.ok('the old Head can no longer hand over', (await head.call('PUT', path, { heads: [member.id], alumni: [] })).s === 403);
 } finally {
   for (const id of [divId, otherDiv]) if (id) await svc.from('divisions').delete().eq('id', id);
   await svc

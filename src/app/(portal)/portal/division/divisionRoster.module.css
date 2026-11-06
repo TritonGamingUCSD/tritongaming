@@ -9,3 +9,5 @@
 .confirm { display: inline-flex; gap: 0.35rem; }
 .joinSwitch { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.2rem 0.5rem; font-weight: 600; }
 .joinSwitch small { grid-column: 2; font-weight: 400; opacity: 0.75; }
+.note { margin: 0; font-size: 0.85rem; opacity: 0.85; }
+.roleSelect { min-width: 7.5rem; padding: 0.5rem 0.7rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; background: var(--pp-paper); color: var(--pp-ink); font: inherit; }

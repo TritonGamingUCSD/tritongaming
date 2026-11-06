@@ -6,6 +6,7 @@ import Loading from '@/components/Loading/Loading';
 import Notice from '@/components/ui/Notice';
 import Select from '@/components/ui/Select';
 import Button from '@/components/ui/Button';
+import DivisionHandoff from './DivisionHandoff';
 import type { DivisionHat } from '@/components/portal/hubTypes';
 import styles from './division.module.css';
 import rosterStyles from './divisionRoster.module.css';
@@ -46,6 +47,7 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
   const [removing, setRemoving] = useState<string | null>(null);
   const [requests, setRequests] = useState<JoinRequest[]>([]);
   const [joinOpen, setJoinOpen] = useState(true);
+  const [handing, setHanding] = useState(false);
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/divisions/${hat.id}/roster`, { cache: 'no-store' }).catch(() => null);
@@ -137,6 +139,24 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
           <small>{joinOpen ? 'Students can ask to join from the portal.' : 'Closed: students see “Not taking requests”. Waiting requests stay below.'}</small>
         </label>
       )}
+      {canManage && !handing && (
+        <div>
+          <Button variant="secondary" onClick={() => setHanding(true)}>
+            Hand Over
+          </Button>
+        </div>
+      )}
+      {canManage && handing && (
+        <DivisionHandoff
+          divisionId={hat.id}
+          people={people}
+          onCancel={() => setHanding(false)}
+          onDone={() => {
+            setHanding(false);
+            void load();
+          }}
+        />
+      )}
       {canManage && requests.length > 0 && (
         <section className={rosterStyles.add} aria-label="Join requests">
           <strong>Join requests ({requests.length})</strong>
@@ -169,7 +189,7 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
               placeholder="Search a name, or type an exact email address"
               aria-label="Search a person"
             />
-            <Select value={addRole} onChange={(e) => setAddRole(e.target.value as Role)} aria-label="Role">
+            <Select value={addRole} onChange={(e) => setAddRole(e.target.value as Role)} aria-label="Role" className={rosterStyles.roleSelect}>
               <option value="division_member">Member</option>
               <option value="division_alumni">Alumni</option>
               <option value="division">Head</option>
@@ -209,7 +229,13 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
               <span className={styles.pname}>{p.name}</span>
               {canManage ? (
                 <>
-                  <Select value={p.role} onChange={(e) => void send('POST', { user_id: p.id, role: e.target.value })} disabled={busy} aria-label={`Role of ${p.name}`}>
+                  <Select
+                    value={p.role}
+                    onChange={(e) => void send('POST', { user_id: p.id, role: e.target.value })}
+                    disabled={busy}
+                    aria-label={`Role of ${p.name}`}
+                    className={rosterStyles.roleSelect}
+                  >
                     <option value="division">Head</option>
                     <option value="division_member">Member</option>
                     <option value="division_alumni">Alumni</option>

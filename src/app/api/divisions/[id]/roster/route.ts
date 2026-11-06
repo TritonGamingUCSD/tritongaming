@@ -144,3 +144,40 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   await logAudit(a.svc, { actorId: a.user.id, action: 'update', entityType: 'role', entityId: b.user_id, summary: 'Removed someone from a division (division roster)' });
   return NextResponse.json({ ok: true });
 }
+
+// The yearly handoff, in one go: { heads: [user ids who become Head], alumni: [user ids who become Alumni] }. Each person keeps their other roles. The division must keep at least one Head.
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const a = await actor(id);
+  if ('error' in a) return a.error;
+  const b = (await request.json().catch(() => ({}))) as { heads?: string[]; alumni?: string[] };
+  const heads = [...new Set((b.heads ?? []).filter((x) => typeof x === 'string'))];
+  const alumni = [...new Set((b.alumni ?? []).filter((x) => typeof x === 'string'))];
+  if (heads.length + alumni.length === 0) return NextResponse.json({ error: 'Pick at least one person.' }, { status: 400 });
+  if (heads.length + alumni.length > 60) return NextResponse.json({ error: 'That is too many at once. Do it in two rounds.' }, { status: 400 });
+  if (heads.some((h) => alumni.includes(h))) return NextResponse.json({ error: 'Someone cannot be both a new Head and Alumni.' }, { status: 400 });
+  const { data: nowHeads } = await a.svc.from('user_roles').select('user_id').eq('division_id', id).eq('role', 'division');
+  const remaining = new Set([...(nowHeads ?? []).map((r) => r.user_id as string), ...heads]);
+  for (const x of alumni) remaining.delete(x);
+  if (remaining.size === 0) return NextResponse.json({ error: 'A division needs at least one Head. Pick a new Head first.' }, { status: 409 });
+  for (const [list, role] of [
+    [heads, 'division'],
+    [alumni, 'division_alumni'],
+  ] as const) {
+    for (const target of list) {
+      const { data: current } = await a.svc.from('user_roles').select('role, division_id').eq('user_id', target);
+      const next = withRole((current ?? []) as RoleRow[], role, id);
+      if (!next) continue;
+      const { error } = await a.svc.rpc('admin_set_user_roles', { _user_id: target, _roles: next, _granted_by: a.user.id });
+      if (error) return NextResponse.json({ error: 'Could not finish the handoff. Check the list and try again.' }, { status: 500 });
+    }
+  }
+  await logAudit(a.svc, {
+    actorId: a.user.id,
+    action: 'update',
+    entityType: 'role',
+    entityId: id,
+    summary: `Division handoff: ${heads.length} new Head${heads.length === 1 ? '' : 's'}, ${alumni.length} moved to Alumni`,
+  });
+  return NextResponse.json({ ok: true, heads: heads.length, alumni: alumni.length });
+}
