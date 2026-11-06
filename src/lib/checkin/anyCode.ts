@@ -11,6 +11,7 @@ export type Outcome =
       status: string;
       userName: string;
       eventTitle: string;
+      division?: string;
       at?: string;
       selfCheckin?: boolean;
       dayNumber?: number | null;
@@ -95,6 +96,7 @@ function ticketOutcome(j: Record<string, unknown>): Outcome {
     status: String(j.status ?? 'active'),
     userName: String(j.user_name ?? 'Unknown'),
     eventTitle: String(j.event_title ?? ''),
+    division: j.division ? String(j.division) : undefined,
     at: j.checked_in_at as string | undefined,
     selfCheckin: !!j.self_checkin,
     dayNumber: j.day_number as number | null | undefined,

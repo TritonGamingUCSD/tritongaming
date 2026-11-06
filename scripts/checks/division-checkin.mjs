@@ -74,6 +74,7 @@ try {
   t.ok('a plain student is refused', (await scan(plain)).s === 403);
   const done = await memberA.call('POST', '/api/tickets/checkin', { code: code(tk.ticket_code) });
   t.ok('a Division Member checks the ticket in', done.s === 200 && !done.j.error, JSON.stringify(done));
+  t.ok('the scan result names the hosting division', done.j.division === 'ZZ Divci A', String(done.j.division));
   const evTG = await mkEvent('ZZ Divci TG event');
   const tk2 = await mkTicket(evTG, plain.id);
   t.ok('a TG officer finds a Triton Gaming ticket as before', (await officer.call('POST', '/api/tickets/checkin', { code: code(tk2.ticket_code), preview: true })).s === 200);

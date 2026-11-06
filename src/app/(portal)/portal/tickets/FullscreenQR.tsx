@@ -1,5 +1,6 @@
 'use client';
 
+import DivisionChip, { type EventDivision } from './DivisionChip';
 import Loading from '@/components/Loading/Loading';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -20,6 +21,8 @@ interface Props {
   eventTitle: string;
   eventDate?: string | null;
   eventLocation?: string | null;
+  /** The division hosting the event, when one does. */
+  division?: EventDivision | null;
   onClose: () => void;
   onCheckedIn?: (checkedInAt: string) => void;
   // Pre-built server-side (see getTicketsData) for events with "Requires
@@ -37,7 +40,7 @@ interface Props {
 const ByteWink = dynamic(() => import('@/components/Bytecode/ByteWink'), { ssr: false, loading: () => null });
 const ByteScanPop = dynamic(() => import('@/components/Bytecode/ByteScanPop'), { ssr: false, loading: () => null });
 
-export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, onClose, onCheckedIn, checkinFormUrl, onFormComplete }: Props) {
+export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, division, onClose, onCheckedIn, checkinFormUrl, onFormComplete }: Props) {
   const [code, setCode] = useState<string | null>(null);
   const [qrData, setQrData] = useState<string | null>(null);
   const [expiresIn, setExpiresIn] = useState(30);
@@ -435,6 +438,7 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
             <Ticket size={13} strokeWidth={1.5} aria-hidden="true" /> TICKET FOR
           </span>
           <div className={styles.eventName}>{eventTitle}</div>
+          <DivisionChip division={division} />
           {(dateLabel || eventLocation) && (
             <div className={styles.eventMeta}>
               {dateLabel}

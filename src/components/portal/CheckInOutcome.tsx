@@ -177,6 +177,7 @@ export default function CheckInOutcome({
         actions={!noButton && <Button onClick={onDone}>{doneLabel}</Button>}
       >
         {outcome.eventTitle && <Row label="Event">{outcome.eventTitle}</Row>}
+        {outcome.division && <Row label="Division">{outcome.division}</Row>}
         <Row label="Status">{status}</Row>
         {fresh && outcome.lifetime !== undefined && outcome.tier && <Row label="Level">{`${outcome.tier} · ${outcome.lifetime.toLocaleString()} pts`}</Row>}
         {fresh && outcome.requiresForm && (

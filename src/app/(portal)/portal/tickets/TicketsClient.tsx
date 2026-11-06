@@ -496,6 +496,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           eventTitle={qrTicket.event?.title ?? 'Event'}
           eventDate={qrTicket.event?.start_date}
           eventLocation={qrTicket.event?.location}
+          division={qrTicket.event?.division}
           onClose={closeQr}
           onCheckedIn={(checkedInAt) => handleCheckedIn(qrTicket.id, checkedInAt)}
           checkinFormUrl={qrTicket.checkinFormUrl}

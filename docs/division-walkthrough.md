@@ -19,7 +19,7 @@ Mark each line done or write what looked wrong.
 12. **Members**: the "Taking join requests" switch. Turn it off: students see "Not taking requests". Turn it on, ask to join as a student, then Approve and Decline requests.
 
 ## Tickets
-1. A ticket for a division's event shows a small tag with the division's logo and color on My Tickets (next event and the list of events to join). Club events show no tag.
+1. A ticket for a division's event shows a small tag with the division's logo and color on My Tickets (next event and the list of events to join). The fullscreen ticket shows it too, and a staff scan result has a Division row. Club events show no tag.
 
 ## Docs
 1. The Docs page lists the docs you may read. "New Doc" asks for a title, who can read it (Heads only, Members and Heads, Everyone in the division, Public) and text.

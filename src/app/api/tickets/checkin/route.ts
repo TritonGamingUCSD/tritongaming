@@ -166,10 +166,15 @@ export async function POST(request: Request) {
     }
   }
 
+  // Staff see whose event it is when a division hosts it (one small lookup, only for division events).
+  const hostId = (eventData as { division_id?: string | null } | null)?.division_id;
+  const division = hostId ? ((await serviceClient.from('divisions').select('name').eq('id', hostId).maybeSingle()).data?.name ?? null) : null;
+
   if (!(await canCheckInNow(serviceClient, ticket, eventData))) {
     return NextResponse.json({
       status: ticket.status,
       event_title: eventData?.title || '',
+      division,
       user_name: userData?.display_name || 'Unknown',
       // For a multi-day event this is today's scan; otherwise the (first) check-in.
       checked_in_at: (await todaysCheckinAt(serviceClient, ticket.id)) ?? ticket.checked_in_at,
@@ -224,6 +229,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     status: 'active',
     event_title: eventData?.title || '',
+    division,
     user_name: userData?.display_name || 'Unknown',
     ticket_id: ticket.id,
     // Just checked in, so the form can't be done yet — staff use this to
