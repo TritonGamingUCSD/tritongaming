@@ -5,8 +5,13 @@ export default function PosterArt({ poster, accent, title, className = '' }: { p
   return (
     <span className={`${styles.poster} ${className}`} style={{ ['--ev' as string]: accent || 'var(--yellow)' }} aria-hidden="true">
       {poster ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={poster} alt="" loading="lazy" />
+        <>
+          {/* A blurred copy fills the frame behind the whole poster, so a tall poster is never cut off and there is no empty band. */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={poster} alt="" loading="lazy" className={styles.posterBack} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={poster} alt="" loading="lazy" className={styles.posterImg} />
+        </>
       ) : (
         <span className={styles.posterLetter}>{title.trim().slice(0, 1).toUpperCase() || '?'}</span>
       )}

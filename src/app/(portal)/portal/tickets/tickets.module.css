@@ -592,3 +592,11 @@
   .heroCard { max-width: none; }
 }
 @media (min-width: 1150px) { .ticketList, .eventList { grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); } }
+
+/* The whole poster is shown (contained) over a blurred copy of itself, never cropped */
+.poster img.posterBack { position: absolute; inset: -12%; width: 124%; height: 124%; object-fit: cover; filter: blur(14px) brightness(0.72); }
+.poster img.posterImg { position: relative; width: 100%; height: 100%; object-fit: contain; }
+.ticketThumb { height: 13rem; }
+.eventDateBlock { height: 13rem; }
+.heroPoster { min-height: 14rem; }
+@container (max-width: 640px) { .heroPoster { height: 13rem; } }

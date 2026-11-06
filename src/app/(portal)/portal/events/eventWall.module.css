@@ -5,7 +5,7 @@
 .past { filter: saturate(0.55); opacity: 0.85; }
 .tape { position: absolute; z-index: 2; top: -0.7rem; left: 50%; width: 4.2rem; height: 1.3rem; margin-left: -2.1rem; transform: rotate(-3deg); background: rgba(255, 223, 128, 0.78); border-left: 2px dotted rgba(0, 0, 0, 0.25); border-right: 2px dotted rgba(0, 0, 0, 0.25); } /* theme-ok: tape */
 .posterBox { position: relative; }
-.poster { width: 100%; height: 11rem; border-bottom: 2px solid var(--ev, var(--yellow)); }
+.poster { width: 100%; height: 15rem; border-bottom: 2px solid var(--ev, var(--yellow)); }
 .sticker { position: absolute; left: 0.5rem; top: 0.6rem; padding: 0.15rem 0.55rem; border-radius: 3px; border: 2px solid #11182b; font-family: var(--font-renegare); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: #11182b; transform: rotate(-4deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35); } /* theme-ok: a sticker keeps its own ink */
 .sUcsd { left: auto; right: 0.5rem; background: #cfe4ff; transform: rotate(3deg); }
 .sLive { background: #ff6b6b; color: #fff; animation: livePulse 1.4s ease-in-out infinite; }
