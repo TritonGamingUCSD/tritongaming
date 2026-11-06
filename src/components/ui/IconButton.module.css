@@ -1,11 +1,11 @@
 .btn {
   display: inline-grid; place-items: center; flex-shrink: 0; cursor: pointer; text-decoration: none;
-  border-radius: 6px; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); background: var(--pp-card); color: var(--pp-ink);
+  border-radius: 6px; border: 2px solid rgba(var(--pp-ink-rgb), 0.8); box-shadow: 2px 2px 0 rgba(var(--pp-ink-rgb), 0.3); background: var(--pp-card); color: var(--pp-ink);
   transition: background 0.12s, border-color 0.12s, transform 0.1s;
 }
 .md { width: var(--btn-h); height: var(--btn-h); }
 .sm { width: var(--btn-h-sm); height: var(--btn-h-sm); border-radius: 5px; }
-.btn:hover:not(:disabled), .active { background: rgba(36, 63, 99, 0.21); border-color: var(--pp-ink); }
+.btn:hover:not(:disabled), .active { background: var(--yellow); color: #011941; border-color: var(--pp-ink); transform: translate(-1px, -1px); box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.45); }
 .btn:focus-visible { outline: 3px solid rgba(125, 180, 234, 0.95); outline-offset: 2px; }
 .btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .danger { color: var(--pp-bad); border-color: rgba(var(--pp-ink-rgb), 0.45); }

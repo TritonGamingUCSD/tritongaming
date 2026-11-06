@@ -15,10 +15,10 @@
 .body strong { font-weight: 800; }
 
 /* portal pages (follow the light/dark theme) */
-.error   { background: rgba(185, 28, 28, 0.1);  border: 1px solid var(--pp-bad);  color: var(--pp-ink); }
-.warning { background: rgba(217, 119, 6, 0.12); border: 1px solid var(--pp-warn); color: var(--pp-ink); }
-.info    { background: rgba(29, 78, 216, 0.1);  border: 1px solid var(--pp-info); color: var(--pp-ink); }
-.success { background: rgba(4, 120, 87, 0.1);   border: 1px solid var(--pp-ok);   color: var(--pp-ink); }
+.error   { background: rgba(185, 28, 28, 0.1);  border: 2px solid var(--pp-bad);  color: var(--pp-ink); }
+.warning { background: rgba(217, 119, 6, 0.12); border: 2px solid var(--pp-warn); color: var(--pp-ink); }
+.info    { background: rgba(29, 78, 216, 0.1);  border: 2px solid var(--pp-info); color: var(--pp-ink); }
+.success { background: rgba(4, 120, 87, 0.1);   border: 2px solid var(--pp-ok);   color: var(--pp-ink); }
 .error .icon { color: var(--pp-bad); } .warning .icon { color: var(--pp-warn); } .info .icon { color: var(--pp-info); } .success .icon { color: var(--pp-ok); }
 
 /* light surfaces (white dialogs / sheets) */
@@ -26,3 +26,10 @@
 .onLight.warning { background: #fffbeb; border-color: #fcd34d; color: #92400e; }
 .onLight.info    { background: #f0f9ff; border-color: #7dd3fc; color: #075985; }
 .onLight.success { background: #f0fdf4; border-color: #86efac; color: #166534; }
+
+/* a notice is a sticky note: a small hard shadow in its own color */
+.error { box-shadow: 3px 3px 0 color-mix(in srgb, var(--pp-bad) 35%, transparent); }
+.warning { box-shadow: 3px 3px 0 color-mix(in srgb, var(--pp-warn) 35%, transparent); }
+.info { box-shadow: 3px 3px 0 color-mix(in srgb, var(--pp-info) 35%, transparent); }
+.success { box-shadow: 3px 3px 0 color-mix(in srgb, var(--pp-ok) 35%, transparent); }
+.onLight { box-shadow: 3px 3px 0 rgba(1, 25, 65, 0.15); }
