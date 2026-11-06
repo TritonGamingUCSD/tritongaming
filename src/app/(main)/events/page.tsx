@@ -6,6 +6,8 @@ import { getUpcomingEvents, getPreviousEvents } from '@/lib/events/events';
 import { getContentBlocks } from '@/lib/site/content';
 import { resolveSections } from '@/lib/site/pageLayout';
 import { Fragment } from 'react';
+import Link from 'next/link';
+import { getDivisions } from '@/lib/members/divisions';
 import styles from './events.module.css';
 
 export const metadata: Metadata = {
@@ -29,7 +31,7 @@ export const metadata: Metadata = {
 export const revalidate = 3600;
 
 export default async function EventsPage() {
-  const [upcoming, previous, blocks] = await Promise.all([getUpcomingEvents(), getPreviousEvents(), getContentBlocks(['page.events', 'layout.events'])]);
+  const [upcoming, previous, blocks, divisions] = await Promise.all([getUpcomingEvents(), getPreviousEvents(), getContentBlocks(['page.events', 'layout.events']), getDivisions()]);
   const content = blocks['page.events'] ?? {};
   const shown = resolveSections('events', blocks['layout.events']?.sections);
   const heroLabel = content.label as string;
@@ -81,6 +83,17 @@ export default async function EventsPage() {
   return (
     <div className={styles.page}>
       <PageHero label={heroLabel} title={heroTitle} sub={heroSub} />
+
+      {divisions.length > 0 && (
+        <nav className={styles.divRow} aria-label="Events by division">
+          <span className={styles.divLabel}>By Division</span>
+          {divisions.map((d) => (
+            <Link key={d.id} href={`/${d.slug}/events`} className={styles.divChip}>
+              {d.name}
+            </Link>
+          ))}
+        </nav>
+      )}
 
       {shown.map((id) => (
         <Fragment key={id}>{sections[id]}</Fragment>

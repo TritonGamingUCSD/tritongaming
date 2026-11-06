@@ -3,3 +3,9 @@
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 320px)); justify-content: center; gap: 2.25rem 1.75rem; padding-top: 0.9rem; }
 
 .emptyMsg { margin: 0; text-align: center; font-family: var(--font-renegare); font-size: 1.6rem; color: var(--yellow-text); }
+
+/* Division chips: each links to that division's own events page */
+.divRow { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; max-width: 1100px; margin: 0 auto; padding: 1.1rem clamp(1rem, 4vw, 3rem) 2.6rem; }
+.divLabel { font-family: var(--font-renegare); font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--yellow-text); margin-right: 0.3rem; }
+.divChip { padding: 0.3rem 0.75rem; border: 2px solid var(--paper); border-radius: 999px; color: var(--paper); text-decoration: none; font-family: var(--font-futura-heavy); font-size: 0.78rem; }
+.divChip:hover { background: var(--yellow); color: var(--ink); border-color: var(--ink); }

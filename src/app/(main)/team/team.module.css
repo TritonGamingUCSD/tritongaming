@@ -1,1 +1,13 @@
 .page { background: var(--navy); min-height: 100svh; --paper: #d8d7d3; } /* a softer paper on this page: dozens of cards in bright cream glare against the dark */
+
+/* Divisions: a name card per division, linking to its own page */
+.divGrid { list-style: none; margin: 0; padding: 0.4rem 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.4rem; }
+.divCard { display: flex; align-items: center; gap: 0.9rem; padding: 0.9rem 1rem; background: var(--paper); color: var(--ink); text-decoration: none; box-shadow: var(--hard-shadow-sm); transition: transform 0.15s; }
+.divCard:hover { transform: rotate(0deg) translate(-2px, -2px); }
+.divCard strong { display: block; font-family: var(--font-futura-heavy); font-size: 1rem; }
+.divCard small { display: block; margin-top: 0.15rem; font-size: 0.78rem; color: #3a4764; } /* theme-ok: ink on paper card */
+.tiltL { transform: rotate(-0.8deg); }
+.tiltR { transform: rotate(0.8deg); }
+.divLogo { width: 52px; height: 52px; object-fit: contain; border-radius: 10px; background: #fff; padding: 3px; flex-shrink: 0; } /* theme-ok: a logo sits on white */
+.divLetter { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 10px; background: var(--yellow); border: 3px solid var(--ink); font-family: var(--font-brick); font-size: 1.5rem; flex-shrink: 0; }
+@media (max-width: 640px) { .tiltL, .tiltR { transform: none; } }
