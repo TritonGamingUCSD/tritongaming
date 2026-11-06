@@ -1,7 +1,7 @@
 /* The events as a wall of posters pinned up with tape */
 .wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 2rem 1.4rem; padding: 0.8rem 0.3rem 1rem; }
-.card { position: relative; display: flex; flex-direction: column; border: 2px solid var(--ev, var(--yellow)); border-radius: 6px; background: var(--pp-card); box-shadow: 5px 5px 0 color-mix(in srgb, var(--ev, var(--yellow)) 40%, transparent); transform: rotate(var(--tilt, 0deg)); transition: transform 0.15s, box-shadow 0.15s; }
-.card:hover { transform: rotate(0deg) translate(-2px, -3px); box-shadow: 7px 8px 0 color-mix(in srgb, var(--ev, var(--yellow)) 45%, transparent); z-index: 1; }
+.card { position: relative; display: flex; flex-direction: column; border: 2px solid var(--ev, var(--yellow)); border-radius: 6px; background: var(--pp-card); box-shadow: 5px 5px 0 color-mix(in srgb, var(--ev, var(--yellow)) 40%, transparent); transition: transform 0.15s, box-shadow 0.15s; }
+.card:hover { transform: translate(-2px, -3px); box-shadow: 7px 8px 0 color-mix(in srgb, var(--ev, var(--yellow)) 45%, transparent); z-index: 1; }
 .past { filter: saturate(0.55); opacity: 0.85; }
 .tape { position: absolute; z-index: 2; top: -0.7rem; left: 50%; width: 4.2rem; height: 1.3rem; margin-left: -2.1rem; transform: rotate(-3deg); background: rgba(255, 223, 128, 0.78); border-left: 2px dotted rgba(0, 0, 0, 0.25); border-right: 2px dotted rgba(0, 0, 0, 0.25); } /* theme-ok: tape */
 .posterBox { position: relative; }

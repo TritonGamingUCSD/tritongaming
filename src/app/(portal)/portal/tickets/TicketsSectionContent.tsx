@@ -1,19 +1,33 @@
 'use client';
 
-import type { ComponentProps } from 'react';
+import { useState, type ComponentProps } from 'react';
+import { History } from 'lucide-react';
+import Dialog from '@/components/ui/Dialog';
+import Button from '@/components/ui/Button';
 import TicketsClient from './TicketsClient';
 import ActivitySectionContent from '../activity/ActivitySectionContent';
 
-// My Tickets, with the personal timeline of registrations and check-ins underneath. It used to be a History tab; old
-// links to tab=history still land here.
+// My Tickets. The personal timeline of registrations and check-ins is one button away in a popup (it used to sit under the tickets); old links to tab=history still land here.
 export default function TicketsSectionContent({
   activity,
   ...tickets
 }: ComponentProps<typeof TicketsClient> & { activity: ComponentProps<typeof ActivitySectionContent>['tickets'] }) {
+  const [open, setOpen] = useState(false);
   return (
     <div>
+      {activity.length > 0 && (
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '-2.4rem', position: 'relative', zIndex: 1 }}>
+          <Button size="sm" variant="secondary" onClick={() => setOpen(true)}>
+            <History size={14} aria-hidden="true" /> History
+          </Button>
+        </div>
+      )}
       <TicketsClient {...tickets} />
-      {activity.length > 0 && <ActivitySectionContent tickets={activity} embedded />}
+      {open && (
+        <Dialog title="History" wide onClose={() => setOpen(false)}>
+          <ActivitySectionContent tickets={activity} embedded popup />
+        </Dialog>
+      )}
     </div>
   );
 }

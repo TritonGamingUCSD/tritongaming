@@ -1070,7 +1070,7 @@
 @media (min-width: 900px) {
   .frameBody { padding-left: clamp(1.5rem, 3vw, 3rem); padding-right: clamp(1.5rem, 3vw, 3rem); }
   .frameBody:has([data-wide]) { padding-left: clamp(1.25rem, 2vw, 2rem); padding-right: clamp(1.25rem, 2vw, 2rem); }
-  .frameBody > .desktopContent { max-width: 1440px; margin-inline: auto; }
+  .frameBody > .desktopContent { max-width: none; margin-inline: 0; }
   .frameBody:has([data-wide]) > .desktopContent { max-width: none; }
 }
 

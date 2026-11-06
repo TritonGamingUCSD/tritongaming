@@ -68,7 +68,7 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
   const page = isDivisionPageId(asked) && allowed.some((p) => p.id === asked) ? asked : 'home';
   const label = DIVISION_PAGES.find((p) => p.id === page)?.label ?? 'Home';
   return (
-    <div className={styles.page} style={{ ['--hat' as string]: hat.accent }}>
+    <div className={styles.page} data-wide style={{ ['--hat' as string]: hat.accent }}>
       {/* The Live Tools bring a title of their own, so the division's is left out there (it would read twice). */}
       {!isLiveTool(page) && (
         <SectionHeader
@@ -125,30 +125,34 @@ function Home({ hat }: { hat: DivisionHat }) {
     { icon: <GraduationCap size={18} aria-hidden="true" />, label: 'Alumni', n: hat.counts.alumni },
   ];
   return (
-    <>
-      <div className={styles.banner}>
-        {hat.logoUrl ? (
-          <Image src={hat.logoUrl} alt="" width={64} height={64} className={styles.logo} unoptimized />
-        ) : (
-          <span className={styles.logoFallback}>{hat.name.slice(0, 1)}</span>
-        )}
-        <div>
-          <h2 className={styles.name}>{hat.name}</h2>
-          <p className={styles.tag}>A Triton Gaming division</p>
+    <div className={styles.homeGrid}>
+      <div className={styles.homeMain}>
+        <div className={styles.banner}>
+          {hat.logoUrl ? (
+            <Image src={hat.logoUrl} alt="" width={64} height={64} className={styles.logo} unoptimized />
+          ) : (
+            <span className={styles.logoFallback}>{hat.name.slice(0, 1)}</span>
+          )}
+          <div>
+            <h2 className={styles.name}>{hat.name}</h2>
+            <p className={styles.tag}>A Triton Gaming division</p>
+          </div>
+        </div>
+        <DivisionNextEvent hat={hat} />
+        <div className={styles.stats}>
+          {cards.map((c) => (
+            <div key={c.label} className={styles.stat}>
+              {c.icon}
+              <b>{c.n}</b>
+              <span>{c.label}</span>
+            </div>
+          ))}
         </div>
       </div>
-      <DivisionNextEvent hat={hat} />
-      <DivisionAnnouncements hat={hat} />
-      {(hat.level === 'head' || hat.level === 'member' || hat.level === 'staff') && <DivisionAttendance hat={hat} />}
-      <div className={styles.stats}>
-        {cards.map((c) => (
-          <div key={c.label} className={styles.stat}>
-            {c.icon}
-            <b>{c.n}</b>
-            <span>{c.label}</span>
-          </div>
-        ))}
+      <div className={styles.homeSide}>
+        <DivisionAnnouncements hat={hat} />
+        {(hat.level === 'head' || hat.level === 'member' || hat.level === 'staff') && <DivisionAttendance hat={hat} />}
       </div>
-    </>
+    </div>
   );
 }

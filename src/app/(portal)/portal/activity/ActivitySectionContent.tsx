@@ -39,11 +39,11 @@ function buildTimeline(tickets: ActivityTicket[]): ActivityItem[] {
   return items.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
 }
 
-export default function ActivitySectionContent({ tickets, embedded = false }: { tickets: ActivityTicket[]; embedded?: boolean }) {
+export default function ActivitySectionContent({ tickets, embedded = false, popup = false }: { tickets: ActivityTicket[]; embedded?: boolean; popup?: boolean }) {
   const all = buildTimeline(tickets);
   // Under the tickets only the latest few show at first; the full list is one tap away.
   const [showAll, setShowAll] = useState(false);
-  const items = embedded && !showAll ? all.slice(0, 5) : all;
+  const items = embedded && !popup && !showAll ? all.slice(0, 5) : all;
 
   if (items.length === 0) {
     return (
@@ -61,7 +61,7 @@ export default function ActivitySectionContent({ tickets, embedded = false }: { 
 
   return (
     <div className={`${styles.page} ${embedded ? styles.pageEmbedded : ''}`}>
-      {embedded ? <h2 className={styles.embeddedTitle}>History</h2> : <SectionHeader title="Activity" flush sub="Your tickets and check-ins, newest first." />}
+      {popup ? null : embedded ? <h2 className={styles.embeddedTitle}>History</h2> : <SectionHeader title="Activity" flush sub="Your tickets and check-ins, newest first." />}
       <ol className={styles.timeline}>
         {items.map((item) => (
           <li key={item.key} className={styles.item}>
@@ -77,7 +77,7 @@ export default function ActivitySectionContent({ tickets, embedded = false }: { 
           </li>
         ))}
       </ol>
-      {embedded && all.length > 5 && (
+      {embedded && !popup && all.length > 5 && (
         <button type="button" className={styles.more} onClick={() => setShowAll((v) => !v)}>
           {showAll ? 'Show less' : `Show all ${all.length}`}
         </button>
