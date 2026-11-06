@@ -18,6 +18,9 @@ Mark each line done or write what looked wrong.
 11. **Home**: post an announcement (it shows for Members, who are notified); remove it.
 12. **Members**: the "Taking join requests" switch. Turn it off: students see "Not taking requests". Turn it on, ask to join as a student, then Approve and Decline requests.
 
+## Tickets
+1. A ticket for a division's event shows a small tag with the division's logo and color on My Tickets (next event and the list of events to join). Club events show no tag.
+
 ## Docs
 1. The Docs page lists the docs you may read. "New Doc" asks for a title, who can read it (Heads only, Members and Heads, Everyone in the division, Public) and text.
 2. A Member sees no Heads-only docs and cannot make one. An Alumnus reads only the Everyone and Public docs and cannot write.

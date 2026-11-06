@@ -5,6 +5,8 @@ import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/events/checki
 import { openEventsFilter } from '@/lib/events/checkinWindow';
 import type TicketsClient from './TicketsClient';
 import { pacificDayKey } from '@/lib/core/timezone';
+import { accentOf } from '@/lib/divisions/accent';
+import { divisionLogoSrc } from '@/lib/members/divisions';
 
 // Shared by the standalone /portal/tickets route and the portal hub so both
 // render the exact same data through the exact same query.
@@ -17,14 +19,14 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
       .select(
         `
         id, status, checked_in_at, created_at, checkin_form_completed_at,
-        event:events(id, title, start_date, end_date, location, flyer_url, points_value, is_online, checkin_windows, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)
+        event:events(id, division_id, title, start_date, end_date, location, flyer_url, points_value, is_online, checkin_windows, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)
       `,
       )
       .eq('user_id', profileId)
       .order('created_at', { ascending: false }),
     supabase
       .from('events')
-      .select('id, title, start_date, end_date, location, flyer_url, ticket_price, audience, points_value, is_online')
+      .select('id, division_id, title, start_date, end_date, location, flyer_url, ticket_price, audience, points_value, is_online')
       .eq('is_published', true)
       // Joinable until the event ends (same rule as check-in), not just
       // before it starts — someone arriving partway through should still be
@@ -50,6 +52,22 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
     : { data: [] as { ticket_id: string }[] };
   const checkedInToday = new Set((todayRows ?? []).map((r) => r.ticket_id));
 
+  // Events hosted by a division carry its name, logo and color so a ticket can show whose event it is.
+  const divIds = [
+    ...new Set(
+      [...(tickets ?? []).map((t) => (t.event as unknown as { division_id?: string | null } | null)?.division_id), ...(upcomingEvents ?? []).map((e) => e.division_id)].filter(
+        (x): x is string => !!x,
+      ),
+    ),
+  ];
+  const { data: divRows } = divIds.length
+    ? await supabase.from('divisions').select('id, name, logo_url, accent').in('id', divIds)
+    : { data: [] as { id: string; name: string; logo_url: string | null; accent: string | null }[] };
+  const divOf = (id: string | null | undefined) => {
+    const d = (divRows ?? []).find((x) => x.id === id);
+    return d ? { name: d.name, logo: divisionLogoSrc(d.logo_url), hex: accentOf(d.accent).hex } : null;
+  };
+
   const roleNames = roles.map((r) => r.role);
   const ticketsWithForm = (tickets ?? []).map((t) => {
     const event = t.event as unknown as {
@@ -73,12 +91,13 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
             foodItem: event.checkin_food_item ?? null,
           })
         : null;
-    return { ...t, checkinFormUrl, checkedInToday: checkedInToday.has(t.id) };
+    const ev = t.event as unknown as { division_id?: string | null } | null;
+    return { ...t, event: ev ? { ...(t.event as object), division: divOf(ev.division_id) } : t.event, checkinFormUrl, checkedInToday: checkedInToday.has(t.id) };
   });
 
   return {
     tickets: ticketsWithForm as unknown as Parameters<typeof TicketsClient>[0]['tickets'],
-    upcomingEvents: (upcomingEvents ?? []) as unknown as Parameters<typeof TicketsClient>[0]['upcomingEvents'],
+    upcomingEvents: (upcomingEvents ?? []).map((e) => ({ ...e, division: divOf(e.division_id) })) as unknown as Parameters<typeof TicketsClient>[0]['upcomingEvents'],
     isUcsd: isVerifiedMember(roles),
     canEarnPoints: isRewardsEligible(roles),
   };

@@ -28,6 +28,7 @@ import {
 } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { saveTicketCodes, cachedMinutesLeft } from '@/lib/events/ticketCodeCache';
+import DivisionChip, { type EventDivision } from './DivisionChip';
 import styles from './tickets.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 import { createClient } from '@/lib/supabase/client';
@@ -48,6 +49,7 @@ interface TicketData {
     flyer_url: string | null;
     points_value?: number;
     is_online: boolean;
+    division?: EventDivision | null;
     // Multi-day events can set check-in hours per day (Pacific time); a day without an entry is open all day.
     checkin_windows?: { day: string; start: string; end: string }[] | null;
   } | null;
@@ -70,6 +72,7 @@ interface UpcomingEvent {
   audience: 'public' | 'ucsd_only';
   points_value?: number;
   is_online?: boolean;
+  division?: EventDivision | null;
 }
 
 interface Props {
@@ -332,6 +335,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
               <div className={styles.heroMeta}>
                 <span className={styles.heroLabel}>NEXT EVENT</span>
                 <h2 className={styles.heroEvent}>{nextActiveTicket.event?.title}</h2>
+                <DivisionChip division={nextActiveTicket.event?.division} />
                 {nextActiveTicket.event?.start_date && (
                   <p className={styles.heroDate}>
                     {formatEventDateRange(nextActiveTicket.event.start_date, nextActiveTicket.event.end_date, { weekday: true })}
@@ -426,6 +430,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   </div>
                   <div className={styles.eventBody}>
                     <div className={styles.eventTitle}>{event.title}</div>
+                    <DivisionChip division={event.division} />
                     {event.location && (
                       <div className={styles.eventLoc}>
                         <MapPin size={12} strokeWidth={1.5} aria-hidden="true" /> {event.location}
