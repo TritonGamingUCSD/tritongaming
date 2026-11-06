@@ -434,3 +434,17 @@ form.form[data-sub='school'] .subGroup[data-school] { border-top: 0; margin-top:
 
 /* The "profile is incomplete" notice sits between the page title and the tabs: room above and below it. */
 .pageNotice { margin-block: 0.9rem 1.1rem; }
+
+/* Zine look for every profile tab: grouped blocks are paper cards with a hard shadow and a taped heading, settings cards match. */
+.requiredGroup, .optionalGroup, .publicGroup { position: relative; border: 2px solid var(--pp-ink); border-radius: 10px; background: var(--pp-card); box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); padding-top: 1.5rem; }
+.optionalGroup { border-style: dashed; box-shadow: none; background: transparent; }
+.requiredGroup::before, .optionalGroup::before, .publicGroup::before { content: ''; position: absolute; top: -0.55rem; left: 1.2rem; width: 4.5rem; height: 1.1rem; background: color-mix(in srgb, var(--yellow) 75%, transparent); border: 1px solid rgba(var(--pp-ink-rgb), 0.25); transform: rotate(-2deg); } /* theme-ok */
+.optionalGroup::before { background: color-mix(in srgb, var(--pp-ink) 14%, transparent); }
+.groupHeading, .publicTitle { font-size: 1rem; letter-spacing: 0.02em; }
+.backupLoginSection { max-width: none; border: 2px solid var(--pp-ink); border-radius: 10px; box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); background: var(--pp-card); }
+.backupLoginTitle { font-size: 1.1rem; }
+.identityRow { border: 2px solid rgba(var(--pp-ink-rgb), 0.5); border-radius: 8px; }
+.signOutSection { display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap; padding: 1rem 1.2rem; border: 2px dashed rgba(var(--pp-ink-rgb), 0.4); border-radius: 10px; }
+.securityTab { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+@media (min-width: 1100px) { .securityTab { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } .securityTab > .signOutSection { grid-column: 1 / -1; } }
+.previewFrame { border: 2px solid var(--pp-ink); border-radius: 10px; box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); }

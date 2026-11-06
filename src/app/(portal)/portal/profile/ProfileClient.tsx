@@ -38,6 +38,7 @@ import AvatarEditor from './AvatarEditor';
 import BoardCardPreview from '@/components/BoardSection/BoardCardPreview';
 import { showToast } from '@/lib/ui/toast';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
+import ProfilePass from './ProfilePass';
 import LinkGoogleSection from './LinkGoogleSection';
 import PushSettings from '@/components/portal/PushSettings';
 import EmailSettings from '@/components/portal/EmailSettings';
@@ -338,6 +339,14 @@ export default function ProfileClient({
 
       {/* Above the two-column layout, not inside it: the columns change width and
           content from tab to tab, which used to drag the tab bar around with them. */}
+      <ProfilePass
+        name={form.display_name || profile.google_first_name || ''}
+        avatarUrl={resolveAvatarUrl({ avatar_url: profile.avatar_url, custom_avatar_url: form.custom_avatar_url || null })}
+        roles={roles}
+        missing={missingNow}
+        divisions={divisions.map((d) => d.name)}
+        gamerTag={form.gamer_tag}
+      />
       <SectionTabs
         top
         value={tab}

@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from '@/components/portal/PortalLink';
-import { Monitor, Moon, Sun } from 'lucide-react';
+import { Bell, Globe, LifeBuoy, Monitor, Moon, Sun, UserRound } from 'lucide-react';
 import { getThemeChoice, setThemeChoice, type ThemeChoice } from '@/lib/portal/themeScript';
 import SignOutButton from './SignOutButton';
 import type { HubIdentity } from './hubTypes';
@@ -127,31 +127,32 @@ export default function AccountMenu({ identity, viewAs, onProfile }: { identity:
             )}
           </div>
 
-          <div className={styles.links}>
+          <div className={styles.tiles}>
             <button
               type="button"
-              className={styles.row}
+              className={styles.tile}
               onClick={() => {
                 setOpen(false);
                 onProfile();
               }}
             >
-              <span>Your profile</span>
-              <span className={styles.go}>→</span>
+              <UserRound size={20} aria-hidden="true" />
+              <span>Profile</span>
             </button>
-            <Link href="/portal/profile/notifications" className={styles.row} onClick={() => setOpen(false)}>
-              <span>Notifications</span>
-              <span className={styles.go}>→</span>
+            <Link href="/portal/profile/notifications" className={styles.tile} onClick={() => setOpen(false)}>
+              <Bell size={20} aria-hidden="true" />
+              <span>Alerts</span>
             </Link>
             {identity.help && (
-              <Link href="/portal/help" className={styles.row} onClick={() => setOpen(false)}>
+              <Link href="/portal/help" className={styles.tile} onClick={() => setOpen(false)}>
+                <LifeBuoy size={20} aria-hidden="true" />
                 <span>{identity.help.label}</span>
-                {waiting > 0 ? <span className={styles.badge}>{waiting}</span> : <span className={styles.go}>→</span>}
+                {waiting > 0 && <span className={styles.badge}>{waiting}</span>}
               </Link>
             )}
-            <Link href="/" className={styles.row} onClick={() => setOpen(false)}>
-              <span>Back to the website</span>
-              <span className={styles.go}>→</span>
+            <Link href="/" className={styles.tile} onClick={() => setOpen(false)}>
+              <Globe size={20} aria-hidden="true" />
+              <span>Website</span>
             </Link>
           </div>
           <SignOutButton plain className={styles.signOut} />

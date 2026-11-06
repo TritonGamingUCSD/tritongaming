@@ -65,3 +65,24 @@
 .viewAs [role='menu'] { border: 1px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 14px; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28); }
 .viewAs [role='menu'] input { border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 10px; background: rgba(var(--pp-ink-rgb), 0.05); color: var(--pp-ink); }
 .viewAs [role='menu'] div[class*='menuHead'] { text-transform: none; letter-spacing: 0; font-size: 0.85rem; font-weight: 700; opacity: 0.75; }
+
+/* Player pass: the menu is a paper card with a hard shadow, the top block an ID badge on a lanyard, the places are four tiles. */
+.menu { border: 2px solid var(--pp-ink); border-radius: 14px; box-shadow: 5px 5px 0 var(--pp-ink); background: var(--pp-paper, var(--pp-card)); padding: 0.6rem; }
+.card { position: relative; border-radius: 10px; padding-top: 1.5rem; box-shadow: inset 0 -4px 0 var(--yellow); overflow: hidden; } /* theme-ok */
+.card::before { content: ''; position: absolute; top: 0.45rem; left: 50%; width: 2.2rem; height: 0.45rem; transform: translateX(-50%); border-radius: 999px; background: rgba(0, 0, 0, 0.45); box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6); } /* theme-ok */
+.card::after { content: ''; position: absolute; right: 0.7rem; bottom: 0.45rem; width: 3.4rem; height: 0.7rem; opacity: 0.35; background: repeating-linear-gradient(90deg, #fff 0 2px, transparent 2px 4px, #fff 4px 5px, transparent 5px 8px); } /* theme-ok */
+.name { font-size: 1.25rem; letter-spacing: 0.01em; }
+.role { border-radius: 4px; text-transform: uppercase; font-size: 0.68rem; letter-spacing: 0.06em; padding: 0.05rem 0.45rem; }
+.levelPill { border-radius: 4px; }
+.xp { height: 0.6rem; border-radius: 2px; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.22) 0 8px, transparent 8px 10px); } /* theme-ok */
+.xp > span { background: repeating-linear-gradient(90deg, var(--yellow) 0 8px, transparent 8px 10px); } /* theme-ok */
+.label { text-transform: uppercase; letter-spacing: 0.1em; font-size: 0.68rem; }
+.modes { border: 2px solid var(--pp-ink); border-radius: 8px; background: none; }
+.bubble { border-radius: 5px; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; padding: 0.2rem 0.15rem 0.5rem; }
+.tile { position: relative; display: grid; justify-items: start; gap: 0.35rem; padding: 0.7rem 0.75rem; border: 2px solid var(--pp-ink); border-radius: 8px; background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.92rem; font-weight: 700; text-decoration: none; cursor: pointer; box-shadow: 2px 2px 0 var(--pp-ink); transition: transform 0.12s, box-shadow 0.12s; }
+.tile:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0 var(--pp-ink); background: color-mix(in srgb, var(--yellow) 22%, var(--pp-card)); } /* theme-ok */
+.tile:active { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--pp-ink); }
+.tile .badge { position: absolute; top: 0.45rem; right: 0.5rem; }
+.signOut { border: 2px dashed color-mix(in srgb, var(--pp-bad) 55%, transparent); border-radius: 8px; text-align: center; margin: 0.1rem 0.15rem 0; }
+@media (prefers-reduced-motion: reduce) { .tile { transition: none; } }

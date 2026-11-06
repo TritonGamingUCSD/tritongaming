@@ -53,6 +53,20 @@ export async function GET(request: Request) {
         const myEmails = [freshUser?.email ?? '', ...(freshUser?.identities ?? []).map((i) => String(i.identity_data?.email ?? ''))];
         await applyPendingGrants(createServiceClient(), data.user.id, myEmails);
 
+        // A linked Discord shows on the person's cards (the Discord line of their social links) so people can be found fast. It only fills an empty line: a handle typed by hand stays, and the card's own "show socials" choice still decides who sees it.
+        const discord = (freshUser?.identities ?? []).find((i) => i.provider === 'discord');
+        const handle = String(discord?.identity_data?.full_name ?? discord?.identity_data?.name ?? '').trim();
+        if (handle) {
+          const svc = createServiceClient();
+          const { data: prof } = await svc.from('profiles').select('social_links').eq('id', data.user.id).maybeSingle();
+          const links = (prof?.social_links ?? {}) as Record<string, string>;
+          if (!links.discord)
+            await svc
+              .from('profiles')
+              .update({ social_links: { ...links, discord: handle.slice(0, 64) } })
+              .eq('id', data.user.id);
+        }
+
         // Admin-only verification name, kept in sync with whatever Google
         // reports for the identity used this session — separate from the
         // user-editable display_name (see sync_google_name for why this is
