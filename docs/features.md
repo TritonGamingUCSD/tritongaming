@@ -330,3 +330,7 @@ Sign in or link with Discord (Supabase provider). A linked account fills the pro
 ## Division tournaments stay on the division
 
 - A division's tournaments open at `/portal/<division>/tournaments/<tournament>` (the open tab is `?t=`). An old link to one under the club's Tournaments page moves to the division's. The club's list shows club tournaments only.
+
+## Profile settings tabs
+
+- The profile's old Settings tab is three tabs: **Linked Accounts** (address `security`, so old links work; Google, Discord and Sign Out), **Notifications** (`/portal/profile/notifications`, push) and **Email** (`/portal/profile/email`, which emails you get). Search finds each by name.

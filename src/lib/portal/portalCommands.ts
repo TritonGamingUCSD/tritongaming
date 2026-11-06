@@ -56,7 +56,9 @@ const DEFS: Def[] = [
   A('help-new', 'Ask for help', 'Open a help ticket', '/portal/help/ask', ['support', 'question', 'bug', 'problem', 'report', 'ticket']),
   A('profile-edit', 'Edit my profile', 'Name, major, games, picture', '/portal/profile', ['update', 'change', 'name', 'major', 'college']),
   A('game-ids', 'Add my game IDs', 'Steam, Riot ID, Genshin UID…', '/portal/profile/card', ['steam', 'riot', 'genshin', 'discord', 'gamertag', 'username'], 'view_members'),
-  A('security', 'Login & security', 'Linked Google accounts, sign out', '/portal/profile/security', ['google', 'password', 'sign out', 'logout', 'account']),
+  A('security', 'Linked accounts', 'Linked Google and Discord accounts, sign out', '/portal/profile/security', ['google', 'password', 'sign out', 'logout', 'account']),
+  A('notification-settings', 'Notifications', 'Choose which notifications reach you', '/portal/profile/notifications', ['push', 'bell', 'alerts', 'mute', 'notify']),
+  A('email-settings', 'Email', 'Choose which emails you get', '/portal/profile/email', ['newsletter', 'unsubscribe', 'emails', 'mail', 'inbox']),
   A('meeting-checkin', 'Check in to a meeting', 'Type the code from the screen', '/portal/meetings/mine', ['code', 'attend', 'present'], 'attend_meetings'),
   A('meeting-history', 'My meetings and history', 'Coming up and what you attended', '/portal/meetings/mine', ['upcoming', 'attended', 'attendance'], 'attend_meetings'),
   A(

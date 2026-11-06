@@ -8,7 +8,7 @@ import Notice from '@/components/ui/Notice';
 import { useRef, useState } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { ShieldCheck, User, Users, Lock, X as XIcon, Globe, EyeOff } from 'lucide-react';
+import { Bell, Mail, ShieldCheck, User, Users, Lock, X as XIcon, Globe, EyeOff } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { canSetOrgTitle, requiresOrgTitle, type RoleGrant } from '@/lib/portal/capabilities';
@@ -51,7 +51,7 @@ import styles from './profile.module.css';
 import Select from '@/components/ui/Select';
 import SectionHeader from '@/components/ui/SectionHeader';
 
-type Tab = 'info' | 'card' | 'notifications' | 'strikes' | 'security';
+type Tab = 'info' | 'card' | 'notifications' | 'email' | 'strikes' | 'security';
 
 export default function ProfileClient({
   profile,
@@ -87,12 +87,12 @@ export default function ProfileClient({
   const showBoardTab = isBoardEligible || canEditOrgTitle || isRecruitOnly;
   // Strikes are tracked for officers, leads and exec: they can always look at their own here (quietly; nothing pushes it at them).
   const showStrikesTab = roles.some((r) => r.role === 'exec' || r.role === 'lead' || r.role === 'officer');
-  const VALID_TABS: Tab[] = [...(showBoardTab ? ['info', 'card'] : ['info']), ...(showStrikesTab ? ['strikes'] : []), 'security'] as Tab[];
+  const VALID_TABS: Tab[] = [...(showBoardTab ? ['info', 'card'] : ['info']), ...(showStrikesTab ? ['strikes'] : []), 'security', 'notifications', 'email'] as Tab[];
   const gender = privateInfo.gender;
   // The tab used to be called "board" — old links/bookmarks still land on it.
   const initialTabParam = useUrlNav().tab;
-  // Notifications now sit with Login & Security on one Settings tab; old links to it still land there.
-  const initialTab = initialTabParam === 'notifications' ? 'security' : initialTabParam === 'school' ? 'info' : initialTabParam;
+  // Linked Accounts (address 'security', so old links keep working), Notifications and Email are three tabs of their own.
+  const initialTab = initialTabParam === 'school' ? 'info' : initialTabParam;
   const [tab, setTab] = useState<Tab>(VALID_TABS.includes(initialTab as Tab) ? (initialTab as Tab) : 'info');
   const syncUrl = usePortalTabSync('profile');
   function selectTab(t: Tab) {
@@ -362,7 +362,9 @@ export default function ProfileClient({
           { id: 'info', label: 'About Me', icon: <User /> },
           ...(showBoardTab ? [{ id: 'card' as const, label: isRecruitOnly ? 'TG Members Card' : 'Public Officer Card', icon: <Users /> }] : []),
           ...(showStrikesTab ? [{ id: 'strikes' as const, label: 'Strikes', icon: <ShieldCheck /> }] : []),
-          { id: 'security', label: 'Settings', icon: <Lock /> },
+          { id: 'security', label: 'Linked Accounts', icon: <Lock /> },
+          { id: 'notifications', label: 'Notifications', icon: <Bell /> },
+          { id: 'email', label: 'Email', icon: <Mail /> },
         ]}
       />
 
@@ -908,14 +910,26 @@ export default function ProfileClient({
             </div>
           )}
 
-          {tab === 'security' && (
+          {tab === 'notifications' && (
             <div className={styles.securityTab}>
               <div className={styles.securityCol}>
                 <PushSettings />
-                <LinkGoogleSection />
               </div>
+            </div>
+          )}
+
+          {tab === 'email' && (
+            <div className={styles.securityTab}>
               <div className={styles.securityCol}>
                 <EmailSettings />
+              </div>
+            </div>
+          )}
+
+          {tab === 'security' && (
+            <div className={styles.securityTab}>
+              <div className={styles.securityCol}>
+                <LinkGoogleSection />
               </div>
               <div className={styles.signOutSection}>
                 <div className={styles.signOutText}>
