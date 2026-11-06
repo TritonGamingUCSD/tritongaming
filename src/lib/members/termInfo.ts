@@ -10,6 +10,10 @@ export interface TermInfoData {
   ends: string;
   state: 'in' | 'break';
   marks: { label: string; at: string }[];
+  /** The term's last day and the next quarter's name and first day (YYYY-MM-DD), when that quarter is on the calendar: for the dashboard's countdowns. */
+  endsOn?: string;
+  nextName?: string;
+  nextStartsOn?: string;
 }
 
 const DAY = 86_400_000;
@@ -22,6 +26,7 @@ export function termInfo(quarters: Quarter[], today: string, events: { title: st
   if (!q) return null;
   const weeks = Math.max(1, Math.ceil(((utc(q.ends_on) - utc(q.starts_on)) / DAY + 1) / 7));
   const inTerm = today <= q.ends_on;
+  const next = quarters.filter((x) => x.starts_on > today).sort((a, b) => a.starts_on.localeCompare(b.starts_on))[0];
   const week = inTerm ? Math.min(weeks, Math.floor((utc(today) - utc(q.starts_on)) / DAY / 7) + 1) : weeks;
   return {
     name: quarterName(q),
@@ -31,6 +36,9 @@ export function termInfo(quarters: Quarter[], today: string, events: { title: st
     starts: short(q.starts_on),
     ends: short(q.ends_on),
     state: inTerm ? 'in' : 'break',
+    endsOn: q.ends_on,
+    nextName: next ? quarterName(next) : undefined,
+    nextStartsOn: next?.starts_on,
     marks: events
       .filter((e) => e.day >= today && e.day <= q.ends_on)
       .slice(0, 3)

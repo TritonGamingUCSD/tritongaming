@@ -15,6 +15,7 @@ import TodayCards from './TodayCards';
 import HomeCards, { type HomeCard } from './HomeCards';
 import NextEventHero from './NextEventHero';
 import TermProgress from './TermProgress';
+import Countdowns from './Countdowns';
 import MemberPass, { type PassData } from './MemberPass';
 import JoinDivision from './JoinDivision';
 import type { TermInfoData } from '@/lib/members/termInfo';
@@ -146,6 +147,9 @@ export function DashboardBody({
             <TermProgress term={term} />
           </div>
         )}
+      </div>
+      <div className={styles.m3}>
+        <Countdowns term={term} event={event} />
       </div>
       {myDivisions.length > 0 && (
         <section className={`${styles.divCards} ${styles.m6}`} aria-label="Your divisions">

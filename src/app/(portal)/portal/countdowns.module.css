@@ -1,0 +1,17 @@
+.wrap { display: grid; gap: 0.6rem; }
+.title { margin: 0; font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.7); }
+.row { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 900px) { .row { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tile { display: grid; gap: 0.1rem; padding: 0.75rem 0.9rem; border: 2px solid var(--pp-ink); border-radius: 10px; background: var(--pp-card); box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.85); min-width: 0; }
+.link { display: grid; gap: 0.1rem; color: inherit; text-decoration: none; }
+.label { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.65); }
+.big { font-family: var(--font-futura-heavy, inherit); font-size: 1.9rem; line-height: 1.05; color: var(--pp-ink); }
+.big small { font-size: 0.8rem; font-weight: 700; margin-left: 0.2rem; }
+.what { font-size: 0.88rem; font-weight: 700; overflow-wrap: anywhere; }
+.on { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.65); }
+.holiday { border-top: 6px solid #e0533f; } /* theme-ok */
+.quarter { border-top: 6px solid #3c7fd0; } /* theme-ok */
+.break { border-top: 6px solid #2fae86; } /* theme-ok */
+.next { border-top: 6px solid #3c7fd0; } /* theme-ok */
+.event { border-top: 6px solid #ffc72c; } /* theme-ok */
+.holiday2 { border-top: 6px solid #e870a8; } /* theme-ok */

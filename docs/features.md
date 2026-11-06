@@ -343,3 +343,7 @@ Sign in or link with Discord (Supabase provider). A linked account fills the pro
 - **Who Can See This:** plain-words box while making a Live Tools item (follows the "Make this for" choice), a tournament (new and settings) and an event (Tickets tab). The sentences are written in `lib/portal/whoSees.ts` from the same rules the servers enforce.
 - **Main Site** is a button in the portal header (a word on a computer, a round icon on a phone), no longer in the account menu.
 - Broadcast channels are kept apart: the club's and each division's, with a line on each Channels tab saying so.
+
+## Dashboard countdowns
+
+- A **Countdowns** row on the portal home (`Countdowns.tsx`, `lib/portal/countdowns.ts`): the next holiday, when the quarter ends (or, in a break, when the next one starts), when the break starts, and the next event; a second holiday fills a free tile. Holidays are computed for any year (US holidays and days off, plus Lunar New Year from a table for 2026 to 2031); the quarter dates come from the quarters calendar, and a tile is left out when its date is not known.
