@@ -23,3 +23,6 @@
 .deviceText b { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; font-size: 0.88rem; color: var(--pp-ink); overflow-wrap: anywhere; }
 .deviceText small { font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.65); }
 .here { padding: 0.05rem 0.5rem; border-radius: 999px; background: var(--yellow); color: #011941; font-size: 0.68rem; font-weight: 700; letter-spacing: 0.02em; } /* theme-ok */
+
+/* Same paper card as the other Settings blocks. */
+.card { border: 2px solid var(--pp-ink); border-radius: 10px; background: var(--pp-card); box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); }

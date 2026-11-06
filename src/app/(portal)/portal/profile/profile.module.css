@@ -448,3 +448,10 @@ form.form[data-sub='school'] .subGroup[data-school] { border-top: 0; margin-top:
 .securityTab { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
 @media (min-width: 1100px) { .securityTab { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; } .securityTab > .signOutSection { grid-column: 1 / -1; } }
 .previewFrame { border: 2px solid var(--pp-ink); border-radius: 10px; box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); }
+
+/* Settings and Strikes use the full width (two columns on wide screens) instead of stopping at 860px. */
+.layoutSingle { max-width: none; }
+
+.securityCol { display: flex; flex-direction: column; gap: 1.5rem; min-width: 0; }
+.securityTab .backupLoginSection { max-width: none; border: 2px solid var(--pp-ink); border-radius: 10px; box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); background: var(--pp-card); }
+.securityTab .identityRow { border: 2px solid rgba(var(--pp-ink-rgb), 0.5); border-radius: 8px; }

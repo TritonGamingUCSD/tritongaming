@@ -903,9 +903,13 @@ export default function ProfileClient({
 
           {tab === 'security' && (
             <div className={styles.securityTab}>
-              <PushSettings />
-              <EmailSettings />
-              <LinkGoogleSection />
+              <div className={styles.securityCol}>
+                <PushSettings />
+                <LinkGoogleSection />
+              </div>
+              <div className={styles.securityCol}>
+                <EmailSettings />
+              </div>
               <div className={styles.signOutSection}>
                 <div className={styles.signOutText}>
                   <h2 className={styles.backupLoginTitle}>Sign out</h2>

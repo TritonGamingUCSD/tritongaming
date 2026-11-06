@@ -57,11 +57,12 @@ export default function ProfilePass({
               {l}
             </span>
           ))}
-          {divisions.map((d) => (
+          {divisions.slice(0, 4).map((d) => (
             <span key={d} className={`${styles.sticker} ${styles.division}`}>
               <Users size={12} aria-hidden="true" /> {d}
             </span>
           ))}
+          {divisions.length > 4 && <span className={`${styles.sticker} ${styles.division}`}>+{divisions.length - 4} more</span>}
         </div>
       </div>
       <div className={styles.side}>
