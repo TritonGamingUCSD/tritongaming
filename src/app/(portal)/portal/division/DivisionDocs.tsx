@@ -6,7 +6,9 @@ import Notice from '@/components/ui/Notice';
 import MarkdownContent from '@/components/MarkdownContent/MarkdownContent';
 import Loading from '@/components/Loading/Loading';
 import { formatPacificDateTime } from '@/lib/core/timezone';
-import { AUDIENCE_LABEL, DOC_AUDIENCES, type DocAudience } from '@/lib/divisions/docs';
+import { AUDIENCE_LABEL, type DocAudience } from '@/lib/divisions/docs';
+import { divisionDefaults, type AccessEntry } from '@/lib/docs/access';
+import DocAccessEditor from './DocAccessEditor';
 import type { DivisionHat } from '@/components/portal/hubTypes';
 import styles from './divisionDocs.module.css';
 
@@ -15,6 +17,9 @@ interface Doc {
   title: string;
   body: string;
   audience: DocAudience;
+  read_access: AccessEntry[];
+  edit_access: AccessEntry[];
+  canEdit: boolean;
   updated_at: string;
 }
 
@@ -23,17 +28,19 @@ export default function DivisionDocs({ hat }: { hat: DivisionHat }) {
   const [docs, setDocs] = useState<Doc[] | null>(null);
   const [canWrite, setCanWrite] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<{ id?: string; title: string; body: string; audience: DocAudience } | null>(null);
+  const [draft, setDraft] = useState<{ id?: string; title: string; body: string; read_access: AccessEntry[]; edit_access: AccessEntry[] } | null>(null);
+  const [teams, setTeams] = useState<{ id: string; name: string }[]>([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  // A Member cannot make a doc that only Heads may read.
-  const audiences = DOC_AUDIENCES.filter((a) => hat.level !== 'member' || a !== 'heads');
+  const headOrStaff = hat.level !== 'member';
+  const d = divisionDefaults(hat.id);
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/divisions/${hat.id}/docs`, { cache: 'no-store' }).catch(() => null);
     const j = r?.ok ? await r.json().catch(() => ({})) : {};
     setDocs((j.docs as Doc[]) ?? []);
     setCanWrite(Boolean(j.canWrite));
+    setTeams((j.teams as { id: string; name: string }[]) ?? []);
   }, [hat.id]);
   useEffect(() => {
     void load();
@@ -75,17 +82,39 @@ export default function DivisionDocs({ hat }: { hat: DivisionHat }) {
           <span>Title</span>
           <input value={draft.title} maxLength={120} required onChange={(e) => setDraft({ ...draft, title: e.target.value })} />
         </label>
-        <label className={styles.field}>
-          <span>Who can read it</span>
-          <select value={draft.audience} onChange={(e) => setDraft({ ...draft, audience: e.target.value as DocAudience })}>
-            {audiences.map((a) => (
-              <option key={a} value={a}>
-                {AUDIENCE_LABEL[a]}
-              </option>
-            ))}
-          </select>
-          {draft.audience === 'public' && <small>Public docs also show on {hat.name}&apos;s public page.</small>}
-        </label>
+        <DocAccessEditor
+          label="Who can read it"
+          hint="Anyone who can edit it can read it too."
+          value={draft.read_access}
+          onChange={(v) => setDraft({ ...draft, read_access: v })}
+          divisionId={hat.id}
+          divisionName={hat.name}
+          teams={teams}
+          canSearchPeople={headOrStaff}
+          wide={headOrStaff ? 'read' : 'none'}
+          presets={[
+            { label: 'Heads only', entries: d.read.slice(0, 1) },
+            { label: 'Heads and Members', entries: d.read },
+            { label: 'Whole division', entries: [...d.read, { t: 'division', role: 'division_alumni', division_id: hat.id }] },
+            ...(headOrStaff ? [{ label: 'Public', entries: [{ t: 'everyone' } as AccessEntry] }] : []),
+          ]}
+        />
+        <DocAccessEditor
+          label="Who can edit it"
+          hint="They can change the text and who it is shared with, but only to people they could add themselves."
+          value={draft.edit_access}
+          onChange={(v) => setDraft({ ...draft, edit_access: v })}
+          divisionId={hat.id}
+          divisionName={hat.name}
+          teams={teams}
+          canSearchPeople={headOrStaff}
+          wide="none"
+          presets={[
+            { label: 'Heads only', entries: d.edit },
+            { label: 'Heads and Members', entries: d.read },
+          ]}
+        />
+        {draft.read_access.some((e) => e.t === 'everyone') && <small>Public docs also show on {hat.name}&apos;s public page.</small>}
         <label className={styles.field}>
           <span>Text (Markdown works)</span>
           <textarea value={draft.body} rows={14} onChange={(e) => setDraft({ ...draft, body: e.target.value })} />
@@ -109,9 +138,12 @@ export default function DivisionDocs({ hat }: { hat: DivisionHat }) {
           <Button variant="secondary" onClick={() => setOpenId(null)}>
             ← All Docs
           </Button>
-          {canWrite && (
+          {open.canEdit && (
             <>
-              <Button variant="secondary" onClick={() => setDraft({ id: open.id, title: open.title, body: open.body, audience: open.audience })}>
+              <Button
+                variant="secondary"
+                onClick={() => setDraft({ id: open.id, title: open.title, body: open.body, read_access: open.read_access, edit_access: open.edit_access })}
+              >
                 Edit
               </Button>
               <Button
@@ -140,7 +172,7 @@ export default function DivisionDocs({ hat }: { hat: DivisionHat }) {
       {error && <Notice tone="error">{error}</Notice>}
       {canWrite && (
         <div className={styles.row}>
-          <Button onClick={() => setDraft({ title: '', body: '', audience: 'members' })}>New Doc</Button>
+          <Button onClick={() => setDraft({ title: '', body: '', read_access: d.read, edit_access: d.edit })}>New Doc</Button>
         </div>
       )}
       {docs.length === 0 ? (

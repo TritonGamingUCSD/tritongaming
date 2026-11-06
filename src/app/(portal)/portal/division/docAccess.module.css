@@ -1,0 +1,22 @@
+.box { display: grid; gap: 0.6rem; margin: 0; padding: 0.8rem 0.9rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.45); border-radius: 8px; min-width: 0; }
+.box legend { padding: 0 0.4rem; font-weight: 800; font-size: 0.85rem; }
+.hint { margin: 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.7); }
+.presets { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.preset { padding: 0.25rem 0.65rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.4); border-radius: 6px; background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+.preset:hover { border-color: var(--pp-ink); }
+.presetOn { background: var(--pp-ink); border-color: var(--pp-ink); color: var(--pp-card); }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.2rem 0.15rem 0.55rem; border: 2px solid var(--pp-ink); border-radius: 6px; font-size: 0.82rem; font-weight: 600; background: color-mix(in srgb, var(--yellow) 22%, var(--pp-card)); } /* theme-ok */
+.chip button { display: inline-grid; place-items: center; width: 1.3rem; height: 1.3rem; border: 0; border-radius: 4px; background: none; color: inherit; cursor: pointer; }
+.chip button:hover { background: rgba(var(--pp-ink-rgb), 0.12); }
+.none { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.65); }
+.add { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: flex-start; }
+.add > :first-child { min-width: 12rem; }
+.addBtn { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.45rem 0.8rem; border: 2px solid var(--pp-ink); border-radius: 8px; background: var(--pp-card); color: var(--pp-ink); font: inherit; font-weight: 700; cursor: pointer; }
+.addBtn:hover:not(:disabled) { background: color-mix(in srgb, var(--yellow) 30%, var(--pp-card)); } /* theme-ok */
+.addBtn:disabled { opacity: 0.4; cursor: default; }
+.person { position: relative; min-width: 14rem; }
+.person input { width: 100%; padding: 0.45rem 0.7rem; border: 2px solid var(--pp-ink); border-radius: 8px; background: var(--pp-card); color: var(--pp-ink); font: inherit; }
+.results { position: absolute; z-index: 5; top: calc(100% + 4px); left: 0; right: 0; list-style: none; margin: 0; padding: 0.25rem; border: 2px solid var(--pp-ink); border-radius: 8px; background: var(--pp-card); box-shadow: 3px 3px 0 var(--pp-ink); }
+.results button { width: 100%; text-align: left; padding: 0.35rem 0.5rem; border: 0; border-radius: 4px; background: none; color: inherit; font: inherit; cursor: pointer; }
+.results button:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
