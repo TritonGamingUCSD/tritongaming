@@ -58,7 +58,9 @@ export async function GET(request: Request) {
         // user-editable display_name (see sync_google_name for why this is
         // split server-side rather than duplicating the name-splitting
         // logic here).
-        const googleFullName = (freshUser?.user_metadata?.full_name as string | undefined) ?? (freshUser?.user_metadata?.name as string | undefined);
+        // Only a Google identity's name counts: a Discord name must never end up as the verification name.
+        const googleIdentity = (freshUser?.identities ?? []).find((i) => i.provider === 'google');
+        const googleFullName = (googleIdentity?.identity_data?.full_name as string | undefined) ?? (googleIdentity?.identity_data?.name as string | undefined);
         if (googleFullName) {
           await createServiceClient().rpc('sync_google_name', { _user_id: data.user.id, _full_name: googleFullName });
         }

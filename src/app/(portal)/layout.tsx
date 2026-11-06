@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import PortalThemeInit from '@/components/portal/PortalThemeInit';
 import './portal-controls.css';
 import { getProfile, getViewingUser } from '@/lib/core/auth';
+import LinkGooglePrompt from '@/components/portal/LinkGooglePrompt';
 import { PortalIdentityProvider } from '@/components/portal/PortalIdentity';
 
 // robots.txt (see app/robots.ts) disallows /portal by path, but that only
@@ -27,6 +28,7 @@ export default async function PortalGroupLayout({ children }: { children: React.
   return (
     <>
       <PortalThemeInit />
+      {profile && !viewing && <LinkGooglePrompt />}
       <div className="pp-root" style={{ display: 'contents' }}>
         {content}
       </div>

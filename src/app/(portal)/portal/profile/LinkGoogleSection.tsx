@@ -15,7 +15,7 @@ import Button from '@/components/ui/Button';
 // why this can't just be a rejected promise like a normal API call.
 const LINK_ERROR_MESSAGES: Record<string, string> = {
   identity_already_exists:
-    'That Google account is already linked to a different profile. Sign out and use the sign-in button for it directly if that’s the account you meant to sign into.',
+    'That account is already linked to a different profile. If it is your own, sign out and sign in with it directly, then connect the other one from your profile.',
   manual_linking_disabled: 'Account linking isn’t turned on for this site yet — an admin needs to enable "Manual linking" in Supabase’s Auth settings.',
 };
 
@@ -84,16 +84,22 @@ export default function LinkGoogleSection() {
   }, []);
 
   function emailOf(identity: UserIdentity): string {
-    return (identity.identity_data?.email as string | undefined) ?? '';
+    const d = identity.identity_data ?? {};
+    const mail = (d.email as string | undefined) ?? '';
+    if (identity.provider === 'discord') return `Discord: ${(d.full_name as string | undefined) || (d.name as string | undefined) || mail || 'connected'}`;
+    return mail;
   }
 
-  async function handleLink() {
+  async function handleLink(provider: 'google' | 'discord' = 'google') {
     setError('');
     setLinking(true);
     const supabase = createClient();
     const { error: err } = await supabase.auth.linkIdentity({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/portal/profile/security')}` },
+      provider,
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent('/portal/profile/security')}`,
+        ...(provider === 'discord' ? { scopes: 'identify email' } : {}),
+      },
     });
     // On success this navigates away to Google's consent screen — setLinking(false)
     // only actually runs if it failed before that redirect happened.
@@ -105,7 +111,7 @@ export default function LinkGoogleSection() {
 
   async function handleUnlink(identity: UserIdentity) {
     const email = emailOf(identity);
-    if (!(await confirmHold({ title: `Unlink ${email}?`, message: "You'll no longer be able to sign in with that Google account.", confirmLabel: 'Hold to unlink' }))) return;
+    if (!(await confirmHold({ title: `Unlink ${email}?`, message: "You'll no longer be able to sign in with that account.", confirmLabel: 'Hold to unlink' }))) return;
     setError('');
     setUnlinkingId(identity.identity_id);
     const supabase = createClient();
@@ -148,9 +154,16 @@ export default function LinkGoogleSection() {
       </p>
 
       {error && <Notice tone="error">{error}</Notice>}
-      <Button onClick={handleLink} loading={linking}>
-        {linking ? 'Redirecting…' : 'Link Another Google Account'}
-      </Button>
+      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+        <Button onClick={() => handleLink('google')} loading={linking}>
+          {linking ? 'Redirecting…' : identities?.some((i) => i.provider === 'google') ? 'Link Another Google Account' : 'Link Your Google Account'}
+        </Button>
+        {!identities?.some((i) => i.provider === 'discord') && (
+          <Button variant="secondary" onClick={() => handleLink('discord')} disabled={linking}>
+            Connect Discord
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
