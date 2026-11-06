@@ -579,8 +579,8 @@ export default function PortalHub({
                 <ChevronLeft size={18} strokeWidth={2} aria-hidden="true" />
               </button>
               <span className={styles.panelTitle}>
-                <span className={styles.crumbGroup}>{GROUP_LABEL[openSection.group]}</span>
-                {openSection.label}
+                <span className={styles.crumbGroup}>{divisionHat ? 'Division' : GROUP_LABEL[openSection.group]}</span>
+                {divisionHat ? divisionHat.name : openSection.label}
               </span>
             </div>
             <div className={styles.panelBody}>

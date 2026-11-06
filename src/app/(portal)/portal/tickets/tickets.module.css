@@ -22,8 +22,7 @@
   border-radius: 8px;
   overflow: hidden;
   background: var(--pp-card);
-  border: 1px solid rgba(var(--pp-ink-rgb), 0.3);
-  border-left: 10px solid var(--yellow);
+  border: 2px solid var(--yellow);
   box-shadow: none;
   padding: 1.5rem;
 }
