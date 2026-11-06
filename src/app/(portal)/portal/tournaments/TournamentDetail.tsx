@@ -19,13 +19,14 @@ import EntrantsPanel from './EntrantsPanel';
 import StreamPanel from './StreamPanel';
 import TSettings from './TSettings';
 import StructurePanel from './StructurePanel';
+import ControlPanel from './ControlPanel';
 import NextStageBanner from './NextStageBanner';
 import { call, FORMAT_NAMES, STATUS_NAMES } from './types';
 import { useTournament } from './useTournament';
 import styles from './tournaments.module.css';
 
-type Tab = 'bracket' | 'structure' | 'entrants' | 'stream' | 'settings';
-const TABS: Tab[] = ['bracket', 'structure', 'entrants', 'stream', 'settings'];
+type Tab = 'bracket' | 'control' | 'structure' | 'entrants' | 'stream' | 'settings';
+const TABS: Tab[] = ['bracket', 'control', 'structure', 'entrants', 'stream', 'settings'];
 
 // One tournament for its organizers: the bracket (enter scores, call stations), the entrants and seeds, the stream links, and the settings. The address says which tab: /portal/tournaments/<tournament>/<tab>.
 export default function TournamentDetail({ slug, subtab, divisions }: { slug: string; subtab: string | null; divisions: { id: string; name: string }[] }) {
@@ -114,6 +115,7 @@ export default function TournamentDetail({ slug, subtab, divisions }: { slug: st
         onChange={goTab}
         tabs={[
           { id: 'bracket', label: 'Bracket', icon: <Swords /> },
+          { id: 'control', label: 'Control' },
           { id: 'structure', label: 'Structure', count: data.stages.length },
           { id: 'entrants', label: 'Entrants', count: active.length },
           { id: 'stream', label: 'Stream' },
@@ -203,6 +205,7 @@ export default function TournamentDetail({ slug, subtab, divisions }: { slug: st
               ))}
           </>
         ))}
+      {tab === 'control' && <ControlPanel data={data} reload={reload} />}
       {tab === 'structure' && <StructurePanel data={data} reload={reload} />}
       {tab === 'entrants' && <EntrantsPanel data={data} reload={reload} />}
       {tab === 'stream' && data.can.manage && <StreamPanel data={data} reload={reload} />}

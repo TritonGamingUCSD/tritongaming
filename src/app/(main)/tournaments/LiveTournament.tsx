@@ -5,6 +5,7 @@ import Link from 'next/link';
 import FeedBracket, { Standings } from '@/components/tournaments/FeedBracket';
 import { FORMAT_LABEL } from '@/components/tournaments/labels';
 import { useFeed, type Feed } from '@/components/tournaments/useFeed';
+import { PROVIDER_NAMES, type Provider } from '@/lib/tournaments/external';
 import styles from './tournaments.module.css';
 
 // The public page of a tournament: the bracket, standings and who plays now and next, updating by itself.
@@ -26,6 +27,16 @@ export default function LiveTournament({ slug, initial }: { slug: string; initia
           {t.status === 'live' ? 'Live' : t.status === 'complete' ? 'Finished' : 'Sign-ups open'}
         </span>
       </header>
+      {feed.links.length > 0 && (
+        <p className={styles.also}>
+          Also on:{' '}
+          {feed.links.map((l) => (
+            <a key={l.url} href={l.url} target="_blank" rel="noopener noreferrer">
+              {l.label || PROVIDER_NAMES[l.provider as Provider] || 'Link'}
+            </a>
+          ))}
+        </p>
+      )}
       {feed.now.length + feed.next.length > 0 && (
         <section className={styles.nowNext} aria-label="Now and next">
           {[...feed.now, ...feed.next].slice(0, 4).map((m) => (

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withTournament } from '@/lib/tournaments/server';
 import { logAudit } from '@/lib/notifications/audit';
+import { cleanLinks } from '@/lib/tournaments/external';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +54,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     patch.signups_open = status === 'registration';
   }
   if (b.new_overlay_token === true) patch.overlay_token = Array.from(crypto.getRandomValues(new Uint8Array(12)), (x) => x.toString(16).padStart(2, '0')).join('');
+  if ('external' in b) patch.settings = { ...(r.tournament.settings ?? {}), external: cleanLinks(b.external) };
   patch.updated_at = new Date().toISOString();
   const { error } = await r.svc.from('tournaments').update(patch).eq('id', r.tournament.id);
   if (error) return NextResponse.json({ error: 'Could not save. Try again.' }, { status: 500 });

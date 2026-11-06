@@ -21,3 +21,6 @@
 .stages button { padding: 0.35rem 0.8rem; border: 2px solid rgba(255, 255, 255, 0.4); border-radius: 8px; background: none; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
 .stageOn { background: #fff !important; color: #0b1730 !important; }
 .sheet { overflow-x: auto; padding: 1rem; border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 10px; background: rgba(255, 255, 255, 0.03); }
+
+.also { margin: 0; display: flex; gap: 0.8rem; flex-wrap: wrap; color: #9fb0c8; font-size: 0.9rem; }
+.also a { color: #f6c84c; font-weight: 700; }

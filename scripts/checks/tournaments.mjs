@@ -194,6 +194,23 @@ try {
   const pf = await (await fetch(`${BASE}${P}/feed`)).json();
   t.ok('the feed lists both stages', pf.stages?.length === 2 && pf.matches.some((m) => m.stage === 2));
 
+  // The producer's game-by-game entry (best of 3): the series score moves, then the match ends by itself
+  const qk = await mk('ZZ Quick', 'single', { best_of: 3 });
+  const Q = `/api/tournaments/${qk.j.id}`;
+  for (const n of ['A', 'B']) await head.call('POST', `${Q}/entrants`, { name: `ZZ ${n}` });
+  await head.call('POST', `${Q}/bracket`, { action: 'start' });
+  const qm = (await head.call('GET', Q)).j.matches.find((m) => m.status === 'ready');
+  const g1 = await head.call('POST', `${Q}/bracket`, { action: 'game', key: qm.key, winner: 'a' });
+  t.ok('a game win moves the series score and the match goes live', g1.s === 200 && g1.j.a === 1 && g1.j.b === 0, JSON.stringify(g1.j));
+  const q1 = (await head.call('GET', Q)).j.matches.find((m) => m.key === qm.key);
+  t.ok('the stored match is live with 1-0', q1.status === 'live' && q1.score_a === 1 && q1.score_b === 0 && q1.games.length === 1);
+  t.ok('the last game can be undone', (await head.call('POST', `${Q}/bracket`, { action: 'undo-game', key: qm.key })).s === 200);
+  await head.call('POST', `${Q}/bracket`, { action: 'game', key: qm.key, winner: 'b' });
+  const g3 = await head.call('POST', `${Q}/bracket`, { action: 'game', key: qm.key, winner: 'b' });
+  t.ok('the deciding game finishes the match and the tournament', g3.s === 200 && g3.j.complete === true, JSON.stringify(g3.j));
+  const qf = (await head.call('GET', Q)).j;
+  t.ok('the finished match has its two games and a winner', qf.matches[0].winner === 'b' && qf.matches[0].games.length === 2);
+
   // Editing the structure
   const ed = await mk('ZZ Edit', 'single');
   const E = `/api/tournaments/${ed.j.id}`;

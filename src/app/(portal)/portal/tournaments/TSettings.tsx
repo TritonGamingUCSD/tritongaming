@@ -6,6 +6,7 @@ import Notice from '@/components/ui/Notice';
 import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
+import { PROVIDER_NAMES, cleanLinks, type ExternalLink } from '@/lib/tournaments/external';
 import { call, FORMAT_NAMES, type TData } from './types';
 import styles from './tournaments.module.css';
 
@@ -25,6 +26,10 @@ export default function TSettings({ data, reload, onDeleted }: { data: TData; re
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [links, setLinks] = useState<ExternalLink[]>(cleanLinks(t.settings?.external));
+  const [newLink, setNewLink] = useState('');
+  const [importUrl, setImportUrl] = useState('');
+  const [importing, setImporting] = useState(false);
   const patch = async (body: object, done: string) => {
     setBusy(true);
     setError('');
@@ -90,6 +95,79 @@ export default function TSettings({ data, reload, onDeleted }: { data: TData; re
             }
           >
             Save
+          </Button>
+        </div>
+      </section>
+      <section className={styles.card}>
+        <h3 className={styles.cardTitle}>Other sites</h3>
+        <p className={styles.hint}>
+          This tournament can live on start.gg, Liquipedia, VLR.gg and others too. Add the links (they show on the public page), or bring entrants in from start.gg.
+        </p>
+        {links.length > 0 && (
+          <ul className={styles.links}>
+            {links.map((l) => (
+              <li key={l.url}>
+                <div>
+                  <strong>{l.label || PROVIDER_NAMES[l.provider]}</strong> <small>{PROVIDER_NAMES[l.provider]}</small>
+                  <code>{l.url}</code>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => patch({ external: links.filter((x) => x.url !== l.url) }, 'Link removed').then(() => setLinks(links.filter((x) => x.url !== l.url)))}
+                >
+                  Remove
+                </Button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <div className={styles.inline}>
+          <Input value={newLink} onChange={(e) => setNewLink(e.target.value)} placeholder="liquipedia.net/valorant/…" aria-label="Link to add" />
+          <Button
+            disabled={busy || !newLink.trim()}
+            onClick={async () => {
+              const next = cleanLinks([...links, { url: newLink }]);
+              if (next.length === links.length) return setError('That is not a web address, or it is already added.');
+              await patch({ external: next }, 'Link added');
+              setLinks(next);
+              setNewLink('');
+            }}
+          >
+            Add
+          </Button>
+        </div>
+        {!started && (
+          <>
+            <h3 className={styles.cardTitle}>Import from start.gg</h3>
+            <p className={styles.hint}>Paste the event page link. Entrants come in as guests in seed order. Needs the club’s start.gg token (set once by an admin).</p>
+            <div className={styles.inline}>
+              <Input value={importUrl} onChange={(e) => setImportUrl(e.target.value)} placeholder="start.gg/tournament/…/event/…" aria-label="start.gg event link" />
+              <Button
+                loading={importing}
+                disabled={!importUrl.trim()}
+                onClick={async () => {
+                  setImporting(true);
+                  setError('');
+                  const r = await call<{ added: number; skipped: number }>('POST', `/api/tournaments/${t.id}/import`, { url: importUrl });
+                  setImporting(false);
+                  if (r.ok) {
+                    showToast(`Added ${r.j.added} entrants${r.j.skipped ? ` (${r.j.skipped} already in)` : ''}`);
+                    setImportUrl('');
+                    reload();
+                  } else setError(r.j.error || 'Could not import.');
+                }}
+              >
+                Import
+              </Button>
+            </div>
+          </>
+        )}
+        <h3 className={styles.cardTitle}>Results as text</h3>
+        <p className={styles.hint}>Copy the placements and every result as plain text, to paste into a Liquipedia page, a post or a recap.</p>
+        <div className={styles.cardActions}>
+          <Button variant="secondary" size="sm" onClick={() => void navigator.clipboard?.writeText(resultsText(data)).then(() => showToast('Results copied'))}>
+            Copy Results
           </Button>
         </div>
       </section>
@@ -165,4 +243,18 @@ export default function TSettings({ data, reload, onDeleted }: { data: TData; re
       </section>
     </div>
   );
+}
+
+// Every finished match as one line, grouped by stage and round, for pasting elsewhere.
+function resultsText(data: TData): string {
+  const nm = (id: string | null) => (id && id !== 'BYE' ? (data.entrants.find((e) => e.id === id)?.name ?? '?') : id === 'BYE' ? 'BYE' : 'TBD');
+  const lines = [`${data.tournament.name}${data.tournament.game ? ` (${data.tournament.game})` : ''}`, ''];
+  for (const s of data.stages) {
+    lines.push(`== ${s.name} ==`);
+    for (const m of data.matches.filter((x) => x.stage_id === s.id && x.status === 'done')) {
+      lines.push(`${m.bracket}${m.round}${m.group_no ? ` pool ${String.fromCharCode(64 + m.group_no)}` : ''}: ${nm(m.a)} ${m.score_a}-${m.score_b} ${nm(m.b)}`);
+    }
+    lines.push('');
+  }
+  return lines.join('\n');
 }

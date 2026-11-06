@@ -1,0 +1,17 @@
+.wrap { display: grid; gap: 1rem; }
+.hint { margin: 0; color: rgba(var(--pp-ink-rgb), 0.75); font-size: 0.88rem; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(22rem, 1fr)); gap: 1.2rem; }
+.card { display: grid; gap: 0.8rem; padding: 1rem 1.1rem; border: 2px solid var(--pp-ink); border-radius: 10px; background: var(--pp-card); box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.live { border-color: #dc2626; box-shadow: 4px 4px 0 #dc2626; } /* theme-ok */
+.card header { display: flex; justify-content: space-between; align-items: center; gap: 0.6rem; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.7); }
+.livePill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border: 2px solid #dc2626; border-radius: 6px; background: #dc2626; color: #fff; font: inherit; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; } /* theme-ok */
+.sides { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+.side { display: grid; gap: 0.4rem; justify-items: center; text-align: center; padding: 0.7rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 8px; }
+.side b { font-size: 1.05rem; overflow-wrap: anywhere; }
+.side em { font-style: normal; font-size: 2.6rem; font-weight: 800; line-height: 1; font-variant-numeric: tabular-nums; }
+.series { margin: 0; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+.card footer { display: flex; align-items: flex-end; gap: 0.7rem; flex-wrap: wrap; }
+.card footer label { display: grid; gap: 0.2rem; font-size: 0.75rem; font-weight: 700; flex: 1; min-width: 8rem; }
+.undo { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.4rem 0.7rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.45); border-radius: 6px; background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.8rem; font-weight: 700; cursor: pointer; }
+.undo:hover:not(:disabled) { border-color: var(--pp-ink); }
+.card footer small { flex-basis: 100%; font-size: 0.72rem; color: rgba(var(--pp-ink-rgb), 0.6); }

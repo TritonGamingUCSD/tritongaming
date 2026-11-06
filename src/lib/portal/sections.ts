@@ -33,6 +33,15 @@ export const SECTIONS: SectionDef[] = [
       caps: ['view_admin_dashboard'],
     },
   },
+  {
+    id: 'broadcast',
+    label: 'Broadcast',
+    search: {
+      hint: 'Stream schedule, roles, go-live checklist and OBS tools',
+      keywords: ['stream', 'twitch', 'youtube', 'obs', 'live', 'cast', 'overlay'],
+      caps: ['view_admin_dashboard'],
+    },
+  },
   { id: 'members', label: 'TG Members', mainTab: 'members', search: { hint: 'Everyone in the org', keywords: ['people', 'directory', 'roster', 'team'], caps: ['view_members'] } },
   {
     id: 'meetings',

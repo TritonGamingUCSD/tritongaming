@@ -26,6 +26,7 @@ import {
   MessagesSquare,
   Newspaper,
   Trophy,
+  Radio,
 } from 'lucide-react';
 import { getProfile, getUserRoles, getMyPrivateProfile, getUser, getSessionRoles, getViewAs, getViewingUser } from '@/lib/core/auth';
 import { ViewAsSwitcher, ViewAsBanner, ViewingUserBanner } from '@/components/portal/ViewAs';
@@ -75,6 +76,8 @@ import TodoCard from './TodoCard';
 import StrikeCard from './strikes/StrikeCard';
 import StrikesSectionContent from './strikes/StrikesSectionContent';
 import LogisticsSectionContent from './logistics/LogisticsSectionContent';
+import BroadcastSectionContent from './broadcast/BroadcastSectionContent';
+import { BROADCAST_ADMIN_ONLY } from '@/lib/broadcast/config';
 import TournamentsSectionContent from './tournaments/TournamentsSectionContent';
 import { TOURNAMENTS_ADMIN_ONLY } from '@/lib/tournaments/access';
 import StaffleSectionContent from './staffle/StaffleSectionContent';
@@ -506,6 +509,21 @@ export default async function PortalDashboard({ searchParams }: Props) {
           },
         ]
       : []),
+    // Broadcast: the stream schedule, roles, go-live checklist and OBS tools for Twitch and YouTube. Admin-only for now (lib/broadcast/config.ts).
+    ...(roles.some((r) => r.role === 'admin') || (!BROADCAST_ADMIN_ONLY && roles.some((r) => r.role === 'exec'))
+      ? [
+          {
+            id: 'broadcast',
+            icon: <Radio size={28} strokeWidth={1.5} aria-hidden="true" />,
+            label: sectionLabel('broadcast'),
+            description: 'Stream schedule, roles, go-live checklist and OBS tools',
+            homeExclude: true,
+            dockExclude: true,
+            group: 'Events' as const,
+            content: <BroadcastSectionContent />,
+          },
+        ]
+      : []),
     // A raffle among staff for prizes from Prizing: everyone who can see Event Logistics can look and enter; the logistics team makes them, draws and marks prizes picked up.
     ...(canManageLogistics || hasCapability(roles, 'view_logistics')
       ? [
@@ -735,6 +753,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     newsletter: 'newsletter',
     meetings: 'meetings',
     tournaments: 'tournaments',
+    broadcast: 'broadcast',
   };
   for (let i = sections.length - 1; i >= 0; i--) if (SWITCH_OF[sections[i].id] && siteSettings.off.includes(SWITCH_OF[sections[i].id])) sections.splice(i, 1);
   // A to Z of everything this person can open (built from the list above, so it can never offer a page they lack).

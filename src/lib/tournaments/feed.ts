@@ -105,6 +105,11 @@ export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchR
       starts_at: t.starts_at,
       swiss_rounds: cur?.format === 'swiss' ? (cur.settings.swiss_rounds ?? swissRounds(active)) : null,
     },
+    links: ((t.settings?.external as { provider: string; url: string; label?: string }[] | undefined) ?? []).map((l) => ({
+      provider: l.provider,
+      url: l.url,
+      label: l.label ?? null,
+    })),
     stages: stages.map((s) => ({ position: s.position, name: s.name, format: s.format, status: s.status, best_of: s.settings.best_of ?? t.best_of })),
     current_stage: cur?.position ?? 1,
     entrants: entrants.map((e) => ({ id: e.id, name: e.name, seed: e.seed, dropped: e.dropped })),

@@ -1,0 +1,39 @@
+.wrap { display: grid; gap: 1.2rem; margin-top: 1rem; }
+.toolbar { display: flex; justify-content: flex-end; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr)); gap: 1.3rem; align-items: start; }
+.card { display: grid; gap: 0.9rem; padding: 1rem 1.2rem; border: 2px solid var(--pp-ink); border-radius: 10px; background: var(--pp-card); box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.live { border-color: #dc2626; box-shadow: 4px 4px 0 #dc2626; } /* theme-ok */
+.past { opacity: 0.75; }
+.card header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.8rem; }
+.card h3 { margin: 0.1rem 0 0; font-size: 1.15rem; }
+.card h4 { margin: 0 0 0.4rem; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.65); }
+.kicker { margin: 0; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.65); }
+.tLink { font-size: 0.82rem; font-weight: 700; color: var(--p-accent-text); text-decoration: underline; }
+.livePill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.7rem; border: 2px solid #dc2626; border-radius: 6px; background: #dc2626; color: #fff; font: inherit; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; cursor: pointer; } /* theme-ok */
+.statusTag { padding: 0.15rem 0.6rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.5); border-radius: 4px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.muted { margin: 0; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.7); }
+.empty { margin: 0; color: rgba(var(--pp-ink-rgb), 0.7); }
+.sub { margin: 0.5rem 0 0; font-size: 0.95rem; }
+.roles { list-style: none; margin: 0 0 0.5rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.roles li { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0.2rem 0.15rem 0.55rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.45); border-radius: 6px; font-size: 0.85rem; }
+.roles b { font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.65); }
+.roles button { border: 0; background: none; color: inherit; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0 0.3rem; }
+.addRole { display: grid; grid-template-columns: 1fr 1fr auto; gap: 0.4rem; align-items: center; }
+.check { border-top: 2px dotted rgba(var(--pp-ink-rgb), 0.25); padding-top: 0.6rem; }
+.check summary { cursor: pointer; font-weight: 700; display: flex; justify-content: space-between; }
+.check h5 { margin: 0.8rem 0 0.3rem; font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(var(--pp-ink-rgb), 0.65); }
+.check label { display: flex; gap: 0.5rem; align-items: flex-start; padding: 0.2rem 0; font-size: 0.88rem; cursor: pointer; }
+.check small { display: block; color: rgba(var(--pp-ink-rgb), 0.65); font-size: 0.75rem; }
+.notes { margin: 0; font-size: 0.88rem; white-space: pre-wrap; }
+.card footer { display: flex; justify-content: space-between; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+.card footer > :first-child:not(button) { flex: 1; min-width: 10rem; }
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+.pick { display: grid; gap: 0.3rem; max-width: 24rem; font-size: 0.8rem; font-weight: 700; }
+.toolGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); gap: 1rem; }
+.tool { display: grid; gap: 0.3rem; padding: 0.9rem 1rem; border: 2px solid var(--pp-ink); border-radius: 10px; background: var(--pp-card); color: var(--pp-ink); text-decoration: none; box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.tool:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.tool span { font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.75); }
+.steps { margin: 0; padding-left: 1.2rem; display: grid; gap: 0.4rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+.setup { max-width: 40rem; margin-top: 1rem; }
+.actions { display: flex; gap: 1rem; align-items: center; flex-wrap: wrap; }
+@media (max-width: 640px) { .twoCol, .addRole { grid-template-columns: 1fr; } }

@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 type Game = { a: number; b: number; map?: string; pick_a?: string; pick_b?: string };
 type Body = {
-  action?: 'start' | 'start-stage' | 'report' | 'undo' | 'next-round' | 'station' | 'live' | 'reset';
+  action?: 'start' | 'start-stage' | 'report' | 'undo' | 'next-round' | 'station' | 'live' | 'reset' | 'game' | 'undo-game';
   key?: string;
   stage_id?: string;
   order?: string[];
@@ -18,6 +18,8 @@ type Body = {
   games?: Game[];
   station?: string;
   on?: boolean;
+  winner?: 'a' | 'b';
+  map?: string;
 };
 
 // Everything that moves a tournament: start it (the first stage), start a later stage from the results of the one before, enter or undo a result, deal the next Swiss round, call a match to a station, mark it live, or reset it back to registration.
@@ -138,6 +140,36 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     }
     await r.svc.from('tournament_matches').update(patch).eq('tournament_id', t.id).eq('key', row.key);
     return NextResponse.json({ ok: true });
+  }
+
+  // The producer's quick entry: one game at a time ("A won this game"). The series score shows on the overlays as it goes, and the match finishes by itself when someone reaches the winning number of games.
+  if (b.action === 'game' || b.action === 'undo-game') {
+    if (row.status !== 'ready' && row.status !== 'live') return bad('That match is not being played.', 409);
+    const bestOf = bestOfOf(t, stage, row);
+    const need = Math.ceil(bestOf / 2);
+    const played: Game[] = [...(row.games ?? [])];
+    if (b.action === 'undo-game') played.pop();
+    else {
+      if (b.winner !== 'a' && b.winner !== 'b' && !(Number.isFinite(b.scoreA) && Number.isFinite(b.scoreB))) return bad('Say who won the game.');
+      const ga = b.winner ? (b.winner === 'a' ? 1 : 0) : Math.max(0, Math.trunc(Number(b.scoreA)));
+      const gb = b.winner ? (b.winner === 'b' ? 1 : 0) : Math.max(0, Math.trunc(Number(b.scoreB)));
+      if (ga === gb) return bad('A game needs a winner.');
+      played.push({ a: ga, b: gb, map: b.map?.slice(0, 40) });
+    }
+    const sa = played.filter((g) => g.a > g.b).length;
+    const sb = played.filter((g) => g.b > g.a).length;
+    if (b.action === 'game' && (sa >= need || sb >= need)) {
+      // That was the deciding game: finish the match the normal way.
+      b.action = 'report';
+      b.games = played;
+    } else {
+      await r.svc
+        .from('tournament_matches')
+        .update({ games: played, score_a: played.length ? sa : null, score_b: played.length ? sb : null, status: 'live', updated_at: now() })
+        .eq('tournament_id', t.id)
+        .eq('key', row.key);
+      return NextResponse.json({ ok: true, a: sa, b: sb });
+    }
   }
 
   try {

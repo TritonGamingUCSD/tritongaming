@@ -126,3 +126,10 @@
 .gameTile:hover, .tplTile:hover { border-color: var(--pp-ink); }
 .gameOn { border-color: var(--pp-ink); background: color-mix(in srgb, var(--yellow) 30%, var(--pp-card)); box-shadow: 3px 3px 0 var(--pp-ink); } /* theme-ok */
 .tips { margin: 0 0 0.8rem; padding-left: 1.1rem; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+
+.lookRow { display: grid; gap: 0.8rem; }
+.lookRow label { display: grid; gap: 0.25rem; font-size: 0.8rem; font-weight: 700; }
+.colorRow { display: flex; gap: 0.5rem; align-items: center; }
+.colorRow input[type='color'] { width: 2.6rem; height: 2.2rem; padding: 0; border: 2px solid var(--pp-ink); border-radius: 6px; background: none; cursor: pointer; }
+.previewBox { position: relative; aspect-ratio: 16 / 9; border: 2px solid var(--pp-ink); border-radius: 8px; overflow: hidden; background: conic-gradient(#3a4660 25%, #2b3550 0 50%, #3a4660 0 75%, #2b3550 0) 0 0 / 24px 24px; }
+.previewBox iframe { position: absolute; top: 0; left: 0; width: 1920px; height: 1080px; border: 0; transform-origin: 0 0; transform: scale(0.3); background: transparent; pointer-events: none; }
