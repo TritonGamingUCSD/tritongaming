@@ -15,6 +15,9 @@ Mark each line done or write what looked wrong.
 9. **Live Tools**: Trivia, Polls, Q&A and Photo Booth are separate pages. Make one in each; it shows only under this division (not in the club's lists).
 10. Phone: the bottom bar and More sheet show the division's pages; Home goes to the division's home.
 
+11. **Home**: post an announcement (it shows for Members, who are notified); remove it.
+12. **Members**: the "Taking join requests" switch. Turn it off: students see "Not taking requests". Turn it on, ask to join as a student, then Approve and Decline requests.
+
 ## As a Division Member
 1. Sees Home, Events? (no), Check-In, QR Codes, Live Tools, Members (read only). No Page or edit buttons.
 2. Can check in people at the division's events, not at the club's.
@@ -22,7 +25,7 @@ Mark each line done or write what looked wrong.
 
 ## As a student or guest
 1. Home opens with the member pass (student) or welcome ticket (guest).
-2. With divisions open, cards to explore appear, with a Join button when the division has a Discord or application link.
+2. With divisions open (or you are a preview person), cards to explore appear. "Ask To Join" sends a request (it then shows "Asked ✓"); the division's Discord is a small link beside it. A closed division says "Not taking requests".
 
 ## Public pages
 1. `/<address>`, `/events`, `/team`, `/gallery`: one navbar (the division's), no club navbar stacked above it, footer at the bottom, nothing odd on a phone.

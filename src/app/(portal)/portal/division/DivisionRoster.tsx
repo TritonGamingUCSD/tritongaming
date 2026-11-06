@@ -45,6 +45,7 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
   const [addRole, setAddRole] = useState<Role>('division_member');
   const [removing, setRemoving] = useState<string | null>(null);
   const [requests, setRequests] = useState<JoinRequest[]>([]);
+  const [joinOpen, setJoinOpen] = useState(true);
 
   const load = useCallback(async () => {
     const r = await fetch(`/api/divisions/${hat.id}/roster`, { cache: 'no-store' }).catch(() => null);
@@ -57,6 +58,7 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
     const r = await fetch(`/api/divisions/${hat.id}/join-requests`, { cache: 'no-store' }).catch(() => null);
     const j = r?.ok ? await r.json().catch(() => ({})) : {};
     setRequests((j.requests as JoinRequest[]) ?? []);
+    setJoinOpen(j.open !== false);
   }, [hat.id, canManage]);
   useEffect(() => {
     setPeople(null);
@@ -64,6 +66,16 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
     void load();
     void loadRequests();
   }, [load, loadRequests]);
+
+  async function toggleJoin(open: boolean) {
+    setBusy(true);
+    const r = await fetch(`/api/divisions/${hat.id}/join-requests`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ open }) }).catch(
+      () => null,
+    );
+    setBusy(false);
+    if (r?.ok) setJoinOpen(open);
+    else setError('Could not change that.');
+  }
 
   async function answer(id: string, action: 'approve' | 'decline') {
     setBusy(true);
@@ -119,6 +131,12 @@ export default function DivisionRoster({ hat }: { hat: DivisionHat }) {
   return (
     <div className={rosterStyles.wrap}>
       {error && <Notice tone="error">{error}</Notice>}
+      {canManage && (
+        <label className={rosterStyles.joinSwitch}>
+          <input type="checkbox" checked={joinOpen} disabled={busy} onChange={(e) => void toggleJoin(e.target.checked)} /> Taking join requests
+          <small>{joinOpen ? 'Students can ask to join from the portal.' : 'Closed: students see “Not taking requests”. Waiting requests stay below.'}</small>
+        </label>
+      )}
       {canManage && requests.length > 0 && (
         <section className={rosterStyles.add} aria-label="Join requests">
           <strong>Join requests ({requests.length})</strong>

@@ -64,6 +64,13 @@ try {
       (await rolesOf(student2)).length === 0,
   );
 
+  // closing join requests
+  t.ok('a Member cannot close join requests', (await member.call('PUT', R, { open: false })).s === 403);
+  t.ok('a Head closes them', (await head.call('PUT', R, { open: false })).s === 200 && (await head.call('GET', R)).j.open === false);
+  t.ok('a student then sees it is closed', (await student2.call('GET', J)).j.closed === true);
+  t.ok('and cannot ask', (await student2.call('DELETE', J)).s === 200 && (await student2.call('POST', J, {})).s === 403);
+  t.ok('a Head opens them again', (await head.call('PUT', R, { open: true })).s === 200 && (await student2.call('POST', J, {})).s === 201);
+
   // announcements
   t.ok('a Member cannot post', (await member.call('POST', A, { title: 'ZZ nope' })).s === 403);
   t.ok('a title is needed', (await head.call('POST', A, { title: '  ' })).s === 400);

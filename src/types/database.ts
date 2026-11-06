@@ -162,6 +162,7 @@ export interface Database {
           accent: string | null;
           tagline: string | null;
           banner_url: string | null;
+          join_open: boolean;
           created_at: string;
         };
         Insert: Omit<Database['public']['Tables']['divisions']['Row'], 'id' | 'created_at'>;

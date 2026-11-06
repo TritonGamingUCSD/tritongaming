@@ -23,6 +23,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const svc = createServiceClient();
   const { data: roles } = await svc.from('user_roles').select('role').eq('user_id', user.id).eq('division_id', id).limit(1);
   if ((roles ?? []).length) return NextResponse.json({ status: 'member' });
+  const { data: div } = await svc.from('divisions').select('join_open').eq('id', id).maybeSingle();
   const { data: last } = await svc
     .from('division_join_requests')
     .select('status')
@@ -31,7 +32,10 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .order('created_at', { ascending: false })
     .limit(1)
     .maybeSingle();
-  return NextResponse.json({ status: (last?.status as string | undefined) === 'pending' ? 'pending' : last?.status === 'declined' ? 'declined' : 'none' });
+  return NextResponse.json({
+    status: (last?.status as string | undefined) === 'pending' ? 'pending' : last?.status === 'declined' ? 'declined' : 'none',
+    closed: div?.join_open === false,
+  });
 }
 
 // Ask to join: { message? }. One waiting request per person per division. The division's Heads are told.
@@ -41,8 +45,9 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!user) return NextResponse.json({ error: 'Sign in to ask to join.' }, { status: 401 });
   const b = (await request.json().catch(() => ({}))) as { message?: string };
   const svc = createServiceClient();
-  const { data: division } = await svc.from('divisions').select('id, name, slug').eq('id', id).maybeSingle();
+  const { data: division } = await svc.from('divisions').select('id, name, slug, join_open').eq('id', id).maybeSingle();
   if (!division) return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  if (division.join_open === false) return NextResponse.json({ error: `${division.name} is not taking join requests right now.` }, { status: 403 });
   const { data: roles } = await svc.from('user_roles').select('role').eq('user_id', user.id).eq('division_id', id).limit(1);
   if ((roles ?? []).length) return NextResponse.json({ error: 'You are already in this division.' }, { status: 409 });
   const { error } = await svc.from('division_join_requests').insert({ division_id: id, user_id: user.id, message: (b.message ?? '').trim().slice(0, 300) || null });

@@ -30,11 +30,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const h = await head(id);
   if ('error' in h) return h.error;
+  const { data: div } = await h.svc.from('divisions').select('join_open').eq('id', id).maybeSingle();
   const { data: rows } = await h.svc.from('division_join_requests').select('id, user_id, message, created_at').eq('division_id', id).eq('status', 'pending').order('created_at');
   const ids = (rows ?? []).map((r) => r.user_id as string);
   const { data: profiles } = ids.length ? await h.svc.from('profiles').select('id, display_name, google_first_name, custom_avatar_url, avatar_url').in('id', ids) : { data: [] };
   const by = new Map((profiles ?? []).map((p) => [p.id as string, p]));
   return NextResponse.json({
+    open: div?.join_open !== false,
     requests: (rows ?? []).map((r) => {
       const p = by.get(r.user_id as string);
       return {
@@ -87,4 +89,23 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     },
   ]);
   return NextResponse.json({ ok: true });
+}
+
+// { open: boolean }: take join requests, or stop taking them (a full division). Waiting requests stay for the Heads to answer.
+export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const h = await head(id);
+  if ('error' in h) return h.error;
+  const b = (await request.json().catch(() => ({}))) as { open?: boolean };
+  if (typeof b.open !== 'boolean') return NextResponse.json({ error: 'Say open or closed.' }, { status: 400 });
+  const { error } = await h.svc.from('divisions').update({ join_open: b.open }).eq('id', id);
+  if (error) return NextResponse.json({ error: 'Could not save. Try again.' }, { status: 500 });
+  await logAudit(h.svc, {
+    actorId: h.user.id,
+    action: 'update',
+    entityType: 'division',
+    entityId: id,
+    summary: b.open ? 'Opened a division to join requests' : 'Closed a division to join requests',
+  });
+  return NextResponse.json({ ok: true, open: b.open });
 }

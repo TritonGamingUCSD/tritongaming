@@ -6,13 +6,18 @@ import styles from './dashboardHome.module.css';
 // "Ask to Join" for a division: sends a request its Heads answer. Shows where it stands afterwards (asked, in, declined). The division's Discord stays a small link beside it.
 export default function JoinDivision({ id, discordUrl }: { id: string; discordUrl: string | null }) {
   const [status, setStatus] = useState<'loading' | 'none' | 'pending' | 'member' | 'declined'>('loading');
+  const [closed, setClosed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   useEffect(() => {
     let live = true;
     fetch(`/api/divisions/${id}/join`, { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : { status: 'none' }))
-      .then((j) => live && setStatus(j.status))
+      .then((j) => {
+        if (!live) return;
+        setStatus(j.status);
+        setClosed(!!j.closed);
+      })
       .catch(() => live && setStatus('none'));
     return () => {
       live = false;
@@ -30,7 +35,9 @@ export default function JoinDivision({ id, discordUrl }: { id: string; discordUr
   if (status === 'loading' || status === 'member') return null;
   return (
     <span className={styles.joinWrap}>
-      {status === 'pending' ? (
+      {closed && status !== 'pending' ? (
+        <span className={styles.joinAsked}>Not taking requests</span>
+      ) : status === 'pending' ? (
         <span className={styles.joinAsked}>Asked ✓</span>
       ) : (
         <button type="button" className={styles.joinBtn} onClick={ask} disabled={busy}>

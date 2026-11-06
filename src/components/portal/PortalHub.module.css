@@ -1181,6 +1181,8 @@
 .railLogo:hover { transform: rotate(1deg) scale(1.02); }
 .railGroupText { padding: 0.12rem 0.5rem; background: var(--accent); color: #011941; border-radius: 3px; font-family: var(--font-renegare); font-size: 0.6rem; letter-spacing: 0.14em; text-transform: uppercase; transform: rotate(-1deg); } /* theme-ok: a sticker keeps its own color with ink text */
 .railItem { position: relative; }
-.railItemActive::after { content: ''; position: absolute; top: -0.32rem; right: 0.8rem; width: 1.9rem; height: 0.7rem; transform: rotate(4deg); background: color-mix(in srgb, var(--yellow) 70%, transparent); border-left: 2px dotted rgba(0, 0, 0, 0.3); border-right: 2px dotted rgba(0, 0, 0, 0.3); pointer-events: none; }
+/* The tape rides the gliding block on wide screens, so it slides with the note; with no glide (small screens) it sits on the item. */
+@media (max-width: 899px) { .railItemActive::after { content: ''; position: absolute; top: -0.32rem; right: 0.8rem; width: 1.9rem; height: 0.7rem; transform: rotate(4deg); background: color-mix(in srgb, var(--yellow) 70%, transparent); border-left: 2px dotted rgba(0, 0, 0, 0.3); border-right: 2px dotted rgba(0, 0, 0, 0.3); pointer-events: none; } }
+@media (min-width: 900px) { .railGlide::after { content: ''; position: absolute; top: -0.32rem; right: 0.8rem; width: 1.9rem; height: 0.7rem; transform: rotate(4deg); background: color-mix(in srgb, var(--yellow) 70%, transparent); border-left: 2px dotted rgba(0, 0, 0, 0.3); border-right: 2px dotted rgba(0, 0, 0, 0.3); pointer-events: none; transition: opacity 0.2s; } }
 @media (prefers-reduced-motion: reduce) { .railLogo { transition: none; } .railLogo:hover { transform: rotate(-1.5deg); } }
 .rail .railGroupLabel .railGroupText { flex: 0 0 auto; align-self: center; }

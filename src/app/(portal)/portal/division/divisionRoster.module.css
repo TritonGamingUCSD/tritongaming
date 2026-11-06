@@ -7,3 +7,5 @@
 .pname { flex: 1; min-width: 0; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .have { font-size: 0.78rem; opacity: 0.75; }
 .confirm { display: inline-flex; gap: 0.35rem; }
+.joinSwitch { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 0.2rem 0.5rem; font-weight: 600; }
+.joinSwitch small { grid-column: 2; font-weight: 400; opacity: 0.75; }
