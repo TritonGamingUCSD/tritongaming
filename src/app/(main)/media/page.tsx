@@ -1,3 +1,5 @@
+import { getOffSwitches } from '@/lib/portal/featureServer';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { resolveSections } from '@/lib/site/pageLayout';
 import { Fragment } from 'react';
@@ -31,6 +33,7 @@ export const metadata: Metadata = {
 type ListItem = { value?: string; label?: string };
 
 export default async function MediaPage() {
+  if ((await getOffSwitches()).includes('public_media')) notFound();
   const sitePhotos = await getSitePhotos();
   const blocks = await getContentBlocks(['page.media', 'media.videos', 'media.albums', 'layout.media']);
   const content = blocks['page.media'] ?? {};

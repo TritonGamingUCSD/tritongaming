@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
 import { authorizeTrivia, findQuiz, lockedQuizIds, publicState, quizGate } from '@/lib/trivia/server';
@@ -80,6 +81,8 @@ export async function GET(request: Request) {
 
 // Open a lobby for a quiz.
 export async function POST(request: Request) {
+  const off = await guardFeature('trivia');
+  if (off) return off;
   const auth = await authorizeTrivia('host');
   if (auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));

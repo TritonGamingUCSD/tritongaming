@@ -8,29 +8,32 @@ export interface DivisionPage {
   needs: DivisionLevel;
   /** Which sidebar group it sits in (the same groups, icons and colors as the club's sidebar). Home has none: the logo at the top is home. */
   group?: 'Events' | 'Run' | 'Team';
+  /** Feature switches that must all be on for this page to show (see featureSwitches.ts). */
+  switches?: string[];
 }
 export const DIVISION_PAGES: readonly DivisionPage[] = [
   { id: 'home', label: 'Home', needs: 'alumni' },
   { id: 'events', label: 'Events', needs: 'head', group: 'Events' },
   { id: 'check-in', label: 'Check-In', needs: 'member', group: 'Events' },
   { id: 'qr', label: 'QR Codes', needs: 'member', group: 'Events' },
-  { id: 'trivia', label: 'Trivia', needs: 'member', group: 'Run' },
-  { id: 'polls', label: 'Polls', needs: 'member', group: 'Run' },
-  { id: 'qa', label: 'Q&A', needs: 'member', group: 'Run' },
-  { id: 'photobooth', label: 'Photo Booth', needs: 'member', group: 'Run' },
+  { id: 'trivia', label: 'Trivia', needs: 'member', group: 'Run', switches: ['div_live', 'trivia'] },
+  { id: 'polls', label: 'Polls', needs: 'member', group: 'Run', switches: ['div_live', 'polls'] },
+  { id: 'qa', label: 'Q&A', needs: 'member', group: 'Run', switches: ['div_live', 'qa'] },
+  { id: 'photobooth', label: 'Photo Booth', needs: 'member', group: 'Run', switches: ['div_live', 'photobooth'] },
   { id: 'members', label: 'Members', needs: 'alumni', group: 'Team' },
   { id: 'docs', label: 'Docs', needs: 'alumni', group: 'Team' },
   { id: 'page', label: 'Page', needs: 'head', group: 'Team' },
 ];
 const RANK: Record<DivisionLevel, number> = { alumni: 1, member: 2, head: 3 };
 /** The pages a person at this level sees ('staff' is exec and admin: every page). */
-export const divisionPagesFor = (level: DivisionLevel | 'staff'): DivisionPage[] => DIVISION_PAGES.filter((p) => level === 'staff' || RANK[level] >= RANK[p.needs]);
+export const divisionPagesFor = (level: DivisionLevel | 'staff', off: string[] = []): DivisionPage[] =>
+  DIVISION_PAGES.filter((p) => (level === 'staff' || RANK[level] >= RANK[p.needs]) && !(p.switches ?? []).some((k) => off.includes(k)));
 export const isDivisionPageId = (id: string | null | undefined): id is string => !!id && DIVISION_PAGES.some((p) => p.id === id);
 
 /** The sidebar groups of a division, in order, with only the pages this level may open. */
 export const DIVISION_GROUP_LABEL = { Events: 'Events', Run: 'Live Tools', Team: 'Division' } as const;
-export function divisionSidebar(level: DivisionLevel | 'staff'): { group: 'Events' | 'Run' | 'Team'; label: string; items: DivisionPage[] }[] {
-  const pages = divisionPagesFor(level).filter((p) => p.group);
+export function divisionSidebar(level: DivisionLevel | 'staff', off: string[] = []): { group: 'Events' | 'Run' | 'Team'; label: string; items: DivisionPage[] }[] {
+  const pages = divisionPagesFor(level, off).filter((p) => p.group);
   return (['Events', 'Run', 'Team'] as const)
     .map((group) => ({ group, label: DIVISION_GROUP_LABEL[group], items: pages.filter((p) => p.group === group) }))
     .filter((g) => g.items.length > 0);

@@ -37,7 +37,7 @@ import { CONTENT_BLOCKS } from '@/lib/site/content-blocks';
 import { PACIFIC_TZ, pacificDayKey, pacificDaysUntil, pacificToday } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { sectionLabel } from '@/lib/portal/sections';
-import { bannerShown, divisionsVisible, loadSiteSettings } from '@/lib/portal/siteSettings';
+import { bannerShown, loadSiteSettings } from '@/lib/portal/siteSettings';
 import PortalBanner from '@/components/portal/PortalBanner';
 import { loadDivisionHats } from '@/lib/divisions/hats';
 import { accentOf } from '@/lib/divisions/accent';
@@ -255,14 +255,8 @@ export default async function PortalDashboard({ searchParams }: Props) {
     loadShoutout(createServiceClient()).catch(() => null),
     loadSiteSettings(createServiceClient()),
   ]);
-  // The divisions this person can switch to. Until an admin turns the division features on, only admins (really, not when viewing as someone) get any; exec and admin see every division.
-  const divisionHats = divisionsVisible(
-    realRoles.some((r) => r.role === 'admin'),
-    siteSettings,
-    profile.id,
-  )
-    ? await loadDivisionHats(createServiceClient(), roles).catch(() => [])
-    : [];
+  // The divisions this person can switch to (exec and admin see every division).
+  const divisionHats = await loadDivisionHats(createServiceClient(), roles).catch(() => []);
   // Who is looking, and as whom: the lazy sections keep their data per view, so a changed "view as" never shows another view's data.
   const scope = `${profile.id}|${viewAs ?? ''}|${viewingUser?.id ?? ''}`;
 
@@ -713,6 +707,18 @@ export default async function PortalDashboard({ searchParams }: Props) {
         ]
       : []),
   ];
+  // Sections whose feature an admin has switched off (Admin → Settings) are left out everywhere: the sidebar, the dock, the home cards and the A to Z.
+  const SWITCH_OF: Record<string, string> = {
+    trivia: 'trivia',
+    polls: 'polls',
+    qa: 'qa',
+    photobooth: 'photobooth',
+    points: 'rewards',
+    logistics: 'logistics',
+    newsletter: 'newsletter',
+    meetings: 'meetings',
+  };
+  for (let i = sections.length - 1; i >= 0; i--) if (SWITCH_OF[sections[i].id] && siteSettings.off.includes(SWITCH_OF[sections[i].id])) sections.splice(i, 1);
   // A to Z of everything this person can open (built from the list above, so it can never offer a page they lack).
   sections.push({
     id: 'all',
@@ -1000,7 +1006,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
                       }
                 }
                 explore={
-                  !isTgMember(roles) && siteSettings.divisionsOpen
+                  !isTgMember(roles)
                     ? divisions
                         .filter((d) => d.logo_url || d.name)
                         .map((d) => ({

@@ -5,6 +5,7 @@ import { strictUser } from '@/lib/supabase/localAuth';
 import { canDivisionAction } from '@/lib/portal/divisionAccess';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import { withGrantedCapabilities } from '@/lib/portal/capabilities';
+import { getOffSwitches } from '@/lib/portal/featureServer';
 import { logAudit } from '@/lib/notifications/audit';
 import { createNotifications } from '@/lib/notifications/notify';
 
@@ -47,9 +48,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { data: division } = await w.svc.from('divisions').select('name, slug').eq('id', id).maybeSingle();
   const { data: people } = await w.svc.from('user_roles').select('user_id').eq('division_id', id).in('role', ['division', 'division_member']);
   const ids = [...new Set((people ?? []).map((p) => p.user_id as string))].filter((u) => u !== w.user.id);
+  const quiet = (await getOffSwitches()).includes('div_announce_notify');
   await createNotifications(
     w.svc,
-    ids.map((u) => ({
+    (quiet ? [] : ids).map((u) => ({
       user_id: u,
       type: 'division_announcement',
       title: `${division?.name ?? 'Division'}: ${title}`,

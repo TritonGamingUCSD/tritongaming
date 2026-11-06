@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { SWITCH_DB_KEYS, parseOff } from './featureSwitches';
 
 // The settings an Admin can change for the whole site (Admin → System → Settings), kept as text in the `team_settings` key/value table (no table of their own). A setting that was never saved,
 // or that holds something unreadable, is its default. Read by the portal layout on every request (four small rows) and given to the pages through a context.
@@ -22,31 +23,14 @@ export interface SiteSettings {
   /** A use's own choice; one that is missing follows `codeStyle`. */
   codeStyles: Partial<Record<CodeUse, CodeStyle>>;
   banner: PortalBanner;
-  /** The division features (switcher, division roles in use, division pages) are shown to everyone. Until an admin turns this on they are admin-only. */
-  divisionsOpen: boolean;
-  /** While the division features are admin-only, these people can see them too (to try them out before everyone). Name kept for the list in Admin. */
-  divisionsPreview: { id: string; name: string }[];
+  /** The keys of the feature switches an admin has turned off (see featureSwitches.ts). Everything else is on. */
+  off: string[];
 }
 
-export const DEFAULT_SETTINGS: SiteSettings = { codeStyle: 'qr', codeStyles: {}, banner: { on: false, text: '', until: '' }, divisionsOpen: false, divisionsPreview: [] };
+export const DEFAULT_SETTINGS: SiteSettings = { codeStyle: 'qr', codeStyles: {}, banner: { on: false, text: '', until: '' }, off: [] };
 export const BANNER_MAX = 160;
 export const codeStyleKey = (use: CodeUse) => `code_style_${use}`;
-export const SETTING_KEYS = ['code_style', ...CODE_USES.map(codeStyleKey), 'banner_on', 'banner_text', 'banner_until', 'divisions_open', 'divisions_preview'] as const;
-
-export const MAX_PREVIEW_PEOPLE = 20;
-/** The stored list of preview people ([{ id, name }] as JSON); anything malformed is an empty list. */
-export function parsePreview(raw: string | undefined): { id: string; name: string }[] {
-  try {
-    const list = JSON.parse(raw ?? '[]');
-    if (!Array.isArray(list)) return [];
-    return list
-      .filter((x): x is { id: string; name: string } => !!x && typeof x.id === 'string' && /^[0-9a-f-]{36}$/i.test(x.id))
-      .map((x) => ({ id: x.id, name: String(x.name ?? '').slice(0, 80) }))
-      .slice(0, MAX_PREVIEW_PEOPLE);
-  } catch {
-    return [];
-  }
-}
+export const SETTING_KEYS = ['code_style', ...CODE_USES.map(codeStyleKey), 'banner_on', 'banner_text', 'banner_until', ...SWITCH_DB_KEYS] as const;
 
 /** The settings from the rows of team_settings (any other rows are ignored). */
 export function parseSettings(rows: { key: string; value: string }[] | null | undefined): SiteSettings {
@@ -55,8 +39,7 @@ export function parseSettings(rows: { key: string; value: string }[] | null | un
   return {
     codeStyle: isStyle(v.get('code_style')) ? (v.get('code_style') as CodeStyle) : 'qr',
     codeStyles: Object.fromEntries(CODE_USES.map((u) => [u, v.get(codeStyleKey(u))]).filter(([, s]) => isStyle(s))),
-    divisionsOpen: v.get('divisions_open') === 'on',
-    divisionsPreview: parsePreview(v.get('divisions_preview')),
+    off: parseOff(rows),
     banner: {
       on: v.get('banner_on') === 'on',
       text: (v.get('banner_text') ?? '').slice(0, BANNER_MAX),
@@ -78,7 +61,3 @@ export const styleFor = (s: SiteSettings, use?: CodeUse): CodeStyle => (use && s
 
 /** Whether the banner shows on a day (`today`: YYYY-MM-DD, Pacific): it is on, has words, and its last day has not passed. */
 export const bannerShown = (s: SiteSettings, today: string): boolean => s.banner.on && s.banner.text.trim().length > 0 && (!s.banner.until || s.banner.until >= today);
-
-/** Whether the division features are visible to this person: admins always (to build and test them), everyone else only once an admin has turned the division features on. */
-export const divisionsVisible = (isAdmin: boolean, s: SiteSettings, userId?: string): boolean =>
-  isAdmin || s.divisionsOpen || (!!userId && s.divisionsPreview.some((p) => p.id === userId));

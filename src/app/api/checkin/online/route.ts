@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -14,6 +15,8 @@ import { canCheckInNow } from '@/lib/events/checkinDays';
 // by the exact audience — regular members — who are the ones typing a
 // code in here.
 export async function POST(request: Request) {
+  const off = await guardFeature('self_checkin');
+  if (off) return off;
   const supabase = await createClient();
   const {
     data: { user },

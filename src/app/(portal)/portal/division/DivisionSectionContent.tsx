@@ -8,6 +8,7 @@ import SectionHeader from '@/components/ui/SectionHeader';
 import { useLiveParams, usePortalParams } from '@/lib/portal/usePortalParams';
 import { mergedPortalParams } from '@/lib/portal/portalPath';
 import type { DivisionHat } from '@/components/portal/hubTypes';
+import { useSiteSettings } from '@/components/portal/SiteSettingsProvider';
 import { DIVISION_PAGES, divisionPagesFor, isDivisionPageId } from '@/lib/divisions/pages';
 import DivisionEvents from './DivisionEvents';
 import DivisionCheckIn from './DivisionCheckIn';
@@ -24,6 +25,7 @@ import styles from './division.module.css';
 // A division's pages in the portal. The address says which: /portal/division/<division address>/<page>. The division's sidebar (DesktopShell) lists the pages; this draws the open one.
 // Home and Members are real; the rest arrive in the next steps of the division project (events, check-in and Live Tools for the division; page, docs and settings).
 export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }) {
+  const siteOff = useSiteSettings().off;
   const setParams = usePortalParams();
   // Which division and page is read from the address bar and followed as it changes: a switch rewrites the address with the history API and Next reports that late, so waiting for it left the old page showing.
   const startParams = useLiveParams();
@@ -62,7 +64,7 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
       </div>
     );
   }
-  const allowed = divisionPagesFor(hat.level);
+  const allowed = divisionPagesFor(hat.level, siteOff);
   const page = isDivisionPageId(asked) && allowed.some((p) => p.id === asked) ? asked : 'home';
   const label = DIVISION_PAGES.find((p) => p.id === page)?.label ?? 'Home';
   return (

@@ -1,3 +1,4 @@
+import { guardDivisionLive, guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { authorizeTrivia, lockedQuizIds, QUIZ_COLUMNS } from '@/lib/trivia/server';
 import { isAskable } from '@/lib/trivia/game';
@@ -63,11 +64,15 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const off = await guardFeature('trivia');
+  if (off) return off;
   const auth = await authorizeTrivia('host');
   if (auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));
   const name = typeof b.name === 'string' ? b.name.trim().slice(0, 80) : '';
   if (!name) return NextResponse.json({ error: 'Give the quiz a name.' }, { status: 400 });
+  const divOff = await guardDivisionLive(b.division_id);
+  if (divOff) return divOff;
   const owner = newItemOwner(auth.scope, b.division_id);
   if (!owner.ok) return NextResponse.json({ error: owner.error }, { status: 403 });
   const base = slugify(name).slice(0, 50) || 'quiz';

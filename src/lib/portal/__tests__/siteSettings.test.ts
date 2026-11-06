@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { BANNER_MAX, DEFAULT_SETTINGS, bannerShown, parseSettings, styleFor, divisionsVisible } from '../siteSettings';
+import { BANNER_MAX, DEFAULT_SETTINGS, bannerShown, parseSettings, styleFor } from '../siteSettings';
 
 describe('site settings', () => {
   test('nothing saved means the defaults: QR code and no banner', () => {
@@ -19,8 +19,7 @@ describe('site settings', () => {
       codeStyle: 'byte',
       codeStyles: {},
       banner: { on: true, text: 'Check-in is at the Price Center', until: '2026-11-02' },
-      divisionsOpen: false,
-      divisionsPreview: [],
+      off: [],
     });
     expect(parseSettings([{ key: 'code_style', value: 'bytecode??' }]).codeStyle).toBe('qr');
     expect(parseSettings([{ key: 'code_style', value: 'tg' }]).codeStyle).toBe('tg');
@@ -52,18 +51,16 @@ describe('site settings', () => {
     expect(bannerShown({ ...on('Hello'), banner: { on: false, text: 'Hello', until: '' } }, '2026-11-01')).toBe(false);
   });
 
-  test('the division features are admin-only until an admin turns them on', () => {
-    expect(parseSettings([]).divisionsOpen).toBe(false);
-    expect(parseSettings([{ key: 'divisions_open', value: 'on' }]).divisionsOpen).toBe(true);
-    expect(parseSettings([{ key: 'divisions_open', value: 'yes' }]).divisionsOpen).toBe(false);
-    expect(divisionsVisible(true, DEFAULT_SETTINGS)).toBe(true);
-    expect(divisionsVisible(false, DEFAULT_SETTINGS)).toBe(false);
-    expect(divisionsVisible(false, { ...DEFAULT_SETTINGS, divisionsOpen: true })).toBe(true);
-    const preview = { ...DEFAULT_SETTINGS, divisionsPreview: [{ id: '11111111-1111-1111-1111-111111111111', name: 'A Head' }] };
-    expect(divisionsVisible(false, preview, '11111111-1111-1111-1111-111111111111')).toBe(true);
-    expect(divisionsVisible(false, preview, '22222222-2222-2222-2222-222222222222')).toBe(false);
-    expect(divisionsVisible(false, preview)).toBe(false);
-    expect(parseSettings([{ key: 'divisions_preview', value: '[{"id":"11111111-1111-1111-1111-111111111111","name":"A Head"},{"id":"bad"}]' }]).divisionsPreview).toHaveLength(1);
-    expect(parseSettings([{ key: 'divisions_preview', value: 'not json' }]).divisionsPreview).toEqual([]);
+  test('every feature is on until its switch is saved as off', () => {
+    expect(parseSettings([]).off).toEqual([]);
+    expect(
+      parseSettings([
+        { key: 'sw_trivia', value: 'off' },
+        { key: 'sw_div_join', value: 'off' },
+      ]).off,
+    ).toEqual(['trivia', 'div_join']);
+    expect(parseSettings([{ key: 'sw_trivia', value: 'on' }]).off).toEqual([]);
+    expect(parseSettings([{ key: 'sw_not_a_switch', value: 'off' }]).off).toEqual([]);
+    expect(parseSettings([{ key: 'sw_polls', value: 'yes' }]).off).toEqual([]);
   });
 });

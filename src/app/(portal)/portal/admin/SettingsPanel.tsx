@@ -6,7 +6,8 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { DateInput, Field, Textarea } from '@/components/ui/Field';
 import { showToast } from '@/lib/ui/toast';
-import { BANNER_MAX, CODE_STYLE_NAMES, CODE_USES, CODE_USE_NAMES, DEFAULT_SETTINGS, styleFor, type CodeStyle, type CodeUse, type SiteSettings } from '@/lib/portal/siteSettings';
+import { FEATURE_SWITCHES, featureOn } from '@/lib/portal/featureSwitches';
+import { BANNER_MAX, CODE_STYLE_NAMES, CODE_USES, CODE_USE_NAMES, styleFor, type CodeStyle, type CodeUse, type SiteSettings } from '@/lib/portal/siteSettings';
 import styles from './settings.module.css';
 
 async function api(init?: { method: 'POST'; body: object }) {
@@ -23,8 +24,9 @@ async function api(init?: { method: 'POST'; body: object }) {
   }
 }
 
-// Admin → System → Settings: what an Admin can change for the whole site. Each setting has its own Save (and a Reset To Default); every change is written to the audit log.
-export default function SettingsPanel() {
+// Admin → Settings: what an Admin can change for the whole site, one tab per job (Codes, Banner, Club Switches, Division Switches). Each setting saves on its own and every change is written to the audit log.
+export type SettingsPart = 'codes' | 'banner' | 'club-switches' | 'division-switches';
+export default function SettingsPanel({ part }: { part: SettingsPart }) {
   const [saved, setSaved] = useState<SiteSettings | null>(null);
   const [error, setError] = useState('');
   const load = useCallback(async () => {
@@ -40,10 +42,15 @@ export default function SettingsPanel() {
     <div className={styles.wrap}>
       <p className={styles.intro}>These apply to everyone on the portal. Each one saves on its own, and every change is recorded in the Audit Log.</p>
       {error && <Notice tone="error">{error}</Notice>}
-      <CodeStyleCard saved={saved} onSaved={setSaved} onError={setError} />
-      <CodeUsesCard saved={saved} onSaved={setSaved} onError={setError} />
-      <BannerCard saved={saved} onSaved={setSaved} onError={setError} />
-      <DivisionsCard saved={saved} onSaved={setSaved} onError={setError} />
+      {part === 'codes' && (
+        <>
+          <CodeStyleCard saved={saved} onSaved={setSaved} onError={setError} />
+          <CodeUsesCard saved={saved} onSaved={setSaved} onError={setError} />
+        </>
+      )}
+      {part === 'banner' && <BannerCard saved={saved} onSaved={setSaved} onError={setError} />}
+      {part === 'club-switches' && <SwitchesCard group="club" saved={saved} onSaved={setSaved} onError={setError} />}
+      {part === 'division-switches' && <SwitchesCard group="divisions" saved={saved} onSaved={setSaved} onError={setError} />}
     </div>
   );
 }
@@ -96,13 +103,6 @@ function CodeStyleCard({ saved, onSaved, onError }: CardProps) {
         <Button onClick={() => send({ setting: 'code_style', value }, `The default code is now ${CODE_STYLE_NAMES[value]}`)} loading={busy} disabled={value === saved.codeStyle}>
           Save
         </Button>
-        <Button
-          variant="secondary"
-          onClick={() => send({ setting: 'code_style', reset: true }, 'Back to QR code')}
-          disabled={busy || saved.codeStyle === DEFAULT_SETTINGS.codeStyle}
-        >
-          Reset To Default
-        </Button>
         <span className={styles.state}>Now: {CODE_STYLE_NAMES[saved.codeStyle]}</span>
       </div>
     </section>
@@ -154,93 +154,41 @@ function CodeUsesCard({ saved, onSaved, onError }: CardProps) {
   );
 }
 
-// The division features are built behind this switch: off means only admins see them (to build and test), on shows them to everyone. It is turned on once, when everything is finished.
-function DivisionsCard({ saved, onSaved, onError }: CardProps) {
-  const [busy, setBusy] = useState(false);
-  const set = async (on: boolean) => {
-    setBusy(true);
+// Feature switches: every feature is on until an admin turns it off. Each toggle saves at once and is written to the audit log.
+function SwitchesCard({ group, saved, onSaved, onError }: CardProps & { group: 'club' | 'divisions' }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const flip = async (key: string, label: string, on: boolean) => {
+    setBusy(key);
     onError('');
-    const { ok, json } = await api({ method: 'POST', body: { setting: 'divisions_open', on } });
-    setBusy(false);
+    const { ok, json } = await api({ method: 'POST', body: { setting: 'switch', key, on } });
+    setBusy(null);
     if (ok && json.settings) {
       onSaved(json.settings);
-      showToast(on ? 'Division features are on for everyone' : 'Division features are admin-only');
+      showToast(`${label} is ${on ? 'on' : 'off'}`);
     } else onError(json.error || 'Could not save.');
   };
+  const list = FEATURE_SWITCHES.filter((x) => x.group === group);
   return (
-    <section className={styles.card} aria-labelledby="set-divisions">
-      <h2 id="set-divisions">Division Features</h2>
-      <p className={styles.about}>
-        The division switcher, division pages and division roles in use. While this is off, only admins can see them, so they can be built and tested without anyone else noticing.
-        Turn it on when everything is finished.
-      </p>
-      <div className={styles.actions}>
-        <Button variant={saved.divisionsOpen ? 'secondary' : 'primary'} onClick={() => set(false)} disabled={busy || !saved.divisionsOpen} aria-pressed={!saved.divisionsOpen}>
-          Admins only
-        </Button>
-        <Button variant={saved.divisionsOpen ? 'primary' : 'secondary'} onClick={() => set(true)} disabled={busy || saved.divisionsOpen} aria-pressed={saved.divisionsOpen}>
-          Everyone
-        </Button>
-        <span className={styles.state}>Now: {saved.divisionsOpen ? 'everyone' : 'admins only'}</span>
-      </div>
-      {!saved.divisionsOpen && <PreviewPeople saved={saved} onSaved={onSaved} onError={onError} />}
-    </section>
-  );
-}
-
-// While the division features are admin-only, a few named people can also see them (a Head to try the walk-through, say). Added by the email they signed in with.
-function PreviewPeople({ saved, onSaved, onError }: CardProps) {
-  const [email, setEmail] = useState('');
-  const [busy, setBusy] = useState(false);
-  const send = async (body: object, done: string) => {
-    setBusy(true);
-    onError('');
-    const { ok, json } = await api({ method: 'POST', body: { setting: 'divisions_preview', ...body } });
-    setBusy(false);
-    if (ok && json.settings) {
-      onSaved(json.settings);
-      setEmail('');
-      showToast(done);
-    } else onError(json.error || 'Could not save.');
-  };
-  return (
-    <div className={styles.about}>
-      <strong>Preview for named people</strong>
-      <p style={{ margin: '0.25rem 0 0.5rem' }}>These people see the division features too, even while they are admin-only.</p>
-      {saved.divisionsPreview.length > 0 && (
-        <ul style={{ listStyle: 'none', margin: '0 0 0.5rem', padding: 0, display: 'grid', gap: '0.3rem' }}>
-          {saved.divisionsPreview.map((p) => (
-            <li key={p.id} style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-              <span>{p.name}</span>
-              <Button size="sm" variant="ghost" disabled={busy} onClick={() => send({ remove_id: p.id }, 'Removed')}>
-                Remove
+    <section className={styles.card} aria-labelledby={`set-sw-${group}`}>
+      <h2 id={`set-sw-${group}`}>{group === 'club' ? 'Club Features' : 'Division Features'}</h2>
+      <p className={styles.about}>Everything is on by default. Turn a feature off to hide it and block it everywhere; turn it back on whenever you like.</p>
+      <ul style={{ listStyle: 'none', margin: 0, padding: 0, display: 'grid', gap: '0.6rem' }}>
+        {list.map((x) => {
+          const on = featureOn(saved, x.key);
+          return (
+            <li key={x.key} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap' }}>
+              <span style={{ flex: '1 1 16rem' }}>
+                <strong>{x.label}</strong>
+                <small style={{ display: 'block', opacity: 0.75 }}>{on ? x.off.replace(/^/, 'If off: ') : x.off}</small>
+              </span>
+              <Button variant={on ? 'secondary' : 'primary'} size="sm" disabled={busy === x.key} aria-pressed={on} onClick={() => void flip(x.key, x.label, !on)}>
+                {on ? 'On — Turn Off' : 'Off — Turn On'}
               </Button>
             </li>
-          ))}
-        </ul>
-      )}
-      <div className={styles.actions}>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="Their email address"
-          aria-label="Email address of the person"
-          style={{
-            flex: '1 1 14rem',
-            padding: '0.5rem 0.7rem',
-            border: '1px solid rgba(var(--pp-ink-rgb), 0.3)',
-            borderRadius: 6,
-            background: 'var(--pp-paper)',
-            color: 'var(--pp-ink)',
-            font: 'inherit',
-          }}
-        />
-        <Button size="sm" disabled={busy || !email.includes('@')} onClick={() => send({ add_email: email }, 'Added')}>
-          Add Person
-        </Button>
-      </div>
-    </div>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
 

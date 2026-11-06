@@ -1,5 +1,6 @@
 'use client';
 
+import { useSiteSettings } from './SiteSettingsProvider';
 import { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
@@ -58,6 +59,7 @@ export function DesktopShell({
   divisionPage?: string;
   openDivision?: (slug: string, page?: string) => void;
 }) {
+  const siteOff = useSiteSettings().off;
   // Icon-only sidebar: remembered per browser. Read after mount so server and first client render match.
   const [collapsed, setCollapsed] = useState(false);
   useEffect(() => {
@@ -222,7 +224,7 @@ export function DesktopShell({
         {divisionHat ? (
           <nav ref={navRef} className={styles.railNav} aria-label={`${divisionHat.name} pages`} style={{ ['--hat' as string]: divisionHat.accent }}>
             <span ref={glideRef} className={styles.railGlide} aria-hidden="true" />
-            {divisionSidebar(divisionHat.level).map(({ group, label, items }) => (
+            {divisionSidebar(divisionHat.level, siteOff).map(({ group, label, items }) => (
               <div key={group} className={styles.railGroup} style={{ ['--accent' as string]: GROUP_ACCENT[group], flexGrow: items.length }}>
                 {items.length > 1 && (
                   <div className={styles.railGroupLabel}>

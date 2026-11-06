@@ -1,3 +1,4 @@
+import { getOffSwitches } from '@/lib/portal/featureServer';
 import { unstable_cache } from 'next/cache';
 import { createServiceClient } from '@/lib/supabase/admin';
 
@@ -9,6 +10,7 @@ export interface PublicDoc {
 
 // The division's docs marked Public, for its public page. Cached briefly like the page itself; the service client is used because the table is server-only.
 export async function getPublicDivisionDocs(divisionId: string): Promise<PublicDoc[]> {
+  if ((await getOffSwitches()).includes('div_public_docs')) return [];
   try {
     return await unstable_cache(
       async () => {

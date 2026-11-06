@@ -1,3 +1,4 @@
+import { getOffSwitches } from '@/lib/portal/featureServer';
 import type { Metadata } from 'next';
 import NextEventTicket from '@/components/NextEventTicket/NextEventTicket';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
@@ -84,7 +85,7 @@ export default async function EventsPage() {
     <div className={styles.page}>
       <PageHero label={heroLabel} title={heroTitle} sub={heroSub} />
 
-      {divisions.length > 0 && (
+      {divisions.length > 0 && !(await getOffSwitches()).includes('div_public_pages') && (
         <nav className={styles.divRow} aria-label="Events by division">
           <span className={styles.divLabel}>By Division</span>
           {divisions.map((d) => (

@@ -1,3 +1,4 @@
+import { getOffSwitches } from '@/lib/portal/featureServer';
 import type { MetadataRoute } from 'next';
 import { getAllEvents } from '@/lib/events/events';
 import { getDivisions } from '@/lib/members/divisions';
@@ -10,9 +11,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
 // list, which only renders a Link when `e.slug` is set), so it's skipped
 // here too rather than listing a URL nothing else points at.
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [events, divisions] = await Promise.all([getAllEvents(1000), getDivisions()]);
+  const [events, divisions, off] = await Promise.all([getAllEvents(1000), getDivisions(), getOffSwitches()]);
 
-  const staticRoutes: MetadataRoute.Sitemap = [
+  const hide = (path: string) => (path === '/sponsors' && off.includes('public_sponsors')) || (path === '/media' && off.includes('public_media'));
+  const staticRoutes = [
     { url: `${SITE_URL}/`, changeFrequency: 'weekly', priority: 1 },
     { url: `${SITE_URL}/team`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/events`, changeFrequency: 'daily', priority: 0.9 },
@@ -24,7 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${SITE_URL}/media`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.3 },
-  ];
+  ].filter((r) => !hide(r.url.replace(SITE_URL, ''))) as MetadataRoute.Sitemap;
 
   const eventRoutes: MetadataRoute.Sitemap = events
     .filter((e) => e.slug)
@@ -37,7 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }));
 
   // A division's address is /<slug>, with its events, team and gallery under it.
-  const divisionRoutes: MetadataRoute.Sitemap = divisions.flatMap((d) => [
+  const divisionRoutes: MetadataRoute.Sitemap = (off.includes('div_public_pages') ? [] : divisions).flatMap((d) => [
     { url: `${SITE_URL}/${d.slug}`, changeFrequency: 'monthly' as const, priority: 0.6 },
     ...['events', 'team', 'gallery'].map((p) => ({ url: `${SITE_URL}/${d.slug}/${p}`, changeFrequency: 'weekly' as const, priority: 0.4 })),
   ]);

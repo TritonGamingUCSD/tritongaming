@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { strictUser } from '@/lib/supabase/localAuth';
+import { getOffSwitches } from '@/lib/portal/featureServer';
 import { canDivisionAction } from '@/lib/portal/divisionAccess';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import { withGrantedCapabilities } from '@/lib/portal/capabilities';
@@ -46,7 +47,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const ids = (events ?? []).map((e) => e.id as string);
   // The other divisions an event of this one could invite as co-hosts (Triton Gaming is offered by the screen).
   const { data: all } = await svc.from('divisions').select('id, name').neq('id', id).order('name');
-  const partners = (all ?? []).map((d) => ({ id: d.id as string, name: d.name as string }));
+  const noCohost = (await getOffSwitches()).includes('div_cohost');
+  const partners = (noCohost ? [] : (all ?? [])).map((d) => ({ id: d.id as string, name: d.name as string }));
   if (!ids.length) return NextResponse.json({ events: [], partners });
 
   const [{ data: tickets }, { data: cohosts }, { data: divisions }] = await Promise.all([

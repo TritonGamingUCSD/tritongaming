@@ -1,3 +1,5 @@
+import { getOffSwitches } from '@/lib/portal/featureServer';
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -34,12 +36,14 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     .maybeSingle();
   return NextResponse.json({
     status: (last?.status as string | undefined) === 'pending' ? 'pending' : last?.status === 'declined' ? 'declined' : 'none',
-    closed: div?.join_open === false,
+    closed: div?.join_open === false || (await getOffSwitches()).includes('div_join'),
   });
 }
 
 // Ask to join: { message? }. One waiting request per person per division. The division's Heads are told.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const off = await guardFeature('div_join');
+  if (off) return off;
   const { id } = await params;
   const user = await me();
   if (!user) return NextResponse.json({ error: 'Sign in to ask to join.' }, { status: 401 });

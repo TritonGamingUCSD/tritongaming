@@ -41,7 +41,7 @@ Mark each line done or write what looked wrong.
 
 ## As a student or guest
 1. Home opens with the member pass (student) or welcome ticket (guest).
-2. With divisions open (or you are a preview person), cards to explore appear. "Ask To Join" sends a request (it then shows "Asked ✓"); the division's Discord is a small link beside it. A closed division says "Not taking requests".
+2. Cards to explore appear for students. "Ask To Join" sends a request (it then shows "Asked ✓"); the division's Discord is a small link beside it. A closed division says "Not taking requests".
 
 ## Public pages
 1. `/<address>`, `/events`, `/team`, `/gallery`: one navbar (the division's), no club navbar stacked above it, footer at the bottom, nothing odd on a phone.

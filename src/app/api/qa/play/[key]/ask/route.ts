@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { UUID, authorizePolls, broadcast } from '@/lib/polls/server';
 import { MAX_ASKED, MAX_AUTHOR, MAX_BODY, MAX_WAITING, cleanText } from '@/lib/qa/rank';
@@ -7,6 +8,8 @@ export const dynamic = 'force-dynamic';
 
 // Send a question: { body, author? } by the session's id, only while it is open. It waits for the host before the room sees it. One person can have a few waiting at a time and send a few in all, so one phone can't flood the screen.
 export async function POST(request: Request, { params }: { params: Promise<{ key: string }> }) {
+  const off = await guardFeature('qa');
+  if (off) return off;
   const auth = await authorizePolls('vote');
   if (auth.error) return auth.error;
   const { key } = await params;

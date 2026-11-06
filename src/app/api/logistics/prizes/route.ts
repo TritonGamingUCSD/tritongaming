@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { PRIZE_COLUMNS, ensureLoose, loadPrizeTotals, logPrize } from '@/lib/logistics/prizeServer';
@@ -43,6 +44,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const off = await guardFeature('logistics');
+  if (off) return off;
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
   await ensureLoose(auth.svc);

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { withGrantedCapabilities } from '@/lib/portal/capabilities';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
+import { getOffSwitches } from '@/lib/portal/featureServer';
 import { liveScope } from '@/lib/divisions/liveAccess';
 
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,9 @@ export async function GET() {
   const grants = withGrantedCapabilities(roles ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => []));
   const scope = liveScope(grants);
   const { data: all } = await svc.from('divisions').select('id, name').order('name');
-  const divisions = (all ?? []).filter((d) => scope.staff || scope.divisions.includes(d.id as string)).map((d) => ({ id: d.id as string, name: d.name as string }));
+  const divLiveOff = (await getOffSwitches()).includes('div_live');
+  const divisions = (divLiveOff ? [] : (all ?? []))
+    .filter((d) => scope.staff || scope.divisions.includes(d.id as string))
+    .map((d) => ({ id: d.id as string, name: d.name as string }));
   return NextResponse.json({ tg: scope.tg, divisions });
 }

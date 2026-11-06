@@ -1,3 +1,4 @@
+import { guardDivisionLive, guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
 import { liveListFilter, newItemOwner } from '@/lib/divisions/liveAccess';
@@ -47,6 +48,8 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const off = await guardFeature('polls');
+  if (off) return off;
   const auth = await authorizePolls('host');
   if (auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));
@@ -57,6 +60,8 @@ export async function POST(request: Request) {
   if (!name) return NextResponse.json({ error: 'Give the poll a name.' }, { status: 400 });
   const mode = (POLL_MODES as readonly string[]).includes(b.mode) ? b.mode : 'one';
   const reveal = (POLL_REVEALS as readonly string[]).includes(b.reveal) ? b.reveal : 'live';
+  const divOff = await guardDivisionLive(b.division_id);
+  if (divOff) return divOff;
   const owner = newItemOwner(auth.scope, b.division_id);
   if (!owner.ok) return NextResponse.json({ error: owner.error }, { status: 403 });
   const link = await eventLink(auth.svc, b.event_id);

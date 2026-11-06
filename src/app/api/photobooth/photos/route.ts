@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { expiresAt } from '@/lib/photobooth/booth';
 import { photoToken } from '@/lib/photobooth/token';
@@ -8,6 +9,8 @@ export const dynamic = 'force-dynamic';
 // A finished picture from the booth: multipart `booth` (the booth's address word), `file` (a JPEG or WebP the booth made) and optionally `gif` (the animated picture of the shots). It is kept for the booth's number of days (at most 7)
 // and the answer is its token, which the booth turns into the QR code for /photos/<token>.
 export async function POST(request: Request) {
+  const off = await guardFeature('photobooth');
+  if (off) return off;
   const auth = await authorizePhotoBooth();
   if (auth.error) return auth.error;
   const form = await request.formData().catch(() => null);

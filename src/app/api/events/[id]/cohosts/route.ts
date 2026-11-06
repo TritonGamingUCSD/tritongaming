@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -38,6 +39,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 }
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const off = await guardFeature('div_cohost');
+  if (off) return off;
   const { id } = await params;
   const me = await who();
   if (!me) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

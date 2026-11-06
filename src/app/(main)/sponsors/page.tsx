@@ -1,3 +1,5 @@
+import { getOffSwitches } from '@/lib/portal/featureServer';
+import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { resolveSections } from '@/lib/site/pageLayout';
 import { Fragment } from 'react';
@@ -58,6 +60,7 @@ function dbSponsorsToLogoItems(items: DbSponsor[]): LogoItem[] {
 }
 
 export default async function SponsorsPage() {
+  if ((await getOffSwitches()).includes('public_sponsors')) notFound();
   const sitePhotos = await getSitePhotos();
   const blocks = await getContentBlocks(['sponsors', 'page.sponsors', 'site.settings', 'layout.sponsors']);
   const sponsorsContent = blocks['sponsors'] ?? {};

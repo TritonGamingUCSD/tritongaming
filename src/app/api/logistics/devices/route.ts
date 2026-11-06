@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { cleanDevice, tagKey } from '@/lib/logistics/devices';
@@ -9,6 +10,8 @@ const COLUMNS = 'id, tag, name, type, shelf, tier, place_note, condition, ports,
 
 // Add a device. Individual types need an ID (and it must be new: TECM1 and "tecm 1" are the same); counted types (cables, power strips) don't.
 export async function POST(request: Request) {
+  const off = await guardFeature('logistics');
+  if (off) return off;
   const auth = await authorizeLogistics('manage');
   if (auth.error) return auth.error;
   const { value, error } = cleanDevice(await request.json().catch(() => ({})));

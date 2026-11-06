@@ -1,3 +1,5 @@
+import { notFound } from 'next/navigation';
+import { getOffSwitches } from '@/lib/portal/featureServer';
 import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -14,6 +16,7 @@ export default async function DivisionLayout({ children, params }: { children: R
   const { slug } = await params;
   const division = await getDivisionBySlug(slug);
   if (!division) return <>{children}</>;
+  if ((await getOffSwitches()).includes('div_public_pages')) notFound();
   const others = (await getDivisions()).filter((d) => d.id !== division.id);
   const hex = accentOf(division.accent).hex;
   const logo = divisionLogoSrc(division.logo_url);

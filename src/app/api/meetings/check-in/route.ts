@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { formatPacificTime } from '@/lib/core/timezone';
 import { NextResponse } from 'next/server';
 import { authorizeMeetings, checkInOpensAt, getTodaysMeetings, isCheckInAccepting, isMeetingOpen, isValidMeetingCode, isValidQrToken } from '@/lib/meetings/meetings';
@@ -7,6 +8,8 @@ import { notifyMeetingLive } from '@/lib/meetings/meetingLive';
 // A team member typing the code shown in the room. The code identifies the meeting: it's checked
 // against every meeting that's open today. Only ever checks in the caller themselves.
 export async function POST(request: Request) {
+  const off = await guardFeature('meetings');
+  if (off) return off;
   const auth = await authorizeMeetings('attend_meetings');
   if (auth.error) return auth.error;
   const body = await request.json().catch(() => ({}));

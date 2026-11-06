@@ -5,7 +5,7 @@ import SectionTabs from '@/components/ui/SectionTabs';
 import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import { ReactNode } from 'react';
-import { LayoutDashboard, BarChart3, Activity, X, Server, Users as UsersIcon, MailPlus, KeyRound, ScrollText, Link2 } from 'lucide-react';
+import { LayoutDashboard, BarChart3, Activity, X, Server, Users as UsersIcon, MailPlus, KeyRound, ScrollText, Link2, Settings as SettingsIcon } from 'lucide-react';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { PACIFIC_TZ, formatPacificDateTime } from '@/lib/core/timezone';
@@ -37,9 +37,22 @@ interface Props {
   initialTab?: string;
 }
 
-type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system' | 'settings' | 'preview';
-const VALID_TABS: Tab[] = ['overview', 'members', 'access', 'analytics', 'audit-log', 'short-links', 'system', 'settings', 'preview'];
-type Group = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system';
+type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system' | 'settings' | 'banner' | 'club-switches' | 'division-switches' | 'preview';
+const VALID_TABS: Tab[] = [
+  'overview',
+  'members',
+  'access',
+  'analytics',
+  'audit-log',
+  'short-links',
+  'system',
+  'settings',
+  'banner',
+  'club-switches',
+  'division-switches',
+  'preview',
+];
+type Group = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'settings' | 'system';
 const GROUPS: Record<Group, { label: string; icon: ReactNode; views: Tab[] }> = {
   overview: { label: 'Overview', icon: <LayoutDashboard />, views: ['overview'] },
   members: { label: 'Members', icon: <UsersIcon />, views: ['members'] },
@@ -47,7 +60,8 @@ const GROUPS: Record<Group, { label: string; icon: ReactNode; views: Tab[] }> = 
   analytics: { label: 'Analytics', icon: <BarChart3 />, views: ['analytics'] },
   'audit-log': { label: 'Audit Log', icon: <ScrollText />, views: ['audit-log'] },
   'short-links': { label: 'Short Links', icon: <Link2 />, views: ['short-links'] },
-  system: { label: 'System', icon: <Server />, views: ['system', 'settings', 'preview'] },
+  settings: { label: 'Settings', icon: <SettingsIcon />, views: ['settings', 'banner', 'club-switches', 'division-switches'] },
+  system: { label: 'System', icon: <Server />, views: ['system', 'preview'] },
 };
 const VIEW_LABELS: Record<Tab, string> = {
   overview: 'Overview',
@@ -57,7 +71,10 @@ const VIEW_LABELS: Record<Tab, string> = {
   'audit-log': 'Audit Log',
   'short-links': 'Short Links',
   system: 'System Health',
-  settings: 'Settings',
+  settings: 'Codes',
+  banner: 'Portal Banner',
+  'club-switches': 'Club Features',
+  'division-switches': 'Division Features',
   preview: 'Previews',
 };
 const groupOf = (t: Tab): Group => (Object.keys(GROUPS) as Group[]).find((g) => GROUPS[g].views.includes(t)) ?? 'overview';
@@ -245,7 +262,10 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       )}
 
       {tab === 'system' && isAdmin && <SystemStats />}
-      {tab === 'settings' && isAdmin && <SettingsPanel />}
+      {tab === 'settings' && isAdmin && <SettingsPanel part="codes" />}
+      {tab === 'banner' && isAdmin && <SettingsPanel part="banner" />}
+      {tab === 'club-switches' && isAdmin && <SettingsPanel part="club-switches" />}
+      {tab === 'division-switches' && isAdmin && <SettingsPanel part="division-switches" />}
       {tab === 'preview' && isAdmin && <PreviewsPanel />}
 
       {historyOpen && roleHistoryEntries && (

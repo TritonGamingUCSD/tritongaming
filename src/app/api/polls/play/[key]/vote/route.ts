@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { cleanVotes } from '@/lib/polls/tally';
 import { UUID, authorizePolls, broadcast, loadEntries, loadPoll } from '@/lib/polls/server';
@@ -7,6 +8,8 @@ export const dynamic = 'force-dynamic';
 // Cast (or change) your vote: { votes: [{ entry_id, value }] } by the poll's id. Only while voting is open; the vote replaces the one you had before, so it can be changed until the host closes voting. One person (one phone's session) has one set of
 // votes. The host's screen is told how many have voted.
 export async function POST(request: Request, { params }: { params: Promise<{ key: string }> }) {
+  const off = await guardFeature('polls');
+  if (off) return off;
   const auth = await authorizePolls('vote');
   if (auth.error) return auth.error;
   const { key } = await params;

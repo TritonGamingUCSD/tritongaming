@@ -1,3 +1,4 @@
+import { getOffSwitches } from '@/lib/portal/featureServer';
 import { divisionCardInputs, ogVersion } from '@/lib/site/ogRoutes';
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
@@ -72,7 +73,8 @@ export default async function DivisionPage({ params }: Params) {
   const [hub, own, club, docs] = await Promise.all([getDivisionHubData(division.id), getDivisionEvents(division.id), getUpcomingEvents(12), getPublicDivisionDocs(division.id)]);
   const next = own.upcoming[0];
   const ownIds = new Set(own.upcoming.map((e) => e._id));
-  const alsoClub = club.filter((e) => !ownIds.has(e._id)).slice(0, 3);
+  const noClub = (await getOffSwitches()).includes('div_club_events');
+  const alsoClub = noClub ? [] : club.filter((e) => !ownIds.has(e._id)).slice(0, 3);
 
   const socials = SOCIAL_PLATFORMS.filter((p) => p.key !== 'discord' && division.social_links[p.key]);
   const pitch = division.description?.trim() ? markdownToDescription(division.description, 140) : '';

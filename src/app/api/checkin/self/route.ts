@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -15,6 +16,8 @@ import { performCheckin } from '@/lib/events/performCheckin';
 // If the person has no ticket yet, a free one is issued here (UCSD students, or any event with no price). A priced ticket still goes through the normal
 // ticket flow with Stripe: this route does not take payment.
 export async function POST(request: Request) {
+  const off = await guardFeature('self_checkin');
+  if (off) return off;
   const supabase = await createClient();
   // The person is waiting on this answer: who they are, and the event they sent, are asked together (nothing here needs the first to ask the second).
   const svc = createServiceClient();

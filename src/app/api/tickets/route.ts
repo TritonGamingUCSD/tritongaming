@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { createNotifications } from '@/lib/notifications/notify';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
@@ -7,6 +8,8 @@ import { hasBasicProfileInfo } from '@/lib/members/profile';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 
 export async function POST(request: Request) {
+  const off = await guardFeature('tickets');
+  if (off) return off;
   const supabase = await createClient();
 
   const {

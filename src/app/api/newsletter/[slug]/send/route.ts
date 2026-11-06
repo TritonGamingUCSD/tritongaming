@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { emailConfigured, sendOne } from '@/lib/email/mailer';
 import { senderForKind } from '@/lib/email/senders';
@@ -17,6 +18,8 @@ export const maxDuration = 60;
 //   { action: 'batch' }   sends the next 40 of them; the page calls again until nothing is left. A batch claims its people first, so two pages can't send one person twice; a batch that died is picked up again after 5 minutes
 //   { action: 'retry' }   puts the failed ones back to be sent again
 export async function POST(request: Request, { params }: { params: Promise<{ slug: string }> }) {
+  const off = await guardFeature('newsletter');
+  if (off) return off;
   const auth = await authorizeNewsletter('send');
   if (auth.error) return auth.error;
   const issue = await loadIssue(auth.svc, (await params).slug);

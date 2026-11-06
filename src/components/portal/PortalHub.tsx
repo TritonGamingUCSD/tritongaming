@@ -1,5 +1,6 @@
 'use client';
 
+import { useSiteSettings } from './SiteSettingsProvider';
 import { createPortal } from 'react-dom';
 import ScanOpening from './ScanOpening';
 import { confirmDiscardUnsaved } from '@/lib/ui/useUnsavedChanges';
@@ -44,6 +45,7 @@ export default function PortalHub({
   frame?: HubFrame;
   /** Guests and UCSD-only accounts: on a desktop, a plain top bar instead of the sidebar app frame. */ plain?: boolean;
 }) {
+  const siteOff = useSiteSettings().off;
   const sections = useMemo(() => {
     const rank = (id: string) => {
       const i = SECTION_ORDER.indexOf(id);
@@ -419,7 +421,7 @@ export default function PortalHub({
 
   // With a division's hat on, the phone's bottom bar and More sheet are that division's: Home (its home), the two pages this person uses most (check-in, events, Live Tools or the roster, by what their level may open),
   // Scan in the middle for Members and Heads, and More with the rest of its pages. The club's sections and the other hats are one tap away in the switcher at the top of More.
-  const hatPages = divisionHat ? divisionPagesFor(divisionHat.level).filter((p) => p.id !== 'home') : [];
+  const hatPages = divisionHat ? divisionPagesFor(divisionHat.level, siteOff).filter((p) => p.id !== 'home') : [];
   const hatDockPages = (['check-in', 'events', 'trivia', 'members'] as const)
     .map((id) => hatPages.find((p) => p.id === id))
     .filter((p): p is (typeof hatPages)[number] => !!p)

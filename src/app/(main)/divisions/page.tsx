@@ -1,3 +1,4 @@
+import { getOffSwitches } from '@/lib/portal/featureServer';
 import type { Metadata } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -31,7 +32,8 @@ export const revalidate = 3600;
 
 export default async function DivisionsPage() {
   const sitePhotos = await getSitePhotos();
-  const [divisions, content] = await Promise.all([getDivisions(), getContentBlock('page.divisions')]);
+  const [allDivisions, content, off] = await Promise.all([getDivisions(), getContentBlock('page.divisions'), getOffSwitches()]);
+  const divisions = off.includes('div_public_pages') ? [] : allDivisions;
 
   return (
     <div className={styles.page}>

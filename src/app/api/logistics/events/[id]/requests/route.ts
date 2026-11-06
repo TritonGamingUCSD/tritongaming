@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { authorizeLogistics } from '@/lib/logistics/auth';
 import { UUID, touchPlan } from '@/lib/logistics/planServer';
@@ -114,6 +115,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
 // Ask for devices or prizes. The logistics team can also write one for somebody else (requester_id). The logistics team is told.
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  const off = await guardFeature('logistics');
+  if (off) return off;
   const auth = await authorizeLogistics('request');
   if (auth.error) return auth.error;
   const { id } = await params;

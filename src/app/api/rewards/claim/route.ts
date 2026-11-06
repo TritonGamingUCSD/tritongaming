@@ -1,9 +1,12 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { getTier, fetchTiers } from '@/lib/members/tiers';
 
 export async function POST(request: Request) {
+  const off = await guardFeature('rewards');
+  if (off) return off;
   const supabase = await createClient();
   const {
     data: { user },

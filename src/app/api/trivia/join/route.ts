@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { authorizeTrivia, broadcast, displayName, loadGame, publicState } from '@/lib/trivia/server';
 import { cleanCode } from '@/lib/trivia/game';
@@ -17,6 +18,8 @@ export const dynamic = 'force-dynamic';
 // Join a game with its code (typed, or from the QR code). Coming back into a game you are already in just returns where it is, with your score. The top three of an earlier game of the same quiz
 // are put on the host's list instead of in: the host can let them in. A guest (no account) may only join a quiz that is open to guests, with a nickname, and is never held back by the top 3 rule.
 export async function POST(request: Request) {
+  const off = await guardFeature('trivia');
+  if (off) return off;
   const auth = await authorizeTrivia('play');
   if (auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));

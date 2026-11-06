@@ -1,3 +1,4 @@
+import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
@@ -9,6 +10,8 @@ export const dynamic = 'force-dynamic';
 // An online event's check-in code typed into the portal's one code box, without saying which event: POST { code } finds, among the online events the person has a ticket for, the one whose current code this is, then checks them in exactly as
 // /api/checkin/online does (the same rules: a ticket for that event, the check-in window, once a day). 404 when it is no online event's code, so the code box can try the other kinds.
 export async function POST(request: Request) {
+  const off = await guardFeature('self_checkin');
+  if (off) return off;
   const supabase = await createClient();
   const {
     data: { user },

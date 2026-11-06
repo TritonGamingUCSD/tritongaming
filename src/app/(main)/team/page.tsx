@@ -1,3 +1,4 @@
+import { getOffSwitches } from '@/lib/portal/featureServer';
 import type { Metadata } from 'next';
 import BoardSection from '@/components/BoardSection/BoardSection';
 import { getContentBlock } from '@/lib/site/content';
@@ -50,7 +51,7 @@ export default async function TeamPage() {
     <div className={styles.page}>
       <PageHero label={label} title={title} sub={subtitle} />
       <BoardSection members={boardMembers} years={years} />
-      {divisions.length > 0 && (
+      {divisions.length > 0 && !(await getOffSwitches()).includes('div_public_pages') && (
         <ZineBand tone="navy" label="Divisions">
           <BandHeader label="Game by game" title="Our Divisions" sub="Each division has its own Heads and its own page." />
           <ul className={styles.divGrid}>
