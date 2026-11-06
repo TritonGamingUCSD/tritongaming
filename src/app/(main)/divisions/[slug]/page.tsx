@@ -18,8 +18,8 @@ import { formatEventDateRange, formatEventTimeRange } from '@/lib/core/timezone'
 import { getDivisionEvents, getUpcomingEvents } from '@/lib/events/events';
 import Link from 'next/link';
 import { getPublicDivisionDocs } from '@/lib/divisions/publicDocs';
-import DivisionPeople from './DivisionPeople';
-import { getDivisionHubData } from './getDivisionHubData';
+import BoardSection from '@/components/BoardSection/BoardSection';
+import { getDivisionCards } from './getDivisionHubData';
 import styles from './division.module.css';
 
 // Cached page, refreshed in the background (and right away when a division is saved).
@@ -70,7 +70,7 @@ export default async function DivisionPage({ params }: Params) {
   if (!division) notFound();
 
   const logoUrl = divisionLogoSrc(division.logo_url);
-  const [hub, own, club, docs] = await Promise.all([getDivisionHubData(division.id), getDivisionEvents(division.id), getUpcomingEvents(12), getPublicDivisionDocs(division.id)]);
+  const [cards, own, club, docs] = await Promise.all([getDivisionCards(division.id), getDivisionEvents(division.id), getUpcomingEvents(12), getPublicDivisionDocs(division.id)]);
   const next = own.upcoming[0];
   const ownIds = new Set(own.upcoming.map((e) => e._id));
   const noClub = (await getOffSwitches()).includes('div_club_events');
@@ -190,10 +190,10 @@ export default async function DivisionPage({ params }: Params) {
         </ZineBand>
       )}
 
-      {hub.leads.length > 0 && (
+      {cards.some((c) => c.tier === 'lead') && (
         <ZineBand tone="ink" label="Division Heads">
           <BandHeader label="Say hi" title="Led by" />
-          <DivisionPeople people={hub.leads} roleLabel="Division Head" />
+          <BoardSection members={cards.filter((c) => c.tier === 'lead')} labels={{ lead: 'Division Heads' }} />
         </ZineBand>
       )}
 

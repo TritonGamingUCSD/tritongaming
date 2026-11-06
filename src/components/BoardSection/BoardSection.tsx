@@ -112,7 +112,8 @@ export function CardFace({ m }: { m: BoardMember }) {
 // the same pattern as TG Members in the portal — so every tier stays on
 // screen behind it instead of the page swapping around. Closes via the X,
 // a click outside, or Escape.
-export default function BoardSection({ members, years = [] }: { members: BoardMember[]; years?: PastYear[] }) {
+export default function BoardSection({ members, years = [], labels }: { members: BoardMember[]; years?: PastYear[]; labels?: Partial<Record<BoardTier, string>> }) {
+  const tierLabel = (tier: BoardTier) => labels?.[tier] ?? TIER_LABELS[tier];
   const [openId, setOpenId] = useState<string | null>(null);
   // 'now' is the current team; a number is a past academic year (its recorded team).
   const [view, setView] = useState<'now' | number>('now');
@@ -187,7 +188,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
             if (group.length === 0) return null;
             return (
               <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
-                <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
+                <h3 className={styles.tierLabel}>{tierLabel(tier)}</h3>
                 <div className={tier === 'exec' ? styles.execGrid : styles.gridCenter} data-stagger>
                   {group.map((m) => {
                     const open = openable(m);
@@ -229,7 +230,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
             if (tier === 'alumni') {
               return (
                 <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
-                  <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
+                  <h3 className={styles.tierLabel}>{tierLabel(tier)}</h3>
                   <ul className={styles.wall}>
                     {group.map((m) => {
                       const url = resolveAvatarUrl(m);
@@ -255,7 +256,7 @@ export default function BoardSection({ members, years = [] }: { members: BoardMe
             }
             return (
               <section key={tier} className={`${styles.tierSection} ${styles[`tier_${tier}`]}`} data-rv-inner>
-                <h3 className={styles.tierLabel}>{TIER_LABELS[tier]}</h3>
+                <h3 className={styles.tierLabel}>{tierLabel(tier)}</h3>
                 <div className={tier === 'exec' ? styles.execGrid : styles.grid} data-stagger>
                   {group.map((m) => (
                     <motion.button
