@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { Users, UserPlus, Calendar, Ticket, CircleCheck, Percent, Coins } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
 import EChart from '@/components/charts/EChart';
@@ -7,6 +8,9 @@ import ChartCard from '@/components/charts/ChartCard';
 import { areaLine, calendarHeat, cohortGrid, donut, groupedBars, rankedBars, weekdayHour } from '@/components/charts/chartOptions';
 import chartStyles from '@/components/charts/charts.module.css';
 import type { StatsData } from './getStatsData';
+import { Segmented } from '../../tournaments/controls';
+import { rangeStart, runningTotal, seriesByGran, type Daily, type Gran, type Range } from '@/lib/stats/analytics';
+import { pacificDayKey } from '@/lib/core/timezone';
 import styles from './stats.module.css';
 
 function Tile({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
@@ -19,10 +23,88 @@ function Tile({ icon, value, label }: { icon: React.ReactNode; value: string; la
   );
 }
 
+const GRANS = [
+  { value: 'day' as Gran, label: 'Day' },
+  { value: 'week' as Gran, label: 'Week' },
+  { value: 'month' as Gran, label: 'Month' },
+];
+const RANGES = [
+  { value: '30d' as Range, label: '30 days' },
+  { value: '90d' as Range, label: '90 days' },
+  { value: '1y' as Range, label: 'Year' },
+  { value: 'all' as Range, label: 'All time' },
+];
+
+// Day, week or month; the last 30 days, 90 days, year or everything. Every day in the range is drawn, so a quiet stretch shows as a quiet stretch.
+function Controls({ gran, range, setGran, setRange }: { gran: Gran; range: Range; setGran: (g: Gran) => void; setRange: (r: Range) => void }) {
+  return (
+    <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', marginBottom: '0.6rem' }}>
+      <Segmented label="Detail" value={gran} options={GRANS} onChange={setGran} />
+      <Segmented label="Range" value={range} options={RANGES} onChange={setRange} />
+    </div>
+  );
+}
+
+function firstDay(...lists: Daily[]): string {
+  return lists.flatMap((l) => l.map((d) => d[0])).sort()[0] ?? pacificDayKey(new Date().toISOString());
+}
+
+function MemberGrowthDetail({ daily, total }: { daily: Daily; total: number }) {
+  const [gran, setGran] = useState<Gran>('week');
+  const [range, setRange] = useState<Range>('1y');
+  const today = pacificDayKey(new Date().toISOString());
+  const from = rangeStart(range, today, firstDay(daily));
+  const s = seriesByGran(daily, gran, from, today);
+  const before = daily.filter((d) => d[0] < from).reduce((n, d) => n + d[1], 0);
+  const totals = runningTotal(s.values, before);
+  return (
+    <ChartCard
+      title="Member Growth"
+      sub={`${total.toLocaleString()} members now. ${s.values.reduce((a, b) => a + b, 0).toLocaleString()} joined in this range.`}
+      table={{ head: [gran === 'month' ? 'Month' : gran === 'week' ? 'Week of' : 'Day', 'Joined', 'Total members'], rows: s.labels.map((l, i) => [l, s.values[i], totals[i]]) }}
+      wide
+    >
+      <Controls gran={gran} range={range} setGran={setGran} setRange={setRange} />
+      <EChart label="Total members over time" build={(t) => areaLine(t, { x: s.labels, y: totals, name: 'Total members' })} />
+    </ChartCard>
+  );
+}
+
+function ActivityDetail({ tickets, checkins }: { tickets: Daily; checkins: Daily }) {
+  const [gran, setGran] = useState<Gran>('day');
+  const [range, setRange] = useState<Range>('90d');
+  const today = pacificDayKey(new Date().toISOString());
+  const from = rangeStart(range, today, firstDay(tickets, checkins));
+  const a = seriesByGran(tickets, gran, from, today);
+  const b = seriesByGran(checkins, gran, from, today);
+  return (
+    <ChartCard
+      title="Sign-Ups And Check-Ins"
+      sub="How much of the interest turns into people in the room."
+      table={{ head: [gran === 'month' ? 'Month' : gran === 'week' ? 'Week of' : 'Day', 'Tickets', 'Check-ins'], rows: a.labels.map((l, i) => [l, a.values[i], b.values[i]]) }}
+      wide
+    >
+      <Controls gran={gran} range={range} setGran={setGran} setRange={setRange} />
+      <EChart
+        label="Tickets and check-ins"
+        build={(t) =>
+          groupedBars(t, {
+            x: a.labels,
+            series: [
+              { name: 'Tickets', data: a.values },
+              { name: 'Check-ins', data: b.values },
+            ],
+          })
+        }
+      />
+    </ChartCard>
+  );
+}
+
 // Org-wide numbers and trends. Each chart has a one-line takeaway, a Table switch with the same numbers, and follows the portal's light and dark theme.
 // Per-event breakdowns live in the Events section (its Analytics tab and each event's Insights page).
 export default function StatsClient({ data }: { data: StatsData }) {
-  const { totals, memberGrowth, pointsEconomy, topRewards, activity, roleCounts, busiest, calendar, cohorts, tierSplit, divisionCompare } = data;
+  const { daily, totals, pointsEconomy, topRewards, roleCounts, busiest, calendar, cohorts, tierSplit, divisionCompare } = data;
   const rate = totals.ticketsIssued > 0 ? Math.round((totals.checkins / totals.ticketsIssued) * 100) : 0;
   const roles = roleCounts.map((r) => ({ name: (ROLE_LABELS as Record<string, string>)[r.role] ?? r.role, count: r.count }));
   const label = (h: number) => `${((h + 11) % 12) + 1}${h < 12 ? 'a' : 'p'}`;
@@ -43,39 +125,9 @@ export default function StatsClient({ data }: { data: StatsData }) {
       </div>
 
       <div className={chartStyles.grid}>
-        {memberGrowth.length > 1 && (
-          <ChartCard
-            title="Member Growth"
-            sub={`${totals.members.toLocaleString()} members now, ${totals.newMembers.toLocaleString()} joined in the last 30 days.`}
-            table={{ head: ['Month', 'Total members'], rows: memberGrowth.map((p) => [p.month, p.count]) }}
-          >
-            <EChart
-              label="Total members over time"
-              build={(t) => areaLine(t, { x: memberGrowth.map((p) => p.month), y: memberGrowth.map((p) => p.count), name: 'Total members' })}
-            />
-          </ChartCard>
-        )}
+        {daily.members.length > 0 && <MemberGrowthDetail daily={daily.members} total={totals.members} />}
 
-        {activity.length > 1 && (
-          <ChartCard
-            title="Sign-Ups And Check-Ins"
-            sub="How much of the interest turns into people in the room, month by month."
-            table={{ head: ['Month', 'Tickets', 'Check-ins'], rows: activity.map((a) => [a.month, a.tickets, a.checkins]) }}
-          >
-            <EChart
-              label="Tickets and check-ins each month"
-              build={(t) =>
-                groupedBars(t, {
-                  x: activity.map((a) => a.month),
-                  series: [
-                    { name: 'Tickets', data: activity.map((a) => a.tickets) },
-                    { name: 'Check-ins', data: activity.map((a) => a.checkins) },
-                  ],
-                })
-              }
-            />
-          </ChartCard>
-        )}
+        {(daily.tickets.length > 0 || daily.checkins.length > 0) && <ActivityDetail tickets={daily.tickets} checkins={daily.checkins} />}
 
         {busiest.data.length > 0 && (
           <ChartCard
@@ -208,7 +260,7 @@ export default function StatsClient({ data }: { data: StatsData }) {
         )}
       </div>
 
-      {memberGrowth.length <= 1 && activity.length <= 1 && <p className={styles.empty}>Not enough data yet to chart trends.</p>}
+      {daily.members.length === 0 && daily.tickets.length === 0 && <p className={styles.empty}>Not enough data yet to chart trends.</p>}
     </div>
   );
 }

@@ -41,8 +41,18 @@ export default function BracketView({
         items: ofB.filter((m) => m.round === r && m.status !== 'skipped').sort((x, y) => x.idx - y.idx),
       }));
     groups.push({
-      key: b,
-      title: b === 'W' && format === 'double' ? 'Winners bracket' : b === 'L' ? 'Losers bracket' : b === 'GF' ? 'Grand final' : b === 'T' ? 'Third place' : '',
+      key: pool ? `${b}${pool}` : b,
+      title: pool
+        ? `Pool ${String.fromCharCode(64 + pool)}`
+        : b === 'W' && format === 'double'
+          ? 'Winners bracket'
+          : b === 'L'
+            ? 'Losers bracket'
+            : b === 'GF'
+              ? 'Grand final'
+              : b === 'T'
+                ? 'Third place'
+                : '',
       rounds: rounds.filter((r) => r.items.length > 0),
     });
   }

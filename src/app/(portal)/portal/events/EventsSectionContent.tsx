@@ -11,7 +11,7 @@ import EventRowActions from './EventRowActions';
 import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, Mail } from 'lucide-react';
 import { formatEventDateRangeShort, formatEventTimeRange, eventDayCount } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
-import type { MonthPoint } from '@/lib/events/monthBuckets';
+import { monthLabels, type MonthPoint } from '@/lib/events/monthBuckets';
 import type { EventTicketStat } from './getEventsData';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import EventCheckinsPage from './EventCheckinsPage';
@@ -332,10 +332,10 @@ export default function EventsSectionContent({ events, analytics, canEdit, canMa
 
 // The Analytics tab: what turned out to matter for running events. How many events happened, how sign-ups turn into people in the room, which events drew the most, whether show-up is getting better, and who comes back.
 function EventCharts({ heldPerMonth, ticketsPerMonth, checkinsPerMonth, eventStats, people }: Props['analytics']) {
-  const months = [...new Set([...ticketsPerMonth, ...checkinsPerMonth, ...heldPerMonth].map((p) => p.month))];
-  const monthOrder = (m: string) => new Date(`1 ${m.replace(/ (\d\d)$/, ' 20$1')}`).getTime();
-  months.sort((a, b) => monthOrder(a) - monthOrder(b));
-  const at = (list: MonthPoint[], m: string) => list.find((p) => p.month === m)?.count ?? 0;
+  const monthKeys = [...new Set([...ticketsPerMonth, ...checkinsPerMonth, ...heldPerMonth].map((p) => p.key))].sort();
+  const names = monthLabels(monthKeys);
+  const months = monthKeys.map((k) => names.get(k) ?? k);
+  const at = (list: MonthPoint[], m: string) => list.find((p) => p.key === monthKeys[months.indexOf(m)])?.count ?? 0;
   const biggest = [...eventStats].sort((a, b) => b.checkedIn - a.checkedIn).slice(0, 12);
   const rateNow = eventStats.length ? eventStats[eventStats.length - 1].rate : 0;
   const rateAvg = eventStats.length ? Math.round(eventStats.reduce((n, e) => n + e.rate, 0) / eventStats.length) : 0;

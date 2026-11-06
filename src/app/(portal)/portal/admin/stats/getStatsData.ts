@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
-import { bucketByMonth, cumulative } from '@/lib/events/monthBuckets';
+import { bucketByMonth, cumulative, monthLabels } from '@/lib/events/monthBuckets';
 import { fetchTiers } from '@/lib/members/tiers';
-import { dailyCounts, retentionCohorts, tierBuckets, weekdayHourCounts } from '@/lib/stats/analytics';
+import { dailyCounts, retentionCohorts, tierBuckets, weekdayHourCounts, type Daily } from '@/lib/stats/analytics';
 import { pacificDayKey } from '@/lib/core/timezone';
 
 export interface DivisionCompare {
@@ -101,18 +101,25 @@ export async function getStatsData() {
   const issued = tickets.filter((t) => t.status === 'active' || t.status === 'used');
   const ticketsByMonth = bucketByMonth(issued.map((t) => t.created_at as string));
   const checkinsByMonth = bucketByMonth(tickets.filter((t) => t.checked_in_at).map((t) => t.checked_in_at as string));
-  const months = [...new Set([...ticketsByMonth, ...checkinsByMonth].map((p) => p.month))];
-  const monthOrder = (m: string) => new Date(`1 ${m.replace(/ (\d\d)$/, ' 20$1')}`).getTime();
-  const activity = months
-    .sort((a, b) => monthOrder(a) - monthOrder(b))
-    .map((month) => ({
-      month,
-      tickets: ticketsByMonth.find((p) => p.month === month)?.count ?? 0,
-      checkins: checkinsByMonth.find((p) => p.month === month)?.count ?? 0,
-    }));
+  const monthKeys = [...new Set([...ticketsByMonth, ...checkinsByMonth].map((p) => p.key))].sort();
+  const names = monthLabels(monthKeys);
+  const activity = monthKeys.map((key) => ({
+    month: names.get(key) ?? key,
+    tickets: ticketsByMonth.find((p) => p.key === key)?.count ?? 0,
+    checkins: checkinsByMonth.find((p) => p.key === key)?.count ?? 0,
+  }));
+
   const roleTotals = new Map<string, number>();
   roleRows.forEach((r) => roleTotals.set(r.role, (roleTotals.get(r.role) ?? 0) + 1));
   const roleCounts: RoleCount[] = [...roleTotals.entries()].map(([role, count]) => ({ role, count })).sort((a, b) => b.count - a.count);
+
+  // The same three series day by day, so the charts can be read by day, week or month over any range.
+  const daily: { members: Daily; tickets: Daily; checkins: Daily } = {
+    members: dailyCounts(profiles.map((p) => p.created_at as string)),
+    tickets: dailyCounts(issued.map((t) => t.created_at as string)),
+    checkins: dailyCounts(tickets.filter((t) => t.checked_in_at).map((t) => t.checked_in_at as string)),
+  };
+
   const monthAgo = Date.now() - 30 * 86_400_000;
   const newMembers = profiles.filter((p) => new Date(p.created_at as string).getTime() >= monthAgo).length;
 
@@ -173,7 +180,7 @@ export async function getStatsData() {
     .filter((d) => d.members + d.events > 0)
     .sort((a, b) => b.checkins - a.checkins || b.members - a.members);
 
-  return { memberGrowth, divisionSizes, totals, pointsEconomy, topRewards, activity, roleCounts, busiest, calendar, cohorts, tierSplit, divisionCompare };
+  return { daily, memberGrowth, divisionSizes, totals, pointsEconomy, topRewards, activity, roleCounts, busiest, calendar, cohorts, tierSplit, divisionCompare };
 }
 
 export type StatsData = Awaited<ReturnType<typeof getStatsData>>;

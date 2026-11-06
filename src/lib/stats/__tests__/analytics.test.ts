@@ -1,4 +1,4 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 import { dailyCounts, newVersusReturning, retentionCohorts, sliceCounts, tierBuckets, weekdayHourCounts } from '../analytics';
 
 describe('analytics math', () => {
@@ -65,5 +65,61 @@ describe('analytics math', () => {
     const r = sliceCounts(['2026-11-02T18:05:00Z', '2026-11-02T18:10:00Z', '2026-11-02T18:35:00Z'], t0, t0 + 3600e3, 2);
     expect(r.counts).toEqual([2, 1]);
     expect(r.total).toEqual([2, 3]);
+  });
+});
+
+import { rangeStart, runningTotal, seriesByGran } from '../analytics';
+import { monthLabels } from '@/lib/events/monthBuckets';
+
+describe('month labels', () => {
+  it('are just the month name inside one year', () => {
+    const l = monthLabels(['2026-05', '2026-06', '2026-07']);
+    expect([...l.values()]).toEqual(['May', 'Jun', 'Jul']);
+  });
+  it('carry the year on the first month and each January once the series crosses a year', () => {
+    const l = monthLabels(['2026-11', '2026-12', '2027-01', '2027-02']);
+    expect([...l.values()]).toEqual(['Nov ’26', 'Dec', 'Jan ’27', 'Feb']);
+  });
+});
+
+describe('time series by day, week and month', () => {
+  const daily: [string, number][] = [
+    ['2026-11-02', 3],
+    ['2026-11-04', 2],
+    ['2026-11-09', 5],
+  ];
+  it('fills every day of the range, quiet days as 0', () => {
+    const s = seriesByGran(daily, 'day', '2026-11-02', '2026-11-05');
+    expect(s.values).toEqual([3, 0, 2, 0]);
+    expect(s.labels[0]).toBe('Nov 2');
+  });
+  it('groups by week from Monday', () => {
+    const s = seriesByGran(daily, 'week', '2026-11-02', '2026-11-15');
+    expect(s.keys).toEqual(['2026-11-02', '2026-11-09']);
+    expect(s.values).toEqual([5, 5]);
+  });
+  it('groups by month and names it plainly', () => {
+    const s = seriesByGran(
+      [
+        ['2026-10-31', 1],
+        ['2026-11-01', 2],
+      ],
+      'month',
+      '2026-10-30',
+      '2026-11-02',
+    );
+    expect(s.labels).toEqual(['Oct', 'Nov']);
+    expect(s.values).toEqual([1, 2]);
+  });
+  it('makes a running total that starts from what was there before', () => {
+    expect(runningTotal([1, 0, 2], 10)).toEqual([11, 11, 13]);
+  });
+  it('counts times per Pacific day and finds the start of a range', () => {
+    expect(dailyCounts(['2026-11-03T07:30:00Z', '2026-11-03T20:00:00Z'])).toEqual([
+      ['2026-11-02', 1],
+      ['2026-11-03', 1],
+    ]);
+    expect(rangeStart('30d', '2026-11-30', '2026-01-01')).toBe('2026-11-01');
+    expect(rangeStart('all', '2026-11-30', '2026-03-05')).toBe('2026-03-05');
   });
 });

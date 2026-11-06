@@ -1,3 +1,4 @@
+import { monthLabels } from '@/lib/events/monthBuckets';
 import { PACIFIC_TZ, pacificDayKey } from '@/lib/core/timezone';
 
 // The math behind the analytics charts, as plain functions of plain data (so it is tested without a database). Everything is read in Pacific time, the club's clock.
@@ -39,7 +40,6 @@ const addMonths = (key: string, n: number) => {
   const d = new Date(Date.UTC(y, m - 1 + n, 1));
   return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
 };
-const monthLabel = (key: string) => new Date(`${key}-15T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', year: '2-digit', timeZone: 'UTC' });
 
 /**
  * Retention cohorts. People are grouped by the month of their first check-in; each cell is the share of that group who checked in again `n` months later (month 0 is always 100%).
@@ -74,7 +74,7 @@ export function retentionCohorts(
       data.push([off, ri, Math.round((came / members.length) * 100)]);
     }
   });
-  return { rows: cohortKeys.map((k, i) => `${monthLabel(k)} (${sizes[i]})`), cols, data, sizes };
+  return { rows: cohortKeys.map((k, i) => `${monthLabels(cohortKeys).get(k) ?? k} (${sizes[i]})`), cols, data, sizes };
 }
 
 /** How many people sit in each tier, given each person's lifetime points and the tiers' starting points (lowest first). */
@@ -110,4 +110,59 @@ export function sliceCounts(times: string[], from: number, to: number, slices: n
   const total: number[] = [];
   counts.reduce((sum, c, i) => (total[i] = sum + c), 0);
   return { starts: counts.map((_, i) => from + i * width), counts, total };
+}
+
+// ---- Time series at any level of detail -------------------------------------------------------------------------------------------------------------------
+// The admin charts can be read by day, by week (Monday to Sunday) or by month, over the last 30 days, 90 days, year or everything. These turn a list of days with counts into the points of one chart,
+// with every day in the range present (a quiet day is 0, not missing), so the line and the bars tell the truth about quiet stretches.
+export type Gran = 'day' | 'week' | 'month';
+export type Range = '30d' | '90d' | '1y' | 'all';
+export type Daily = [string, number][]; // [Pacific day "YYYY-MM-DD", count]
+
+const dayMs = 86_400_000;
+const toTime = (day: string) => Date.UTC(Number(day.slice(0, 4)), Number(day.slice(5, 7)) - 1, Number(day.slice(8, 10)));
+const fromTime = (t: number) => new Date(t).toISOString().slice(0, 10);
+const mondayOf = (day: string) => {
+  const t = toTime(day);
+  const wd = (new Date(t).getUTCDay() + 6) % 7; // Monday = 0
+  return fromTime(t - wd * dayMs);
+};
+const dayName = new Intl.DateTimeFormat('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric' });
+
+export function rangeStart(range: Range, today: string, first: string): string {
+  if (range === 'all') return first;
+  const back = range === '30d' ? 29 : range === '90d' ? 89 : 364;
+  const start = fromTime(toTime(today) - back * dayMs);
+  return start < first && range !== '30d' ? (first < start ? start : first) : start;
+}
+
+export function seriesByGran(daily: Daily, gran: Gran, from: string, to: string): { keys: string[]; labels: string[]; values: number[] } {
+  const byDay = new Map(daily);
+  const keys: string[] = [];
+  const values: number[] = [];
+  const idx = new Map<string, number>();
+  for (let t = toTime(from); t <= toTime(to); t += dayMs) {
+    const day = fromTime(t);
+    const key = gran === 'day' ? day : gran === 'week' ? mondayOf(day) : day.slice(0, 7);
+    if (!idx.has(key)) {
+      idx.set(key, keys.length);
+      keys.push(key);
+      values.push(0);
+    }
+    values[idx.get(key) as number] += byDay.get(day) ?? 0;
+  }
+  let labels: string[];
+  if (gran === 'month') {
+    const names = monthLabels(keys);
+    labels = keys.map((k) => names.get(k) ?? k);
+  } else {
+    labels = keys.map((k) => dayName.format(new Date(`${k}T12:00:00Z`)));
+  }
+  return { keys, labels, values };
+}
+
+/** Running total, starting from how many there already were before the first point. */
+export function runningTotal(values: number[], before = 0): number[] {
+  let sum = before;
+  return values.map((v) => (sum += v));
 }
