@@ -25,6 +25,10 @@ import wall from './eventWall.module.css';
 import styles from './events.module.css';
 import chartStyles from '@/components/charts/charts.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
+import { ScopeChip, ScopeNote, useScopeFilter } from '@/components/portal/ScopeChip';
+import { scopeNote } from '@/lib/portal/whoSees';
+
+const eventOwner = (e: { division_id?: string | null }) => e.division_id;
 
 interface EventRow {
   id: string;
@@ -36,6 +40,8 @@ interface EventRow {
   is_published: boolean;
   requires_ticket: boolean;
   audience: 'public' | 'ucsd_only';
+  division_id?: string | null;
+  sharedWith?: (string | null)[];
   ticketsIssued: number;
   ticketsCheckedIn: number;
   points_value: number;
@@ -104,6 +110,7 @@ export default function EventsSectionContent({ events, analytics, canEdit, canMa
   });
   const [deleteTarget, setDeleteTarget] = useState<EventRow | null>(null);
 
+  const scope = useScopeFilter(events, eventOwner);
   const counts = {
     all: events.length,
     upcoming: events.filter((e) => isCheckinWindowOpen(e)).length,
@@ -113,7 +120,7 @@ export default function EventsSectionContent({ events, analytics, canEdit, canMa
 
   const filtered = (() => {
     const q = query.trim().toLowerCase();
-    return events.filter((e) => {
+    return scope.shown.filter((e) => {
       if (filter === 'upcoming' && !isCheckinWindowOpen(e)) return false;
       if (filter === 'past' && isCheckinWindowOpen(e)) return false;
       if (filter === 'draft' && e.is_published) return false;
@@ -150,6 +157,7 @@ export default function EventsSectionContent({ events, analytics, canEdit, canMa
           ) : undefined
         }
       />
+      {tab === 'list' && <ScopeNote>{scopeNote('club')}</ScopeNote>}
 
       {(canEdit || canEmail) && (
         <SectionTabs
@@ -233,89 +241,93 @@ export default function EventsSectionContent({ events, analytics, canEdit, canMa
                 <p>No events match your search.</p>
               </div>
             ) : (
-              <div className={wall.wall}>
-                {filtered.map((event, i) => {
-                  const now = Date.now();
-                  const start = new Date(event.start_date).getTime();
-                  const isPast = !isCheckinWindowOpen(event);
-                  const live = !isPast && start <= now;
-                  const soon = !isPast && !live && start - now < 7 * 86400e3;
-                  const sticker = !event.is_published
-                    ? ['Draft', wall.sDraft]
-                    : live
-                      ? ['Live now', wall.sLive]
-                      : soon
-                        ? ['Soon', wall.sSoon]
-                        : isPast
-                          ? ['Done', wall.sDone]
-                          : ['Upcoming', wall.sUp];
-                  const pct = event.ticketsIssued ? Math.round((event.ticketsCheckedIn / event.ticketsIssued) * 100) : 0;
-                  return (
-                    <article
-                      key={event.id}
-                      className={`${wall.card} ${isPast ? wall.past : ''}`}
-                      style={{ ['--ev' as string]: event.accent || 'var(--yellow)', ['--tilt' as string]: `${((i * 5) % 7) - 3}deg` }}
-                    >
-                      <span className={wall.tape} aria-hidden="true" />
-                      <div className={wall.posterBox}>
-                        <PosterArt poster={event.poster} accent={event.accent} title={event.title} className={wall.poster} />
-                        <span className={`${wall.sticker} ${sticker[1]}`}>{sticker[0]}</span>
-                        {event.audience === 'ucsd_only' && <span className={`${wall.sticker} ${wall.sUcsd}`}>UCSD only</span>}
-                      </div>
-                      <div className={wall.body}>
-                        <h3 className={wall.title}>{event.title}</h3>
-                        <p className={wall.when}>
-                          {formatEventDateRangeShort(event.start_date, event.end_date)} · {formatEventTimeRange(event.start_date, event.end_date)}
-                          {eventDayCount(event.start_date, event.end_date) > 1 && ` · ${eventDayCount(event.start_date, event.end_date)} days`}
-                        </p>
-                        {event.location && (
-                          <p className={wall.where}>
-                            <MapPin size={12} strokeWidth={1.75} aria-hidden="true" /> {event.location}
+              <>
+                {scope.control}
+                <div className={wall.wall}>
+                  {filtered.map((event, i) => {
+                    const now = Date.now();
+                    const start = new Date(event.start_date).getTime();
+                    const isPast = !isCheckinWindowOpen(event);
+                    const live = !isPast && start <= now;
+                    const soon = !isPast && !live && start - now < 7 * 86400e3;
+                    const sticker = !event.is_published
+                      ? ['Draft', wall.sDraft]
+                      : live
+                        ? ['Live now', wall.sLive]
+                        : soon
+                          ? ['Soon', wall.sSoon]
+                          : isPast
+                            ? ['Done', wall.sDone]
+                            : ['Upcoming', wall.sUp];
+                    const pct = event.ticketsIssued ? Math.round((event.ticketsCheckedIn / event.ticketsIssued) * 100) : 0;
+                    return (
+                      <article
+                        key={event.id}
+                        className={`${wall.card} ${isPast ? wall.past : ''}`}
+                        style={{ ['--ev' as string]: event.accent || 'var(--yellow)', ['--tilt' as string]: `${((i * 5) % 7) - 3}deg` }}
+                      >
+                        <span className={wall.tape} aria-hidden="true" />
+                        <div className={wall.posterBox}>
+                          <PosterArt poster={event.poster} accent={event.accent} title={event.title} className={wall.poster} />
+                          <span className={`${wall.sticker} ${sticker[1]}`}>{sticker[0]}</span>
+                          {event.audience === 'ucsd_only' && <span className={`${wall.sticker} ${wall.sUcsd}`}>UCSD only</span>}
+                        </div>
+                        <div className={wall.body}>
+                          <h3 className={wall.title}>{event.title}</h3>
+                          <ScopeChip divisionId={event.division_id} shared={event.sharedWith} />
+                          <p className={wall.when}>
+                            {formatEventDateRangeShort(event.start_date, event.end_date)} · {formatEventTimeRange(event.start_date, event.end_date)}
+                            {eventDayCount(event.start_date, event.end_date) > 1 && ` · ${eventDayCount(event.start_date, event.end_date)} days`}
                           </p>
+                          {event.location && (
+                            <p className={wall.where}>
+                              <MapPin size={12} strokeWidth={1.75} aria-hidden="true" /> {event.location}
+                            </p>
+                          )}
+                          {event.points_value > 0 && (
+                            <span className={wall.pts}>
+                              <Award size={11} strokeWidth={1.75} aria-hidden="true" /> {event.points_value} pts
+                            </span>
+                          )}
+                        </div>
+                        {event.requires_ticket ? (
+                          <button
+                            type="button"
+                            className={wall.meter}
+                            onClick={() => {
+                              const key = event.slug ?? event.id;
+                              setCheckinsKey(key);
+                              syncUrl('check-ins', key);
+                            }}
+                            aria-label={`${event.ticketsCheckedIn} of ${event.ticketsIssued} checked in. Open the check-ins.`}
+                          >
+                            <span className={wall.meterTop}>
+                              <Ticket size={12} strokeWidth={1.75} aria-hidden="true" /> {event.ticketsIssued} ticket{event.ticketsIssued === 1 ? '' : 's'}
+                              {event.ticketsIssued > 0 && <b>{event.ticketsCheckedIn} in</b>}
+                            </span>
+                            <span className={wall.track}>
+                              <span style={{ width: `${pct}%` }} />
+                            </span>
+                          </button>
+                        ) : (
+                          <span className={wall.noTicket}>No ticket needed</span>
                         )}
-                        {event.points_value > 0 && (
-                          <span className={wall.pts}>
-                            <Award size={11} strokeWidth={1.75} aria-hidden="true" /> {event.points_value} pts
-                          </span>
-                        )}
-                      </div>
-                      {event.requires_ticket ? (
-                        <button
-                          type="button"
-                          className={wall.meter}
-                          onClick={() => {
-                            const key = event.slug ?? event.id;
-                            setCheckinsKey(key);
-                            syncUrl('check-ins', key);
-                          }}
-                          aria-label={`${event.ticketsCheckedIn} of ${event.ticketsIssued} checked in. Open the check-ins.`}
-                        >
-                          <span className={wall.meterTop}>
-                            <Ticket size={12} strokeWidth={1.75} aria-hidden="true" /> {event.ticketsIssued} ticket{event.ticketsIssued === 1 ? '' : 's'}
-                            {event.ticketsIssued > 0 && <b>{event.ticketsCheckedIn} in</b>}
-                          </span>
-                          <span className={wall.track}>
-                            <span style={{ width: `${pct}%` }} />
-                          </span>
-                        </button>
-                      ) : (
-                        <span className={wall.noTicket}>No ticket needed</span>
-                      )}
-                      <div className={wall.foot}>
-                        <EventRowActions
-                          eventId={event.id}
-                          title={event.title}
-                          showSummary={event.requires_ticket}
-                          canEdit={canEdit}
-                          previewUrl={event.checkinFormPreviewUrl}
-                          canDelete={canDelete}
-                          onDelete={() => setDeleteTarget(event)}
-                        />
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
+                        <div className={wall.foot}>
+                          <EventRowActions
+                            eventId={event.id}
+                            title={event.title}
+                            showSummary={event.requires_ticket}
+                            canEdit={canEdit}
+                            previewUrl={event.checkinFormPreviewUrl}
+                            canDelete={canDelete}
+                            onDelete={() => setDeleteTarget(event)}
+                          />
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </>
         ))}

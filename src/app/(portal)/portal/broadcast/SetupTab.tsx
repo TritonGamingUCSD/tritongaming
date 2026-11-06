@@ -31,6 +31,11 @@ export default function SetupTab({ divisionId, divisionName, divisionSlug }: { d
         <p className={styles.muted}>
           Viewers watch on the website at {watch}, with the live stream and chat embedded. Nothing is connected to your accounts; only the public channel names are used.
         </p>
+        <p className={styles.muted}>
+          {divisionName
+            ? `These belong to ${divisionName} only. Triton Gaming and every other division have their own channels, set on their own Broadcast pages.`
+            : 'These are the club’s channels only. Each division sets its own on its Broadcast page, and they never show here.'}
+        </p>
         {error && <Notice tone="error">{error}</Notice>}
         <Field label="Twitch channel" hint="A name like tritongaming, or the twitch.tv link.">
           <Input value={twitch} onChange={(e) => setTwitch(e.target.value)} placeholder="tritongaming" />

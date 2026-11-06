@@ -69,6 +69,7 @@ export interface LobbyPlayer {
 
 export interface QuizRow {
   id: string;
+  division_id?: string | null;
   slug: string;
   name: string;
   per_game: number;

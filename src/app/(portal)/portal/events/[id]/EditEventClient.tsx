@@ -20,8 +20,10 @@ export default function EditEventClient({
   seedCheckinFormConfig,
   previewViewer,
   creditPeople,
+  ownerDivisionId = null,
 }: {
   eventId: string;
+  ownerDivisionId?: string | null;
   initial: EventFormValues;
   seedCheckinFormConfig?: CheckinFormConfigValue | null;
   creditPeople?: import('@/lib/members/creditPeople').CreditPerson[];
@@ -99,6 +101,7 @@ export default function EditEventClient({
       stayAfterSave
       eventId={eventId}
       creditPeople={creditPeople}
+      ownerDivisionId={ownerDivisionId}
       seedCheckinFormConfig={seedCheckinFormConfig}
       previewViewer={previewViewer}
     />

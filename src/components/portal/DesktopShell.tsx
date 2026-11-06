@@ -14,6 +14,7 @@ import Image from 'next/image';
 import DivisionSwitcher from './DivisionSwitcher';
 import { divisionSidebar } from '@/lib/divisions/pages';
 import AccountMenu from './AccountMenu';
+import MainSiteLink from './MainSiteLink';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { familyOf } from '@/lib/portal/families';
 import AreaPixelIcon from './AreaPixelIcon';
@@ -358,6 +359,7 @@ export function DesktopShell({
               <CodeBox compact />
             </div>
             <Spotlight />
+            <MainSiteLink />
             <NotificationBell inline />
             {identity && <AccountMenu identity={identity} viewAs={frame?.viewAs} onProfile={() => open('profile')} />}
           </div>

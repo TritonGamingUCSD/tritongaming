@@ -12,6 +12,9 @@ import { call } from './api';
 import { LiveGames } from './QuizGames';
 import type { QuizRow } from '@/lib/trivia/types';
 import card from '@/components/ui/Card.module.css';
+import { ScopeChip, ScopeNote, useScopeFilter } from '@/components/portal/ScopeChip';
+import { scopeNote } from '@/lib/portal/whoSees';
+import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
 import styles from './trivia.module.css';
 
 // The quizzes. Each is a pool of questions; hosting it draws a fresh random set from the pool.
@@ -20,9 +23,12 @@ export async function startGame(quiz: string): Promise<{ code: string } | { erro
   return r.ok ? { code: r.data.code } : { error: r.error };
 }
 
+const ownerOf = (x: { division_id?: string | null }) => x.division_id;
 export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, view?: 'questions' | 'games') => void; onHost: (code: string) => void }) {
   const { owner: division, picker } = useLiveOwner();
   const [quizzes, setQuizzes] = useState<QuizRow[] | null>(null);
+  const embedded = useEmbeddedDivision();
+  const scope = useScopeFilter(quizzes, ownerOf);
   const side = useLiveSide();
   const [name, setName] = useState('');
   const [error, setError] = useState('');
@@ -78,6 +84,8 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, 
         </Button>
       </div>
       <LiveGames onHost={onHost} />
+      {!embedded && <ScopeNote>{scopeNote('club')}</ScopeNote>}
+      {!embedded && scope.control}
       {error && (
         <div role="alert" onClick={() => setError('')}>
           <Notice tone="error">{error}</Notice>
@@ -93,7 +101,7 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, 
         </div>
       ) : (
         <div className={card.grid}>
-          {quizzes.map((q) =>
+          {scope.shown.map((q) =>
             q.locked ? (
               <div key={q.id} className={card.card}>
                 <span className={card.kicker}>
@@ -112,6 +120,7 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, 
               >
                 <span className={styles.marquee}>Now showing</span>
                 <span className={card.kicker}>Quiz</span>
+                {!embedded && <ScopeChip divisionId={q.division_id} />}
                 <h3 className={card.title}>
                   <button type="button" onClick={() => onOpen(q.slug)}>
                     {q.name}

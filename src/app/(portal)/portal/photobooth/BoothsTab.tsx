@@ -11,12 +11,16 @@ import { DEFAULT_BOOTH, type BoothConfig } from '@/lib/photobooth/booth';
 import card from '@/components/ui/Card.module.css';
 import { call, type BoothRow } from './api';
 import { LiveStrip } from './LiveStrip';
+import { ScopeChip, ScopeNote, useScopeFilter } from '@/components/portal/ScopeChip';
+import { scopeNote } from '@/lib/portal/whoSees';
 import styles from './photobooth.module.css';
 
 // The booths. Each is its own thing (not tied to an event): Set Up opens its settings, Open Booth runs it on this screen.
+const ownerOf = (x: { division_id?: string | null }) => x.division_id;
 export function BoothsTab({ onNew, onOpen, onRun }: { onNew: () => void; onOpen: (booth: string) => void; onRun: (booth: string) => void }) {
   const division = useEmbeddedDivision();
   const [booths, setBooths] = useState<BoothRow[] | null>(null);
+  const scope = useScopeFilter(booths, ownerOf);
   const side = useLiveSide();
   const [error, setError] = useState('');
   const load = useCallback(async () => {
@@ -44,11 +48,13 @@ export function BoothsTab({ onNew, onOpen, onRun }: { onNew: () => void; onOpen:
           <Plus size={16} aria-hidden="true" /> Make A Booth
         </Button>
       </div>
+      {!division && <ScopeNote>{scopeNote('club')}</ScopeNote>}
+      {!division && scope.control}
       {booths.length === 0 ? (
         <p className={styles.empty}>No booths yet. Make one, set up its looks and stickers, then open it on a screen at your event.</p>
       ) : (
         <div className={card.grid}>
-          {booths.map((b) => (
+          {scope.shown.map((b) => (
             <div
               key={b.id}
               className={`${card.card} ${card.link}`}
@@ -64,6 +70,7 @@ export function BoothsTab({ onNew, onOpen, onRun }: { onNew: () => void; onOpen:
                 )}
               </div>
               <span className={card.kicker}>Booth</span>
+              {!division && <ScopeChip divisionId={b.division_id} />}
               <h3 className={card.title}>
                 <button type="button" onClick={() => onOpen(b.slug)}>
                   {b.name}

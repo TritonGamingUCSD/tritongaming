@@ -6,6 +6,7 @@ export type { QaSessionStatus, QuestionInfo };
 
 export interface QaCard {
   id: string;
+  division_id?: string | null;
   slug: string;
   name: string;
   status: QaSessionStatus;

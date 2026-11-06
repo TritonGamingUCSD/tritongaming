@@ -334,3 +334,12 @@ Sign in or link with Discord (Supabase provider). A linked account fills the pro
 ## Profile settings tabs
 
 - The profile's old Settings tab is three tabs: **Linked Accounts** (address `security`, so old links work; Google, Discord and Sign Out), **Notifications** (`/portal/profile/notifications`, push) and **Email** (`/portal/profile/email`, which emails you get). Search finds each by name.
+
+## Who sees what (scope)
+
+- **Chip:** every row of a Live Tools list (Trivia quizzes, Polls, Q&A, Photo Booths) and every event on the club's Events list says whose it is: `Club`, or the division's name in its colour (`ScopeChip`, `components/portal/ScopeChip.tsx`; names come from the portal layout's `DivisionDirectoryProvider`). Co-hosted events add `+ Division` chips. Hidden inside a division's own pages, where everything is that division's.
+- **Filter:** a list that mixes owners shows `All / Club / <division>` buttons (`useScopeFilter`; `?scope=` in the address).
+- **Notes:** a one-line note under those page titles; a coloured **Acting as <division>** band at the top of every division page, with the way back to the club (`scopeNote` in `lib/portal/whoSees.ts`).
+- **Who Can See This:** plain-words box while making a Live Tools item (follows the "Make this for" choice), a tournament (new and settings) and an event (Tickets tab). The sentences are written in `lib/portal/whoSees.ts` from the same rules the servers enforce.
+- **Main Site** is a button in the portal header (a word on a computer, a round icon on a phone), no longer in the account menu.
+- Broadcast channels are kept apart: the club's and each division's, with a line on each Channels tab saying so.

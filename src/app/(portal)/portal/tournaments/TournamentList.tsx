@@ -11,6 +11,8 @@ import { Field, Input, Select } from '@/components/ui/Field';
 import { GAME_PRESETS } from '@/lib/tournaments/games';
 import { TEMPLATES } from '@/lib/tournaments/stages';
 import { call, FORMAT_NAMES, STATUS_NAMES } from './types';
+import { WhoCanSee } from '@/components/portal/ScopeChip';
+import { tournamentWho } from '@/lib/portal/whoSees';
 import styles from './tournaments.module.css';
 
 type Row = {
@@ -84,7 +86,7 @@ export default function TournamentList({
   );
 }
 
-function NewDialog({ fixedDivision, home, onClose }: { divisions: { id: string; name: string }[]; fixedDivision?: string; home: string; onClose: () => void }) {
+function NewDialog({ divisions, fixedDivision, home, onClose }: { divisions: { id: string; name: string }[]; fixedDivision?: string; home: string; onClose: () => void }) {
   const [game, setGame] = useState<string>('');
   const [f, setF] = useState({ name: '', game: '', template: 'single', best_of: '1', entrant_type: 'solo', team_size: '2', division_id: fixedDivision ?? '', third_place: false });
   const [busy, setBusy] = useState(false);
@@ -190,6 +192,10 @@ function NewDialog({ fixedDivision, home, onClose }: { divisions: { id: string; 
         )}
       </div>
       {error && <Notice tone="error">{error}</Notice>}
+      {(() => {
+        const who = tournamentWho(f.division_id ? (divisions.find((d) => d.id === f.division_id)?.name ?? 'This division') : null, true);
+        return <WhoCanSee owner={who.owner} lines={who.lines} />;
+      })()}
       <DialogActions>
         <DialogCancel onClick={onClose} disabled={busy} />
         <Button loading={busy} disabled={f.name.trim().length < 3} onClick={create}>

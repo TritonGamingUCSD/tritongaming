@@ -55,3 +55,10 @@
 .homeGrid { display: grid; gap: 1rem; }
 .homeMain, .homeSide { display: grid; gap: 1rem; align-content: start; min-width: 0; }
 @media (min-width: 1000px) { .homeGrid { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1.4rem; align-items: start; } }
+
+/* The band that says whose pages these are: the division's colour and name, what the person is there, and the way back to the club. */
+.hatBand { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; margin: 0 0 1rem; padding: 0.6rem 0.9rem; border: 2px solid var(--pp-ink); border-left: 8px solid var(--hat, var(--yellow)); border-radius: 8px; background: color-mix(in srgb, var(--hat, var(--yellow)) 12%, var(--pp-card)); }
+.hatDot { width: 0.85rem; height: 0.85rem; border-radius: 50%; background: var(--hat, var(--yellow)); border: 2px solid var(--pp-ink); flex-shrink: 0; }
+.hatText { display: grid; gap: 0.1rem; flex: 1 1 16rem; min-width: 0; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+.hatText b { font-size: 0.92rem; color: var(--pp-ink); }
+.hatSwitch { font-size: 0.8rem; font-weight: 800; color: inherit; text-decoration: underline; white-space: nowrap; }

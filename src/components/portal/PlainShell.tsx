@@ -6,6 +6,7 @@ import PortalRefresh from './PortalRefresh';
 import PortalSearch from './PortalSearch';
 import NotificationBell from './NotificationBell';
 import PortalThemeToggle from './PortalThemeToggle';
+import MainSiteLink from './MainSiteLink';
 import ScanLink from './ScanLink';
 import simple from './PortalSimple.module.css';
 import { GroupedSection, HubFrame, HubIdentity, HubSection } from './hubTypes';
@@ -77,6 +78,7 @@ export function PlainShell({
             <div className={simple.search}>
               <PortalSearch compact />
             </div>
+            <MainSiteLink />
             <ScanLink />
             <PortalRefresh />
             <PortalThemeToggle />

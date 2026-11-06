@@ -38,6 +38,7 @@ export async function GET() {
       lock.has(q.id as string)
         ? {
             id: q.id,
+            division_id: q.division_id,
             slug: q.slug,
             name: q.name,
             per_game: 0,

@@ -22,7 +22,10 @@ import DivisionDocs from './DivisionDocs';
 import DivisionTournaments from './DivisionTournaments';
 import DivisionBroadcast from '../broadcast/DivisionBroadcast';
 import DivisionAttendance from './DivisionAttendance';
+import { scopeNote } from '@/lib/portal/whoSees';
 import styles from './division.module.css';
+
+const LEVEL_NAME: Record<DivisionHat['level'], string> = { head: 'Division Head', member: 'Division Member', alumni: 'Division Alumni', staff: 'Exec or admin' };
 
 // A division's pages in the portal. The address says which: /portal/division/<division address>/<page>. The division's sidebar (DesktopShell) lists the pages; this draws the open one.
 // Home and Members are real; the rest arrive in the next steps of the division project (events, check-in and Live Tools for the division; page, docs and settings).
@@ -71,6 +74,19 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
   const label = DIVISION_PAGES.find((p) => p.id === page)?.label ?? 'Home';
   return (
     <div className={styles.page} data-wide style={{ ['--hat' as string]: hat.accent }}>
+      {/* Who you are acting as: everything here belongs to this division, and nothing of the club's or another division's shows. */}
+      <div className={styles.hatBand} role="note">
+        <span className={styles.hatDot} aria-hidden="true" />
+        <span className={styles.hatText}>
+          <b>Acting as {hat.name}</b>
+          <span>
+            {LEVEL_NAME[hat.level]}. {scopeNote('division', hat.name)}
+          </span>
+        </span>
+        <Link href="/portal" className={styles.hatSwitch}>
+          Back To Triton Gaming
+        </Link>
+      </div>
       {/* The Live Tools bring a title of their own, so the division's is left out there (it would read twice). */}
       {!isLiveTool(page) && (
         <SectionHeader

@@ -7,12 +7,16 @@ import { Field, Input, Select, Textarea } from '@/components/ui/Field';
 import { confirmHold } from '@/lib/ui/confirmHold';
 import { showToast } from '@/lib/ui/toast';
 import { PROVIDER_NAMES, cleanLinks, type ExternalLink } from '@/lib/tournaments/external';
+import { WhoCanSee } from '@/components/portal/ScopeChip';
+import { useDivisionDirectory } from '@/components/portal/DivisionDirectory';
+import { tournamentWho } from '@/lib/portal/whoSees';
 import { call, FORMAT_NAMES, type TData } from './types';
 import styles from './tournaments.module.css';
 
 // The tournament's settings. Format and entrant type are fixed when it is made; best-of and the third-place match lock once the bracket starts.
 export default function TSettings({ data, reload, onDeleted }: { data: TData; reload: () => void; onDeleted: () => void }) {
   const t = data.tournament;
+  const dir = useDivisionDirectory();
   const started = data.matches.length > 0;
   const [f, setF] = useState({
     name: t.name,
@@ -72,6 +76,10 @@ export default function TSettings({ data, reload, onDeleted }: { data: TData; re
           <input type="checkbox" checked={f.is_public} onChange={(e) => setF({ ...f, is_public: e.target.checked })} /> Public (the public page and live feed work without the token
           once it is open)
         </label>
+        {(() => {
+          const who = tournamentWho(t.division_id ? (dir.find((d) => d.id === t.division_id)?.name ?? 'This division') : null, f.is_public);
+          return <WhoCanSee owner={who.owner} lines={who.lines} />;
+        })()}
         {t.format === 'single' && !started && (
           <label className={styles.check}>
             <input type="checkbox" checked={f.third_place} onChange={(e) => setF({ ...f, third_place: e.target.checked })} /> Play a third-place match

@@ -7,6 +7,7 @@ export type { EntryInfo, PollMode, PollReveal, PollStatus, Standing };
 
 export interface PollCard {
   id: string;
+  division_id?: string | null;
   slug: string;
   name: string;
   mode: PollMode;

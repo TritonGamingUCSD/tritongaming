@@ -1,0 +1,15 @@
+.chips { display: inline-flex; align-items: center; gap: 0.3rem; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.08rem 0.5rem; border: 2px solid var(--dot, var(--pp-ink)); border-radius: 999px; font-size: 0.7rem; font-weight: 800; line-height: 1.5; letter-spacing: 0.02em; color: var(--pp-ink); background: color-mix(in srgb, var(--dot, transparent) 14%, transparent); max-width: 100%; overflow-wrap: anywhere; }
+.dot { width: 0.5rem; height: 0.5rem; border-radius: 50%; background: var(--dot); flex-shrink: 0; }
+.club { --dot: var(--pp-ink); background: transparent; border-color: rgba(var(--pp-ink-rgb), 0.55); }
+.shared { border-style: dashed; background: transparent; --dot: rgba(var(--pp-ink-rgb), 0.5); font-weight: 700; }
+.note { display: flex; align-items: flex-start; gap: 0.4rem; margin: 0.2rem 0 0.9rem; font-size: 0.85rem; color: rgba(var(--pp-ink-rgb), 0.75); }
+.note svg { flex-shrink: 0; margin-top: 0.15rem; }
+.who { display: grid; gap: 0.3rem; padding: 0.7rem 0.9rem; border: 2px dashed rgba(var(--pp-ink-rgb), 0.45); border-radius: 8px; font-size: 0.85rem; }
+.who b { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; flex-wrap: wrap; font-size: 0.85rem; }
+.who b span { padding: 0.05rem 0.5rem; border: 2px solid var(--pp-ink); border-radius: 999px; font-size: 0.72rem; }
+.who ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.15rem; color: rgba(var(--pp-ink-rgb), 0.85); }
+.filter { display: flex; gap: 0.4rem; flex-wrap: wrap; margin: 0 0 0.9rem; }
+.filter button { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 2.2rem; padding: 0.25rem 0.8rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.45); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 0.82rem; font-weight: 700; cursor: pointer; }
+.filter button:hover { background: rgba(var(--pp-ink-rgb), 0.08); }
+.filter button.on { background: var(--pp-ink); color: var(--pp-card); border-color: var(--pp-ink); }

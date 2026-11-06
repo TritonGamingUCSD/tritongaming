@@ -7,6 +7,7 @@ export { call };
 
 export interface BoothRow {
   id: string;
+  division_id?: string | null;
   slug: string;
   name: string;
   looks: number;

@@ -16,11 +16,17 @@ import card from '@/components/ui/Card.module.css';
 import { useDirty } from '@/lib/ui/useDirty';
 import { MODE_NAMES, POLL_MODES, POLL_REVEALS, REVEAL_NAMES } from '@/lib/polls/tally';
 import { call, STATUS_NAMES, type PollCard, type PollMode, type PollReveal } from './api';
+import { ScopeChip, ScopeNote, useScopeFilter } from '@/components/portal/ScopeChip';
+import { scopeNote } from '@/lib/portal/whoSees';
+import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
 import styles from './polls.module.css';
 
 // The polls. A card shows a poll's pictures, how it is voted, its state and how many people have voted; Run It opens it on the big screen, Set Up changes it.
+const ownerOf = (x: { division_id?: string | null }) => x.division_id;
 export default function PollsList({ onOpen, onRun }: { onOpen: (slug: string) => void; onRun: (slug: string) => void }) {
   const [polls, setPolls] = useState<PollCard[] | null>(null);
+  const embedded = useEmbeddedDivision();
+  const scope = useScopeFilter(polls, ownerOf);
   const side = useLiveSide();
   const [error, setError] = useState('');
   const [making, setMaking] = useState(false);
@@ -47,13 +53,15 @@ export default function PollsList({ onOpen, onRun }: { onOpen: (slug: string) =>
           </Button>
         }
       />
+      {!embedded && <ScopeNote>{scopeNote('club')}</ScopeNote>}
+      {!embedded && scope.control}
       {polls.length === 0 ? (
         <EmptyState icon={<Radio />} title="No polls yet" action={<Button onClick={() => setMaking(true)}>Make A Poll</Button>}>
           Make one, add its entries (with pictures), then open voting at your event.
         </EmptyState>
       ) : (
         <div className={card.grid}>
-          {polls.map((p) => (
+          {scope.shown.map((p) => (
             <div
               key={p.id}
               className={`${card.card} ${card.link}`}
@@ -72,6 +80,7 @@ export default function PollsList({ onOpen, onRun }: { onOpen: (slug: string) =>
                 )}
               </div>
               <span className={card.kicker}>{STATUS_NAMES[p.status]}</span>
+              {!embedded && <ScopeChip divisionId={p.division_id} />}
               <h3 className={card.title}>
                 <button type="button" onClick={() => onOpen(p.slug)}>
                   {p.name}

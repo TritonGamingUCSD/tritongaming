@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Image from 'next/image';
 import Link from '@/components/portal/PortalLink';
-import { Bell, Globe, LifeBuoy, Monitor, Moon, Sun, UserRound } from 'lucide-react';
+import { Bell, LifeBuoy, Monitor, Moon, Sun, UserRound } from 'lucide-react';
 import { getThemeChoice, setThemeChoice, type ThemeChoice } from '@/lib/portal/themeScript';
 import SignOutButton from './SignOutButton';
 import type { HubIdentity } from './hubTypes';
@@ -150,10 +150,6 @@ export default function AccountMenu({ identity, viewAs, onProfile }: { identity:
                 {waiting > 0 && <span className={styles.badge}>{waiting}</span>}
               </Link>
             )}
-            <Link href="/" className={styles.tile} onClick={() => setOpen(false)}>
-              <Globe size={20} aria-hidden="true" />
-              <span>Website</span>
-            </Link>
           </div>
           <SignOutButton plain className={styles.signOut} />
         </div>

@@ -16,11 +16,17 @@ import card from '@/components/ui/Card.module.css';
 import { useDirty } from '@/lib/ui/useDirty';
 import { SESSION_NAMES } from '@/lib/qa/rank';
 import { call, type QaCard } from './api';
+import { ScopeChip, ScopeNote, useScopeFilter } from '@/components/portal/ScopeChip';
+import { scopeNote } from '@/lib/portal/whoSees';
+import { useEmbeddedDivision } from '@/lib/portal/usePortalParams';
 import polls from '../polls/polls.module.css';
 
 // The Q&A sessions. A card shows how it stands (waiting, shown, answered) and its code; clicking it opens the console where questions are approved.
+const ownerOf = (x: { division_id?: string | null }) => x.division_id;
 export default function QaList({ onOpen }: { onOpen: (slug: string) => void }) {
   const [list, setList] = useState<QaCard[] | null>(null);
+  const embedded = useEmbeddedDivision();
+  const scope = useScopeFilter(list, ownerOf);
   const side = useLiveSide();
   const [error, setError] = useState('');
   const [making, setMaking] = useState(false);
@@ -48,13 +54,15 @@ export default function QaList({ onOpen }: { onOpen: (slug: string) => void }) {
           </Button>
         }
       />
+      {!embedded && <ScopeNote>{scopeNote('club')}</ScopeNote>}
+      {!embedded && scope.control}
       {list.length === 0 ? (
         <EmptyState icon={<MessagesSquare />} title="No Q&A sessions yet" action={<Button onClick={() => setMaking(true)}>Make A Q&amp;A</Button>}>
           Make one, open it when the event starts, and put the code on the screen.
         </EmptyState>
       ) : (
         <div className={card.grid}>
-          {list.map((s) => (
+          {scope.shown.map((s) => (
             <div
               key={s.id}
               className={`${card.card} ${card.link}`}
@@ -66,6 +74,7 @@ export default function QaList({ onOpen }: { onOpen: (slug: string) => void }) {
                 <MessagesSquare size={40} strokeWidth={1.5} />
               </div>
               <span className={card.kicker}>{SESSION_NAMES[s.status]}</span>
+              {!embedded && <ScopeChip divisionId={s.division_id} />}
               <h3 className={card.title}>
                 <button type="button" onClick={() => onOpen(s.slug)}>
                   {s.name}

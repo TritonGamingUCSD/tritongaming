@@ -90,7 +90,16 @@ export default async function EditEventPage({ params }: Params) {
   return (
     <EventWorkspace
       eventId={event.id}
-      details={<EditEventClient eventId={event.id} initial={initial} seedCheckinFormConfig={seedCheckinFormConfig} previewViewer={previewViewer} creditPeople={creditPeople} />}
+      details={
+        <EditEventClient
+          eventId={event.id}
+          ownerDivisionId={ev.division_id}
+          initial={initial}
+          seedCheckinFormConfig={seedCheckinFormConfig}
+          previewViewer={previewViewer}
+          creditPeople={creditPeople}
+        />
+      }
     />
   );
 }

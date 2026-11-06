@@ -1,4 +1,5 @@
 import { cleanTheme } from '@/lib/events/eventTheme';
+import { createServiceClient } from '@/lib/supabase/admin';
 import { createClient } from '@/lib/supabase/server';
 import { bucketByMonth } from '@/lib/events/monthBuckets';
 import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/events/checkinForm';
@@ -36,12 +37,20 @@ export async function getEventsData() {
     supabase
       .from('events')
       .select(
-        'id, slug, title, flyer_url, theme, start_date, end_date, created_at, location, is_published, requires_ticket, audience, points_value, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override',
+        'id, slug, division_id, title, flyer_url, theme, start_date, end_date, created_at, location, is_published, requires_ticket, audience, points_value, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override',
       )
       .order('start_date', { ascending: false })
       .limit(50),
     supabase.from('tickets').select('event_id, status, created_at, checked_in_at, user_id'),
   ]);
+
+  // Divisions an event is shared with (accepted co-hosts); null is Triton Gaming itself, co-hosting a division's event.
+  const sharedByEvent = new Map<string, (string | null)[]>();
+  const ids = (events ?? []).map((e) => e.id as string);
+  if (ids.length) {
+    const { data: co } = await createServiceClient().from('event_cohosts').select('event_id, division_id').eq('status', 'accepted').in('event_id', ids);
+    for (const c of co ?? []) sharedByEvent.set(c.event_id as string, [...(sharedByEvent.get(c.event_id as string) ?? []), (c.division_id as string | null) ?? null]);
+  }
 
   const ticketsByEvent = new Map<string, { issued: number; checkedIn: number }>();
   (tickets ?? []).forEach((t) => {
@@ -70,6 +79,7 @@ export async function getEventsData() {
       ...e,
       poster: theme?.posters?.[0] || e.flyer_url || null,
       accent: theme?.colors.accent || null,
+      sharedWith: sharedByEvent.get(e.id) ?? [],
       ticketsIssued: ticketsByEvent.get(e.id)?.issued ?? 0,
       ticketsCheckedIn: ticketsByEvent.get(e.id)?.checkedIn ?? 0,
       checkinFormPreviewUrl,

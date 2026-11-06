@@ -12,6 +12,7 @@ import LinkAccountBanner from '@/components/portal/LinkAccountBanner';
 import NotificationBell from '@/components/portal/NotificationBell';
 import CodeButton from '@/components/portal/CodeButton';
 import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
+import MainSiteLink from '@/components/portal/MainSiteLink';
 import PullToRefresh from '@/components/portal/PullToRefresh';
 import AttributionCapture from '@/components/AttributionCapture/AttributionCapture';
 import ConnectivityBanner from '@/components/ConnectivityBanner/ConnectivityBanner';
@@ -19,6 +20,9 @@ import InstallAsk from '@/components/portal/InstallAsk';
 import HideOnPaths from '@/components/portal/HideOnPaths';
 import PortalBanner from '@/components/portal/PortalBanner';
 import SiteSettingsProvider from '@/components/portal/SiteSettingsProvider';
+import { DivisionDirectoryProvider } from '@/components/portal/DivisionDirectory';
+import { getDivisions } from '@/lib/members/divisions';
+import { accentOf } from '@/lib/divisions/accent';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { bannerShown, loadSiteSettings } from '@/lib/portal/siteSettings';
 
@@ -40,7 +44,14 @@ export default async function PortalLayout({ children }: { children: React.React
 
   // Anything required still blank on this person's profile — surfaced as a
   // banner on every portal page, not only when a ticket claim bounces them.
-  const [roles, gender, viewAs, viewing, siteSettings] = await Promise.all([getUserRoles(), getMyGender(), getViewAs(), getViewingUser(), loadSiteSettings(createServiceClient())]);
+  const [roles, gender, viewAs, viewing, siteSettings, divisions] = await Promise.all([
+    getUserRoles(),
+    getMyGender(),
+    getViewAs(),
+    getViewingUser(),
+    loadSiteSettings(createServiceClient()),
+    getDivisions(),
+  ]);
   const viewingName = viewing ? profile.display_name || profile.google_first_name || viewing.email || 'this person' : null;
   const isUcsdMember = isVerifiedMember(roles);
   const missingProfileFields = getMissingProfileFields({ ...profile, gender }, isUcsdMember, { requireOrgTitle: requiresOrgTitle(roles) });
@@ -49,62 +60,67 @@ export default async function PortalLayout({ children }: { children: React.React
 
   return (
     <SiteSettingsProvider value={siteSettings}>
-      <div className={`${styles.layout} ${styles.fontScope} ${portalSans.variable} ${jbMono.variable}`} data-portal-layout>
-        <main className={styles.main} data-ptr-page>
-          {viewAs && (
-            <div className={styles.bannerSlot}>
-              <ViewAsBanner active={viewAs} />
+      <DivisionDirectoryProvider value={divisions.map((d) => ({ id: d.id, name: d.name, slug: d.slug, accent: accentOf(d.accent).hex }))}>
+        <div className={`${styles.layout} ${styles.fontScope} ${portalSans.variable} ${jbMono.variable}`} data-portal-layout>
+          <main className={styles.main} data-ptr-page>
+            {viewAs && (
+              <div className={styles.bannerSlot}>
+                <ViewAsBanner active={viewAs} />
+              </div>
+            )}
+            {viewingName && (
+              <div className={styles.bannerSlot}>
+                <ViewingUserBanner name={viewingName} />
+              </div>
+            )}
+            <SessionGuard />
+            {viewingName && <ViewOnlyGuard name={viewingName} />}
+            <div className={styles.content}>
+              <div data-print-hide className={styles.bannerSlot} style={{ display: 'contents' }}>
+                {bannerShown(siteSettings, pacificDayKey()) && <PortalBanner text={siteSettings.banner.text} />}
+                <Suspense fallback={null}>
+                  <HideOnPaths paths={CHECKIN_PATHS}>
+                    <ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} />
+                    {!viewingName && <LinkAccountBanner />}
+                  </HideOnPaths>
+                </Suspense>
+              </div>
+              {children}
             </div>
-          )}
-          {viewingName && (
-            <div className={styles.bannerSlot}>
-              <ViewingUserBanner name={viewingName} />
-            </div>
-          )}
-          <SessionGuard />
-          {viewingName && <ViewOnlyGuard name={viewingName} />}
-          <div className={styles.content}>
-            <div data-print-hide className={styles.bannerSlot} style={{ display: 'contents' }}>
-              {bannerShown(siteSettings, pacificDayKey()) && <PortalBanner text={siteSettings.banner.text} />}
-              <Suspense fallback={null}>
-                <HideOnPaths paths={CHECKIN_PATHS}>
-                  <ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} />
-                  {!viewingName && <LinkAccountBanner />}
-                </HideOnPaths>
-              </Suspense>
-            </div>
-            {children}
-          </div>
-        </main>
-        {/* Fixed to the viewport, not slotted into .content — needs to stay
+          </main>
+          {/* Fixed to the viewport, not slotted into .content — needs to stay
           reachable on /portal itself, which is the one page PortalTopbar
           (the other persistent portal chrome) deliberately hides on. */}
-        <div data-print-hide style={{ display: 'contents' }}>
-          <div className={styles.fixedBell} style={{ display: 'contents' }}>
+          <div data-print-hide style={{ display: 'contents' }}>
+            <div className={styles.fixedBell} style={{ display: 'contents' }}>
+              <HideOnPaths paths={CHECKIN_PATHS}>
+                <NotificationBell />
+              </HideOnPaths>
+            </div>
+            {/* Phones: the light/dark switch sits right beside the bell (desktop has it in the top bar). */}
             <HideOnPaths paths={CHECKIN_PATHS}>
-              <NotificationBell />
+              <div className={styles.fixedTheme}>
+                <PortalThemeToggle />
+              </div>
             </HideOnPaths>
+            {/* Phones: the Enter A Code button, left of the light/dark switch (a computer has the code box in the sidebar, or this button in the top bar when the sidebar is hidden). */}
+            <HideOnPaths paths={CHECKIN_PATHS}>
+              <div className={styles.fixedSite}>
+                <MainSiteLink round />
+              </div>
+              <div className={styles.fixedCode}>
+                <CodeButton />
+              </div>
+            </HideOnPaths>
+            <PullToRefresh />
+            <ConnectivityBanner />
+            <HideOnPaths paths={CHECKIN_PATHS}>
+              <InstallAsk />
+            </HideOnPaths>
+            <AttributionCapture />
           </div>
-          {/* Phones: the light/dark switch sits right beside the bell (desktop has it in the top bar). */}
-          <HideOnPaths paths={CHECKIN_PATHS}>
-            <div className={styles.fixedTheme}>
-              <PortalThemeToggle />
-            </div>
-          </HideOnPaths>
-          {/* Phones: the Enter A Code button, left of the light/dark switch (a computer has the code box in the sidebar, or this button in the top bar when the sidebar is hidden). */}
-          <HideOnPaths paths={CHECKIN_PATHS}>
-            <div className={styles.fixedCode}>
-              <CodeButton />
-            </div>
-          </HideOnPaths>
-          <PullToRefresh />
-          <ConnectivityBanner />
-          <HideOnPaths paths={CHECKIN_PATHS}>
-            <InstallAsk />
-          </HideOnPaths>
-          <AttributionCapture />
         </div>
-      </div>
+      </DivisionDirectoryProvider>
     </SiteSettingsProvider>
   );
 }

@@ -30,6 +30,9 @@ import styles from './new/newevent.module.css';
 import Select from '@/components/ui/Select';
 import SectionTabs from '@/components/ui/SectionTabs';
 import { DateTimeInput, TimeInput } from '@/components/ui/Field';
+import { WhoCanSee } from '@/components/portal/ScopeChip';
+import { useDivisionDirectory } from '@/components/portal/DivisionDirectory';
+import { eventWho } from '@/lib/portal/whoSees';
 import NumberInput from '@/components/ui/NumberInput';
 
 export interface EventFormValues {
@@ -165,8 +168,11 @@ export default function EventForm({
   stayAfterSave = false,
   eventId,
   creditPeople = [],
+  ownerDivisionId = null,
 }: {
   heading: string;
+  /** The division the event belongs to (empty: Triton Gaming), for the "who can see this" note. */
+  ownerDivisionId?: string | null;
   /** The event being edited (not set for a new one): lets everyone editing it see each other. */
   eventId?: string;
   initial: EventFormValues;
@@ -185,6 +191,7 @@ export default function EventForm({
   creditPeople?: import('@/lib/members/creditPeople').CreditPerson[];
 }) {
   // Older events have only a flyer: it becomes poster 1.
+  const dir = useDivisionDirectory();
   const [form, setForm] = useState<EventFormValues>(() =>
     initial.theme.posters?.length || !initial.flyer_url ? initial : { ...initial, theme: { ...initial.theme, posters: [initial.flyer_url] } },
   );
@@ -573,6 +580,11 @@ export default function EventForm({
                 <option value="ucsd_only">UCSD-affiliated only</option>
               </Select>
             </label>
+
+            {(() => {
+              const who = eventWho(ownerDivisionId ? (dir.find((d) => d.id === ownerDivisionId)?.name ?? 'This division') : null, form.audience);
+              return <WhoCanSee owner={who.owner} lines={who.lines} />;
+            })()}
 
             {form.audience === 'public' && (
               <label className={styles.field}>

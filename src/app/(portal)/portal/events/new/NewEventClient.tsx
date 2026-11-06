@@ -96,6 +96,7 @@ export default function NewEventClient({
   return (
     <EventForm
       creditPeople={creditPeople}
+      ownerDivisionId={division?.id ?? null}
       heading={division ? `Create Event for ${division.name}` : 'Create Event'}
       initial={initial}
       submitLabel="Create Event"
