@@ -1,7 +1,16 @@
 import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { bucketByMonth, cumulative } from '@/lib/events/monthBuckets';
+import { fetchTiers } from '@/lib/members/tiers';
+import { dailyCounts, retentionCohorts, tierBuckets, weekdayHourCounts } from '@/lib/stats/analytics';
+import { pacificDayKey } from '@/lib/core/timezone';
 
+export interface DivisionCompare {
+  name: string;
+  members: number;
+  events: number;
+  checkins: number;
+}
 export interface DivisionCount {
   name: string;
   count: number;
@@ -37,14 +46,17 @@ export async function getStatsData() {
   // are covered by every one of those policies.
   const serviceClient = createServiceClient();
 
-  const [eventsRes, ticketsRes, profilesRes, rolesRes, divisionsRes, memberPointsRes, memberRedemptionsRes] = await Promise.all([
+  const [eventsRes, ticketsRes, profilesRes, rolesRes, divisionsRes, memberPointsRes, memberRedemptionsRes, eventRowsRes, cohostRes, tiers] = await Promise.all([
     supabase.from('events').select('id', { count: 'exact', head: true }),
-    supabase.from('tickets').select('status, created_at, checked_in_at'),
+    supabase.from('tickets').select('status, created_at, checked_in_at, user_id, event_id'),
     supabase.from('profiles').select('created_at'),
     supabase.from('user_roles').select('role, division_id'),
     supabase.from('divisions').select('id, name'),
-    serviceClient.from('point_transactions').select('amount, type, reversed_at'),
+    serviceClient.from('point_transactions').select('amount, type, reversed_at, user_id'),
     serviceClient.from('reward_redemptions').select('status, reward:reward_items(title)').neq('status', 'cancelled'),
+    supabase.from('events').select('id, division_id, start_date, is_published'),
+    serviceClient.from('event_cohosts').select('event_id, division_id').eq('status', 'accepted'),
+    fetchTiers(supabase).catch(() => []),
   ]);
 
   const tickets = ticketsRes.data ?? [];
@@ -112,7 +124,56 @@ export async function getStatsData() {
     checkins: tickets.filter((t) => t.status === 'used').length,
   };
 
-  return { memberGrowth, divisionSizes, totals, pointsEconomy, topRewards, activity, roleCounts };
+  // When people come: the busiest weekday and hour, every day of the last year, and who comes back month after month.
+  const checkinTimes = tickets.filter((t) => t.checked_in_at).map((t) => t.checked_in_at as string);
+  const hours = Array.from({ length: 16 }, (_, i) => i + 8); // 8 am to 11 pm
+  const busiest = { hours, data: weekdayHourCounts(checkinTimes, hours) };
+  const yearAgo = pacificDayKey(Date.now() - 364 * 86_400_000);
+  const calendar = { from: yearAgo, to: pacificDayKey(), data: dailyCounts(checkinTimes).filter((d) => d[0] >= yearAgo) };
+  const cohorts = retentionCohorts(
+    tickets.filter((t) => t.checked_in_at && t.user_id).map((t) => ({ user: t.user_id as string, at: t.checked_in_at as string })),
+    new Date(),
+  );
+
+  // How many people sit in each rewards tier, by what they have earned over all time.
+  const lifetime = new Map<string, number>();
+  (memberPointsRes.data ?? []).forEach((t) => {
+    if (t.amount > 0 && !t.reversed_at && t.user_id) lifetime.set(t.user_id as string, (lifetime.get(t.user_id as string) ?? 0) + t.amount);
+  });
+  const tierSplit = tiers.length
+    ? tierBuckets(
+        [...lifetime.values()],
+        tiers.map((t) => ({ name: t.name, min: t.min })),
+      )
+    : [];
+
+  // Each division side by side: who is in it, the events it held (its own and ones it co-hosted) and the people it checked in.
+  const eventRows = eventRowsRes.data ?? [];
+  const cohostRows = cohostRes.data ?? [];
+  const usedByEvent = new Map<string, number>();
+  tickets.forEach((t) => {
+    if (t.status === 'used') usedByEvent.set(t.event_id as string, (usedByEvent.get(t.event_id as string) ?? 0) + 1);
+  });
+  const nowMs = Date.now();
+  const divisionCompare: DivisionCompare[] = divisions
+    .map((d) => {
+      const own = eventRows.filter((e) => e.division_id === d.id);
+      const co = cohostRows
+        .filter((c) => c.division_id === d.id)
+        .map((c) => eventRows.find((e) => e.id === c.event_id))
+        .filter(Boolean) as typeof eventRows;
+      const held = [...own, ...co].filter((e) => e.is_published && new Date(e.start_date as string).getTime() <= nowMs);
+      return {
+        name: d.name,
+        members: roleRows.filter((r) => r.division_id === d.id && (r.role === 'division' || r.role === 'division_member')).length,
+        events: held.length,
+        checkins: held.reduce((n, e) => n + (usedByEvent.get(e.id as string) ?? 0), 0),
+      };
+    })
+    .filter((d) => d.members + d.events > 0)
+    .sort((a, b) => b.checkins - a.checkins || b.members - a.members);
+
+  return { memberGrowth, divisionSizes, totals, pointsEconomy, topRewards, activity, roleCounts, busiest, calendar, cohorts, tierSplit, divisionCompare };
 }
 
 export type StatsData = Awaited<ReturnType<typeof getStatsData>>;

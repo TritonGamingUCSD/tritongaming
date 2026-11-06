@@ -21,13 +21,10 @@ import type { getContentData } from './admin/content/getContentData';
 // `scope` is who is looking (and "viewing as" what), so a changed view never reuses another view's data.
 type Awaited_<T extends (...a: never[]) => Promise<unknown>> = Awaited<ReturnType<T>>;
 
-export function EventsLazy({
-  scope,
-  ...rest
-}: { scope: string } & Omit<ComponentProps<typeof EventsSectionContent>, 'events' | 'eventsPerMonth' | 'ticketsPerMonth' | 'eventStats'>) {
+export function EventsLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof EventsSectionContent>, 'events' | 'analytics'>) {
   const { data, error, retry } = useSectionData<Awaited_<typeof getEventsData>>('events', scope);
   if (!data) return <SectionLoading error={error} retry={retry} />;
-  return <EventsSectionContent {...rest} events={data.events} eventsPerMonth={data.eventsPerMonth} ticketsPerMonth={data.ticketsPerMonth} eventStats={data.eventStats} />;
+  return <EventsSectionContent {...rest} events={data.events} analytics={data.analytics} />;
 }
 
 export function MembersLazy({ scope, ...rest }: { scope: string } & Omit<ComponentProps<typeof MembersSectionContent>, 'rows'>) {

@@ -4,7 +4,9 @@ import { useState } from 'react';
 import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
 import Link from '@/components/portal/NoPrefetchLink';
-import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from 'recharts';
+import EChart from '@/components/charts/EChart';
+import ChartCard from '@/components/charts/ChartCard';
+import { areaLine, funnel, groupedBars, rankedBars } from '@/components/charts/chartOptions';
 import EventRowActions from './EventRowActions';
 import { Search, Plus, Ticket, MapPin, BarChart3, ListChecks, Award, Mail } from 'lucide-react';
 import { formatEventDateRangeShort, formatEventTimeRange, eventDayCount } from '@/lib/core/timezone';
@@ -21,7 +23,7 @@ import { ButtonLink } from '@/components/ui/Button';
 import PosterArt from '../tickets/PosterArt';
 import wall from './eventWall.module.css';
 import styles from './events.module.css';
-import chartStyles from '../admin/stats/stats.module.css';
+import chartStyles from '@/components/charts/charts.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 
 interface EventRow {
@@ -56,20 +58,15 @@ const FILTERS: { key: StatusFilter; label: string }[] = [
   { key: 'draft', label: 'Drafts' },
 ];
 
-const TOOLTIP_STYLE = {
-  background: 'rgba(10, 15, 28, 0.95)',
-  border: '1px solid rgba(255,255,255,0.12)',
-  borderRadius: 8,
-  fontSize: 12,
-  color: '#f2f1f0',
-};
-const AXIS_STYLE = { fontSize: 11, fill: 'rgba(242,241,240,0.5)' };
-
 interface Props {
   events: EventRow[];
-  eventsPerMonth: MonthPoint[];
-  ticketsPerMonth: MonthPoint[];
-  eventStats: EventTicketStat[];
+  analytics: {
+    heldPerMonth: MonthPoint[];
+    ticketsPerMonth: MonthPoint[];
+    checkinsPerMonth: MonthPoint[];
+    eventStats: EventTicketStat[];
+    people: { ticketed: number; came: number; returned: number };
+  };
   canEdit: boolean;
   canManagePoints: boolean;
   // delete_events (admin-only) — separate from canEdit, which lead+ hold.
@@ -84,7 +81,8 @@ interface Props {
 // component — search + status filter are pure UI state over data that's
 // already fully fetched (all events + their ticket counts come in as
 // props), so filtering is instant with no round trip.
-export default function EventsSectionContent({ events, eventsPerMonth, ticketsPerMonth, eventStats, canEdit, canManagePoints, canDelete = false, canEmail = false }: Props) {
+export default function EventsSectionContent({ events, analytics, canEdit, canManagePoints, canDelete = false, canEmail = false }: Props) {
+  const { heldPerMonth, ticketsPerMonth, checkinsPerMonth, eventStats, people } = analytics;
   const { tab: initialTab, subtab: initialSub } = useUrlNav();
   // The check-ins page of one event (/portal/events/check-ins/<event>). Held here, like the tab, because changing the address bar alone does not redraw the page.
   const [checkinsKey, setCheckinsKey] = useState<string | null>(initialTab === 'check-ins' && initialSub ? initialSub : null);
@@ -185,76 +183,12 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
       {tab === 'analytics' &&
         canEdit &&
         view === 'charts' &&
-        (eventsPerMonth.length === 0 && ticketsPerMonth.length === 0 && eventStats.length === 0 ? (
+        (heldPerMonth.length === 0 && ticketsPerMonth.length === 0 && eventStats.length === 0 ? (
           <div className={styles.empty}>
             <p>Not enough data yet to chart trends.</p>
           </div>
         ) : (
-          <div className={styles.analyticsCharts}>
-            <div className={chartStyles.chartRow}>
-              {eventsPerMonth.length > 0 && (
-                <section className={chartStyles.chartCard}>
-                  <h2 className={chartStyles.chartTitle}>Events Created / Month</h2>
-                  <ResponsiveContainer width="100%" height={220}>
-                    <BarChart data={eventsPerMonth}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                      <XAxis dataKey="month" tick={AXIS_STYLE} />
-                      <YAxis tick={AXIS_STYLE} allowDecimals={false} />
-                      <Tooltip contentStyle={TOOLTIP_STYLE} />
-                      <Bar dataKey="count" name="Events" fill="#4f8ef7" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </section>
-              )}
-
-              {ticketsPerMonth.length > 0 && (
-                <section className={chartStyles.chartCard}>
-                  <h2 className={chartStyles.chartTitle}>Tickets Issued / Month</h2>
-                  <ResponsiveContainer width="100%" height={220}>
-                    <LineChart data={ticketsPerMonth}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                      <XAxis dataKey="month" tick={AXIS_STYLE} />
-                      <YAxis tick={AXIS_STYLE} allowDecimals={false} />
-                      <Tooltip contentStyle={TOOLTIP_STYLE} />
-                      <Line type="monotone" dataKey="count" name="Tickets" stroke="#34d399" strokeWidth={2} dot={false} />
-                    </LineChart>
-                  </ResponsiveContainer>
-                </section>
-              )}
-            </div>
-
-            {eventStats.length > 0 && (
-              <>
-                <section className={chartStyles.chartCard}>
-                  <h2 className={chartStyles.chartTitle}>Ticket Sales & Attendance by Event (most recent)</h2>
-                  <ResponsiveContainer width="100%" height={Math.max(240, eventStats.length * 34)}>
-                    <BarChart data={eventStats} layout="vertical" margin={{ left: 24 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                      <XAxis type="number" tick={AXIS_STYLE} allowDecimals={false} />
-                      <YAxis type="category" dataKey="title" tick={{ ...AXIS_STYLE, fontSize: 10 }} width={150} />
-                      <Tooltip contentStyle={TOOLTIP_STYLE} />
-                      <Legend wrapperStyle={{ fontSize: 12 }} />
-                      <Bar dataKey="issued" name="Tickets sold" fill="#4f8ef7" radius={[0, 4, 4, 0]} />
-                      <Bar dataKey="checkedIn" name="Checked in" fill="#ffc72c" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </section>
-
-                <section className={chartStyles.chartCard}>
-                  <h2 className={chartStyles.chartTitle}>Attendance Rate by Event (most recent)</h2>
-                  <ResponsiveContainer width="100%" height={Math.max(220, eventStats.length * 32)}>
-                    <BarChart data={eventStats} layout="vertical" margin={{ left: 24 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
-                      <XAxis type="number" tick={AXIS_STYLE} unit="%" domain={[0, 100]} />
-                      <YAxis type="category" dataKey="title" tick={{ ...AXIS_STYLE, fontSize: 10 }} width={150} />
-                      <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(v, _n, p) => [`${v}% (${p.payload.checkedIn}/${p.payload.issued})`, 'Attendance rate']} />
-                      <Bar dataKey="rate" name="Attendance rate" fill="#34d399" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </section>
-              </>
-            )}
-          </div>
+          <EventCharts heldPerMonth={heldPerMonth} ticketsPerMonth={ticketsPerMonth} checkinsPerMonth={checkinsPerMonth} eventStats={eventStats} people={people} />
         ))}
 
       {tab === 'list' &&
@@ -391,6 +325,106 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
           event={{ id: deleteTarget.id, title: deleteTarget.title, ticketsIssued: deleteTarget.ticketsIssued, ticketsCheckedIn: deleteTarget.ticketsCheckedIn }}
           onClose={() => setDeleteTarget(null)}
         />
+      )}
+    </div>
+  );
+}
+
+// The Analytics tab: what turned out to matter for running events. How many events happened, how sign-ups turn into people in the room, which events drew the most, whether show-up is getting better, and who comes back.
+function EventCharts({ heldPerMonth, ticketsPerMonth, checkinsPerMonth, eventStats, people }: Props['analytics']) {
+  const months = [...new Set([...ticketsPerMonth, ...checkinsPerMonth, ...heldPerMonth].map((p) => p.month))];
+  const monthOrder = (m: string) => new Date(`1 ${m.replace(/ (\d\d)$/, ' 20$1')}`).getTime();
+  months.sort((a, b) => monthOrder(a) - monthOrder(b));
+  const at = (list: MonthPoint[], m: string) => list.find((p) => p.month === m)?.count ?? 0;
+  const biggest = [...eventStats].sort((a, b) => b.checkedIn - a.checkedIn).slice(0, 12);
+  const rateNow = eventStats.length ? eventStats[eventStats.length - 1].rate : 0;
+  const rateAvg = eventStats.length ? Math.round(eventStats.reduce((n, e) => n + e.rate, 0) / eventStats.length) : 0;
+  return (
+    <div className={chartStyles.grid}>
+      {heldPerMonth.length > 0 && (
+        <ChartCard
+          title="Events Held"
+          sub="Events that happened, by the month they took place."
+          table={{ head: ['Month', 'Events'], rows: heldPerMonth.map((p) => [p.month, p.count]) }}
+        >
+          <EChart
+            label="Events held per month"
+            build={(t) => groupedBars(t, { x: heldPerMonth.map((p) => p.month), series: [{ name: 'Events', data: heldPerMonth.map((p) => p.count) }] })}
+          />
+        </ChartCard>
+      )}
+      {months.length > 0 && (
+        <ChartCard
+          title="Sign-Ups And Check-Ins"
+          sub="Tickets taken and people checked in, month by month."
+          table={{ head: ['Month', 'Tickets', 'Check-ins'], rows: months.map((m) => [m, at(ticketsPerMonth, m), at(checkinsPerMonth, m)]) }}
+        >
+          <EChart
+            label="Tickets and check-ins each month"
+            build={(t) =>
+              groupedBars(t, {
+                x: months,
+                series: [
+                  { name: 'Tickets', data: months.map((m) => at(ticketsPerMonth, m)) },
+                  { name: 'Check-ins', data: months.map((m) => at(checkinsPerMonth, m)) },
+                ],
+              })
+            }
+          />
+        </ChartCard>
+      )}
+      {biggest.length > 0 && (
+        <ChartCard
+          title="Biggest Turnouts"
+          sub="People checked in, for the twelve events that drew the most."
+          table={{ head: ['Event', 'Tickets', 'Checked in', 'Showed up'], rows: biggest.map((e) => [e.title, e.issued, e.checkedIn, `${e.rate}%`]) }}
+        >
+          <EChart
+            label="People checked in per event"
+            height={Math.max(200, biggest.length * 32 + 20)}
+            build={(t) => rankedBars(t, { labels: biggest.map((e) => e.title), values: biggest.map((e) => e.checkedIn), color: t.series[0] })}
+          />
+        </ChartCard>
+      )}
+      {eventStats.length > 1 && (
+        <ChartCard
+          title="Show-Up Rate Over Time"
+          sub={`Of the people with a ticket, how many came. Latest event ${rateNow}%, average ${rateAvg}%.`}
+          table={{ head: ['Event', 'Showed up'], rows: eventStats.map((e) => [e.title, `${e.rate}%`]) }}
+        >
+          <EChart
+            label="Show-up rate for each event, oldest to newest"
+            build={(t) => areaLine(t, { x: eventStats.map((e) => e.title), y: eventStats.map((e) => e.rate), name: 'Showed up (%)', color: t.series[2], max: 100 })}
+          />
+        </ChartCard>
+      )}
+      {people.came > 0 && (
+        <ChartCard
+          title="Who Comes Back"
+          sub={`${people.returned.toLocaleString()} of ${people.came.toLocaleString()} people who came have been to more than one event.`}
+          table={{
+            head: ['Step', 'People'],
+            rows: [
+              ['Had a ticket', people.ticketed],
+              ['Came to an event', people.came],
+              ['Came to 2 or more', people.returned],
+            ],
+          }}
+        >
+          <EChart
+            label="People who had a ticket, came, and came back"
+            height={240}
+            build={(t) =>
+              funnel(t, {
+                steps: [
+                  { name: 'Had a ticket', value: people.ticketed },
+                  { name: 'Came', value: people.came },
+                  { name: 'Came back', value: people.returned },
+                ],
+              })
+            }
+          />
+        </ChartCard>
       )}
     </div>
   );

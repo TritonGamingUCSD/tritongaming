@@ -1,0 +1,15 @@
+/* Chart cards: paper with a hard offset shadow, the way every card in the portal is drawn */
+.card { display: grid; gap: 0.7rem; align-content: start; min-width: 0; padding: 1rem 1.1rem 0.9rem; background: var(--pp-card); color: var(--pp-ink); border: 2px solid rgba(var(--pp-ink-rgb), 0.6); border-radius: 10px; box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.16); }
+.wide { grid-column: 1 / -1; }
+.head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.8rem; }
+.title { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.15rem; line-height: 1.15; }
+.sub { margin: 0.25rem 0 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+.switch { flex: none; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.7); border-radius: 6px; background: var(--pp-card); color: var(--pp-ink); font: inherit; font-size: 0.75rem; font-weight: 700; cursor: pointer; }
+.switch:hover { background: var(--yellow); color: #011941; } /* theme-ok */
+.tableWrap { max-height: 18rem; overflow: auto; border: 1px solid rgba(var(--pp-ink-rgb), 0.2); border-radius: 6px; }
+.table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+.table th, .table td { padding: 0.4rem 0.7rem; text-align: left; border-bottom: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
+.table th { position: sticky; top: 0; background: var(--pp-card); font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
+.table td:not(:first-child), .table th:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+.foot { margin: 0; font-size: 0.74rem; color: rgba(var(--pp-ink-rgb), 0.7); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 26rem), 1fr)); gap: 1.1rem; }

@@ -40,7 +40,7 @@ export async function getEventsData() {
       )
       .order('start_date', { ascending: false })
       .limit(50),
-    supabase.from('tickets').select('event_id, status, created_at'),
+    supabase.from('tickets').select('event_id, status, created_at, checked_in_at, user_id'),
   ]);
 
   const ticketsByEvent = new Map<string, { issued: number; checkedIn: number }>();
@@ -79,8 +79,24 @@ export async function getEventsData() {
   // Analytics-tab data — moved here from the Admin card's Analytics tab
   // (see getStatsData.ts), since these are all per-event/event-entity
   // numbers, not org-wide platform metrics.
-  const eventsPerMonth = bucketByMonth((events ?? []).map((e) => e.created_at));
+  // Events that have happened, counted by the month they took place in (when an event was created in the system says nothing useful).
+  const nowMs = Date.now();
+  const heldPerMonth = bucketByMonth((events ?? []).filter((e) => e.is_published && new Date(e.start_date).getTime() <= nowMs).map((e) => e.start_date));
   const ticketsPerMonth = bucketByMonth((tickets ?? []).map((t) => t.created_at));
+  const checkinsPerMonth = bucketByMonth((tickets ?? []).filter((t) => t.checked_in_at).map((t) => t.checked_in_at as string));
+  // The people behind the tickets: who had one, who came, and who came to more than one event.
+  const eventsByUser = new Map<string, Set<string>>();
+  const ticketed = new Set<string>();
+  (tickets ?? []).forEach((t) => {
+    if (!t.user_id) return;
+    if (t.status === 'active' || t.status === 'used') ticketed.add(t.user_id as string);
+    if (t.checked_in_at) {
+      const set = eventsByUser.get(t.user_id as string) ?? new Set<string>();
+      set.add(t.event_id as string);
+      eventsByUser.set(t.user_id as string, set);
+    }
+  });
+  const people = { ticketed: ticketed.size, came: eventsByUser.size, returned: [...eventsByUser.values()].filter((s) => s.size >= 2).length };
   const eventStats: EventTicketStat[] = (events ?? [])
     .map((e) => {
       const b = ticketsByEvent.get(e.id) ?? { issued: 0, checkedIn: 0 };
@@ -91,7 +107,9 @@ export async function getEventsData() {
     .slice(0, 20)
     .reverse();
 
-  return { events: eventsWithTickets, eventsPerMonth, ticketsPerMonth, eventStats };
+  const analytics = { heldPerMonth, ticketsPerMonth, checkinsPerMonth, eventStats, people };
+
+  return { events: eventsWithTickets, analytics };
 }
 
 // Starting point for a new event's AS Form config. The form link (and its

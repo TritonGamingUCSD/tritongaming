@@ -1,15 +1,13 @@
 'use client';
 
-import { ResponsiveContainer, LineChart, Line, BarChart, Bar, Legend, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts';
-import { Users, UserPlus, Calendar, Ticket, CircleCheck, Percent, Coins, Gift } from 'lucide-react';
+import { Users, UserPlus, Calendar, Ticket, CircleCheck, Percent, Coins } from 'lucide-react';
 import { ROLE_LABELS } from '@/types/database';
+import EChart from '@/components/charts/EChart';
+import ChartCard from '@/components/charts/ChartCard';
+import { areaLine, calendarHeat, cohortGrid, donut, groupedBars, rankedBars, weekdayHour } from '@/components/charts/chartOptions';
+import chartStyles from '@/components/charts/charts.module.css';
 import type { StatsData } from './getStatsData';
 import styles from './stats.module.css';
-
-// Charts read the portal's theme tokens, so they stay readable in light and dark.
-const TOOLTIP_STYLE = { background: 'var(--pp-card)', border: '1px solid var(--pp-line)', borderRadius: 8, fontSize: 12, color: 'var(--pp-ink)' };
-const AXIS = { fontSize: 11, fill: 'var(--pp-ink)', fillOpacity: 0.8 };
-const GRID = 'var(--pp-line)';
 
 function Tile({ icon, value, label }: { icon: React.ReactNode; value: string; label: string }) {
   return (
@@ -21,11 +19,17 @@ function Tile({ icon, value, label }: { icon: React.ReactNode; value: string; la
   );
 }
 
-// Org-wide numbers only. Per-event ticket and attendance breakdowns live in the Events section's own Analytics tab.
+// Org-wide numbers and trends. Each chart has a one-line takeaway, a Table switch with the same numbers, and follows the portal's light and dark theme.
+// Per-event breakdowns live in the Events section (its Analytics tab and each event's Insights page).
 export default function StatsClient({ data }: { data: StatsData }) {
-  const { totals, memberGrowth, divisionSizes, pointsEconomy, topRewards, activity, roleCounts } = data;
+  const { totals, memberGrowth, pointsEconomy, topRewards, activity, roleCounts, busiest, calendar, cohorts, tierSplit, divisionCompare } = data;
   const rate = totals.ticketsIssued > 0 ? Math.round((totals.checkins / totals.ticketsIssued) * 100) : 0;
   const roles = roleCounts.map((r) => ({ name: (ROLE_LABELS as Record<string, string>)[r.role] ?? r.role, count: r.count }));
+  const label = (h: number) => `${((h + 11) % 12) + 1}${h < 12 ? 'a' : 'p'}`;
+  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const peak = [...busiest.data].sort((a, b) => b[2] - a[2])[0];
+  const byCheckins = divisionCompare.some((d) => d.checkins > 0);
+  const calendarTotal = calendar.data.reduce((n, d) => n + d[1], 0);
 
   return (
     <div className={styles.page}>
@@ -38,76 +42,144 @@ export default function StatsClient({ data }: { data: StatsData }) {
         <Tile icon={<Percent size={20} strokeWidth={1.5} aria-hidden="true" />} value={`${rate}%`} label="Showed up" />
       </div>
 
-      <div className={styles.chartRow}>
+      <div className={chartStyles.grid}>
         {memberGrowth.length > 1 && (
-          <section className={styles.chartCard}>
-            <h2 className={styles.chartTitle}>Member growth</h2>
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={memberGrowth}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
-                <XAxis dataKey="month" tick={AXIS} />
-                <YAxis tick={AXIS} allowDecimals={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Line type="monotone" dataKey="count" name="Total members" stroke="var(--p-accent-text)" strokeWidth={2.5} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </section>
+          <ChartCard
+            title="Member Growth"
+            sub={`${totals.members.toLocaleString()} members now, ${totals.newMembers.toLocaleString()} joined in the last 30 days.`}
+            table={{ head: ['Month', 'Total members'], rows: memberGrowth.map((p) => [p.month, p.count]) }}
+          >
+            <EChart
+              label="Total members over time"
+              build={(t) => areaLine(t, { x: memberGrowth.map((p) => p.month), y: memberGrowth.map((p) => p.count), name: 'Total members' })}
+            />
+          </ChartCard>
         )}
 
         {activity.length > 1 && (
-          <section className={styles.chartCard}>
-            <h2 className={styles.chartTitle}>Tickets and check-ins each month</h2>
-            <ResponsiveContainer width="100%" height={260}>
-              <LineChart data={activity}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID} />
-                <XAxis dataKey="month" tick={AXIS} />
-                <YAxis tick={AXIS} allowDecimals={false} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Legend wrapperStyle={{ fontSize: 12, color: 'var(--pp-ink)' }} />
-                <Line type="monotone" dataKey="tickets" name="Tickets" stroke="var(--pp-info)" strokeWidth={2.5} dot={false} />
-                <Line type="monotone" dataKey="checkins" name="Check-ins" stroke="var(--pp-ok)" strokeWidth={2.5} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </section>
+          <ChartCard
+            title="Sign-Ups And Check-Ins"
+            sub="How much of the interest turns into people in the room, month by month."
+            table={{ head: ['Month', 'Tickets', 'Check-ins'], rows: activity.map((a) => [a.month, a.tickets, a.checkins]) }}
+          >
+            <EChart
+              label="Tickets and check-ins each month"
+              build={(t) =>
+                groupedBars(t, {
+                  x: activity.map((a) => a.month),
+                  series: [
+                    { name: 'Tickets', data: activity.map((a) => a.tickets) },
+                    { name: 'Check-ins', data: activity.map((a) => a.checkins) },
+                  ],
+                })
+              }
+            />
+          </ChartCard>
         )}
-      </div>
 
-      <div className={styles.chartRow}>
+        {busiest.data.length > 0 && (
+          <ChartCard
+            title="When People Show Up"
+            sub={peak ? `Busiest slot: ${days[peak[1]]} around ${label(busiest.hours[peak[0]])} (${peak[2]} check-ins).` : undefined}
+            table={{
+              head: ['Day', 'Hour', 'Check-ins'],
+              rows: [...busiest.data]
+                .sort((a, b) => b[2] - a[2])
+                .slice(0, 30)
+                .map((d) => [days[d[1]], label(busiest.hours[d[0]]), d[2]]),
+            }}
+            foot="Table shows the 30 busiest slots."
+          >
+            <EChart label="Check-ins by weekday and hour" height={300} build={(t) => weekdayHour(t, { data: busiest.data, hours: busiest.hours })} />
+          </ChartCard>
+        )}
+
+        {cohorts.data.length > 0 && (
+          <ChartCard
+            title="Who Comes Back"
+            sub="Each row is the people who first checked in that month; each cell is the share who came again."
+            table={{
+              head: ['First month (people)', ...cohorts.cols],
+              rows: cohorts.rows.map((r, ri) => [
+                r,
+                ...cohorts.cols.map((_, ci) => {
+                  const c = cohorts.data.find((d) => d[0] === ci && d[1] === ri);
+                  return c ? `${c[2]}%` : '–';
+                }),
+              ]),
+            }}
+          >
+            <EChart
+              label="Share of each month's new people who came back later"
+              height={Math.max(200, cohorts.rows.length * 40 + 50)}
+              build={(t) => cohortGrid(t, { rows: cohorts.rows, cols: cohorts.cols, data: cohorts.data })}
+            />
+          </ChartCard>
+        )}
+
+        {calendar.data.length > 0 && (
+          <ChartCard
+            title="The Last Year, Day By Day"
+            sub={`${calendarTotal.toLocaleString()} check-ins on ${calendar.data.length} days. Darker means busier.`}
+            table={{ head: ['Day', 'Check-ins'], rows: [...calendar.data].reverse().map((d) => [d[0], d[1]]) }}
+            wide
+          >
+            <EChart
+              label="Check-ins on each day of the last year"
+              height={170}
+              build={(t) => calendarHeat(t, { from: calendar.from, to: calendar.to, data: calendar.data, what: 'check-ins' })}
+            />
+          </ChartCard>
+        )}
+
+        {tierSplit.length > 0 && tierSplit.some((s) => s.value > 0) && (
+          <ChartCard
+            title="Rewards Tiers"
+            sub="Where everyone who has earned points sits, by what they have earned over all time."
+            table={{ head: ['Tier', 'People'], rows: tierSplit.map((s) => [s.name, s.value]) }}
+          >
+            <EChart
+              label="People in each rewards tier"
+              height={280}
+              build={(t) => donut(t, { items: tierSplit, centre: tierSplit.reduce((n, s) => n + s.value, 0).toLocaleString() })}
+            />
+          </ChartCard>
+        )}
+
+        {divisionCompare.length > 0 && (
+          <ChartCard
+            title="Divisions Side By Side"
+            sub={
+              byCheckins
+                ? 'Check-ins at the events each division held (its own and ones it co-hosted).'
+                : 'People in each division. Check-ins appear here once a division has held an event.'
+            }
+            table={{ head: ['Division', 'Members', 'Events', 'Check-ins'], rows: divisionCompare.map((d) => [d.name, d.members, d.events, d.checkins]) }}
+            wide
+          >
+            <EChart
+              label="Check-ins by division"
+              height={Math.max(180, divisionCompare.length * 34 + 20)}
+              build={(t) =>
+                rankedBars(t, { labels: divisionCompare.map((d) => d.name), values: divisionCompare.map((d) => (byCheckins ? d.checkins : d.members)), color: t.series[2] })
+              }
+            />
+          </ChartCard>
+        )}
+
         {roles.length > 0 && (
-          <section className={styles.chartCard}>
-            <h2 className={styles.chartTitle}>People by role</h2>
-            <ResponsiveContainer width="100%" height={Math.max(200, roles.length * 38)}>
-              <BarChart data={roles} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
-                <XAxis type="number" tick={AXIS} allowDecimals={false} />
-                <YAxis type="category" dataKey="name" tick={AXIS} width={120} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Bar dataKey="count" name="People" fill="var(--pp-violet)" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </section>
+          <ChartCard title="People By Role" table={{ head: ['Role', 'People'], rows: roles.map((r) => [r.name, r.count]) }}>
+            <EChart
+              label="People by role"
+              height={Math.max(180, roles.length * 34 + 20)}
+              build={(t) => rankedBars(t, { labels: roles.map((r) => r.name), values: roles.map((r) => r.count), color: t.series[6] })}
+            />
+          </ChartCard>
         )}
 
-        {divisionSizes.length > 0 && (
-          <section className={styles.chartCard}>
-            <h2 className={styles.chartTitle}>Division sizes</h2>
-            <ResponsiveContainer width="100%" height={Math.max(200, divisionSizes.length * 38)}>
-              <BarChart data={divisionSizes} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
-                <XAxis type="number" tick={AXIS} allowDecimals={false} />
-                <YAxis type="category" dataKey="name" tick={AXIS} width={120} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} />
-                <Bar dataKey="count" name="Members" fill="var(--pp-teal)" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </section>
-        )}
-      </div>
-
-      <div className={styles.chartRow}>
-        <section className={styles.chartCard}>
-          <h2 className={styles.chartTitle}>
-            <Coins size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards economy
+        <section className={chartStyles.card}>
+          <h2 className={chartStyles.title}>
+            <Coins size={15} strokeWidth={1.75} aria-hidden="true" /> Rewards Economy
           </h2>
           <div className={styles.economyStats}>
             <div>
@@ -126,24 +198,17 @@ export default function StatsClient({ data }: { data: StatsData }) {
         </section>
 
         {topRewards.length > 0 && (
-          <section className={styles.chartCard}>
-            <h2 className={styles.chartTitle}>
-              <Gift size={15} strokeWidth={1.75} aria-hidden="true" /> Most redeemed rewards
-            </h2>
-            <ResponsiveContainer width="100%" height={Math.max(180, topRewards.length * 42)}>
-              <BarChart data={topRewards} layout="vertical" margin={{ left: 8 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={GRID} horizontal={false} />
-                <XAxis type="number" tick={AXIS} allowDecimals={false} />
-                <YAxis type="category" dataKey="title" tick={{ ...AXIS, fontSize: 10 }} width={140} />
-                <Tooltip contentStyle={TOOLTIP_STYLE} formatter={(value) => [`${value} claimed`, 'Rewards']} />
-                <Bar dataKey="count" name="Claimed" fill="var(--pp-ok)" radius={[0, 4, 4, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </section>
+          <ChartCard title="Most Redeemed Rewards" table={{ head: ['Reward', 'Claimed'], rows: topRewards.map((r) => [r.title, r.count]) }}>
+            <EChart
+              label="Most redeemed rewards"
+              height={Math.max(180, topRewards.length * 36 + 20)}
+              build={(t) => rankedBars(t, { labels: topRewards.map((r) => r.title), values: topRewards.map((r) => r.count), color: t.series[1] })}
+            />
+          </ChartCard>
         )}
       </div>
 
-      {memberGrowth.length <= 1 && divisionSizes.length === 0 && activity.length <= 1 && <p className={styles.empty}>Not enough data yet to chart trends.</p>}
+      {memberGrowth.length <= 1 && activity.length <= 1 && <p className={styles.empty}>Not enough data yet to chart trends.</p>}
     </div>
   );
 }
