@@ -79,3 +79,7 @@
 .ticketTitle { font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.15rem; line-height: 1.2; overflow-wrap: anywhere; }
 .ticketMeta { font-size: 0.78rem; color: #3a4764; } /* theme-ok: ink on paper ticket */
 @media (max-width: 860px) { .ticket { margin-left: 0; transform: none; } .heroInner { flex-wrap: wrap; } }
+
+/* Public guides: one fold-out per doc */
+.guide { margin: 0 0 0.7rem; padding: 0.7rem 1rem; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.5); }
+.guide summary { cursor: pointer; font-family: var(--font-futura-heavy); font-size: 1rem; }

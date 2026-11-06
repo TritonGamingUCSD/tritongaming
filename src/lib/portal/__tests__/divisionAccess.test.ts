@@ -29,6 +29,7 @@ describe('division access', () => {
     expect(canActInDivision(member, A, 'member')).toBe(true);
     expect(canActInDivision(member, A, 'head')).toBe(false);
     const alumni = [g('division_alumni', A)];
+    expect(canDivisionAction(alumni, A, 'read_docs')).toBe(true);
     expect(canActInDivision(alumni, A, 'alumni')).toBe(true);
     expect(canActInDivision(alumni, A, 'member')).toBe(false);
   });
@@ -57,13 +58,15 @@ describe('division access', () => {
     const member = [g('division_member', A)];
     expect(canDivisionAction(member, A, 'check_in')).toBe(true);
     expect(canDivisionAction(member, A, 'run_live_tools')).toBe(true);
+    expect(canDivisionAction(member, A, 'write_docs')).toBe(true);
+    expect(canDivisionAction([g('division_alumni', A)], A, 'write_docs')).toBe(false);
     expect(canDivisionAction(member, A, 'manage_events')).toBe(false);
     expect(canDivisionAction(member, A, 'manage_members')).toBe(false);
     const alumni = [g('division_alumni', A)];
     expect(canDivisionAction(alumni, A, 'see_home')).toBe(true);
     expect(canDivisionAction(alumni, A, 'check_in')).toBe(false);
     const head = [g('division', A)];
-    for (const a of ['manage_events', 'edit_page', 'manage_members', 'manage_heads', 'write_docs', 'post_announcements', 'request_logistics', 'see_numbers'] as const) {
+    for (const a of ['manage_events', 'edit_page', 'manage_members', 'manage_heads', 'post_announcements', 'request_logistics', 'see_numbers'] as const) {
       expect(canDivisionAction(head, A, a)).toBe(true);
       expect(canDivisionAction(head, B, a)).toBe(false);
     }

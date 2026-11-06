@@ -16,6 +16,7 @@ import EventCard from '@/components/EventCard/EventCard';
 import { formatEventDateRange, formatEventTimeRange } from '@/lib/core/timezone';
 import { getDivisionEvents, getUpcomingEvents } from '@/lib/events/events';
 import Link from 'next/link';
+import { getPublicDivisionDocs } from '@/lib/divisions/publicDocs';
 import DivisionPeople from './DivisionPeople';
 import { getDivisionHubData } from './getDivisionHubData';
 import styles from './division.module.css';
@@ -68,7 +69,7 @@ export default async function DivisionPage({ params }: Params) {
   if (!division) notFound();
 
   const logoUrl = divisionLogoSrc(division.logo_url);
-  const [hub, own, club] = await Promise.all([getDivisionHubData(division.id), getDivisionEvents(division.id), getUpcomingEvents(12)]);
+  const [hub, own, club, docs] = await Promise.all([getDivisionHubData(division.id), getDivisionEvents(division.id), getUpcomingEvents(12), getPublicDivisionDocs(division.id)]);
   const next = own.upcoming[0];
   const ownIds = new Set(own.upcoming.map((e) => e._id));
   const alsoClub = club.filter((e) => !ownIds.has(e._id)).slice(0, 3);
@@ -164,6 +165,20 @@ export default async function DivisionPage({ params }: Params) {
               </div>
             </>
           )}
+        </ZineBand>
+      )}
+
+      {docs.length > 0 && (
+        <ZineBand tone="navy" label="Guides">
+          <BandHeader label="Good to know" title="Guides" />
+          <div className={styles.prose}>
+            {docs.map((d) => (
+              <details key={d.id} className={styles.guide}>
+                <summary>{d.title}</summary>
+                <MarkdownContent>{d.body}</MarkdownContent>
+              </details>
+            ))}
+          </div>
         </ZineBand>
       )}
 

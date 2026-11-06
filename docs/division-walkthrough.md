@@ -18,10 +18,16 @@ Mark each line done or write what looked wrong.
 11. **Home**: post an announcement (it shows for Members, who are notified); remove it.
 12. **Members**: the "Taking join requests" switch. Turn it off: students see "Not taking requests". Turn it on, ask to join as a student, then Approve and Decline requests.
 
+## Docs
+1. The Docs page lists the docs you may read. "New Doc" asks for a title, who can read it (Heads only, Members and Heads, Everyone in the division, Public) and text.
+2. A Member sees no Heads-only docs and cannot make one. An Alumnus reads only the Everyone and Public docs and cannot write.
+3. A Public doc shows as a fold-out under "Guides" on the division's public page (within about ten minutes, or straight away after saving).
+
 ## As a Division Member
 1. Sees Home, Events? (no), Check-In, QR Codes, Live Tools, Members (read only). No Page or edit buttons.
 2. Can check in people at the division's events, not at the club's.
 3. Cannot add or remove people.
+4. Can write and edit docs (not Heads-only ones).
 
 ## As a student or guest
 1. Home opens with the member pass (student) or welcome ticket (guest).

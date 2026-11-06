@@ -1,0 +1,12 @@
+.wrap, .read, .form { display: grid; gap: 0.9rem; color: var(--pp-ink); }
+.row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.h { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.3rem; }
+.meta { margin: 0; font-size: 0.8rem; opacity: 0.7; }
+.empty { margin: 0; opacity: 0.8; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; }
+.item { width: 100%; display: grid; gap: 0.15rem; text-align: left; padding: 0.8rem 1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 8px; background: var(--pp-card); color: var(--pp-ink); cursor: pointer; font: inherit; }
+.item:hover { border-color: rgba(var(--pp-ink-rgb), 0.55); }
+.item span { font-size: 0.78rem; opacity: 0.7; }
+.field { display: grid; gap: 0.3rem; font-size: 0.85rem; }
+.field input, .field select, .field textarea { padding: 0.55rem 0.7rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 6px; background: var(--pp-card); color: var(--pp-ink); font: inherit; }
+.field small { opacity: 0.7; }

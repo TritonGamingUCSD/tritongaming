@@ -17,6 +17,7 @@ import DivisionQr from './DivisionQr';
 import DivisionRoster from './DivisionRoster';
 import DivisionNextEvent from './DivisionNextEvent';
 import DivisionAnnouncements from './DivisionAnnouncements';
+import DivisionDocs from './DivisionDocs';
 import styles from './division.module.css';
 
 // A division's pages in the portal. The address says which: /portal/division/<division address>/<page>. The division's sidebar (DesktopShell) lists the pages; this draws the open one.
@@ -102,7 +103,8 @@ export default function DivisionSectionContent({ hats }: { hats: DivisionHat[] }
       {isLiveTool(page) && <DivisionLive hat={hat} tool={page} />}
       {page === 'page' && <DivisionPageEditor hat={hat} />}
       {page === 'qr' && <DivisionQr hat={hat} />}
-      {page !== 'home' && page !== 'members' && page !== 'events' && page !== 'check-in' && !isLiveTool(page) && page !== 'page' && page !== 'qr' && (
+      {page === 'docs' && <DivisionDocs hat={hat} />}
+      {page !== 'home' && page !== 'members' && page !== 'events' && page !== 'check-in' && !isLiveTool(page) && page !== 'page' && page !== 'qr' && page !== 'docs' && (
         <div className={styles.soon}>
           <p>
             <strong>{label}</strong> for {hat.name} is coming in a later step of the division project. It is only visible to admins until everything is finished.

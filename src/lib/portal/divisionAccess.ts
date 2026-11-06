@@ -69,7 +69,7 @@ const NEEDS: Record<DivisionAction, DivisionLevel> = {
   edit_page: 'head',
   manage_members: 'head',
   manage_heads: 'head',
-  write_docs: 'head',
+  write_docs: 'member',
   post_announcements: 'head',
   request_logistics: 'head',
 };
