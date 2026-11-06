@@ -610,7 +610,10 @@ function TicketRow({
   }, [ticket.checkin_form_completed_at]);
 
   return (
-    <div className={`${styles.ticketRow} ${shouldDim ? styles.ticketDim : ''}`} style={{ ['--ev' as string]: ev?.accent || 'var(--yellow)' }}>
+    <div
+      className={`${styles.ticketRow} ${shouldDim ? styles.ticketDim : ''}`}
+      style={{ ['--ev' as string]: shouldDim ? `color-mix(in srgb, ${ev?.accent || 'var(--yellow)'} 32%, #8c8c8c)` : ev?.accent || 'var(--yellow)' }}
+    >
       <div className={styles.ticketLeft}>
         <PosterArt poster={ev?.poster} accent={ev?.accent} title={ev?.title ?? ''} className={styles.ticketThumb} />
         <span className={styles.ticketStatusIcon}>{STATUS_ICON[displayStatus]}</span>

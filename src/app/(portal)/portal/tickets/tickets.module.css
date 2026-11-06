@@ -599,3 +599,13 @@
 .eventDateBlock { height: 13rem; }
 .heroPoster { min-height: 14rem; }
 @container (max-width: 640px) { .heroPoster { height: 13rem; } }
+
+/* The list of tickets is a plain grid, not a framed box (the shared card style used to draw a border around it). */
+.ticketList.ticketList, .eventList.eventList { border: 0; background: transparent; box-shadow: none; border-radius: 0; padding: 0.3rem 0.2rem 0.5rem; overflow: visible; }
+
+/* Past tickets: toned down to greys with a hint of the event's color, still recognisable. */
+.ticketDim.ticketRow { box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.18); background: color-mix(in srgb, var(--pp-card) 94%, #888); }
+.ticketDim .poster img.posterImg { filter: saturate(0.28) contrast(0.95); }
+.ticketDim .poster img.posterBack { filter: blur(14px) brightness(0.72) saturate(0.15); }
+.ticketDim .ticketRight { background: color-mix(in srgb, var(--ev) 10%, color-mix(in srgb, var(--pp-card) 94%, #888)); }
+.ticketDim.ticketRow:hover { box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.25); }
