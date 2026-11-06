@@ -1,0 +1,29 @@
+/* Shared by the public tournament page and the stream overlays. Colors come from variables so the page can be light or dark and an overlay can take an accent. */
+.bracket { display: grid; gap: 1.6rem; }
+.block h3 { margin: 0 0 0.6rem; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tf-muted, #9aa); }
+.cols { display: flex; gap: 1.6rem; align-items: stretch; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 1.2rem; }
+.round { display: flex; flex-direction: column; min-width: 14.5rem; }
+.round > p { margin: 0 0 0.5rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tf-muted, #9aa); }
+.cards { display: flex; flex-direction: column; justify-content: space-around; gap: 0.8rem; flex: 1; }
+.match { position: relative; display: grid; border: 2px solid var(--tf-line, rgba(255, 255, 255, 0.35)); border-radius: 8px; background: var(--tf-card, rgba(10, 18, 32, 0.9)); color: var(--tf-ink, #fff); overflow: hidden; }
+.live { border-color: #ff3b3b; box-shadow: 0 0 0 2px rgba(255, 59, 59, 0.3); }
+.bye { opacity: 0.45; }
+.row { display: grid; grid-template-columns: 1.6rem 1fr auto; align-items: center; gap: 0.4rem; padding: 0.4rem 0.65rem; }
+.row + .row { border-top: 1px solid var(--tf-line, rgba(255, 255, 255, 0.25)); }
+.row i { font-style: normal; font-size: 0.7rem; color: var(--tf-muted, #9aa); text-align: right; }
+.row b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row em { font-style: normal; font-weight: 800; font-variant-numeric: tabular-nums; min-width: 1.6rem; text-align: right; }
+.win { background: color-mix(in srgb, var(--tf-accent, #f6c84c) 30%, transparent); }
+.win b { font-weight: 800; }
+.lose { opacity: 0.55; }
+.tbd b { font-style: italic; font-weight: 500; opacity: 0.6; }
+.meta { display: flex; gap: 0.5rem; padding: 0.2rem 0.65rem; font-size: 0.68rem; color: var(--tf-muted, #9aa); border-top: 1px solid var(--tf-line, rgba(255, 255, 255, 0.25)); }
+.liveTag { color: #ff5a5a; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; }
+.compact .row { padding: 0.25rem 0.5rem; }
+.tables { display: grid; gap: 1.2rem; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
+.table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; color: var(--tf-ink, #fff); }
+.table caption { text-align: left; font-size: 0.78rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tf-muted, #9aa); padding-bottom: 0.4rem; }
+.table th, .table td { padding: 0.35rem 0.5rem; text-align: right; border-bottom: 1px solid var(--tf-line, rgba(255, 255, 255, 0.2)); }
+.table th:nth-child(2), .table td:nth-child(2) { text-align: left; }
+.table th { font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--tf-muted, #9aa); }

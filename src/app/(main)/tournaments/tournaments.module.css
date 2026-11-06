@@ -1,0 +1,23 @@
+.list { display: grid; grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr)); gap: 1.2rem; max-width: 72rem; margin: 2rem auto; padding: 0 1.2rem; }
+.card { display: grid; gap: 0.3rem; padding: 1.1rem 1.2rem; border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 10px; background: rgba(255, 255, 255, 0.04); color: #fff; text-decoration: none; transition: transform 0.12s, box-shadow 0.12s; }
+.card:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 rgba(255, 255, 255, 0.5); }
+.cardLive { border-color: #ff3b3b; }
+.card b { font-size: 1.2rem; }
+.card small { color: #9fb0c8; }
+.status { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: #f6c84c; }
+.empty { color: #9fb0c8; }
+.wrap { max-width: 96rem; margin: 0 auto; padding: 7rem 1.2rem 4rem; color: #fff; display: grid; gap: 1.4rem; }
+.back { color: #9fb0c8; text-decoration: none; font-weight: 700; }
+.head h1 { margin: 0.2rem 0 0.5rem; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.05; }
+.kicker { margin: 0; font-size: 0.75rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #9fb0c8; }
+.pill { display: inline-block; padding: 0.15rem 0.7rem; border: 2px solid currentColor; border-radius: 4px; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
+.pillLive { background: #ff3b3b; border-color: #ff3b3b; color: #fff; }
+.nowNext { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 0.8rem; }
+.nn { display: grid; gap: 0.2rem; padding: 0.7rem 0.9rem; border: 2px solid rgba(255, 255, 255, 0.35); border-radius: 8px; }
+.nn small { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: #9fb0c8; }
+.nn i { font-style: normal; color: #9fb0c8; }
+.nnLive { border-color: #ff3b3b; }
+.stages { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+.stages button { padding: 0.35rem 0.8rem; border: 2px solid rgba(255, 255, 255, 0.4); border-radius: 8px; background: none; color: #fff; font: inherit; font-weight: 700; cursor: pointer; }
+.stageOn { background: #fff !important; color: #0b1730 !important; }
+.sheet { overflow-x: auto; padding: 1rem; border: 2px solid rgba(255, 255, 255, 0.25); border-radius: 10px; background: rgba(255, 255, 255, 0.03); }

@@ -94,6 +94,7 @@ export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchR
   const active = entrants.filter((e) => !e.dropped).length;
   return {
     tournament: {
+      id: t.id,
       name: t.name,
       slug: t.slug,
       game: t.game,

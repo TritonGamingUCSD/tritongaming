@@ -1,0 +1,29 @@
+.root { min-height: 100vh; padding: 1rem; font-family: var(--font-dm-sans, system-ui), sans-serif; color: var(--tf-ink, #fff); background: transparent; pointer-events: none; }
+.lower { position: fixed; left: 2rem; right: 2rem; bottom: 2rem; display: grid; grid-template-columns: minmax(10rem, 1fr) minmax(0, 2.4fr) minmax(8rem, 1fr); align-items: stretch; border-radius: 10px; overflow: hidden; background: var(--tf-card); border: 2px solid var(--tf-line); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4); animation: rise 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+@keyframes rise { from { transform: translateY(40px); opacity: 0; } }
+.lowerLeft, .lowerRight { display: grid; align-content: center; gap: 0.15rem; padding: 0.7rem 1.1rem; background: color-mix(in srgb, var(--tf-accent) 22%, transparent); }
+.lowerRight { text-align: right; justify-items: end; }
+.lowerLeft small { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--tf-muted); }
+.lowerLeft b { font-size: 1.15rem; }
+.lowerLeft span, .lowerRight span { font-size: 0.8rem; color: var(--tf-muted); }
+.lowerRight b { font-size: 1.05rem; }
+.lowerMid { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 1rem; padding: 0.6rem 1.2rem; }
+.team { display: flex; align-items: center; gap: 0.6rem; min-width: 0; font-size: 1.6rem; font-weight: 700; }
+.team b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.team i { font-style: normal; font-size: 0.8rem; color: var(--tf-muted); }
+.right { justify-content: flex-end; text-align: right; }
+.winner b { color: var(--tf-accent); }
+.lowerScore { display: flex; align-items: center; gap: 0.7rem; font-size: 2.4rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+.lowerScore span { color: var(--tf-muted); font-weight: 400; }
+.lowerScore em { font-style: normal; min-width: 1.6ch; text-align: center; }
+.livePill { padding: 0.1rem 0.6rem; border-radius: 4px; background: #ff3b3b; color: #fff !important; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; animation: blink 1.4s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: 0.55; } }
+.next { display: grid; gap: 0.7rem; width: min(34rem, 100%); }
+.next h2 { margin: 0; font-size: 1rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--tf-accent); }
+.nextRow { display: grid; gap: 0.15rem; animation: rise 0.4s ease; }
+.nextRow small { font-size: 0.75rem; color: var(--tf-muted); }
+.champion { display: grid; justify-items: center; gap: 0.3rem; padding: 3rem 1rem; text-align: center; animation: rise 0.6s ease; }
+.champion small { font-size: 1rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--tf-muted); }
+.champion b { font-size: 4rem; color: var(--tf-accent); }
+.champion span { font-size: 1.4rem; letter-spacing: 0.3em; text-transform: uppercase; }
+@media (prefers-reduced-motion: reduce) { .lower, .nextRow, .champion, .livePill { animation: none; } }
