@@ -2,7 +2,7 @@ import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight } from 'lucide-react';
-import { getDivisionBySlug, divisionLogoSrc } from '@/lib/members/divisions';
+import { getDivisionBySlug, getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
 import { accentOf } from '@/lib/divisions/accent';
 import { SOCIAL_PLATFORMS, socialHref } from '@/lib/members/profile';
 import DivisionSubNav from './DivisionSubNav';
@@ -14,6 +14,7 @@ export default async function DivisionLayout({ children, params }: { children: R
   const { slug } = await params;
   const division = await getDivisionBySlug(slug);
   if (!division) return <>{children}</>;
+  const others = (await getDivisions()).filter((d) => d.id !== division.id);
   const hex = accentOf(division.accent).hex;
   const logo = divisionLogoSrc(division.logo_url);
   const socials = SOCIAL_PLATFORMS.filter((p) => p.key !== 'discord' && division.social_links[p.key]);
@@ -27,7 +28,9 @@ export default async function DivisionLayout({ children, params }: { children: R
         <span className={styles.stripLinks}>
           <Link href="/events">Club Events</Link>
           <Link href="/divisions">All Divisions</Link>
-          <Link href="/portal">Portal</Link>
+          <Link href="/portal" className={styles.portalBtn}>
+            Sign in / Portal
+          </Link>
         </span>
       </div>
       <header className={styles.bar}>
@@ -38,6 +41,26 @@ export default async function DivisionLayout({ children, params }: { children: R
         <DivisionSubNav slug={division.slug} />
       </header>
       {children}
+      {others.length > 0 && (
+        <nav className={styles.others} aria-label="Other divisions">
+          <div className={styles.othersInner}>
+            <span className={styles.othersLabel}>More from Triton Gaming</span>
+            <ul className={styles.othersList}>
+              {others.map((d) => {
+                const l = divisionLogoSrc(d.logo_url);
+                return (
+                  <li key={d.id}>
+                    <Link href={`/${d.slug}`} className={styles.otherChip}>
+                      {l ? <Image src={l} alt="" width={24} height={24} unoptimized className={styles.otherLogo} /> : <span className={styles.otherLetter}>{d.name[0]}</span>}
+                      {d.name}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </nav>
+      )}
       <footer className={styles.footer}>
         <div className={styles.footerRow}>
           <Link href={`/${division.slug}`} className={styles.brand}>

@@ -1,4 +1,4 @@
-.page { background: var(--navy); min-height: 100svh; }
+.page { background: var(--navy); }
 
 /* Hero: flat ink, logo as a die-cut sticker, caution tape under it */
 .hero { position: relative; background: var(--navy); padding: var(--hero-padding-top) clamp(1rem, 5vw, 4rem) clamp(2.5rem, 5vw, 3.5rem); }
@@ -71,3 +71,11 @@
 
 /* A division's own banner picture behind its hero, under a dark wash so the name stays readable. */
 .heroBanner { background-image: linear-gradient(rgba(1, 25, 65, 0.72), rgba(1, 25, 65, 0.82)), var(--banner); background-size: cover; background-position: center; }
+
+/* The next event as a ticket in the hero */
+.ticket { margin-left: auto; flex-shrink: 0; display: flex; flex-direction: column; gap: 0.25rem; width: min(17rem, 100%); padding: 1rem 1.1rem; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: 0.4rem; box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6); transform: rotate(2deg); text-decoration: none; transition: transform 0.15s, box-shadow 0.15s; }
+.ticket:hover { transform: rotate(0.5deg) translate(-2px, -2px); box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.6); }
+.ticketKicker { align-self: flex-start; padding: 0.15rem 0.5rem; background: var(--yellow); border: 2px solid var(--ink); font-family: var(--font-renegare); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; }
+.ticketTitle { font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.15rem; line-height: 1.2; overflow-wrap: anywhere; }
+.ticketMeta { font-size: 0.78rem; color: #3a4764; } /* theme-ok: ink on paper ticket */
+@media (max-width: 860px) { .ticket { margin-left: 0; transform: none; } .heroInner { flex-wrap: wrap; } }

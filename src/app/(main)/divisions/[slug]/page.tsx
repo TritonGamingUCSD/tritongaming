@@ -12,6 +12,10 @@ import PageBlocks from '@/components/PageBlocks/PageBlocks';
 import { cleanBlocks } from '@/lib/site/pageBlocks';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
 import { ZineBand, BandHeader } from '@/components/ZineBand/ZineBand';
+import EventCard from '@/components/EventCard/EventCard';
+import { formatEventDateRange, formatEventTimeRange } from '@/lib/core/timezone';
+import { getDivisionEvents, getUpcomingEvents } from '@/lib/events/events';
+import Link from 'next/link';
 import DivisionPeople from './DivisionPeople';
 import { getDivisionHubData } from './getDivisionHubData';
 import styles from './division.module.css';
@@ -64,7 +68,10 @@ export default async function DivisionPage({ params }: Params) {
   if (!division) notFound();
 
   const logoUrl = divisionLogoSrc(division.logo_url);
-  const hub = await getDivisionHubData(division.id);
+  const [hub, own, club] = await Promise.all([getDivisionHubData(division.id), getDivisionEvents(division.id), getUpcomingEvents(12)]);
+  const next = own.upcoming[0];
+  const ownIds = new Set(own.upcoming.map((e) => e._id));
+  const alsoClub = club.filter((e) => !ownIds.has(e._id)).slice(0, 3);
 
   const socials = SOCIAL_PLATFORMS.filter((p) => p.key !== 'discord' && division.social_links[p.key]);
   const pitch = division.description?.trim() ? markdownToDescription(division.description, 140) : '';
@@ -112,6 +119,16 @@ export default async function DivisionPage({ params }: Params) {
               })}
             </div>
           </div>
+          {next && (
+            <Link href={`/events/${next.slug || next._id}`} className={styles.ticket}>
+              <span className={styles.ticketKicker}>Next up</span>
+              <strong className={styles.ticketTitle}>{next.full_name}</strong>
+              <span className={styles.ticketMeta}>
+                {formatEventDateRange(next.start_date, next.end_date)} · {formatEventTimeRange(next.start_date, next.end_date)}
+              </span>
+              {next.location && <span className={styles.ticketMeta}>{next.location}</span>}
+            </Link>
+          )}
         </div>
       </header>
 
@@ -124,6 +141,31 @@ export default async function DivisionPage({ params }: Params) {
           )}
         </div>
       </ZineBand>
+
+      {(own.upcoming.length > 0 || alsoClub.length > 0) && (
+        <ZineBand tone="ink" label="Coming up">
+          {own.upcoming.length > 0 && (
+            <>
+              <BandHeader label="Coming up" title={`From ${division.name}`} />
+              <div className={styles.eventGrid}>
+                {own.upcoming.slice(0, 3).map((e) => (
+                  <EventCard key={e._id} event={e} />
+                ))}
+              </div>
+            </>
+          )}
+          {alsoClub.length > 0 && (
+            <>
+              <h2 className={styles.groupTitle}>Also at Triton Gaming</h2>
+              <div className={styles.eventGrid}>
+                {alsoClub.map((e) => (
+                  <EventCard key={e._id} event={e} />
+                ))}
+              </div>
+            </>
+          )}
+        </ZineBand>
+      )}
 
       {cleanBlocks(division.page_blocks).length > 0 && (
         <ZineBand tone="ink" label="More about this division">
