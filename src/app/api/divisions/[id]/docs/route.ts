@@ -8,6 +8,7 @@ import { withGrantedCapabilities } from '@/lib/portal/capabilities';
 import { logAudit } from '@/lib/notifications/audit';
 import { invalidate } from '@/lib/site/revalidate';
 import { DOC_AUDIENCES, docVisibleTo, type DocAudience } from '@/lib/divisions/docs';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +51,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if ('error' in w) return w.error;
   const v = clean((await request.json().catch(() => ({}))) as object);
   if (!v.title) return NextResponse.json({ error: 'Give the doc a title.' }, { status: 400 });
+  const blocked = await refuseBlocked({ Title: v.title, Document: v.body });
+  if (blocked) return blocked;
   if (!docVisibleTo(v.audience, w.level)) return NextResponse.json({ error: 'You cannot write a doc only people above you can read.' }, { status: 403 });
   const { data, error } = await w.svc
     .from('division_docs')
@@ -70,6 +73,8 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   const b = (await request.json().catch(() => ({}))) as { id?: string };
   const v = clean(b as object);
   if (!b.id || !v.title) return NextResponse.json({ error: 'Say which doc, and give it a title.' }, { status: 400 });
+  const blocked = await refuseBlocked({ Title: v.title, Document: v.body });
+  if (blocked) return blocked;
   const { data: cur } = await w.svc.from('division_docs').select('audience').eq('id', b.id).eq('division_id', id).maybeSingle();
   if (!cur || !docVisibleTo(cur.audience as DocAudience, w.level)) return NextResponse.json({ error: 'Doc not found' }, { status: 404 });
   if (!docVisibleTo(v.audience, w.level)) return NextResponse.json({ error: 'You cannot make a doc only people above you can read.' }, { status: 403 });

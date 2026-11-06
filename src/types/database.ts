@@ -81,7 +81,11 @@ export type Capability =
   | 'manage_rewards_shop'
   | 'scan_redemptions'
   | 'manage_points'
-  | 'manage_board_order';
+  | 'manage_board_order'
+  | 'manage_tournaments'
+  | 'run_tournaments'
+  | 'manage_broadcast'
+  | 'manage_word_filter';
 
 export interface Database {
   public: {

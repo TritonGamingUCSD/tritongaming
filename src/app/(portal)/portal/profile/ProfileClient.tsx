@@ -226,7 +226,11 @@ export default function ProfileClient({
 
     setSaving(false);
     if (err) {
-      setError('Failed to save. Please try again.');
+      setError(
+        /not allowed here/.test(err.message)
+          ? 'Something you wrote (name, tag, title or bio) has language that is not allowed here. Please reword it.'
+          : 'Failed to save. Please try again.',
+      );
       return;
     }
 

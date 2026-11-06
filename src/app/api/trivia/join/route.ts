@@ -2,6 +2,7 @@ import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { authorizeTrivia, broadcast, displayName, loadGame, publicState } from '@/lib/trivia/server';
 import { cleanCode } from '@/lib/trivia/game';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 // A guest's nickname: trimmed, spaces squeezed, no control characters, at most 20 characters.
 const cleanNick = (v: unknown) =>
@@ -35,6 +36,8 @@ export async function POST(request: Request) {
     if (auth.guest) {
       name = cleanNick(b.nickname);
       if (name.length < 2) return NextResponse.json({ error: 'Pick a nickname (2 to 20 characters).', nickname: true }, { status: 400 });
+      const blocked = await refuseBlocked({ Nickname: name });
+      if (blocked) return NextResponse.json({ error: 'Pick a different nickname.', nickname: true }, { status: 422 });
       // The same nickname twice in a game gets a number, so players can tell each other apart.
       const { data: taken } = await auth.svc.from('trivia_players').select('name').eq('game_id', g.id).limit(1000);
       const used = new Set((taken ?? []).map((p) => (p.name as string).toLowerCase()));

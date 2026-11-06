@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { authorizeHelp, cleanAttachments, describeAgent, notify, staffIds, HELP_CATEGORIES, MAX_BODY, MAX_SUBJECT, type HelpTicketRow } from '@/lib/notifications/help';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +32,8 @@ export async function POST(request: Request) {
   const auth = await authorizeHelp();
   if (auth.error) return auth.error;
   const b = await request.json().catch(() => ({}));
+  const blocked = await refuseBlocked({ Subject: String(b.subject ?? ''), Message: String(b.body ?? '') });
+  if (blocked) return blocked;
   const subject = String(b.subject ?? '')
     .trim()
     .slice(0, MAX_SUBJECT);

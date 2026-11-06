@@ -9,6 +9,7 @@ import { ACCENTS } from '@/lib/divisions/accent';
 import { slugify } from '@/lib/core/slug';
 import { divisionSlugProblem } from '@/lib/divisions/slugConflicts';
 import type { SocialEmbed } from '@/types/database';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 // Same shape as profiles.social_links (see lib/profile.ts) — a plain
 // {platformKey: handle} object. Only real string values survive; this is
@@ -101,6 +102,8 @@ export async function POST(request: Request) {
     banner_url?: string;
   };
   if (!name?.trim()) return NextResponse.json({ error: 'Name is required' }, { status: 400 });
+  const blocked = await refuseBlocked({ Name: name, Description: description, Tagline: tagline });
+  if (blocked) return blocked;
 
   const finalSlug = slugify(slug?.trim() || name);
   if (!finalSlug) return NextResponse.json({ error: 'Slug cannot be empty' }, { status: 400 });

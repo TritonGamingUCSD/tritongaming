@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { withTournament } from '@/lib/tournaments/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { cleanLinks } from '@/lib/tournaments/external';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const r = await withTournament(id, 'manage');
   if ('error' in r) return r.error;
   const b = (await request.json().catch(() => ({}))) as Record<string, unknown>;
+  const blocked = await refuseBlocked({ Name: String(b.name ?? ''), Game: String(b.game ?? ''), Description: String(b.description ?? '') });
+  if (blocked) return blocked;
   const patch: Record<string, unknown> = {};
   for (const k of EDITABLE) if (k in b) patch[k] = b[k];
   if ('best_of' in patch && ![1, 3, 5, 7].includes(Number(patch.best_of))) return NextResponse.json({ error: 'Best of 1, 3, 5 or 7.' }, { status: 400 });

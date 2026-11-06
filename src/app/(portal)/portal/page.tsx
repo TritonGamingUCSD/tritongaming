@@ -495,7 +495,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         ]
       : []),
     // Tournaments: brackets that update live, with stream overlays. Admin-only for now (lib/tournaments/access.ts); it sits with Events & Check-In.
-    ...(roles.some((r) => r.role === 'admin') || (!TOURNAMENTS_ADMIN_ONLY && hasCapability(roles, 'manage_events'))
+    ...(hasCapability(roles, 'manage_tournaments') || hasCapability(roles, 'run_tournaments') || (!TOURNAMENTS_ADMIN_ONLY && hasCapability(roles, 'manage_events'))
       ? [
           {
             id: 'tournaments',
@@ -510,7 +510,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
         ]
       : []),
     // Broadcast: the stream schedule, roles, go-live checklist and OBS tools for Twitch and YouTube. Admin-only for now (lib/broadcast/config.ts).
-    ...(roles.some((r) => r.role === 'admin') || (!BROADCAST_ADMIN_ONLY && roles.some((r) => r.role === 'exec'))
+    ...(hasCapability(roles, 'manage_broadcast') || (!BROADCAST_ADMIN_ONLY && roles.some((r) => r.role === 'exec'))
       ? [
           {
             id: 'broadcast',
@@ -786,7 +786,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
   const avatarUrl = resolveAvatarUrl(profile);
   // Every role the person holds (shown as chips in the sidebar), highest first.
   // Roles for display only: permissions granted straight to the person (Admin → Access) are not roles.
-  const heldRoles = roles.filter((r) => !String(r.role).startsWith('cap:'));
+  const heldRoles = roles.filter((r) => !String(r.role).startsWith('cap:') && !String(r.role).startsWith('deny:'));
   const roleChips = (
     heldRoles.length === 0 ? [{ role: 'guest' as const, division_id: null as string | null }] : [...heldRoles].sort((a, b) => ROLE_DISPLAY_RANK[b.role] - ROLE_DISPLAY_RANK[a.role])
   ).map((r) => ({

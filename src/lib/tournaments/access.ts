@@ -7,21 +7,21 @@ import { canActInDivision } from '@/lib/portal/divisionAccess';
 // Exec and admin can do everything.
 // Until tournaments are ready for everyone, only admins can see or use them (the portal page, creating, running, the lists). Turn this off to hand them to Heads and organizers by the rules below.
 export const TOURNAMENTS_ADMIN_ONLY = true;
-const isAdmin = (roles: RoleGrant[]) => roles.some((r) => r.role === 'admin');
 
 export interface TournamentOwner {
   division_id: string | null;
 }
 
 export function canManageTournament(roles: RoleGrant[], t: TournamentOwner, isStaff = false): boolean {
-  if (TOURNAMENTS_ADMIN_ONLY) return isAdmin(roles);
-  if (isStaff) return true;
+  if (isStaff || hasCapability(roles, 'manage_tournaments')) return true;
+  if (TOURNAMENTS_ADMIN_ONLY) return false;
   if (t.division_id) return canActInDivision(roles, t.division_id, 'head');
   return hasCapability(roles, 'manage_events');
 }
 
 export function canRunTournament(roles: RoleGrant[], t: TournamentOwner, isStaff = false): boolean {
-  if (TOURNAMENTS_ADMIN_ONLY) return isAdmin(roles);
+  if (hasCapability(roles, 'run_tournaments')) return true;
+  if (TOURNAMENTS_ADMIN_ONLY) return canManageTournament(roles, t, isStaff);
   if (canManageTournament(roles, t, isStaff)) return true;
   if (t.division_id) return canActInDivision(roles, t.division_id, 'member');
   return hasCapability(roles, 'checkin');

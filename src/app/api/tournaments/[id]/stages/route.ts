@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withTournament } from '@/lib/tournaments/server';
 import type { StageDef } from '@/lib/tournaments/stages';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if ('error' in r) return r.error;
   const b = (await request.json().catch(() => ({}))) as Parameters<typeof clean>[0];
   if (r.stages.length >= 6) return NextResponse.json({ error: 'That is plenty of stages (6 at most).' }, { status: 400 });
+  const blocked = await refuseBlocked({ Stage: String(b.name ?? '') });
+  if (blocked) return blocked;
   const c = clean(b);
   if (!c.format) return NextResponse.json({ error: 'Pick a format for the stage.' }, { status: 400 });
   const position = r.stages.length + 1;

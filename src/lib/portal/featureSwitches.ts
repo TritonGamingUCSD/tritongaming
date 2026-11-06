@@ -23,6 +23,7 @@ export const FEATURE_SWITCHES: readonly FeatureSwitch[] = [
   { key: 'public_sponsors', group: 'club', label: 'Public Sponsors Page', off: 'The sponsors page on the public site shows nothing and is left out of the sitemap.' },
   { key: 'tournaments', group: 'club', label: 'Tournaments', off: 'Hides tournaments and their public pages and stream overlays, and stops new ones and score entry.' },
   { key: 'broadcast', group: 'club', label: 'Broadcast', off: 'Hides the Broadcast section and the public watch page.' },
+  { key: 'word_filter', group: 'club', label: 'Word Filter', off: 'Blocked words are no longer refused when something is saved.' },
   { key: 'div_join', group: 'divisions', label: 'Join Requests', off: 'Students cannot ask to join any division.' },
   { key: 'div_public_docs', group: 'divisions', label: 'Public Guides', off: 'Public docs stop showing on division pages.' },
   { key: 'div_cohost', group: 'divisions', label: 'Co-Hosting', off: 'Divisions cannot invite other divisions to co-host.' },

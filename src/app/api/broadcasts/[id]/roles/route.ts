@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { broadcaster } from '@/lib/broadcast/server';
 import { BROADCAST_ROLES } from '@/lib/broadcast/config';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .trim()
     .slice(0, 40);
   if (!role) return NextResponse.json({ error: 'Pick a role.' }, { status: 400 });
+  const blocked = await refuseBlocked({ Name: b.name });
+  if (blocked) return blocked;
   if (!b.user_id && !String(b.name ?? '').trim()) return NextResponse.json({ error: 'Say who.' }, { status: 400 });
   void BROADCAST_ROLES;
   const { error } = await a.svc.from('broadcast_roles').insert({

@@ -1,0 +1,20 @@
+.wrap { display: grid; gap: 1.3rem; max-width: 72rem; }
+.cols { display: grid; gap: 1.3rem; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 900px) { .cols { grid-template-columns: 1fr 1fr; } }
+.card { display: grid; gap: 0.8rem; align-content: start; padding: 1.1rem 1.2rem; border: 2px solid var(--pp-ink); border-radius: 10px; background: var(--pp-card); box-shadow: 4px 4px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.card h2, .card h3 { margin: 0; display: flex; align-items: center; gap: 0.4rem; font-size: 1.05rem; }
+.about { margin: 0; font-size: 0.88rem; color: rgba(var(--pp-ink-rgb), 0.78); }
+.row { display: flex; align-items: center; gap: 0.8rem; flex-wrap: wrap; }
+.muted { font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.65); }
+.add { display: flex; gap: 0.6rem; }
+.add > :first-child { flex: 1; }
+.check { display: flex; gap: 0.5rem; align-items: flex-start; font-size: 0.82rem; }
+.chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
+.chips li { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.15rem 0.3rem 0.15rem 0.6rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.45); border-radius: 6px; font-size: 0.88rem; }
+.chips li.muted { border: 0; padding: 0; }
+.chips small { color: rgba(var(--pp-ink-rgb), 0.6); }
+.chips button { display: inline-grid; place-items: center; width: 1.4rem; height: 1.4rem; border: 0; border-radius: 4px; background: none; color: inherit; cursor: pointer; }
+.chips button:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
+.verdict { margin: 0; padding: 0.5rem 0.8rem; border: 2px solid; border-radius: 6px; font-weight: 700; }
+.bad { color: var(--pp-bad); border-color: var(--pp-bad); }
+.good { color: var(--pp-good); border-color: var(--pp-good); }

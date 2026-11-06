@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { UUID, authorizePolls, broadcast } from '@/lib/polls/server';
 import { MAX_ASKED, MAX_AUTHOR, MAX_BODY, MAX_WAITING, cleanText } from '@/lib/qa/rank';
 import { loadSession } from '@/lib/qa/server';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +19,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ key
   if (session.status !== 'open') return NextResponse.json({ error: 'This Q&A is not taking questions any more.', closed: true }, { status: 409 });
   const b = await request.json().catch(() => ({}));
   const body = cleanText(b.body, MAX_BODY);
+  const blocked = await refuseBlocked({ Question: body });
+  if (blocked) return blocked;
   if (!body) return NextResponse.json({ error: 'Type your question first.' }, { status: 400 });
   const { data: mine } = await auth.svc.from('qa_questions').select('status').eq('session_id', session.id).eq('user_id', auth.user.id).limit(100);
   if ((mine ?? []).length >= MAX_ASKED) return NextResponse.json({ error: `You have sent ${MAX_ASKED} questions, which is the most for one Q&A.` }, { status: 429 });

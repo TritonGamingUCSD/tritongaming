@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withTournament, who, unauthorized } from '@/lib/tournaments/server';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const b = (await request.json().catch(() => ({}))) as { name?: string; user_id?: string; self?: boolean; claim?: string; members?: { name: string; user_id?: string }[] };
   const r = await withTournament(id, b.claim ? 'claim' : b.self ? 'view' : 'manage');
   if ('error' in r) return r.error;
+  const blocked = await refuseBlocked({ Name: String(b.name ?? ''), ...Object.fromEntries((b.members ?? []).map((m, i) => [`Member ${i + 1}`, m.name])) });
+  if (blocked) return blocked;
   const t = r.tournament;
   if (r.matches.length > 0 && !b.claim) return NextResponse.json({ error: 'The bracket has started. Entrants are locked.' }, { status: 409 });
   if (t.max_entrants && r.entrants.length >= t.max_entrants && !b.claim) return NextResponse.json({ error: 'This tournament is full.' }, { status: 409 });

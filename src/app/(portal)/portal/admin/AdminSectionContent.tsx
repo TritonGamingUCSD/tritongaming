@@ -24,6 +24,7 @@ import LinksManager from '../links/LinksManager';
 import RoleHistoryClient from './history/RoleHistoryClient';
 import type { RoleChangeEntry } from './history/getRoleHistoryData';
 import IconButton from '@/components/ui/IconButton';
+import WordFilterPanel from './WordFilterPanel';
 import styles from './admin.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
 
@@ -37,7 +38,20 @@ interface Props {
   initialTab?: string;
 }
 
-type Tab = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'system' | 'settings' | 'banner' | 'club-switches' | 'division-switches' | 'preview';
+type Tab =
+  | 'overview'
+  | 'members'
+  | 'access'
+  | 'analytics'
+  | 'audit-log'
+  | 'short-links'
+  | 'system'
+  | 'settings'
+  | 'banner'
+  | 'club-switches'
+  | 'division-switches'
+  | 'word-filter'
+  | 'preview';
 const VALID_TABS: Tab[] = [
   'overview',
   'members',
@@ -50,6 +64,7 @@ const VALID_TABS: Tab[] = [
   'banner',
   'club-switches',
   'division-switches',
+  'word-filter',
   'preview',
 ];
 type Group = 'overview' | 'members' | 'access' | 'analytics' | 'audit-log' | 'short-links' | 'settings' | 'system';
@@ -60,7 +75,7 @@ const GROUPS: Record<Group, { label: string; icon: ReactNode; views: Tab[] }> = 
   analytics: { label: 'Analytics', icon: <BarChart3 />, views: ['analytics'] },
   'audit-log': { label: 'Audit Log', icon: <ScrollText />, views: ['audit-log'] },
   'short-links': { label: 'Short Links', icon: <Link2 />, views: ['short-links'] },
-  settings: { label: 'Settings', icon: <SettingsIcon />, views: ['settings', 'banner', 'club-switches', 'division-switches'] },
+  settings: { label: 'Settings', icon: <SettingsIcon />, views: ['settings', 'banner', 'club-switches', 'division-switches', 'word-filter'] },
   system: { label: 'System', icon: <Server />, views: ['system', 'preview'] },
 };
 const VIEW_LABELS: Record<Tab, string> = {
@@ -75,6 +90,7 @@ const VIEW_LABELS: Record<Tab, string> = {
   banner: 'Portal Banner',
   'club-switches': 'Club Features',
   'division-switches': 'Division Features',
+  'word-filter': 'Word Filter',
   preview: 'Previews',
 };
 const groupOf = (t: Tab): Group => (Object.keys(GROUPS) as Group[]).find((g) => GROUPS[g].views.includes(t)) ?? 'overview';
@@ -266,6 +282,7 @@ export default function AdminSectionContent({ isAdmin, stats, allUsers, division
       {tab === 'banner' && isAdmin && <SettingsPanel part="banner" />}
       {tab === 'club-switches' && isAdmin && <SettingsPanel part="club-switches" />}
       {tab === 'division-switches' && isAdmin && <SettingsPanel part="division-switches" />}
+      {tab === 'word-filter' && isAdmin && <WordFilterPanel />}
       {tab === 'preview' && isAdmin && <PreviewsPanel />}
 
       {historyOpen && roleHistoryEntries && (

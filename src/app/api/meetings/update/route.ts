@@ -16,6 +16,7 @@ import {
 import { MAX_QUESTION_LENGTH, asQuestionType, cleanOptions } from '@/lib/meetings/meetingFun';
 import { formatPacificDateTime } from '@/lib/core/timezone';
 import { validateAudienceInput } from '@/lib/meetings/meetingAudience';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 // Set the doc link (and room) for ONE meeting — an existing one ({meeting_id}) or the next
 // occurrence of a repeating series ({series_id, date}), which is created on the spot.
@@ -80,6 +81,8 @@ export async function POST(request: Request) {
       .trim()
       .slice(0, 60);
     if (!t) return NextResponse.json({ error: 'Give the meeting a name.' }, { status: 400 });
+    const blocked = await refuseBlocked({ Name: t });
+    if (blocked) return blocked;
     if (row0.series_id && t !== row0.title) return NextResponse.json({ error: 'A repeating meeting keeps its name every week.' }, { status: 400 });
     patch.title = t;
   }

@@ -99,6 +99,11 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   host_trivia: ['officer', 'lead', 'exec', 'admin'],
   // Photo Booth: setting up an event's booth, keeping the overlay library and running the booth on a screen at the event. Officers and above; the guests' download page needs nothing.
   run_photobooth: ['officer', 'lead', 'exec', 'admin'],
+  // Tournaments and Broadcast are admin-only while they are new. An admin can hand any of these to a person or group (Admin → Access), for example the broadcast team. UI/API gating only (the routes use the service role).
+  manage_tournaments: ['admin'],
+  run_tournaments: ['admin'],
+  manage_broadcast: ['admin'],
+  manage_word_filter: ['admin'],
 };
 
 // What being inactive takes away: anything that manages, hosts or deletes, plus checking in and scanning redemptions. Attending meetings is NOT stripped: roles never
@@ -126,6 +131,8 @@ export const isTgMember = (roles: RoleGrant[]): boolean => roles.some((r) => (['
 export function hasCapability(roles: RoleGrant[], capability: Capability, divisionId?: string): boolean {
   // An inactive officer or lead keeps every viewing permission and loses the ones that change or run things (admins are never affected).
   if (isInactiveStripped(capability) && roles.some((r) => r.role === 'inactive') && !roles.some((r) => r.role === 'admin')) return false;
+  // A rule that takes this permission away from the person (Admin → Access → Takes away). Admins are never affected.
+  if (roles.some((r) => (r.role as string) === `deny:${capability}`) && !roles.some((r) => r.role === 'admin')) return false;
   return roles.some((r) => {
     if (r.role === 'admin') return true;
     // A permission granted straight to the person or one of their groups (see withGrantedCapabilities).
@@ -154,7 +161,7 @@ export function isVerifiedMember(roles: RoleGrant[]): boolean {
 // 20261015110000_rewards_students_only.sql, which is what actually stops points being awarded; this keeps the section and leaderboard in step with it.
 // (Permissions handed to a person directly appear as `cap:` pseudo-roles and are not roles.)
 export function isRewardsEligible(roles: RoleGrant[]): boolean {
-  const held = roles.filter((r) => !String(r.role).startsWith('cap:'));
+  const held = roles.filter((r) => !String(r.role).startsWith('cap:') && !String(r.role).startsWith('deny:'));
   return held.some((r) => r.role === 'ucsd') && held.every((r) => r.role === 'ucsd');
 }
 
@@ -205,6 +212,21 @@ export const GRANTABLE_CAPABILITIES: { id: Capability; label: string; descriptio
       'Read an issue that was sent for checking, send it to its audience (after a test email and a hold-to-confirm), see the results and manage subscribers. A person can’t send an issue they asked to have checked.',
   },
   {
+    id: 'manage_tournaments',
+    label: 'Manage Tournaments',
+    description: 'Create tournaments, set their structure and entrants, start them, and change settings. Admin only until Tournaments open up; hand it to the people who run them.',
+  },
+  {
+    id: 'run_tournaments',
+    label: 'Run Tournaments (scores and stream)',
+    description: 'Enter scores, call matches to stations, mark matches live, and use the Control panel and stream overlays. For score keepers and the broadcast producer.',
+  },
+  {
+    id: 'manage_broadcast',
+    label: 'Broadcast',
+    description: 'The Broadcast section: schedule streams, give people roles, run the go-live checklist, and set the club channels. For the broadcast team.',
+  },
+  {
     id: 'view_attendance_reports',
     label: 'Meeting attendance reports',
     description: 'See every meeting’s attendance results, absences and reasons, check-in times, and download the HR CSV export. View only.',
@@ -213,6 +235,6 @@ export const GRANTABLE_CAPABILITIES: { id: Capability; label: string; descriptio
 
 // Adds the permissions someone was granted directly to their role list, so every existing
 // hasCapability() check just works. Used wherever roles are loaded.
-export function withGrantedCapabilities(roles: RoleGrant[], granted: Capability[]): RoleGrant[] {
-  return [...roles, ...granted.map((c) => ({ role: `cap:${c}` as unknown as AppRole, division_id: null }))];
+export function withGrantedCapabilities(roles: RoleGrant[], granted: (Capability | `deny:${Capability}`)[]): RoleGrant[] {
+  return [...roles, ...granted.map((c) => ({ role: (c.startsWith('deny:') ? c : `cap:${c}`) as unknown as AppRole, division_id: null }))];
 }

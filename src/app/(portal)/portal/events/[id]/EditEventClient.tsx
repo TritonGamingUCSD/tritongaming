@@ -74,6 +74,7 @@ export default function EditEventClient({
 
     if (error) {
       if (error.code === '23505') return 'That URL slug is already taken by another event.';
+      if (/not allowed here/.test(error.message)) return 'The title, description or location has language that is not allowed here. Please reword it.';
       return 'Failed to save changes. Please try again.';
     }
 

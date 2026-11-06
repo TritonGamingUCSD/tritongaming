@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { broadcaster } from '@/lib/broadcast/server';
 import { logAudit } from '@/lib/notifications/audit';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,6 +36,8 @@ export async function POST(request: Request) {
     .trim()
     .slice(0, 100);
   if (title.length < 3) return NextResponse.json({ error: 'Give the broadcast a title.' }, { status: 400 });
+  const blocked = await refuseBlocked({ Title: title, Notes: b.notes });
+  if (blocked) return blocked;
   const start = b.starts_at ? new Date(b.starts_at) : null;
   if (!start || Number.isNaN(start.getTime())) return NextResponse.json({ error: 'Pick when it starts.' }, { status: 400 });
   const end = b.ends_at ? new Date(b.ends_at) : null;

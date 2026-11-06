@@ -4,6 +4,7 @@ import { canCreateTournamentFor, canManageTournament } from '@/lib/tournaments/a
 import { slugify } from '@/lib/tournaments/store';
 import { TEMPLATES, type StageDef } from '@/lib/tournaments/stages';
 import { logAudit } from '@/lib/notifications/audit';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,6 +43,8 @@ export async function POST(request: Request) {
     .trim()
     .slice(0, 80);
   if (name.length < 3) return NextResponse.json({ error: 'Give the tournament a name (at least 3 letters).' }, { status: 400 });
+  const blocked = await refuseBlocked({ Name: name, Game: String(b.game ?? ''), Description: String(b.description ?? '') });
+  if (blocked) return blocked;
   const divisionId = typeof b.division_id === 'string' && b.division_id ? b.division_id : null;
   if (divisionId) {
     const offDiv = await guardFeature('div_tournaments');

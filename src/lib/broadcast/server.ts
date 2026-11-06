@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { strictUser } from '@/lib/supabase/localAuth';
 import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
-import { withGrantedCapabilities, type RoleGrant } from '@/lib/portal/capabilities';
+import { hasCapability, withGrantedCapabilities, type RoleGrant } from '@/lib/portal/capabilities';
 import { guardFeature } from '@/lib/portal/featureGuard';
 import { BROADCAST_ADMIN_ONLY, CHANNEL_KEYS } from './config';
 
@@ -19,7 +19,7 @@ export async function broadcaster() {
   const svc = createServiceClient();
   const { data: mine } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);
   const roles = withGrantedCapabilities(mine ?? [], await loadGrantedCapabilities(svc, user.id).catch(() => [])) as RoleGrant[];
-  const ok = roles.some((r) => r.role === 'admin') || (!BROADCAST_ADMIN_ONLY && roles.some((r) => r.role === 'exec'));
+  const ok = hasCapability(roles, 'manage_broadcast') || (!BROADCAST_ADMIN_ONLY && roles.some((r) => r.role === 'exec'));
   if (!ok) return { error: NextResponse.json({ error: 'Broadcast is not open to you yet.' }, { status: 403 }) } as const;
   return { user, svc, roles } as const;
 }

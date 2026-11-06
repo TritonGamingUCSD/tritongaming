@@ -8,6 +8,7 @@ import { withGrantedCapabilities } from '@/lib/portal/capabilities';
 import { getOffSwitches } from '@/lib/portal/featureServer';
 import { logAudit } from '@/lib/notifications/audit';
 import { createNotifications } from '@/lib/notifications/notify';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,6 +41,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const w = await who(id, 'post_announcements');
   if ('error' in w) return w.error;
   const b = (await request.json().catch(() => ({}))) as { title?: string; body?: string };
+  const blocked = await refuseBlocked({ Title: b.title, Message: b.body });
+  if (blocked) return blocked;
   const title = (b.title ?? '').trim().slice(0, 120);
   if (!title) return NextResponse.json({ error: 'Give the announcement a title.' }, { status: 400 });
   const body = (b.body ?? '').trim().slice(0, 2000);

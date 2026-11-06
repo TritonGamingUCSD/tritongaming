@@ -16,6 +16,7 @@ import { syncPrizeStation, syncRequestRows } from '@/lib/logistics/requestRows';
 import { createNotifications } from '@/lib/notifications/notify';
 import { logAudit } from '@/lib/notifications/audit';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,7 +107,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     patch.requester_id = b.requester_id;
     patch.contact = (await names(auth.svc, [b.requester_id])).get(b.requester_id) ?? null;
   }
-  if ('notes' in b) patch.notes = text(b.notes, 2000);
+  if ('notes' in b) {
+    const blocked = await refuseBlocked({ Notes: String(b.notes ?? '') });
+    if (blocked) return blocked;
+    patch.notes = text(b.notes, 2000);
+  }
   if ('division_id' in b) {
     const d = await divisionOk(auth.svc, b.division_id);
     if (d === false) return NextResponse.json({ error: 'That division is gone.' }, { status: 400 });

@@ -8,6 +8,7 @@ import { syncPrizeStation, syncRequestRows } from '@/lib/logistics/requestRows';
 import { createNotifications } from '@/lib/notifications/notify';
 import { logAudit } from '@/lib/notifications/audit';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -134,6 +135,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const division = await divisionOk(auth.svc, b.division_id);
   if (division === false) return NextResponse.json({ error: 'That division is gone.' }, { status: 400 });
   const onBehalf = auth.canManage && typeof b.requester_id === 'string' && UUID.test(b.requester_id) ? b.requester_id : auth.user.id;
+  const blockedNotes = await refuseBlocked({ Notes: String(b.notes ?? ''), Team: String(b.team ?? '') });
+  if (blockedNotes) return blockedNotes;
   const { data, error } = await auth.svc
     .from('logistics_requests')
     .insert({
