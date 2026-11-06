@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Match, Link } from './bracket';
+import type { Advance, StageFormat, StageSettings } from './stages';
 
 // Reading and writing a tournament, with the service client. Rows use snake_case; the engine's Match uses scoreA/scoreB and a/b slots.
 export type TournamentRow = {
@@ -25,6 +26,18 @@ export type TournamentRow = {
   settings: Record<string, unknown>;
   created_by: string | null;
 };
+
+export type StageRow = {
+  id: string;
+  tournament_id: string;
+  position: number;
+  name: string;
+  format: StageFormat;
+  settings: StageSettings;
+  advance: Advance;
+  status: 'pending' | 'live' | 'complete';
+};
+export type StageEntrantRow = { stage_id: string; entrant_id: string; seed: number; group_no: number | null };
 
 export type EntrantRow = {
   id: string;
@@ -54,10 +67,21 @@ export type MatchRow = {
   lose_to: Link | null;
   games: { a: number; b: number; map?: string; pick_a?: string; pick_b?: string }[];
   station: string | null;
+  stage_id: string | null;
+  group_no: number | null;
+  label: string | null;
+  best_of: number | null;
+  scheduled_at: string | null;
+  heat: { entrant_id: string; placement: number; points: number }[] | null;
 };
 
+// A match's key in the database starts with its stage ("s1/W2-3") so keys never collide between stages; the engine knows only the part after the slash.
+export const stageKey = (position: number, key: string) => `s${position}/${key}`;
+export const engineKey = (dbKey: string) => dbKey.replace(/^s\d+\//, '');
+const unlink = (l: Link | null): Link | undefined => (l ? { ...l, key: engineKey(l.key) } : undefined);
 export const toMatch = (r: MatchRow): Match => ({
-  key: r.key,
+  key: engineKey(r.key),
+  group: r.group_no ?? undefined,
   bracket: r.bracket as Match['bracket'],
   round: r.round,
   index: r.idx,
@@ -67,13 +91,21 @@ export const toMatch = (r: MatchRow): Match => ({
   scoreB: r.score_b,
   winner: r.winner,
   status: r.status === 'live' ? 'ready' : r.status,
-  winTo: r.win_to ?? undefined,
-  loseTo: r.lose_to ?? undefined,
+  winTo: unlink(r.win_to),
+  loseTo: unlink(r.lose_to),
 });
 
-export const toRow = (tournamentId: string, m: Match, extra: Partial<Pick<MatchRow, 'games' | 'station'>> = {}): Omit<MatchRow, 'games' | 'station'> & Partial<MatchRow> => ({
+const relink = (position: number, l: Link | undefined): Link | null => (l ? { ...l, key: stageKey(position, l.key) } : null);
+export const toRow = (
+  tournamentId: string,
+  stage: Pick<StageRow, 'id' | 'position'>,
+  m: Match,
+  extra: { games?: MatchRow['games']; station?: string | null; best_of?: number | null; label?: string | null } = {},
+) => ({
   tournament_id: tournamentId,
-  key: m.key,
+  stage_id: stage.id,
+  group_no: m.group ?? null,
+  key: stageKey(stage.position, m.key),
   bracket: m.bracket,
   round: m.round,
   idx: m.index,
@@ -83,8 +115,8 @@ export const toRow = (tournamentId: string, m: Match, extra: Partial<Pick<MatchR
   score_b: m.scoreB,
   winner: m.winner,
   status: m.status,
-  win_to: m.winTo ?? null,
-  lose_to: m.loseTo ?? null,
+  win_to: relink(stage.position, m.winTo),
+  lose_to: relink(stage.position, m.loseTo),
   ...extra,
 });
 
@@ -96,22 +128,27 @@ export async function loadTournament(svc: SupabaseClient, idOrSlug: string) {
     .eq(isId ? 'id' : 'slug', idOrSlug)
     .maybeSingle();
   if (!t) return null;
-  const [{ data: entrants }, { data: matches }, { data: staff }] = await Promise.all([
+  const [{ data: entrants }, { data: matches }, { data: staff }, { data: stages }, { data: stageEntrants }] = await Promise.all([
     svc.from('tournament_entrants').select('*').eq('tournament_id', t.id).order('seed', { ascending: true, nullsFirst: false }).order('created_at'),
     svc.from('tournament_matches').select('*').eq('tournament_id', t.id),
     svc.from('tournament_staff').select('user_id').eq('tournament_id', t.id),
+    svc.from('tournament_stages').select('*').eq('tournament_id', t.id).order('position'),
+    svc.from('tournament_stage_entrants').select('stage_id, entrant_id, seed, group_no'),
   ]);
+  const stageIds = new Set((stages ?? []).map((x) => x.id as string));
   return {
     tournament: t as TournamentRow,
     entrants: (entrants ?? []) as EntrantRow[],
     matches: (matches ?? []) as MatchRow[],
     staff: (staff ?? []).map((s) => s.user_id as string),
+    stages: (stages ?? []) as StageRow[],
+    stageEntrants: ((stageEntrants ?? []) as StageEntrantRow[]).filter((x) => stageIds.has(x.stage_id)),
   };
 }
 
-// Write back the matches that changed (only those whose result, sides or status differ from what is stored).
-export async function saveMatches(svc: SupabaseClient, tournamentId: string, before: MatchRow[], after: Match[]) {
-  const old = new Map(before.map((r) => [r.key, r]));
+// Write back the matches of one stage that changed (only those whose result, sides or status differ from what is stored).
+export async function saveMatches(svc: SupabaseClient, tournamentId: string, stage: Pick<StageRow, 'id' | 'position'>, before: MatchRow[], after: Match[]) {
+  const old = new Map(before.map((r) => [engineKey(r.key), r]));
   const changed = after.filter((m) => {
     const o = old.get(m.key);
     return !o || o.a !== m.a || o.b !== m.b || o.score_a !== m.scoreA || o.score_b !== m.scoreB || o.winner !== m.winner || (o.status === 'live' ? 'ready' : o.status) !== m.status;
@@ -119,7 +156,10 @@ export async function saveMatches(svc: SupabaseClient, tournamentId: string, bef
   if (changed.length === 0) return;
   const rows = changed.map((m) => {
     const o = old.get(m.key);
-    return { ...toRow(tournamentId, m, { games: o?.games ?? [], station: o?.station ?? null }), updated_at: new Date().toISOString() };
+    return {
+      ...toRow(tournamentId, stage, m, { games: o?.games ?? [], station: o?.station ?? null, best_of: o?.best_of ?? null, label: o?.label ?? null }),
+      updated_at: new Date().toISOString(),
+    };
   });
   const { error } = await svc.from('tournament_matches').upsert(rows, { onConflict: 'tournament_id,key' });
   if (error) throw new Error('Could not save the matches.');

@@ -21,6 +21,7 @@ export type Match = {
   status: 'pending' | 'ready' | 'done' | 'bye' | 'skipped';
   winTo?: Link;
   loseTo?: Link;
+  group?: number; // pools: which group (1-based) this match belongs to
 };
 
 export type Entrant = { id: string; seed: number };
@@ -73,7 +74,7 @@ function singleElimination(entrants: Entrant[], thirdPlace: boolean): Match[] {
   return out;
 }
 
-function doubleElimination(entrants: Entrant[]): Match[] {
+function doubleElimination(entrants: Entrant[], grandFinalReset = true): Match[] {
   const out = singleElimination(entrants, false);
   const size = pow2(entrants.length);
   const R = Math.log2(size);
@@ -98,7 +99,8 @@ function doubleElimination(entrants: Entrant[]): Match[] {
     for (let i = 1; i <= n; i++) get(`W${k}-${i}`).loseTo = { key: `L${2 * (k - 1)}-${i}`, side: 'b' };
   }
   get(`W${R}-1`).winTo = { key: 'GF1', side: 'a' };
-  out.push(blank('GF1', 'GF', 1, 1), blank('GF2', 'GF', 2, 1));
+  out.push(blank('GF1', 'GF', 1, 1));
+  if (grandFinalReset) out.push(blank('GF2', 'GF', 2, 1));
   return out;
 }
 
@@ -121,12 +123,12 @@ function roundRobin(entrants: Entrant[]): Match[] {
   return out;
 }
 
-export function generate(format: Format, entrants: Entrant[], opts: { thirdPlace?: boolean } = {}): Match[] {
+export function generate(format: Format, entrants: Entrant[], opts: { thirdPlace?: boolean; grandFinalReset?: boolean } = {}): Match[] {
   if (entrants.length < 2) throw new Error('A bracket needs at least two entrants.');
   const sorted = [...entrants].sort((x, y) => x.seed - y.seed).map((e, i) => ({ id: e.id, seed: i + 1 }));
   let matches: Match[];
   if (format === 'single') matches = singleElimination(sorted, !!opts.thirdPlace);
-  else if (format === 'double') matches = doubleElimination(sorted);
+  else if (format === 'double') matches = doubleElimination(sorted, opts.grandFinalReset !== false);
   else if (format === 'roundrobin') matches = roundRobin(sorted);
   else
     matches = swissRound(

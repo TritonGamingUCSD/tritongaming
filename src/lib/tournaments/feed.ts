@@ -1,9 +1,13 @@
-import { BYE, placements, standings, swissRounds, type Match } from './bracket';
-import { toMatch, type EntrantRow, type MatchRow, type TournamentRow } from './store';
+import { BYE, swissRounds, type Match } from './bracket';
+import { currentStage, defOf, stageEngineMatches, stageField } from './run';
+import { rank, stageRanking } from './stages';
+import { toMatch, type EntrantRow, type MatchRow, type StageEntrantRow, type StageRow, type TournamentRow } from './store';
 
-// What a stream tool, the public page and the overlays read: names instead of ids, ordered matches, standings or placements, and what is on now and next. No user ids, codes or tokens.
+// What a stream tool, the public page and the overlays read: names instead of ids, ordered matches, stages, standings or placements, and what is on now and next. No user ids, codes or tokens.
 export type FeedMatch = {
   key: string;
+  stage: number;
+  group: number | null;
   bracket: string;
   round: number;
   index: number;
@@ -15,10 +19,12 @@ export type FeedMatch = {
   status: string;
   station: string | null;
   games: MatchRow['games'];
+  best_of: number | null;
 };
 
-export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchRow[]) {
+export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchRow[], stages: StageRow[], stageEntrants: StageEntrantRow[]) {
   const byId = new Map(entrants.map((e) => [e.id, e]));
+  const posOf = new Map(stages.map((s) => [s.id, s.position]));
   const side = (slot: string | null) => {
     if (slot === null) return null;
     if (slot === BYE) return { id: null, name: 'BYE', seed: null };
@@ -26,9 +32,18 @@ export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchR
     return { id: slot, name: e?.name ?? 'TBD', seed: e?.seed ?? null };
   };
   const matches: FeedMatch[] = [...rows]
-    .sort((x, y) => x.bracket.localeCompare(y.bracket) || x.round - y.round || x.idx - y.idx)
+    .sort(
+      (x, y) =>
+        (posOf.get(x.stage_id ?? '') ?? 0) - (posOf.get(y.stage_id ?? '') ?? 0) ||
+        x.bracket.localeCompare(y.bracket) ||
+        (x.group_no ?? 0) - (y.group_no ?? 0) ||
+        x.round - y.round ||
+        x.idx - y.idx,
+    )
     .map((r) => ({
       key: r.key,
+      stage: posOf.get(r.stage_id ?? '') ?? 1,
+      group: r.group_no,
       bracket: r.bracket,
       round: r.round,
       index: r.idx,
@@ -40,12 +55,43 @@ export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchR
       status: r.status,
       station: r.station,
       games: r.games,
+      best_of: r.best_of,
     }));
-  const engine: Match[] = rows.map(toMatch);
-  const ids = entrants.filter((e) => !e.dropped).map((e) => e.id);
-  const table = t.format === 'roundrobin' || t.format === 'swiss' ? standings(ids, engine).map((r, i) => ({ ...r, place: i + 1, name: byId.get(r.id)?.name ?? '' })) : null;
-  const places = t.format === 'single' || t.format === 'double' ? placements(engine).map((p) => ({ place: p.place, name: byId.get(p.id)?.name ?? '' })) : null;
+  const cur = currentStage(stages);
+  const nameOf = (id: string) => byId.get(id)?.name ?? '';
+  let standings: { place: number; name: string; group: number | null; played: number; wins: number; losses: number; draws: number; points: number; diff: number }[] | null = null;
+  let placements: { place: number; name: string }[] | null = null;
+  if (cur) {
+    const field = stageField(stages, cur, entrants, rows, stageEntrants);
+    const engine: Match[] = stageEngineMatches(rows, cur);
+    const def = defOf(cur);
+    if (def.format === 'roundrobin' || def.format === 'swiss') {
+      const seeds = new Map(field.map((e) => [e.id, e.seed]));
+      const groups = [...new Set(engine.map((m) => m.group ?? 0))];
+      standings = groups.flatMap((g) => {
+        const inG = engine.filter((m) => (m.group ?? 0) === g);
+        const ids = g ? [...new Set(inG.flatMap((m) => [m.a, m.b]).filter((x): x is string => !!x && x !== BYE))] : field.map((e) => e.id);
+        return rank(ids, inG, def.settings, seeds).map((r, i) => ({
+          place: i + 1,
+          name: nameOf(r.id),
+          group: g || null,
+          played: r.played,
+          wins: r.wins,
+          losses: r.losses,
+          draws: r.draws,
+          points: r.points,
+          diff: r.diff,
+        }));
+      });
+    }
+  }
+  const last = stages[stages.length - 1];
+  if (last && (last.format === 'single' || last.format === 'double') && last.status !== 'pending') {
+    const field = stageField(stages, last, entrants, rows, stageEntrants);
+    placements = stageRanking(defOf(last), field, rows.filter((r) => r.stage_id === last.id).map(toMatch)).map((p) => ({ place: p.place, name: nameOf(p.id) }));
+  }
   const playable = matches.filter((m) => m.status === 'ready' || m.status === 'live');
+  const active = entrants.filter((e) => !e.dropped).length;
   return {
     tournament: {
       name: t.name,
@@ -56,12 +102,14 @@ export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchR
       status: t.status,
       entrant_type: t.entrant_type,
       starts_at: t.starts_at,
-      swiss_rounds: t.format === 'swiss' ? (t.swiss_rounds ?? swissRounds(ids.length)) : null,
+      swiss_rounds: cur?.format === 'swiss' ? (cur.settings.swiss_rounds ?? swissRounds(active)) : null,
     },
+    stages: stages.map((s) => ({ position: s.position, name: s.name, format: s.format, status: s.status, best_of: s.settings.best_of ?? t.best_of })),
+    current_stage: cur?.position ?? 1,
     entrants: entrants.map((e) => ({ id: e.id, name: e.name, seed: e.seed, dropped: e.dropped })),
     matches,
-    standings: table,
-    placements: places,
+    standings,
+    placements,
     now: playable.filter((m) => m.status === 'live'),
     next: playable.filter((m) => m.status === 'ready').slice(0, 6),
     updated: new Date().toISOString(),

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, Copy, Shuffle, Trash2, UserCheck, UserMinus } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, GripVertical, Shuffle, Trash2, UserCheck, UserMinus } from 'lucide-react';
+import { useDragOrder } from './useDragOrder';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Input, Textarea } from '@/components/ui/Field';
@@ -26,6 +27,11 @@ export default function EntrantsPanel({ data, reload }: { data: TData; reload: (
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const list = data.entrants;
+  const drag = useDragOrder(
+    list.map((e) => e.id),
+    (order) => void run(() => call('PATCH', `/api/tournaments/${t.id}/entrants`, { order })),
+    locked,
+  );
   const base = `/api/tournaments/${t.id}/entrants`;
   const run = async (fn: () => Promise<{ ok: boolean; j: { error?: string } }>) => {
     setBusy(true);
@@ -63,11 +69,12 @@ export default function EntrantsPanel({ data, reload }: { data: TData; reload: (
         {locked && <Notice tone="info">The bracket has started, so seeds and entrants are locked. You can still drop someone.</Notice>}
         {error && <Notice tone="error">{error}</Notice>}
         {list.length === 0 ? (
-          <p className={styles.empty}>Nobody yet. Add names on the right, or open sign-ups in Settings.</p>
+          <p className={styles.empty}>Nobody yet. Add names on the right, or open sign-ups in Settings. Drag the grip to reorder seeds once you have a few.</p>
         ) : (
           <ol className={styles.entrants}>
             {list.map((e, i) => (
-              <li key={e.id} className={`${styles.entrant} ${e.dropped ? styles.dropped : ''}`}>
+              <li key={e.id} {...drag.rowProps(e.id)} className={`${styles.entrant} ${e.dropped ? styles.dropped : ''}`}>
+                {!locked && <GripVertical size={15} className={styles.gripIcon} aria-hidden="true" />}
                 <b className={styles.seedNo}>{e.seed ?? i + 1}</b>
                 <span className={styles.entName}>
                   {e.name}
@@ -115,6 +122,9 @@ export default function EntrantsPanel({ data, reload }: { data: TData; reload: (
         )}
         {!locked && list.length > 1 && (
           <div className={styles.cardActions}>
+            <Button variant="secondary" size="sm" disabled={busy} onClick={() => run(() => call('PATCH', base, { order: [...list].reverse().map((e) => e.id) }))}>
+              Reverse Order
+            </Button>
             <Button variant="secondary" size="sm" disabled={busy} onClick={() => run(() => call('PATCH', base, { random: true }))}>
               <Shuffle size={14} aria-hidden="true" /> Randomize Seeds
             </Button>

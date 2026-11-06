@@ -8,6 +8,8 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Dialog, { DialogActions, DialogCancel } from '@/components/ui/Dialog';
 import { Field, Input, Select } from '@/components/ui/Field';
+import { GAME_PRESETS } from '@/lib/tournaments/games';
+import { TEMPLATES } from '@/lib/tournaments/stages';
 import { call, FORMAT_NAMES, STATUS_NAMES } from './types';
 import styles from './tournaments.module.css';
 
@@ -74,9 +76,18 @@ export default function TournamentList({ divisions }: { divisions: { id: string;
 }
 
 function NewDialog({ divisions, onClose }: { divisions: { id: string; name: string }[]; onClose: () => void }) {
-  const [f, setF] = useState({ name: '', game: '', format: 'single', best_of: '1', entrant_type: 'solo', team_size: '2', division_id: '', third_place: false });
+  const [game, setGame] = useState<string>('');
+  const [f, setF] = useState({ name: '', game: '', template: 'single', best_of: '1', entrant_type: 'solo', team_size: '2', division_id: '', third_place: false });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const preset = GAME_PRESETS.find((g) => g.id === game) ?? null;
+  const pick = (id: string) => {
+    const g = GAME_PRESETS.find((x) => x.id === id);
+    setGame(id);
+    if (g) setF((x) => ({ ...x, game: g.name, template: g.template, best_of: String(g.best_of), entrant_type: g.entrant_type, team_size: String(g.team_size) }));
+    else setF((x) => ({ ...x, game: '' }));
+  };
+  const tpl = TEMPLATES.find((x) => x.id === f.template);
   const create = async () => {
     setBusy(true);
     setError('');
@@ -91,54 +102,94 @@ function NewDialog({ divisions, onClose }: { divisions: { id: string; name: stri
     else setError(r.j.error || 'Could not create it.');
   };
   return (
-    <Dialog title="New tournament" onClose={onClose} busy={busy}>
+    <Dialog title="New tournament" onClose={onClose} busy={busy} wide>
+      <p className={styles.dlgSub}>1. What are you playing?</p>
+      <div className={styles.gameTiles} role="radiogroup" aria-label="Game">
+        {GAME_PRESETS.map((g) => (
+          <button
+            key={g.id}
+            type="button"
+            role="radio"
+            aria-checked={game === g.id}
+            className={`${styles.gameTile} ${game === g.id ? styles.gameOn : ''}`}
+            onClick={() => pick(g.id)}
+          >
+            <b>{g.short}</b>
+            <span>{g.name}</span>
+          </button>
+        ))}
+        <button type="button" role="radio" aria-checked={game === 'other'} className={`${styles.gameTile} ${game === 'other' ? styles.gameOn : ''}`} onClick={() => pick('other')}>
+          <b>+</b>
+          <span>Something else</span>
+        </button>
+      </div>
+      {preset && (
+        <ul className={styles.tips}>
+          {preset.tips.map((t) => (
+            <li key={t}>{t}</li>
+          ))}
+        </ul>
+      )}
+      {game === 'other' && (
+        <Field label="Game">
+          <Input value={f.game} maxLength={60} onChange={(e) => setF({ ...f, game: e.target.value })} placeholder="Mario Kart 8" />
+        </Field>
+      )}
+      <p className={styles.dlgSub}>2. How is it played?</p>
+      <div className={styles.tplTiles} role="radiogroup" aria-label="Structure">
+        {TEMPLATES.map((x) => (
+          <button
+            key={x.id}
+            type="button"
+            role="radio"
+            aria-checked={f.template === x.id}
+            className={`${styles.tplTile} ${f.template === x.id ? styles.gameOn : ''}`}
+            onClick={() => setF({ ...f, template: x.id })}
+          >
+            <b>{x.name}</b>
+            <span>{x.about}</span>
+          </button>
+        ))}
+      </div>
+      {tpl && tpl.stages.length > 1 && <p className={styles.hint}>Stages: {tpl.stages.map((x) => x.name).join(' → ')}. You can change everything on the Structure tab.</p>}
+      <p className={styles.dlgSub}>3. The details</p>
       <Field label="Name">
-        <Input value={f.name} maxLength={80} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder="Fall Smash Bracket" autoFocus />
-      </Field>
-      <Field label="Game">
-        <Input value={f.game} maxLength={60} onChange={(e) => setF({ ...f, game: e.target.value })} placeholder="Super Smash Bros. Ultimate" />
-      </Field>
-      <Field label="Run by">
-        <Select value={f.division_id} onChange={(e) => setF({ ...f, division_id: e.target.value })}>
-          <option value="">Triton Gaming</option>
-          {divisions.map((d) => (
-            <option key={d.id} value={d.id}>
-              {d.name}
-            </option>
-          ))}
-        </Select>
-      </Field>
-      <Field label="Format">
-        <Select value={f.format} onChange={(e) => setF({ ...f, format: e.target.value })}>
-          {['single', 'double', 'roundrobin', 'swiss'].map((k) => (
-            <option key={k} value={k}>
-              {FORMAT_NAMES[k]}
-            </option>
-          ))}
-        </Select>
+        <Input value={f.name} maxLength={80} onChange={(e) => setF({ ...f, name: e.target.value })} placeholder={`${f.game || 'Fall'} Bracket`} />
       </Field>
       <div className={styles.twoCol}>
+        <Field label="Run by">
+          <Select value={f.division_id} onChange={(e) => setF({ ...f, division_id: e.target.value })}>
+            <option value="">Triton Gaming</option>
+            {divisions.map((d) => (
+              <option key={d.id} value={d.id}>
+                {d.name}
+              </option>
+            ))}
+          </Select>
+        </Field>
         <Field label="Matches are">
           <Select value={f.best_of} onChange={(e) => setF({ ...f, best_of: e.target.value })}>
-            {[1, 3, 5, 7].map((n) => (
+            {(preset?.best_ofs ?? [1, 3, 5, 7]).map((n) => (
               <option key={n} value={n}>
                 {n === 1 ? 'A single game' : `Best of ${n}`}
               </option>
             ))}
           </Select>
         </Field>
+      </div>
+      <div className={styles.twoCol}>
         <Field label="Who plays">
           <Select value={f.entrant_type} onChange={(e) => setF({ ...f, entrant_type: e.target.value })}>
             <option value="solo">Solo players</option>
             <option value="team">Teams</option>
           </Select>
         </Field>
+        {f.entrant_type === 'team' && (
+          <Field label="Team size">
+            <Input type="number" min={2} max={10} value={f.team_size} onChange={(e) => setF({ ...f, team_size: e.target.value })} />
+          </Field>
+        )}
       </div>
-      {f.entrant_type === 'team' && (
-        <Field label="Team size">
-          <Input type="number" min={2} max={10} value={f.team_size} onChange={(e) => setF({ ...f, team_size: e.target.value })} />
-        </Field>
-      )}
       {error && <Notice tone="error">{error}</Notice>}
       <DialogActions>
         <DialogCancel onClick={onClose} disabled={busy} />

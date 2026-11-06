@@ -18,5 +18,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const token = new URL(req.url).searchParams.get('token');
   const open = t.is_public && t.status !== 'draft';
   if (!open && token !== t.overlay_token) return NextResponse.json({ error: 'No such tournament.' }, { status: 404 });
-  return NextResponse.json(buildFeed(t, data.entrants, data.matches), { headers: { 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' } });
+  return NextResponse.json(buildFeed(t, data.entrants, data.matches, data.stages, data.stageEntrants), {
+    headers: { 'Cache-Control': 'no-store', 'Access-Control-Allow-Origin': '*' },
+  });
 }

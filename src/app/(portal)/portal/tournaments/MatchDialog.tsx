@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Input } from '@/components/ui/Field';
 import type { MatchRow } from '@/lib/tournaments/store';
+import { presetOf } from '@/lib/tournaments/games';
 import { call, type TEntrant } from './types';
 import styles from './tournaments.module.css';
 
@@ -16,6 +17,7 @@ export default function MatchDialog({
   entrants,
   bestOf,
   format,
+  game,
   onClose,
   onDone,
 }: {
@@ -24,16 +26,24 @@ export default function MatchDialog({
   entrants: TEntrant[];
   bestOf: number;
   format: string;
+  game?: string;
   onClose: () => void;
   onDone: () => void;
 }) {
   const nm = (s: string | null) => (s ? (entrants.find((e) => e.id === s)?.name ?? '?') : 'TBD');
+  const preset = presetOf(game);
   const need = Math.ceil(bestOf / 2);
   const start =
     bestOf === 1
       ? [{ a: match.score_a ?? 0, b: match.score_b ?? 0 }]
-      : Array.from({ length: bestOf }, (_, i) => ({ a: match.games?.[i]?.a ?? 0, b: match.games?.[i]?.b ?? 0, map: match.games?.[i]?.map ?? '' }));
-  const [rows, setRows] = useState<{ a: number; b: number; map?: string }[]>(start);
+      : Array.from({ length: bestOf }, (_, i) => ({
+          a: match.games?.[i]?.a ?? 0,
+          b: match.games?.[i]?.b ?? 0,
+          map: match.games?.[i]?.map ?? '',
+          pick_a: match.games?.[i]?.pick_a ?? '',
+          pick_b: match.games?.[i]?.pick_b ?? '',
+        }));
+  const [rows, setRows] = useState<{ a: number; b: number; map?: string; pick_a?: string; pick_b?: string }[]>(start);
   const [station, setStation] = useState(match.station ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -53,7 +63,9 @@ export default function MatchDialog({
   return (
     <Dialog title={`${nm(match.a)} vs ${nm(match.b)}`} onClose={onClose} busy={busy}>
       <p className={styles.dlgSub}>
-        {bestOf === 1 ? 'Final score' : `Best of ${bestOf}: first to ${need}. Played games count; leave the rest at 0.`}
+        {bestOf === 1
+          ? `Final score${preset ? ` (${preset.scoreLabel.toLowerCase()})` : ''}`
+          : `Best of ${bestOf}: first to ${need} ${preset ? `${preset.unit.toLowerCase()}s` : 'games'}. Enter each ${preset?.unit.toLowerCase() ?? 'game'}'s ${preset ? preset.scoreLabel.toLowerCase() : 'score'}; leave the rest at 0.`}
         {robin && bestOf === 1 ? ' A tie is allowed here.' : ''}
       </p>
       <div className={styles.scoreGrid}>
@@ -91,6 +103,11 @@ export default function MatchDialog({
           </div>
         ))}
       </div>
+      <datalist id="picks">
+        {(preset?.picks ?? []).map((p) => (
+          <option key={p} value={p} />
+        ))}
+      </datalist>
       {bestOf > 1 && (
         <p className={styles.dlgSub}>
           Series: {wins.a} – {wins.b}
@@ -130,7 +147,12 @@ export default function MatchDialog({
             await send(
               bestOf === 1
                 ? { action: 'report', scoreA: rows[0].a, scoreB: rows[0].b }
-                : { action: 'report', games: rows.filter((g) => g.a > 0 || g.b > 0).map((g) => ({ a: g.a, b: g.b, map: g.map || undefined })) },
+                : {
+                    action: 'report',
+                    games: rows
+                      .filter((g) => g.a > 0 || g.b > 0)
+                      .map((g) => ({ a: g.a, b: g.b, map: g.map || undefined, pick_a: g.pick_a || undefined, pick_b: g.pick_b || undefined })),
+                  },
             );
           }}
         >

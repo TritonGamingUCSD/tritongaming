@@ -1,4 +1,4 @@
-import type { EntrantRow, MatchRow, TournamentRow } from '@/lib/tournaments/store';
+import type { EntrantRow, MatchRow, StageEntrantRow, StageRow, TournamentRow } from '@/lib/tournaments/store';
 
 // What the organizer screen reads from /api/tournaments/<id> (see that route: the public view leaves out tokens and codes).
 export type TEntrant = Pick<EntrantRow, 'id' | 'name' | 'seed' | 'checked_in' | 'dropped' | 'members'> & { user_id?: string | null; claim_code?: string | null; linked?: boolean };
@@ -6,11 +6,21 @@ export type TData = {
   tournament: Omit<TournamentRow, 'created_by'>;
   entrants: TEntrant[];
   matches: MatchRow[];
+  stages: StageRow[];
+  stageEntrants: StageEntrantRow[];
   staff?: string[];
   can: { manage: boolean; run: boolean };
 };
 
-export const FORMAT_NAMES: Record<string, string> = { single: 'Single elimination', double: 'Double elimination', roundrobin: 'Round robin', swiss: 'Swiss', points: 'Points' };
+export const FORMAT_NAMES: Record<string, string> = {
+  single: 'Single elimination',
+  double: 'Double elimination',
+  roundrobin: 'Round robin',
+  swiss: 'Swiss',
+  points: 'Points series',
+  custom: 'Custom',
+  multi: 'Multi-stage',
+};
 export const STATUS_NAMES: Record<string, string> = { draft: 'Draft', registration: 'Sign-ups open', live: 'Live', complete: 'Finished' };
 
 export async function call<T = Record<string, unknown>>(method: string, path: string, body?: object): Promise<{ ok: boolean; j: T & { error?: string } }> {

@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const r = await withTournament(id, 'view');
   if ('error' in r) return r.error;
-  const { tournament: t, entrants, matches, staff, manage, run } = r;
+  const { tournament: t, entrants, matches, staff, stages, stageEntrants, manage, run } = r;
   const publicT = { ...t, overlay_token: manage ? t.overlay_token : undefined, created_by: undefined };
   return NextResponse.json({
     tournament: publicT,
@@ -23,6 +23,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       ...(manage ? { user_id: e.user_id, claim_code: e.claim_code } : { linked: !!e.user_id }),
     })),
     matches,
+    stages,
+    stageEntrants,
     staff: manage ? staff : undefined,
     can: { manage, run },
   });

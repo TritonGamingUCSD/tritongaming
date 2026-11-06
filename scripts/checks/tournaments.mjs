@@ -1,12 +1,17 @@
 // Checks, over HTTP against a running dev server with throwaway ZZ accounts and a ZZ division: tournaments (who creates, runs and reads; entrants; single, double and Swiss through to a champion; best-of; the public feed).
 // Run (after migration 20261106100000_tournaments.sql is applied): node scripts/checks/tournaments.mjs
+import fs from 'node:fs';
 import { svc, tracker, accounts, BASE } from './lib.mjs';
+
+// While tournaments are admin-only (lib/tournaments/access.ts), the division's Head needs the admin role too, and the role-based checks below are about who is refused.
+const ADMIN_ONLY = /TOURNAMENTS_ADMIN_ONLY\s*=\s*true/.test(fs.readFileSync(new URL('../../src/lib/tournaments/access.ts', import.meta.url), 'utf8'));
 
 const t = tracker();
 const { user, made: accountIds, cleanup } = accounts('tourney');
 let divId;
 const setRoles = (u, roles) => svc.rpc('admin_set_user_roles', { _user_id: u.id, _roles: roles, _granted_by: null });
 const made = [];
+const second0 = (d, m) => m.key;
 try {
   divId = (
     await svc
@@ -15,11 +20,11 @@ try {
       .select('id')
       .single()
   ).data.id;
-  const head = await user('head', ['ucsd']);
+  const head = await user('head', ADMIN_ONLY ? ['ucsd', 'admin'] : ['ucsd']);
   const member = await user('member', ['ucsd']);
   const stranger = await user('stranger', ['ucsd']);
   const admin = await user('admin', ['ucsd', 'admin']);
-  await setRoles(head, [{ role: 'ucsd' }, { role: 'division', division_id: divId }]);
+  await setRoles(head, [{ role: 'ucsd' }, ...(ADMIN_ONLY ? [{ role: 'admin' }] : []), { role: 'division', division_id: divId }]);
   await setRoles(member, [{ role: 'ucsd' }, { role: 'division_member', division_id: divId }]);
 
   // Creating
@@ -62,7 +67,8 @@ try {
 
   // Playing: best of 3, the better seed wins everything.
   const data = async () => (await head.call('GET', A)).j;
-  const play = async (m, a, b) => member.call('POST', `${A}/bracket`, { action: 'report', key: m.key, scoreA: a, scoreB: b });
+  const scorer = ADMIN_ONLY ? head : member;
+  const play = async (m, a, b) => scorer.call('POST', `${A}/bracket`, { action: 'report', key: m.key, scoreA: a, scoreB: b });
   let d = await data();
   const ready = d.matches.filter((m) => m.status === 'ready');
   t.ok(
@@ -73,12 +79,17 @@ try {
   const first = ready[0];
   t.ok('a best of 3 needs 2 wins', (await play(first, 1, 0)).s === 400);
   t.ok('and cannot pass 2', (await play(first, 3, 0)).s === 400);
-  t.ok('a Member of the division enters scores', (await play(first, 2, 1)).s === 200);
+  t.ok('a Member of the division enters scores', (await play(first, 2, 1)).s === (ADMIN_ONLY ? 200 : 200));
+  if (ADMIN_ONLY)
+    t.ok(
+      'while admin-only, a division Member is refused',
+      (await member.call('POST', `${A}/bracket`, { action: 'report', key: second0(d, first), scoreA: 2, scoreB: 0 })).s === 403,
+    );
   t.ok('a stranger cannot enter scores', (await stranger.call('POST', `${A}/bracket`, { action: 'report', key: first.key, scoreA: 2, scoreB: 0 })).s === 403);
   // Per-game scores with picks
   d = await data();
   const second = d.matches.find((m) => m.status === 'ready');
-  const g = await member.call('POST', `${A}/bracket`, {
+  const g = await scorer.call('POST', `${A}/bracket`, {
     action: 'report',
     key: second.key,
     games: [
@@ -90,7 +101,7 @@ try {
   t.ok('per-game scores add up to the match score', g.s === 200, JSON.stringify(g.j));
   const after = (await data()).matches.find((m) => m.key === second.key);
   t.ok('the games are kept with the map and pick', after.score_a + after.score_b === 3 && after.games?.[0]?.map === 'Bind');
-  t.ok('a station can be set and a match called live', (await member.call('POST', `${A}/bracket`, { action: 'station', key: second.key, station: 'Setup 3' })).s === 200);
+  t.ok('a station can be set and a match called live', (await scorer.call('POST', `${A}/bracket`, { action: 'station', key: second.key, station: 'Setup 3' })).s === 200);
   // Play to the end.
   for (let i = 0; i < 20; i++) {
     d = await data();
@@ -112,7 +123,7 @@ try {
     feed.placements?.[0]?.place === 1 && !JSON.stringify(feed).includes('claim_code') && !JSON.stringify(feed).includes('overlay_token'),
     JSON.stringify(feed.placements),
   );
-  t.ok('a result can be undone only if nothing later was played', (await member.call('POST', `${A}/bracket`, { action: 'undo', key: 'W1-1' })).s === 409);
+  t.ok('a result can be undone only if nothing later was played', (await scorer.call('POST', `${A}/bracket`, { action: 'undo', key: 's1/W1-1' })).s === 409);
 
   // Double elimination: favorite wins, a reset is never needed
   const dbl = await mk('ZZ Double', 'double');
@@ -146,6 +157,54 @@ try {
   const sf = await (await fetch(`${BASE}${S}/feed`)).json();
   t.ok('Swiss plays 3 rounds and has standings', sf.tournament.swiss_rounds === 3 && sf.standings?.length === 5, JSON.stringify(sf.tournament));
   t.ok('Swiss is complete', sf.tournament.status === 'complete', sf.tournament.status);
+
+  // Pools then a double elimination bracket (two stages): 8 players, 2 pools of 4, top 2 of each pool move on
+  const pools = await mk('ZZ Pools', 'pools', {
+    stages: [
+      { name: 'Pools', format: 'roundrobin', settings: { group_count: 2 }, advance: { mode: 'top', count: 2, per_group: true } },
+      { name: 'Bracket', format: 'single', settings: {}, advance: { mode: 'none' } },
+    ],
+  });
+  const P = `/api/tournaments/${pools.j.id}`;
+  for (const n of ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']) await head.call('POST', `${P}/entrants`, { name: `ZZ ${n}` });
+  const pd0 = (await head.call('GET', P)).j;
+  t.ok('a two-stage tournament has two stages', pd0.stages.length === 2 && pd0.stages[1].position === 2);
+  t.ok('stage 2 cannot start before stage 1', (await head.call('POST', `${P}/bracket`, { action: 'start-stage', stage_id: pd0.stages[1].id })).s === 409);
+  t.ok('the pools start', (await head.call('POST', `${P}/bracket`, { action: 'start' })).s === 200);
+  let pd = (await head.call('GET', P)).j;
+  t.ok('two pools of four make 12 matches', pd.matches.length === 12 && pd.matches.every((m) => m.group_no));
+  for (let i = 0; i < 30; i++) {
+    pd = (await head.call('GET', P)).j;
+    const m = pd.matches.find((x) => x.status === 'ready');
+    if (!m) break;
+    await head.call('POST', `${P}/bracket`, { action: 'report', key: m.key, scoreA: 1, scoreB: 0 });
+  }
+  pd = (await head.call('GET', P)).j;
+  t.ok('stage 1 is complete and the tournament is not', pd.stages[0].status === 'complete' && pd.tournament.status === 'live', JSON.stringify(pd.stages.map((x) => x.status)));
+  const ss = await head.call('POST', `${P}/bracket`, { action: 'start-stage', stage_id: pd.stages[1].id });
+  t.ok('stage 2 starts with the four who moved on', ss.s === 200 && ss.j.matches === 3, JSON.stringify(ss.j));
+  for (let i = 0; i < 10; i++) {
+    pd = (await head.call('GET', P)).j;
+    const m = pd.matches.find((x) => x.status === 'ready');
+    if (!m) break;
+    await head.call('POST', `${P}/bracket`, { action: 'report', key: m.key, scoreA: 1, scoreB: 0 });
+  }
+  pd = (await head.call('GET', P)).j;
+  t.ok('the tournament completes after the last stage', pd.tournament.status === 'complete', pd.tournament.status);
+  const pf = await (await fetch(`${BASE}${P}/feed`)).json();
+  t.ok('the feed lists both stages', pf.stages?.length === 2 && pf.matches.some((m) => m.stage === 2));
+
+  // Editing the structure
+  const ed = await mk('ZZ Edit', 'single');
+  const E = `/api/tournaments/${ed.j.id}`;
+  const e0 = (await head.call('GET', E)).j;
+  t.ok('a stage can be added', (await head.call('POST', `${E}/stages`, { name: 'Final', format: 'roundrobin' })).s === 200);
+  const e1 = (await head.call('GET', E)).j;
+  t.ok('the stage before it now sends people on', e1.stages.length === 2 && e1.stages[0].advance.mode === 'top');
+  t.ok('stages can be reordered', (await head.call('PATCH', `${E}/stages`, { order: [e1.stages[1].id, e1.stages[0].id] })).s === 200);
+  t.ok('a stage can be changed', (await head.call('PATCH', `${E}/stages`, { id: e0.stages[0].id, settings: { best_of: 5 } })).s === 200);
+  t.ok('a stage can be removed', (await head.call('DELETE', `${E}/stages`, { id: e1.stages[1].id })).s === 200);
+  t.ok('the last stage cannot be removed', (await head.call('DELETE', `${E}/stages`, { id: e0.stages[0].id })).s === 409);
 
   // Sign-ups by the players themselves
   const open = await mk('ZZ Open', 'single');

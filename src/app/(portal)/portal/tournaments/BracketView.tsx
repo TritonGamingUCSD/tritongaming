@@ -22,9 +22,16 @@ export default function BracketView({
   const byId = new Map(entrants.map((e) => [e.id, e]));
   const groups: { key: string; title: string; rounds: { round: number; title: string; items: MatchRow[] }[] }[] = [];
   const order = ['W', 'GF', 'T', 'L', 'RR', 'S'];
+  // Pools: one block per pool; everything else is one block per bracket.
+  const blocks: { b: string; pool: number | null; items: MatchRow[] }[] = [];
   for (const b of order) {
-    const ofB = matches.filter((m) => m.bracket === b);
-    if (ofB.length === 0) continue;
+    const all = matches.filter((m) => m.bracket === b);
+    if (all.length === 0) continue;
+    const pools = [...new Set(all.map((m) => m.group_no).filter((x): x is number => !!x))].sort((x, y) => x - y);
+    if (b === 'RR' && pools.length > 0) for (const p of pools) blocks.push({ b, pool: p, items: all.filter((m) => m.group_no === p) });
+    else blocks.push({ b, pool: null, items: all });
+  }
+  for (const { b, pool, items: ofB } of blocks) {
     const maxRound = Math.max(...ofB.map((m) => m.round));
     const rounds = [...new Set(ofB.map((m) => m.round))]
       .sort((x, y) => x - y)
