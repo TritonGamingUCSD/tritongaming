@@ -33,7 +33,6 @@ export const FAMILIES: Family[] = [
     children: [
       { id: 'events', label: 'Events' },
       { id: 'checkin', label: 'Check-In' },
-      { id: 'tournaments', label: 'Tournaments' },
     ],
   },
 ];

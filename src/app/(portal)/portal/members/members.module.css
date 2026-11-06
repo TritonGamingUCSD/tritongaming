@@ -268,3 +268,5 @@
 .tabsRow > :last-child:not(:first-child) { flex: none; margin-left: auto; }
 .closeBtn { position: absolute; top: 0.875rem; right: 0.875rem; }
 
+
+.discordLine { display: flex; align-items: center; gap: 0.3rem; margin-top: 0.15rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.75); }

@@ -249,3 +249,5 @@
 .panel { background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: 0; box-shadow: var(--hard-shadow); }
 .closeBtn { top: 0.7rem; right: 0.7rem; width: 32px; height: 32px; background: var(--yellow); border: 2px solid var(--ink); border-radius: var(--radius-sm); color: var(--ink); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.5); }
 .closeBtn:hover { background: var(--yellow); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5); }
+
+.discordLine { display: inline-flex; align-items: center; justify-content: center; gap: 0.3rem; margin-top: 0.25rem; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.78rem; opacity: 0.8; }

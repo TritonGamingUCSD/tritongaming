@@ -12,7 +12,7 @@ import Image from 'next/image';
 import { createPortal } from 'react-dom';
 import { usePortalParams, useLiveParams } from '@/lib/portal/usePortalParams';
 import SectionTabs from '@/components/ui/SectionTabs';
-import { Eye, KeyRound, LayoutGrid, List, ListOrdered, Moon, Users, UsersRound } from 'lucide-react';
+import { Eye, KeyRound, LayoutGrid, List, ListOrdered, MessageCircle, Moon, Users, UsersRound } from 'lucide-react';
 import BoardOrderManager from './BoardOrderManager';
 import { mergedPortalParams } from '@/lib/portal/portalPath';
 import { TeamsPanel } from '../meetings/TeamsPanel';
@@ -285,6 +285,12 @@ export default function MembersSectionContent({
                       )}
                       {/* Always rendered in list view, even when empty, so the columns line up row to row. */}
                       {(m.org_title || view === 'list') && <div className={styles.orgTitle}>{m.org_title}</div>}
+                      {/* Their Discord, for finding people fast (from linking Discord, or typed on their profile). */}
+                      {m.social_links?.discord && (
+                        <div className={styles.discordLine}>
+                          <MessageCircle size={12} aria-hidden="true" /> {m.social_links.discord}
+                        </div>
+                      )}
                       {/* Grid is the compact "who's who" view — name, title,
                         photo, nothing else. List view is the one place that
                         still shows division/year/major, since a single-line

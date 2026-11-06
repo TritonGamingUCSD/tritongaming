@@ -6,7 +6,7 @@ import gsap from 'gsap';
 import { Flip } from 'gsap/Flip';
 import Image from 'next/image';
 import { AnimatePresence, motion } from 'motion/react';
-import { Moon, X } from 'lucide-react';
+import { MessageCircle, Moon, X } from 'lucide-react';
 import { resolveAvatarUrl, isVisible } from '@/lib/members/profile';
 import type { BoardMember, BoardTier } from '@/app/(main)/team/getBoardMembers';
 import type { PastMember, PastYear } from '@/app/(main)/team/getTeamYears';
@@ -95,6 +95,12 @@ export function CardFace({ m }: { m: BoardMember }) {
         {m.gamer_tag && <span className={styles.tag}> &quot;{m.gamer_tag}&quot;</span>}
       </div>
       {m.org_title && <div className={styles.title}>{m.org_title}</div>}
+      {/* Their Discord (from linking it, or typed on their profile), only when they chose to show their social links on this card. */}
+      {isVisible(m.board_visibility, 'socials') && m.social_links?.discord && (
+        <div className={styles.discordLine}>
+          <MessageCircle size={12} aria-hidden="true" /> {m.social_links.discord}
+        </div>
+      )}
       {m.inactive && (
         <span className={styles.idle}>
           <Moon size={11} aria-hidden="true" /> Inactive
