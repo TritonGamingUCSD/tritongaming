@@ -1,3 +1,4 @@
+import { cleanTheme } from '@/lib/events/eventTheme';
 import { createClient } from '@/lib/supabase/server';
 import { bucketByMonth } from '@/lib/events/monthBuckets';
 import { buildCheckinFormUrl, type CheckinFormConfig } from '@/lib/events/checkinForm';
@@ -35,7 +36,7 @@ export async function getEventsData() {
     supabase
       .from('events')
       .select(
-        'id, slug, title, start_date, end_date, created_at, location, is_published, requires_ticket, audience, points_value, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override',
+        'id, slug, title, flyer_url, theme, start_date, end_date, created_at, location, is_published, requires_ticket, audience, points_value, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override',
       )
       .order('start_date', { ascending: false })
       .limit(50),
@@ -64,8 +65,11 @@ export async function getEventsData() {
             foodItem: e.checkin_food_item ?? null,
           })
         : null;
+    const theme = cleanTheme(e.theme);
     return {
       ...e,
+      poster: theme?.posters?.[0] || e.flyer_url || null,
+      accent: theme?.colors.accent || null,
       ticketsIssued: ticketsByEvent.get(e.id)?.issued ?? 0,
       ticketsCheckedIn: ticketsByEvent.get(e.id)?.checkedIn ?? 0,
       checkinFormPreviewUrl,

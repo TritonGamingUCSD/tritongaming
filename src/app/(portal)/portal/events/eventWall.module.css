@@ -1,0 +1,28 @@
+/* The events as a wall of posters pinned up with tape */
+.wall { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 2rem 1.4rem; padding: 0.8rem 0.3rem 1rem; }
+.card { position: relative; display: flex; flex-direction: column; border: 2px solid var(--ev, var(--yellow)); border-radius: 6px; background: var(--pp-card); box-shadow: 5px 5px 0 color-mix(in srgb, var(--ev, var(--yellow)) 40%, transparent); transform: rotate(var(--tilt, 0deg)); transition: transform 0.15s, box-shadow 0.15s; }
+.card:hover { transform: rotate(0deg) translate(-2px, -3px); box-shadow: 7px 8px 0 color-mix(in srgb, var(--ev, var(--yellow)) 45%, transparent); z-index: 1; }
+.past { filter: saturate(0.55); opacity: 0.85; }
+.tape { position: absolute; z-index: 2; top: -0.7rem; left: 50%; width: 4.2rem; height: 1.3rem; margin-left: -2.1rem; transform: rotate(-3deg); background: rgba(255, 223, 128, 0.78); border-left: 2px dotted rgba(0, 0, 0, 0.25); border-right: 2px dotted rgba(0, 0, 0, 0.25); } /* theme-ok: tape */
+.posterBox { position: relative; }
+.poster { width: 100%; height: 11rem; border-bottom: 2px solid var(--ev, var(--yellow)); }
+.sticker { position: absolute; left: 0.5rem; top: 0.6rem; padding: 0.15rem 0.55rem; border-radius: 3px; border: 2px solid #11182b; font-family: var(--font-renegare); font-size: 0.64rem; letter-spacing: 0.14em; text-transform: uppercase; color: #11182b; transform: rotate(-4deg); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35); } /* theme-ok: a sticker keeps its own ink */
+.sUcsd { left: auto; right: 0.5rem; background: #cfe4ff; transform: rotate(3deg); }
+.sLive { background: #ff6b6b; color: #fff; animation: livePulse 1.4s ease-in-out infinite; }
+.sSoon { background: #ffc72c; }
+.sUp { background: #b9e6c9; }
+.sDone { background: #d6d3cc; }
+.sDraft { background: #fff; border-style: dashed; }
+@keyframes livePulse { 0%, 100% { box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35), 0 0 0 0 rgba(255, 107, 107, 0.6); } 50% { box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35), 0 0 0 8px rgba(255, 107, 107, 0); } }
+.body { display: grid; gap: 0.3rem; padding: 0.8rem 0.9rem 0.6rem; }
+.title { margin: 0; font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.15rem; line-height: 1.2; color: var(--pp-ink); overflow-wrap: anywhere; }
+.when, .where { margin: 0; font-size: 0.8rem; color: rgba(var(--pp-ink-rgb), 0.85); display: flex; align-items: center; gap: 0.3rem; }
+.pts { justify-self: start; display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.1rem 0.5rem; border-radius: 999px; background: color-mix(in srgb, var(--ev, var(--yellow)) 25%, transparent); font-size: 0.72rem; font-weight: 700; color: var(--pp-ink); }
+.meter { display: grid; gap: 0.3rem; margin: 0 0.9rem; padding: 0.55rem 0 0.2rem; border: 0; border-top: 2px dashed rgba(var(--pp-ink-rgb), 0.3); background: none; color: var(--pp-ink); font: inherit; text-align: left; cursor: pointer; }
+.meterTop { display: flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; }
+.meterTop b { margin-left: auto; }
+.track { display: block; height: 0.55rem; border-radius: 999px; background: rgba(var(--pp-ink-rgb), 0.14); overflow: hidden; }
+.track > span { display: block; height: 100%; border-radius: 999px; background: var(--ev, var(--yellow)); }
+.noTicket { margin: 0 0.9rem; padding: 0.55rem 0 0.2rem; border-top: 2px dashed rgba(var(--pp-ink-rgb), 0.3); font-size: 0.78rem; opacity: 0.7; }
+.foot { display: flex; justify-content: flex-end; padding: 0.4rem 0.7rem 0.7rem; }
+@media (prefers-reduced-motion: reduce) { .sLive { animation: none; } .card, .card:hover { transform: none; } }

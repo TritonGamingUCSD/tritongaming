@@ -7,6 +7,7 @@ import { Wifi, QrCode } from 'lucide-react';
 import { usePortalTabSync, useUrlNav } from '@/lib/portal/usePortalTabSync';
 import OnlineCheckinPanel from './OnlineCheckinPanel';
 import SelfCheckinPanel from './SelfCheckinPanel';
+import DoorDesk from './DoorDesk';
 import styles from './checkinsection.module.css';
 
 interface Event {
@@ -37,8 +38,9 @@ export default function CheckInSectionContent({ events, canControlSelfCheckin }:
   }
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-wide>
       <SectionHeader title="Check-In" sub="Check people in to an event: self check-in with a code or a QR, and codes for online events." />
+      {events.length > 0 && <DoorDesk events={events} />}
       {available.length === 0 ? (
         <section className={styles.codePanel}>
           <h2>Nothing To Set Up Here Yet</h2>

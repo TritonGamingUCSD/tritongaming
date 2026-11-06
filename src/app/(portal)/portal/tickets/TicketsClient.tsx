@@ -314,7 +314,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
   const unregisteredEvents = upcomingEvents.filter((e) => !registeredEventIds.has(e.id));
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-wide>
       <SectionHeader title="My Tickets" flush sub="Your event tickets and what you’ve been to." />
 
       {checkoutResult === 'success' && <Notice tone="success">Payment received — your ticket will appear here in a few seconds.</Notice>}
@@ -395,7 +395,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       {/* Other active tickets — excludes whichever one is already shown in
           the hero above, so the same ticket never appears twice on screen. */}
       {otherActiveTickets.length > 0 && (
-        <section>
+        <section className={styles.colA}>
           <h2 className={styles.sectionTitle}>{nextActiveTicket ? 'Other Active Tickets' : 'Active Tickets'}</h2>
           <div className={styles.ticketList}>
             {otherActiveTickets.map((ticket) => (
@@ -414,7 +414,7 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
 
       {/* Upcoming events to register for */}
       {unregisteredEvents.length > 0 && (
-        <section>
+        <section className={styles.colB}>
           <h2 className={styles.sectionTitle}>Upcoming Events</h2>
           <div className={styles.eventList}>
             {unregisteredEvents.map((event, i) => (

@@ -3,6 +3,7 @@
 import SectionTabs from '@/components/ui/SectionTabs';
 import styles from './meetings.module.css';
 import { CheckInPanel } from './CheckInPanel';
+import PunchCard from './PunchCard';
 import { UpcomingPanel } from './UpcomingPanel';
 import { MyHistoryPanel } from './MyHistoryPanel';
 
@@ -10,6 +11,7 @@ import { MyHistoryPanel } from './MyHistoryPanel';
 export function MineTab({ view, onView }: { view: 'up' | 'history'; onView: (v: 'up' | 'history') => void }) {
   return (
     <div className={styles.stack}>
+      <PunchCard />
       <CheckInPanel />
       <SectionTabs<'up' | 'history'>
         label="My meetings"

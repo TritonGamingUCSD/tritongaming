@@ -1,0 +1,29 @@
+/* The door desk: a dark scoreboard that looks the same in light and dark */
+.desk { display: grid; gap: 0.9rem; padding: 1.1rem 1.2rem 1rem; border-radius: 14px; background: #0b1220; color: #f2f1f0; border: 3px solid #1d2a47; box-shadow: 0 0 0 2px #0b1220, 5px 6px 0 rgba(0, 0, 0, 0.35); } /* theme-ok: a scoreboard is always dark */
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
+.badge { padding: 0.15rem 0.6rem; border-radius: 3px; background: #2b3550; font-family: var(--font-renegare); font-size: 0.66rem; letter-spacing: 0.18em; text-transform: uppercase; }
+.on { background: #1f9d55; animation: doorOn 1.6s ease-in-out infinite; }
+@keyframes doorOn { 0%, 100% { box-shadow: 0 0 0 0 rgba(31, 157, 85, 0.6); } 50% { box-shadow: 0 0 0 7px rgba(31, 157, 85, 0); } }
+.name { font-family: var(--font-soulmaze); font-weight: 400; font-size: 1.15rem; }
+.pick { max-width: 100%; padding: 0.3rem 0.6rem; border-radius: 6px; border: 1px solid #3a4768; background: #111a2e; color: #f2f1f0; font: inherit; }
+.board { display: grid; grid-template-columns: auto 1fr 1fr; align-items: end; gap: 1rem 1.6rem; }
+.counter { display: grid; gap: 0.3rem; }
+.digits { display: inline-flex; gap: 0.3rem; }
+.digit { display: grid; place-items: center; width: 2.6rem; height: 3.6rem; border-radius: 6px; background: linear-gradient(#18233d 0 49%, #101a30 51% 100%); border: 1px solid #2b3858; font-family: var(--font-brick); font-size: 2.4rem; color: #ffc72c; animation: digitIn 0.4s ease-out; } /* theme-ok */
+.dim { color: rgba(255, 199, 44, 0.28); }
+@keyframes digitIn { 0% { transform: rotateX(-90deg); opacity: 0.2; } 100% { transform: rotateX(0); opacity: 1; } }
+.label, .stat span { font-family: var(--font-renegare); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.75; }
+.stat { display: grid; gap: 0.2rem; justify-items: start; }
+.stat b { font-family: var(--font-brick); font-size: 1.9rem; line-height: 1; }
+.rail { height: 0.6rem; border-radius: 999px; background: #18233d; overflow: hidden; }
+.rail > span { display: block; height: 100%; background: linear-gradient(90deg, #1f9d55, #ffc72c); border-radius: 999px; transition: width 0.6s ease; } /* theme-ok */
+.ticker { display: grid; gap: 0.4rem; }
+.tickLabel { font-family: var(--font-renegare); font-size: 0.64rem; letter-spacing: 0.16em; text-transform: uppercase; opacity: 0.7; }
+.empty { font-size: 0.85rem; opacity: 0.75; }
+.chips { list-style: none; margin: 0; padding: 0 0 0.2rem; display: flex; gap: 0.5rem; overflow-x: auto; }
+.chip { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.3rem 0.7rem 0.3rem 0.35rem; border-radius: 999px; background: #18233d; border: 1px solid #2b3858; font-size: 0.82rem; animation: chipIn 0.35s ease-out; }
+.chip i { display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: #ffc72c; color: #0b1220; font-style: normal; font-weight: 700; font-size: 0.8rem; } /* theme-ok */
+.chip small { opacity: 0.65; }
+@keyframes chipIn { from { transform: translateX(-14px); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (max-width: 560px) { .board { grid-template-columns: 1fr 1fr; } .counter { grid-column: 1 / -1; } }
+@media (prefers-reduced-motion: reduce) { .on, .digit, .chip { animation: none; } }

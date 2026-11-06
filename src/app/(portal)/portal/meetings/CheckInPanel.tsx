@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Check } from 'lucide-react';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
 import styles from './meetings.module.css';
+import punch from './punchCard.module.css';
 import { NextMeeting, TodayMeeting } from './types';
 import { dayLabel, time, timeRange } from './format';
 import { DocButton } from './DocButton';
@@ -56,7 +57,7 @@ export function CheckInPanel() {
   return (
     <div className={styles.stack}>
       {checkedIn.map((m) => (
-        <div key={m.id} className={`${styles.card} ${styles.done}`}>
+        <div key={m.id} className={`${styles.card} ${styles.done} ${punch.slip}`}>
           <div className={styles.doneHead}>
             <span className={styles.doneIcon}>
               <Check size={22} strokeWidth={2.5} aria-hidden="true" />
@@ -75,7 +76,7 @@ export function CheckInPanel() {
       ))}
 
       {openToEnter.length > 0 && (
-        <div className={styles.card}>
+        <div className={`${styles.card} ${punch.enter}`}>
           <h2 className={styles.cardTitle}>{checkedIn.length > 0 ? 'Another meeting? Enter its code' : 'Enter the code on the screen'}</h2>
           <p className={styles.muted}>{openToEnter.length === 1 ? `${openToEnter[0].title} · ` : 'The code decides which meeting you join · '}the code changes every 30 s</p>
           {openToEnter.length === 1 && openToEnter[0].doc_url && <DocButton url={openToEnter[0].doc_url} label="Open meeting doc" />}
@@ -106,7 +107,7 @@ export function CheckInPanel() {
       )}
 
       {data.next && (
-        <div className={styles.nextCard}>
+        <div className={`${styles.nextCard} ${punch.slip}`}>
           <span className={styles.nextLabel}>Next meeting</span>
           <strong>{data.next.title}</strong>
           <span className={styles.muted}>

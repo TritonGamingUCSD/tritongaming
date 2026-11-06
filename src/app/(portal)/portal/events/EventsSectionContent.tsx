@@ -18,6 +18,8 @@ import EventStatsTable from './EventStatsTable';
 import { useAddressState, wordCodec } from '@/lib/portal/usePageState';
 import DeleteEventModal from './DeleteEventModal';
 import { ButtonLink } from '@/components/ui/Button';
+import PosterArt from '../tickets/PosterArt';
+import wall from './eventWall.module.css';
 import styles from './events.module.css';
 import chartStyles from '../admin/stats/stats.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -39,6 +41,8 @@ interface EventRow {
   // getEventsData. Null for any event without "Requires AS Form" on, or
   // before a form's been configured at all.
   checkinFormPreviewUrl?: string | null;
+  poster?: string | null;
+  accent?: string | null;
 }
 
 type StatusFilter = 'all' | 'upcoming' | 'past' | 'draft';
@@ -136,7 +140,7 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
     );
 
   return (
-    <div className={styles.page}>
+    <div className={styles.page} data-wide>
       <SectionHeader
         title="Events"
         sub={canEdit ? undefined : 'What’s coming up and what you’ve been to.'}
@@ -295,73 +299,86 @@ export default function EventsSectionContent({ events, eventsPerMonth, ticketsPe
                 <p>No events match your search.</p>
               </div>
             ) : (
-              <div className={styles.table}>
-                <div className={styles.tableHeader}>
-                  <span>Event</span>
-                  <span>Date</span>
-                  <span>Tickets</span>
-                  <span>Status</span>
-                  <span className={styles.actionsHead}>Actions</span>
-                </div>
-                {filtered.map((event) => {
-                  // Greyed only once the event has actually ended (same rule as
-                  // check-in), not as soon as it starts.
+              <div className={wall.wall}>
+                {filtered.map((event, i) => {
+                  const now = Date.now();
+                  const start = new Date(event.start_date).getTime();
                   const isPast = !isCheckinWindowOpen(event);
+                  const live = !isPast && start <= now;
+                  const soon = !isPast && !live && start - now < 7 * 86400e3;
+                  const sticker = !event.is_published
+                    ? ['Draft', wall.sDraft]
+                    : live
+                      ? ['Live now', wall.sLive]
+                      : soon
+                        ? ['Soon', wall.sSoon]
+                        : isPast
+                          ? ['Done', wall.sDone]
+                          : ['Upcoming', wall.sUp];
+                  const pct = event.ticketsIssued ? Math.round((event.ticketsCheckedIn / event.ticketsIssued) * 100) : 0;
                   return (
-                    <div key={event.id} className={`${styles.tableRow} ${isPast ? styles.tableRowPast : ''}`}>
-                      <div>
-                        <div className={styles.eventTitle}>{event.title}</div>
+                    <article
+                      key={event.id}
+                      className={`${wall.card} ${isPast ? wall.past : ''}`}
+                      style={{ ['--ev' as string]: event.accent || 'var(--yellow)', ['--tilt' as string]: `${((i * 5) % 7) - 3}deg` }}
+                    >
+                      <span className={wall.tape} aria-hidden="true" />
+                      <div className={wall.posterBox}>
+                        <PosterArt poster={event.poster} accent={event.accent} title={event.title} className={wall.poster} />
+                        <span className={`${wall.sticker} ${sticker[1]}`}>{sticker[0]}</span>
+                        {event.audience === 'ucsd_only' && <span className={`${wall.sticker} ${wall.sUcsd}`}>UCSD only</span>}
+                      </div>
+                      <div className={wall.body}>
+                        <h3 className={wall.title}>{event.title}</h3>
+                        <p className={wall.when}>
+                          {formatEventDateRangeShort(event.start_date, event.end_date)} · {formatEventTimeRange(event.start_date, event.end_date)}
+                          {eventDayCount(event.start_date, event.end_date) > 1 && ` · ${eventDayCount(event.start_date, event.end_date)} days`}
+                        </p>
                         {event.location && (
-                          <div className={styles.eventLocation}>
-                            <MapPin size={11} strokeWidth={1.75} aria-hidden="true" /> {event.location}
-                          </div>
+                          <p className={wall.where}>
+                            <MapPin size={12} strokeWidth={1.75} aria-hidden="true" /> {event.location}
+                          </p>
                         )}
                         {event.points_value > 0 && (
-                          <div className={styles.eventPointsBadge}>
+                          <span className={wall.pts}>
                             <Award size={11} strokeWidth={1.75} aria-hidden="true" /> {event.points_value} pts
-                          </div>
+                          </span>
                         )}
                       </div>
-                      <div className={styles.eventDate}>
-                        {formatEventDateRangeShort(event.start_date, event.end_date)}
-                        <span className={styles.checkinSub}>
-                          {' '}
-                          {formatEventTimeRange(event.start_date, event.end_date)}
-                          {eventDayCount(event.start_date, event.end_date) > 1 && ` · ${eventDayCount(event.start_date, event.end_date)} days`}
-                        </span>
+                      {event.requires_ticket ? (
+                        <button
+                          type="button"
+                          className={wall.meter}
+                          onClick={() => {
+                            const key = event.slug ?? event.id;
+                            setCheckinsKey(key);
+                            syncUrl('check-ins', key);
+                          }}
+                          aria-label={`${event.ticketsCheckedIn} of ${event.ticketsIssued} checked in. Open the check-ins.`}
+                        >
+                          <span className={wall.meterTop}>
+                            <Ticket size={12} strokeWidth={1.75} aria-hidden="true" /> {event.ticketsIssued} ticket{event.ticketsIssued === 1 ? '' : 's'}
+                            {event.ticketsIssued > 0 && <b>{event.ticketsCheckedIn} in</b>}
+                          </span>
+                          <span className={wall.track}>
+                            <span style={{ width: `${pct}%` }} />
+                          </span>
+                        </button>
+                      ) : (
+                        <span className={wall.noTicket}>No ticket needed</span>
+                      )}
+                      <div className={wall.foot}>
+                        <EventRowActions
+                          eventId={event.id}
+                          title={event.title}
+                          showSummary={event.requires_ticket}
+                          canEdit={canEdit}
+                          previewUrl={event.checkinFormPreviewUrl}
+                          canDelete={canDelete}
+                          onDelete={() => setDeleteTarget(event)}
+                        />
                       </div>
-                      <div className={styles.ticketInfo}>
-                        {event.requires_ticket ? (
-                          <button
-                            type="button"
-                            className={styles.checkinLink}
-                            onClick={() => {
-                              const key = event.slug ?? event.id;
-                              setCheckinsKey(key);
-                              syncUrl('check-ins', key);
-                            }}
-                          >
-                            <Ticket size={12} strokeWidth={1.75} aria-hidden="true" /> {event.ticketsIssued}
-                            {event.ticketsIssued > 0 && <span className={styles.checkinSub}> · {event.ticketsCheckedIn} in</span>}
-                          </button>
-                        ) : (
-                          <span className={styles.noTicket}>No ticket</span>
-                        )}
-                      </div>
-                      <div className={styles.statusCol}>
-                        <span className={`${styles.badge} ${event.is_published ? styles.published : styles.draft}`}>{event.is_published ? 'Published' : 'Draft'}</span>
-                        {event.audience === 'ucsd_only' && <span className={`${styles.badge} ${styles.ucsdBadge}`}>UCSD Only</span>}
-                      </div>
-                      <EventRowActions
-                        eventId={event.id}
-                        title={event.title}
-                        showSummary={event.requires_ticket}
-                        canEdit={canEdit}
-                        previewUrl={event.checkinFormPreviewUrl}
-                        canDelete={canDelete}
-                        onDelete={() => setDeleteTarget(event)}
-                      />
-                    </div>
+                    </article>
                   );
                 })}
               </div>

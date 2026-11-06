@@ -1,4 +1,4 @@
-.page { display: flex; flex-direction: column; gap: 1rem; max-width: 860px; margin-inline: 0; }
+.page { display: flex; flex-direction: column; gap: 1rem; max-width: 1200px; margin-inline: 0; }
 .publicLink { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.85rem; font-weight: 600; color: var(--pp-ink); text-decoration: underline; }
 .banner { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.1rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.22); border-radius: 0.7rem; background: var(--pp-card); color: var(--pp-ink); }
 .logo, .logoFallback { flex: none; width: 64px; height: 64px; border-radius: 10px; object-fit: contain; background: #fff; box-shadow: 0 0 0 3px var(--hat, var(--yellow)); margin: 3px; } /* theme-ok: a logo sits on white */
