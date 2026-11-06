@@ -31,3 +31,12 @@
 .testSheet { display: grid; gap: 0.5rem; justify-items: center; text-align: center; padding: 0.4rem 0; color: var(--pp-ink); }
 .useRow { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; justify-content: space-between; padding-top: 0.6rem; border-top: 1px solid rgba(var(--pp-ink-rgb), 0.12); }
 .useRow span { display: grid; gap: 0.1rem; }
+
+/* The Wide / Phone switch over a light and dark pair */
+.pairWrap { display: grid; gap: 0.6rem; }
+.widths { display: inline-flex; justify-self: start; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 8px; overflow: hidden; }
+.widths button { padding: 0.35rem 0.9rem; border: 0; background: transparent; color: var(--pp-ink); font: inherit; font-size: 0.85rem; cursor: pointer; }
+.widths button + button { border-left: 1px solid rgba(var(--pp-ink-rgb), 0.3); }
+.widths .widthOn { background: var(--pp-ink); color: var(--pp-paper); }
+.themesPhone { grid-template-columns: repeat(auto-fit, minmax(0, 24rem)); justify-content: center; }
+.themesPhone .pane { max-width: 24rem; }

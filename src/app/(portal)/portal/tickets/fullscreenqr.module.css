@@ -535,3 +535,15 @@
 /* Byte growing out of the live code the moment it is scanned (a tap skips it): he sits over the code, which fades back behind him */
 .popOver { position: absolute; inset: 0; z-index: 3; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .qrPopping .qrSwap { opacity: 0.12; transition: opacity 0.2s ease; }
+
+/* The stamp: the poster gets a big CHECKED IN stamp slammed on it, a small shake, and a burst of the event's color. */
+.stampWrap { position: relative; display: grid; place-items: center; width: 9.5rem; height: 12rem; margin: 0.4rem auto 0.8rem; }
+.stampPoster { width: 100%; height: 100%; border-radius: 10px; border: 3px solid var(--ev); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35); animation: posterJolt 0.5s 0.42s both; }
+.stamp { position: absolute; display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.4rem 1rem; border: 4px solid #1f9d55; border-radius: 6px; background: rgba(255, 255, 255, 0.95); color: #15803d; font-family: var(--font-futura-heavy); font-weight: 800; font-size: 1.3rem; letter-spacing: 0.05em; text-transform: uppercase; transform: rotate(-9deg); white-space: nowrap; animation: stampSlam 0.5s 0.2s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; } /* theme-ok: a stamp keeps its own green */
+.burst { position: absolute; inset: 0; pointer-events: none; }
+.burst i { position: absolute; left: 50%; top: 50%; width: 9px; height: 9px; margin: -4px 0 0 -4px; border-radius: 2px; background: var(--ev); transform: rotate(calc(var(--i) * 22.5deg)); opacity: 0; animation: burstOut 0.8s 0.55s ease-out both; }
+.burst i:nth-child(even) { background: #ffc72c; width: 6px; height: 6px; } /* theme-ok: confetti */
+@keyframes stampSlam { 0% { transform: scale(2.8) rotate(-22deg); opacity: 0; } 55% { transform: scale(0.9) rotate(-9deg); opacity: 1; } 75% { transform: scale(1.06) rotate(-9deg); } 100% { transform: scale(1) rotate(-9deg); opacity: 1; } }
+@keyframes posterJolt { 0%, 100% { transform: translate(0, 0); } 20% { transform: translate(-4px, 2px); } 40% { transform: translate(4px, -2px); } 60% { transform: translate(-2px, 1px); } 80% { transform: translate(2px, 0); } }
+@keyframes burstOut { 0% { opacity: 1; transform: rotate(calc(var(--i) * 22.5deg)) translateY(0) scale(1); } 100% { opacity: 0; transform: rotate(calc(var(--i) * 22.5deg)) translateY(-110px) scale(0.4); } }
+@media (prefers-reduced-motion: reduce) { .stamp, .stampPoster, .burst i { animation: none; } .burst i { display: none; } }

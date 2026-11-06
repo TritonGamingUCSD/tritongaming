@@ -1,5 +1,6 @@
 'use client';
 
+import PosterArt from './PosterArt';
 import DivisionChip, { type EventDivision } from './DivisionChip';
 import Loading from '@/components/Loading/Loading';
 import { useVisiblePoll } from '@/lib/ui/useVisiblePoll';
@@ -23,6 +24,9 @@ interface Props {
   eventLocation?: string | null;
   /** The division hosting the event, when one does. */
   division?: EventDivision | null;
+  /** The event's poster and theme color, for the stamp on the checked-in screen. */
+  poster?: string | null;
+  accent?: string | null;
   onClose: () => void;
   onCheckedIn?: (checkedInAt: string) => void;
   // Pre-built server-side (see getTicketsData) for events with "Requires
@@ -40,7 +44,7 @@ interface Props {
 const ByteWink = dynamic(() => import('@/components/Bytecode/ByteWink'), { ssr: false, loading: () => null });
 const ByteScanPop = dynamic(() => import('@/components/Bytecode/ByteScanPop'), { ssr: false, loading: () => null });
 
-export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, division, onClose, onCheckedIn, checkinFormUrl, onFormComplete }: Props) {
+export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLocation, division, poster, accent, onClose, onCheckedIn, checkinFormUrl, onFormComplete }: Props) {
   const [code, setCode] = useState<string | null>(null);
   const [qrData, setQrData] = useState<string | null>(null);
   const [expiresIn, setExpiresIn] = useState(30);
@@ -477,8 +481,16 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
                     <ByteWink label="Byte winks: you are checked in" />
                   </div>
                 ) : (
-                  <div className={styles.checkedInIcon} aria-hidden="true">
-                    <Check size={32} strokeWidth={2} />
+                  <div className={styles.stampWrap} style={{ ['--ev' as string]: accent || 'var(--yellow)' }} aria-hidden="true">
+                    <PosterArt poster={poster} accent={accent} title={eventTitle} className={styles.stampPoster} />
+                    <span className={styles.stamp}>
+                      <Check size={20} strokeWidth={3} /> Checked In
+                    </span>
+                    <span className={styles.burst}>
+                      {Array.from({ length: 16 }, (_, i) => (
+                        <i key={i} style={{ ['--i' as string]: i } as React.CSSProperties} />
+                      ))}
+                    </span>
                   </div>
                 )}
                 <div className={styles.checkedInTitle}>You&apos;re Checked In!</div>

@@ -19,6 +19,7 @@ Mark each line done or write what looked wrong.
 12. **Members**: the "Taking join requests" switch. Turn it off: students see "Not taking requests". Turn it on, ask to join as a student, then Approve and Decline requests.
 
 ## Tickets
+0. My Tickets draws each ticket like a real one: the event's poster and theme color, notched sides, a tear line, a barcode and serial on the stub. Checking in stamps CHECKED IN on the poster with a burst of the event's color. Admin → System → Previews has Ticket Card and Ticket Checked In, each in light and dark side by side with a Wide / Phone switch.
 1. A ticket for a division's event shows a small tag with the division's logo and color on My Tickets (next event and the list of events to join). The fullscreen ticket shows it too, and a staff scan result has a Division row. Club events show no tag.
 
 ## Attendance

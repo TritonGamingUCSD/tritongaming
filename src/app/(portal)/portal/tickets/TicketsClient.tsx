@@ -28,6 +28,8 @@ import {
 } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { saveTicketCodes, cachedMinutesLeft } from '@/lib/events/ticketCodeCache';
+import PosterArt from './PosterArt';
+import TicketBarcode from './TicketBarcode';
 import DivisionChip, { type EventDivision } from './DivisionChip';
 import styles from './tickets.module.css';
 import SectionHeader from '@/components/ui/SectionHeader';
@@ -50,6 +52,9 @@ interface TicketData {
     points_value?: number;
     is_online: boolean;
     division?: EventDivision | null;
+    /** The event's poster and theme color, for the ticket's look. */
+    poster?: string | null;
+    accent?: string | null;
     // Multi-day events can set check-in hours per day (Pacific time); a day without an entry is open all day.
     checkin_windows?: { day: string; start: string; end: string }[] | null;
   } | null;
@@ -73,6 +78,8 @@ interface UpcomingEvent {
   points_value?: number;
   is_online?: boolean;
   division?: EventDivision | null;
+  poster?: string | null;
+  accent?: string | null;
 }
 
 interface Props {
@@ -330,7 +337,8 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
       {/* Hero: next active ticket */}
       {nextActiveTicket && (
         <section className={styles.heroSection}>
-          <div className={styles.heroCard}>
+          <div className={styles.heroCard} style={{ ['--ev' as string]: nextActiveTicket.event?.accent || 'var(--yellow)' }}>
+            <PosterArt poster={nextActiveTicket.event?.poster} accent={nextActiveTicket.event?.accent} title={nextActiveTicket.event?.title ?? ''} className={styles.heroPoster} />
             <div className={styles.heroCardInner}>
               <div className={styles.heroMeta}>
                 <span className={styles.heroLabel}>NEXT EVENT</span>
@@ -359,22 +367,25 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                   </span>
                 )}
               </div>
-              {nextActiveTicket.event?.is_online ? (
-                <OnlineCheckinEntry
-                  ticketId={nextActiveTicket.id}
-                  eventId={nextActiveTicket.event.id}
-                  onCheckedIn={handleCheckedIn}
-                  checkinFormUrl={nextActiveTicket.checkinFormUrl}
-                  onFormComplete={handleFormCompleted}
-                />
-              ) : (
-                <button className={styles.showQrBtn} onClick={() => setQrTicket(nextActiveTicket)}>
-                  <span className={styles.showQrIcon}>
-                    <CodeIcon size={18} use="ticket" />
-                  </span>
-                  Show <CodeName use="ticket" />
-                </button>
-              )}
+              <div className={styles.heroStub}>
+                <TicketBarcode id={nextActiveTicket.id} />
+                {nextActiveTicket.event?.is_online ? (
+                  <OnlineCheckinEntry
+                    ticketId={nextActiveTicket.id}
+                    eventId={nextActiveTicket.event.id}
+                    onCheckedIn={handleCheckedIn}
+                    checkinFormUrl={nextActiveTicket.checkinFormUrl}
+                    onFormComplete={handleFormCompleted}
+                  />
+                ) : (
+                  <button className={styles.showQrBtn} onClick={() => setQrTicket(nextActiveTicket)}>
+                    <span className={styles.showQrIcon}>
+                      <CodeIcon size={18} use="ticket" />
+                    </span>
+                    Show <CodeName use="ticket" />
+                  </button>
+                )}
+              </div>
             </div>
             <div className={styles.heroGlow} aria-hidden="true" />
           </div>
@@ -416,8 +427,9 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                     <WeekHead as="div" date={pacificDayKey(event.start_date)} />
                   </div>
                 )}
-                <div className={styles.eventRow}>
+                <div className={styles.eventRow} style={{ ['--ev' as string]: event.accent || 'var(--yellow)' }}>
                   <div className={styles.eventDateBlock}>
+                    <PosterArt poster={event.poster} accent={event.accent} title={event.title} className={styles.eventThumb} />
                     <span className={styles.eventMon}>{new Date(event.start_date).toLocaleDateString('en-US', { timeZone: PACIFIC_TZ, month: 'short' })}</span>
                     <span className={styles.eventDay}>
                       {/* Date.getDate() reads the day-of-month in the runtime's
@@ -442,18 +454,21 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
                       </div>
                     )}
                   </div>
-                  {event.audience === 'ucsd_only' && !isUcsd ? (
-                    <span className={styles.ucsdOnlyBox}>
-                      <span className={styles.registerBtnDisabled}>UCSD students only</span>
-                      <button type="button" className={styles.switchBtn} onClick={switchToUcsd}>
-                        Use my UCSD account
+                  <div className={styles.eventStub}>
+                    <span className={styles.admit}>Admit one</span>
+                    {event.audience === 'ucsd_only' && !isUcsd ? (
+                      <span className={styles.ucsdOnlyBox}>
+                        <span className={styles.registerBtnDisabled}>UCSD students only</span>
+                        <button type="button" className={styles.switchBtn} onClick={switchToUcsd}>
+                          Use my UCSD account
+                        </button>
+                      </span>
+                    ) : (
+                      <button className={styles.registerBtn} disabled={purchasing === event.id} onClick={() => handleGetTicket(event.id)}>
+                        {purchasing === event.id ? 'Please wait…' : isUcsd || event.ticket_price <= 0 ? 'Get Ticket — Free' : `Buy Ticket — $${event.ticket_price}`}
                       </button>
-                    </span>
-                  ) : (
-                    <button className={styles.registerBtn} disabled={purchasing === event.id} onClick={() => handleGetTicket(event.id)}>
-                      {purchasing === event.id ? 'Please wait…' : isUcsd || event.ticket_price <= 0 ? 'Get Ticket — Free' : `Buy Ticket — $${event.ticket_price}`}
-                    </button>
-                  )}
+                    )}
+                  </div>
                 </div>
               </Fragment>
             ))}
@@ -497,6 +512,8 @@ export default function TicketsClient({ tickets: initialTickets, upcomingEvents,
           eventDate={qrTicket.event?.start_date}
           eventLocation={qrTicket.event?.location}
           division={qrTicket.event?.division}
+          poster={qrTicket.event?.poster}
+          accent={qrTicket.event?.accent}
           onClose={closeQr}
           onCheckedIn={(checkedInAt) => handleCheckedIn(qrTicket.id, checkedInAt)}
           checkinFormUrl={qrTicket.checkinFormUrl}
@@ -593,8 +610,9 @@ function TicketRow({
   }, [ticket.checkin_form_completed_at]);
 
   return (
-    <div className={`${styles.ticketRow} ${shouldDim ? styles.ticketDim : ''}`}>
+    <div className={`${styles.ticketRow} ${shouldDim ? styles.ticketDim : ''}`} style={{ ['--ev' as string]: ev?.accent || 'var(--yellow)' }}>
       <div className={styles.ticketLeft}>
+        <PosterArt poster={ev?.poster} accent={ev?.accent} title={ev?.title ?? ''} className={styles.ticketThumb} />
         <span className={styles.ticketStatusIcon}>{STATUS_ICON[displayStatus]}</span>
       </div>
       <div className={styles.ticketInfo}>
@@ -649,6 +667,7 @@ function TicketRow({
         )}
       </div>
       <div className={styles.ticketRight}>
+        <TicketBarcode id={ticket.id} />
         <div className={styles.ticketRightRow}>
           {isActionable && ev?.is_online && onCheckedIn ? (
             <OnlineCheckinEntry ticketId={ticket.id} eventId={ev.id} onCheckedIn={onCheckedIn} checkinFormUrl={ticket.checkinFormUrl} onFormComplete={onFormComplete} compact />

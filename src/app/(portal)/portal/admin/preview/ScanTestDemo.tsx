@@ -5,6 +5,7 @@ import Button from '@/components/ui/Button';
 import Bytecode from '@/components/Bytecode/Bytecode';
 import TGcode from '@/components/TGcode/TGcode';
 import QrScanner from '../../meetings/QrScanner';
+import ThemePair from './ThemePair';
 import styles from './preview.module.css';
 
 const SAMPLE = 't00ffeeddccbb';
@@ -32,20 +33,22 @@ export default function ScanTestDemo() {
       <div className={styles.bar}>
         <Button onClick={() => setOpen(true)}>Open The Test Scanner</Button>
       </div>
-      <div className={styles.cards}>
-        <figure className={styles.card}>
-          <div className={styles.box}>
-            <Bytecode payload={`${SAMPLE}`} />
-          </div>
-          <figcaption>Sample Bytecode</figcaption>
-        </figure>
-        <figure className={styles.card}>
-          <div className={styles.box}>
-            <TGcode payload={`${SAMPLE}`} />
-          </div>
-          <figcaption>Sample TGcode</figcaption>
-        </figure>
-      </div>
+      <ThemePair>
+        <div className={styles.cards} style={{ width: '100%' }}>
+          <figure className={styles.card}>
+            <div className={styles.box}>
+              <Bytecode payload={`${SAMPLE}`} />
+            </div>
+            <figcaption>Sample Bytecode</figcaption>
+          </figure>
+          <figure className={styles.card}>
+            <div className={styles.box}>
+              <TGcode payload={`${SAMPLE}`} />
+            </div>
+            <figcaption>Sample TGcode</figcaption>
+          </figure>
+        </div>
+      </ThemePair>
       {open && (
         <QrScanner
           title="Test Scan: Nothing Is Saved"

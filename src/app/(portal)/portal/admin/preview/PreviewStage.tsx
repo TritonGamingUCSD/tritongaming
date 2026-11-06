@@ -8,6 +8,8 @@ import ScanOpening from '@/components/portal/ScanOpening';
 import CheckInOutcome from '@/components/portal/CheckInOutcome';
 import type { Outcome } from '@/lib/checkin/anyCode';
 import ticketStyles from '../../tickets/fullscreenqr.module.css';
+import ticketCardStyles from '../../tickets/tickets.module.css';
+import PosterArt from '../../tickets/PosterArt';
 import CodesDemo from './CodesDemo';
 import ThemePair from './ThemePair';
 import ScanTestDemo from './ScanTestDemo';
@@ -142,35 +144,82 @@ function TicketCheckedInDemo() {
           {tierUp ? 'Without Tier Up' : 'With Tier Up'}
         </Button>
         <Button variant="secondary" onClick={() => setByte((v) => !v)}>
-          {byte ? 'Show The Check Mark' : 'Show Byte Instead'}
+          {byte ? 'Show The Stamp' : 'Show Byte Instead'}
         </Button>
       </div>
-      <div className={`${styles.card} ${styles.dark}`} key={run}>
-        <div className={ticketStyles.checkedInState}>
-          <div className={ticketStyles.checkedInIcon} aria-hidden="true" style={byte ? { width: '8rem', height: '8rem', background: 'transparent', boxShadow: 'none' } : undefined}>
-            {byte ? <ByteWink /> : <Check size={32} strokeWidth={2} />}
-          </div>
-          <div className={ticketStyles.checkedInTitle}>You&apos;re Checked In!</div>
-          <div className={ticketStyles.checkedInTime}>9:41:07 PM</div>
-          <div className={`${ticketStyles.pointsEarned} pp-dark`}>
-            <span className={ticketStyles.pointsEarnedNumber}>+25</span>
-            <span className={ticketStyles.pointsEarnedLabel}>points earned</span>
-            {tierUp && (
-              <div className={ticketStyles.tierUp} style={{ '--tier-color': '#c0c0c0' } as React.CSSProperties}>
-                <div className={ticketStyles.confetti} aria-hidden="true">
-                  {Array.from({ length: 18 }, (_, i) => (
-                    <span key={i} style={{ '--i': i } as React.CSSProperties} />
+      <ThemePair>
+        <div className={styles.card} key={run} style={{ width: '100%' }}>
+          <div className={ticketStyles.checkedInState}>
+            {byte ? (
+              <div className={ticketStyles.checkedInByte}>
+                <ByteWink />
+              </div>
+            ) : (
+              <div className={ticketStyles.stampWrap} style={{ ['--ev' as string]: '#e0533f' }} aria-hidden="true">
+                <PosterArt poster="/images/what_is_triton_gaming_justinlu.jpg" accent="#e0533f" title="Sample Night" className={ticketStyles.stampPoster} />
+                <span className={ticketStyles.stamp}>
+                  <Check size={20} strokeWidth={3} /> Checked In
+                </span>
+                <span className={ticketStyles.burst}>
+                  {Array.from({ length: 16 }, (_, i) => (
+                    <i key={i} style={{ '--i': i } as React.CSSProperties} />
                   ))}
-                </div>
-                <div className={ticketStyles.tierUpKicker}>Tier up!</div>
-                <div className={ticketStyles.tierUpName}>Silver</div>
-                <div className={ticketStyles.tierUpFrom}>you were Bronze</div>
+                </span>
               </div>
             )}
+            <div className={ticketStyles.checkedInTitle}>You&apos;re Checked In!</div>
+            <div className={ticketStyles.checkedInTime}>9:41:07 PM</div>
+            <div className={`${ticketStyles.pointsEarned} pp-dark`}>
+              <span className={ticketStyles.pointsEarnedNumber}>+25</span>
+              <span className={ticketStyles.pointsEarnedLabel}>points earned</span>
+              {tierUp && (
+                <div className={ticketStyles.tierUp} style={{ '--tier-color': '#c0c0c0' } as React.CSSProperties}>
+                  <div className={ticketStyles.confetti} aria-hidden="true">
+                    {Array.from({ length: 18 }, (_, i) => (
+                      <span key={i} style={{ '--i': i } as React.CSSProperties} />
+                    ))}
+                  </div>
+                  <div className={ticketStyles.tierUpKicker}>Tier up!</div>
+                  <div className={ticketStyles.tierUpName}>Silver</div>
+                  <div className={ticketStyles.tierUpFrom}>you were Bronze</div>
+                </div>
+              )}
+            </div>
+            <p className={ticketStyles.hint}>Have a great time — see you inside.</p>
           </div>
-          <p className={ticketStyles.hint}>Have a great time — see you inside.</p>
         </div>
-      </div>
+      </ThemePair>
+    </div>
+  );
+}
+
+// The poster ticket on My Tickets (see tickets/TicketsClient.tsx): the poster, the details and the stub with a tear line, in the event's own color.
+function TicketCardDemo() {
+  return (
+    <div className={styles.stage}>
+      <ThemePair>
+        {[
+          ['#e0533f', 'Fall Game Night'],
+          ['#2fae86', 'Smash Sunday'],
+        ].map(([accent, title]) => (
+          <div key={title} className={ticketCardStyles.heroSection} style={{ width: '100%' }}>
+            <div className={ticketCardStyles.heroCard} style={{ ['--ev' as string]: accent }}>
+              <PosterArt poster="/images/what_is_triton_gaming_justinlu.jpg" accent={accent} title={title} className={ticketCardStyles.heroPoster} />
+              <div className={ticketCardStyles.heroCardInner}>
+                <div className={ticketCardStyles.heroMeta}>
+                  <span className={ticketCardStyles.heroLabel}>NEXT EVENT</span>
+                  <h2 className={ticketCardStyles.heroEvent}>{title}</h2>
+                  <p className={ticketCardStyles.heroDate}>Friday, Nov 6 · 7:00 PM</p>
+                  <p className={ticketCardStyles.heroLocation}>Price Center Ballroom</p>
+                </div>
+                <div className={ticketCardStyles.heroStub}>
+                  <span className={ticketCardStyles.showQrBtn}>Show TGcode</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </ThemePair>
     </div>
   );
 }
@@ -194,16 +243,18 @@ function SiteAnimationsDemo() {
   return (
     <div className={styles.stage}>
       <Replay onClick={() => setRun((n) => n + 1)} />
-      <div className={styles.cards}>
-        {SITE.map(([name, title, animation]) => (
-          <figure key={`${name}${run}`} className={styles.card}>
-            <div className={styles.swatch} style={{ animation }}>
-              {name === 'tgPendingSpin' ? '◜' : 'TG'}
-            </div>
-            <figcaption>{title}</figcaption>
-          </figure>
-        ))}
-      </div>
+      <ThemePair>
+        <div className={styles.cards} style={{ width: '100%' }}>
+          {SITE.map(([name, title, animation]) => (
+            <figure key={`${name}${run}`} className={styles.card}>
+              <div className={styles.swatch} style={{ animation }}>
+                {name === 'tgPendingSpin' ? '◜' : 'TG'}
+              </div>
+              <figcaption>{title}</figcaption>
+            </figure>
+          ))}
+        </div>
+      </ThemePair>
     </div>
   );
 }
@@ -252,6 +303,8 @@ export default function PreviewStage({ slug }: { slug: string }) {
       return <CheckInResultsDemo />;
     case 'ticket-checked-in':
       return <TicketCheckedInDemo />;
+    case 'ticket-card':
+      return <TicketCardDemo />;
     case 'site-animations':
       return <SiteAnimationsDemo />;
     default:

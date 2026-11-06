@@ -28,7 +28,13 @@ export const PREVIEWS: Preview[] = [
   {
     slug: 'ticket-checked-in',
     title: 'Ticket Checked In',
-    about: 'The screen a person sees on their own phone once staff scan their ticket, with points and a tier-up.',
+    about: 'The stamp that lands on a person’s ticket once staff scan it, with points and a tier-up, light and dark.',
+    group: 'Scanning',
+  },
+  {
+    slug: 'ticket-card',
+    title: 'Ticket Card',
+    about: 'The poster ticket on My Tickets: poster, details and the tear-off stub in the event’s color, light and dark.',
     group: 'Scanning',
   },
   { slug: 'site-animations', title: 'Site Animations', about: 'The shared motion of the site: logo pop, float, glow, shimmer, aurora, spinners.', group: 'Site' },

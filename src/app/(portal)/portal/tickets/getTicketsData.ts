@@ -6,6 +6,7 @@ import { openEventsFilter } from '@/lib/events/checkinWindow';
 import type TicketsClient from './TicketsClient';
 import { pacificDayKey } from '@/lib/core/timezone';
 import { accentOf } from '@/lib/divisions/accent';
+import { cleanTheme } from '@/lib/events/eventTheme';
 import { divisionLogoSrc } from '@/lib/members/divisions';
 
 // Shared by the standalone /portal/tickets route and the portal hub so both
@@ -19,14 +20,14 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
       .select(
         `
         id, status, checked_in_at, created_at, checkin_form_completed_at,
-        event:events(id, division_id, title, start_date, end_date, location, flyer_url, points_value, is_online, checkin_windows, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)
+        event:events(id, division_id, theme, title, start_date, end_date, location, flyer_url, points_value, is_online, checkin_windows, requires_checkin_form, checkin_food_item, checkin_form_event_name, checkin_form_override)
       `,
       )
       .eq('user_id', profileId)
       .order('created_at', { ascending: false }),
     supabase
       .from('events')
-      .select('id, division_id, title, start_date, end_date, location, flyer_url, ticket_price, audience, points_value, is_online')
+      .select('id, division_id, theme, title, start_date, end_date, location, flyer_url, ticket_price, audience, points_value, is_online')
       .eq('is_published', true)
       // Joinable until the event ends (same rule as check-in), not just
       // before it starts — someone arriving partway through should still be
@@ -68,6 +69,12 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
     return d ? { name: d.name, logo: divisionLogoSrc(d.logo_url), hex: accentOf(d.accent).hex } : null;
   };
 
+  // The look of an event's ticket: its first poster (else its flyer) and its theme's accent color (else its division's, else none).
+  const lookOf = (e: { theme?: unknown; flyer_url?: string | null; division_id?: string | null }) => {
+    const theme = cleanTheme(e.theme);
+    return { poster: theme?.posters?.[0] || e.flyer_url || null, accent: theme?.colors.accent || divOf(e.division_id)?.hex || null };
+  };
+
   const roleNames = roles.map((r) => r.role);
   const ticketsWithForm = (tickets ?? []).map((t) => {
     const event = t.event as unknown as {
@@ -92,12 +99,17 @@ export async function getTicketsData(profileId: string, roles: RoleGrant[]) {
           })
         : null;
     const ev = t.event as unknown as { division_id?: string | null } | null;
-    return { ...t, event: ev ? { ...(t.event as object), division: divOf(ev.division_id) } : t.event, checkinFormUrl, checkedInToday: checkedInToday.has(t.id) };
+    return {
+      ...t,
+      event: ev ? { ...(t.event as object), division: divOf(ev.division_id), ...lookOf(t.event as never) } : t.event,
+      checkinFormUrl,
+      checkedInToday: checkedInToday.has(t.id),
+    };
   });
 
   return {
     tickets: ticketsWithForm as unknown as Parameters<typeof TicketsClient>[0]['tickets'],
-    upcomingEvents: (upcomingEvents ?? []).map((e) => ({ ...e, division: divOf(e.division_id) })) as unknown as Parameters<typeof TicketsClient>[0]['upcomingEvents'],
+    upcomingEvents: (upcomingEvents ?? []).map((e) => ({ ...e, division: divOf(e.division_id), ...lookOf(e) })) as unknown as Parameters<typeof TicketsClient>[0]['upcomingEvents'],
     isUcsd: isVerifiedMember(roles),
     canEarnPoints: isRewardsEligible(roles),
   };
