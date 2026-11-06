@@ -8,6 +8,7 @@ import SessionGuard from '@/components/portal/SessionGuard';
 import { isVerifiedMember, requiresOrgTitle } from '@/lib/portal/capabilities';
 import { getMissingProfileFields } from '@/lib/members/profile';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
+import LinkAccountBanner from '@/components/portal/LinkAccountBanner';
 import NotificationBell from '@/components/portal/NotificationBell';
 import CodeButton from '@/components/portal/CodeButton';
 import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
@@ -68,6 +69,7 @@ export default async function PortalLayout({ children }: { children: React.React
               <Suspense fallback={null}>
                 <HideOnPaths paths={CHECKIN_PATHS}>
                   <ProfileIncompleteBanner missing={missingProfileFields} officerTabOnly={missingOnlyOfficerTab} />
+                  {!viewingName && <LinkAccountBanner />}
                 </HideOnPaths>
               </Suspense>
             </div>
