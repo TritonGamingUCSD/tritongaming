@@ -38,14 +38,12 @@ describe('countdowns', () => {
       term: { name: 'Fall 2026', endsOn: '2026-12-11', state: 'in', nextName: 'Winter 2027', nextStartsOn: '2027-01-04' },
       event: { title: 'Smash Night', day: '2026-11-08' },
     });
-    expect(t.map((x) => x.id)).toEqual(['holiday', 'quarter', 'break', 'event']);
-    expect(t[1].days).toBe(35);
-    expect(t[2].days).toBe(36);
-    expect(t[3].days).toBe(2);
+    expect(t.map((x) => x.id)).toEqual(['event', 'holiday', 'holiday2', 'quarter']);
+    expect(t.map((x) => x.days)).toEqual([2, 5, 20, 35]);
   });
   it('shows the next quarter during a break and leaves out what it does not know', () => {
     const t = countdownTiles({ today: '2026-12-20', term: { name: 'Fall 2026', endsOn: '2026-12-11', state: 'break', nextName: 'Winter 2027', nextStartsOn: '2027-01-04' } });
-    expect(t.map((x) => x.id)).toEqual(['holiday', 'next', 'holiday2']);
+    expect(t.map((x) => x.id)).toEqual(['holiday', 'holiday2', 'next']);
     expect(countdownTiles({ today: '2026-11-06' }).map((x) => x.id)).toEqual(['holiday', 'holiday2']);
   });
 });

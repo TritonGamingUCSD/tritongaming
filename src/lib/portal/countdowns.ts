@@ -110,6 +110,7 @@ export function countdownTiles(input: {
     });
   }
   if (event) tiles.push({ id: 'event', label: 'Next Event', days: Math.max(0, daysBetween(today, event.day)), what: event.title, on: short(event.day), href: event.href });
-  if (second && tiles.length < 4) tiles.push({ id: 'holiday2', label: 'Then', days: second.days, what: second.name, on: short(second.day) });
-  return tiles.slice(0, 4);
+  if (second) tiles.push({ id: 'holiday2', label: 'Holiday', days: second.days, what: second.name, on: short(second.day) });
+  // whatever comes soonest first (a tie keeps the order above), and at most four
+  return tiles.sort((x, y) => x.days - y.days).slice(0, 4);
 }
