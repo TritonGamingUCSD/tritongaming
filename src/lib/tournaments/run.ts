@@ -42,6 +42,9 @@ export function stageField(
 }
 
 // Build and store a stage: its entrants with seeds (and pools), then its first matches. Pools set by hand beforehand (group_no on the stage's entrants) are kept.
+/** Has the tournament begun? (Not "does it have matches": a custom stage starts with none, and matches can be planned before it begins.) */
+export const hasStarted = (t: { status: string }) => t.status === 'live' || t.status === 'complete';
+
 export async function startStage(svc: SupabaseClient, t: TournamentRow, stage: StageRow, field: Entrant[], existing: StageEntrantRow[]): Promise<number> {
   const def = defOf(stage);
   let groups: Entrant[][] | undefined;
@@ -76,6 +79,8 @@ export async function startStage(svc: SupabaseClient, t: TournamentRow, stage: S
     const { error } = await svc.from('tournament_matches').insert(heatRows);
     if (error) throw new Error('Could not deal the heats.');
   }
+  // matches planned by hand before it began are now ready to play
+  if (def.format === 'custom') await svc.from('tournament_matches').update({ status: 'ready' }).eq('stage_id', stage.id).eq('status', 'pending');
   const now = new Date().toISOString();
   await svc.from('tournament_stages').update({ status: 'live' }).eq('id', stage.id);
   await svc.from('tournaments').update({ status: 'live', signups_open: false, updated_at: now }).eq('id', t.id);

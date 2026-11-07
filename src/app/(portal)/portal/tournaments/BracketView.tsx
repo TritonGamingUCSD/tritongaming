@@ -4,6 +4,7 @@ import { Check, Radio } from 'lucide-react';
 import type { MatchRow } from '@/lib/tournaments/store';
 import HeatCard from './HeatCard';
 import { roundName, type TEntrant } from './types';
+import { formatPacificDateTime } from '@/lib/core/timezone';
 import styles from './tournaments.module.css';
 
 // The bracket as a sheet: one column per round, a card per match with two rows (seed, name, score). Elimination formats draw columns left to right; round robin and Swiss list each round as a grid of cards.
@@ -14,6 +15,7 @@ export default function BracketView({
   onPick,
   canRun,
   onHeat,
+  roundNames,
 }: {
   matches: MatchRow[];
   entrants: TEntrant[];
@@ -21,6 +23,8 @@ export default function BracketView({
   onPick: (m: MatchRow) => void;
   canRun: boolean;
   onHeat?: (m: MatchRow, order: string[]) => Promise<void>;
+  /** The host's own round names for this stage (W2: Quarterfinals). */
+  roundNames?: Record<string, string> | null;
 }) {
   const byId = new Map(entrants.map((e) => [e.id, e]));
   const groups: { key: string; title: string; rounds: { round: number; title: string; items: MatchRow[] }[] }[] = [];
@@ -40,7 +44,7 @@ export default function BracketView({
       .sort((x, y) => x - y)
       .map((r) => ({
         round: r,
-        title: roundName(b, r, maxRound),
+        title: roundName(b, r, maxRound, roundNames),
         items: ofB.filter((m) => m.round === r && m.status !== 'skipped').sort((x, y) => x.idx - y.idx),
       }));
     groups.push({
@@ -111,6 +115,12 @@ export default function BracketView({
                             </span>
                           );
                         })}
+                        {(m.label || (m.scheduled_at && m.status !== 'done')) && (
+                          <span className={styles.matchTitle}>
+                            {m.label && <b>{m.label}</b>}
+                            {m.scheduled_at && m.status !== 'done' && <small>{formatPacificDateTime(m.scheduled_at)}</small>}
+                          </span>
+                        )}
                         <span className={styles.matchMeta}>
                           {m.status === 'live' && (
                             <span className={styles.liveTag}>

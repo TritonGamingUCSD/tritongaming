@@ -23,6 +23,9 @@ import StructurePanel from './StructurePanel';
 import ControlPanel from './ControlPanel';
 import NextStageBanner from './NextStageBanner';
 import CustomAdd from './CustomAdd';
+import PlannedMatches from './PlannedMatches';
+import NextSteps from './NextSteps';
+import PlanTools from './PlanTools';
 import { call, FORMAT_NAMES, STATUS_NAMES } from './types';
 import { useTournament } from './useTournament';
 import styles from './tournaments.module.css';
@@ -61,6 +64,7 @@ export default function TournamentDetail({
   if (!data) return error ? <Notice tone="error">{error}</Notice> : <Loading label="Loading the tournament…" />;
   const t = data.tournament;
   const tab: Tab = TABS.includes(subtab as Tab) ? (subtab as Tab) : t.status === 'draft' || t.status === 'registration' ? 'structure' : 'bracket';
+  const started = t.status === 'live' || t.status === 'complete';
   const owner = t.division_id ? (divisions.find((d) => d.id === t.division_id)?.name ?? 'A division') : 'Triton Gaming';
   const goTab = (x: Tab) => {
     setParams({ [tabKey]: x });
@@ -128,9 +132,13 @@ export default function TournamentDetail({
           <span className={`${styles.status} ${styles[`st_${t.status}`]}`}>
             {t.status === 'live' && <i className={styles.pulse} />} {STATUS_NAMES[t.status]}
           </span>
-          {data.can.manage && data.matches.length === 0 && (
-            <Button disabled={busy || active.length < 2} onClick={() => act({ action: 'start' }, 'The bracket is live')}>
-              <Play size={15} aria-hidden="true" /> Start Bracket
+          {data.can.manage && !started && (
+            <Button
+              disabled={busy || active.length < 2}
+              onClick={() => act({ action: 'start' }, 'The tournament is live')}
+              title={active.length < 2 ? 'Add at least two entrants first' : 'Start the tournament'}
+            >
+              <Play size={15} aria-hidden="true" /> Start Tournament
             </Button>
           )}
           {t.status !== 'draft' && (
@@ -141,6 +149,7 @@ export default function TournamentDetail({
         </div>
       </header>
       {problem && <Notice tone="error">{problem}</Notice>}
+      {!started && data.can.manage && <NextSteps data={data} active={active.length} goTab={goTab} />}
       <SectionTabs
         value={tab}
         onChange={goTab}
@@ -154,8 +163,20 @@ export default function TournamentDetail({
         ]}
       />
       {tab === 'bracket' &&
-        (data.matches.length === 0 ? (
-          <Notice tone="info">The bracket is made when you press Start Bracket. Set the structure and the entrants first (the Structure and Entrants tabs).</Notice>
+        (!started ? (
+          <>
+            <Notice tone="info">
+              {data.stages[0]?.format === 'custom'
+                ? 'This tournament has no automatic bracket: you make the matches. Add them below now (they wait until you press Start), or after it starts.'
+                : 'The bracket is made when you press Start. Set the entrants (Entrants tab) and the structure (Structure tab) first; the seeding order decides who meets whom.'}
+            </Notice>
+            {data.stages[0]?.format === 'custom' && data.can.run && (
+              <>
+                <CustomAdd data={data} stageId={data.stages[0].id} act={act} busy={busy} />
+                <PlannedMatches data={data} stageId={data.stages[0].id} act={act} busy={busy} />
+              </>
+            )}
+          </>
         ) : (
           <>
             {data.stages.length > 1 && (
@@ -174,6 +195,7 @@ export default function TournamentDetail({
                 ))}
               </nav>
             )}
+            {shown && data.can.run && shownRows.length > 0 && <PlanTools data={data} stage={shown} act={act} busy={busy} reload={reload} />}
             {nextReady && nextStage && data.can.manage && <NextStageBanner data={data} from={shown!} stage={nextStage} moving={moving} reload={reload} />}
             {(shown?.format === 'swiss' || shown?.format === 'points') && shownRows.length > 0 && (
               <div className={styles.swissBar}>
@@ -189,7 +211,9 @@ export default function TournamentDetail({
             )}
             {shownRows.length === 0 ? (
               <Notice tone="info">
-                {shown?.name} has not started yet. {shown && shown.position > 1 ? 'It starts when the stage before it is finished.' : ''}
+                {shown?.format === 'custom' && shown.status !== 'pending'
+                  ? 'No matches yet. Add the first one below.'
+                  : `${shown?.name} has not started yet. ${shown && shown.position > 1 ? 'It starts when the stage before it is finished.' : ''}`}
               </Notice>
             ) : (
               <BracketView
@@ -199,9 +223,15 @@ export default function TournamentDetail({
                 canRun={data.can.run}
                 onPick={setPicked}
                 onHeat={async (m, order) => act({ action: 'report-heat', key: m.key, order })}
+                roundNames={shown?.settings?.round_names}
               />
             )}
-            {shown?.format === 'custom' && data.can.run && <CustomAdd data={data} stageId={shown.id} act={act} busy={busy} />}
+            {shown?.format === 'custom' && data.can.run && shown.status !== 'pending' && (
+              <>
+                <CustomAdd data={data} stageId={shown.id} act={act} busy={busy} />
+                <PlannedMatches data={data} stageId={shown.id} act={act} busy={busy} />
+              </>
+            )}
             {shown?.format === 'points' && pointsTable && (
               <section className={styles.card}>
                 <h3 className={styles.cardTitle}>Points standings</h3>

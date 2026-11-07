@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withTournament, who, unauthorized } from '@/lib/tournaments/server';
+import { hasStarted } from '@/lib/tournaments/run';
 import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
@@ -16,7 +17,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const blocked = await refuseBlocked({ Name: String(b.name ?? ''), ...Object.fromEntries((b.members ?? []).map((m, i) => [`Member ${i + 1}`, m.name])) });
   if (blocked) return blocked;
   const t = r.tournament;
-  if (r.matches.length > 0 && !b.claim) return NextResponse.json({ error: 'The bracket has started. Entrants are locked.' }, { status: 409 });
+  if (hasStarted(t) && !b.claim) return NextResponse.json({ error: 'The bracket has started. Entrants are locked.' }, { status: 409 });
   if (t.max_entrants && r.entrants.length >= t.max_entrants && !b.claim) return NextResponse.json({ error: 'This tournament is full.' }, { status: 409 });
   const me = await who();
 
@@ -85,9 +86,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   const { id } = await params;
   const r = await withTournament(id, 'manage');
   if ('error' in r) return r.error;
-  const b = (await request.json().catch(() => ({}))) as { order?: string[]; random?: boolean; id?: string; checked_in?: boolean; dropped?: boolean; name?: string };
+  const b = (await request.json().catch(() => ({}))) as {
+    order?: string[];
+    random?: boolean;
+    id?: string;
+    checked_in?: boolean;
+    dropped?: boolean;
+    name?: string;
+    members?: { name?: string; sub?: boolean; user_id?: string | null }[];
+  };
   if (b.order || b.random) {
-    if (r.matches.length > 0) return NextResponse.json({ error: 'The bracket has started. Seeds are locked.' }, { status: 409 });
+    if (hasStarted(r.tournament)) return NextResponse.json({ error: 'The bracket has started. Seeds are locked.' }, { status: 409 });
     let order = b.order ?? r.entrants.map((e) => e.id);
     if (b.random) order = [...order].sort(() => Math.random() - 0.5);
     const known = new Set(r.entrants.map((e) => e.id));
@@ -107,6 +116,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (typeof b.checked_in === 'boolean') patch.checked_in = b.checked_in;
   if (typeof b.dropped === 'boolean') patch.dropped = b.dropped;
   if (typeof b.name === 'string' && b.name.trim()) patch.name = b.name.trim().slice(0, 40);
+  // a team's players (and its substitutes): change them any time, even while it is live
+  if (Array.isArray(b.members)) {
+    const members = b.members
+      .slice(0, 12)
+      .map((m) => ({
+        name: String(m.name ?? '')
+          .trim()
+          .slice(0, 40),
+        user_id: m.user_id ?? null,
+        ...(m.sub ? { sub: true } : {}),
+      }))
+      .filter((m) => m.name);
+    const blockedRoster = await refuseBlocked(Object.fromEntries(members.map((m, i) => [`Player ${i + 1}`, m.name])));
+    if (blockedRoster) return blockedRoster;
+    patch.members = members;
+  }
   await r.svc.from('tournament_entrants').update(patch).eq('id', b.id);
   return NextResponse.json({ ok: true });
 }
@@ -117,7 +142,9 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const b = (await request.json().catch(() => ({}))) as { id?: string; self?: boolean };
   const r = await withTournament(id, b.self ? 'view' : 'manage');
   if ('error' in r) return r.error;
-  if (r.matches.length > 0) return NextResponse.json({ error: 'The bracket has started. Mark them as dropped instead.' }, { status: 409 });
+  if (hasStarted(r.tournament)) return NextResponse.json({ error: 'The bracket has started. Mark them as dropped instead.' }, { status: 409 });
+  if (r.matches.some((m) => m.a === b.id || m.b === b.id))
+    return NextResponse.json({ error: 'They are in matches you planned. Remove those matches first (Bracket tab).' }, { status: 409 });
   let target = b.id;
   if (b.self) {
     const me = await who();

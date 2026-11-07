@@ -5,9 +5,11 @@ import { Radio, Undo2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Input } from '@/components/ui/Field';
+import { formatPacificTime } from '@/lib/core/timezone';
 import { presetOf } from '@/lib/tournaments/games';
 import { bestOfOf } from '@/lib/tournaments/run';
 import type { MatchRow } from '@/lib/tournaments/store';
+import MatchDialog from './MatchDialog';
 import { call, type TData } from './types';
 import styles from './control.module.css';
 
@@ -16,6 +18,7 @@ export default function ControlPanel({ data, reload }: { data: TData; reload: ()
   const t = data.tournament;
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [picked, setPicked] = useState<MatchRow | null>(null);
   const preset = presetOf(t.game);
   const nm = (id: string | null) => (id ? (data.entrants.find((e) => e.id === id)?.name ?? '?') : 'TBD');
   const active = data.matches
@@ -31,8 +34,18 @@ export default function ControlPanel({ data, reload }: { data: TData; reload: ()
     reload();
   };
   if (!data.can.run) return <Notice tone="info">Only people who run the tournament see the control panel.</Notice>;
-  if (data.matches.length === 0) return <Notice tone="info">Start the bracket first. The matches that are ready to play show up here.</Notice>;
-  if (active.length === 0) return <Notice tone="info">No match is ready right now. When a result sets up the next match, it appears here.</Notice>;
+  if (data.tournament.status !== 'live' && data.tournament.status !== 'complete')
+    return <Notice tone="info">Start the tournament first (the Start button at the top). The matches that are ready to play show up here.</Notice>;
+  if (active.length === 0) {
+    const custom = data.stages.some((x) => x.format === 'custom' && x.status !== 'complete');
+    return (
+      <Notice tone="info">
+        {custom
+          ? 'No match is ready right now. Add matches on the Bracket tab (under the bracket, “Add a match”).'
+          : 'No match is ready right now. When a result sets up the next match, it appears here.'}
+      </Notice>
+    );
+  }
   return (
     <div className={styles.wrap}>
       {error && <Notice tone="error">{error}</Notice>}
@@ -55,6 +68,8 @@ export default function ControlPanel({ data, reload }: { data: TData; reload: ()
                   {stage && data.stages.length > 1 ? `${stage.name} · ` : ''}
                   {m.bracket === 'GF' ? 'Grand final' : m.bracket === 'L' ? `Losers R${m.round}` : `Round ${m.round}`}
                   {bestOf > 1 ? ` · Bo${bestOf}` : ''}
+                  {m.label ? ` · ${m.label}` : ''}
+                  {m.scheduled_at ? ` · ${formatPacificTime(m.scheduled_at)}` : ''}
                 </span>
                 {m.status === 'live' ? (
                   <button type="button" className={styles.livePill} onClick={() => send(m, { action: 'live', on: false })} disabled={off} title="Take off the scoreboard">
@@ -84,6 +99,15 @@ export default function ControlPanel({ data, reload }: { data: TData; reload: ()
                 </p>
               )}
               <footer>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  disabled={off || !m.a || !m.b}
+                  onClick={() => setPicked(m)}
+                  title="Type the whole score yourself instead of tapping each game"
+                >
+                  Enter Full Score
+                </Button>
                 <label>
                   <span>Station</span>
                   <Input
@@ -104,6 +128,22 @@ export default function ControlPanel({ data, reload }: { data: TData; reload: ()
           );
         })}
       </div>
+      {picked && (
+        <MatchDialog
+          tid={t.id}
+          match={picked}
+          entrants={data.entrants}
+          bestOf={bestOfOf(
+            t,
+            data.stages.find((x) => x.id === picked.stage_id),
+            picked,
+          )}
+          format={data.stages.find((x) => x.id === picked.stage_id)?.format ?? t.format}
+          game={t.game}
+          onClose={() => setPicked(null)}
+          onDone={reload}
+        />
+      )}
     </div>
   );
 }

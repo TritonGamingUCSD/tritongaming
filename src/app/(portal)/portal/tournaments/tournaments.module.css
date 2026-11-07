@@ -146,5 +146,49 @@
 .heatArrows { display: inline-flex; gap: 0.2rem; }
 .heatArrows button { width: 1.5rem; height: 1.5rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.4); border-radius: 4px; background: var(--pp-card); color: var(--pp-ink); cursor: pointer; line-height: 1; }
 .heatArrows button:disabled { opacity: 0.3; cursor: default; }
-.customAdd { display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center; padding: 0.7rem 0.9rem; border: 2px dashed rgba(var(--pp-ink-rgb), 0.4); border-radius: 8px; }
-.customAdd > * { min-width: 9rem; }
+.customAdd { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 0.5rem; align-items: center; padding: 0.7rem 0.9rem; border: 2px dashed rgba(var(--pp-ink-rgb), 0.4); border-radius: 8px; }
+.customAdd > b { grid-column: 1 / -1; }
+.customAdd > button { justify-self: start; }
+.planList { display: grid; gap: 0.5rem; }
+.planRow { display: grid; grid-template-columns: 2.2rem minmax(7rem, 1fr) minmax(8rem, 1.1fr) auto minmax(8rem, 1.1fr) minmax(13rem, 1.2fr) minmax(8rem, 0.8fr) auto; gap: 0.4rem; align-items: center; padding: 0.4rem 0.5rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 8px; }
+.planPending { border-style: dashed; }
+.planNo { font-size: 0.85rem; }
+.planVs { font-size: 0.78rem; font-weight: 700; opacity: 0.7; }
+@media (max-width: 899px) {
+  /* a phone: the name and the time each get a line, the two sides sit either side of "vs", then the length and the bin */
+  .planRow { grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+  .planRow > :nth-child(1), .planRow > :nth-child(2), .planRow > :nth-child(6) { grid-column: 1 / -1; }
+  .planRow > :nth-child(7) { grid-column: 1 / 3; }
+  .planRow > :nth-child(8) { justify-self: end; }
+}
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.5rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+.step { display: flex; gap: 0.6rem; align-items: flex-start; padding: 0.65rem 0.8rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 10px; background: var(--pp-card); }
+.stepNext { border-color: var(--pp-ink); box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.stepDone { opacity: 0.8; }
+.stepNo { display: grid; place-items: center; flex-shrink: 0; width: 1.6rem; height: 1.6rem; border: 2px solid var(--pp-ink); border-radius: 50%; font-size: 0.78rem; font-weight: 800; }
+.stepDone .stepNo { background: var(--pp-ink); color: var(--pp-card); }
+.stepText { display: grid; gap: 0.15rem; flex: 1; min-width: 0; font-size: 0.88rem; }
+.stepText small { font-size: 0.78rem; color: rgba(var(--pp-ink-rgb), 0.75); }
+.stepGo { align-self: center; padding: 0.3rem 0.7rem; border: 2px solid var(--pp-ink); border-radius: 6px; background: none; color: inherit; font: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; min-height: 2rem; }
+.stepGo:hover { background: rgba(var(--pp-ink-rgb), 0.1); }
+.roster { grid-column: 1 / -1; display: grid; gap: 0.5rem; margin-top: 0.4rem; padding: 0.6rem 0.8rem; border: 2px dashed rgba(var(--pp-ink-rgb), 0.4); border-radius: 8px; }
+.rosterList { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.rosterList li { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.1rem 0.25rem 0.1rem 0.55rem; border: 2px solid var(--pp-ink); border-radius: 6px; font-size: 0.85rem; font-weight: 700; }
+.rosterList li.hint { border: 0; font-weight: 400; }
+.rosterList button { display: inline-grid; place-items: center; min-width: 1.3rem; height: 1.3rem; border: 0; border-radius: 4px; background: none; color: inherit; cursor: pointer; font: inherit; }
+.rosterList button:hover { background: rgba(var(--pp-ink-rgb), 0.12); }
+.subTag { font-size: 0.68rem !important; padding: 0 0.3rem; opacity: 0.7; }
+.subOn { background: var(--pp-ink) !important; color: var(--pp-card) !important; opacity: 1; }
+.entrant { flex-wrap: wrap; }
+.roster { flex: 1 1 100%; }
+.planTools { border: 2px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 10px; background: var(--pp-card); }
+.planTools > summary { cursor: pointer; padding: 0.7rem 0.9rem; font-weight: 800; font-size: 0.9rem; }
+.planBox { display: grid; gap: 0.7rem; padding: 0 0.9rem 0.9rem; }
+.planForm { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
+.planForm label { display: grid; gap: 0.2rem; font-size: 0.78rem; font-weight: 700; }
+.matchTitle { display: flex; justify-content: space-between; gap: 0.4rem; padding: 0.1rem 0.45rem; font-size: 0.72rem; }
+.matchTitle small { opacity: 0.75; font-weight: 600; }
+
+.step { flex-wrap: wrap; }
+.stepText { flex: 1 1 9rem; }
+.stepGo { margin-left: 2.2rem; align-self: flex-start; }

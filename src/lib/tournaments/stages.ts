@@ -17,6 +17,7 @@ export interface StageSettings {
   points_table?: number[]; // points stage: points for 1st, 2nd, 3rd...
   heat_size?: number; // points stage: players per heat
   rounds?: number; // points stage: number of rounds
+  round_names?: Record<string, string>; // the host's own names for rounds, by bracket letter and round (W2: 'Quarterfinals'); see schedule.ts
 }
 
 // Who moves on from a stage. 'top' with per_group keeps the top N of each pool; without it the top N overall.

@@ -257,6 +257,97 @@ try {
   const cm = (await head.call('GET', CT)).j.matches[0];
   t.ok('and scored like any other', (await head.call('POST', `${CT}/bracket`, { action: 'report', key: cm.key, scoreA: 2, scoreB: 1 })).s === 200);
 
+  // A custom tournament, planned before it starts (the host could not enter matches before): teams, rosters, planned matches, then live
+  const pl = await mk('ZZ Planned', 'custom', { entrant_type: 'team', team_size: 2, stages: [{ name: 'Matches', format: 'custom', settings: {}, advance: { mode: 'none' } }] });
+  const PL = `/api/tournaments/${pl.j.id}`;
+  const pids = [];
+  for (const n of ['T1', 'T2', 'T3', 'T4']) pids.push((await head.call('POST', `${PL}/entrants`, { name: `ZZ Team ${n}`, members: [{ name: 'ZZ p1' }, { name: 'ZZ p2' }] })).j.id);
+  const pst = (await head.call('GET', PL)).j.stages[0].id;
+  t.ok(
+    'players are put on a team by the host (and a sub marked) any time',
+    (await head.call('PATCH', `${PL}/entrants`, { id: pids[0], members: [{ name: 'ZZ Ann' }, { name: 'ZZ Bo' }, { name: 'ZZ Cy', sub: true }] })).s === 200,
+  );
+  t.ok(
+    'the roster is kept with who is a sub',
+    (await head.call('GET', PL)).j.entrants.find((e) => e.id === pids[0]).members.some((m) => m.sub && m.name === 'ZZ Cy'),
+  );
+  t.ok(
+    'a match can be planned before the tournament starts',
+    (await head.call('POST', `${PL}/bracket`, { action: 'add-match', stage_id: pst, a: pids[0], b: pids[1], label: 'ZZ Opener', scheduled_at: '2026-12-01T18:00:00Z' })).s === 200,
+  );
+  let pln = (await head.call('GET', PL)).j;
+  t.ok(
+    'it waits (planned), and the tournament has not started',
+    pln.matches.length === 1 && pln.matches[0].status === 'pending' && pln.tournament.status !== 'live' && pln.matches[0].label === 'ZZ Opener',
+  );
+  t.ok(
+    'every pairing is added at once (without repeating the first)',
+    (
+      await head.call('POST', `${PL}/bracket`, {
+        action: 'add-matches',
+        stage_id: pst,
+        pairs: [
+          [pids[0], pids[2]],
+          [pids[0], pids[3]],
+          [pids[1], pids[2]],
+          [pids[1], pids[3]],
+          [pids[2], pids[3]],
+        ],
+      })
+    ).j.added === 5,
+  );
+  pln = (await head.call('GET', PL)).j;
+  t.ok('six matches are planned, each with its own number', pln.matches.length === 6 && new Set(pln.matches.map((m) => m.key)).size === 6);
+  const firstM = pln.matches.find((m) => m.label === 'ZZ Opener');
+  t.ok(
+    'a match can be renamed, given a time and its own length',
+    (await head.call('POST', `${PL}/bracket`, { action: 'edit-match', key: firstM.key, label: 'ZZ Grand Opener', scheduled_at: '2026-12-01T19:00:00Z', best_of: 3 })).s === 200,
+  );
+  t.ok('and who plays can be swapped', (await head.call('POST', `${PL}/bracket`, { action: 'edit-match', key: firstM.key, a: pids[3], b: pids[1] })).s === 200);
+  t.ok('but not the same entrant twice', (await head.call('POST', `${PL}/bracket`, { action: 'edit-match', key: firstM.key, a: pids[1], b: pids[1] })).s === 400);
+  t.ok('a team in a planned match cannot be removed', (await head.call('DELETE', `${PL}/entrants`, { id: pids[2] })).s === 409);
+  const last = pln.matches[pln.matches.length - 1];
+  t.ok('a planned match can be taken out', (await head.call('POST', `${PL}/bracket`, { action: 'delete-match', key: last.key })).s === 200);
+  t.ok(
+    'start times are filled in round by round',
+    (await head.call('POST', `${PL}/bracket`, { action: 'schedule', stage_id: pst, start: '2026-12-01T20:00:00Z', minutes: 20, parallel: 2, overwrite: true })).j.scheduled === 5,
+  );
+  const startR = await head.call('POST', `${PL}/bracket`, { action: 'start' });
+  t.ok('starting makes the planned matches ready', startR.s === 200);
+  pln = (await head.call('GET', PL)).j;
+  t.ok(
+    'the tournament is live and every planned match is ready',
+    pln.tournament.status === 'live' && pln.matches.length === 5 && pln.matches.every((m) => m.status === 'ready'),
+    JSON.stringify(pln.matches.map((m) => m.status)),
+  );
+  t.ok('starting twice is refused', (await head.call('POST', `${PL}/bracket`, { action: 'start' })).s === 409);
+  t.ok('entrants are locked once it is live', (await head.call('POST', `${PL}/entrants`, { name: 'ZZ Late' })).s === 409);
+  t.ok(
+    'a match can still be added while it is live',
+    (await head.call('POST', `${PL}/bracket`, { action: 'add-match', stage_id: pst, a: pids[2], b: pids[3], label: 'ZZ Rematch' })).s === 200,
+  );
+  const live1 = (await head.call('GET', PL)).j.matches.find((m) => m.label === 'ZZ Rematch');
+  t.ok('and it is ready at once', live1?.status === 'ready');
+  t.ok('a match is scored', (await head.call('POST', `${PL}/bracket`, { action: 'report', key: firstM.key, scoreA: 2, scoreB: 1 })).s === 200);
+  t.ok(
+    'a scored match cannot be taken out or have its players changed',
+    (await head.call('POST', `${PL}/bracket`, { action: 'delete-match', key: firstM.key })).s === 409 &&
+      (await head.call('POST', `${PL}/bracket`, { action: 'edit-match', key: firstM.key, a: pids[2] })).s === 409,
+  );
+  t.ok(
+    'rounds can be named any time',
+    (await head.call('PATCH', `${PL}/stages`, { id: pst, round_names: { RR1: 'ZZ Pool Play', bad: 'x' } })).s === 200 &&
+      (await head.call('GET', PL)).j.stages[0].settings.round_names?.RR1 === 'ZZ Pool Play',
+  );
+  const pfeed2 = await (await fetch(`${BASE}${PL}/feed`)).json();
+  t.ok(
+    'the public feed carries names, times, round names and players',
+    pfeed2.matches.some((m) => m.label === 'ZZ Rematch') &&
+      pfeed2.matches.some((m) => m.at) &&
+      pfeed2.stages[0].round_names?.RR1 === 'ZZ Pool Play' &&
+      pfeed2.entrants.some((e) => e.players?.some((p) => p.sub)),
+  );
+
   // Editing the structure
   const ed = await mk('ZZ Edit', 'single');
   const E = `/api/tournaments/${ed.j.id}`;

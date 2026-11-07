@@ -1,13 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { ArrowDown, ArrowUp, Copy, GripVertical, Shuffle, Trash2, UserCheck, UserMinus } from 'lucide-react';
+import { ArrowDown, ArrowUp, Copy, GripVertical, Shuffle, Trash2, UserCheck, UserMinus, Users, X } from 'lucide-react';
 import { useDragOrder } from './useDragOrder';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import { Input, Textarea } from '@/components/ui/Field';
 import { showToast } from '@/lib/ui/toast';
-import { call, type TData } from './types';
+import { call, type TData, type TEntrant } from './types';
 import styles from './tournaments.module.css';
 
 function Ico({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
@@ -26,6 +26,7 @@ export default function EntrantsPanel({ data, reload }: { data: TData; reload: (
   const [bulk, setBulk] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [open, setOpen] = useState<string | null>(null);
   const list = data.entrants;
   const drag = useDragOrder(
     list.map((e) => e.id),
@@ -93,6 +94,11 @@ export default function EntrantsPanel({ data, reload }: { data: TData; reload: (
                     </Ico>
                   </>
                 )}
+                {t.entrant_type === 'team' && (
+                  <Ico label={open === e.id ? 'Close the players' : 'Players on this team'} onClick={() => setOpen(open === e.id ? null : e.id)}>
+                    <Users size={15} style={{ opacity: e.members.length ? 1 : 0.4 }} />
+                  </Ico>
+                )}
                 {e.claim_code && (
                   <Ico
                     label="Copy claim code"
@@ -115,6 +121,9 @@ export default function EntrantsPanel({ data, reload }: { data: TData; reload: (
                   <Ico label="Remove" onClick={() => run(() => call('DELETE', base, { id: e.id }))} disabled={busy}>
                     <Trash2 size={15} />
                   </Ico>
+                )}
+                {t.entrant_type === 'team' && open === e.id && (
+                  <Roster entrant={e} limit={t.team_size} save={(members) => run(() => call('PATCH', base, { id: e.id, members }))} busy={busy} />
                 )}
               </li>
             ))}
@@ -171,6 +180,67 @@ export default function EntrantsPanel({ data, reload }: { data: TData; reload: (
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+// The players on one team: add and remove names, mark who is a substitute. It saves as you go, and can change while the tournament is live (a sub comes in).
+function Roster({
+  entrant,
+  limit,
+  save,
+  busy,
+}: {
+  entrant: TEntrant;
+  limit: number;
+  save: (members: { name: string; sub?: boolean; user_id?: string | null }[]) => Promise<boolean>;
+  busy: boolean;
+}) {
+  const [name, setName] = useState('');
+  const [sub, setSub] = useState(false);
+  const members = entrant.members as { name: string; sub?: boolean; user_id?: string | null }[];
+  const main = members.filter((m) => !m.sub).length;
+  return (
+    <div className={styles.roster}>
+      <p className={styles.hint}>
+        Players on {entrant.name}: {main} of {limit} starting{members.length > main ? `, ${members.length - main} sub${members.length - main === 1 ? '' : 's'}` : ''}.
+      </p>
+      <ul className={styles.rosterList}>
+        {members.length === 0 && <li className={styles.hint}>No players yet.</li>}
+        {members.map((m, i) => (
+          <li key={i}>
+            {m.name}
+            <button
+              type="button"
+              className={`${styles.subTag} ${m.sub ? styles.subOn : ''}`}
+              disabled={busy}
+              onClick={() => save(members.map((x, j) => (j === i ? { ...x, sub: !x.sub } : x)))}
+              title={m.sub ? 'Make a starter' : 'Mark as a substitute'}
+            >
+              {m.sub ? 'Sub' : 'Starter'}
+            </button>
+            <button type="button" aria-label={`Remove ${m.name}`} disabled={busy} onClick={() => save(members.filter((_, j) => j !== i))}>
+              <X size={12} />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <form
+        className={styles.inline}
+        onSubmit={async (ev) => {
+          ev.preventDefault();
+          if (!name.trim()) return;
+          if (await save([...members, { name: name.trim(), ...(sub ? { sub: true } : {}) }])) setName('');
+        }}
+      >
+        <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Player name or tag" maxLength={40} aria-label={`Add a player to ${entrant.name}`} />
+        <label className={styles.check}>
+          <input type="checkbox" checked={sub} onChange={(e) => setSub(e.target.checked)} /> Sub
+        </label>
+        <Button type="submit" size="sm" disabled={busy || !name.trim()}>
+          Add Player
+        </Button>
+      </form>
     </div>
   );
 }

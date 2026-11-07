@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withTournament } from '@/lib/tournaments/server';
 import type { StageDef } from '@/lib/tournaments/stages';
+import { cleanRoundNames } from '@/lib/tournaments/schedule';
 import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
@@ -95,6 +96,17 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   const stage = r.stages.find((s) => s.id === b.id);
   if (!stage) return NextResponse.json({ error: 'No such stage.' }, { status: 404 });
+  // round names are only words: they can change any time, even while it is live
+  if ('round_names' in b) {
+    const names = cleanRoundNames((b as { round_names?: unknown }).round_names);
+    const blockedNames = await refuseBlocked(Object.fromEntries(Object.entries(names).map(([k, v]) => [`Round ${k}`, v])));
+    if (blockedNames) return blockedNames;
+    await r.svc
+      .from('tournament_stages')
+      .update({ settings: { ...(stage.settings ?? {}), round_names: names } })
+      .eq('id', stage.id);
+    return NextResponse.json({ ok: true });
+  }
   if (stage.status !== 'pending') return NextResponse.json({ error: 'That stage has started, so it is locked.' }, { status: 409 });
   if (b.groups) {
     // Pools by hand (drag an entrant into a pool): stored as the stage's entrants with a pool number.

@@ -5,7 +5,9 @@ import styles from './feed.module.css';
 
 type M = Feed['matches'][number];
 
-export function roundTitle(bracket: string, round: number, max: number, pool: number | null): string {
+export function roundTitle(bracket: string, round: number, max: number, pool: number | null, names?: Record<string, string> | null): string {
+  const own = names?.[`${bracket}${round}`]?.trim();
+  if (own) return own;
   if (bracket === 'GF') return round === 1 ? 'Grand final' : 'Bracket reset';
   if (bracket === 'T') return 'Third place';
   if (bracket === 'L') return `Losers round ${round}`;
@@ -30,6 +32,14 @@ export function MatchCard({ m, compact }: { m: M; compact?: boolean }) {
     <div className={`${styles.match} ${m.status === 'live' ? styles.live : ''} ${m.status === 'bye' ? styles.bye : ''} ${compact ? styles.compact : ''}`}>
       {row('a')}
       {row('b')}
+      {(m.label || (m.at && m.status !== 'done')) && (
+        <span className={styles.meta}>
+          {m.label && <b>{m.label}</b>}
+          {m.at && m.status !== 'done' && (
+            <span>{new Date(m.at).toLocaleString('en-US', { timeZone: 'America/Los_Angeles', weekday: 'short', hour: 'numeric', minute: '2-digit' })}</span>
+          )}
+        </span>
+      )}
       {(m.status === 'live' || m.station) && (
         <span className={styles.meta}>
           {m.status === 'live' && <span className={styles.liveTag}>Live</span>}
@@ -75,7 +85,7 @@ export default function FeedBracket({ feed, stage, hideByes = true }: { feed: Fe
             <div className={robin ? styles.grid : styles.cols}>
               {rounds.map((r) => (
                 <div key={r} className={styles.round}>
-                  <p>{roundTitle(blk.bracket, r, max, blk.bracket === 'RR' ? 1 : null)}</p>
+                  <p>{roundTitle(blk.bracket, r, max, blk.bracket === 'RR' ? 1 : null, feed.stages.find((s) => s.position === pos)?.round_names)}</p>
                   <div className={styles.cards}>
                     {blk.items
                       .filter((m) => m.round === r)

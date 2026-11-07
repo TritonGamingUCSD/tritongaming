@@ -47,7 +47,7 @@ export type EntrantRow = {
   seed: number | null;
   checked_in: boolean;
   dropped: boolean;
-  members: { user_id?: string | null; name: string }[];
+  members: { user_id?: string | null; name: string; sub?: boolean }[];
   claim_code: string | null;
 };
 

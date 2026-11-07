@@ -21,6 +21,8 @@ export type FeedMatch = {
   station: string | null;
   games: MatchRow['games'];
   best_of: number | null;
+  label: string | null;
+  at: string | null;
   heat: { name: string; placement: number | null; points: number | null }[] | null;
 };
 
@@ -58,6 +60,8 @@ export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchR
       station: r.station,
       games: r.games,
       best_of: r.best_of,
+      label: r.label,
+      at: r.scheduled_at,
       heat: r.heat ? r.heat.map((h) => ({ name: byId.get(h.entrant_id)?.name ?? '?', placement: h.placement, points: h.points })) : null,
     }));
   const cur = currentStage(stages);
@@ -121,9 +125,22 @@ export function buildFeed(t: TournamentRow, entrants: EntrantRow[], rows: MatchR
       url: l.url,
       label: l.label ?? null,
     })),
-    stages: stages.map((s) => ({ position: s.position, name: s.name, format: s.format, status: s.status, best_of: s.settings.best_of ?? t.best_of })),
+    stages: stages.map((s) => ({
+      position: s.position,
+      name: s.name,
+      format: s.format,
+      status: s.status,
+      best_of: s.settings.best_of ?? t.best_of,
+      round_names: s.settings.round_names ?? {},
+    })),
     current_stage: cur?.position ?? 1,
-    entrants: entrants.map((e) => ({ id: e.id, name: e.name, seed: e.seed, dropped: e.dropped })),
+    entrants: entrants.map((e) => ({
+      id: e.id,
+      name: e.name,
+      seed: e.seed,
+      dropped: e.dropped,
+      players: (e.members ?? []).map((m) => ({ name: m.name, ...(m.sub ? { sub: true } : {}) })),
+    })),
     matches,
     standings,
     placements,

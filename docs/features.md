@@ -356,3 +356,14 @@ Sign in or link with Discord (Supabase provider). A linked account fills the pro
 - **Request access:** a link to a doc you cannot open says so (never what the doc is called) and lets you ask; the editors (people named on its edit list, its author and last editor, or exec and admin) get a notification that opens the Share box.
 - It is enforced in the database (`doc_can()` and the row rules on `docs`) and in every doc route (`authorizeDoc` in `lib/docs/docsServer.ts`); the doc list, sync, the dashboard's latest docs and required reading only show docs the person may read.
 - Check: `node scripts/checks/club-docs.mjs`.
+
+## Tournaments: planning, rosters and times
+
+- **Started means started.** A tournament has begun when its status is Live or Finished (`hasStarted` in `lib/tournaments/run.ts`), not when it has matches: a custom stage starts with none. This was why a custom tournament showed "press Start" forever and never offered the Add-a-match box.
+- **Before it starts:** a **Next Steps** strip says what is left (add teams, pick how it is played, make the matches for a custom stage, press Start) with a button to each place. In a custom stage you can plan matches before going live (they wait, and become ready when you start): add one (with a name and a time), add every pairing at once, rename, swap who plays, give a match its own best-of, or take one out. A team that is in a planned match cannot be removed until its matches are.
+- **Matches in a custom stage** can be added, edited and deleted any time until they have a result.
+- **Enter scores:** the Control panel has an **Enter Full Score** button on each match (as well as tapping who won each game).
+- **Team players:** on the Entrants tab each team has a players button: add and remove names, mark substitutes. It works any time, even while live. Players show on the public feed (`players`).
+- **Plan The Day** (Bracket tab, a collapsed box): fill in start times round by round (first match, minutes per match, matches at once, break between) and rename rounds (`stage.settings.round_names`, keyed like `W2`). Names, times and round names show on the bracket, the Control panel and the public page.
+- Tiebreakers and points for a win, draw and loss were already in a stage's **Points and tiebreakers** box (Structure tab).
+- Check: `node scripts/checks/tournaments.mjs` (the "ZZ Planned" section).

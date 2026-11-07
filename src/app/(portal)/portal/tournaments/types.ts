@@ -32,7 +32,9 @@ export async function call<T = Record<string, unknown>>(method: string, path: st
   }
 }
 
-export const roundName = (bracket: string, round: number, maxRound: number): string => {
+export const roundName = (bracket: string, round: number, maxRound: number, names?: Record<string, string> | null): string => {
+  const own = names?.[`${bracket}${round}`]?.trim();
+  if (own) return own;
   if (bracket === 'GF') return round === 1 ? 'Grand final' : 'Bracket reset';
   if (bracket === 'T') return 'Third place';
   if (bracket === 'L') return `Losers round ${round}`;

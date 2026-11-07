@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { hasStarted } from '@/lib/tournaments/run';
 import { withTournament } from '@/lib/tournaments/server';
 import { startggEventSlug, normalizeUrl } from '@/lib/tournaments/external';
 import { fetchStartggEvent } from '@/lib/tournaments/startgg';
@@ -13,7 +14,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const { id } = await params;
   const r = await withTournament(id, 'manage');
   if ('error' in r) return r.error;
-  if (r.matches.length > 0) return NextResponse.json({ error: 'The bracket has started. Entrants are locked.' }, { status: 409 });
+  if (hasStarted(r.tournament)) return NextResponse.json({ error: 'The bracket has started. Entrants are locked.' }, { status: 409 });
   const b = (await request.json().catch(() => ({}))) as { url?: string };
   const slug = startggEventSlug(b.url ?? '');
   if (!slug) return NextResponse.json({ error: 'Paste a start.gg event link (it looks like start.gg/tournament/…/event/…).' }, { status: 400 });

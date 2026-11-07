@@ -2,15 +2,34 @@ import { NextResponse } from 'next/server';
 import { withTournament } from '@/lib/tournaments/server';
 import { report, undo, swissRound, swissRounds, type Match } from '@/lib/tournaments/bracket';
 import { engineKey, saveMatches, toMatch, toRow } from '@/lib/tournaments/store';
-import { bestOfOf, currentStage, defOf, heatRowsFor, refreshStatus, stageEngineMatches, stageField, startStage } from '@/lib/tournaments/run';
+import { bestOfOf, currentStage, hasStarted, heatRowsFor, refreshStatus, stageEngineMatches, stageField, startStage } from '@/lib/tournaments/run';
 import { dealHeats, pointsStandings, scoreHeat, type HeatSlot } from '@/lib/tournaments/points';
+import { scheduleMatches } from '@/lib/tournaments/schedule';
 import { logAudit } from '@/lib/notifications/audit';
+import { refuseBlocked } from '@/lib/wordfilter/server';
 
 export const dynamic = 'force-dynamic';
 
 type Game = { a: number; b: number; map?: string; pick_a?: string; pick_b?: string };
 type Body = {
-  action?: 'start' | 'start-stage' | 'report' | 'undo' | 'next-round' | 'station' | 'live' | 'reset' | 'game' | 'undo-game' | 'report-heat' | 'add-match';
+  action?:
+    | 'start'
+    | 'start-stage'
+    | 'report'
+    | 'undo'
+    | 'next-round'
+    | 'station'
+    | 'live'
+    | 'reset'
+    | 'game'
+    | 'undo-game'
+    | 'report-heat'
+    | 'add-match'
+    | 'add-matches'
+    | 'edit-match'
+    | 'delete-match'
+    | 'schedule'
+    | 'clear-schedule';
   key?: string;
   stage_id?: string;
   order?: string[];
@@ -23,6 +42,15 @@ type Body = {
   map?: string;
   a?: string;
   b?: string;
+  pairs?: [string, string][];
+  label?: string | null;
+  scheduled_at?: string | null;
+  best_of?: number | null;
+  start?: string;
+  minutes?: number;
+  parallel?: number;
+  gap?: number;
+  overwrite?: boolean;
 };
 
 // Everything that moves a tournament: start it (the first stage), start a later stage from the results of the one before, enter or undo a result, deal the next Swiss round, call a match to a station, mark it live, or reset it back to registration.
@@ -37,7 +65,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const now = () => new Date().toISOString();
 
   if (b.action === 'start') {
-    if (r.matches.length > 0) return bad('It has already started.', 409);
+    if (hasStarted(t)) return bad('It has already started.', 409);
     const first = r.stages[0];
     if (!first) return bad('Add a stage first.');
     const field = stageField(r.stages, first, r.entrants, r.matches, r.stageEntrants);
@@ -103,6 +131,123 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ ok: true });
   }
 
+  // Hand-made matches, times and match details can be worked on before the tournament starts (planning), so these come before the "has it started" check.
+  // A custom stage: add matches by hand, { stage_id, a, b, label?, scheduled_at? } for one or { stage_id, pairs: [[a, b], …] } for several (every pairing at once, say). Before the tournament starts they are planned (they wait, and become ready when it starts); after, they are ready at once.
+  if (b.action === 'add-match' || b.action === 'add-matches') {
+    const stage = r.stages.find((s) => s.id === b.stage_id);
+    if (!stage || stage.format !== 'custom') return bad('Matches are added by hand only in a custom stage.');
+    if (stage.status === 'pending' && stage.position !== 1) return bad('A later stage gets its entrants when the stage before it is finished.', 409);
+    const ids = new Set(r.entrants.filter((e) => !e.dropped).map((e) => e.id));
+    const pairs: [string, string][] = b.action === 'add-matches' ? (Array.isArray(b.pairs) ? b.pairs : []).slice(0, 200) : [[String(b.a ?? ''), String(b.b ?? '')]];
+    if (pairs.length === 0) return bad('Pick the matches to add.');
+    if (pairs.some(([x, y]) => !x || !y || x === y || !ids.has(x) || !ids.has(y))) return bad('Pick two different entrants for each match.');
+    const label = typeof b.label === 'string' ? b.label.trim().slice(0, 40) : '';
+    const blockedLabel = await refuseBlocked({ Name: label });
+    if (blockedLabel) return blockedLabel;
+    const when = b.scheduled_at && !Number.isNaN(Date.parse(b.scheduled_at)) ? new Date(b.scheduled_at).toISOString() : null;
+    const planned = stage.status === 'pending';
+    let n = Math.max(0, ...r.matches.filter((m) => m.stage_id === stage.id).map((m) => m.idx));
+    const rows = pairs.map(([x, y]) => {
+      n += 1;
+      return {
+        tournament_id: t.id,
+        stage_id: stage.id,
+        group_no: null,
+        key: `s${stage.position}/C${n}`,
+        bracket: 'RR',
+        round: 1,
+        idx: n,
+        a: x,
+        b: y,
+        score_a: null,
+        score_b: null,
+        winner: null,
+        status: planned ? 'pending' : 'ready',
+        win_to: null,
+        lose_to: null,
+        label: label || null,
+        scheduled_at: when,
+      };
+    });
+    const { error } = await r.svc.from('tournament_matches').insert(rows);
+    if (error) return bad('Could not add the match.', 500);
+    if (!planned) {
+      // the stage and the tournament are playing now (they may have finished before this match was added)
+      await r.svc.from('tournament_stages').update({ status: 'live' }).eq('id', stage.id);
+      if (t.status === 'complete') await r.svc.from('tournaments').update({ status: 'live', updated_at: now() }).eq('id', t.id);
+    }
+    return NextResponse.json({ ok: true, added: rows.length, key: rows[0].key });
+  }
+
+  // Change a match's details, { key, label?, scheduled_at?, best_of? } for any match that is not finished, and { a, b } to change who plays in a custom stage while nothing is scored.
+  if (b.action === 'edit-match') {
+    const row = r.matches.find((m) => m.key === b.key);
+    if (!row) return bad('That match does not exist.', 404);
+    const stage = r.stages.find((s) => s.id === row.stage_id);
+    if (row.status === 'done') return bad('A finished match cannot be edited. Undo its result first.', 409);
+    const patch: Record<string, unknown> = { updated_at: now() };
+    if ('label' in b) {
+      const label = typeof b.label === 'string' ? b.label.trim().slice(0, 40) : '';
+      const blockedLabel = await refuseBlocked({ Name: label });
+      if (blockedLabel) return blockedLabel;
+      patch.label = label || null;
+    }
+    if ('scheduled_at' in b) {
+      if (b.scheduled_at && Number.isNaN(Date.parse(b.scheduled_at))) return bad('That is not a time.');
+      patch.scheduled_at = b.scheduled_at ? new Date(b.scheduled_at).toISOString() : null;
+    }
+    if ('best_of' in b) {
+      if (b.best_of !== null && ![1, 3, 5, 7].includes(Number(b.best_of))) return bad('Best of 1, 3, 5 or 7 (or empty for the stage’s setting).');
+      if ((row.games ?? []).length > 0) return bad('Games are already recorded, so the length cannot change.', 409);
+      patch.best_of = b.best_of === null ? null : Number(b.best_of);
+    }
+    if ('a' in b || 'b' in b) {
+      if (!stage || stage.format !== 'custom') return bad('Only matches in a custom stage can change players.');
+      if (row.score_a !== null || row.score_b !== null || (row.games ?? []).length > 0) return bad('Scores are already entered. Undo them first.', 409);
+      const ids = new Set(r.entrants.filter((e) => !e.dropped).map((e) => e.id));
+      const na = 'a' in b ? String(b.a ?? '') : (row.a ?? '');
+      const nb = 'b' in b ? String(b.b ?? '') : (row.b ?? '');
+      if (!na || !nb || na === nb || !ids.has(na) || !ids.has(nb)) return bad('Pick two different entrants.');
+      patch.a = na;
+      patch.b = nb;
+    }
+    const { error } = await r.svc.from('tournament_matches').update(patch).eq('tournament_id', t.id).eq('key', row.key);
+    if (error) return bad('Could not save that.', 500);
+    return NextResponse.json({ ok: true });
+  }
+
+  // Fill in start times for a stage, { stage_id, start, minutes, parallel, gap?, overwrite? }: round by round, `parallel` matches at a time. Matches that already have a time keep it unless `overwrite`. { action: 'clear-schedule', stage_id } takes them all off.
+  if (b.action === 'schedule' || b.action === 'clear-schedule') {
+    const stage = r.stages.find((s) => s.id === b.stage_id);
+    if (!stage) return bad('Pick a stage.');
+    const rows = r.matches.filter((m) => m.stage_id === stage.id);
+    if (b.action === 'clear-schedule') {
+      await r.svc.from('tournament_matches').update({ scheduled_at: null }).eq('stage_id', stage.id).neq('status', 'done');
+      return NextResponse.json({ ok: true });
+    }
+    if (!b.start || Number.isNaN(Date.parse(b.start))) return bad('Pick the first start time.');
+    const times = scheduleMatches(rows, { start: b.start, minutes: Number(b.minutes) || 30, parallel: Number(b.parallel) || 1, gap: Number(b.gap) || 0 });
+    let n = 0;
+    for (const m of rows) {
+      const at = times.get(m.key);
+      if (!at || (m.scheduled_at && !b.overwrite)) continue;
+      await r.svc.from('tournament_matches').update({ scheduled_at: at, updated_at: now() }).eq('tournament_id', t.id).eq('key', m.key);
+      n += 1;
+    }
+    return NextResponse.json({ ok: true, scheduled: n });
+  }
+
+  // Take a hand-made match out, { key }, while nothing is scored on it.
+  if (b.action === 'delete-match') {
+    const row = r.matches.find((m) => m.key === b.key);
+    if (!row) return bad('That match does not exist.', 404);
+    const stage = r.stages.find((s) => s.id === row.stage_id);
+    if (!stage || stage.format !== 'custom') return bad('Only matches made by hand can be removed.');
+    if (row.status === 'done' || row.score_a !== null || row.score_b !== null || (row.games ?? []).length > 0) return bad('It has a result. Undo it first.', 409);
+    await r.svc.from('tournament_matches').delete().eq('tournament_id', t.id).eq('key', row.key);
+    return NextResponse.json({ ok: true });
+  }
+
   if (t.status !== 'live' && t.status !== 'complete') return bad('The tournament has not started.', 409);
 
   if (b.action === 'next-round') {
@@ -144,37 +289,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     await r.svc.from('tournament_stages').update({ status: 'live' }).eq('id', stage.id);
     if (t.status === 'complete') await r.svc.from('tournaments').update({ status: 'live', updated_at: now() }).eq('id', t.id);
     return NextResponse.json({ ok: true, round: played + 1 });
-  }
-
-  // A custom stage: add one match by hand, { stage_id, a, b } (two entrants of the tournament).
-  if (b.action === 'add-match') {
-    const stage = r.stages.find((s) => s.id === b.stage_id);
-    if (!stage || stage.format !== 'custom') return bad('Matches are added by hand only in a custom stage.');
-    const ids = new Set(r.entrants.filter((e) => !e.dropped).map((e) => e.id));
-    if (!b.a || !b.b || b.a === b.b || !ids.has(b.a) || !ids.has(b.b)) return bad('Pick two different entrants.');
-    const n = r.matches.filter((m) => m.stage_id === stage.id).length + 1;
-    const { error } = await r.svc.from('tournament_matches').insert({
-      tournament_id: t.id,
-      stage_id: stage.id,
-      group_no: null,
-      key: `s${stage.position}/C${n}`,
-      bracket: 'RR',
-      round: 1,
-      idx: n,
-      a: b.a,
-      b: b.b,
-      score_a: null,
-      score_b: null,
-      winner: null,
-      status: 'ready',
-      win_to: null,
-      lose_to: null,
-    });
-    if (error) return bad('Could not add the match.', 500);
-    // the stage and the tournament are playing now (they may have finished before this match was added)
-    await r.svc.from('tournament_stages').update({ status: 'live' }).eq('id', stage.id);
-    if (t.status === 'complete') await r.svc.from('tournaments').update({ status: 'live', updated_at: now() }).eq('id', t.id);
-    return NextResponse.json({ ok: true, key: `s${stage.position}/C${n}` });
   }
 
   const row = r.matches.find((m) => m.key === b.key);

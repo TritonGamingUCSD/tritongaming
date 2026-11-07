@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServiceClient } from '@/lib/supabase/admin';
+import { hasStarted } from '@/lib/tournaments/run';
 import { withTournament } from '@/lib/tournaments/server';
 import { logAudit } from '@/lib/notifications/audit';
 import { cleanLinks } from '@/lib/tournaments/external';
@@ -24,7 +25,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       seed: e.seed,
       checked_in: e.checked_in,
       dropped: e.dropped,
-      members: e.members.map((m) => ({ name: m.name })),
+      members: e.members.map((m) => ({ name: m.name, ...(m.sub ? { sub: true } : {}) })),
       ...(manage ? { user_id: e.user_id, claim_code: e.claim_code } : { linked: !!e.user_id }),
     })),
     matches,
@@ -50,12 +51,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if ('best_of' in patch && ![1, 3, 5, 7].includes(Number(patch.best_of))) return NextResponse.json({ error: 'Best of 1, 3, 5 or 7.' }, { status: 400 });
   if (typeof patch.name === 'string') patch.name = patch.name.trim().slice(0, 80);
   if (typeof patch.name === 'string' && (patch.name as string).length < 3) return NextResponse.json({ error: 'Give the tournament a name (at least 3 letters).' }, { status: 400 });
-  if (r.matches.length > 0 && ('best_of' in patch || 'third_place' in patch || 'team_size' in patch))
+  if (hasStarted(r.tournament) && ('best_of' in patch || 'third_place' in patch || 'team_size' in patch))
     return NextResponse.json({ error: 'Those cannot change once the bracket has started.' }, { status: 409 });
   const status = typeof b.status === 'string' ? b.status : null;
   if (status) {
     if (!['draft', 'registration'].includes(status)) return NextResponse.json({ error: 'Use Start to begin the bracket.' }, { status: 400 });
-    if (r.matches.length > 0) return NextResponse.json({ error: 'The bracket has started.' }, { status: 409 });
+    if (hasStarted(r.tournament)) return NextResponse.json({ error: 'The bracket has started.' }, { status: 409 });
     patch.status = status;
     patch.signups_open = status === 'registration';
   }
