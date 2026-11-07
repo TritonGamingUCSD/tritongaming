@@ -2,6 +2,7 @@
 
 import { ZoomImg } from '@/components/ui/PictureZoom';
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { createPortal } from 'react-dom';
 import { Gift, X } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Loading from '@/components/Loading/Loading';
@@ -29,7 +30,15 @@ const hash = (s: string) => {
 
 // The draw, full screen for a projector. Staff press Draw: the winners are worked out and saved on the server first (so a reload shows the same), then each prize comes up in turn. The host pulls each winner
 // (button, Space, Enter or →): the names of everyone who entered flicker past on the wall and in the big box, slow down and stop on the winner. Whoever already won an earlier prize fades out. Esc leaves.
-export default function DrawScreen({ slug, onClose }: { slug: string; onClose: () => void }) {
+export default function DrawScreen(props: { slug: string; onClose: () => void }) {
+  // Drawn straight into the page body: inside the portal's shell a transformed ancestor made "full screen" mean a thin strip on a computer, and let the phone's buttons and bottom bar sit on top of it.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  if (!mounted) return null;
+  return createPortal(<DrawInner {...props} />, document.body);
+}
+
+function DrawInner({ slug, onClose }: { slug: string; onClose: () => void }) {
   const [s, setS] = useState<StaffleView | null>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
