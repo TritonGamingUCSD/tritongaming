@@ -1,17 +1,16 @@
 import { NextResponse } from 'next/server';
 import { staffName } from '@/lib/members/names';
-import { UUID, authorizeDocs, bad } from '@/lib/docs/docsServer';
+import { authorizeDoc } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 const ACTIVE_MS = 60_000;
 
 // A heartbeat from an open editor: { id, leaving? }. Answers with who ELSE has this doc open right now, so two people can see each other.
 export async function POST(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
-  if (!UUID.test(id)) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
   if (b.leaving) {
     await auth.svc.from('doc_editing').delete().eq('doc_id', id).eq('user_id', auth.user.id);
     return NextResponse.json({ others: [] });

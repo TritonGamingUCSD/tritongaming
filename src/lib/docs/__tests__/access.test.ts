@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { audienceOf, canAccess, canRead, cleanEntries, clubDefaults, describeEntries, divisionDefaults, opensWide, type AccessContext } from '../access';
+import {
+  audienceOf,
+  canAccess,
+  canEditClubDoc,
+  canRead,
+  canReadClubDoc,
+  cleanClubEntries,
+  cleanEntries,
+  clubDefaults,
+  describeEntries,
+  divisionDefaults,
+  effectiveClubLists,
+  opensWide,
+  type AccessContext,
+} from '../access';
 
 const D1 = '11111111-1111-4111-8111-111111111111';
 const D2 = '22222222-2222-4222-8222-222222222222';
@@ -83,5 +97,51 @@ describe('cleaning and describing', () => {
       D1,
     );
     expect(s).toBe('Heads of this division, Tech team');
+  });
+});
+
+describe('timed access', () => {
+  const ctx = (now: number) => ({ userId: 'u1', roles: [], teamIds: [], now });
+  const e = { t: 'person' as const, id: 'u1', until: '2026-12-01' };
+  it('lets the person in through the end of the day, then not', () => {
+    expect(canAccess([e], ctx(Date.parse('2026-12-01T20:00:00-08:00')))).toBe(true);
+    expect(canAccess([e], ctx(Date.parse('2026-12-02T00:30:00-08:00')))).toBe(false);
+  });
+  it('keeps the end day when cleaning and drops a bad one', () => {
+    const id = '123e4567-e89b-12d3-a456-426614174000';
+    expect(cleanEntries([{ t: 'person', id, until: '2026-12-01' }])).toEqual([{ t: 'person', id, until: '2026-12-01' }]);
+    expect(cleanEntries([{ t: 'person', id, until: 'soon' }])).toEqual([{ t: 'person', id }]);
+  });
+  it('says when it ends', () => {
+    expect(describeEntries([{ t: 'person', id: 'x', name: 'Sam', until: '2099-01-02' }], {})).toBe('Sam (until Jan 2, 2099)');
+    expect(describeEntries([{ t: 'person', id: 'x', name: 'Sam', until: '2020-01-02' }], {})).toBe('Sam (ended Jan 2, 2020)');
+  });
+});
+
+describe('club docs', () => {
+  const lead = { userId: 'u', roles: [{ role: 'lead', division_id: null }], teamIds: [] } as never;
+  const officer = { userId: 'o', roles: [{ role: 'officer', division_id: null }], teamIds: [] } as never;
+  const exec = { userId: 'e', roles: [{ role: 'exec', division_id: null }], teamIds: [] } as never;
+  it('a doc with no lists keeps the old rule', () => {
+    const d = { read_access: null, edit_access: null };
+    expect(canReadClubDoc(d, officer, true)).toBe(true);
+    expect(canReadClubDoc(d, officer, false)).toBe(false);
+    expect(canEditClubDoc(d, lead, true)).toBe(true);
+    expect(canEditClubDoc(d, officer, false)).toBe(false);
+  });
+  it('a doc with lists follows them, and exec always gets in', () => {
+    const d = { read_access: [{ t: 'role' as const, role: 'lead' }], edit_access: [{ t: 'person' as const, id: 'someone-else' }] };
+    expect(canReadClubDoc(d, lead, true)).toBe(true);
+    expect(canReadClubDoc(d, officer, true)).toBe(false);
+    expect(canEditClubDoc(d, lead, true)).toBe(false);
+    expect(canEditClubDoc(d, exec, false)).toBe(true);
+  });
+  it('whoever may edit may read', () => {
+    const d = { read_access: [], edit_access: [{ t: 'role' as const, role: 'officer' }] };
+    expect(canReadClubDoc(d, officer, false)).toBe(true);
+  });
+  it('shows the old rule as lists, and never keeps everyone or signed in', () => {
+    expect(effectiveClubLists({ read_access: null, edit_access: null }).custom).toBe(false);
+    expect(cleanClubEntries([{ t: 'everyone' }, { t: 'signed_in' }, { t: 'role', role: 'lead' }])).toEqual([{ t: 'role', role: 'lead' }]);
   });
 });

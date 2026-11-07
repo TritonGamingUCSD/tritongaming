@@ -256,7 +256,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
     loadTodos(createServiceClient(), { id: profile.id, roles }, { manageAll: canManageMeetings, canHost: canHostMeetings }),
     canViewDocs ? getDashboardLinks(profile.id).catch(() => []) : Promise.resolve([]),
     loadHomeAttention(createServiceClient(), profile.id).catch(() => []),
-    loadHomeActivity(createServiceClient(), canViewDocs).catch(() => []),
+    loadHomeActivity(createServiceClient(), canViewDocs, profile.id).catch(() => []),
     loadHomePins(createServiceClient(), profile.id).catch(() => [] as string[]),
     loadShoutout(createServiceClient()).catch(() => null),
     loadSiteSettings(createServiceClient()),

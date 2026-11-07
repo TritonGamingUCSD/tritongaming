@@ -5,6 +5,7 @@ import { loadGrantedCapabilities } from '@/lib/portal/grantedCapabilities';
 import { hasCapability, withGrantedCapabilities } from '@/lib/portal/capabilities';
 import { staffName } from '@/lib/members/names';
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { canEditClubDoc, canReadClubDoc, type AccessContext, type AccessEntry, type ClubDocLists } from './access';
 
 // 'manage_docs' = lead, exec, admin (write); 'view_docs' = everyone who can read the docs. The routes use the service client, so this is the real boundary.
 export async function authorizeDocs(capability: 'manage_docs' | 'view_docs') {
@@ -53,4 +54,57 @@ export async function editingNow(svc: SupabaseClient, docIds: string[], me: stri
   const out = new Map<string, string[]>();
   for (const r of data ?? []) out.set(r.doc_id as string, [...(out.get(r.doc_id as string) ?? []), names.get(r.user_id as string) ?? 'Someone']);
   return out;
+}
+
+// ── Per-doc access ───────────────────────────────────────────────────────────────────────────────────────────────────────────────
+export interface DocActor {
+  userId: string;
+  ctx: AccessContext;
+  hasView: boolean;
+  hasManage: boolean;
+  staff: boolean;
+}
+
+/** Everything needed to ask "may this person read or edit this doc?": their roles (with granted permissions), teams and the two permissions that decide a doc with no lists. */
+export async function loadDocActor(svc: SupabaseClient, userId: string): Promise<DocActor> {
+  const [{ data: roles }, granted, { data: groups }] = await Promise.all([
+    svc.from('user_roles').select('role, division_id').eq('user_id', userId),
+    loadGrantedCapabilities(svc, userId).catch(() => []),
+    svc.from('meeting_groups').select('id').contains('member_ids', [userId]),
+  ]);
+  const grants = withGrantedCapabilities(roles ?? [], granted);
+  const staff = grants.some((r) => r.role === 'exec' || r.role === 'admin');
+  return {
+    userId,
+    ctx: { userId, roles: grants, teamIds: (groups ?? []).map((g) => g.id as string) },
+    hasView: hasCapability(grants, 'view_docs'),
+    hasManage: hasCapability(grants, 'manage_docs'),
+    staff,
+  };
+}
+
+export type DocListsRow = { id: string; read_access: AccessEntry[] | null; edit_access: AccessEntry[] | null };
+export const DOC_LIST_COLUMNS = 'id, read_access, edit_access';
+
+export const docCan = (a: DocActor, d: ClubDocLists) => ({ read: canReadClubDoc(d, a.ctx, a.hasView), edit: canEditClubDoc(d, a.ctx, a.hasManage) });
+
+/**
+ * For a route about one doc: the person, whether they may read / edit it, and the doc's lists. `mode` is what the route needs: 'read' or 'edit'.
+ * A doc that does not exist, or that they cannot read, is "not found" for a reader, and a doc they can read but not change says so. Nobody is told a doc they cannot read exists, except through the request-access route.
+ */
+export async function authorizeDoc(docId: string, mode: 'read' | 'edit') {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) } as const;
+  const svc = createServiceClient();
+  if (!UUID.test(docId)) return { error: bad('Doc not found.', 404) } as const;
+  const [actor, { data: lists }] = await Promise.all([loadDocActor(svc, user.id), svc.from('docs').select(DOC_LIST_COLUMNS).eq('id', docId).maybeSingle()]);
+  if (!lists) return { error: NextResponse.json({ error: 'This doc was deleted or moved out of reach.', code: 'deleted' }, { status: 404 }) } as const;
+  const can = docCan(actor, lists as unknown as ClubDocLists);
+  const readOk = can.read || can.edit;
+  if (!readOk) return { error: NextResponse.json({ error: 'This doc was deleted or moved out of reach.', code: 'deleted' }, { status: 404 }) } as const;
+  if (mode === 'edit' && !can.edit) return { error: NextResponse.json({ error: 'You can read this doc but not change it.', code: 'read_only' }, { status: 403 }) } as const;
+  return { user, svc, actor, can, lists: lists as unknown as DocListsRow } as const;
 }

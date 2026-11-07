@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { MAX_DOC_CHARS, UUID, authorizeDocs, bad, namesOf } from '@/lib/docs/docsServer';
+import { MAX_DOC_CHARS, authorizeDoc, bad, namesOf } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,11 +9,10 @@ export const dynamic = 'force-dynamic';
 //   published_elsewhere  someone published a newer version (409): `rebase` accepts it and carries on from there
 //   draft_changed        someone else saved the shared draft after you last did (409, with their text): `force` writes over it
 export async function POST(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
-  if (!UUID.test(id)) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
   const content = b.content === undefined ? undefined : String(b.content);
   const title = b.title === undefined ? undefined : String(b.title).trim().slice(0, 120);
   if (content !== undefined && content.length > MAX_DOC_CHARS) return bad('This doc is too long.');

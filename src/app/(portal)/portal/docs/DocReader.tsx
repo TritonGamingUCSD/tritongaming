@@ -2,7 +2,7 @@
 
 import { formatPacificDate } from '@/lib/core/timezone';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AlertTriangle, BadgeCheck, ChevronRight, FileText, BookCheck, Flag, MoreHorizontal, Pencil, Pin, PinOff, Plus, Star, Trash2 } from 'lucide-react';
+import { AlertTriangle, BadgeCheck, ChevronRight, FileText, BookCheck, Flag, MoreHorizontal, Pencil, Pin, PinOff, Plus, Share2, Star, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import Notice from '@/components/ui/Notice';
 import Dialog, { DialogActions, DialogCancel, DialogText } from '@/components/ui/Dialog';
@@ -15,6 +15,7 @@ import { ageLabel, ancestors, type DocSection } from '@/lib/docs/docsTree';
 import type { SyncDoc } from '@/lib/docs/docsSync';
 import type { Doc, DocCategory } from '@/types/database';
 import { RequiredReadingDialog } from './DocRequired';
+import DocShare from './DocShare';
 import DocComments from './DocComments';
 import { clock } from './docsApi';
 import styles from './docs.module.css';
@@ -80,6 +81,12 @@ export default function DocReader({
 }) {
   const [reporting, setReporting] = useState(false);
   const [requiring, setRequiring] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  // a link from a request notification opens the Share box straight away
+  useEffect(() => {
+    if (canEdit && new URLSearchParams(window.location.search).get('share')) setSharing(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [doc.id]);
   // Opening a doc counts as reading it; the server only keeps it when the doc is required reading for one of my roles.
   useEffect(() => {
     void fetch('/api/docs/read', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: doc.id }) }).catch(() => {});
@@ -289,6 +296,18 @@ export default function DocReader({
                         role="menuitem"
                         onClick={() => {
                           setSettings(false);
+                          setSharing(true);
+                        }}
+                      >
+                        <Share2 size={14} aria-hidden="true" /> Share…
+                      </button>
+                    )}
+                    {canEdit && (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        onClick={() => {
+                          setSettings(false);
                           setRequiring(true);
                         }}
                       >
@@ -445,6 +464,7 @@ export default function DocReader({
 
         {doc.published && <DocComments docId={doc.id} />}
         {requiring && <RequiredReadingDialog doc={doc} onClose={() => setRequiring(false)} />}
+        {sharing && <DocShare doc={doc} onClose={() => setSharing(false)} />}
         {reporting && <ReportDoc doc={doc} onClose={() => setReporting(false)} />}
       </article>
 

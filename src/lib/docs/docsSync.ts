@@ -16,6 +16,7 @@ export interface SyncDoc {
   tags: string[];
   pinned: boolean;
   teams: string[];
+  can_edit?: boolean;
   draft_updated_at: string | null;
   draft_by_name: string | null;
   draft_by_me: boolean;

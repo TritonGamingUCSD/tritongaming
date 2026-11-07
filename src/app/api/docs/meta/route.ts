@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { cleanTags } from '@/lib/docs/docsTree';
-import { UUID, authorizeDocs, bad } from '@/lib/docs/docsServer';
+import { UUID, authorizeDoc, bad } from '@/lib/docs/docsServer';
 import { notifyDocs } from '@/lib/docs/docsLive';
 
 export const dynamic = 'force-dynamic';
@@ -8,11 +8,10 @@ export const dynamic = 'force-dynamic';
 // Change a doc's icon, cover, pin, tags or teams without touching its text: { id, icon?, cover_url?, pinned?, teams?, reviewed?, add_tags?, remove_tags? }.
 // Only the fields you send change, and tags are added or removed one by one, so two people changing them at once don't wipe each other's work.
 export async function POST(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
-  if (!UUID.test(id)) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
   const { data: doc } = await auth.svc.from('docs').select('id, tags').eq('id', id).maybeSingle();
   if (!doc) return NextResponse.json({ error: 'This doc was deleted by someone else.', code: 'deleted' }, { status: 404 });
   const patch: Record<string, unknown> = {};

@@ -347,3 +347,12 @@ Sign in or link with Discord (Supabase provider). A linked account fills the pro
 ## Dashboard countdowns
 
 - A **Countdowns** row on the portal home (`Countdowns.tsx`, `lib/portal/countdowns.ts`): the next holiday, when the quarter ends (or, in a break, when the next one starts), when the break starts, and the next event; a second holiday fills a free tile. Holidays are computed for any year (US holidays and days off, plus Lunar New Year from a table for 2026 to 2031); the quarter dates come from the quarters calendar, and a tile is left out when its date is not known.
+
+## Club documentation access
+
+- A club doc has two lists like a division doc: who can **read** and who can **edit** (`docs.read_access`, `docs.edit_access`). Entries: a role, a team, a person (optionally until a day), the Heads/Members/Alumni of one division or any. Club docs can never be listed for everyone or everyone signed in. Exec and admin always get in; whoever may edit may also read.
+- A doc with no lists keeps the old rule (the docs permission reads, the manage-docs permission edits), so nothing changed until someone shares a doc differently. Defaults for a new list come from `clubDefaults()` in `lib/docs/access.ts`.
+- **Share…** (the doc's ⋯ menu, for editors): the two lists with quick choices, who asked to read it (7 days, 30 days, always, or not now), **Check A Person** (can they read or edit it, and which entry says so), and **What Changed** (each change to the lists, who made it). The person who saves stays an editor.
+- **Request access:** a link to a doc you cannot open says so (never what the doc is called) and lets you ask; the editors (people named on its edit list, its author and last editor, or exec and admin) get a notification that opens the Share box.
+- It is enforced in the database (`doc_can()` and the row rules on `docs`) and in every doc route (`authorizeDoc` in `lib/docs/docsServer.ts`); the doc list, sync, the dashboard's latest docs and required reading only show docs the person may read.
+- Check: `node scripts/checks/club-docs.mjs`.

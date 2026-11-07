@@ -22,6 +22,7 @@ import NewDocDialog, { HOWTO_START, type NewDocChoice } from './NewDocDialog';
 import MoveDialog from './MoveDialog';
 import ConflictDialog from './ConflictDialog';
 import { dayTime, docsGet, docsPost } from './docsApi';
+import RequestDocAccess from './RequestDocAccess';
 import styles from './docs.module.css';
 
 interface Notice2 {
@@ -54,6 +55,8 @@ export default function DocsClient({
   canEdit: boolean;
 }) {
   const [docs, setDocs] = useState(initialDocs);
+  // each doc says whether this person may edit it (its own edit list); the section-wide permission is only the fallback
+  const docEditable = (d: Doc) => d.can_edit ?? canEdit;
   const [categories, setCategories] = useState(initialCategories);
   const [links, setLinks] = useState(initialLinks);
   const [favorites, setFavorites] = useState(() => new Set(initialFavorites));
@@ -181,6 +184,7 @@ export default function DocsClient({
           pinned: s.pinned,
           teams: s.teams,
           published: s.published,
+          can_edit: s.can_edit,
           ...(open.editing && open.selectedId === d.id ? {} : { revision: d.revision }),
         } as Doc,
       ];
@@ -619,7 +623,7 @@ export default function DocsClient({
         <aside className={`${styles.treeCol} ${treeOpen ? styles.treeColOpen : ''}`} aria-label="All docs">
           {treeOpen && <button type="button" className={styles.treeBackdrop} aria-label="Close the doc list" onClick={() => setTreeOpen(false)} />}
           <DocSidebar
-            docs={docs.filter((d) => d.published || canEdit)}
+            docs={docs.filter((d) => d.published || docEditable(d))}
             sections={sections}
             categories={categories}
             selectedId={selectedId}
@@ -650,7 +654,7 @@ export default function DocsClient({
               <button type="button" className={styles.treeBtn} onClick={() => setTreeOpen(true)}>
                 <PanelLeft size={16} aria-hidden="true" /> All docs
               </button>
-              <DocSearch docs={docs.filter((d) => d.published || canEdit)} groupName={catName} onOpen={openDoc} />
+              <DocSearch docs={docs.filter((d) => d.published || docEditable(d))} groupName={catName} onOpen={openDoc} />
             </div>
           )}
 
@@ -727,7 +731,7 @@ export default function DocsClient({
                   docs={docs}
                   sections={sections}
                   categories={categories}
-                  canEdit={canEdit}
+                  canEdit={docEditable(selected)}
                   favorite={favorites.has(selected.id)}
                   size={size}
                   onSize={(s) => saveReader(s)}
@@ -744,9 +748,17 @@ export default function DocsClient({
                   teams={teams}
                 />
               )
+            ) : selectedId && !editingNew ? (
+              <RequestDocAccess
+                id={selectedId}
+                onHome={() => {
+                  setSelectedId(null);
+                  goHome();
+                }}
+              />
             ) : (
               <DocHome
-                docs={docs.filter((d) => d.published || canEdit)}
+                docs={docs.filter((d) => d.published || docEditable(d))}
                 sections={sections}
                 favorites={favorites}
                 onOpen={openDoc}

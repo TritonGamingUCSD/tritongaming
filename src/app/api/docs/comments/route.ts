@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { hasCapability } from '@/lib/portal/capabilities';
+import { createServiceClient } from '@/lib/supabase/admin';
+
 import { createNotifications } from '@/lib/notifications/notify';
 import { refuseBlocked } from '@/lib/wordfilter/server';
-import { UUID, authorizeDocs, bad, namesOf } from '@/lib/docs/docsServer';
+import { UUID, authorizeDoc, bad, namesOf } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,19 +12,18 @@ const MAX = 1000;
 // A simple thread under each doc. Anyone who can read the docs can comment; the commenter or an editor can delete; an editor can mark one resolved.
 // GET ?doc_id=<id> -> the thread. POST { doc_id, body } adds one (the doc's author and last editor get a bell). PATCH { id, resolved } resolves or reopens it (editors). DELETE ?id=<id>.
 export async function GET(request: Request) {
-  const auth = await authorizeDocs('view_docs');
-  if ('error' in auth) return auth.error;
   const docId = new URL(request.url).searchParams.get('doc_id') ?? '';
-  if (!UUID.test(docId)) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(docId, 'read');
+  if ('error' in auth) return auth.error;
   // A draft that nobody can read yet has no readable thread either.
   const { data: d } = await auth.svc.from('docs').select('published').eq('id', docId).maybeSingle();
-  if (!d || (!d.published && !hasCapability(auth.roles, 'manage_docs'))) return bad('Doc not found.', 404);
+  if (!d || (!d.published && !auth.can.edit)) return bad('Doc not found.', 404);
   const { data } = await auth.svc.from('doc_comments').select('id, author_id, body, created_at, resolved_at').eq('doc_id', docId).order('created_at');
   const names = await namesOf(
     auth.svc,
     (data ?? []).map((c) => c.author_id as string | null),
   );
-  const edit = hasCapability(auth.roles, 'manage_docs');
+  const edit = auth.can.edit;
   return NextResponse.json({
     canEdit: edit,
     comments: (data ?? []).map((c) => ({
@@ -38,19 +38,18 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await authorizeDocs('view_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const docId = String(b.doc_id ?? '');
   const body = String(b.body ?? '')
     .trim()
     .slice(0, MAX);
-  if (!UUID.test(docId)) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(docId, 'read');
+  if ('error' in auth) return auth.error;
   if (!body) return bad('Write a comment first.');
   const blocked = await refuseBlocked({ Comment: body });
   if (blocked) return blocked;
   const { data: doc } = await auth.svc.from('docs').select('title, created_by, updated_by, published').eq('id', docId).maybeSingle();
-  if (!doc || (!doc.published && !hasCapability(auth.roles, 'manage_docs'))) return bad('Doc not found.', 404);
+  if (!doc || (!doc.published && !auth.can.edit)) return bad('Doc not found.', 404);
   const { count } = await auth.svc
     .from('doc_comments')
     .select('id', { count: 'exact', head: true })
@@ -70,11 +69,12 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
   if (!UUID.test(id)) return bad('Comment not found.', 404);
+  const { data: row } = await createServiceClient().from('doc_comments').select('doc_id').eq('id', id).maybeSingle();
+  const auth = await authorizeDoc(String(row?.doc_id ?? ''), 'edit');
+  if ('error' in auth) return auth.error;
   const { error } = await auth.svc
     .from('doc_comments')
     .update(b.resolved === false ? { resolved_at: null, resolved_by: null } : { resolved_at: new Date().toISOString(), resolved_by: auth.user.id })
@@ -84,13 +84,13 @@ export async function PATCH(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  const auth = await authorizeDocs('view_docs');
-  if ('error' in auth) return auth.error;
   const id = new URL(request.url).searchParams.get('id') ?? '';
   if (!UUID.test(id)) return bad('Comment not found.', 404);
-  const { data: c } = await auth.svc.from('doc_comments').select('author_id').eq('id', id).maybeSingle();
+  const { data: c } = await createServiceClient().from('doc_comments').select('author_id, doc_id').eq('id', id).maybeSingle();
   if (!c) return bad('Comment not found.', 404);
-  if (c.author_id !== auth.user.id && !hasCapability(auth.roles, 'manage_docs')) return bad('You can only delete your own comments.', 403);
+  const auth = await authorizeDoc(String(c.doc_id), 'read');
+  if ('error' in auth) return auth.error;
+  if (c.author_id !== auth.user.id && !auth.can.edit) return bad('You can only delete your own comments.', 403);
   await auth.svc.from('doc_comments').delete().eq('id', id);
   return NextResponse.json({ ok: true });
 }

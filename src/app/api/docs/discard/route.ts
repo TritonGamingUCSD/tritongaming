@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server';
-import { UUID, authorizeDocs, bad, namesOf } from '@/lib/docs/docsServer';
+import { authorizeDoc, bad, namesOf } from '@/lib/docs/docsServer';
 import { notifyDocs } from '@/lib/docs/docsLive';
 
 export const dynamic = 'force-dynamic';
 
 // Throw away the unpublished draft: { id, force? }. The live doc is untouched. If the draft holds someone else's work it asks first (409 'others_in_draft').
 export async function POST(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
-  if (!UUID.test(id)) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
   const { data: doc } = await auth.svc.from('docs').select('draft_updated_at, draft_updated_by').eq('id', id).maybeSingle();
   if (!doc) return NextResponse.json({ error: 'This doc was deleted by someone else.', code: 'deleted' }, { status: 404 });
   if (!b.force && doc.draft_updated_by && doc.draft_updated_by !== auth.user.id && doc.draft_updated_at) {

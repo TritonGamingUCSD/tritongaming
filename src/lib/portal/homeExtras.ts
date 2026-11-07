@@ -1,4 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { docCan, loadDocActor } from '@/lib/docs/docsServer';
+import type { ClubDocLists } from '@/lib/docs/access';
 
 // What the desktop dashboard shows beside the next event, small and cheap to load: what is waiting on this person (their unread notifications; the to-do list above it already covers plans, help and check-in) and what has been going on lately (the latest documentation updates and the latest events).
 export interface HomeAttention {
@@ -33,15 +35,18 @@ export async function loadHomeAttention(svc: SupabaseClient, userId: string): Pr
   }));
 }
 
-export async function loadHomeActivity(svc: SupabaseClient, canViewDocs: boolean): Promise<HomeActivity[]> {
+export async function loadHomeActivity(svc: SupabaseClient, canViewDocs: boolean, userId?: string): Promise<HomeActivity[]> {
   const [docs, events] = await Promise.all([
     canViewDocs
-      ? svc.from('docs').select('id, title, updated_at').eq('published', true).order('updated_at', { ascending: false }).limit(4)
-      : Promise.resolve({ data: [] as { id: string; title: string; updated_at: string }[] }),
+      ? svc.from('docs').select('id, title, updated_at, read_access, edit_access').eq('published', true).order('updated_at', { ascending: false }).limit(20)
+      : Promise.resolve({ data: [] as { id: string; title: string; updated_at: string; read_access?: unknown; edit_access?: unknown }[] }),
     svc.from('events').select('id, title, slug, created_at').eq('is_published', true).order('created_at', { ascending: false }).limit(4),
   ]);
+  // only docs this person may read (each doc's own list)
+  const actor = userId ? await loadDocActor(svc, userId) : null;
+  const readable = (docs.data ?? []).filter((d) => (actor ? docCan(actor, d as unknown as ClubDocLists).read : true)).slice(0, 4);
   const items: HomeActivity[] = [
-    ...(docs.data ?? []).map((d) => ({ id: `d-${d.id}`, kind: 'Doc' as const, title: d.title as string, at: d.updated_at as string, href: `/portal/docs?id=${d.id}` })),
+    ...readable.map((d) => ({ id: `d-${d.id}`, kind: 'Doc' as const, title: d.title as string, at: d.updated_at as string, href: `/portal/docs?id=${d.id}` })),
     ...(events.data ?? []).map((e) => ({
       id: `e-${e.id}`,
       kind: 'Event' as const,

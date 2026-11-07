@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { DOC_COLUMNS, UUID, authorizeDocs, bad, editingNow, namesOf } from '@/lib/docs/docsServer';
+import { DOC_COLUMNS, authorizeDoc, bad, editingNow, namesOf } from '@/lib/docs/docsServer';
 import { notifyDocs } from '@/lib/docs/docsLive';
 
 export const dynamic = 'force-dynamic';
@@ -8,11 +8,10 @@ export const dynamic = 'force-dynamic';
 // Refused (409) when: someone published since you started (code 'published_elsewhere'), the draft holds someone else's edits (code 'others_in_draft'), or
 // someone else has the doc open right now (code 'being_edited'). `force` goes ahead anyway, after the person has been told.
 export async function POST(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
-  if (!UUID.test(id)) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
   const { data: doc } = await auth.svc
     .from('docs')
     .select('id, revision, title, content, updated_by, updated_at, draft_title, draft_content, draft_updated_at, draft_updated_by')

@@ -442,7 +442,8 @@ type DocOptionalColumns =
   | 'draft_content'
   | 'draft_updated_at'
   | 'draft_updated_by';
-export type Doc = Database['public']['Tables']['docs']['Row'];
+// can_edit: whether the signed-in person may edit this doc (its own edit list, or the docs permission when it has none); set by the server where docs are loaded.
+export type Doc = Database['public']['Tables']['docs']['Row'] & { can_edit?: boolean };
 /** A tile on the documentation home that opens a Google Drive file or other address. Not a document. */
 export interface QuickLink {
   id: string;

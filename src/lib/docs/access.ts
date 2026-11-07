@@ -8,13 +8,20 @@ export type AccessEntry =
   | { t: 'signed_in' }
   | { t: 'role'; role: string }
   | { t: 'team'; id: string }
-  | { t: 'person'; id: string; name?: string }
+  | { t: 'person'; id: string; name?: string; until?: string }
   | { t: 'division'; role: DivisionRole; division_id: string | null };
 
 export interface AccessContext {
   userId: string | null;
   roles: RoleGrant[];
   teamIds: string[];
+  /** For tests: what time it is (milliseconds). */
+  now?: number;
+}
+
+/** A person entry can end on a day (YYYY-MM-DD, through the end of that Pacific day). Expired entries stay in the list, shown as such, and let nobody in. */
+export function entryExpired(e: AccessEntry, now: number = Date.now()): boolean {
+  return e.t === 'person' && !!e.until && now > Date.parse(`${e.until}T23:59:59-08:00`);
 }
 
 const DIVISION_ROLES: DivisionRole[] = ['division', 'division_member', 'division_alumni'];
@@ -30,7 +37,7 @@ export function matches(e: AccessEntry, ctx: AccessContext): boolean {
     case 'team':
       return ctx.teamIds.includes(e.id);
     case 'person':
-      return !!ctx.userId && ctx.userId === e.id;
+      return !!ctx.userId && ctx.userId === e.id && !entryExpired(e, ctx.now);
     case 'division':
       return ctx.roles.some((r) => (r.role as string) === e.role && (e.division_id === null || r.division_id === e.division_id));
   }
@@ -77,7 +84,12 @@ export function cleanEntries(input: unknown): AccessEntry[] {
     else if (e?.t === 'role' && typeof e.role === 'string' && ROLE.test(e.role) && !DIVISION_ROLES.includes(e.role as DivisionRole)) entry = { t: 'role', role: e.role };
     else if (e?.t === 'team' && typeof e.id === 'string' && ID.test(e.id)) entry = { t: 'team', id: e.id };
     else if (e?.t === 'person' && typeof e.id === 'string' && ID.test(e.id))
-      entry = { t: 'person', id: e.id, ...(typeof e.name === 'string' && e.name.trim() ? { name: e.name.trim().slice(0, 60) } : {}) };
+      entry = {
+        t: 'person',
+        id: e.id,
+        ...(typeof e.name === 'string' && e.name.trim() ? { name: e.name.trim().slice(0, 60) } : {}),
+        ...(typeof e.until === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(e.until) ? { until: e.until } : {}),
+      };
     else if (e?.t === 'division' && DIVISION_ROLES.includes(e.role as DivisionRole) && (e.division_id === null || (typeof e.division_id === 'string' && ID.test(e.division_id))))
       entry = { t: 'division', role: e.role as DivisionRole, division_id: e.division_id as string | null };
     if (!entry) continue;
@@ -120,8 +132,12 @@ export function describeEntries(
           return `${names.roleLabel?.(e.role) ?? e.role} role`;
         case 'team':
           return `${names.team?.(e.id) ?? 'A team'} team`;
-        case 'person':
-          return e.name ?? names.person?.(e.id) ?? 'A person';
+        case 'person': {
+          const who = e.name ?? names.person?.(e.id) ?? 'A person';
+          if (!e.until) return who;
+          const day = new Date(`${e.until}T00:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', month: 'short', day: 'numeric', year: 'numeric' });
+          return `${who} ${entryExpired(e) ? '(ended' : '(until'} ${day})`;
+        }
         case 'division': {
           const who = e.role === 'division' ? 'Heads' : e.role === 'division_member' ? 'Members' : 'Alumni';
           const of = e.division_id === null ? 'of any division' : e.division_id === thisDivision ? 'of this division' : `of ${names.division?.(e.division_id) ?? 'a division'}`;
@@ -131,3 +147,22 @@ export function describeEntries(
     })
     .join(', ');
 }
+
+// ── Club documentation ───────────────────────────────────────────────────────────────────────────────────────────────────────────
+// A club doc has the same two lists as a division doc. A doc with no lists yet (null) keeps the old rule: read by everyone who has the docs permission, edited by those who manage docs. Club docs are never public
+// and never open to everyone signed in: only roles, teams, people and division roles can be listed.
+export interface ClubDocLists {
+  read_access: AccessEntry[] | null;
+  edit_access: AccessEntry[] | null;
+}
+export const canReadClubDoc = (doc: ClubDocLists, ctx: AccessContext, hasViewDocs: boolean): boolean =>
+  doc.read_access === null ? hasViewDocs || isStaff(ctx) : canRead(doc.read_access, doc.edit_access, ctx);
+export const canEditClubDoc = (doc: ClubDocLists, ctx: AccessContext, hasManageDocs: boolean): boolean =>
+  doc.edit_access === null ? hasManageDocs || isStaff(ctx) : canAccess(doc.edit_access, ctx);
+/** The lists a club doc would show in the editor: its own, or what the old rule amounts to. */
+export function effectiveClubLists(doc: ClubDocLists): { read: AccessEntry[]; edit: AccessEntry[]; custom: boolean } {
+  const d = clubDefaults();
+  return { read: doc.read_access ?? d.read, edit: doc.edit_access ?? d.edit, custom: doc.read_access !== null || doc.edit_access !== null };
+}
+/** Club lists with anything that must not be there taken out (everyone, signed in). */
+export const cleanClubEntries = (input: unknown): AccessEntry[] => cleanEntries(input).filter((e) => e.t !== 'everyone' && e.t !== 'signed_in');

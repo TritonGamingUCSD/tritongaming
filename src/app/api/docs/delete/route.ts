@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { descendantIds } from '@/lib/docs/docsTree';
-import { UUID, authorizeDocs, bad, editingNow } from '@/lib/docs/docsServer';
+import { authorizeDoc, bad, editingNow } from '@/lib/docs/docsServer';
 import { notifyDocs } from '@/lib/docs/docsLive';
 import { removeUnreferencedFiles, storageUrlsIn } from '@/lib/storage/removeFiles';
 
@@ -9,11 +9,10 @@ export const dynamic = 'force-dynamic';
 // Delete a doc and every page inside it: { id, force? }. Asks first (409 'being_edited') when someone has it, or a page inside it, open in the editor,
 // or holds an unpublished draft there (409 'has_drafts'), since deleting throws that work away.
 export async function POST(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
-  if (!UUID.test(id)) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
   const { data } = await auth.svc.from('docs').select('id, title, parent_id, category_id, order_index, draft_updated_at, draft_updated_by');
   const docs = (data ?? []) as {
     id: string;

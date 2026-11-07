@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { canMoveUnder, reorder } from '@/lib/docs/docsTree';
-import { UUID, authorizeDocs, bad } from '@/lib/docs/docsServer';
+import { UUID, authorizeDoc, bad } from '@/lib/docs/docsServer';
 import { notifyDocs } from '@/lib/docs/docsLive';
 
 export const dynamic = 'force-dynamic';
@@ -9,10 +9,15 @@ export const dynamic = 'force-dynamic';
 // `from_parent_id` is where the mover's screen thought the page was: if someone already moved it, that is reported (409 'moved_elsewhere') instead of silently moving it again.
 // Under a parent it follows the parent's category; at the top it takes `category_id`. `before_id` puts it ahead of that sibling, otherwise last.
 export async function POST(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
+  // moving a page needs the right to edit it, and the right to edit the page it goes under
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
+  if (b.parent_id) {
+    const into = await authorizeDoc(String(b.parent_id), 'edit');
+    if ('error' in into) return into.error;
+  }
   const parentId = b.parent_id ? String(b.parent_id) : null;
   const beforeId = b.before_id ? String(b.before_id) : null;
   const categoryId = b.category_id ? String(b.category_id) : null;

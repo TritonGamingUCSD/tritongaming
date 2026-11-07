@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
+import type { ClubDocLists } from '@/lib/docs/access';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { logAudit } from '@/lib/notifications/audit';
 import { createNotifications } from '@/lib/notifications/notify';
-import { UUID, authorizeDocs, bad, namesOf } from '@/lib/docs/docsServer';
+import { authorizeDoc, authorizeDocs, docCan, loadDocActor, bad, namesOf } from '@/lib/docs/docsServer';
 import { pacificDayKey } from '@/lib/core/timezone';
 
 export const dynamic = 'force-dynamic';
@@ -28,15 +29,19 @@ export async function GET(request: Request) {
     const ids = [...new Set((req ?? []).map((r) => r.doc_id as string))];
     if (!ids.length) return NextResponse.json({ unread: [] });
     const [{ data: docs }, { data: reads }] = await Promise.all([
-      auth.svc.from('docs').select('id, title').in('id', ids).eq('published', true),
+      auth.svc.from('docs').select('id, title, read_access, edit_access').in('id', ids).eq('published', true),
       auth.svc.from('doc_reads').select('doc_id').eq('user_id', auth.user.id).in('doc_id', ids),
     ]);
     const read = new Set((reads ?? []).map((r) => r.doc_id as string));
-    return NextResponse.json({ unread: (docs ?? []).filter((d) => !read.has(d.id as string)).map((d) => ({ id: d.id as string, title: d.title as string })) });
+    const actor = await loadDocActor(auth.svc, auth.user.id);
+    return NextResponse.json({
+      unread: (docs ?? [])
+        .filter((d) => !read.has(d.id as string) && docCan(actor, d as unknown as ClubDocLists).read)
+        .map((d) => ({ id: d.id as string, title: d.title as string })),
+    });
   }
-  const auth = await authorizeDocs('manage_docs');
+  const auth = await authorizeDoc(id, 'edit');
   if ('error' in auth) return auth.error;
-  if (!UUID.test(id)) return bad('Doc not found.', 404);
   const people = await expectedReaders(auth.svc, id);
   return NextResponse.json({ ...people });
 }
@@ -60,11 +65,10 @@ async function expectedReaders(svc: SupabaseClient, docId: string) {
 
 // Editors: PUT { id, roles } sets who the doc is required for (empty = not required). POST { id, action: 'remind' } sends a bell reminder to those who haven't read it (once a day).
 export async function PUT(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
-  if (!UUID.test(id)) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
   const asked: string[] = (Array.isArray(b.roles) ? b.roles : []).map(String);
   const roles = [...new Set(asked)].filter((r): r is (typeof REQUIRED_ROLES)[number] => (REQUIRED_ROLES as readonly string[]).includes(r));
   const { data: doc } = await auth.svc.from('docs').select('title').eq('id', id).maybeSingle();
@@ -85,11 +89,11 @@ export async function PUT(request: Request) {
 }
 
 export async function POST(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? '');
-  if (!UUID.test(id) || (b.action !== 'remind' && b.action !== 'reread')) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
+  if (b.action !== 'remind' && b.action !== 'reread') return bad('Doc not found.', 404);
   const { data: doc } = await auth.svc.from('docs').select('title, published').eq('id', id).maybeSingle();
   if (!doc) return bad('Doc not found.', 404);
   if (!doc.published) return bad('Publish the doc first; people can’t read a draft.', 409);

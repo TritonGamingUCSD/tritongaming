@@ -1,15 +1,14 @@
 import { NextResponse } from 'next/server';
 import { staffName } from '@/lib/members/names';
-import { UUID, authorizeDocs, bad, editingNow, namesOf } from '@/lib/docs/docsServer';
+import { UUID, authorizeDoc, bad, editingNow, namesOf } from '@/lib/docs/docsServer';
 
 export const dynamic = 'force-dynamic';
 
 // GET ?id=<doc>: the doc's past versions, newest first, with who made each (editors only).
 export async function GET(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const id = new URL(request.url).searchParams.get('id') ?? '';
-  if (!UUID.test(id)) return bad('Doc not found.', 404);
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
   const { data } = await auth.svc
     .from('doc_versions')
     .select('id, title, content, created_by, created_at, note')
@@ -36,12 +35,12 @@ export async function GET(request: Request) {
 // POST { id, version_id, force? }: bring a past version back as the draft (nothing goes live until it is published). That replaces the shared draft, so it asks
 // first (409) when someone else has unpublished changes in it or has the doc open right now.
 export async function POST(request: Request) {
-  const auth = await authorizeDocs('manage_docs');
-  if ('error' in auth) return auth.error;
   const b = await request.json().catch(() => ({}));
   const id = String(b.id ?? ''),
     versionId = String(b.version_id ?? '');
-  if (!UUID.test(id) || !UUID.test(versionId)) return bad('Version not found.', 404);
+  const auth = await authorizeDoc(id, 'edit');
+  if ('error' in auth) return auth.error;
+  if (!UUID.test(versionId)) return bad('Version not found.', 404);
   const { data: cur } = await auth.svc.from('docs').select('draft_updated_at, draft_updated_by').eq('id', id).maybeSingle();
   if (!cur) return NextResponse.json({ error: 'This doc was deleted by someone else.', code: 'deleted' }, { status: 404 });
   if (!b.force) {
