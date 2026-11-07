@@ -581,13 +581,15 @@
 
 /* On a wide screen the next ticket keeps a ticket's shape instead of stretching across the whole page */
 .heroCard { max-width: 1200px; }
-.ticketList, .eventList { grid-template-columns: repeat(auto-fill, minmax(17rem, 20rem)); }
+.ticketList, .eventList { grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); } /* the cards share the width: no empty strip beside them on a tablet */
 
 /* Wide screens: other active tickets and the events to join sit side by side; everything else spans the page */
 @media (min-width: 1150px) {
   .page { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 2.5rem; align-items: start; }
   .page > * { grid-column: 1 / -1; }
   .page > .colA, .page > .colB { grid-column: auto; }
+  /* with no events to join beside them, the other tickets use the whole width instead of half */
+  .page:not(:has(> .colB)) > .colA { grid-column: 1 / -1; }
   .heroCard { max-width: none; }
 }
 @media (min-width: 1150px) { .ticketList, .eventList { grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); } }
