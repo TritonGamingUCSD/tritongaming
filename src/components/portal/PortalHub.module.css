@@ -1196,3 +1196,10 @@
   .appFrame[data-hat] .topBar { background-image: repeating-linear-gradient(115deg, color-mix(in srgb, var(--hat) 14%, transparent) 0 14px, transparent 14px 28px); border-bottom: 3px solid var(--hat); }
   .appFrame[data-hat] .railItemActive { box-shadow: none; }
 }
+
+/* A tablet held wide (900 to 1100px): the top bar has less room, so the page name, the code box and the gaps all give a little, instead of pushing the buttons off the right edge. */
+@media (min-width: 900px) and (max-width: 1100px) {
+  .topTitle { min-width: 4rem; }
+  .topRight { gap: 0.3rem; }
+  .topCode { flex-basis: 9rem; min-width: 7.8rem; }
+}

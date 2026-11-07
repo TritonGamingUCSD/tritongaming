@@ -44,7 +44,7 @@ export default function LinkAccountBanner() {
   };
 
   return (
-    <div className={styles.banner} role="status">
+    <div className={styles.banner} role="status" data-top-banner>
       <Link2 size={18} strokeWidth={1.75} aria-hidden="true" className={styles.icon} />
       <p className={styles.text}>
         {ask === 'google' ? (

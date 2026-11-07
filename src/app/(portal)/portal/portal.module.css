@@ -90,3 +90,6 @@
   .fixedSite a, .fixedSite a:hover, .fixedSite a:focus { width: 38px; height: 38px; border-radius: 50%; background: var(--pp-chrome-2); border: 1px solid rgba(var(--pp-chrome-rgb), 0.1); color: rgba(var(--pp-chrome-rgb), 0.75); }
 }
 @media (max-width: 480px) { .fixedSite { top: 0.875rem; right: calc(0.875rem + 138px); } }
+
+/* On a phone the round buttons (Main Site, Enter A Code, light/dark, bell) float at the top right: a notice banner would sit under them, so it starts below them. */
+@media (max-width: 899px) { .content:has([data-top-banner]) { padding-top: 3.4rem; } }

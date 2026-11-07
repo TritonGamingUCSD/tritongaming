@@ -22,7 +22,7 @@ export default function ProfileIncompleteBanner({ missing, officerTabOnly = fals
   const href = officerTabOnly ? `/portal/profile/card?next=${encodeURIComponent(here)}` : `/portal/profile?next=${encodeURIComponent(here)}`;
 
   return (
-    <div className={styles.banner} role="status">
+    <div className={styles.banner} role="status" data-top-banner>
       <UserRoundPen size={18} strokeWidth={1.75} aria-hidden="true" className={styles.icon} />
       <p className={styles.text}>
         <strong>Finish your profile.</strong>
