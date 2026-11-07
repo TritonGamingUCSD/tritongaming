@@ -367,3 +367,12 @@ Sign in or link with Discord (Supabase provider). A linked account fills the pro
 - **Plan The Day** (Bracket tab, a collapsed box): fill in start times round by round (first match, minutes per match, matches at once, break between) and rename rounds (`stage.settings.round_names`, keyed like `W2`). Names, times and round names show on the bracket, the Control panel and the public page.
 - Tiebreakers and points for a win, draw and loss were already in a stage's **Points and tiebreakers** box (Structure tab).
 - Check: `node scripts/checks/tournaments.mjs` (the "ZZ Planned" section).
+
+## Calendar (`lib/calendar`, `components/calendar`, `/portal/calendar`, `/calendar`)
+- **Portal calendar** (`/portal/calendar`, tab = Month / Week / List, subtab = the date): everything a person can see or is part of on one screen. Events (published, theirs marked), tournaments and streams, meetings and plans, event setups, deadlines, the quarter dates (begins, ends, break), holidays. `loadPortalCalendar` gathers it and only returns what that person may see.
+- **Quarter system:** the quarter name and week number show above the calendar (“Fall 2026 · Week 6”); a person sitting a quarter out is told on its first day.
+- **Filters** (all in the address: `hide`, `div`, `mine`): kind chips with colours and counts, Triton Gaming vs one division, “Only Mine”.
+- **An item** opens a popup with when, where, a link to its page, and Add To Your Calendar (Google, Outlook, or an `.ics` file for Apple).
+- **Subscribe:** each person has a private link (`/api/calendar/feed/<secret>.ics`, table `calendar_feeds`) they can make, replace (the old one stops working) or turn off. It carries the same items.
+- **Public calendar** (`/calendar`, footer link): only what is published for everyone (public events, public tournaments, streams, quarter dates, holidays), filter by division, and an `.ics` subscribe link (`/api/calendar/public.ics`, `?division=<address>`). `calendar` is a reserved short-link word.
+- Check: `node scripts/checks/calendar.mjs`.

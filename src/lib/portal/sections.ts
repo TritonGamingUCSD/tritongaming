@@ -14,6 +14,15 @@ export interface SectionDef {
 // The order of the list is the order in the sidebar, the More sheet and the home grid (inside each group).
 export const SECTIONS: SectionDef[] = [
   { id: 'tickets', label: 'My Tickets', mainTab: 'tickets', search: { hint: 'Your event tickets and history', keywords: ['qr', 'ticket', 'history', 'activity', 'registered'] } },
+  {
+    id: 'calendar',
+    label: 'Calendar',
+    mainTab: 'month',
+    search: {
+      hint: 'Events, tournaments, streams, meetings and the quarter in one place',
+      keywords: ['calendar', 'schedule', 'dates', 'when', 'month', 'week', 'quarter', 'subscribe', 'google', 'ical'],
+    },
+  },
   { id: 'points', label: 'Rewards', mainTab: 'mine', search: { hint: 'Points and the shop', keywords: ['points', 'shop', 'perks', 'redeem'] } },
   { id: 'activity', label: 'Activity', address: true },
   { id: 'profile', label: 'Profile', mainTab: 'info', search: { hint: 'Your info and preferences', keywords: ['account', 'settings', 'me', 'name', 'picture', 'avatar'] } },

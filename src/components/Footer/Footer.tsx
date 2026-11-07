@@ -9,6 +9,7 @@ const EXPLORE_LINKS = [
   { href: '/', label: 'Home' },
   { href: '/our-story', label: 'Our Story' },
   { href: '/events', label: 'Events' },
+  { href: '/calendar', label: 'Calendar' },
   { href: '/divisions', label: 'Divisions' },
   { href: '/team', label: 'Team' },
   { href: '/media', label: 'Media' },

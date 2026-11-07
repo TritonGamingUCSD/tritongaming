@@ -19,6 +19,7 @@ import {
   CircleHelp,
   ShieldAlert,
   CalendarRange,
+  CalendarDays,
   Globe,
   Package,
   Gamepad2,
@@ -83,6 +84,7 @@ import { TOURNAMENTS_ADMIN_ONLY } from '@/lib/tournaments/access';
 import { canActInAnyDivision } from '@/lib/portal/divisionAccess';
 import StaffleSectionContent from './staffle/StaffleSectionContent';
 import TriviaSectionContent from './trivia/TriviaSectionContent';
+import CalendarSectionContent from './calendar/CalendarSectionContent';
 import PhotoBoothSectionContent from './photobooth/PhotoBoothSectionContent';
 import PollsSectionContent from './polls/PollsSectionContent';
 import QaSectionContent from './qa/QaSectionContent';
@@ -325,6 +327,15 @@ export default async function PortalDashboard({ searchParams }: Props) {
           activity={ticketsData.tickets}
         />
       ),
+    },
+    {
+      id: 'calendar',
+      icon: <CalendarDays size={28} strokeWidth={1.5} aria-hidden="true" />,
+      label: sectionLabel('calendar'),
+      description: 'Everything coming up, in one calendar',
+      homeExclude: true,
+      group: 'Yours' as const,
+      content: <CalendarSectionContent />,
     },
     {
       id: 'profile',

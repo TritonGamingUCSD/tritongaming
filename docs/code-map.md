@@ -100,6 +100,7 @@ Every portal section is defined once in `src/lib/portal/sections.ts` (its addres
 | Address | Name | First tab | In the search |
 | --- | --- | --- | --- |
 | `/portal/tickets` | My Tickets | tickets | Your event tickets and history |
+| `/portal/calendar` | Calendar | month | Events, tournaments, streams, meetings and the quarter in one place |
 | `/portal/points` | Rewards | mine | Points and the shop |
 | `/portal/activity` | Activity | - | an address only (no page of its own) |
 | `/portal/profile` | Profile | info | Your info and preferences |

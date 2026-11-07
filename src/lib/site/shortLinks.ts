@@ -8,6 +8,7 @@ export const RESERVED_SLUGS = new Set([
   'team',
   'events',
   'divisions',
+  'calendar',
   'media',
   'sponsors',
   'membership',

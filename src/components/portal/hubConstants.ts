@@ -27,6 +27,7 @@ export const GROUP_ORDER = ['Overview', 'Yours', 'Events', 'Run', 'Team', 'Outre
 // (Grouped by job: Events plans an event, Live Tools holds what runs while it happens, Club is meetings, people and standing, Outreach is how the club reaches people (email, QR codes, the public website), Admin is the portal's own settings.)
 const WANTED_ORDER = [
   'tickets',
+  'calendar',
   'points',
   'activity',
   'profile',
