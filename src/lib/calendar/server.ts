@@ -112,7 +112,7 @@ export async function loadPortalCalendar(svc: SupabaseClient, user: { id: string
       divisionId: owner.division_id,
       mine,
       location: (e.location as string | null) ?? null,
-      href: mine ? '/portal/tickets' : manages ? `/portal/events/${e.id}` : `/events/${(e.slug as string | null) || e.id}`,
+      href: mine ? '/me/tickets' : manages ? `/portal/events/${e.id}` : `/events/${(e.slug as string | null) || e.id}`,
       note: !e.is_published ? 'Draft' : e.audience === 'ucsd_only' ? 'UCSD only' : null,
     });
   }

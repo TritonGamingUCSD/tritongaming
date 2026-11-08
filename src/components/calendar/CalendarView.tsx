@@ -316,12 +316,37 @@ export default function CalendarView({
         </div>
       )}
 
-      {open && <Detail item={open} divName={open.divisionId ? divName.get(open.divisionId)?.name : undefined} onClose={() => setOpen(null)} />}
+      {open && <Detail item={open} canRegister={signedInView} divName={open.divisionId ? divName.get(open.divisionId)?.name : undefined} onClose={() => setOpen(null)} />}
     </div>
   );
 }
 
-function Detail({ item, divName, onClose }: { item: CalItem; divName?: string; onClose: () => void }) {
+function Detail({ item, divName, canRegister, onClose }: { item: CalItem; divName?: string; canRegister: boolean; onClose: () => void }) {
+  const [reg, setReg] = useState<'idle' | 'working' | 'done'>('idle');
+  const [regMsg, setRegMsg] = useState('');
+  // An event the person has no ticket for yet can be registered for right here (the event page's own button does the same).
+  const eventId = item.id.startsWith('event:') ? item.id.slice(6) : null;
+  const canGet = canRegister && !item.mine && !!eventId && !!item.href?.startsWith('/events/');
+  async function register() {
+    if (!eventId) return;
+    setReg('working');
+    setRegMsg('');
+    try {
+      const res = await fetch('/api/tickets', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event_id: eventId, source: 'calendar' }) });
+      const data = await res.json();
+      if (res.status === 409) return setReg('done');
+      if (!res.ok) {
+        if (data.needsProfile) return void (window.location.href = `/portal/finish-profile?next=/me/calendar&mode=ticket&event=${eventId}`);
+        setRegMsg(data.error || 'Something went wrong. Please try again.');
+        return setReg('idle');
+      }
+      if (data.url) return void (window.location.href = data.url);
+      setReg('done');
+    } catch {
+      setRegMsg('Could not reach the site. Try again.');
+      setReg('idle');
+    }
+  }
   const origin = typeof window === 'undefined' ? '' : window.location.origin;
   const when = whenOf(item);
   const download = () => {
@@ -350,8 +375,23 @@ function Detail({ item, divName, onClose }: { item: CalItem; divName?: string; o
           </p>
         )}
         {item.note && <p>{item.note}</p>}
+        {regMsg && (
+          <p role="alert" style={{ color: 'var(--pp-bad)' }}>
+            {regMsg}
+          </p>
+        )}
         <div className={styles.dActions}>
-          {item.href && (
+          {canGet && reg !== 'done' && (
+            <Button onClick={register} loading={reg === 'working'}>
+              Register
+            </Button>
+          )}
+          {reg === 'done' && (
+            <Link href="/me/tickets" className={styles.open} onClick={onClose}>
+              You’re going · Show Ticket
+            </Link>
+          )}
+          {item.href && reg !== 'done' && (
             <Link href={item.href} className={styles.open} onClick={onClose}>
               <ExternalLink size={15} aria-hidden="true" /> Open
             </Link>
