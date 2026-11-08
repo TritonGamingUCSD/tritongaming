@@ -31,7 +31,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Promis
   const user = await getUser();
   const params = await searchParams;
 
-  if (user) redirect(params.next || '/portal');
+  if (user) redirect(params.next || '/app');
 
   return (
     <div className={styles.page}>

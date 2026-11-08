@@ -60,7 +60,7 @@ export async function updateSession(request: NextRequest) {
 
   // Redirect authenticated users away from login
   if (pathname === '/login' && user && !guest) {
-    const next = request.nextUrl.searchParams.get('next') || '/portal';
+    const next = request.nextUrl.searchParams.get('next') || '/app';
     const url = request.nextUrl.clone();
     url.pathname = next;
     url.searchParams.delete('next');

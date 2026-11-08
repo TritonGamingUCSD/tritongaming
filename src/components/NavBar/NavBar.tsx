@@ -4,10 +4,12 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowUpRight } from 'lucide-react';
+import { ArrowUpRight, Award, CalendarDays, LogOut, Ticket, User, LayoutDashboard } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/members/profile';
+import { usesPortal } from '@/lib/portal/audience';
+import type { RoleGrant } from '@/lib/portal/capabilities';
 import styles from './NavBar.module.css';
 import { DISCORD_URL } from '@/lib/site/links';
 
@@ -33,6 +35,10 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
   const toggleRef = useRef<HTMLButtonElement>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  // The person's roles decide what the account menu offers: students and guests get their own pages (/me), anyone with another role also gets the portal.
+  const [roles, setRoles] = useState<RoleGrant[]>([]);
+  const [acct, setAcct] = useState(false);
+  const acctRef = useRef<HTMLDivElement>(null);
   // What the last signed-in visit looked like (kept on this browser), so the Portal button already has the person's picture while the login is being checked.
   const [hint, setHint] = useState<{ avatar: string | null; letter: string } | null>(null);
   const prevScrollY = useRef(0);
@@ -57,11 +63,26 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
   // direct visit to /login. The middleware's own /portal/* -> /login?next=
   // redirect (when a protected page bounces you here) is untouched — that
   // one *should* return you to the specific page you were trying to reach.
-  const loginHref = '/login';
+  const loginHref = `/login?next=${encodeURIComponent(pathname && !pathname.startsWith('/login') ? pathname : '/me')}`;
 
   useEffect(() => {
     setOpen(false);
+    setAcct(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (!acct) return;
+    const down = (e: MouseEvent) => {
+      if (acctRef.current && !acctRef.current.contains(e.target as Node)) setAcct(false);
+    };
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && setAcct(false);
+    document.addEventListener('mousedown', down);
+    document.addEventListener('keydown', key);
+    return () => {
+      document.removeEventListener('mousedown', down);
+      document.removeEventListener('keydown', key);
+    };
+  }, [acct]);
 
   useEffect(() => {
     try {
@@ -82,6 +103,8 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
       if (user) {
         const { data } = await supabase.from('profiles').select('id, display_name, avatar_url, custom_avatar_url').eq('id', user.id).single();
         setProfile(data as Profile | null);
+        const { data: held } = await supabase.from('user_roles').select('role, division_id').eq('user_id', user.id);
+        setRoles((held ?? []) as RoleGrant[]);
         try {
           const p = data as Profile | null;
           if (p) localStorage.setItem(NAV_HINT_KEY, JSON.stringify({ avatar: resolveAvatarUrl(p), letter: (p.display_name || 'U')[0].toUpperCase() }));
@@ -106,6 +129,7 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
     } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         setProfile(null);
+        setRoles([]);
         try {
           localStorage.removeItem(NAV_HINT_KEY);
           setHint(null);
@@ -188,7 +212,14 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
   // is not signed in on to the login page by itself, so it works from the first moment.
   const navAvatarUrl = profile ? resolveAvatarUrl(profile) : authLoading ? (hint?.avatar ?? null) : null;
   const showLetter = profile ? (profile.display_name || 'U')[0].toUpperCase() : authLoading ? (hint?.letter ?? null) : null;
-  const portalHref = profile || authLoading ? '/portal' : loginHref;
+  const signedIn = !!profile || authLoading; // (while the login is still being checked, act as signed in: a signed-out visitor is sent on to sign in anyway)
+  const staff = usesPortal(roles);
+  const student = roles.length > 0 && !staff;
+  async function signOut() {
+    await createClient().auth.signOut();
+    setAcct(false);
+    router.refresh();
+  }
 
   return (
     <>
@@ -219,14 +250,48 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
         {announcement && <div className={`${styles.announce}${open ? ` ${styles.announceHidden}` : ''}`}>{announcement}</div>}
 
         <div className={styles.right}>
-          <Link href={portalHref} prefetch={false} className={styles.portal} aria-label={profile || authLoading ? 'Member portal' : 'Sign in to the member portal'}>
-            {navAvatarUrl ? (
-              <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
-            ) : showLetter ? (
-              <span className={styles.avatarFallback} aria-hidden="true" data-letter={showLetter} />
-            ) : null}
-            <span>Portal</span>
-          </Link>
+          {profile || authLoading ? (
+            <div className={styles.acct} ref={acctRef}>
+              <button type="button" className={styles.portal} aria-expanded={acct} aria-haspopup="menu" aria-label="Your account menu" onClick={() => setAcct((v) => !v)}>
+                {navAvatarUrl ? (
+                  <Image src={navAvatarUrl} alt="" width={24} height={24} className={styles.avatar} unoptimized referrerPolicy="no-referrer" />
+                ) : showLetter ? (
+                  <span className={styles.avatarFallback} aria-hidden="true" data-letter={showLetter} />
+                ) : null}
+                <span>Me</span>
+              </button>
+              {acct && (
+                <div className={styles.acctMenu} role="menu">
+                  <Link role="menuitem" href="/me/tickets" prefetch={false}>
+                    <Ticket size={16} aria-hidden="true" /> My Tickets
+                  </Link>
+                  <Link role="menuitem" href="/me/calendar" prefetch={false}>
+                    <CalendarDays size={16} aria-hidden="true" /> Calendar
+                  </Link>
+                  {student && (
+                    <Link role="menuitem" href="/me/rewards" prefetch={false}>
+                      <Award size={16} aria-hidden="true" /> Rewards
+                    </Link>
+                  )}
+                  <Link role="menuitem" href="/me/profile" prefetch={false}>
+                    <User size={16} aria-hidden="true" /> Profile
+                  </Link>
+                  {staff && (
+                    <Link role="menuitem" href="/portal" prefetch={false} className={styles.acctPortal}>
+                      <LayoutDashboard size={16} aria-hidden="true" /> Portal
+                    </Link>
+                  )}
+                  <button role="menuitem" type="button" onClick={signOut}>
+                    <LogOut size={16} aria-hidden="true" /> Sign Out
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href={loginHref} prefetch={false} className={styles.portal} aria-label="Sign in">
+              <span>Sign In</span>
+            </Link>
+          )}
           <button ref={toggleRef} type="button" className={styles.menuBtn} onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="poster-menu">
             <span className={styles.bars} aria-hidden="true">
               <i />
@@ -282,8 +347,8 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
             <a href={DISCORD_URL} target="_blank" rel="noopener noreferrer" className={styles.discord} onClick={() => setOpen(false)}>
               <Image src="/logos/discord.svg" alt="" width={22} height={22} unoptimized /> Join the Discord <ArrowUpRight size={18} aria-hidden="true" />
             </a>
-            <Link href={portalHref} prefetch={false} className={styles.sideLink} onClick={() => setOpen(false)}>
-              {profile || authLoading ? 'Open your member portal' : 'Member portal sign in'} <span aria-hidden="true">→</span>
+            <Link href={signedIn ? (staff ? '/portal' : '/me/tickets') : loginHref} prefetch={false} className={styles.sideLink} onClick={() => setOpen(false)}>
+              {signedIn ? (staff ? 'Open the portal' : 'My tickets and profile') : 'Sign in'} <span aria-hidden="true">→</span>
             </Link>
             <p className={styles.tag}>Gaming Org at UC San Diego</p>
           </div>

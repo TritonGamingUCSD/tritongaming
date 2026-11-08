@@ -6,7 +6,7 @@ import { VIEW_USER_COOKIE } from '@/lib/portal/viewAs';
 // before it reaches any route. (The cookie is only honoured for a real admin; for anyone else a copied cookie just blocks their own edits.)
 const READ_ONLY_OK = ['/api/admin/view-as-user', '/api/admin/view-as', '/api/auth/'];
 
-const NEEDS_SESSION = ['/portal', '/login', '/api', '/auth'];
+const NEEDS_SESSION = ['/portal', '/me', '/app', '/login', '/api', '/auth'];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -28,5 +28,5 @@ export async function proxy(request: NextRequest) {
 // invocation limits. So it is only attached to the paths that need it (the portal, sign-in and the APIs); every public page, picture and file
 // is served without running it at all. Keep this list in step with NEEDS_SESSION above.
 export const config = {
-  matcher: ['/portal/:path*', '/login', '/auth/:path*', '/api/:path*'],
+  matcher: ['/portal/:path*', '/me/:path*', '/me', '/app', '/login', '/auth/:path*', '/api/:path*'],
 };

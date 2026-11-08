@@ -7,7 +7,7 @@ import { applyPendingGrants } from '@/lib/members/roleByEmail';
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
-  const next = searchParams.get('next') ?? '/portal';
+  const next = searchParams.get('next') ?? '/app';
 
   // A failed linkIdentity() (e.g. that Google account is already linked
   // to someone else's profile) comes back here the same way any OAuth

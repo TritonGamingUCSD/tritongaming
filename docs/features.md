@@ -376,3 +376,10 @@ Sign in or link with Discord (Supabase provider). A linked account fills the pro
 - **Subscribe:** each person has a private link (`/api/calendar/feed/<secret>.ics`, table `calendar_feeds`) they can make, replace (the old one stops working) or turn off. It carries the same items.
 - **Public calendar** (`/calendar`, footer link): only what is published for everyone (public events, public tournaments, streams, quarter dates, holidays), filter by division, and an `.ics` subscribe link (`/api/calendar/public.ics`, `?division=<address>`). `calendar` is a reserved short-link word.
 - Check: `node scripts/checks/calendar.mjs`.
+
+## My pages on the main site (`/me`), the launcher (`/app`) and the home-screen app
+- **Who goes where:** students (only the UCSD Student role) and guests (signed in, no role) live on the main site's own pages at `/me/tickets`, `/me/calendar`, `/me/rewards` (students only) and `/me/profile`. These are the same pages the portal has, shown in the main site's frame (`lib/portal/audience.ts`: `usesPortal`, `homeFor`). Anyone holding another role (recruit, alumni, officer, lead, exec, division people, admin) keeps the portal as home and also gets a Portal button on `/me`. The portal's addresses all keep working.
+- **Header:** signed out it says **Sign In** (and returns to the page you were on); signed in it is **Me**, a menu with My Tickets, Calendar, Rewards (students), Profile, Portal (staff) and Sign Out.
+- **`/app`** sends someone to their home: signed out → sign in, staff and members → `/portal`, students and guests → `/me`. It is the default after signing in, and what the home-screen app opens.
+- **Home-screen app:** named **Triton Gaming** (it was "TG Portal"), opens `/app`. The manifest keeps its old file name and `id` so earlier installs keep updating; an iPhone icon launch is sent to `/app` as well.
+- `/me`, `/app` are reserved short-link words. Rewards points card: always dark with light text (it was unreadable in the light theme).

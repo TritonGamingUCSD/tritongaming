@@ -39,10 +39,10 @@ export const metadata: Metadata = {
     title: 'Triton Gaming',
     description: 'Gaming Org at UC San Diego',
   },
-  // "Add to Home Screen" / "Install" from any page of the site is the portal: the manifest (public/portal.webmanifest: name TG Portal, the logo icons, opens /portal) and, for iOS, the standalone
-  // flags; a launch from an iPhone icon whose first page is outside the portal is sent to /portal (components/HomeScreenLaunch).
+  // "Add to Home Screen" / "Install" from any page of the site is the Triton Gaming app: the manifest (public/portal.webmanifest, kept under its old name so earlier installs keep updating: name Triton Gaming, the logo icons, opens /app, which sends staff to /portal and everyone else to /me) and, for iOS, the standalone
+  // flags; a launch from an iPhone icon whose first page is outside the portal is sent to /app (components/HomeScreenLaunch).
   manifest: '/portal.webmanifest',
-  appleWebApp: { capable: true, title: 'TG Portal', statusBarStyle: 'default' },
+  appleWebApp: { capable: true, title: 'Triton Gaming', statusBarStyle: 'default' },
 };
 
 export const viewport: Viewport = {

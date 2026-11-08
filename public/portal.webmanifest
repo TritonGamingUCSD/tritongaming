@@ -1,9 +1,9 @@
 {
   "id": "/portal",
-  "name": "Triton Gaming Portal",
-  "short_name": "TG Portal",
-  "description": "The Triton Gaming member portal: tickets, check-in, meetings and more.",
-  "start_url": "/portal",
+  "name": "Triton Gaming",
+  "short_name": "Triton Gaming",
+  "description": "Triton Gaming: your tickets, calendar and events, and the member tools for the team.",
+  "start_url": "/app",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f3f1ea",
@@ -14,7 +14,7 @@
     { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "My Tickets", "url": "/portal/tickets", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "My Tickets", "url": "/me/tickets", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] },
     { "name": "Scan", "url": "/portal/scan", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }] }
   ]
 }

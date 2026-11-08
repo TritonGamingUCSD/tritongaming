@@ -113,3 +113,10 @@
 }
 @media (min-width: 1100px) and (max-width: 1279px) { .cart { padding: 0.5rem 0.6rem; } .cartName { font-size: 0.68rem; letter-spacing: 0.05em; } }
 @media (prefers-reduced-motion: reduce) { .cart { transition: none; } }
+
+/* The account menu under the signed-in button. */
+.acct { position: relative; }
+.acctMenu { position: absolute; right: 0; top: calc(100% + 0.5rem); z-index: 60; display: flex; flex-direction: column; min-width: 13rem; padding: 0.4rem; border: 3px solid var(--ink); border-radius: var(--radius-sm); background: var(--paper); box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6); }
+.acctMenu a, .acctMenu button { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; padding: 0 0.8rem; border: 0; border-radius: 6px; background: none; color: var(--ink); font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; text-align: left; cursor: pointer; }
+.acctMenu a:hover, .acctMenu button:hover, .acctMenu a:focus-visible, .acctMenu button:focus-visible { background: var(--yellow); outline: none; }
+.acctMenu .acctPortal { border-top: 2px dashed rgba(0, 0, 0, 0.25); border-radius: 0 0 6px 6px; margin-top: 0.2rem; }

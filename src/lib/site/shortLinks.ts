@@ -1,6 +1,8 @@
 // Slugs that already mean something on this site — a short link may never shadow them.
 export const RESERVED_SLUGS = new Set([
   'portal',
+  'me',
+  'app',
   'login',
   'auth',
   'in',

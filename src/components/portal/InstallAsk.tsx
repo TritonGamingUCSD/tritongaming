@@ -13,9 +13,9 @@ interface InstallEvent extends Event {
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
 }
 
-// The offer to put the portal on the home screen, on a phone, when it is not already there. Android and Chrome give a real install button (the browser's own install event);
+// The offer to put the app on the home screen, on a phone, when it is not already there. Android and Chrome give a real install button (the browser's own install event);
 // iPhones and iPads have no such button for a web page, so the card says where to tap (Share, then Add to Home Screen). Shown a little after the page settles and after the
-// notifications offer has had its turn; "Not now" is remembered for a month, installing for good. Anything added from any page is the portal (see public/portal.webmanifest).
+// notifications offer has had its turn; "Not now" is remembered for a month, installing for good. Anything added from any page is the app (see public/portal.webmanifest).
 export default function InstallAsk() {
   const [mode, setMode] = useState<'android' | 'ios' | null>(null);
   const [busy, setBusy] = useState(false);
@@ -95,12 +95,12 @@ export default function InstallAsk() {
 
   if (!mode) return null;
   return (
-    <div className={styles.wrap} role="dialog" aria-label="Add the portal to your home screen">
+    <div className={styles.wrap} role="dialog" aria-label="Add Triton Gaming to your home screen">
       <span className={styles.icon}>
         <Smartphone size={18} aria-hidden="true" />
       </span>
       <div className={styles.text}>
-        <strong>Add the portal to your home screen</strong>
+        <strong>Add Triton Gaming to your home screen</strong>
         {mode === 'ios' ? (
           <span>
             Tap <Share size={13} aria-label="Share" style={{ verticalAlign: '-2px' }} /> at the bottom of Safari, then <b>Add to Home Screen</b>. Your tickets and Scan are one tap

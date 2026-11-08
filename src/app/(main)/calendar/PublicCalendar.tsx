@@ -15,7 +15,8 @@ const read = (): CalState => {
   return readCalState((k) => q.get(k === 'tab' ? KEYS.tab : k === 'subtab' ? KEYS.subtab : k), pacificToday());
 };
 
-export default function PublicCalendar({ divisions }: { divisions: CalDivision[] }) {
+// With `personal` it is a signed-in person's own calendar (/me/calendar): their items marked, an "Only Mine" switch, a private subscribe link, and the light look of the pages around it.
+export default function PublicCalendar({ divisions, personal = false }: { divisions: CalDivision[]; personal?: boolean }) {
   const [state, setState] = useState<CalState>(() => ({ view: 'month', date: pacificToday(), hide: [], div: '', mine: false }));
   const [subscribe, setSubscribe] = useState(false);
   useEffect(() => {
@@ -40,21 +41,21 @@ export default function PublicCalendar({ divisions }: { divisions: CalDivision[]
   const divSlug = state.div && state.div !== 'club' ? divisions.find((d) => d.id === state.div)?.slug : null;
   const feed = typeof window === 'undefined' ? '' : `${window.location.origin}/api/calendar/public.ics${divSlug ? `?division=${divSlug}` : ''}`;
   return (
-    <div className={styles.wrap}>
+    <div className={personal ? undefined : styles.wrap}>
       <CalendarView
-        endpoint="/api/calendar/public"
+        endpoint={personal ? '/api/calendar' : '/api/calendar/public'}
         state={state}
         onState={onState}
         divisions={divisions}
-        tone="site"
-        signedInView={false}
+        tone={personal ? 'portal' : 'site'}
+        signedInView={personal}
         toolbarExtra={
-          <button type="button" className={styles.sub} onClick={() => setSubscribe(true)}>
+          <button type="button" className={personal ? `${styles.sub} ${styles.subLight}` : styles.sub} onClick={() => setSubscribe(true)}>
             <CalendarSync size={15} aria-hidden="true" /> Subscribe
           </button>
         }
       />
-      {subscribe && <SubscribeDialog url={feed} onClose={() => setSubscribe(false)} />}
+      {subscribe && (personal ? <SubscribeDialog manage onClose={() => setSubscribe(false)} /> : <SubscribeDialog url={feed} onClose={() => setSubscribe(false)} />)}
     </div>
   );
 }

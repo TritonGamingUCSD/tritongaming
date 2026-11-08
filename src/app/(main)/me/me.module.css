@@ -1,0 +1,13 @@
+.wrap { max-width: 80rem; margin: 1.5rem auto 4rem; padding: 0 1.2rem; display: flex; flex-direction: column; gap: 1rem; }
+.tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.tabs a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1.1rem; border: 2px solid rgba(255, 255, 255, 0.45); border-radius: 8px; color: #fff; font-weight: 800; font-size: 0.85rem; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; }
+.tabs a:hover { background: rgba(255, 255, 255, 0.1); }
+.tabs .on { background: #fff; color: #0b1730; border-color: #fff; }
+.tabs .portal { margin-left: auto; border-color: var(--yellow); color: var(--yellow); }
+.sheet { padding: 1.2rem; border-radius: 12px; background: var(--pp-paper); color: var(--pp-ink); min-width: 0; }
+@media (max-width: 640px) {
+  .wrap { padding: 0 0.8rem; }
+  .sheet { padding: 0.9rem; }
+  .tabs a { flex: 1 1 auto; justify-content: center; padding: 0 0.7rem; }
+  .tabs .portal { margin-left: 0; }
+}

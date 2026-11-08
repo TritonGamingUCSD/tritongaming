@@ -45,6 +45,8 @@ export function usePortalParams() {
           (window as unknown as { __tgPush?: number }).__tgPush = ((window as unknown as { __tgPush?: number }).__tgPush ?? 0) + 1;
         } else window.history.replaceState(window.history.state, '', target);
       } else {
+        // A page of the main site's own (/me/…) keeps its path: the tab and subtab ride in the query, and the portal-only words are left out.
+        if (window.location.pathname.startsWith('/me')) for (const k of ['section', 'block', 'id', 'detail']) if (!(k in updates) || k === 'section') params.delete(k);
         const qs = params.toString();
         window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
       }
