@@ -1,8 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import SignInDialog from '@/components/auth/SignInDialog';
 import styles from './tournaments.module.css';
 
 // Sign up for a tournament from its public page, or claim an entry an organizer typed in for you (with the code they gave you). Needs an account; a guest is asked to sign in first and comes back here.
@@ -13,6 +13,7 @@ export default function JoinPanel({ slug, id, type, teamSize, onDone }: { slug: 
   const [code, setCode] = useState('');
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [signIn, setSignIn] = useState(false);
   useEffect(() => {
     void createClient()
       .auth.getUser()
@@ -32,7 +33,10 @@ export default function JoinPanel({ slug, id, type, teamSize, onDone }: { slug: 
     return (
       <section className={styles.join}>
         <b>Sign-ups are open.</b>
-        <Link href={`/login?next=${encodeURIComponent(`/tournaments/${slug}`)}`}>Sign in to join →</Link>
+        <button type="button" onClick={() => setSignIn(true)}>
+          Sign in to join →
+        </button>
+        {signIn && <SignInDialog next={`/tournaments/${slug}`} reason="Sign in to sign up for this tournament." onClose={() => setSignIn(false)} />}
       </section>
     );
   return (

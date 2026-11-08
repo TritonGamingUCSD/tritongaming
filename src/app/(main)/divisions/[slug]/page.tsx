@@ -20,6 +20,7 @@ import Link from 'next/link';
 import { getPublicDivisionDocs } from '@/lib/divisions/publicDocs';
 import BoardSection from '@/components/BoardSection/BoardSection';
 import { getDivisionCards } from './getDivisionHubData';
+import DivisionJoinButton from './DivisionJoinButton';
 import styles from './division.module.css';
 
 // Cached page, refreshed in the background (and right away when a division is saved).
@@ -106,6 +107,7 @@ export default async function DivisionPage({ params }: Params) {
                   <Image src="/logos/discord.svg" alt="" width={16} height={16} unoptimized /> Join our Discord
                 </a>
               )}
+              {!(await getOffSwitches()).includes('div_join') && <DivisionJoinButton id={division.id} name={division.name} path={`/divisions/${division.slug}`} />}
               {division.application_url && (
                 <a href={division.application_url} target="_blank" rel="noopener noreferrer" className={styles.applyBtn}>
                   <ExternalLink size={15} strokeWidth={1.75} aria-hidden="true" /> Apply to be an officer

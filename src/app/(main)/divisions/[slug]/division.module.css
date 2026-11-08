@@ -25,6 +25,8 @@
 .discordBtn { background: #4752c4; color: #f2f1f0; padding: 0.65rem 1rem; }
 .applyBtn { background: var(--yellow); color: var(--ink); padding: 0.65rem 1rem; }
 .socialBtn { background: var(--paper); padding: 0.55rem; }
+.joinBtn { cursor: pointer; font: inherit; font-family: var(--font-futura-heavy); font-size: 0.82rem; }
+.joinBtn:disabled { opacity: 0.7; cursor: default; }
 .discordBtn:hover, .applyBtn:hover, .socialBtn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }
 
 .prose { max-width: 46rem; margin: 0 auto; }
