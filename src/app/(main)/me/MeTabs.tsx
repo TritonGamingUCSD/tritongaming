@@ -8,6 +8,7 @@ import styles from './me.module.css';
 export default function MeTabs({ rewards, portal }: { rewards: boolean; portal: boolean }) {
   const path = usePathname();
   const tabs = [
+    { href: '/me/events', label: 'Events' },
     { href: '/me/tickets', label: 'My Tickets' },
     { href: '/me/calendar', label: 'Calendar' },
     ...(rewards ? [{ href: '/me/rewards', label: 'Rewards' }] : []),

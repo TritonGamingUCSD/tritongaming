@@ -1,0 +1,26 @@
+.page { display: flex; flex-direction: column; gap: 1.6rem; }
+.h { margin: 0 0 0.7rem; font-family: var(--font-futura-heavy); font-size: 1.3rem; color: var(--pp-ink); }
+.empty { margin: 0; color: rgba(var(--pp-ink-rgb), 0.85); font-size: 0.92rem; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr)); gap: 0.8rem; }
+.card { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.8rem 0.9rem; border: 2px solid rgba(var(--pp-ink-rgb), 0.35); border-radius: 10px; background: var(--pp-card); min-width: 0; }
+.mine { border-color: var(--pp-ink); box-shadow: 3px 3px 0 rgba(var(--pp-ink-rgb), 0.85); }
+.text { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; font-size: 0.84rem; color: rgba(var(--pp-ink-rgb), 0.9); }
+.text b { font-size: 0.98rem; color: var(--pp-ink); overflow-wrap: anywhere; line-height: 1.25; }
+.text a { color: inherit; text-decoration: none; }
+.text a:hover b { text-decoration: underline; }
+.text span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.text small { font-size: 0.76rem; color: rgba(var(--pp-ink-rgb), 0.8); }
+.btn, .show { display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem; flex: none; min-height: 44px; padding: 0 1rem; border: 2px solid var(--pp-ink); border-radius: 8px; background: var(--yellow); color: #011941; font: inherit; font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.05em; text-transform: uppercase; text-decoration: none; cursor: pointer; } /* theme-ok */
+.btn:disabled { opacity: 0.6; cursor: default; }
+.going { background: transparent; color: var(--pp-ink); }
+.reg { display: flex; flex-direction: column; align-items: flex-end; gap: 0.3rem; flex: none; }
+.reg small { max-width: 11rem; text-align: right; color: var(--pp-bad); font-size: 0.74rem; }
+.more { margin: 0; font-size: 0.88rem; color: rgba(var(--pp-ink-rgb), 0.9); }
+.more a { color: var(--pp-info); font-weight: 700; }
+@media (max-width: 480px) {
+  .list { grid-template-columns: 1fr; }
+  .card { flex-wrap: wrap; }
+  .btn, .show { flex: 1 1 100%; }
+  .reg { align-items: stretch; flex: 1 1 100%; }
+  .reg small { max-width: none; text-align: left; }
+}

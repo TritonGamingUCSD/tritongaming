@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowUpRight, Award, CalendarDays, LogOut, Ticket, User, LayoutDashboard } from 'lucide-react';
+import { ArrowUpRight, Award, CalendarCheck, CalendarDays, LogOut, Ticket, User, LayoutDashboard } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import type { Profile } from '@/types/database';
 import { resolveAvatarUrl } from '@/lib/members/profile';
@@ -262,6 +262,9 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
               </button>
               {acct && (
                 <div className={styles.acctMenu} role="menu">
+                  <Link role="menuitem" href="/me/events" prefetch={false}>
+                    <CalendarCheck size={16} aria-hidden="true" /> Events
+                  </Link>
                   <Link role="menuitem" href="/me/tickets" prefetch={false}>
                     <Ticket size={16} aria-hidden="true" /> My Tickets
                   </Link>
