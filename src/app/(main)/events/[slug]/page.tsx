@@ -7,7 +7,8 @@ import type { Metadata, Viewport } from 'next';
 import Image from 'next/image';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { MapPin, Ticket, Camera, Award, CalendarDays, Users, Navigation, ExternalLink } from 'lucide-react';
+import EventTicketButton from './EventTicketButton';
+import { MapPin, Camera, Award, CalendarDays, Users, Navigation, ExternalLink } from 'lucide-react';
 import { getEventBySlugOrId, getGoingCount, getAllEvents } from '@/lib/events/events';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
 import { getAlbumPreview } from '@/lib/storage/googlePhotosAlbum';
@@ -204,15 +205,11 @@ export default async function EventDetailPage({ params }: Params) {
 
             {!isPast && (
               <div className={styles.ctaRow} data-avoid>
-                <Link href="/portal/tickets" className={styles.ticketBtn}>
-                  <span className={styles.stubLeft}>
-                    <Ticket size={20} strokeWidth={1.75} aria-hidden="true" />
-                  </span>
-                  <span className={styles.stubRight}>
-                    {event.audience === 'ucsd_only' ? 'UCSD students: get ticket' : event.ticket_price > 0 ? `Get ticket · $${event.ticket_price}` : 'Get ticket · free'}
-                    {event.audience !== 'ucsd_only' && event.ticket_price > 0 && <small>free for UCSD students</small>}
-                  </span>
-                </Link>
+                <EventTicketButton
+                  eventId={event._id}
+                  label={event.audience === 'ucsd_only' ? 'UCSD students: get ticket' : event.ticket_price > 0 ? `Get ticket · $${event.ticket_price}` : 'Get ticket · free'}
+                  sub={event.audience !== 'ucsd_only' && event.ticket_price > 0 ? 'free for UCSD students' : null}
+                />
               </div>
             )}
             {!isPast && event.points_value > 0 && (

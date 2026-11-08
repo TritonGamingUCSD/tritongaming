@@ -13,7 +13,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Where to go afterwards: only a path inside the portal, never another site.
 function safeNext(raw: string | undefined): string {
-  return raw && /^\/portal(\/[A-Za-z0-9_\-./?=&%]*)?$/.test(raw) && !raw.includes('//') ? raw : '/portal';
+  return raw && /^\/(portal|me)(\/[A-Za-z0-9_\-./?=&%]*)?$/.test(raw) && !raw.includes('//') ? raw : '/app';
 }
 
 // A stripped-down profile page for the moment someone needs it to continue (getting a ticket, checking in): the required details first, then the optional ones
