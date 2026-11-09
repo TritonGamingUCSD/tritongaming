@@ -103,7 +103,7 @@
   .navItem { position: relative; display: inline-flex; }
   .subShelf { position: absolute; left: 50%; top: 100%; z-index: 60; display: none; flex-direction: column; min-width: 10.5rem; padding: 0.7rem 0.4rem 0.4rem; transform: translateX(-50%); }
   .subRight { left: auto; right: 0; transform: none; }
-  .navItem:hover > .subShelf, .navItem:focus-within > .subShelf { display: flex; }
+  .navItem:hover > .subShelf, .navItem:has(:focus-visible) > .subShelf { display: flex; }
   .subShelf a { padding: 0.6rem 0.8rem; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6); margin-bottom: 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.72rem; letter-spacing: 0.07em; text-transform: uppercase; text-decoration: none; white-space: nowrap; }
   .subShelf a:hover, .subShelf a:focus-visible, .subShelf a[aria-current='page'] { background: var(--yellow); outline: none; }
   .cart:hover, .cart:focus-visible { transform: translate(-2px, -2px) rotate(0deg); box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6); }
