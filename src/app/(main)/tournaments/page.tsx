@@ -4,6 +4,7 @@ import { notFound } from 'next/navigation';
 import { getOffSwitches } from '@/lib/portal/featureServer';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { PageHero } from '@/components/ZineBand/ZineBand';
+import EventsTabs from '@/components/PublicPages/EventsTabs';
 import { FORMAT_LABEL } from '@/components/tournaments/labels';
 import { getLeaderboard } from '@/lib/tournaments/results';
 import styles from './tournaments.module.css';
@@ -26,6 +27,7 @@ export default async function TournamentsPage() {
   return (
     <main>
       <PageHero label="Compete" title="Tournaments" sub="Brackets update live while the matches are played." />
+      <EventsTabs active="tournaments" />
       {board.length > 0 && (
         <section className={styles.board} aria-label="Leaderboard">
           <h2>Leaderboard</h2>

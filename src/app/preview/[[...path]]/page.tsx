@@ -16,6 +16,8 @@ const PAGES: Record<string, () => Promise<{ default: ComponentType }>> = {
   events: () => import('@/app/(main)/events/page'),
   membership: () => import('@/app/(main)/membership/page'),
   media: () => import('@/app/(main)/media/page'),
+  join: () => import('@/app/(main)/join/page'),
+  about: () => import('@/app/(main)/about/page'),
 };
 
 // Pages with a slug in the URL. The editors preview their unsaved form as the slug "__draft__" (see lib/events and lib/divisions).

@@ -1,0 +1,8 @@
+.jump { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; padding: 0 1rem 1.2rem; background: var(--navy); }
+.jump a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 1.1rem; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6); font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; transform: rotate(-1deg); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.jump a:nth-child(even) { transform: rotate(1deg); }
+.jump a:hover, .jump a:focus-visible { transform: translate(-2px, -2px) rotate(0deg); box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6); }
+.jump a:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
+html { scroll-padding-top: 6rem; }
+@media (prefers-reduced-motion: reduce) { .jump a { transition: none; } }
+.jump a.on { background: var(--yellow); }

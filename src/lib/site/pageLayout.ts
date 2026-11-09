@@ -6,12 +6,15 @@ export interface SectionDef {
 
 export const PAGE_SECTIONS: Record<string, SectionDef[]> = {
   homepage: [
-    { id: 'stats', label: 'Statistics strip' },
-    { id: 'about', label: 'About' },
+    { id: 'carousel', label: 'Photo carousel' },
     { id: 'events', label: 'Upcoming events' },
+    { id: 'about', label: 'About' },
+    { id: 'stats', label: 'Statistics strip' },
+    { id: 'divisions', label: 'Divisions' },
     { id: 'sponsors', label: 'Sponsors strip' },
     { id: 'recruitment', label: 'Get involved cards' },
   ],
+
   'our-story': [
     { id: 'section1', label: 'Section 1 (Inside TG)' },
     { id: 'section2', label: 'Section 2 (Community)' },

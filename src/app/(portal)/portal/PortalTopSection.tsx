@@ -88,7 +88,7 @@ export default function PortalTopSection({
                 <Gift size={16} aria-hidden="true" /> Check your rewards
               </Link>
             )}
-            <Link href="/get-involved" className={styles.emptyHomeBtn}>
+            <Link href="/join#get-involved" className={styles.emptyHomeBtn}>
               <UserPlus size={16} aria-hidden="true" /> Get involved
             </Link>
           </div>

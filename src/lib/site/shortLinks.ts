@@ -2,6 +2,7 @@
 export const RESERVED_SLUGS = new Set([
   'portal',
   'me',
+  'join',
   'app',
   'login',
   'auth',

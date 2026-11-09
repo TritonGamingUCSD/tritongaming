@@ -7,18 +7,17 @@ import { DISCORD_URL } from '@/lib/site/links';
 
 const EXPLORE_LINKS = [
   { href: '/', label: 'Home' },
-  { href: '/our-story', label: 'Our Story' },
   { href: '/events', label: 'Events' },
   { href: '/calendar', label: 'Calendar' },
   { href: '/divisions', label: 'Divisions' },
-  { href: '/team', label: 'Team' },
   { href: '/media', label: 'Media' },
+  { href: '/about', label: 'About' },
 ];
 
 const INVOLVED_LINKS = [
-  { href: '/get-involved', label: 'Get Involved' },
-  { href: '/membership', label: 'Membership' },
-  { href: '/sponsors', label: 'Sponsors' },
+  { href: '/join', label: 'Join the Club' },
+  { href: '/join#membership', label: 'Membership Card' },
+  { href: '/sponsors', label: 'For Sponsors' },
 ];
 
 // Public invite counts, cached for an hour; the strip just drops the number if Discord can't be reached.

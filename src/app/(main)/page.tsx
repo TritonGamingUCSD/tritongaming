@@ -5,6 +5,8 @@ import LandingAbout from '@/components/LandingAbout/LandingAbout';
 import LandingStatistics from '@/components/LandingStatistics/LandingStatistics';
 import LandingEvents from '@/components/LandingEvents/LandingEvents';
 import LandingSponsors from '@/components/LandingSponsors/LandingSponsors';
+import HomeCarousel from '@/components/HomeCarousel/HomeCarousel';
+import LandingDivisions from '@/components/LandingDivisions/LandingDivisions';
 import LandingRecruitment from '@/components/LandingRecruitment/LandingRecruitment';
 import { getContentBlocks } from '@/lib/site/content';
 import { resolveSections } from '@/lib/site/pageLayout';
@@ -52,7 +54,9 @@ export default async function HomePage() {
   const statsItems = (statsContent.items as StatInput[] | undefined) ?? undefined;
 
   const sections: Record<string, React.ReactNode> = {
+    carousel: <HomeCarousel />,
     stats: <LandingStatistics stats={statsItems} />,
+    divisions: <LandingDivisions />,
     about: <LandingAbout content={aboutContent as Parameters<typeof LandingAbout>[0]['content']} />,
     events: <LandingEvents initialEvents={upcomingEvents} content={eventsContent} />,
     sponsors: <LandingSponsors />,

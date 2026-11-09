@@ -15,15 +15,13 @@ import { DISCORD_URL } from '@/lib/site/links';
 
 const NAV_HINT_KEY = 'tg_nav_portal_hint';
 
+// Five places, in the order a visitor wants them: what's on, who plays, the photos, how to join, who we are. (Sponsors are in the footer; Our Story and Team are inside About; Membership and Get Involved are inside Join.)
 const NAV_LINKS = [
-  { href: '/our-story', label: 'Our Story' },
-  { href: '/team', label: 'Team' },
   { href: '/events', label: 'Events' },
   { href: '/divisions', label: 'Divisions' },
   { href: '/media', label: 'Media' },
-  { href: '/sponsors', label: 'Sponsors' },
-  { href: '/membership', label: 'Membership' },
-  { href: '/get-involved', label: 'Get Involved' },
+  { href: '/join', label: 'Join' },
+  { href: '/about', label: 'About' },
 ];
 
 // `announcement` is the (server-rendered) announcement pill; it sits in the same row as the logo and the Portal / Menu stickers.
@@ -44,7 +42,7 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
   const prevScrollY = useRef(0);
   const pathname = usePathname();
   const router = useRouter();
-  // Number keys 1 to 8 jump to a page on a laptop or desktop (like hotkeys in a game); not while typing, and not with a modifier key held.
+  // Number keys 1 to 5 jump to a page on a laptop or desktop (like hotkeys in a game); not while typing, and not with a modifier key held.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || window.innerWidth < 1100) return;

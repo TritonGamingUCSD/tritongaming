@@ -194,7 +194,7 @@ export const CONTENT_BLOCKS = [
     description: 'The banner at the top of the Team page. Board members themselves are managed separately, from each officer’s own profile.',
     icon: createElement(Users, ICON_PROPS),
     category: 'Team',
-    pages: ['/team'],
+    pages: ['/team', '/about'],
     fields: [
       { name: 'label', label: 'Eyebrow Label', type: 'text' as const, placeholder: 'THE PEOPLE BEHIND TG' },
       { name: 'title', label: 'Page Title', type: 'text' as const, placeholder: 'Meet the Team' },
@@ -210,7 +210,7 @@ export const CONTENT_BLOCKS = [
     description: 'The three alternating photo/text sections on the Our Story page.',
     icon: createElement(BookText, ICON_PROPS),
     category: 'Our Story',
-    pages: ['/our-story'],
+    pages: ['/our-story', '/about'],
     fields: [
       { name: 'section1_title', label: 'Section 1 — Title', type: 'text' as const, placeholder: 'INSIDE TG' },
       { name: 'section1_body', label: 'Section 1 — Body', type: 'textarea' as const },
@@ -224,6 +224,34 @@ export const CONTENT_BLOCKS = [
       { name: 'hero_label', label: 'Hero — Label', type: 'text' as const, placeholder: 'Who we are', optional: true },
       { name: 'hero_title', label: 'Hero — Title', type: 'text' as const, placeholder: 'Our story', optional: true },
       { name: 'hero_sub', label: 'Hero — Hand-written Line', type: 'text' as const, placeholder: 'Gaming Org at UC San Diego', optional: true },
+    ],
+  },
+
+  // ── Join and About (the merged pages) ─────────────────────
+  {
+    key: 'page.join',
+    title: 'Join Page Hero',
+    description: 'The banner at the top of the Join page, which holds Get Involved and Membership. Their own sections are edited under Get Involved and Membership.',
+    icon: createElement(Users, ICON_PROPS),
+    category: 'Get Involved',
+    pages: ['/join'],
+    fields: [
+      { name: 'hero_label', label: 'Hero: Label', type: 'text' as const, placeholder: 'Join the club', optional: true },
+      { name: 'hero_title', label: 'Hero: Title', type: 'text' as const, placeholder: 'Join Triton Gaming', optional: true },
+      { name: 'hero_sub', label: 'Hero: Hand-written Line', type: 'text' as const, placeholder: 'Find your place, then get the card.', optional: true },
+    ],
+  },
+  {
+    key: 'page.about-us',
+    title: 'About Page Hero',
+    description: 'The banner at the top of the About page, which holds Our Story and the Team. Their own sections are edited under Our Story and Team.',
+    icon: createElement(BookText, ICON_PROPS),
+    category: 'Our Story',
+    pages: ['/about'],
+    fields: [
+      { name: 'hero_label', label: 'Hero: Label', type: 'text' as const, placeholder: 'Who we are', optional: true },
+      { name: 'hero_title', label: 'Hero: Title', type: 'text' as const, placeholder: 'About Triton Gaming', optional: true },
+      { name: 'hero_sub', label: 'Hero: Hand-written Line', type: 'text' as const, placeholder: 'Gaming Org at UC San Diego', optional: true },
     ],
   },
 
@@ -329,7 +357,7 @@ export const CONTENT_BLOCKS = [
     description: 'Top banner and the three "join the community" cards (Discord, Instagram, Attend an Event).',
     icon: createElement(Hand, ICON_PROPS),
     category: 'Get Involved',
-    pages: ['/get-involved'],
+    pages: ['/get-involved', '/join'],
     fields: [
       { name: 'hero_label', label: 'Hero — Eyebrow Label', type: 'text' as const, placeholder: 'GET INVOLVED' },
       { name: 'hero_title', label: 'Hero — Title', type: 'text' as const, placeholder: 'Level Up at UC San Diego' },
@@ -357,7 +385,7 @@ export const CONTENT_BLOCKS = [
     description: 'The "become an officer" section, its perks list, and the three stat cards beside it.',
     icon: createElement(Hand, ICON_PROPS),
     category: 'Get Involved',
-    pages: ['/get-involved'],
+    pages: ['/get-involved', '/join'],
     fields: [
       { name: 'label', label: 'Eyebrow Label', type: 'text' as const, placeholder: 'BECOME AN OFFICER' },
       { name: 'title', label: 'Title', type: 'text' as const, placeholder: 'Shape Gaming at UC San Diego' },
@@ -390,7 +418,7 @@ export const CONTENT_BLOCKS = [
     description: 'Banner, price, validity, and purchase link on the Membership Card page. Partner discounts are the separate "Partner Discounts" block below.',
     icon: createElement(CreditCard, ICON_PROPS),
     category: 'Membership',
-    pages: ['/membership'],
+    pages: ['/membership', '/join'],
     fields: [
       { name: 'hero_label', label: 'Hero — Eyebrow Label', type: 'text' as const, placeholder: 'MEMBERSHIP CARDS' },
       { name: 'hero_title', label: 'Hero — Title', type: 'text' as const, placeholder: 'Triton Gaming Membership Card' },
@@ -404,6 +432,31 @@ export const CONTENT_BLOCKS = [
       { name: 'partners_title', label: 'Partners — Title', type: 'text' as const, placeholder: 'Partner Discounts', optional: true },
       { name: 'partners_empty', label: 'Partners — Text When None', type: 'text' as const, placeholder: 'Partner announcements coming soon.', optional: true },
       { name: 'strip_caption', label: 'Photo Strip — Hand-written Caption', type: 'text' as const, placeholder: 'The places and people behind the card.', optional: true },
+    ],
+  },
+  {
+    key: 'homepage.carousel',
+    title: 'Photo Carousel',
+    description:
+      'The photos that slide under the hero on the home page. Add, replace and reorder them (use the arrows on each row). Every photo needs a photographer credit, which shows under it; a photo without one is not shown. A caption and a link are optional.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Homepage',
+    pages: ['/'],
+    fields: [
+      {
+        name: 'items',
+        label: 'Photos',
+        type: 'imagelist' as const,
+        addLabel: '+ Add Photo',
+        imageFields: [
+          { key: 'src', label: 'Photo', type: 'image' as const },
+          { key: 'credit', label: 'Photographer', type: 'text' as const },
+          { key: 'credit_url', label: 'Photographer Link (optional)', type: 'url' as const, optional: true },
+          { key: 'alt', label: 'What The Photo Shows', type: 'text' as const },
+          { key: 'caption', label: 'Caption (optional)', type: 'text' as const, optional: true },
+          { key: 'link', label: 'Opens When Tapped (optional page or event link)', type: 'url' as const, optional: true },
+        ],
+      },
     ],
   },
   {
@@ -434,7 +487,7 @@ export const CONTENT_BLOCKS = [
     description: 'The local partners, their discount, and (optionally) their logo.',
     icon: createElement(Handshake, ICON_PROPS),
     category: 'Membership',
-    pages: ['/membership'],
+    pages: ['/membership', '/join'],
     fields: [
       {
         name: 'items',

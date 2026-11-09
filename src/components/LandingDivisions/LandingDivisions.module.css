@@ -1,0 +1,11 @@
+.grid { list-style: none; margin: 1.5rem auto 0; padding: 0; max-width: 70rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.9rem; }
+.card { display: inline-flex; align-items: center; gap: 0.7rem; min-height: 56px; padding: 0.5rem 1rem 0.5rem 0.6rem; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.tiltL { transform: rotate(-1.2deg); }
+.tiltR { transform: rotate(1.2deg); }
+.card:hover, .card:focus-visible { transform: translate(-2px, -2px) rotate(0deg); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }
+.card:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
+.logo { width: 40px; height: 40px; object-fit: contain; border-radius: 6px; }
+.letter { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 6px; background: var(--yellow); color: var(--ink); font-size: 1.1rem; }
+.all { margin: 1.4rem 0 0; text-align: center; }
+.all a { color: var(--yellow-text, #ffd966); font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } }

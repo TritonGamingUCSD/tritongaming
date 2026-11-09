@@ -34,7 +34,7 @@ interface Props {
   creditPeople?: CreditPerson[];
 }
 
-const ALL_PAGES = ['/', '/our-story', '/team', '/events', '/divisions', '/sponsors', '/get-involved', '/membership', '/media'];
+const ALL_PAGES = ['/', '/about', '/our-story', '/team', '/events', '/divisions', '/sponsors', '/join', '/get-involved', '/membership', '/media'];
 
 const COLOR_PREVIEW: Record<string, string> = {
   yellow: '#ffc72c',

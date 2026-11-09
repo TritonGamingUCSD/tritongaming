@@ -16,14 +16,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const hide = (path: string) => (path === '/sponsors' && off.includes('public_sponsors')) || (path === '/media' && off.includes('public_media'));
   const staticRoutes = [
     { url: `${SITE_URL}/`, changeFrequency: 'weekly', priority: 1 },
-    { url: `${SITE_URL}/team`, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/about`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/events`, changeFrequency: 'daily', priority: 0.9 },
     { url: `${SITE_URL}/calendar`, changeFrequency: 'daily', priority: 0.7 },
     { url: `${SITE_URL}/divisions`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/sponsors`, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${SITE_URL}/get-involved`, changeFrequency: 'monthly', priority: 0.7 },
-    { url: `${SITE_URL}/our-story`, changeFrequency: 'monthly', priority: 0.5 },
-    { url: `${SITE_URL}/membership`, changeFrequency: 'monthly', priority: 0.6 },
+    { url: `${SITE_URL}/join`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/media`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.3 },

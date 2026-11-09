@@ -48,6 +48,15 @@ const nextConfig: NextConfig = {
       ],
     };
   },
+  // The pages that were merged keep working at their old addresses (printed QR codes, old links, search results): they go to the merged page, at the right section. (The Site Content editor's preview does not use these addresses.)
+  async redirects() {
+    return [
+      { source: '/membership', destination: '/join#membership', permanent: true },
+      { source: '/get-involved', destination: '/join#get-involved', permanent: true },
+      { source: '/our-story', destination: '/about#story', permanent: true },
+      { source: '/team', destination: '/about#team', permanent: true },
+    ];
+  },
   // The push service worker must always be fetched fresh and may only load its own code.
   async headers() {
     return [
