@@ -8,6 +8,7 @@ import { PortalIdentityProvider } from '@/components/portal/PortalIdentity';
 import '@/app/(portal)/portal-controls.css';
 import Link from 'next/link';
 import MeBar from './MeBar';
+import MeHeading from './MeHeading';
 import MeTabs from './MeTabs';
 import MeTheme from './MeTheme';
 import styles from './me.module.css';
@@ -27,7 +28,10 @@ export default async function MeLayout({ children }: { children: React.ReactNode
       <div data-me-site className={`pp-root ${styles.wrap}`}>
         <MeBar name={name} avatar={avatar} portal={usesPortal(roles)} />
         <MeTabs rewards={isRewardsEligible(roles)} portal={false} />
-        <div className={styles.sheet}>{children}</div>
+        <div className={styles.main}>
+          <MeHeading />
+          <div className={styles.sheet}>{children}</div>
+        </div>
         <footer className={styles.foot}>
           <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> · Gaming Org at UC San Diego
         </footer>

@@ -32,8 +32,7 @@ export default function MeBar({ name, avatar, portal }: { name: string; avatar: 
   return (
     <header className={styles.bar}>
       <Link href="/me/events" className={styles.brand} aria-label="My Triton Gaming">
-        <Image src="/logos/tg_logo.png" alt="" width={36} height={36} />
-        <span>Triton Gaming</span>
+        <Image src="/logos/tg_logo.png" alt="" width={44} height={44} />
       </Link>
       <div className={styles.barRight}>
         {portal && (

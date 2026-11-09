@@ -4,7 +4,11 @@ import { getProfile, getUserRoles } from '@/lib/core/auth';
 import { createClient } from '@/lib/supabase/server';
 import { isVerifiedMember } from '@/lib/portal/capabilities';
 import { openEventsFilter } from '@/lib/events/checkinWindow';
-import { formatEventDateRange, formatEventTimeRange, pacificDayKey } from '@/lib/core/timezone';
+import { formatEventDateRange, formatEventTimeRange, formatPacificDate, formatPacificTime, pacificDayKey } from '@/lib/core/timezone';
+import { createServiceClient } from '@/lib/supabase/admin';
+import { hasCapability } from '@/lib/portal/capabilities';
+import { getOffSwitches } from '@/lib/portal/featureServer';
+import { buildSchedule, EARLY_MS } from '@/lib/meetings/meetings';
 import QuickRegister from './QuickRegister';
 import styles from './events.module.css';
 
@@ -17,6 +21,15 @@ export default async function MyEventsPage() {
   const roles = await getUserRoles();
   const student = isVerifiedMember(roles);
   const supabase = await createClient();
+  // For team members: the meeting that is on now or comes next (the tool itself stays in the portal).
+  const meeting = await (async () => {
+    if (!hasCapability(roles, 'attend_meetings') || (await getOffSwitches()).includes('meetings')) return null;
+    const { upcoming } = await buildSchedule(createServiceClient(), { id: profile.id, roles }).catch(() => ({
+      upcoming: [] as Awaited<ReturnType<typeof buildSchedule>>['upcoming'],
+    }));
+    const t = Date.now();
+    return upcoming.find((m) => m.status !== 'cancelled' && m.status !== 'closed' && Date.parse(m.ends_at) >= t) ?? null;
+  })();
   const [{ data: mine }, { data: open }] = await Promise.all([
     supabase
       .from('tickets')
@@ -50,6 +63,23 @@ export default async function MyEventsPage() {
 
   return (
     <div className={styles.page}>
+      {meeting && (
+        <section className={`${styles.today} ${styles.meet}`} aria-label="Meeting">
+          <div>
+            <small>
+              {meeting.status === 'open' || (Date.parse(meeting.starts_at) - EARLY_MS <= Date.now() && Date.now() <= Date.parse(meeting.ends_at)) ? 'Meeting now' : 'Next meeting'}
+            </small>
+            <b>{meeting.title}</b>
+            <span>
+              {formatPacificDate(meeting.starts_at, { weekday: true })} · {formatPacificTime(meeting.starts_at)}
+              {meeting.location ? ` · ${meeting.location}` : ''}
+            </span>
+          </div>
+          <Link href="/portal/meetings" prefetch={false} className={`${styles.show} ${styles.big}`}>
+            {meeting.status === 'open' ? 'Check In' : 'Open Meetings'}
+          </Link>
+        </section>
+      )}
       {happeningToday.map((t) => (
         <section key={t.id} className={styles.today} aria-label="Happening today">
           <div>
