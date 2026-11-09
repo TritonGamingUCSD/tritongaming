@@ -3,7 +3,6 @@ import type { Metadata } from 'next';
 import NextEventTicket from '@/components/NextEventTicket/NextEventTicket';
 import ClubBlocks from '@/components/ClubBlocks/ClubBlocks';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
-import EventsTabs from '@/components/PublicPages/EventsTabs';
 import EventCard from '@/components/EventCard/EventCard';
 import { getUpcomingEvents, getPreviousEvents } from '@/lib/events/events';
 import { getContentBlocks } from '@/lib/site/content';
@@ -86,7 +85,6 @@ export default async function EventsPage() {
   return (
     <div className={styles.page}>
       <PageHero label={heroLabel} title={heroTitle} sub={heroSub} />
-      <EventsTabs active="events" />
       <ClubBlocks page="events" slot="top" />
 
       {divisions.length > 0 && !(await getOffSwitches()).includes('div_public_pages') && (

@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import HubHero from '@/components/PublicPages/HubHero';
-import PageTabs from '@/components/PublicPages/PageTabs';
 import ClubBlocks from '@/components/ClubBlocks/ClubBlocks';
 import MembershipBody from '@/components/PublicPages/MembershipBody';
 
@@ -18,14 +17,6 @@ export default function Page() {
   return (
     <>
       <HubHero block="page.join" label="Join the club" title="Join" sub="Find your place, then get the card." />
-      <PageTabs
-        label="Join pages"
-        active="/join/membership"
-        tabs={[
-          { href: '/join', label: 'Get Involved' },
-          { href: '/join/membership', label: 'Membership Card' },
-        ]}
-      />
       <ClubBlocks page="membership" slot="top" />
       <MembershipBody hero={false} />
       <ClubBlocks page="membership" slot="bottom" />

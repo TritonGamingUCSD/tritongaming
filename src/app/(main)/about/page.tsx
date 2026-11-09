@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import HubHero from '@/components/PublicPages/HubHero';
-import PageTabs from '@/components/PublicPages/PageTabs';
 import ClubBlocks from '@/components/ClubBlocks/ClubBlocks';
 import OurStoryBody from '@/components/PublicPages/OurStoryBody';
 
@@ -18,14 +17,6 @@ export default function Page() {
   return (
     <>
       <HubHero block="page.about-us" label="Who we are" title="About" sub="Gaming Org at UC San Diego" />
-      <PageTabs
-        label="About pages"
-        active="/about"
-        tabs={[
-          { href: '/about', label: 'Our Story' },
-          { href: '/about/team', label: 'The Team' },
-        ]}
-      />
       <ClubBlocks page="about" slot="top" />
       <OurStoryBody hero={false} />
       <ClubBlocks page="about" slot="bottom" />

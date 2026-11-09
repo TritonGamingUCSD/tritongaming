@@ -17,13 +17,53 @@ const NAV_HINT_KEY = 'tg_nav_portal_hint';
 
 // The sticker row: who we are, what's on, who plays, the photos. Joining is the main call to action, so it is not one of the stickers: it is the yellow Join button beside Sign In (and the last line of the phone menu).
 // (Sponsors are in the footer; Our Story and Team are inside About; Membership and Get Involved are inside Join.)
-const NAV_LINKS = [
-  { href: '/about', label: 'About' },
-  { href: '/events', label: 'Events' },
+// A sticker with `sub` opens a small shelf of its parts when you hover or tab to it (so there is only ever one navbar: no second row of tabs under the title).
+type NavItem = { href: string; label: string; sub?: { href: string; label: string }[] };
+const NAV_LINKS: NavItem[] = [
+  {
+    href: '/about',
+    label: 'About',
+    sub: [
+      { href: '/about', label: 'Our Story' },
+      { href: '/about/team', label: 'The Team' },
+    ],
+  },
+  {
+    href: '/events',
+    label: 'Events',
+    sub: [
+      { href: '/events', label: 'Events' },
+      { href: '/calendar', label: 'Calendar' },
+      { href: '/tournaments', label: 'Tournaments' },
+    ],
+  },
   { href: '/divisions', label: 'Divisions' },
   { href: '/media', label: 'Media' },
 ];
-const MENU_LINKS = [...NAV_LINKS, { href: '/join', label: 'Join' }];
+const JOIN_ITEM: NavItem = {
+  href: '/join',
+  label: 'Join',
+  sub: [
+    { href: '/join', label: 'Get Involved' },
+    { href: '/join/membership', label: 'Membership' },
+  ],
+};
+const MENU_LINKS: NavItem[] = [...NAV_LINKS, JOIN_ITEM];
+// Is this address the part itself (About's own page is /about, not /about/team)?
+const partOn = (pathname: string, href: string, all: { href: string }[]) =>
+  pathname === href || (pathname.startsWith(href + '/') && !all.some((o) => o.href !== href && o.href.length > href.length && pathname.startsWith(o.href)));
+
+function SubShelf({ sub, pathname, right }: { sub: { href: string; label: string }[]; pathname: string; right?: boolean }) {
+  return (
+    <span className={`${styles.subShelf}${right ? ` ${styles.subRight}` : ''}`}>
+      {sub.map((x) => (
+        <Link key={x.href} href={x.href} aria-current={partOn(pathname, x.href, sub) ? 'page' : undefined}>
+          {x.label}
+        </Link>
+      ))}
+    </span>
+  );
+}
 
 // `announcement` is the (server-rendered) announcement strip: a thin bar across the very top, above the logo and buttons. It slides away with them when you scroll down.
 export default function NavBar({ announcement, ticker }: { announcement?: React.ReactNode; ticker?: React.ReactNode }) {
@@ -231,15 +271,18 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
         {/* A laptop or desktop gets a regular navbar with every page in view; phones and tablets keep the Menu button and the poster menu below. */}
         <nav className={styles.deskNav} aria-label="Site pages">
           <span className={styles.shelf}>
-            {NAV_LINKS.map(({ href, label }, i) => {
-              const on = pathname.startsWith(href);
+            {NAV_LINKS.map(({ href, label, sub }, i) => {
+              const on = pathname.startsWith(href) || !!sub?.some((x) => pathname.startsWith(x.href));
               return (
-                <Link key={href} href={href} className={`${styles.cart} ${on ? styles.cartOn : ''}`} aria-current={on ? 'page' : undefined} title={`Press ${i + 1}`}>
-                  <span className={styles.cartNum} aria-hidden="true">
-                    {i + 1}
-                  </span>
-                  <span className={styles.cartName}>{label}</span>
-                </Link>
+                <span key={href} className={styles.navItem}>
+                  <Link href={href} className={`${styles.cart} ${on ? styles.cartOn : ''}`} aria-current={on ? 'page' : undefined} title={`Press ${i + 1}`}>
+                    <span className={styles.cartNum} aria-hidden="true">
+                      {i + 1}
+                    </span>
+                    <span className={styles.cartName}>{label}</span>
+                  </Link>
+                  {sub && <SubShelf sub={sub} pathname={pathname} />}
+                </span>
               );
             })}
           </span>
@@ -249,9 +292,12 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
         {announcement && <div className={`${styles.stripSlot}${open ? ` ${styles.announceHidden}` : ''}`}>{announcement}</div>}
 
         <div className={styles.right}>
-          <Link href="/join" className={styles.joinCta} aria-current={pathname.startsWith('/join') ? 'page' : undefined}>
-            Join
-          </Link>
+          <span className={`${styles.navItem} ${styles.joinItem}`}>
+            <Link href="/join" className={styles.joinCta} aria-current={pathname.startsWith('/join') ? 'page' : undefined}>
+              Join
+            </Link>
+            <SubShelf sub={JOIN_ITEM.sub!} pathname={pathname} right />
+          </span>
           {profile || authLoading ? (
             <div className={styles.acct} ref={acctRef}>
               <button type="button" className={styles.portal} aria-expanded={acct} aria-haspopup="menu" aria-label="Your account menu" onClick={() => setAcct((v) => !v)}>
@@ -260,7 +306,7 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
                 ) : showLetter ? (
                   <span className={styles.avatarFallback} aria-hidden="true" data-letter={showLetter} />
                 ) : null}
-                <span>Me</span>
+                <span>{profile?.display_name?.split(' ')[0] || 'Me'}</span>
               </button>
               {acct && (
                 <div className={styles.acctMenu} role="menu">
@@ -334,7 +380,7 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
                 {pathname === '/' && <span className={styles.here}>you are here</span>}
               </Link>
             </li>
-            {MENU_LINKS.map(({ href, label }, i) => {
+            {MENU_LINKS.map(({ href, label, sub }, i) => {
               const on = pathname.startsWith(href);
               return (
                 <li key={href} style={{ '--i': i + 1 } as React.CSSProperties}>
@@ -343,6 +389,15 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
                     <span className={styles.word}>{label}</span>
                     {on && <span className={styles.here}>you are here</span>}
                   </Link>
+                  {sub && (
+                    <span className={styles.menuSub}>
+                      {sub.map((x) => (
+                        <Link key={x.href} href={x.href} onClick={() => setOpen(false)} aria-current={partOn(pathname, x.href, sub) ? 'page' : undefined}>
+                          {x.label}
+                        </Link>
+                      ))}
+                    </span>
+                  )}
                 </li>
               );
             })}

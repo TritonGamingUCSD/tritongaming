@@ -98,8 +98,14 @@
   .deskNav { display: flex; align-items: center; gap: 0.9rem; margin-inline: auto; }
   .shelf { display: flex; align-items: center; flex-wrap: wrap; justify-content: center; gap: 0.45rem; }
   .cart { display: inline-flex; align-items: center; padding: 0.5rem 0.8rem; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6); text-decoration: none; transform: rotate(var(--tilt, -1deg)); transition: transform 0.15s ease, box-shadow 0.15s ease; }
-  .cart:nth-child(even) { --tilt: 1deg; }
-  .cart:nth-child(3n) { --tilt: -1.8deg; }
+  .navItem:nth-child(even) .cart { --tilt: 1deg; }
+  .navItem:nth-child(3n) .cart { --tilt: -1.8deg; }
+  .navItem { position: relative; display: inline-flex; }
+  .subShelf { position: absolute; left: 50%; top: 100%; z-index: 60; display: none; flex-direction: column; min-width: 10.5rem; padding: 0.7rem 0.4rem 0.4rem; transform: translateX(-50%); }
+  .subRight { left: auto; right: 0; transform: none; }
+  .navItem:hover > .subShelf, .navItem:focus-within > .subShelf { display: flex; }
+  .subShelf a { padding: 0.6rem 0.8rem; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6); margin-bottom: 0.35rem; font-family: var(--font-futura-heavy); font-size: 0.72rem; letter-spacing: 0.07em; text-transform: uppercase; text-decoration: none; white-space: nowrap; }
+  .subShelf a:hover, .subShelf a:focus-visible, .subShelf a[aria-current='page'] { background: var(--yellow); outline: none; }
   .cart:hover, .cart:focus-visible { transform: translate(-2px, -2px) rotate(0deg); box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6); }
   .cart:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
   .cartOn { background: var(--yellow); }
@@ -125,3 +131,10 @@
 .joinCta:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
 @media (max-width: 860px) { .joinCta { display: none; } }
 @media (prefers-reduced-motion: reduce) { .joinCta { transition: none; } }
+
+.subShelf { display: none; }
+/* The parts of a page, under its name in the phone menu. */
+.menuSub { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.2rem 0 0.4rem 3.2rem; }
+.menuSub a { padding: 0.35rem 0.75rem; border: 2px solid currentColor; border-radius: 999px; font-family: var(--font-futura-heavy); font-size: 0.72rem; letter-spacing: 0.07em; text-transform: uppercase; text-decoration: none; color: inherit; }
+.menuSub a[aria-current='page'] { background: var(--yellow); color: var(--ink); border-color: var(--ink); }
+@media (max-width: 860px) { .joinItem { display: none; } }
