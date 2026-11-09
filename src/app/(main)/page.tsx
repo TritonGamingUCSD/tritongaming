@@ -5,7 +5,9 @@ import LandingAbout from '@/components/LandingAbout/LandingAbout';
 import LandingStatistics from '@/components/LandingStatistics/LandingStatistics';
 import LandingEvents from '@/components/LandingEvents/LandingEvents';
 import LandingSponsors from '@/components/LandingSponsors/LandingSponsors';
+import ClubBlocks from '@/components/ClubBlocks/ClubBlocks';
 import HomeCarousel from '@/components/HomeCarousel/HomeCarousel';
+import LandingMedia from '@/components/LandingMedia/LandingMedia';
 import LandingDivisions from '@/components/LandingDivisions/LandingDivisions';
 import LandingRecruitment from '@/components/LandingRecruitment/LandingRecruitment';
 import { getContentBlocks } from '@/lib/site/content';
@@ -57,6 +59,7 @@ export default async function HomePage() {
     carousel: <HomeCarousel />,
     stats: <LandingStatistics stats={statsItems} />,
     divisions: <LandingDivisions />,
+    media: <LandingMedia />,
     about: <LandingAbout content={aboutContent as Parameters<typeof LandingAbout>[0]['content']} />,
     events: <LandingEvents initialEvents={upcomingEvents} content={eventsContent} />,
     sponsors: <LandingSponsors />,
@@ -68,9 +71,14 @@ export default async function HomePage() {
       {}
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(ORGANIZATION_JSON_LD) }} />
       <Hero content={heroContent as Parameters<typeof Hero>[0]['content']} />
+      <ClubBlocks page="homepage" slot="top" />
       {resolveSections('homepage', content['layout.homepage']?.sections).map((id) => (
-        <Fragment key={id}>{sections[id]}</Fragment>
+        <Fragment key={id}>
+          {sections[id]}
+          <ClubBlocks page="homepage" slot={`after:${id}`} />
+        </Fragment>
       ))}
+      <ClubBlocks page="homepage" slot="bottom" />
     </>
   );
 }

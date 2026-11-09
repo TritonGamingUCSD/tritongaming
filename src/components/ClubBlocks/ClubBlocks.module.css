@@ -1,0 +1,2 @@
+.club { background: var(--navy); color: var(--white); padding: clamp(1.5rem, 4vw, 3rem) clamp(1rem, 5vw, 4rem); overflow-x: clip; }
+.club > * { max-width: 70rem; margin-inline: auto; }

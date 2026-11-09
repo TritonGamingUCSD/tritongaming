@@ -13,25 +13,14 @@ interface Props {
   label: string;
 }
 
-// A sticker-style pill in the nav row, between the logo and the Portal / Menu buttons (NavBar places it). Visitors can dismiss it.
+// A thin strip across the very top of every public page (NavBar places it above the logo and buttons). Visitors can dismiss it. While it shows, page titles leave room for it (--banner-offset).
 export default function AnnouncementClient({ text, link, linkText, tone, label }: Props) {
   const [dismissed, setDismissed] = useState(false);
 
-  // On phones the pill drops to a second row under the buttons, so page headers need that much more room at the top (--banner-offset).
   useEffect(() => {
     const root = document.documentElement;
-    if (dismissed) {
-      root.style.setProperty('--banner-offset', '0px');
-      return;
-    }
-    const mq = window.matchMedia('(max-width: 860px)');
-    const apply = () => root.style.setProperty('--banner-offset', mq.matches ? '3.6rem' : '0px');
-    apply();
-    mq.addEventListener('change', apply);
-    return () => {
-      mq.removeEventListener('change', apply);
-      root.style.setProperty('--banner-offset', '0px');
-    };
+    root.style.setProperty('--banner-offset', dismissed ? '0px' : '2.4rem');
+    return () => root.style.setProperty('--banner-offset', '0px');
   }, [dismissed]);
 
   if (dismissed) return null;

@@ -815,7 +815,7 @@ export default function ProfileClient({
                           <div className={styles.publicHeader}>
                             <Globe size={18} strokeWidth={1.75} aria-hidden="true" />
                             <h2 className={styles.publicTitle}>Public Team page — what to show</h2>
-                            <a href="/about#team" target="_blank" rel="noopener noreferrer" className={styles.publicLink}>
+                            <a href="/about/team" target="_blank" rel="noopener noreferrer" className={styles.publicLink}>
                               View Team page ↗
                             </a>
                           </div>

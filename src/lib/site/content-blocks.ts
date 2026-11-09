@@ -194,7 +194,7 @@ export const CONTENT_BLOCKS = [
     description: 'The banner at the top of the Team page. Board members themselves are managed separately, from each officer’s own profile.',
     icon: createElement(Users, ICON_PROPS),
     category: 'Team',
-    pages: ['/team', '/about'],
+    pages: ['/about/team'],
     fields: [
       { name: 'label', label: 'Eyebrow Label', type: 'text' as const, placeholder: 'THE PEOPLE BEHIND TG' },
       { name: 'title', label: 'Page Title', type: 'text' as const, placeholder: 'Meet the Team' },
@@ -210,7 +210,7 @@ export const CONTENT_BLOCKS = [
     description: 'The three alternating photo/text sections on the Our Story page.',
     icon: createElement(BookText, ICON_PROPS),
     category: 'Our Story',
-    pages: ['/our-story', '/about'],
+    pages: ['/about'],
     fields: [
       { name: 'section1_title', label: 'Section 1 — Title', type: 'text' as const, placeholder: 'INSIDE TG' },
       { name: 'section1_body', label: 'Section 1 — Body', type: 'textarea' as const },
@@ -237,7 +237,7 @@ export const CONTENT_BLOCKS = [
     pages: ['/join'],
     fields: [
       { name: 'hero_label', label: 'Hero: Label', type: 'text' as const, placeholder: 'Join the club', optional: true },
-      { name: 'hero_title', label: 'Hero: Title', type: 'text' as const, placeholder: 'Join Triton Gaming', optional: true },
+      { name: 'hero_title', label: 'Hero: Title', type: 'text' as const, placeholder: 'Join', optional: true },
       { name: 'hero_sub', label: 'Hero: Hand-written Line', type: 'text' as const, placeholder: 'Find your place, then get the card.', optional: true },
     ],
   },
@@ -250,7 +250,7 @@ export const CONTENT_BLOCKS = [
     pages: ['/about'],
     fields: [
       { name: 'hero_label', label: 'Hero: Label', type: 'text' as const, placeholder: 'Who we are', optional: true },
-      { name: 'hero_title', label: 'Hero: Title', type: 'text' as const, placeholder: 'About Triton Gaming', optional: true },
+      { name: 'hero_title', label: 'Hero: Title', type: 'text' as const, placeholder: 'About', optional: true },
       { name: 'hero_sub', label: 'Hero: Hand-written Line', type: 'text' as const, placeholder: 'Gaming Org at UC San Diego', optional: true },
     ],
   },
@@ -357,7 +357,7 @@ export const CONTENT_BLOCKS = [
     description: 'Top banner and the three "join the community" cards (Discord, Instagram, Attend an Event).',
     icon: createElement(Hand, ICON_PROPS),
     category: 'Get Involved',
-    pages: ['/get-involved', '/join'],
+    pages: ['/join'],
     fields: [
       { name: 'hero_label', label: 'Hero — Eyebrow Label', type: 'text' as const, placeholder: 'GET INVOLVED' },
       { name: 'hero_title', label: 'Hero — Title', type: 'text' as const, placeholder: 'Level Up at UC San Diego' },
@@ -385,7 +385,7 @@ export const CONTENT_BLOCKS = [
     description: 'The "become an officer" section, its perks list, and the three stat cards beside it.',
     icon: createElement(Hand, ICON_PROPS),
     category: 'Get Involved',
-    pages: ['/get-involved', '/join'],
+    pages: ['/join'],
     fields: [
       { name: 'label', label: 'Eyebrow Label', type: 'text' as const, placeholder: 'BECOME AN OFFICER' },
       { name: 'title', label: 'Title', type: 'text' as const, placeholder: 'Shape Gaming at UC San Diego' },
@@ -418,7 +418,7 @@ export const CONTENT_BLOCKS = [
     description: 'Banner, price, validity, and purchase link on the Membership Card page. Partner discounts are the separate "Partner Discounts" block below.',
     icon: createElement(CreditCard, ICON_PROPS),
     category: 'Membership',
-    pages: ['/membership', '/join'],
+    pages: ['/join/membership'],
     fields: [
       { name: 'hero_label', label: 'Hero — Eyebrow Label', type: 'text' as const, placeholder: 'MEMBERSHIP CARDS' },
       { name: 'hero_title', label: 'Hero — Title', type: 'text' as const, placeholder: 'Triton Gaming Membership Card' },
@@ -487,7 +487,7 @@ export const CONTENT_BLOCKS = [
     description: 'The local partners, their discount, and (optionally) their logo.',
     icon: createElement(Handshake, ICON_PROPS),
     category: 'Membership',
-    pages: ['/membership', '/join'],
+    pages: ['/join/membership'],
     fields: [
       {
         name: 'items',
@@ -543,6 +543,96 @@ export const CONTENT_BLOCKS = [
     pages: ['/media'],
     fields: [{ name: 'items', label: 'Albums', type: 'kvlist' as const, kvKeyLabel: 'Title', kvValueLabel: 'Google Photos Album URL' }],
   },
+  {
+    key: 'builder.homepage',
+    title: 'Page Builder: Home page',
+    description:
+      'Extra blocks for the Home page: banners, photo and text, columns, buttons, video, countdowns, people, logos and more. Place each block at the top, after one of the page’s sections, or at the bottom. The page’s own sections above stay as they are.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Homepage',
+    pages: ['/'],
+    fields: [{ name: 'blocks', label: 'Blocks', type: 'pageblocks' as const, slotsFor: 'homepage' }],
+  },
+  {
+    key: 'builder.about',
+    title: 'Page Builder: Our Story page',
+    description:
+      'Extra blocks for the Our Story page: banners, photo and text, columns, buttons, video, countdowns, people, logos and more. Place each block at the top, after one of the page’s sections, or at the bottom. The page’s own sections above stay as they are.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Our Story',
+    pages: ['/about'],
+    fields: [{ name: 'blocks', label: 'Blocks', type: 'pageblocks' as const, slotsFor: 'about' }],
+  },
+  {
+    key: 'builder.team',
+    title: 'Page Builder: Team page',
+    description:
+      'Extra blocks for the Team page: banners, photo and text, columns, buttons, video, countdowns, people, logos and more. Place each block at the top, after one of the page’s sections, or at the bottom. The page’s own sections above stay as they are.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Team',
+    pages: ['/about/team'],
+    fields: [{ name: 'blocks', label: 'Blocks', type: 'pageblocks' as const, slotsFor: 'team' }],
+  },
+  {
+    key: 'builder.join',
+    title: 'Page Builder: Get Involved page',
+    description:
+      'Extra blocks for the Get Involved page: banners, photo and text, columns, buttons, video, countdowns, people, logos and more. Place each block at the top, after one of the page’s sections, or at the bottom. The page’s own sections above stay as they are.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Get Involved',
+    pages: ['/join'],
+    fields: [{ name: 'blocks', label: 'Blocks', type: 'pageblocks' as const, slotsFor: 'join' }],
+  },
+  {
+    key: 'builder.membership',
+    title: 'Page Builder: Membership page',
+    description:
+      'Extra blocks for the Membership page: banners, photo and text, columns, buttons, video, countdowns, people, logos and more. Place each block at the top, after one of the page’s sections, or at the bottom. The page’s own sections above stay as they are.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Membership',
+    pages: ['/join/membership'],
+    fields: [{ name: 'blocks', label: 'Blocks', type: 'pageblocks' as const, slotsFor: 'membership' }],
+  },
+  {
+    key: 'builder.events',
+    title: 'Page Builder: Events page',
+    description:
+      'Extra blocks for the Events page: banners, photo and text, columns, buttons, video, countdowns, people, logos and more. Place each block at the top, after one of the page’s sections, or at the bottom. The page’s own sections above stay as they are.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Events',
+    pages: ['/events'],
+    fields: [{ name: 'blocks', label: 'Blocks', type: 'pageblocks' as const, slotsFor: 'events' }],
+  },
+  {
+    key: 'builder.divisions',
+    title: 'Page Builder: Divisions page',
+    description:
+      'Extra blocks for the Divisions page: banners, photo and text, columns, buttons, video, countdowns, people, logos and more. Place each block at the top, after one of the page’s sections, or at the bottom. The page’s own sections above stay as they are.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Divisions',
+    pages: ['/divisions'],
+    fields: [{ name: 'blocks', label: 'Blocks', type: 'pageblocks' as const, slotsFor: 'divisions' }],
+  },
+  {
+    key: 'builder.media',
+    title: 'Page Builder: Media page',
+    description:
+      'Extra blocks for the Media page: banners, photo and text, columns, buttons, video, countdowns, people, logos and more. Place each block at the top, after one of the page’s sections, or at the bottom. The page’s own sections above stay as they are.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Media',
+    pages: ['/media'],
+    fields: [{ name: 'blocks', label: 'Blocks', type: 'pageblocks' as const, slotsFor: 'media' }],
+  },
+  {
+    key: 'builder.sponsors',
+    title: 'Page Builder: Sponsors page',
+    description:
+      'Extra blocks for the Sponsors page: banners, photo and text, columns, buttons, video, countdowns, people, logos and more. Place each block at the top, after one of the page’s sections, or at the bottom. The page’s own sections above stay as they are.',
+    icon: createElement(Images, ICON_PROPS),
+    category: 'Sponsors',
+    pages: ['/sponsors'],
+    fields: [{ name: 'blocks', label: 'Blocks', type: 'pageblocks' as const, slotsFor: 'sponsors' }],
+  },
 ];
 
 export type ContentBlock = (typeof CONTENT_BLOCKS)[number];
@@ -582,6 +672,15 @@ export const BLOCK_ORDER = [
   'page.media',
   'media.videos',
   'media.albums',
+  'builder.homepage',
+  'builder.about',
+  'builder.join',
+  'builder.team',
+  'builder.membership',
+  'builder.events',
+  'builder.divisions',
+  'builder.media',
+  'builder.sponsors',
 ];
 
 // Sub-tabs inside a page's tab, used only where a page has enough blocks to need them. Blocks that belong together share a group and sit in one

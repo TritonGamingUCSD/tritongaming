@@ -238,6 +238,7 @@ export default function PageBlocksEditor({
   bucket = 'event-flyers',
   creditPeople = [],
   page,
+  slots,
 }: {
   blocks: PageBlock[];
   onChange: (b: PageBlock[]) => void;
@@ -245,6 +246,8 @@ export default function PageBlocksEditor({
   creditPeople?: CreditPerson[];
   /** The saved page being edited: with it, the editor offers drafts and history. */
   page?: PageRef;
+  /** On a club page: where a block can go (top, after a section, bottom). Each block then has a "Place it" choice. */
+  slots?: { id: string; label: string }[];
 }) {
   const hist = useHistory(blocks, onChange);
   const apply = hist.commit;
@@ -384,6 +387,7 @@ export default function PageBlocksEditor({
             </span>
             <button type="button" className={styles.blockTitle} onClick={() => setClosed(toggle(closed, b.id))} aria-expanded={!closed.has(b.id)}>
               {closed.has(b.id) ? <ChevronDown size={14} aria-hidden="true" /> : <ChevronUp size={14} aria-hidden="true" />} {BLOCK_LABELS[b.type].title}
+              {slots && <em> · {slots.find((x) => x.id === (b.slot ?? slots[slots.length - 1].id))?.label ?? 'Bottom'}</em>}
               {b.style?.hide && <em> · {b.style.hide === 'phone' ? 'computer only' : 'phone only'}</em>}
             </button>
             <button type="button" className={styles.mini} onClick={() => move(i, -1)} disabled={i === 0} aria-label={`Move ${BLOCK_LABELS[b.type].title} block up`}>
@@ -420,6 +424,23 @@ export default function PageBlocksEditor({
           </div>
           {layoutOpen.has(b.id) && (
             <div className={styles.layout}>
+              {slots && (
+                <label className={styles.sel}>
+                  <span>Place it</span>
+                  <Select
+                    className={styles.input}
+                    value={b.slot ?? slots[slots.length - 1].id}
+                    onChange={(e) => update(i, { ...b, slot: e.target.value } as PageBlock)}
+                    aria-label="Place it"
+                  >
+                    {slots.map((x) => (
+                      <option key={x.id} value={x.id}>
+                        {x.label}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+              )}
               {STYLE_CHOICES.map((c) => (
                 <label key={c.k} className={styles.sel}>
                   <span>{c.label}</span>

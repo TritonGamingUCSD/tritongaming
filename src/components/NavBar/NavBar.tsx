@@ -15,16 +15,17 @@ import { DISCORD_URL } from '@/lib/site/links';
 
 const NAV_HINT_KEY = 'tg_nav_portal_hint';
 
-// Five places, in the order a visitor wants them: what's on, who plays, the photos, how to join, who we are. (Sponsors are in the footer; Our Story and Team are inside About; Membership and Get Involved are inside Join.)
+// The sticker row: who we are, what's on, who plays, the photos. Joining is the main call to action, so it is not one of the stickers: it is the yellow Join button beside Sign In (and the last line of the phone menu).
+// (Sponsors are in the footer; Our Story and Team are inside About; Membership and Get Involved are inside Join.)
 const NAV_LINKS = [
+  { href: '/about', label: 'About' },
   { href: '/events', label: 'Events' },
   { href: '/divisions', label: 'Divisions' },
   { href: '/media', label: 'Media' },
-  { href: '/join', label: 'Join' },
-  { href: '/about', label: 'About' },
 ];
+const MENU_LINKS = [...NAV_LINKS, { href: '/join', label: 'Join' }];
 
-// `announcement` is the (server-rendered) announcement pill; it sits in the same row as the logo and the Portal / Menu stickers.
+// `announcement` is the (server-rendered) announcement strip: a thin bar across the very top, above the logo and buttons. It slides away with them when you scroll down.
 export default function NavBar({ announcement, ticker }: { announcement?: React.ReactNode; ticker?: React.ReactNode }) {
   const [offset, setOffset] = useState(0);
   const [scrolled, setScrolled] = useState(false);
@@ -42,14 +43,14 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
   const prevScrollY = useRef(0);
   const pathname = usePathname();
   const router = useRouter();
-  // Number keys 1 to 5 jump to a page on a laptop or desktop (like hotkeys in a game); not while typing, and not with a modifier key held.
+  // Number keys 1 to 5 (the four pages, then Join) jump to a page on a laptop or desktop (like hotkeys in a game); not while typing, and not with a modifier key held.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.metaKey || e.ctrlKey || e.altKey || window.innerWidth < 1100) return;
       const t = e.target as HTMLElement | null;
       if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
       const n = Number(e.key);
-      if (Number.isInteger(n) && n >= 1 && n <= NAV_LINKS.length) router.push(NAV_LINKS[n - 1].href);
+      if (Number.isInteger(n) && n >= 1 && n <= MENU_LINKS.length) router.push(MENU_LINKS[n - 1].href);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
@@ -245,9 +246,12 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
           {ticker && <span className={styles.deskTicker}>{ticker}</span>}
         </nav>
 
-        {announcement && <div className={`${styles.announce}${open ? ` ${styles.announceHidden}` : ''}`}>{announcement}</div>}
+        {announcement && <div className={`${styles.stripSlot}${open ? ` ${styles.announceHidden}` : ''}`}>{announcement}</div>}
 
         <div className={styles.right}>
+          <Link href="/join" className={styles.joinCta} aria-current={pathname.startsWith('/join') ? 'page' : undefined}>
+            Join
+          </Link>
           {profile || authLoading ? (
             <div className={styles.acct} ref={acctRef}>
               <button type="button" className={styles.portal} aria-expanded={acct} aria-haspopup="menu" aria-label="Your account menu" onClick={() => setAcct((v) => !v)}>
@@ -330,7 +334,7 @@ export default function NavBar({ announcement, ticker }: { announcement?: React.
                 {pathname === '/' && <span className={styles.here}>you are here</span>}
               </Link>
             </li>
-            {NAV_LINKS.map(({ href, label }, i) => {
+            {MENU_LINKS.map(({ href, label }, i) => {
               const on = pathname.startsWith(href);
               return (
                 <li key={href} style={{ '--i': i + 1 } as React.CSSProperties}>

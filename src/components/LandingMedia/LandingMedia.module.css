@@ -1,0 +1,17 @@
+.videos { list-style: none; margin: 1.5rem auto 0; padding: 0; max-width: 70rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: 1.4rem; }
+.tiltL { transform: rotate(-0.8deg); }
+.tiltR { transform: rotate(0.8deg); }
+.video { position: relative; display: flex; flex-direction: column; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.6); text-decoration: none; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.video:hover, .video:focus-visible { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.6); }
+.video:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
+.video img { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-bottom: 3px solid var(--ink); }
+.video b { padding: 0.7rem 0.8rem; font-family: var(--font-futura-heavy); font-size: 0.95rem; line-height: 1.25; }
+.play { position: absolute; top: calc(50% - 2.6rem); left: 50%; translate: -50% -50%; display: grid; place-items: center; width: 3.4rem; height: 3.4rem; border-radius: 50%; background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6); }
+.albums { list-style: none; margin: 1.4rem auto 0; padding: 0; max-width: 70rem; display: flex; flex-wrap: wrap; justify-content: center; gap: 0.8rem; }
+.album { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0 1rem; background: var(--paper); color: var(--ink); border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.6); font-family: var(--font-futura-heavy); font-size: 0.82rem; letter-spacing: 0.04em; text-transform: uppercase; text-decoration: none; }
+.album:hover, .album:focus-visible { transform: translate(-2px, -2px); }
+.album:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
+.all { margin: 1.6rem 0 0; text-align: center; }
+.all a { color: var(--yellow-text, #ffd966); font-family: var(--font-futura-heavy); font-size: 0.85rem; letter-spacing: 0.08em; text-transform: uppercase; }
+@media (max-width: 640px) { .tiltL, .tiltR { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .video { transition: none; } }

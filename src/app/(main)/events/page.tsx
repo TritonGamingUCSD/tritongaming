@@ -1,6 +1,7 @@
 import { getOffSwitches } from '@/lib/portal/featureServer';
 import type { Metadata } from 'next';
 import NextEventTicket from '@/components/NextEventTicket/NextEventTicket';
+import ClubBlocks from '@/components/ClubBlocks/ClubBlocks';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import EventsTabs from '@/components/PublicPages/EventsTabs';
 import EventCard from '@/components/EventCard/EventCard';
@@ -86,6 +87,7 @@ export default async function EventsPage() {
     <div className={styles.page}>
       <PageHero label={heroLabel} title={heroTitle} sub={heroSub} />
       <EventsTabs active="events" />
+      <ClubBlocks page="events" slot="top" />
 
       {divisions.length > 0 && !(await getOffSwitches()).includes('div_public_pages') && (
         <nav className={styles.divRow} aria-label="Events by division">
@@ -107,6 +109,7 @@ export default async function EventsPage() {
           <p className={styles.emptyMsg}>{(content.empty as string) || 'Nothing on the calendar right now. Check back soon!'}</p>
         </ZineBand>
       )}
+      <ClubBlocks page="events" slot="bottom" />
     </div>
   );
 }

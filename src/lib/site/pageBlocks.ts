@@ -14,7 +14,9 @@ export type BlockStyle = {
   anchor?: string;
 };
 
-type Base = { id: string; style?: BlockStyle };
+/** Where a block sits on a club page (Site Content → Page Builder): at the top, after one of the page's sections, or at the bottom. Event and division pages do not use it. */
+export type BlockSlot = string;
+type Base = { id: string; style?: BlockStyle; slot?: BlockSlot };
 export type TextBlock = Base & { type: 'text'; markdown: string };
 export type HighlightsBlock = Base & { type: 'highlights'; items: { label: string; value: string }[] };
 export type FaqBlock = Base & { type: 'faq'; items: { q: string; a: string }[] };
@@ -188,7 +190,8 @@ export function cleanBlocks(raw: unknown): PageBlock[] {
     const r = b as Record<string, unknown>;
     const id = str(r.id, 16) || rid();
     const style = cleanStyle(r.style);
-    const st = style ? { style } : {};
+    const slot = typeof r.slot === 'string' && /^(top|bottom|after:[a-z0-9-]{1,30})$/.test(r.slot) ? r.slot : undefined;
+    const st = { ...(style ? { style } : {}), ...(slot ? { slot } : {}) };
     const items = Array.isArray(r.items) ? (r.items as Record<string, unknown>[]).filter((i) => i && typeof i === 'object') : [];
     switch (r.type) {
       case 'text': {

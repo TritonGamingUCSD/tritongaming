@@ -5,6 +5,7 @@ import { resolveSections } from '@/lib/site/pageLayout';
 import { Fragment } from 'react';
 import { Building2, Trophy, RadioTower, Handshake } from 'lucide-react';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
+import ClubBlocks from '@/components/ClubBlocks/ClubBlocks';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import { getContentBlocks } from '@/lib/site/content';
 import type { LogoItem } from '@/types';
@@ -149,10 +150,12 @@ export default async function SponsorsPage() {
   return (
     <div className={styles.page}>
       <PageHero label={content.hero_label as string} title={content.hero_title as string} sub={content.hero_subtitle as string} />
+      <ClubBlocks page="sponsors" slot="top" />
       {order.map((id) => (
         <Fragment key={id}>{sections[id]}</Fragment>
       ))}
       <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'This is what your brand sits next to.'} photos={pickPhotos(sitePhotos, 3, 3)} />
+      <ClubBlocks page="sponsors" slot="bottom" />
     </div>
   );
 }

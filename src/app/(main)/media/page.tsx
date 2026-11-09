@@ -6,6 +6,7 @@ import { Fragment } from 'react';
 import { Camera, ImageOff } from 'lucide-react';
 import { getContentBlocks } from '@/lib/site/content';
 import { youtubeVideoId } from '@/lib/site/youtube';
+import ClubBlocks from '@/components/ClubBlocks/ClubBlocks';
 import { ZineBand, PageHero, BandHeader } from '@/components/ZineBand/ZineBand';
 import HoverVideo from './HoverVideo';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
@@ -99,10 +100,12 @@ export default async function MediaPage() {
   return (
     <div className={styles.page}>
       <PageHero label={(content.hero_label as string) || 'Media'} title={(content.hero_title as string) || 'Watch & explore'} sub={content.hero_subtitle as string} />
+      <ClubBlocks page="media" slot="top" />
       {order.map((id) => (
         <Fragment key={id}>{sections[id]}</Fragment>
       ))}
       <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'More where that came from.'} photos={pickPhotos(sitePhotos, 1, 3)} />
+      <ClubBlocks page="media" slot="bottom" />
     </div>
   );
 }

@@ -16,7 +16,7 @@ const EXPLORE_LINKS = [
 
 const INVOLVED_LINKS = [
   { href: '/join', label: 'Join the Club' },
-  { href: '/join#membership', label: 'Membership Card' },
+  { href: '/join/membership', label: 'Membership Card' },
   { href: '/sponsors', label: 'For Sponsors' },
 ];
 

@@ -7,6 +7,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useDraft } from '@/lib/ui/useDraft';
 import type { CreditPerson } from '@/lib/members/creditPeople';
 import SaveBar from '@/components/portal/SaveBar';
+import ContentHistory from './ContentHistory';
+import PageBlocksEditor from '@/components/PageBlocksEditor/PageBlocksEditor';
+import { PAGE_SLOTS } from '@/lib/site/pageLayout';
+import { type PageBlock } from '@/lib/site/pageBlocks';
 import EditingNow from '@/components/portal/EditingNow';
 import DraftBanner from '@/components/portal/DraftBanner';
 import Image from 'next/image';
@@ -34,7 +38,7 @@ interface Props {
   creditPeople?: CreditPerson[];
 }
 
-const ALL_PAGES = ['/', '/about', '/our-story', '/team', '/events', '/divisions', '/sponsors', '/join', '/get-involved', '/membership', '/media'];
+const ALL_PAGES = ['/', '/about', '/about/team', '/events', '/divisions', '/sponsors', '/join', '/join/membership', '/media'];
 
 const COLOR_PREVIEW: Record<string, string> = {
   yellow: '#ffc72c',
@@ -105,7 +109,7 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
         throw new Error(body.error || 'Failed to save');
       }
       setSavedForms((prev) => ({ ...prev, [key]: forms[key] }));
-      showToast('Site content saved');
+      showToast('Site content published');
       return true;
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
@@ -368,6 +372,8 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
                       </div>
                     </div>
 
+                    <ContentHistory blockKey={block.key} content={forms[block.key] ?? {}} onLoad={(c) => setForms((prev) => ({ ...prev, [block.key]: c }))} />
+
                     <div className={styles.fields}>
                       {sortFields(block.key, block.fields as FieldDef[]).map((field) => (
                         <FieldEditor
@@ -389,7 +395,7 @@ export default function ContentEditor({ query, setQuery, blocks, contentMap, cre
                   dirty={hasUnsaved}
                   saving={saving !== null}
                   onSave={saveAll}
-                  saveLabel="Save changes"
+                  saveLabel="Publish changes"
                   message={dirtyKeys.length > 1 ? `${dirtyKeys.length} sections have unsaved changes` : 'You have unsaved changes'}
                   onDiscard={() => {
                     setForms(savedForms);
@@ -636,6 +642,22 @@ function FieldEditor({
       <div className={styles.fieldGroup}>
         {labelEl}
         <ImageUploadField label={field.label} value={(value as string) ?? ''} onChange={onChange} bucket="site-content" shape="wide" />
+      </div>
+    );
+  }
+
+  // ── Page Builder: extra blocks for a club page ─────
+  if (field.type === 'pageblocks') {
+    const slots = PAGE_SLOTS[(fieldAny.slotsFor as string) ?? ''] ?? [];
+    return (
+      <div className={styles.fieldGroup}>
+        <PageBlocksEditor
+          blocks={Array.isArray(value) ? (value as PageBlock[]) : []}
+          onChange={(b) => onChange(b)}
+          bucket="site-content"
+          creditPeople={creditPeople}
+          slots={slots}
+        />
       </div>
     );
   }

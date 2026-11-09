@@ -6,6 +6,7 @@ import { getDivisions, divisionLogoSrc } from '@/lib/members/divisions';
 import { getContentBlock } from '@/lib/site/content';
 import { markdownToDescription } from '@/lib/docs/markdown';
 import LogoPlate from '@/components/LogoPlate/LogoPlate';
+import ClubBlocks from '@/components/ClubBlocks/ClubBlocks';
 import { ZineBand, PageHero } from '@/components/ZineBand/ZineBand';
 import PhotoStrip from '@/components/PhotoStrip/PhotoStrip';
 import { getSitePhotos, pickPhotos } from '@/lib/storage/sitePhotos';
@@ -38,6 +39,7 @@ export default async function DivisionsPage() {
   return (
     <div className={styles.page}>
       <PageHero label={(content.label as string) || 'Find your squad'} title={content.title as string} sub={content.subtitle as string} />
+      <ClubBlocks page="divisions" slot="top" />
 
       <ZineBand tone="navy" edge={false} label="Divisions">
         {divisions.length > 0 ? (
@@ -79,6 +81,7 @@ export default async function DivisionsPage() {
         )}
       </ZineBand>
       <PhotoStrip tone="ink" caption={(content.strip_caption as string) || 'Every division, in the same room.'} photos={pickPhotos(sitePhotos, 1, 3)} />
+      <ClubBlocks page="divisions" slot="bottom" />
     </div>
   );
 }

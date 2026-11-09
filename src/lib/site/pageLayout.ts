@@ -11,6 +11,7 @@ export const PAGE_SECTIONS: Record<string, SectionDef[]> = {
     { id: 'about', label: 'About' },
     { id: 'stats', label: 'Statistics strip' },
     { id: 'divisions', label: 'Divisions' },
+    { id: 'media', label: 'Media highlights' },
     { id: 'sponsors', label: 'Sponsors strip' },
     { id: 'recruitment', label: 'Get involved cards' },
   ],
@@ -50,3 +51,23 @@ export const PAGE_SECTIONS: Record<string, SectionDef[]> = {
 export function resolveSections(page: string, _layout?: unknown): string[] {
   return (PAGE_SECTIONS[page] ?? []).map((s) => s.id);
 }
+
+// Where Page Builder blocks can go on each club page: the top (under the page's title), after a section, or the bottom. (Slot ids: 'top', 'bottom', 'after:<section id>'.)
+export interface SlotDef {
+  id: string;
+  label: string;
+}
+const TB: SlotDef[] = [{ id: 'top', label: 'Top, under the title' }];
+const BOTTOM: SlotDef = { id: 'bottom', label: 'Bottom of the page' };
+const after = (page: string): SlotDef[] => (PAGE_SECTIONS[page] ?? []).map((x) => ({ id: `after:${x.id}`, label: `After: ${x.label}` }));
+export const PAGE_SLOTS: Record<string, SlotDef[]> = {
+  homepage: [...TB, ...after('homepage'), BOTTOM],
+  about: [...TB, BOTTOM],
+  team: [...TB, BOTTOM],
+  join: [...TB, BOTTOM],
+  membership: [...TB, BOTTOM],
+  events: [...TB, BOTTOM],
+  divisions: [...TB, BOTTOM],
+  media: [...TB, BOTTOM],
+  sponsors: [...TB, BOTTOM],
+};

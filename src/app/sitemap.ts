@@ -17,11 +17,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const staticRoutes = [
     { url: `${SITE_URL}/`, changeFrequency: 'weekly', priority: 1 },
     { url: `${SITE_URL}/about`, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/about/team`, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${SITE_URL}/events`, changeFrequency: 'daily', priority: 0.9 },
     { url: `${SITE_URL}/calendar`, changeFrequency: 'daily', priority: 0.7 },
     { url: `${SITE_URL}/divisions`, changeFrequency: 'monthly', priority: 0.8 },
     { url: `${SITE_URL}/sponsors`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/join`, changeFrequency: 'monthly', priority: 0.7 },
+    { url: `${SITE_URL}/join/membership`, changeFrequency: 'monthly', priority: 0.6 },
     { url: `${SITE_URL}/media`, changeFrequency: 'monthly', priority: 0.5 },
     { url: `${SITE_URL}/privacy`, changeFrequency: 'yearly', priority: 0.3 },
     { url: `${SITE_URL}/terms`, changeFrequency: 'yearly', priority: 0.3 },

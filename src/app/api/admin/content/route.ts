@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createServiceClient } from '@/lib/supabase/admin';
 import { hasCapability } from '@/lib/portal/capabilities';
 import { strictUser } from '@/lib/supabase/localAuth';
+import { cleanBlocks } from '@/lib/site/pageBlocks';
 
 export async function GET() {
   // Public read — anyone can fetch content for rendering
@@ -24,7 +25,7 @@ export async function POST(request: Request) {
   const { data: roles } = await userClient.from('user_roles').select('role, division_id').eq('user_id', user.id);
 
   if (!hasCapability(roles ?? [], 'manage_site_content')) {
-    return NextResponse.json({ error: 'Content editor access required (lead, exec, or admin)' }, { status: 403 });
+    return NextResponse.json({ error: 'Content editor access required (exec or admin)' }, { status: 403 });
   }
 
   const body = (await request.json()) as { key?: string; content?: Record<string, unknown> };
@@ -34,13 +35,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Missing key or content' }, { status: 400 });
   }
 
+  // A club page's Page Builder blocks are checked (addresses, video links, dates, limits) before they are stored, whatever the editor sent.
+  const clean = key.startsWith('builder.') ? { blocks: cleanBlocks((content as { blocks?: unknown }).blocks) } : content;
+
   // 2. Upsert via service client — bypasses RLS; auth is already verified above
   const adminClient = createServiceClient();
   const { error } = await adminClient.from('site_contents').upsert(
     {
       key,
       title: key, // default title = key (satisfies NOT NULL)
-      content,
+      content: clean,
       updated_by: user.id,
       updated_at: new Date().toISOString(),
     },

@@ -12,6 +12,7 @@
   flex-wrap: wrap;
   gap: 0.6rem;
   padding-inline: clamp(0.75rem, 3vw, 1.75rem);
+  padding-top: var(--banner-offset, 0px);
   pointer-events: none;
   transition: transform 0.25s ease;
   will-change: transform;
@@ -25,11 +26,9 @@
 .right { display: flex; align-items: flex-start; gap: 0.7rem; }
 
 /* The announcement pill: same row, between the logo and the buttons. On phones there is no room, so it drops to a row of its own under them. */
-.announce { flex: 1 1 0; min-width: 0; display: flex; justify-content: center; align-self: center; }
+/* The announcement strip sits across the very top of the screen, above this row (the row is pushed down by its height, --banner-offset), and leaves with it when you scroll. */
+.stripSlot { position: absolute; top: calc(-1 * max(0.85rem, env(safe-area-inset-top))); left: 0; right: 0; pointer-events: auto; }
 .announceHidden { visibility: hidden; }
-@media (max-width: 860px) {
-  .announce { order: 3; flex-basis: 100%; }
-}
 
 .portal, .menuBtn {
   display: inline-flex; align-items: center; gap: 0.5rem; height: 2.9rem; padding: 0 1rem;
@@ -109,7 +108,6 @@
   .deskTicker { display: inline-flex; min-width: 0; }
   .deskTicker:empty { display: none; }
   .menuBtn { display: none; }
-  .announce { order: 3; flex-basis: 100%; }
 }
 @media (min-width: 1100px) and (max-width: 1279px) { .cart { padding: 0.5rem 0.6rem; } .cartName { font-size: 0.68rem; letter-spacing: 0.05em; } }
 @media (prefers-reduced-motion: reduce) { .cart { transition: none; } }
@@ -120,3 +118,10 @@
 .acctMenu a, .acctMenu button { display: flex; align-items: center; gap: 0.6rem; min-height: 44px; padding: 0 0.8rem; border: 0; border-radius: 6px; background: none; color: var(--ink); font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.06em; text-transform: uppercase; text-decoration: none; text-align: left; cursor: pointer; }
 .acctMenu a:hover, .acctMenu button:hover, .acctMenu a:focus-visible, .acctMenu button:focus-visible { background: var(--yellow); outline: none; }
 .acctMenu .acctPortal { border-top: 2px dashed rgba(0, 0, 0, 0.25); border-radius: 0 0 6px 6px; margin-top: 0.2rem; }
+
+/* The Join button: the one yellow sticker on the right, next to Sign In / Me. On a phone it is in the menu instead. */
+.joinCta { display: inline-flex; align-items: center; height: 2.9rem; padding: 0 1.1rem; background: var(--yellow); color: var(--ink); border: 3px solid var(--ink); border-radius: var(--radius-sm); box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.6); font-family: var(--font-futura-heavy); font-size: 0.8rem; letter-spacing: 0.08em; text-transform: uppercase; text-decoration: none; transform: rotate(-1.5deg); transition: transform 0.15s ease, box-shadow 0.15s ease; }
+.joinCta:hover, .joinCta:focus-visible { transform: translate(-2px, -2px) rotate(0deg); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6); }
+.joinCta:focus-visible { outline: 3px solid var(--white); outline-offset: 2px; }
+@media (max-width: 860px) { .joinCta { display: none; } }
+@media (prefers-reduced-motion: reduce) { .joinCta { transition: none; } }
