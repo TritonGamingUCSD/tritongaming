@@ -2,28 +2,34 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { Award, CalendarCheck, CalendarDays, LayoutDashboard, Ticket, User } from 'lucide-react';
 import styles from './me.module.css';
 
-// The tabs of /me. Each is its own address. Rewards is for students only; Portal is for people who hold a role beyond student.
+// The tabs of /me. Each is its own address. On a computer they are a row of tabs under the header; on a phone they are a bar at the bottom, in reach of a thumb. Rewards is for students only; Portal is for people who hold a role beyond student.
 export default function MeTabs({ rewards, portal }: { rewards: boolean; portal: boolean }) {
   const path = usePathname();
   const tabs = [
-    { href: '/me/events', label: 'Events' },
-    { href: '/me/tickets', label: 'My Tickets' },
-    { href: '/me/calendar', label: 'Calendar' },
-    ...(rewards ? [{ href: '/me/rewards', label: 'Rewards' }] : []),
-    { href: '/me/profile', label: 'Profile' },
+    { href: '/me/events', label: 'Events', Icon: CalendarCheck },
+    { href: '/me/tickets', label: 'Tickets', Icon: Ticket },
+    { href: '/me/calendar', label: 'Calendar', Icon: CalendarDays },
+    ...(rewards ? [{ href: '/me/rewards', label: 'Rewards', Icon: Award }] : []),
+    { href: '/me/profile', label: 'Profile', Icon: User },
   ];
   return (
     <nav className={styles.tabs} aria-label="My pages">
-      {tabs.map((t) => (
-        <Link key={t.href} href={t.href} className={path.startsWith(t.href) ? styles.on : ''} aria-current={path.startsWith(t.href) ? 'page' : undefined}>
-          {t.label}
-        </Link>
-      ))}
+      {tabs.map(({ href, label, Icon }) => {
+        const on = path.startsWith(href);
+        return (
+          <Link key={href} href={href} className={on ? styles.on : ''} aria-current={on ? 'page' : undefined}>
+            <Icon size={20} strokeWidth={1.75} aria-hidden="true" />
+            <span>{label}</span>
+          </Link>
+        );
+      })}
       {portal && (
         <Link href="/portal" className={styles.portal} prefetch={false}>
-          Portal
+          <LayoutDashboard size={20} strokeWidth={1.75} aria-hidden="true" />
+          <span>Portal</span>
         </Link>
       )}
     </nav>
