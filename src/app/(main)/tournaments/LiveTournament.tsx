@@ -7,6 +7,7 @@ import { FORMAT_LABEL } from '@/components/tournaments/labels';
 import { useFeed, type Feed } from '@/components/tournaments/useFeed';
 import { PROVIDER_NAMES, type Provider } from '@/lib/tournaments/external';
 import JoinPanel from './JoinPanel';
+import MyMatch from './MyMatch';
 import styles from './tournaments.module.css';
 
 // The public page of a tournament: the bracket, standings and who plays now and next, updating by itself.
@@ -29,6 +30,7 @@ export default function LiveTournament({ slug, initial }: { slug: string; initia
         </span>
       </header>
       {t.signups_open && <JoinPanel slug={slug} id={t.id} type={t.entrant_type} teamSize={t.team_size} onDone={() => undefined} />}
+      {t.status !== 'registration' || feed.matches.length > 0 ? <MyMatch tournamentId={t.id} feed={feed} /> : null}
       {feed.links.length > 0 && (
         <p className={styles.also}>
           Also on:{' '}

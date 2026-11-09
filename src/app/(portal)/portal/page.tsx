@@ -38,7 +38,9 @@ import { ROLE_LABELS, ROLE_COLORS, ROLE_DISPLAY_RANK, isDivisionRole } from '@/t
 import { CONTENT_BLOCKS } from '@/lib/site/content-blocks';
 import { PACIFIC_TZ, pacificDayKey, pacificDaysUntil, pacificToday } from '@/lib/core/timezone';
 import { isCheckinWindowOpen } from '@/lib/events/checkinWindow';
+import { redirect } from 'next/navigation';
 import { sectionLabel } from '@/lib/portal/sections';
+import { usesPortal, meAddressFor } from '@/lib/portal/audience';
 import { bannerShown, loadSiteSettings } from '@/lib/portal/siteSettings';
 import PortalBanner from '@/components/portal/PortalBanner';
 import { loadDivisionHats } from '@/lib/divisions/hats';
@@ -134,6 +136,12 @@ export default async function PortalDashboard({ searchParams }: Props) {
     getViewAs(),
     getViewingUser(),
   ]);
+  // Students and guests (nobody holding a role beyond student) have their own pages on the main site: the portal's old addresses for them go to the matching /me page. The real roles decide, so an admin
+  // previewing the portal as someone else is never sent away from the preview (and its way back).
+  if (profile && !viewAs && !viewingUser && !usesPortal(realRoles)) {
+    const to = meAddressFor(requestedSection, requestedTab, requestedSubTab);
+    if (to) redirect(to);
+  }
   // Every email they can sign in with: the choices for the email on their public officer card.
   const linkedEmails =
     authUser && requestedSection === 'profile'

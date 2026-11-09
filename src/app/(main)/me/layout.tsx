@@ -6,6 +6,8 @@ import { usesPortal } from '@/lib/portal/audience';
 import { resolveAvatarUrl } from '@/lib/members/profile';
 import { PortalIdentityProvider } from '@/components/portal/PortalIdentity';
 import '@/app/(portal)/portal-controls.css';
+import Link from 'next/link';
+import MeBar from './MeBar';
 import MeTabs from './MeTabs';
 import MeTheme from './MeTheme';
 import styles from './me.module.css';
@@ -22,21 +24,13 @@ export default async function MeLayout({ children }: { children: React.ReactNode
   return (
     <PortalIdentityProvider id={profile.id} name={name} track>
       <MeTheme />
-      <div className={`pp-root ${styles.wrap}`}>
-        <header className={styles.head}>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          {avatar ? (
-            <img src={avatar} alt="" width={44} height={44} className={styles.avatar} referrerPolicy="no-referrer" />
-          ) : (
-            <span className={styles.avatar}>{name[0]?.toUpperCase()}</span>
-          )}
-          <div>
-            <p>My Triton Gaming</p>
-            <h1>Hi, {name}</h1>
-          </div>
-        </header>
-        <MeTabs rewards={isRewardsEligible(roles)} portal={usesPortal(roles)} />
+      <div data-me-site className={`pp-root ${styles.wrap}`}>
+        <MeBar name={name} avatar={avatar} portal={usesPortal(roles)} />
+        <MeTabs rewards={isRewardsEligible(roles)} portal={false} />
         <div className={styles.sheet}>{children}</div>
+        <footer className={styles.foot}>
+          <Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> · Gaming Org at UC San Diego
+        </footer>
       </div>
     </PortalIdentityProvider>
   );

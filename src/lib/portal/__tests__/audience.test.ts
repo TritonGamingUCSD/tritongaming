@@ -17,3 +17,22 @@ describe('who uses the portal', () => {
     expect(usesPortal(r('ucsd', 'cap:view_events', 'deny:view_events'))).toBe(false);
   });
 });
+
+import { meAddressFor } from '../audience';
+
+describe('where a student or guest goes instead of the portal', () => {
+  it('maps the pages they use to /me', () => {
+    expect(meAddressFor(undefined)).toBe('/me/events');
+    expect(meAddressFor('all')).toBe('/me/events');
+    expect(meAddressFor('tickets')).toBe('/me/tickets');
+    expect(meAddressFor('tickets', 'history')).toBe('/me/tickets');
+    expect(meAddressFor('activity')).toBe('/me/tickets');
+    expect(meAddressFor('calendar', 'week', '2026-11-10')).toBe('/me/calendar?view=week&date=2026-11-10');
+    expect(meAddressFor('points', 'shop')).toBe('/me/rewards?tab=shop');
+    expect(meAddressFor('profile', 'linked')).toBe('/me/profile?tab=linked');
+    expect(meAddressFor('help')).toBe('/me/help');
+  });
+  it('leaves every other section alone', () => {
+    for (const s of ['events', 'checkin', 'meetings', 'admin', 'division', 'docs']) expect(meAddressFor(s)).toBeNull();
+  });
+});

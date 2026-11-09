@@ -403,6 +403,13 @@ export default function FullscreenQR({ ticketId, eventTitle, eventDate, eventLoc
   // confirm the check-in went through. The ticket list behind it already
   // shows the ticket as checked in (see onCheckedIn above).
 
+  // Escape closes it too (keyboard users)
+  useEffect(() => {
+    const key = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
+    window.addEventListener('keydown', key);
+    return () => window.removeEventListener('keydown', key);
+  }, [onClose]);
+
   // Close on backdrop tap
   function onBackdrop(e: React.MouseEvent) {
     if (e.target === e.currentTarget) onClose();

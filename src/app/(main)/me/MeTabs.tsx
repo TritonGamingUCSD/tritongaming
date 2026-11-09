@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Award, CalendarCheck, CalendarDays, LayoutDashboard, Ticket, User } from 'lucide-react';
+import { Award, CalendarCheck, CalendarDays, CircleHelp, LayoutDashboard, Ticket, User } from 'lucide-react';
 import styles from './me.module.css';
 
 // The tabs of /me. Each is its own address. On a computer they are a row of tabs under the header; on a phone they are a bar at the bottom, in reach of a thumb. Rewards is for students only; Portal is for people who hold a role beyond student.
@@ -14,6 +14,7 @@ export default function MeTabs({ rewards, portal }: { rewards: boolean; portal: 
     { href: '/me/calendar', label: 'Calendar', Icon: CalendarDays },
     ...(rewards ? [{ href: '/me/rewards', label: 'Rewards', Icon: Award }] : []),
     { href: '/me/profile', label: 'Profile', Icon: User },
+    { href: '/me/help', label: 'Help', Icon: CircleHelp },
   ];
   return (
     <nav className={styles.tabs} aria-label="My pages">

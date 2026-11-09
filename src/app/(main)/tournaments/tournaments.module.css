@@ -42,3 +42,5 @@
 .board b { text-align: center; }
 .board small { color: #9fb0c8; }
 .board em { font-style: normal; font-weight: 800; color: #f6c84c; }
+.mine { border-color: #f6c84c; background: rgba(246, 200, 76, 0.08); }
+.mine b { font-size: 1.05rem; }

@@ -4,7 +4,7 @@ import { getProfile, getUserRoles } from '@/lib/core/auth';
 import { createClient } from '@/lib/supabase/server';
 import { isVerifiedMember } from '@/lib/portal/capabilities';
 import { openEventsFilter } from '@/lib/events/checkinWindow';
-import { formatEventDateRange, formatEventTimeRange } from '@/lib/core/timezone';
+import { formatEventDateRange, formatEventTimeRange, pacificDayKey } from '@/lib/core/timezone';
 import QuickRegister from './QuickRegister';
 import styles from './events.module.css';
 
@@ -42,11 +42,29 @@ export default async function MyEventsPage() {
     .filter((t) => Date.parse(t.event.end_date ?? t.event.start_date) + 12 * 3600e3 >= now)
     .sort((a, b) => Date.parse(a.event.start_date) - Date.parse(b.event.start_date));
   for (const t of upcoming) ticketed.set(t.event.id, t.id);
+  // Happening today (Pacific): a ticket for it is the first thing on the page.
+  const today = pacificDayKey();
+  const happeningToday = upcoming.filter((t) => pacificDayKey(t.event.start_date) <= today && today <= pacificDayKey(t.event.end_date ?? t.event.start_date));
   const joinable = (open ?? []).filter((e) => !ticketed.has(e.id as string) && (e.audience !== 'ucsd_only' || student));
   const when = (e: Ev) => `${formatEventDateRange(e.start_date, e.end_date, { weekday: true })} · ${formatEventTimeRange(e.start_date, e.end_date)}`;
 
   return (
     <div className={styles.page}>
+      {happeningToday.map((t) => (
+        <section key={t.id} className={styles.today} aria-label="Happening today">
+          <div>
+            <small>Happening Today</small>
+            <b>{t.event.title}</b>
+            <span>
+              {when(t.event)}
+              {t.event.location ? ` · ${t.event.location}` : ''}
+            </span>
+          </div>
+          <Link href={`/me/tickets?qr=${t.id}`} className={`${styles.show} ${styles.big}`}>
+            <Ticket size={18} aria-hidden="true" /> Show Ticket
+          </Link>
+        </section>
+      ))}
       <section aria-labelledby="mine-h">
         <h2 id="mine-h" className={styles.h}>
           Your Tickets

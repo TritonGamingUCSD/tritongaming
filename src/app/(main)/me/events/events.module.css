@@ -24,3 +24,13 @@
   .reg { align-items: stretch; flex: 1 1 100%; }
   .reg small { max-width: none; text-align: left; }
 }
+
+.today { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 1rem 1.1rem; border: 3px solid var(--yellow); border-radius: 12px; background: color-mix(in srgb, var(--yellow) 14%, var(--pp-card)); }
+.today div { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+.today small { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--yellow); }
+.today b { font-size: 1.25rem; color: var(--pp-ink); overflow-wrap: anywhere; }
+.today span { font-size: 0.88rem; color: rgba(var(--pp-ink-rgb), 0.9); }
+.big { min-height: 52px; padding: 0 1.4rem; font-size: 0.9rem; }
+@media (max-width: 480px) {
+  .today { flex-direction: column; align-items: stretch; }
+}

@@ -8,3 +8,30 @@ export function usesPortal(roles: RoleGrant[]): boolean {
 
 /** Where a signed-in person starts: the portal for staff and members, /me for students and guests. */
 export const homeFor = (roles: RoleGrant[]): string => (usesPortal(roles) ? '/portal' : '/me');
+
+/** Where a student or guest goes instead of a portal hub address: the matching page of /me (tickets, calendar, rewards, profile, help), or Events for the portal's home. Null for anything else (they stay where they are). */
+export function meAddressFor(section: string | undefined, tab?: string, subtab?: string): string | null {
+  const q = (p: Record<string, string | undefined>) => {
+    const s = new URLSearchParams(Object.entries(p).filter((e): e is [string, string] => !!e[1])).toString();
+    return s ? `?${s}` : '';
+  };
+  switch (section) {
+    case undefined:
+    case '':
+    case 'all':
+      return '/me/events';
+    case 'tickets':
+    case 'activity':
+      return '/me/tickets';
+    case 'calendar':
+      return `/me/calendar${q({ view: tab, date: subtab })}`;
+    case 'points':
+      return `/me/rewards${q({ tab, subtab })}`;
+    case 'profile':
+      return `/me/profile${q({ tab })}`;
+    case 'help':
+      return `/me/help${q({ tab, subtab })}`;
+    default:
+      return null;
+  }
+}
