@@ -7,6 +7,7 @@ import ImageUploadField from '@/components/ImageUploadField/ImageUploadField';
 import IconButton from '@/components/ui/IconButton';
 import { useDragReorder } from '@/lib/ui/useDragReorder';
 import { BLOCK_LABELS, BLOCK_LIMITS, newBlock, videoEmbed, type BlockStyle, type BlockType, type PageBlock } from '@/lib/site/pageBlocks';
+import BlocksHistory, { type PageRef } from './BlocksHistory';
 import { pacificDatetimeLocalToUTC, utcToPacificDatetimeLocal } from '@/lib/core/timezone';
 import type { CreditPerson } from '@/lib/members/creditPeople';
 import styles from './PageBlocksEditor.module.css';
@@ -236,11 +237,14 @@ export default function PageBlocksEditor({
   onChange,
   bucket = 'event-flyers',
   creditPeople = [],
+  page,
 }: {
   blocks: PageBlock[];
   onChange: (b: PageBlock[]) => void;
   bucket?: string;
   creditPeople?: CreditPerson[];
+  /** The saved page being edited: with it, the editor offers drafts and history. */
+  page?: PageRef;
 }) {
   const hist = useHistory(blocks, onChange);
   const apply = hist.commit;
@@ -355,6 +359,7 @@ export default function PageBlocksEditor({
     <fieldset className={styles.group} ref={root}>
       <legend className={styles.legend}>Page sections</legend>
       <span className={styles.hint}>Build the page from blocks. They appear below the main text, in this order. Drag the grip, or use the arrows, to reorder.</span>
+      {page && <BlocksHistory page={page} blocks={blocks} onLoad={apply} />}
       <div className={styles.toolbar}>
         <button type="button" className={styles.tool} onClick={hist.undo} disabled={!hist.canUndo} aria-label="Undo">
           <Undo2 size={14} aria-hidden="true" /> Undo

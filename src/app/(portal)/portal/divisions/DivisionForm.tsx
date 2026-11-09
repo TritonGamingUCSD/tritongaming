@@ -233,7 +233,13 @@ export default function DivisionForm({
 
           <SocialLinksField value={form.social_links} onChange={(v) => set('social_links', v)} exclude={['discord']} hint="Just your handle, not the full link — optional." />
 
-          <PageBlocksEditor blocks={form.page_blocks} onChange={(b) => set('page_blocks', b)} bucket="site-content" creditPeople={creditPeople} />
+          <PageBlocksEditor
+            blocks={form.page_blocks}
+            onChange={(b) => set('page_blocks', b)}
+            page={divisionId ? { type: 'division', id: divisionId } : undefined}
+            bucket="site-content"
+            creditPeople={creditPeople}
+          />
 
           <SocialEmbedsField
             value={form.social_embeds}

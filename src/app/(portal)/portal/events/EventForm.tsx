@@ -546,7 +546,12 @@ export default function EventForm({
               }
             />
 
-            <PageBlocksEditor blocks={form.page_blocks} onChange={(b) => setForm((f) => ({ ...f, page_blocks: b }))} creditPeople={creditPeople} />
+            <PageBlocksEditor
+              blocks={form.page_blocks}
+              onChange={(b) => setForm((f) => ({ ...f, page_blocks: b }))}
+              page={eventId ? { type: 'event', id: eventId } : undefined}
+              creditPeople={creditPeople}
+            />
 
             <EventExtrasEditor
               venueAddress={form.venue_address}

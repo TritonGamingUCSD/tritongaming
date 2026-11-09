@@ -41,3 +41,11 @@
 .warn { font-size: 0.74rem; color: var(--pp-bad); }
 .addGroups { display: flex; flex-direction: column; gap: 0.5rem; }
 .groupName { min-width: 7.5rem; font-size: 0.72rem; font-weight: 700; color: rgba(var(--pp-ink-rgb), 0.8); }
+
+/* drafts and history */
+.draftBanner { display: flex; align-items: center; flex-wrap: wrap; gap: 0.6rem; padding: 0.6rem 0.8rem; border-radius: 0.6rem; background: rgba(255, 199, 44, 0.14); border: 1px solid rgba(255, 199, 44, 0.5); font-size: 0.82rem; }
+.draftBanner span { flex: 1 1 14rem; }
+.versions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+.versions li { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.6rem 0.8rem; border: 1px solid rgba(var(--pp-ink-rgb), 0.25); border-radius: 0.6rem; }
+.versions span { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.versions small { font-size: 0.74rem; opacity: 0.8; }
