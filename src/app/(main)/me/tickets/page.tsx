@@ -10,5 +10,7 @@ export default async function MyTicketsPage() {
   if (!profile) return null; // (the layout has already sent them to sign in)
   const roles = await getUserRoles();
   const data = await getTicketsData(profile.id, roles);
-  return <TicketsSectionContent tickets={data.tickets} upcomingEvents={data.upcomingEvents} isUcsd={data.isUcsd} canEarnPoints={data.canEarnPoints} activity={data.tickets} />;
+  return (
+    <TicketsSectionContent noHeader tickets={data.tickets} upcomingEvents={data.upcomingEvents} isUcsd={data.isUcsd} canEarnPoints={data.canEarnPoints} activity={data.tickets} />
+  );
 }

@@ -37,3 +37,14 @@
   .tabs .portal { margin-left: 0; border: 0; }
 }
 .portalLink { border-color: var(--yellow); color: var(--yellow); }
+
+/* A computer: the tabs become a slim sidebar on the left, the bar spans the top, the page fills the rest. (A phone keeps the bottom bar above.) */
+@media (min-width: 761px) {
+  .wrap { display: grid; grid-template-columns: 13.5rem minmax(0, 1fr); grid-template-areas: 'bar bar' 'tabs sheet' 'foot foot'; column-gap: 1.6rem; row-gap: 1.2rem; align-content: start; max-width: 92rem; }
+  .bar { grid-area: bar; }
+  .tabs { grid-area: tabs; flex-direction: column; flex-wrap: nowrap; align-self: start; position: sticky; top: 5rem; gap: 0.3rem; }
+  .tabs a { width: 100%; min-height: 46px; padding: 0 0.9rem; border: 0; border-radius: 10px; }
+  .tabs .on { background: var(--pp-ink); color: #011941; } /* theme-ok */
+  .sheet { grid-area: sheet; }
+  .foot { grid-area: foot; }
+}

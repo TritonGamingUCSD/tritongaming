@@ -148,7 +148,7 @@ export default function HelpSectionContent({ isStaff, userId }: { isStaff: boole
               ? { id, label: 'Ask for help', icon: <MessageSquarePlus size={15} /> }
               : id === 'replies'
                 ? { id, label: 'Saved replies', icon: <MessageSquareText size={15} /> }
-                : { id, label: 'My tickets', icon: <ListChecks size={15} /> },
+                : { id, label: 'My requests', icon: <ListChecks size={15} /> },
         )}
       />
       {tab === 'ask' && <NewTicket userId={userId} onCreated={created} />}
