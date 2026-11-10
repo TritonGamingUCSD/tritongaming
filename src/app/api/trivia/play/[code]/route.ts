@@ -15,8 +15,16 @@ export async function GET(_req: Request, { params }: { params: Promise<{ code: s
   const [state, mine, answer] = await Promise.all([
     publicState(auth.svc, g),
     auth.svc.from('trivia_players').select('status, score').eq('game_id', g.id).eq('user_id', auth.user.id).maybeSingle(),
-    g.status === 'question' ? auth.svc.from('trivia_answers').select('pos').eq('game_id', g.id).eq('user_id', auth.user.id).eq('q_index', g.current).maybeSingle() : null,
+    g.status === 'question' ? auth.svc.from('trivia_answers').select('pos, picks').eq('game_id', g.id).eq('user_id', auth.user.id).eq('q_index', g.current).maybeSingle() : null,
   ]);
   if (!mine.data) return NextResponse.json({ error: 'You haven’t joined this game.', joined: false }, { status: 404 });
-  return NextResponse.json({ state, me: { ...mine.data, userId: auth.user.id, answered: (answer?.data?.pos as number | undefined) ?? null } });
+  return NextResponse.json({
+    state,
+    me: {
+      ...mine.data,
+      userId: auth.user.id,
+      answered: (answer?.data?.pos as number | undefined) ?? null,
+      answeredPicks: (answer?.data?.picks as number[] | null | undefined) ?? null,
+    },
+  });
 }

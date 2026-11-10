@@ -15,6 +15,7 @@ import { bestOfOf, currentStage, defOf, stageEngineMatches, stageField } from '@
 import type { MatchRow } from '@/lib/tournaments/store';
 import { showToast } from '@/lib/ui/toast';
 import BracketView from './BracketView';
+import { SeatBar, SeatDialog, placesOf, seatingOpen } from './SeatTools';
 import MatchDialog from './MatchDialog';
 import EntrantsPanel from './EntrantsPanel';
 import StreamPanel from './StreamPanel';
@@ -51,6 +52,8 @@ export default function TournamentDetail({
   const { data, error, reload } = useTournament(slug);
   const setParams = usePortalParams();
   const [picked, setPicked] = useState<MatchRow | null>(null);
+  const [seatFor, setSeatFor] = useState<MatchRow | null>(null);
+  const [seatMode, setSeatMode] = useState<boolean | null>(null);
   const [stagePick, setStagePick] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState('');
@@ -91,6 +94,8 @@ export default function TournamentDetail({
   const lastRound = Math.max(0, ...engine.map((m) => m.round));
   const roundDone = engine.length > 0 && !engine.some((m) => m.status === 'ready' || m.status === 'pending');
   const seeds = new Map(field.map((e) => [e.id, e.seed]));
+  const seatsOpen = seatingOpen(shown ?? undefined, shownRows);
+  const seating = seatsOpen && (seatMode ?? placesOf(shownRows).some((p) => !p.slot));
   const poolRows =
     shown && (shown.format === 'roundrobin' || shown.format === 'swiss')
       ? [...new Set(engine.map((m) => m.group ?? 0))].map((g) => {
@@ -195,6 +200,7 @@ export default function TournamentDetail({
                 ))}
               </nav>
             )}
+            {shown && data.can.run && seatsOpen && <SeatBar data={data} stage={shown} rows={shownRows} seating={!!seating} setSeating={setSeatMode} act={act} busy={busy} />}
             {shown && data.can.run && shownRows.length > 0 && <PlanTools data={data} stage={shown} act={act} busy={busy} reload={reload} />}
             {nextReady && nextStage && data.can.manage && <NextStageBanner data={data} from={shown!} stage={nextStage} moving={moving} reload={reload} />}
             {(shown?.format === 'swiss' || shown?.format === 'points') && shownRows.length > 0 && (
@@ -221,7 +227,8 @@ export default function TournamentDetail({
                 entrants={data.entrants}
                 format={shown?.format ?? t.format}
                 canRun={data.can.run}
-                onPick={setPicked}
+                onPick={(m) => (seating && m.bracket === 'W' && m.round === 1 ? setSeatFor(m) : setPicked(m))}
+                seatable={(m) => !!seating && m.bracket === 'W' && m.round === 1}
                 onHeat={async (m, order) => act({ action: 'report-heat', key: m.key, order })}
                 roundNames={shown?.settings?.round_names}
               />
@@ -308,6 +315,16 @@ export default function TournamentDetail({
       {tab === 'entrants' && <EntrantsPanel data={data} reload={reload} />}
       {tab === 'stream' && data.can.manage && <StreamPanel data={data} reload={reload} />}
       {tab === 'settings' && data.can.manage && <TSettings data={data} reload={reload} onDeleted={() => (window.location.href = home)} />}
+      {seatFor && shown && (
+        <SeatDialog
+          data={data}
+          stage={shown}
+          match={data.matches.find((x) => x.key === seatFor.key) ?? seatFor}
+          rows={shownRows}
+          onClose={() => setSeatFor(null)}
+          reload={reload}
+        />
+      )}
       {picked && (
         <MatchDialog
           tid={t.id}

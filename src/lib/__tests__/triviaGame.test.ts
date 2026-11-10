@@ -60,6 +60,17 @@ describe('drawing a game', () => {
     expect(g[0].choices).toEqual(pool[0].choices.map((c) => c.trim()));
     expect(g[0].correct).toBe(pool[0].correct);
   });
+  it('with shuffling off and a count, a caller that passes every question gets every question', () => {
+    expect(drawGame(pool, new Set(), pool.length, seeded(2), { shuffle: false }).map((x) => x.id)).toEqual(pool.map((x) => x.id));
+  });
+  it('marks a question with several right answers as "choose all" only when asked to, and never a single-answer one', () => {
+    const multi = [q('m', { also: [3] }), q('s')];
+    const on = drawGame(multi, new Set(), 2, seeded(4), { multiAll: true });
+    expect(on.find((x) => x.id === 'm')?.all).toBe(true);
+    expect(on.find((x) => x.id === 's')?.all).toBeUndefined();
+    expect(drawGame(multi, new Set(), 2, seeded(4)).some((x) => x.all)).toBe(false);
+    expect(drawGame(multi, new Set(), 2, seeded(4), { shuffle: false, multiAll: true }).find((x) => x.id === 'm')?.all).toBe(true);
+  });
   it('uses one time limit for every question when set, the automatic one otherwise', () => {
     expect(new Set(drawGame(pool, new Set(), 5, seeded(1), { secs: 15 }).map((x) => x.secs))).toEqual(new Set([15]));
     expect(new Set(drawGame(pool, new Set(), 5, seeded(1), { shuffle: false, secs: 20 }).map((x) => x.secs))).toEqual(new Set([20]));

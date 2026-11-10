@@ -328,7 +328,8 @@ try {
   );
   const live1 = (await head.call('GET', PL)).j.matches.find((m) => m.label === 'ZZ Rematch');
   t.ok('and it is ready at once', live1?.status === 'ready');
-  t.ok('a match is scored', (await head.call('POST', `${PL}/bracket`, { action: 'report', key: firstM.key, scoreA: 2, scoreB: 1 })).s === 200);
+  const scoredR = await head.call('POST', `${PL}/bracket`, { action: 'report', key: firstM.key, scoreA: 2, scoreB: 1 });
+  t.ok('a match is scored', scoredR.s === 200, JSON.stringify(scoredR));
   t.ok(
     'a scored match cannot be taken out or have its players changed',
     (await head.call('POST', `${PL}/bracket`, { action: 'delete-match', key: firstM.key })).s === 409 &&
@@ -359,6 +360,81 @@ try {
   t.ok('a stage can be changed', (await head.call('PATCH', `${E}/stages`, { id: e0.stages[0].id, settings: { best_of: 5 } })).s === 200);
   t.ok('a stage can be removed', (await head.call('DELETE', `${E}/stages`, { id: e1.stages[1].id })).s === 200);
   t.ok('the last stage cannot be removed', (await head.call('DELETE', `${E}/stages`, { id: e0.stages[0].id })).s === 409);
+
+  // A double elimination with empty places (placement "by hand or draw"): no seeding, teams seated by hand or by a draw, then played like any double elimination
+  const man = await mk('ZZ Manual', 'double');
+  const M = `/api/tournaments/${man.j.id}`;
+  const mstage = (await head.call('GET', M)).j.stages[0];
+  t.ok(
+    'placement and places are saved on the stage',
+    (await head.call('PATCH', `${M}/stages`, { id: mstage.id, settings: { placement: 'manual', slots: 6 } })).s === 200 &&
+      (await head.call('GET', M)).j.stages[0].settings?.placement === 'manual',
+  );
+  for (const n of ['A1', 'B2', 'C3', 'D4', 'E5', 'F6']) await head.call('POST', `${M}/entrants`, { name: `ZZ ${n}` });
+  t.ok('it starts', (await head.call('POST', `${M}/bracket`, { action: 'start' })).s === 200);
+  let md = (await head.call('GET', M)).j;
+  const w1 = md.matches.filter((m) => m.bracket === 'W' && m.round === 1);
+  t.ok(
+    'the bracket has the double elimination layout, empty',
+    md.matches.some((m) => m.bracket === 'L') && md.matches.some((m) => m.bracket === 'GF') && md.matches.every((m) => m.status !== 'ready'),
+    JSON.stringify(md.matches.map((m) => [m.key, m.status])),
+  );
+  t.ok('first-round matches wait for teams (byes sit beside empty places)', w1.length === 4 && w1.every((m) => m.status === 'pending'));
+  const people = md.entrants.map((e) => e.id);
+  const open0 = w1.find((m) => m.a === null && m.b === null);
+  t.ok(
+    'someone with no part in it cannot seat teams',
+    (await stranger.call('POST', `${M}/bracket`, { action: 'place', key: open0.key, side: 'a', entrant_id: people[0] })).s === 403,
+  );
+  t.ok('a team is seated by hand', (await head.call('POST', `${M}/bracket`, { action: 'place', key: open0.key, side: 'a', entrant_id: people[0] })).s === 200);
+  md = (await head.call('GET', M)).j;
+  t.ok('and sits there', md.matches.find((m) => m.key === open0.key).a === people[0]);
+  t.ok(
+    'a bye place cannot be seated',
+    (
+      await head.call('POST', `${M}/bracket`, {
+        action: 'place',
+        key: md.matches.find((m) => m.bracket === 'W' && m.round === 1 && (m.a === 'BYE' || m.b === 'BYE')).key,
+        side: md.matches.find((m) => m.bracket === 'W' && m.round === 1 && m.a === 'BYE') ? 'a' : 'b',
+        entrant_id: people[1],
+      })
+    ).s === 400,
+  );
+  t.ok(
+    'a stranger is not a team here',
+    (await head.call('POST', `${M}/bracket`, { action: 'place', key: open0.key, side: 'b', entrant_id: '00000000-0000-0000-0000-000000000000' })).s === 400,
+  );
+  t.ok('the draw fills every place left', (await head.call('POST', `${M}/bracket`, { action: 'fill-slots', stage_id: mstage.id, mode: 'random' })).s === 200);
+  md = (await head.call('GET', M)).j;
+  const seated = md.matches
+    .filter((m) => m.bracket === 'W' && m.round === 1)
+    .flatMap((m) => [m.a, m.b])
+    .filter((x) => x && x !== 'BYE');
+  t.ok('all six teams sit, once each', seated.length === 6 && new Set(seated).size === 6, JSON.stringify(seated));
+  t.ok(
+    'matches with both teams are ready and byes moved their team on',
+    md.matches.filter((m) => m.status === 'ready').length === 2 && md.matches.filter((m) => m.bracket === 'W' && m.round === 2).every((m) => m.a || m.b),
+  );
+  t.ok(
+    'clearing empties the places again',
+    (await head.call('POST', `${M}/bracket`, { action: 'clear-slots', stage_id: mstage.id })).s === 200 && (await head.call('GET', M)).j.matches.every((m) => m.status !== 'ready'),
+  );
+  await head.call('POST', `${M}/bracket`, { action: 'fill-slots', stage_id: mstage.id, mode: 'order' });
+  md = (await head.call('GET', M)).j;
+  const firstReady = md.matches.find((m) => m.status === 'ready');
+  t.ok('a result goes in', (await head.call('POST', `${M}/bracket`, { action: 'report', key: firstReady.key, scoreA: 1, scoreB: 0 })).s === 200);
+  t.ok(
+    'the loser drops to the losers side',
+    (await head.call('GET', M)).j.matches.some((m) => m.bracket === 'L' && (m.a || m.b)),
+  );
+  t.ok('seats lock once a result is in', (await head.call('POST', `${M}/bracket`, { action: 'clear-slots', stage_id: mstage.id })).s === 409);
+  for (let i = 0; i < 40; i++) {
+    const m = (await head.call('GET', M)).j.matches.find((x) => x.status === 'ready');
+    if (!m) break;
+    await head.call('POST', `${M}/bracket`, { action: 'report', key: m.key, scoreA: 1, scoreB: 0 });
+  }
+  const fin = (await head.call('GET', M)).j;
+  t.ok('it plays through to a champion', fin.tournament.status === 'complete', fin.tournament.status);
 
   // Sign-ups by the players themselves
   const open = await mk('ZZ Open', 'single');

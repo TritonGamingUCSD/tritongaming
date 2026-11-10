@@ -512,3 +512,6 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 .showPoster { position: relative; overflow: hidden; padding-top: 4.6rem !important; border: 2px solid #011941 !important; background: linear-gradient(#0b1d3f, #12335f) top / 100% 3.6rem no-repeat, var(--pp-card) !important; } /* theme-ok: the marquee is always dark */
 .marquee { position: absolute; left: 0; right: 0; top: 0; z-index: 1; height: 3.6rem; display: flex; align-items: center; justify-content: center; padding-bottom: 0.5rem; white-space: nowrap; font-family: var(--font-renegare); font-size: 0.78rem; letter-spacing: 0.32em; text-transform: uppercase; color: #ffc72c; background: radial-gradient(circle, #ffc72c 2.6px, transparent 3.2px) 0 100% / 16px 12px repeat-x; } /* theme-ok */
 @media (prefers-reduced-motion: reduce) { .stage::before, .step1::before, .qCard { animation: none; } }
+
+/* the line under a question that asks for all the right answers */
+.qHint { margin: 0.4rem 0 0; font-family: var(--font-futura-heavy), system-ui, sans-serif; font-size: 0.9rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yellow, #ffc72c); }

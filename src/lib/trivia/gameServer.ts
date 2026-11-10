@@ -37,9 +37,9 @@ async function setPlayerTotals(svc: SupabaseClient, gameId: string, rows: { user
 async function standingsNow(svc: SupabaseClient, gameId: string) {
   const [pl, an] = await Promise.all([
     svc.from('trivia_players').select('user_id, name').eq('game_id', gameId).eq('status', 'in').limit(500),
-    svc.from('trivia_answers').select('user_id, q_index, pos, ok, ms, points').eq('game_id', gameId).limit(20000),
+    svc.from('trivia_answers').select('user_id, q_index, pos, picks, ok, ms, points').eq('game_id', gameId).limit(20000),
   ]);
-  const answers = (an.data ?? []) as { user_id: string; q_index: number; pos: number; ok: boolean; ms: number; points: number }[];
+  const answers = (an.data ?? []) as { user_id: string; q_index: number; pos: number; picks?: number[] | null; ok: boolean; ms: number; points: number }[];
   const list = standings(totals((pl.data ?? []) as { user_id: string; name: string }[], answers));
   return { list, answers };
 }
@@ -74,9 +74,12 @@ export async function startGame(svc: SupabaseClient, g: GameRow, count: number):
   const rows = ((pool.data ?? []) as (PoolQuestion & { also_correct?: number[] })[]).map((r) => ({ ...r, also: r.also_correct ?? [] })) as PoolQuestion[]; // `also_correct` is the stored column, `also` what a game's plan calls it
   const ready = rows.filter(isAskable).length;
   if (!ready) return { error: 'This quiz has no finished questions yet: each needs text, four answers and a right answer.', status: 409 };
-  const plan = drawGame(rows, usedIds, Math.min(Math.max(1, count), ready), Math.random, {
-    shuffle: g.trivia_quizzes?.shuffle_questions !== false,
+  const shuffled = g.trivia_quizzes?.shuffle_questions !== false;
+  // Random: the quiz's number of questions, drawn from the pool. Not random: every finished question, in the order written.
+  const plan = drawGame(rows, usedIds, shuffled ? Math.min(Math.max(1, count), ready) : ready, Math.random, {
+    shuffle: shuffled,
     secs: g.trivia_quizzes?.secs_per_question ?? null,
+    multiAll: !!g.trivia_quizzes?.multi_all,
   });
   const next = await save(svc, g, 'lobby', { plan, per_game: plan.length, ...OPEN({ ...g, plan }, 0) });
   if (!next) return { error: 'That game already started.', status: 409 };
@@ -93,7 +96,7 @@ export async function revealQuestion(svc: SupabaseClient, g: GameRow): Promise<G
   if (!closed) return { error: 'That question was already revealed.', status: 409 };
   const { list, answers } = await standingsNow(svc, g.id);
   const q = g.plan[g.current];
-  const counts = q.choices.map((_, pos) => answers.filter((a) => a.q_index === g.current && a.pos === pos).length);
+  const counts = q.choices.map((_, pos) => answers.filter((a) => a.q_index === g.current && (a.picks ?? [a.pos]).includes(pos)).length); // (a "choose all" answer counts for each answer it picked)
   const results: Record<string, PlayerResult> = {};
   const before = standingsBefore(list, answers, g.current);
   for (const p of list) {
@@ -102,6 +105,7 @@ export async function revealQuestion(svc: SupabaseClient, g: GameRow): Promise<G
     for (let i = g.current; i >= 0 && answers.some((x) => x.q_index === i && x.user_id === p.user_id && x.ok); i--) streak++;
     results[p.user_id] = {
       pos: a?.pos ?? null,
+      ...(a?.picks ? { picks: a.picks } : {}),
       ok: !!a?.ok,
       pts: a?.points ?? 0,
       rank: p.rank,

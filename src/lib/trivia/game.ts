@@ -62,6 +62,7 @@ export interface PlannedQuestion {
   choices: string[];
   correct: number;
   also?: number[];
+  all?: boolean; // the player must choose ALL the right answers (the quiz's "choose all" setting, on a question with several right answers)
   secs: number;
   category?: string;
   image?: string;
@@ -83,6 +84,8 @@ export interface DrawOptions {
   shuffle?: boolean;
   /** One time limit for every question; omitted keeps the automatic one by length. */
   secs?: number | null;
+  /** Questions with several right answers ask for all of them. */
+  multiAll?: boolean;
 }
 export function drawGame(pool: PoolQuestion[], used: ReadonlySet<string>, count: number, rng: Rng = Math.random, opts: DrawOptions = {}): PlannedQuestion[] {
   const ready = pool.filter(isAskable);
@@ -93,7 +96,7 @@ export function drawGame(pool: PoolQuestion[], used: ReadonlySet<string>, count:
       text: q.text.trim(),
       choices: q.choices.map((c) => c.trim()),
       correct: q.correct,
-      ...((q.also ?? []).length ? { also: (q.also ?? []).filter((i) => i !== q.correct) } : {}),
+      ...((q.also ?? []).length ? { also: (q.also ?? []).filter((i) => i !== q.correct), ...(opts.multiAll ? { all: true } : {}) } : {}),
       secs: secsOf(q),
       category: (q.category ?? '').trim(),
       image: q.image || undefined,
@@ -117,7 +120,9 @@ export function drawGame(pool: PoolQuestion[], used: ReadonlySet<string>, count:
       text: q.text.trim(),
       choices: order.map((i) => q.choices[i].trim()),
       correct: order.indexOf(q.correct),
-      ...((q.also ?? []).length ? { also: (q.also ?? []).map((i) => order.indexOf(i)).filter((i) => i >= 0 && i !== order.indexOf(q.correct)) } : {}),
+      ...((q.also ?? []).length
+        ? { also: (q.also ?? []).map((i) => order.indexOf(i)).filter((i) => i >= 0 && i !== order.indexOf(q.correct)), ...(opts.multiAll ? { all: true } : {}) }
+        : {}),
       secs: secsOf(q),
       category: (q.category ?? '').trim(),
       image: q.image || undefined,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BYE, generate, placements, report, seedOrder, standings, swissRound, swissRounds, undo, type Entrant, type Match } from '../bracket';
+import { BYE, generate, generateOpen, placements, report, seat, seats, seedOrder, standings, swissRound, swissRounds, undo, type Entrant, type Match } from '../bracket';
 
 const field = (n: number): Entrant[] => Array.from({ length: n }, (_, i) => ({ id: `p${i + 1}`, seed: i + 1 }));
 const find = (m: Match[], k: string) => m.find((x) => x.key === k)!;
@@ -165,5 +165,54 @@ describe('swiss', () => {
   it('plays ceil(log2 n) rounds', () => {
     expect(swissRounds(8)).toBe(3);
     expect(swissRounds(9)).toBe(4);
+  });
+});
+
+describe('a bracket with empty places (no seeding)', () => {
+  const ids = (n: number) => Array.from({ length: n }, (_, i) => `p${i + 1}`);
+  const placedIn = (n: number) => Object.fromEntries(seats(generateOpen('double', n)).map((p, i) => [`${p.key}:${p.side}`, ids(n)[i]]));
+  it('has the same layout and links as the seeded bracket, with nobody in it', () => {
+    for (const format of ['single', 'double'] as const) {
+      const open = generateOpen(format, 8);
+      const seeded = generate(format, field(8));
+      expect(open.map((m) => m.key).sort()).toEqual(seeded.map((m) => m.key).sort());
+      expect(open.find((m) => m.key === 'W1-1')!.winTo).toEqual(seeded.find((m) => m.key === 'W1-1')!.winTo);
+      expect(open.every((m) => m.status === 'pending' && m.a !== 'p1')).toBe(true);
+    }
+  });
+  it('has exactly as many places as teams, the rest are byes', () => {
+    expect(seats(generateOpen('double', 8))).toHaveLength(8);
+    expect(seats(generateOpen('double', 6))).toHaveLength(6);
+    expect(seats(generateOpen('single', 5))).toHaveLength(5);
+  });
+  it('a match becomes ready only when both teams are seated, and a bye moves its team on by itself', () => {
+    const m = seat('single', 6, {}, { 'W1-1:a': 'x' });
+    expect(m.find((x) => x.key === 'W1-1')!.status).toBe('bye'); // 6 teams: W1-1's other place is a bye (seed 8 is missing), so x walks into round 2
+    expect(m.find((x) => x.key === 'W2-1')!.a === 'x' || m.find((x) => x.key === 'W2-1')!.b === 'x').toBe(true);
+    const ready = seat('double', 8, {}, { 'W1-1:a': 'p1', 'W1-1:b': 'p2' });
+    expect(ready.find((x) => x.key === 'W1-1')!.status).toBe('ready');
+    expect(ready.find((x) => x.key === 'W1-2')!.status).toBe('pending');
+  });
+  it('a team can only have one place', () => {
+    expect(() => seat('single', 4, {}, { 'W1-1:a': 'x', 'W1-2:a': 'x' })).toThrow();
+  });
+  it('plays through like any double elimination: winners move on, losers drop, and the final is reached', () => {
+    let cur = seat('double', 8, {}, placedIn(8));
+    for (let guard = 0; guard < 200; guard++) {
+      const m = cur.find((x) => x.status === 'ready');
+      if (!m) break;
+      const n = (s: string | null) => Number(String(s).slice(1));
+      cur = report(cur, m.key, n(m.a) < n(m.b) ? 2 : 0, n(m.a) < n(m.b) ? 0 : 2);
+    }
+    expect(cur.find((x) => x.key === 'GF1')!.status).toBe('done');
+    expect(placements(cur)[0].id).toBe('p1');
+    expect(cur.filter((x) => x.bracket === 'W' || x.bracket === 'L').every((x) => x.status === 'done' || x.status === 'bye')).toBe(true);
+  });
+  it('re-seating rebuilds cleanly: moving a team leaves its old place empty', () => {
+    const first = seat('single', 4, {}, { 'W1-1:a': 'x', 'W1-1:b': 'y' });
+    expect(first.find((m) => m.key === 'W1-1')!.status).toBe('ready');
+    const moved = seat('single', 4, {}, { 'W1-1:a': 'x', 'W1-2:a': 'y' });
+    expect(moved.find((m) => m.key === 'W1-1')!.status).toBe('pending');
+    expect(moved.find((m) => m.key === 'W1-1')!.b).toBeNull();
   });
 });

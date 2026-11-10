@@ -26,7 +26,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
     publicState(auth.svc, g),
     auth.svc.from('trivia_players').select('user_id, name, status, score, time_ms').eq('game_id', g.id).order('joined_at').limit(500),
     g.status === 'lobby' ? auth.svc.from('trivia_questions').select('id, category, text, choices, correct').eq('quiz_id', g.quiz_id).limit(1000) : null,
-    wantResults ? auth.svc.from('trivia_answers').select('user_id, q_index, pos, ok').eq('game_id', g.id).limit(20000) : null,
+    wantResults ? auth.svc.from('trivia_answers').select('user_id, q_index, pos, picks, ok').eq('game_id', g.id).limit(20000) : null,
   ]);
   const players: LobbyPlayer[] = (pl.data ?? []).map((p) => ({
     id: p.user_id as string,
@@ -44,10 +44,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
     guests: !!g.trivia_quizzes?.open_to_guests,
     perGame: g.per_game,
     autoNext: g.trivia_quizzes?.auto_next !== false,
+    shuffle: g.trivia_quizzes?.shuffle_questions !== false,
     ready: pool ? ((pool.data ?? []) as PoolQuestion[]).filter(isAskable).length : null,
   };
   if (wantResults) {
-    const rows = (answers?.data ?? []) as { user_id: string; q_index: number; pos: number; ok: boolean }[];
+    const rows = (answers?.data ?? []) as { user_id: string; q_index: number; pos: number; picks?: number[] | null; ok: boolean }[];
     body.results = {
       standings: (pl.data ?? [])
         .filter((p) => p.status === 'in')
@@ -58,7 +59,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
         choices: q.choices,
         correct: q.correct,
         also: q.also ?? [],
-        counts: q.choices.map((_, pos) => rows.filter((r) => r.q_index === i && r.pos === pos).length),
+        counts: q.choices.map((_, pos) => rows.filter((r) => r.q_index === i && (r.picks ?? [r.pos]).includes(pos)).length),
       })),
     };
   }

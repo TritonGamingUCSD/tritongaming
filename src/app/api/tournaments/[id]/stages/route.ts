@@ -16,6 +16,8 @@ function clean(b: { name?: unknown; format?: unknown; settings?: Record<string, 
     const s = b.settings as StageDef['settings'];
     const ok: Record<string, unknown> = {};
     if (s.best_of !== undefined && [1, 3, 5, 7].includes(Number(s.best_of))) ok.best_of = Number(s.best_of);
+    if (s.placement === 'seed' || s.placement === 'manual') ok.placement = s.placement;
+    if (s.slots !== undefined && s.slots !== null) ok.slots = Math.min(128, Math.max(2, Math.trunc(Number(s.slots) || 2)));
     if (typeof s.third_place === 'boolean') ok.third_place = s.third_place;
     if (typeof s.grand_final_reset === 'boolean') ok.grand_final_reset = s.grand_final_reset;
     if (s.swiss_rounds !== undefined && s.swiss_rounds !== null) ok.swiss_rounds = Math.min(20, Math.max(1, Math.trunc(Number(s.swiss_rounds) || 1)));

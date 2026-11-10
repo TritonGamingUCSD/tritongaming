@@ -1,4 +1,4 @@
-import { BYE, generate, swissRound, swissRounds, type Entrant, type Match } from './bracket';
+import { BYE, generate, generateOpen, swissRound, swissRounds, type Entrant, type Match } from './bracket';
 
 // A tournament is one or more STAGES played in order (pools, then a bracket; Swiss, then a top cut; a round robin final). Each stage has a format, its own settings, and a rule for who moves on to the next one.
 // Everything here is pure: it builds a stage's matches, ranks the people in it, and says who advances. The database and screens only store and show the result.
@@ -7,6 +7,8 @@ export type Tiebreak = 'wins' | 'diff' | 'h2h' | 'buchholz' | 'seed';
 
 export interface StageSettings {
   best_of?: number; // 1, 3, 5, 7 (a match is first to ceil(n/2))
+  placement?: 'seed' | 'manual'; // single and double elimination: teams are placed by their seed (default), or the bracket starts with empty places that are filled by hand or by a draw (no seeding needed)
+  slots?: number; // with manual placement: how many teams the bracket has places for (default: everyone who is in when it starts)
   third_place?: boolean; // single elimination
   grand_final_reset?: boolean; // double elimination: play the reset when the losers-side finalist wins the first final (default on)
   swiss_rounds?: number; // default ceil(log2 players)
@@ -60,6 +62,10 @@ const prefix = (m: Match, g: number): Match => ({
 // The matches a stage starts with. Pools are a round robin per group (keys G1.RR1-1 ...). A Swiss stage starts with round 1 only; later rounds are dealt on request. 'points' and 'custom' start empty (heats and hand-made matches are added as they are played).
 export function buildStage(def: StageDef, entrants: Entrant[], groupsOverride?: Entrant[][]): Match[] {
   const s = def.settings;
+  if ((def.format === 'single' || def.format === 'double') && s.placement === 'manual') {
+    const size = Math.max(2, s.slots ?? 0, entrants.length);
+    return generateOpen(def.format, size, { thirdPlace: !!s.third_place, grandFinalReset: s.grand_final_reset !== false });
+  }
   if (def.format === 'single') return generate('single', entrants, { thirdPlace: !!s.third_place });
   if (def.format === 'double') return generate('double', entrants, { grandFinalReset: s.grand_final_reset !== false });
   if (def.format === 'swiss') return generate('swiss', entrants);

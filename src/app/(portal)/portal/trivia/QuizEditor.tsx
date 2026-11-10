@@ -48,6 +48,7 @@ interface Quiz {
   secs_per_question: number | null;
   shuffle_questions: boolean;
   auto_next: boolean;
+  multi_all: boolean;
 }
 
 // What a question still needs before a game can draw it.
@@ -289,7 +290,7 @@ export default function QuizEditor({
     .map(([key, items]) => ({ key, items, unfinished: items.filter(({ q }) => !isAskable(q)).length }));
   const firstKey = groups[0]?.key;
   const ready = rows.filter(isAskable).length;
-  const asked = Math.min(quiz.per_game, ready || quiz.per_game);
+  const asked = quiz.shuffle_questions ? Math.min(quiz.per_game, ready || quiz.per_game) : ready;
 
   return (
     <div className={styles.tab}>
@@ -344,7 +345,9 @@ export default function QuizEditor({
                   type="number"
                   min={1}
                   max={100}
-                  value={per ?? String(quiz.per_game)}
+                  disabled={!quiz.shuffle_questions}
+                  title={quiz.shuffle_questions ? undefined : 'Random questions is off: a game asks every question, in the order written.'}
+                  value={quiz.shuffle_questions ? (per ?? String(quiz.per_game)) : String(ready)}
                   aria-label="Questions per game"
                   onChange={(e) => setPer(e.target.value)}
                   onBlur={() => void savePer(Math.round(Number(per ?? quiz.per_game)) || quiz.per_game)}
@@ -386,6 +389,12 @@ export default function QuizEditor({
               >
                 <input type="checkbox" checked={quiz.auto_next} onChange={(e) => void setting({ auto_next: e.target.checked })} /> Next question automatically
               </label>
+              <label
+                className={styles.toggleInline}
+                title="For a question with more than one right answer: on, the player has to choose all of them (picking only some is wrong); off, choosing any one of them is right."
+              >
+                <input type="checkbox" checked={quiz.multi_all} onChange={(e) => void setting({ multi_all: e.target.checked })} /> Choose all right answers
+              </label>
               <label className={styles.toggleInline} title="The top 3 of a game can’t join this quiz’s next game unless the host lets them in.">
                 <input type="checkbox" checked={quiz.block_winners} onChange={(e) => void setting({ block_winners: e.target.checked })} /> Top 3 can’t replay
               </label>
@@ -408,7 +417,7 @@ export default function QuizEditor({
                 return `${n} ${n === 1 ? 'category' : 'categories'}`;
               })()}
             </span>
-            <span className={`${styles.badge} ${styles.neutral}`}>{quiz.shuffle_questions ? `a game draws ${asked} at random` : `a game asks the first ${asked} in order`}</span>
+            <span className={`${styles.badge} ${styles.neutral}`}>{quiz.shuffle_questions ? `a game draws ${asked} at random` : `a game asks all ${asked} in order`}</span>
             {ready < rows.length && <span className={`${styles.badge} ${styles.bad}`}>{rows.length - ready} to finish</span>}
             {filtering && (
               <span className={`${styles.badge} ${styles.good}`}>

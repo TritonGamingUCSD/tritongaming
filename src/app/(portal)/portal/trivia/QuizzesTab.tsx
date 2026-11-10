@@ -136,7 +136,9 @@ export default function QuizzesTab({ onOpen, onHost }: { onOpen: (slug: string, 
                   <span className={`${styles.badge} ${styles.neutral}`}>
                     {q.questions} {q.questions === 1 ? 'question' : 'questions'} in the pool
                   </span>
-                  <span className={`${styles.badge} ${styles.neutral}`}>{Math.min(q.per_game, q.ready || q.per_game)} per game</span>
+                  <span className={`${styles.badge} ${styles.neutral}`}>
+                    {q.shuffle_questions === false ? `all ${q.ready} in order` : `${Math.min(q.per_game, q.ready || q.per_game)} per game`}
+                  </span>
                   <span className={`${styles.badge} ${styles.neutral}`}>
                     {!q.games
                       ? 'Not played yet'

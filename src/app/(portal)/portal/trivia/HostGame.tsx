@@ -150,7 +150,7 @@ export default function HostGame({
     const inList = host.players.filter((p) => p.status === 'in');
     const out = host.players.filter((p) => p.status !== 'in');
     const max = host.ready ?? 0;
-    const n = Math.max(1, Math.min(host.perGame, Math.max(max, 1))); // fixed by the quiz's own setting; the host does not change it here
+    const n = host.shuffle ? Math.max(1, Math.min(host.perGame, Math.max(max, 1))) : Math.max(1, max); // fixed by the quiz's own setting; the host does not change it here (not random: every question)
     return frame(
       <>
         <div className={styles.ticket}>
@@ -177,7 +177,7 @@ export default function HostGame({
             <b>
               {n} {n === 1 ? 'question' : 'questions'}
             </b>{' '}
-            this game <span aria-hidden="true">·</span> drawn at random from {max}
+            this game <span aria-hidden="true">·</span> {host.shuffle ? `drawn at random from ${max}` : 'all of them, in order'}
           </p>
           <div className={styles.controls}>
             <Button
@@ -445,6 +445,7 @@ export default function HostGame({
           {q.category && <span className={styles.catTag}>{q.category}</span>}
           <div className={`${styles.qMedia} ${picture ? styles.qMediaHas : ''}`}>
             <p className={styles.qText}>{q.text}</p>
+            {q.multi && <p className={styles.qHint}>Choose all the right answers</p>}
             {/* eslint-disable-next-line @next/next/no-img-element */}
             {picture && (
               <img

@@ -12,14 +12,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
   if (auth.error) return auth.error;
   const code = cleanCode((await params).code);
   const b = await request.json().catch(() => ({}));
-  const pos = Math.round(Number(b.pos)),
+  // A question that asks for ALL the right answers sends `picks` (a list of positions); any other sends one `pos`.
+  const picks: number[] | null = Array.isArray(b.picks) ? [...new Set<number>(b.picks.slice(0, 4).map((x: unknown) => Math.round(Number(x))))] : null;
+  if (picks && picks.some((x) => !Number.isInteger(x) || x < 0 || x > 3)) return NextResponse.json({ error: 'Pick from the answers.' }, { status: 400 });
+  const pos = picks?.length ? picks[0] : Math.round(Number(b.pos)),
     q = Math.round(Number(b.q));
   const g = code ? await loadGame(auth.svc, code, 'id') : null;
   if (!g) return NextResponse.json({ error: 'There is no game with that code.' }, { status: 404 });
   if (!Number.isInteger(pos) || !Number.isInteger(q) || pos < 0 || pos > 3 || q < 0) return NextResponse.json({ error: 'Pick one of the answers.' }, { status: 400 });
-  const { data, error } = await auth.svc.rpc('trivia_submit_answer', { p_game: g.id, p_user: auth.user.id, p_q: q, p_pos: pos, p_grace_ms: GRACE_MS });
+  const { data, error } = await auth.svc.rpc('trivia_submit_answer', { p_game: g.id, p_user: auth.user.id, p_q: q, p_pos: pos, p_grace_ms: GRACE_MS, p_picks: picks });
   if (error) return NextResponse.json({ error: 'Couldn’t send that. Tap again.' }, { status: 503 });
-  const r = data as { gone?: boolean; closed?: boolean; out?: boolean; bad?: boolean; first?: boolean; pos?: number; answered?: number; players?: number };
+  const r = data as { gone?: boolean; closed?: boolean; out?: boolean; bad?: boolean; first?: boolean; pos?: number; picks?: number[] | null; answered?: number; players?: number };
   if (r.gone) return NextResponse.json({ error: 'There is no game with that code.' }, { status: 404 });
   if (r.closed) return NextResponse.json({ error: 'Too late: that question is closed.', closed: true }, { status: 409 });
   if (r.out) return NextResponse.json({ error: 'You are not in this game.' }, { status: 403 });
@@ -27,5 +30,5 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
   // Tell the host how many have answered, once the reply is on its way (so the phone is not kept waiting for it). In steps (about 20 messages however many play) and always for the last one.
   const step = Math.max(1, Math.ceil((r.players ?? 1) / 20));
   if (r.first && ((r.answered ?? 0) % step === 0 || r.answered === r.players)) after(() => broadcast(g.id, 'count', { answered: r.answered, q }, true));
-  return NextResponse.json({ ok: true, pos: r.pos, ...(r.first ? {} : { again: true }) });
+  return NextResponse.json({ ok: true, pos: r.pos, picks: r.picks ?? null, ...(r.first ? {} : { again: true }) });
 }

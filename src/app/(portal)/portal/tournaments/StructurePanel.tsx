@@ -252,6 +252,37 @@ function StageCard({
             Grand final reset
           </Toggle>
         )}
+        {(stage.format === 'single' || stage.format === 'double') && (
+          <>
+            <label className={styles.field}>
+              <span>Teams go in</span>
+              <Segmented
+                label="Team placement"
+                disabled={!pending || busy}
+                value={s.placement === 'manual' ? 'manual' : 'seed'}
+                options={[
+                  { value: 'seed', label: 'By seed', hint: 'Seed 1 meets the lowest seed; everyone has a number' },
+                  { value: 'manual', label: 'By hand or draw', hint: 'The bracket starts with empty places: pick a team for each, or draw them at random. No seeding needed.' },
+                ]}
+                onChange={(v) => setSettings({ placement: v })}
+              />
+            </label>
+            {s.placement === 'manual' && (
+              <label className={styles.field}>
+                <span>Places in the bracket</span>
+                <Stepper
+                  label="places"
+                  value={s.slots ?? Math.max(2, players)}
+                  min={2}
+                  max={128}
+                  disabled={!pending || busy}
+                  suffix="teams"
+                  onChange={(v) => setSettings({ slots: v })}
+                />
+              </label>
+            )}
+          </>
+        )}
         {stage.format === 'roundrobin' && (
           <>
             <label className={styles.field}>

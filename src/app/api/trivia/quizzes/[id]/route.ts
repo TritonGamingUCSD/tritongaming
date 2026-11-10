@@ -70,7 +70,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       patch.secs_per_question = n;
     }
   }
-  for (const k of ['shuffle_questions', 'auto_next'] as const) {
+  for (const k of ['shuffle_questions', 'auto_next', 'multi_all'] as const) {
     if (b[k] === undefined) continue;
     if (typeof b[k] !== 'boolean') return NextResponse.json({ error: 'That setting is on or off.' }, { status: 400 });
     patch[k] = b[k];

@@ -16,6 +16,7 @@ export default function BracketView({
   canRun,
   onHeat,
   roundNames,
+  seatable,
 }: {
   matches: MatchRow[];
   entrants: TEntrant[];
@@ -25,6 +26,8 @@ export default function BracketView({
   onHeat?: (m: MatchRow, order: string[]) => Promise<void>;
   /** The host's own round names for this stage (W2: Quarterfinals). */
   roundNames?: Record<string, string> | null;
+  /** A match whose places can be filled by hand right now (a bracket that started with empty places). */
+  seatable?: (m: MatchRow) => boolean;
 }) {
   const byId = new Map(entrants.map((e) => [e.id, e]));
   const groups: { key: string; title: string; rounds: { round: number; title: string; items: MatchRow[] }[] }[] = [];
@@ -89,7 +92,7 @@ export default function BracketView({
                         />
                       );
                     const bye = m.status === 'bye';
-                    const playable = canRun && (m.status === 'ready' || m.status === 'live' || m.status === 'done');
+                    const playable = canRun && (m.status === 'ready' || m.status === 'live' || m.status === 'done' || !!seatable?.(m));
                     return (
                       <button
                         key={m.key}
@@ -128,7 +131,7 @@ export default function BracketView({
                             </span>
                           )}
                           {m.station && <span>{m.station}</span>}
-                          {m.status === 'ready' && canRun && <span className={styles.enter}>Enter score</span>}
+                          {seatable?.(m) ? <span className={styles.enter}>Pick teams</span> : m.status === 'ready' && canRun && <span className={styles.enter}>Enter score</span>}
                         </span>
                       </button>
                     );

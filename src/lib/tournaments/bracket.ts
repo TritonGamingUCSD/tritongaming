@@ -139,6 +139,52 @@ export function generate(format: Format, entrants: Entrant[], opts: { thirdPlace
   return settle(matches);
 }
 
+/**
+ * An elimination bracket of `size` teams with every team's place EMPTY (no seeding): the same winners / losers / grand final layout and links as `generate`, with null where a team will sit and BYE where a team will not be needed
+ * (the BYEs sit where the top seeds would have had them). Teams are put in with `seat`.
+ */
+export function generateOpen(format: 'single' | 'double', size: number, opts: { thirdPlace?: boolean; grandFinalReset?: boolean } = {}): Match[] {
+  if (size < 2) throw new Error('A bracket needs at least two places.');
+  const fake: Entrant[] = Array.from({ length: size }, (_, i) => ({ id: `~${i + 1}`, seed: i + 1 }));
+  const matches = format === 'double' ? doubleElimination(fake, opts.grandFinalReset !== false) : singleElimination(fake, !!opts.thirdPlace);
+  for (const m of matches) {
+    if (m.bracket === 'W' && m.round === 1) {
+      if (m.a !== BYE) m.a = null;
+      if (m.b !== BYE) m.b = null;
+    }
+  }
+  return settle(matches);
+}
+
+/** The places in the first round of an open bracket, in order: where a team can sit ({ key, side }), and which of them are not needed (BYE). */
+export function seats(matches: Match[]): { key: string; side: Side; slot: Slot }[] {
+  return matches
+    .filter((m) => m.bracket === 'W' && m.round === 1)
+    .sort((x, y) => x.index - y.index)
+    .flatMap((m) => (['a', 'b'] as const).map((side) => ({ key: m.key, side, slot: m[side] })))
+    .filter((s) => s.slot !== BYE);
+}
+
+/**
+ * Put teams in the places of an open bracket: `placed` maps "key:side" to a team id (or leaves it out for empty). Builds the bracket fresh, so changing a seat is always clean (nothing to unwind), and settles it. Only for a bracket nobody has played in yet.
+ */
+export function seat(format: 'single' | 'double', size: number, opts: { thirdPlace?: boolean; grandFinalReset?: boolean }, placed: Record<string, string | null>): Match[] {
+  const matches = generateOpen(format, size, opts);
+  const used = new Set<string>();
+  for (const m of matches) {
+    if (!(m.bracket === 'W' && m.round === 1)) continue;
+    for (const side of ['a', 'b'] as const) {
+      const id = placed[`${m.key}:${side}`];
+      if (m[side] === null && id) {
+        if (used.has(id)) throw new Error('A team can only have one place.');
+        used.add(id);
+        m[side] = id;
+      }
+    }
+  }
+  return settle(matches);
+}
+
 const key = (m: Match[]) => new Map(m.map((x) => [x.key, x]));
 
 function put(map: Map<string, Match>, link: Link | undefined, value: Slot) {

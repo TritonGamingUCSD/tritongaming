@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withTournament } from '@/lib/tournaments/server';
-import { report, undo, swissRound, swissRounds, type Match } from '@/lib/tournaments/bracket';
+import { report, undo, swissRound, swissRounds, seat, seats, type Match } from '@/lib/tournaments/bracket';
 import { engineKey, saveMatches, toMatch, toRow } from '@/lib/tournaments/store';
 import { bestOfOf, currentStage, hasStarted, heatRowsFor, refreshStatus, stageEngineMatches, stageField, startStage } from '@/lib/tournaments/run';
 import { dealHeats, pointsStandings, scoreHeat, type HeatSlot } from '@/lib/tournaments/points';
@@ -29,7 +29,10 @@ type Body = {
     | 'edit-match'
     | 'delete-match'
     | 'schedule'
-    | 'clear-schedule';
+    | 'clear-schedule'
+    | 'place'
+    | 'fill-slots'
+    | 'clear-slots';
   key?: string;
   stage_id?: string;
   order?: string[];
@@ -51,6 +54,9 @@ type Body = {
   parallel?: number;
   gap?: number;
   overwrite?: boolean;
+  side?: 'a' | 'b';
+  entrant_id?: string | null;
+  mode?: 'random' | 'order';
 };
 
 // Everything that moves a tournament: start it (the first stage), start a later stage from the results of the one before, enter or undo a result, deal the next Swiss round, call a match to a station, mark it live, or reset it back to registration.
@@ -249,6 +255,53 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   if (t.status !== 'live' && t.status !== 'complete') return bad('The tournament has not started.', 409);
+
+  // A bracket that starts with empty places (placement "by hand or draw"): put a team in a place, { key, side, entrant_id | null }, draw everyone left into the empty places, { stage_id, mode: 'random' | 'order' },
+  // or empty them all, { stage_id }. Allowed until the first result is in; the bracket is rebuilt from the places each time, so nothing has to be unwound.
+  if (b.action === 'place' || b.action === 'fill-slots' || b.action === 'clear-slots') {
+    const stageId = b.action === 'place' ? r.matches.find((m) => m.key === b.key)?.stage_id : b.stage_id;
+    const stage = r.stages.find((s) => s.id === stageId);
+    if (!stage || (stage.format !== 'single' && stage.format !== 'double') || stage.settings?.placement !== 'manual') return bad('That bracket is placed by seed, not by hand.');
+    const rows = r.matches.filter((m) => m.stage_id === stage.id);
+    if (rows.some((m) => m.status === 'done' || m.status === 'live' || m.score_a !== null || (m.games ?? []).length > 0))
+      return bad('A result is already in, so the places are locked.', 409);
+    const mine = stageEngineMatches(r.matches, stage);
+    const places = seats(mine);
+    if (places.length === 0) return bad('This bracket has no places yet.', 409);
+    const inStage = new Set(r.stageEntrants.filter((x) => x.stage_id === stage.id).map((x) => x.entrant_id));
+    const alive = r.entrants.filter((e) => !e.dropped && inStage.has(e.id));
+    const at = (p: { key: string; side: string }) => `${p.key}:${p.side}`;
+    let placed: Record<string, string | null> = {};
+    for (const p of places) if (p.slot) placed[at(p)] = p.slot;
+    if (b.action === 'clear-slots') placed = {};
+    else if (b.action === 'place') {
+      const ek = engineKey(String(b.key));
+      const target = places.find((p) => p.key === ek && p.side === b.side);
+      if (!target) return bad('That is not a place a team can sit.');
+      if (b.entrant_id) {
+        if (!alive.some((e) => e.id === b.entrant_id)) return bad('Pick someone who is in this stage.');
+        for (const k of Object.keys(placed)) if (placed[k] === b.entrant_id) delete placed[k]; // moving them: the old place empties
+        placed[at(target)] = b.entrant_id;
+      } else delete placed[at(target)];
+    } else {
+      const seated = new Set(Object.values(placed));
+      const left = alive.filter((e) => !seated.has(e.id)).sort((x, y) => (x.seed ?? 1e9) - (y.seed ?? 1e9));
+      if (b.mode === 'random')
+        for (let i = left.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [left[i], left[j]] = [left[j], left[i]];
+        }
+      const empty = places.filter((p) => !placed[at(p)]);
+      empty.slice(0, left.length).forEach((p, i) => (placed[at(p)] = left[i].id));
+    }
+    try {
+      const next = seat(stage.format, places.length, { thirdPlace: !!stage.settings.third_place, grandFinalReset: stage.settings.grand_final_reset !== false }, placed);
+      await saveMatches(r.svc, t.id, stage, rows, next);
+    } catch (e) {
+      return bad(e instanceof Error ? e.message : 'Could not place that.', 409);
+    }
+    return NextResponse.json({ ok: true });
+  }
 
   if (b.action === 'next-round') {
     const stage = r.stages.find((s) => s.id === b.stage_id) ?? currentStage(r.stages);

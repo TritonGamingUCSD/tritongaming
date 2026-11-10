@@ -24,6 +24,7 @@ export interface EndStats {
 }
 export interface PlayerResult {
   pos: number | null;
+  picks?: number[] | null; // a "choose all" question: everything they picked
   ok: boolean;
   pts: number;
   rank: number;
@@ -54,7 +55,7 @@ export interface PublicState {
   current: number; // index of the question on screen, -1 in the lobby
   total: number; // questions in this game (the quiz's number until the game starts)
   players: number; // people in (not blocked or removed)
-  question?: { category?: string; text: string; choices: string[]; secs: number; startedAt: number; endsAt: number };
+  question?: { category?: string; text: string; choices: string[]; secs: number; startedAt: number; endsAt: number; multi?: boolean }; // multi: choose ALL the right answers
   answered?: number;
   reveal?: Reveal;
   now: number; // the server's clock when this was made, to line phones up with it
@@ -76,6 +77,8 @@ export interface QuizRow {
   block_winners: boolean;
   restricted: boolean;
   open_to_guests: boolean;
+  shuffle_questions?: boolean;
+  multi_all?: boolean;
   locked: boolean;
   questions: number;
   ready: number;

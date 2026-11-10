@@ -13,13 +13,17 @@ import styles from './trivia.module.css';
 export default function PlayGame({ code, onLeave }: { code: string; onLeave: () => void }) {
   const { state, me, error, gone, serverNow } = useGame(code, 'player');
   useWakeLock(); // a phone that dims in the middle of a question loses the tap
-  const [picked, setPicked] = useState<{ q: number; pos: number } | null>(null);
+  const [picked, setPicked] = useState<{ q: number; pos: number; picks?: number[] } | null>(null);
+  const [sel, setSel] = useState<{ q: number; picks: number[] } | null>(null); // a "choose all" question: what is ticked so far, before Lock In
   const [problem, setProblem] = useState('');
   const q = state?.question;
   const left = useCountdown(state?.status === 'question' ? q?.endsAt : null, serverNow);
 
   // An answer sent from this phone, or one the server already has (after a refresh), shows as picked.
   const mine = picked && state && picked.q === state.current ? picked.pos : state?.status === 'question' && me?.answeredQ === state.current ? me.answered : null;
+  const selNow = sel && state && sel.q === state.current ? sel.picks : [];
+  const lockedPicks =
+    picked && state && picked.q === state.current ? (picked.picks ?? null) : state?.status === 'question' && me?.answeredQ === state.current ? (me.answeredPicks ?? null) : null;
   useEffect(() => {
     setProblem('');
   }, [state?.current, state?.status]);
@@ -43,6 +47,29 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
     },
     [state, mine, code],
   );
+
+  // "Choose all the right answers": tick as many as you like, then Lock In. The server counts it right only when the ticks are exactly the right answers.
+  const lockIn = useCallback(async () => {
+    if (!state || mine !== null || selNow.length === 0) return;
+    const picks = [...selNow].sort((x, y) => x - y);
+    setPicked({ q: state.current, pos: picks[0], picks });
+    let r = await call<{ pos: number; picks: number[] | null }>('POST', `/api/trivia/play/${code}/answer`, { q: state.current, picks });
+    for (let again = 0; again < 3 && !r.ok && (r.status === 0 || r.status >= 500); again++) {
+      await new Promise((res) => setTimeout(res, 400 * (again + 1)));
+      r = await call<{ pos: number; picks: number[] | null }>('POST', `/api/trivia/play/${code}/answer`, { q: state.current, picks });
+    }
+    if (r.ok) {
+      setPicked({ q: state.current, pos: r.data.pos, picks: r.data.picks ?? picks });
+      return;
+    }
+    setPicked(null);
+    setProblem(r.error);
+  }, [state, mine, selNow, code]);
+  const tick = (i: number) => {
+    if (!state || mine !== null) return;
+    const has = selNow.includes(i);
+    setSel({ q: state.current, picks: has ? selNow.filter((x) => x !== i) : [...selNow, i] });
+  };
 
   const frame = (title: string, body: React.ReactNode, urgent?: boolean) => (
     <Stage>
@@ -200,6 +227,7 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
     const r = mineResult;
     const rights = state.reveal?.correct === undefined ? [] : [state.reveal.correct, ...(state.reveal.also ?? [])]; // a question can have several right answers
     const isRight = (i: number) => rights.includes(i);
+    const yours = (i: number) => (r?.picks ? r.picks.includes(i) : r?.pos === i);
     return frame(
       title,
       <>
@@ -267,7 +295,7 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
         )}
         <div className={styles.recap} aria-label="Your answer and the right answer">
           {q.choices.map((c, i) => (
-            <div key={i} className={`${styles.recapRow} ${isRight(i) ? styles.recapRight : ''} ${r?.pos === i && !isRight(i) ? styles.recapWrong : ''}`}>
+            <div key={i} className={`${styles.recapRow} ${isRight(i) ? styles.recapRight : ''} ${yours(i) && !isRight(i) ? styles.recapWrong : ''}`}>
               <Shape i={i} solid />
               <span>{c}</span>
               {isRight(i) && (
@@ -275,12 +303,12 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
                   <Check size={14} aria-hidden="true" /> Right answer
                 </span>
               )}
-              {r?.pos === i && !isRight(i) && (
+              {yours(i) && !isRight(i) && (
                 <span className={styles.recapTag}>
                   <X size={14} aria-hidden="true" /> Your answer
                 </span>
               )}
-              {r?.pos === i && isRight(i) && <span className={styles.recapTag}>You got it</span>}
+              {yours(i) && isRight(i) && <span className={styles.recapTag}>{r?.ok ? 'You got it' : 'You picked this'}</span>}
             </div>
           ))}
         </div>
@@ -322,12 +350,33 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
               type="button"
               disabled={mine !== null}
               aria-label={`Answer ${'ABCD'[i]}`}
-              className={`${styles.ans} ${ansClass(i)} ${mine === i ? styles.picked : mine !== null ? styles.notPicked : ''}`}
-              onClick={() => void answer(i)}
+              aria-pressed={q.multi ? (mine !== null ? !!lockedPicks?.includes(i) : selNow.includes(i)) : undefined}
+              className={`${styles.ans} ${ansClass(i)} ${
+                q.multi
+                  ? (mine !== null ? !!lockedPicks?.includes(i) : selNow.includes(i))
+                    ? styles.picked
+                    : mine !== null || selNow.length > 0
+                      ? styles.notPicked
+                      : ''
+                  : mine === i
+                    ? styles.picked
+                    : mine !== null
+                      ? styles.notPicked
+                      : ''
+              }`}
+              onClick={() => (q.multi ? tick(i) : void answer(i))}
             >
               <Shape i={i} solid />
             </button>
           ))}
+        </div>
+      )}
+      {q.multi && mine === null && !closed && (
+        <div style={{ alignSelf: 'center', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '0.6rem', alignItems: 'center' }}>
+          <span className={styles.kicker}>Choose all the right answers</span>
+          <Button disabled={selNow.length === 0} onClick={() => void lockIn()}>
+            Lock In {selNow.length > 0 ? `(${selNow.length})` : ''}
+          </Button>
         </div>
       )}
       {mine !== null && (

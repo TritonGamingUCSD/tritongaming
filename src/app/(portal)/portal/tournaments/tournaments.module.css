@@ -192,3 +192,6 @@
 .step { flex-wrap: wrap; }
 .stepText { flex: 1 1 9rem; }
 .stepGo { margin-left: 2.2rem; align-self: flex-start; }
+
+.seatBar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem; margin-top: 0.7rem; }
+.seatDialog { display: flex; flex-direction: column; gap: 0.8rem; min-width: min(22rem, 100%); }

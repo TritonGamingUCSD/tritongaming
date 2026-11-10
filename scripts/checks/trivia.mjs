@@ -304,6 +304,7 @@ try {
     paced.j.quiz?.secs_per_question === 15 && paced.j.quiz?.shuffle_questions === false && paced.j.quiz?.auto_next === false,
     JSON.stringify(paced.j),
   );
+  await host.call('PATCH', `/api/trivia/quizzes/${open.slug}`, { per_game: 1 }); // not random asks every question whatever this says
   const go = await host.call('POST', '/api/trivia/games', { quiz: open.slug });
   await winner.call('POST', '/api/trivia/join', { code: go.j.code });
   await host.call('POST', `/api/trivia/games/${go.j.code}`, { action: 'start' });
@@ -322,6 +323,39 @@ try {
   const go2 = await host.call('POST', '/api/trivia/games', { quiz: open.slug });
   t.ok('and the same player joins its next game freely', (await winner.call('POST', '/api/trivia/join', { code: go2.j.code })).j.me.status === 'in');
   t.ok('hosting a quiz with a lobby already open opens that lobby again', (await host.call('POST', '/api/trivia/games', { quiz: open.slug })).j.code === go2.j.code);
+
+  // ---- choose ALL the right answers (a quiz setting): exactly the set is right; any one of them is right when it is off
+  const mq = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Multi Quiz' })).j.quiz;
+  t.ok(
+    'choose-all is off for a new quiz and can be switched on',
+    mq.multi_all === false && (await host.call('PATCH', `/api/trivia/quizzes/${mq.slug}`, { multi_all: true })).j.quiz?.multi_all === true,
+  );
+  t.ok('a bad value is refused', (await host.call('PATCH', `/api/trivia/quizzes/${mq.slug}`, { multi_all: 'yes' })).s === 400);
+  await host.call('POST', `/api/trivia/quizzes/${mq.slug}/questions`, { rows: [{ category: 'ZZ Cat', text: 'ZZ Multi 0', choices: ['a', 'b', 'c', 'd'], correct: 0, also: [2] }] });
+  const playMulti = async (picks) => {
+    const gm = await host.call('POST', '/api/trivia/games', { quiz: mq.slug });
+    const who = await user('multi' + Math.random().toString(36).slice(2, 6), ['ucsd']);
+    await who.call('POST', '/api/trivia/join', { code: gm.j.code });
+    await host.call('POST', `/api/trivia/games/${gm.j.code}`, { action: 'start' });
+    await sleep(7400);
+    const plan = (await svc.from('trivia_games').select('plan').eq('code', gm.j.code).single()).data.plan;
+    const rights = [plan[0].correct, ...(plan[0].also ?? [])].sort();
+    const sent = await who.call('POST', `/api/trivia/play/${gm.j.code}/answer`, { q: 0, picks: picks(rights) });
+    const row = (await svc.from('trivia_answers').select('ok, pos, picks').eq('user_id', who.id).single()).data;
+    await host.call('POST', `/api/trivia/games/${gm.j.code}`, { action: 'end' });
+    return { plan, rights, sent, row };
+  };
+  const exact = await playMulti((r) => r);
+  t.ok('the plan marks the question "choose all"', exact.plan[0].all === true && exact.rights.length === 2, JSON.stringify(exact.plan[0]));
+  t.ok('choosing exactly the right answers is right', exact.sent.s === 200 && exact.row?.ok === true && exact.row.picks.length === 2, JSON.stringify(exact.row));
+  const part = await playMulti((r) => [r[0]]);
+  t.ok('choosing only some of them is wrong', part.sent.s === 200 && part.row?.ok === false, JSON.stringify(part.row));
+  const extra = await playMulti((r) => [...r, [0, 1, 2, 3].find((x) => !r.includes(x))]);
+  t.ok('choosing a wrong one as well is wrong', extra.row?.ok === false, JSON.stringify(extra.row));
+  t.ok('a pick outside the answers is refused', (await playMulti(() => [7])).sent.s === 400);
+  await host.call('PATCH', `/api/trivia/quizzes/${mq.slug}`, { multi_all: false });
+  const anyOne = await playMulti(() => []);
+  t.ok('with it off the plan has no "choose all" and one pick is enough', anyOne.plan[0].all === undefined);
 
   // ---- categories: a category card first, the question after it
   const cq = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Category Quiz' })).j.quiz;
