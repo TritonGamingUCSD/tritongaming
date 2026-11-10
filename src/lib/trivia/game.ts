@@ -78,8 +78,27 @@ export function isAskable(q: { text: string; choices: string[]; correct: number;
  * The questions of one game: `count` drawn at random from the pool, questions no earlier game of the quiz used first (then repeats if the pool runs out), with the answers of each shuffled.
  * `used` is every question id earlier games of this quiz asked.
  */
-export function drawGame(pool: PoolQuestion[], used: ReadonlySet<string>, count: number, rng: Rng = Math.random): PlannedQuestion[] {
+export interface DrawOptions {
+  /** false: the first `count` finished questions in the order written, answers left as written too (no random draw, no memory of earlier games). */
+  shuffle?: boolean;
+  /** One time limit for every question; omitted keeps the automatic one by length. */
+  secs?: number | null;
+}
+export function drawGame(pool: PoolQuestion[], used: ReadonlySet<string>, count: number, rng: Rng = Math.random, opts: DrawOptions = {}): PlannedQuestion[] {
   const ready = pool.filter(isAskable);
+  const secsOf = (q: PoolQuestion) => (opts.secs ? opts.secs : suggestSecs(q));
+  if (opts.shuffle === false) {
+    return ready.slice(0, Math.max(0, count)).map((q) => ({
+      id: q.id,
+      text: q.text.trim(),
+      choices: q.choices.map((c) => c.trim()),
+      correct: q.correct,
+      ...((q.also ?? []).length ? { also: (q.also ?? []).filter((i) => i !== q.correct) } : {}),
+      secs: secsOf(q),
+      category: (q.category ?? '').trim(),
+      image: q.image || undefined,
+    }));
+  }
   const fresh = shuffle(
     ready.filter((q) => !used.has(q.id)),
     rng,
@@ -99,7 +118,7 @@ export function drawGame(pool: PoolQuestion[], used: ReadonlySet<string>, count:
       choices: order.map((i) => q.choices[i].trim()),
       correct: order.indexOf(q.correct),
       ...((q.also ?? []).length ? { also: (q.also ?? []).map((i) => order.indexOf(i)).filter((i) => i >= 0 && i !== order.indexOf(q.correct)) } : {}),
-      secs: suggestSecs(q),
+      secs: secsOf(q),
       category: (q.category ?? '').trim(),
       image: q.image || undefined,
     };

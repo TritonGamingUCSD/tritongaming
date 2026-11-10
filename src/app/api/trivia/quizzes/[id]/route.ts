@@ -62,6 +62,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!Number.isFinite(n) || n < 1 || n > 100) return NextResponse.json({ error: 'A game asks between 1 and 100 questions.' }, { status: 400 });
     patch.per_game = n;
   }
+  if (b.secs_per_question !== undefined) {
+    if (b.secs_per_question === null) patch.secs_per_question = null;
+    else {
+      const n = Math.round(Number(b.secs_per_question));
+      if (!Number.isFinite(n) || n < 5 || n > 300) return NextResponse.json({ error: 'A question gets between 5 and 300 seconds.' }, { status: 400 });
+      patch.secs_per_question = n;
+    }
+  }
+  for (const k of ['shuffle_questions', 'auto_next'] as const) {
+    if (b[k] === undefined) continue;
+    if (typeof b[k] !== 'boolean') return NextResponse.json({ error: 'That setting is on or off.' }, { status: 400 });
+    patch[k] = b[k];
+  }
   if (b.block_winners !== undefined) {
     if (typeof b.block_winners !== 'boolean') return NextResponse.json({ error: 'That setting is on or off.' }, { status: 400 });
     patch.block_winners = b.block_winners;

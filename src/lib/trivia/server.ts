@@ -33,6 +33,9 @@ export interface GameRow {
     created_by: string | null;
     open_to_guests: boolean;
     division_id: string | null;
+    secs_per_question: number | null;
+    shuffle_questions: boolean;
+    auto_next: boolean;
   } | null;
 }
 
@@ -65,7 +68,11 @@ export async function loadGame(svc: SupabaseClient, code: string, only: 'id'): P
 export async function loadGame(svc: SupabaseClient, code: string, only?: 'id'): Promise<GameRow | { id: string } | null> {
   const { data, error } = await svc
     .from('trivia_games')
-    .select(only ? 'id' : `${GAME_COLUMNS}, trivia_quizzes(name, slug, block_winners, restricted, created_by, open_to_guests, division_id)`)
+    .select(
+      only
+        ? 'id'
+        : `${GAME_COLUMNS}, trivia_quizzes(name, slug, block_winners, restricted, created_by, open_to_guests, division_id, secs_per_question, shuffle_questions, auto_next)`,
+    )
     .eq('code', code)
     .maybeSingle();
   if (error) throw new Error(`trivia game read failed: ${error.message}`);
@@ -131,8 +138,12 @@ export interface QuizRec {
   created_by: string | null;
   created_at: string;
   division_id: string | null;
+  secs_per_question: number | null;
+  shuffle_questions: boolean;
+  auto_next: boolean;
 }
-export const QUIZ_COLUMNS = 'id, slug, name, per_game, block_winners, restricted, open_to_guests, created_by, created_at, division_id';
+export const QUIZ_COLUMNS =
+  'id, slug, name, per_game, block_winners, restricted, open_to_guests, created_by, created_at, division_id, secs_per_question, shuffle_questions, auto_next';
 
 // A quiz by its address (the slug) or its id.
 export async function findQuiz(svc: SupabaseClient, idOrSlug: string): Promise<QuizRec | null> {

@@ -108,6 +108,7 @@ A portal section (Events group, `/portal/qa`) for a panel, a keynote or an open 
 - **Checks:** `scripts/checks/qa.mjs` (permissions for every kind of visitor, the limits, approval, likes, the screen, closing and deleting).
 
 ## Trivia (quiz games for events)
+- **Pacing, per quiz** (next to "Questions per game"): **Seconds per question** (5 to 300; empty = automatic, 40 to 120 by length), **Random questions** (off = the first questions in the order written, answers left as written, no memory of earlier games) and **Next question automatically** (off = the host presses Next; on = 6 seconds after the answer shows). Stored on the quiz (`secs_per_question`, `shuffle_questions`, `auto_next`) and read when a game starts; checks in `scripts/checks/trivia.mjs`, tests in `triviaGame.test.ts`.
 
 A portal section (Events group). **Everyone signed in can play**; officers and above (`host_trivia`) write quizzes, host games and see results.
 

@@ -43,6 +43,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
     blocks: !!g.trivia_quizzes?.block_winners,
     guests: !!g.trivia_quizzes?.open_to_guests,
     perGame: g.per_game,
+    autoNext: g.trivia_quizzes?.auto_next !== false,
     ready: pool ? ((pool.data ?? []) as PoolQuestion[]).filter(isAskable).length : null,
   };
   if (wantResults) {

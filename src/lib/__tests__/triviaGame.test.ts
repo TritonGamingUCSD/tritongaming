@@ -54,6 +54,17 @@ describe('points', () => {
 
 describe('drawing a game', () => {
   const pool = Array.from({ length: 12 }, (_, i) => q(`q${i}`));
+  it('with shuffling off asks the first questions in the order written, answers as written, even if earlier games used them', () => {
+    const g = drawGame(pool, new Set(['q0', 'q1']), 4, seeded(9), { shuffle: false });
+    expect(g.map((x) => x.id)).toEqual(['q0', 'q1', 'q2', 'q3']);
+    expect(g[0].choices).toEqual(pool[0].choices.map((c) => c.trim()));
+    expect(g[0].correct).toBe(pool[0].correct);
+  });
+  it('uses one time limit for every question when set, the automatic one otherwise', () => {
+    expect(new Set(drawGame(pool, new Set(), 5, seeded(1), { secs: 15 }).map((x) => x.secs))).toEqual(new Set([15]));
+    expect(new Set(drawGame(pool, new Set(), 5, seeded(1), { shuffle: false, secs: 20 }).map((x) => x.secs))).toEqual(new Set([20]));
+    expect(drawGame(pool, new Set(), 1, seeded(1))[0].secs).toBeGreaterThanOrEqual(40);
+  });
   it('draws the amount asked, each question once', () => {
     const g = drawGame(pool, new Set(), 5, seeded(3));
     expect(g).toHaveLength(5);

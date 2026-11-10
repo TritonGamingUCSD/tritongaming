@@ -67,7 +67,7 @@ export default function HostGame({
 
   // After the answer has been shown for AUTO_NEXT_SECS (6) seconds with no button pressed the game moves on by itself: to the next question, or after the last one to the results (the button counts it down).
   const [nextIn, setNextIn] = useState<number | null>(null);
-  const shown = status === 'reveal' && !!state?.reveal;
+  const shown = status === 'reveal' && !!state?.reveal && host.autoNext;
   useEffect(() => {
     if (!shown) {
       setNextIn(null);

@@ -45,6 +45,9 @@ interface Quiz {
   block_winners: boolean;
   restricted: boolean;
   open_to_guests: boolean;
+  secs_per_question: number | null;
+  shuffle_questions: boolean;
+  auto_next: boolean;
 }
 
 // What a question still needs before a game can draw it.
@@ -104,6 +107,7 @@ export default function QuizEditor({
   const [error, setError] = useState('');
   const [busy, setBusy] = useState('');
   const [per, setPer] = useState<string | null>(null);
+  const [secs, setSecs] = useState<string | null>(null);
   const [bulk, setBulk] = useState(false);
   const [adding, setAdding] = useState(false);
   const [filter, setFilter] = useState('');
@@ -349,6 +353,39 @@ export default function QuizEditor({
                   }}
                 />
               </label>
+              <label className={styles.perGame} title="Every question gets this long. Empty: automatic, 40 to 120 seconds depending on how long the question is.">
+                Seconds per question
+                <Input
+                  type="number"
+                  min={5}
+                  max={300}
+                  placeholder="Auto"
+                  value={secs ?? (quiz.secs_per_question ? String(quiz.secs_per_question) : '')}
+                  aria-label="Seconds per question"
+                  onChange={(e) => setSecs(e.target.value)}
+                  onBlur={() => {
+                    const raw = (secs ?? (quiz.secs_per_question ? String(quiz.secs_per_question) : '')).trim();
+                    setSecs(null);
+                    const n = raw === '' ? null : Math.max(5, Math.min(300, Math.round(Number(raw)) || 5));
+                    if (n !== quiz.secs_per_question) void setting({ secs_per_question: n });
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') e.currentTarget.blur();
+                  }}
+                />
+              </label>
+              <label
+                className={styles.toggleInline}
+                title="On: each game draws its questions at random and shuffles the answers. Off: the first questions in the order written, answers left as written."
+              >
+                <input type="checkbox" checked={quiz.shuffle_questions} onChange={(e) => void setting({ shuffle_questions: e.target.checked })} /> Random questions
+              </label>
+              <label
+                className={styles.toggleInline}
+                title="On: after an answer is shown the game moves to the next question by itself after 6 seconds. Off: the host presses Next."
+              >
+                <input type="checkbox" checked={quiz.auto_next} onChange={(e) => void setting({ auto_next: e.target.checked })} /> Next question automatically
+              </label>
               <label className={styles.toggleInline} title="The top 3 of a game can’t join this quiz’s next game unless the host lets them in.">
                 <input type="checkbox" checked={quiz.block_winners} onChange={(e) => void setting({ block_winners: e.target.checked })} /> Top 3 can’t replay
               </label>
@@ -371,7 +408,7 @@ export default function QuizEditor({
                 return `${n} ${n === 1 ? 'category' : 'categories'}`;
               })()}
             </span>
-            <span className={`${styles.badge} ${styles.neutral}`}>a game draws {asked} at random</span>
+            <span className={`${styles.badge} ${styles.neutral}`}>{quiz.shuffle_questions ? `a game draws ${asked} at random` : `a game asks the first ${asked} in order`}</span>
             {ready < rows.length && <span className={`${styles.badge} ${styles.bad}`}>{rows.length - ready} to finish</span>}
             {filtering && (
               <span className={`${styles.badge} ${styles.good}`}>

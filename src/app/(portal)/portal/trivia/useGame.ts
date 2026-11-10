@@ -20,6 +20,7 @@ interface HostBits {
   quizSlug: string;
   blocks: boolean;
   guests: boolean;
+  autoNext: boolean;
 }
 
 // Follows one game live. The server sends a small message on the game's channel whenever something changes, so a screen shows it within a fraction of a second without asking for anything; it also asks
@@ -29,7 +30,7 @@ const POLL_MS = 10000;
 export function useGame(code: string, role: 'player' | 'host') {
   const [state, setState] = useState<PublicState | null>(null);
   const [me, setMe] = useState<MeState | null>(null);
-  const [host, setHost] = useState<HostBits>({ images: [], players: [], ready: null, perGame: 10, quizSlug: '', blocks: true, guests: false });
+  const [host, setHost] = useState<HostBits>({ images: [], players: [], ready: null, perGame: 10, quizSlug: '', blocks: true, guests: false, autoNext: true });
   const [error, setError] = useState('');
   const [gone, setGone] = useState(false);
   const offset = useRef(0); // the server's clock minus this device's
@@ -66,6 +67,7 @@ export function useGame(code: string, role: 'player' | 'host') {
         quizSlug: string;
         blocks: boolean;
         guests?: boolean;
+        autoNext?: boolean;
       }>('GET', `/api/trivia/games/${code}`);
       if (r.ok) {
         take(r.data.state);
@@ -77,6 +79,7 @@ export function useGame(code: string, role: 'player' | 'host') {
           quizSlug: r.data.quizSlug,
           blocks: r.data.blocks,
           guests: !!r.data.guests,
+          autoNext: r.data.autoNext !== false,
         }));
         setError('');
       } else if (r.status === 404) {

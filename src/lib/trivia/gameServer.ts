@@ -74,7 +74,10 @@ export async function startGame(svc: SupabaseClient, g: GameRow, count: number):
   const rows = ((pool.data ?? []) as (PoolQuestion & { also_correct?: number[] })[]).map((r) => ({ ...r, also: r.also_correct ?? [] })) as PoolQuestion[]; // `also_correct` is the stored column, `also` what a game's plan calls it
   const ready = rows.filter(isAskable).length;
   if (!ready) return { error: 'This quiz has no finished questions yet: each needs text, four answers and a right answer.', status: 409 };
-  const plan = drawGame(rows, usedIds, Math.min(Math.max(1, count), ready));
+  const plan = drawGame(rows, usedIds, Math.min(Math.max(1, count), ready), Math.random, {
+    shuffle: g.trivia_quizzes?.shuffle_questions !== false,
+    secs: g.trivia_quizzes?.secs_per_question ?? null,
+  });
   const next = await save(svc, g, 'lobby', { plan, per_game: plan.length, ...OPEN({ ...g, plan }, 0) });
   if (!next) return { error: 'That game already started.', status: 409 };
   await push(svc, next);

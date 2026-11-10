@@ -286,6 +286,24 @@ try {
   await host.call('POST', `/api/trivia/quizzes/${open.slug}/questions`, {
     rows: Array.from({ length: 2 }, (_, i) => ({ category: 'ZZ Cat', text: `ZZ Open ${i}`, choices: ['a', 'b', 'c', 'd'], correct: 0 })),
   });
+  // pacing: new quizzes shuffle, advance by themselves and use the automatic time; the settings are checked and a game follows them
+  t.ok(
+    'a new quiz draws at random, moves on by itself and times questions automatically',
+    open.shuffle_questions === true && open.auto_next === true && open.secs_per_question === null,
+    JSON.stringify(open),
+  );
+  t.ok(
+    'bad pacing values are refused',
+    (await host.call('PATCH', `/api/trivia/quizzes/${open.slug}`, { secs_per_question: 2 })).s === 400 &&
+      (await host.call('PATCH', `/api/trivia/quizzes/${open.slug}`, { secs_per_question: 999 })).s === 400 &&
+      (await host.call('PATCH', `/api/trivia/quizzes/${open.slug}`, { auto_next: 'yes' })).s === 400,
+  );
+  const paced = await host.call('PATCH', `/api/trivia/quizzes/${open.slug}`, { secs_per_question: 15, shuffle_questions: false, auto_next: false });
+  t.ok(
+    'the pacing settings save',
+    paced.j.quiz?.secs_per_question === 15 && paced.j.quiz?.shuffle_questions === false && paced.j.quiz?.auto_next === false,
+    JSON.stringify(paced.j),
+  );
   const go = await host.call('POST', '/api/trivia/games', { quiz: open.slug });
   await winner.call('POST', '/api/trivia/join', { code: go.j.code });
   await host.call('POST', `/api/trivia/games/${go.j.code}`, { action: 'start' });
@@ -293,6 +311,12 @@ try {
   const planO = (await svc.from('trivia_games').select('plan').eq('code', go.j.code).single()).data.plan;
   await winner.call('POST', `/api/trivia/play/${go.j.code}/answer`, { q: 0, pos: planO[0].correct });
   await host.call('POST', `/api/trivia/games/${go.j.code}`, { action: 'end' });
+  t.ok(
+    'the game used them: written order, 15 seconds each',
+    planO.length === 2 && planO.every((q) => q.secs === 15) && planO[0].text === 'ZZ Open 0' && planO[1].text === 'ZZ Open 1',
+    JSON.stringify(planO.map((q) => [q.text, q.secs])),
+  );
+  t.ok('the host screen is told not to move on by itself', (await host.call('GET', `/api/trivia/games/${go.j.code}`)).j.autoNext === false);
   const goId = (await svc.from('trivia_games').select('id').eq('code', go.j.code).single()).data.id;
   t.ok('a quiz without the rule records no winners', (await svc.from('trivia_winners').select('user_id', { count: 'exact', head: true }).eq('game_id', goId)).count === 0);
   const go2 = await host.call('POST', '/api/trivia/games', { quiz: open.slug });
