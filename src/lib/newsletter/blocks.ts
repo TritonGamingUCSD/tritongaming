@@ -24,7 +24,7 @@ export const CARD_KINDS: Record<CardKind, string> = { link: 'Link', trivia: 'Tri
 
 export const BLOCK_TYPES: { type: BlockType; label: string; hint: string }[] = [
   { type: 'heading', label: 'Heading', hint: 'A big or small title for a section' },
-  { type: 'text', label: 'Text', hint: 'Paragraphs, lists and links' },
+  { type: 'text', label: 'Text', hint: 'Paragraphs, bold, lists, headings and links' },
   { type: 'button', label: 'Button', hint: 'A yellow button that opens a link' },
   { type: 'image', label: 'Image', hint: 'A picture with an optional caption and link' },
   { type: 'event', label: 'Event Card', hint: 'An event from the portal, kept up to date' },

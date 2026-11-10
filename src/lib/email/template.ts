@@ -19,23 +19,34 @@ export const siteUrl = () => (typeof process !== 'undefined' && process.env?.NEX
 
 const linkStyle = `color:${SKY};text-decoration:underline;`;
 
-/** One piece of a line: [text](url), a bare address, or plain text, all escaped. */
+// Every piece of text carries its own font, size and colour: Outlook (and some phones) lose what a table cell passes down, so text in a column or a card would otherwise fall back to Times.
+const TEXT = `font-family:${BODY};font-size:16px;line-height:1.6;color:${NAVY};`;
+
+/** **bold**, __bold__, *italic* and _italic_ in text that is already escaped (so no tag can sneak in). Needs a word edge on each side so snake_case and 2*3 are left alone. */
+function emphasis(escaped: string): string {
+  return escaped.replace(/(\*\*|__)(?=\S)(.+?)(?<=\S)\1/g, '<strong>$2</strong>').replace(/(^|[\s(>])([*_])(?=[^\s*_])(.+?)(?<=[^\s*_])\2(?=$|[\s).,!?;:<])/g, '$1<em>$3</em>');
+}
+
+/** One piece of a line: [text](url), a bare address, or plain text, all escaped, with **bold** and *italic* in the text and the link words. */
 function inline(line: string): string {
   let out = '',
     i = 0;
   const re = /\[([^\]]{1,120})\]\(([^)\s]+)\)|(https?:\/\/[^\s<]+[^\s<.,;:!?)])/gi;
   for (let m = re.exec(line); m; m = re.exec(line)) {
-    out += esc(line.slice(i, m.index));
+    out += emphasis(esc(line.slice(i, m.index)));
     const url = safeUrl(m[2] ?? m[3]),
       label = m[1] ?? m[3];
-    out += url ? `<a href="${esc(url)}" style="${linkStyle}">${esc(label)}</a>` : esc(m[0]);
+    out += url ? `<a href="${esc(url)}" style="${linkStyle}">${m[1] ? emphasis(esc(label)) : esc(label)}</a>` : esc(m[0]);
     i = m.index + m[0].length;
   }
-  return out + esc(line.slice(i));
+  return out + emphasis(esc(line.slice(i)));
 }
 
-export const button = (label: string, url: string) =>
-  `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 18px"><tr><td style="background:${YELLOW};border:2px solid ${NAVY};border-bottom-width:5px;border-right-width:5px;border-radius:6px;"><a href="${esc(url)}" style="display:inline-block;padding:11px 22px;font-family:${HEAD};font-size:15px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${NAVY};text-decoration:none;">${esc(label)}</a></td></tr></table>`;
+export const button = (label: string, url: string, margin = '6px 0 18px') =>
+  `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:${margin}"><tr><td style="background:${YELLOW};border:2px solid ${NAVY};border-bottom-width:5px;border-right-width:5px;border-radius:6px;"><a href="${esc(url)}" style="display:inline-block;padding:11px 22px;font-family:${HEAD};font-size:15px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:${NAVY};text-decoration:none;">${esc(label)}</a></td></tr></table>`;
+
+type Kind = 'ul' | 'ol' | 'h' | 'p';
+const kindOf = (l: string): Kind => (/^[-*•]\s+/.test(l) ? 'ul' : /^\d{1,3}[.)]\s+/.test(l) ? 'ol' : /^#{1,3}\s+\S/.test(l) ? 'h' : 'p');
 
 export function blocks(message: string): string {
   return message
@@ -46,17 +57,41 @@ export function blocks(message: string): string {
       const lines = block.split('\n').map((l) => l.trimEnd());
       const solo = lines.length === 1 && lines[0].match(/^\[([^\]]{1,120})\]\(([^)\s]+)\)$/);
       if (solo && safeUrl(solo[2])) return button(solo[1], solo[2]);
-      if (lines.every((l) => /^[-*•]\s+/.test(l))) {
-        return `<ul style="margin:0 0 18px;padding:0 0 0 22px;">${lines.map((l) => `<li style="margin:0 0 6px;">${inline(l.replace(/^[-*•]\s+/, ''))}</li>`).join('')}</ul>`;
+      // A paragraph, a list or a heading can follow each other without a blank line: group the neighbouring lines of one kind.
+      const groups: { kind: Kind; lines: string[] }[] = [];
+      for (const l of lines) {
+        const kind = kindOf(l);
+        const last = groups[groups.length - 1];
+        if (last && last.kind === kind && kind !== 'h') last.lines.push(l);
+        else groups.push({ kind, lines: [l] });
       }
-      return `<p style="margin:0 0 16px;">${lines.map(inline).join('<br>')}</p>`;
+      return groups
+        .map(({ kind, lines: ls }) => {
+          if (kind === 'ul')
+            return `<ul style="margin:0 0 18px;padding:0 0 0 22px;${TEXT}">${ls.map((l) => `<li style="margin:0 0 6px;${TEXT}">${inline(l.replace(/^[-*•]\s+/, ''))}</li>`).join('')}</ul>`;
+          if (kind === 'ol')
+            return `<ol style="margin:0 0 18px;padding:0 0 0 26px;${TEXT}">${ls.map((l) => `<li style="margin:0 0 6px;${TEXT}">${inline(l.replace(/^\d{1,3}[.)]\s+/, ''))}</li>`).join('')}</ol>`;
+          if (kind === 'h')
+            return `<h3 style="margin:4px 0 10px;font-family:${HEAD};font-size:18px;line-height:1.3;font-weight:800;color:${NAVY};">${inline(ls[0].replace(/^#{1,3}\s+/, ''))}</h3>`;
+          return `<p style="margin:0 0 16px;${TEXT}">${ls.map(inline).join('<br>')}</p>`;
+        })
+        .join('');
     })
     .join('');
 }
 
+/** The same words for a mail app that shows only text: links become "words (address)", the ** and * marks go. */
+export function plainOf(message: string): string {
+  return message
+    .replace(/\[([^\]]{1,120})\]\(([^)\s]+)\)/g, (_m, t: string, u: string) => (t === u ? u : `${t} (${u})`))
+    .replace(/(\*\*|__)(?=\S)(.+?)(?<=\S)\1/g, '$2')
+    .replace(/(^|[\s(])([*_])(?=[^\s*_])(.+?)(?<=[^\s*_])\2(?=$|[\s).,!?;:])/gm, '$1$3')
+    .replace(/^#{1,3}\s+/gm, '');
+}
+
 /** Plain-text version: the message as written, plus the footer. */
 export function emailText(message: string): string {
-  return `${message.trim()}\n\n—\nTriton Gaming · Gaming Org at UC San Diego\n${siteUrl().replace(/^https?:\/\//, '')}\n`;
+  return `${plainOf(message.trim())}\n\n—\nTriton Gaming · Gaming Org at UC San Diego\n${siteUrl().replace(/^https?:\/\//, '')}\n`;
 }
 
 /** The full HTML email. `logoSrc` is where the logo comes from: `cid:tglogo` when sent (the image travels inside the email, so it never depends on our site being reachable), a data: address in the preview. */

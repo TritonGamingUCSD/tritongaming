@@ -10,7 +10,8 @@ import { uploadPicture, type Options } from './api';
 import polls from '../polls/polls.module.css';
 import styles from './newsletter.module.css';
 
-const TEXT_HELP = 'A blank line starts a new paragraph. Start lines with “- ” for a list. [words](https://…) makes a link; a line that is only a link becomes a yellow button.';
+const TEXT_HELP =
+  'A blank line starts a new paragraph. **bold** and *italic*. Start lines with “- ” for a bullet list or “1. ” for a numbered one, “## ” for a small heading. [words](https://…) makes a link; a line that is only a link becomes a yellow button.';
 
 // The blocks of an issue, in order. Each has its own fields, can be moved (dragged by its handle, or with the arrow buttons), copied and removed. Everything changes the draft in the parent, which saves it.
 export default function BlocksEditor({

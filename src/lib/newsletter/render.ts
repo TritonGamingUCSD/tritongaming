@@ -1,4 +1,4 @@
-import { blocks as paragraphs, button, CREAM, esc, HEAD, BODY, LOGO_CID, MUTED, NAVY, siteUrl, SKY, YELLOW } from '@/lib/email/template';
+import { blocks as paragraphs, plainOf, button, CREAM, esc, HEAD, BODY, LOGO_CID, MUTED, NAVY, siteUrl, SKY, YELLOW } from '@/lib/email/template';
 import { eventWhen, shortText, type EventForEmail } from '@/lib/email/eventData';
 import { CARD_KINDS, type Block } from './blocks';
 import { ISSUE_TYPES, type IssueType } from './rules';
@@ -31,7 +31,7 @@ function eventCard(e: EventForEmail, note: string): string {
   const place = e.is_online ? 'Online' : e.location || '';
   const cover =
     e.cover_url && /^https:\/\/[^\s"'<>]+$/i.test(e.cover_url)
-      ? `<tr><td><img src="${esc(e.cover_url)}" width="548" alt="${esc(e.title)}" style="display:block;width:100%;height:auto;border:0;border-radius:6px 6px 0 0;"></td></tr>`
+      ? `<tr><td><img src="${esc(e.cover_url)}" width="538" alt="${esc(e.title)}" style="display:block;width:100%;height:auto;border:0;border-radius:6px 6px 0 0;"></td></tr>`
       : '';
   const desc = shortText(e.description, 220);
   return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 20px;border:2px solid ${NAVY};border-bottom-width:5px;border-right-width:5px;border-radius:8px;">
@@ -41,7 +41,7 @@ ${cover}<tr><td style="padding:14px 16px;font-family:${BODY};color:${NAVY};">
 ${place ? `<div style="font-size:14px;color:${inkSoft};margin:0 0 6px;">${esc(place)}</div>` : ''}
 ${desc ? `<div style="font-size:14px;line-height:1.5;margin:0 0 8px;">${esc(desc)}</div>` : ''}
 ${note ? `<div style="font-size:14px;line-height:1.5;margin:0 0 8px;">${paragraphs(note)}</div>` : ''}
-${e.pageUrl ? button('Event Details', e.pageUrl) : ''}
+${e.pageUrl ? button('Event Details', e.pageUrl, '6px 0 0') : ''}
 </td></tr></table>`;
 }
 
@@ -57,7 +57,7 @@ function renderBlock(b: Block, o: RenderOptions): string {
       return b.url && b.label ? button(b.label, b.url) : '';
     case 'image': {
       if (!b.url) return '';
-      const img = `<img src="${esc(b.url)}" width="548" alt="${esc(b.alt)}" style="display:block;width:100%;height:auto;border:0;border-radius:6px;">`;
+      const img = `<img src="${esc(b.url)}" width="546" alt="${esc(b.alt)}" style="display:block;width:100%;height:auto;border:0;border-radius:6px;">`;
       return `<div style="margin:0 0 18px;">${b.link ? `<a href="${esc(b.link)}">${img}</a>` : img}${b.caption ? `<div style="font-size:13px;color:${MUTED};margin-top:6px;">${esc(b.caption)}</div>` : ''}</div>`;
     }
     case 'event': {
@@ -75,14 +75,18 @@ function renderBlock(b: Block, o: RenderOptions): string {
 <div style="font-family:${HEAD};font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:${MUTED};font-weight:700;">${esc(CARD_KINDS[b.kind])}</div>
 <div style="font-family:${HEAD};font-size:19px;font-weight:800;line-height:1.3;margin:3px 0 4px;">${esc(b.title)}</div>
 ${b.text ? `<div style="font-size:14px;line-height:1.5;margin:0 0 6px;">${esc(b.text)}</div>` : ''}
-${b.url ? button(b.label || 'Open', b.url) : ''}</td></tr></table>`;
+${b.url ? button(b.label || 'Open', b.url, '6px 0 0') : ''}</td></tr></table>`;
     case 'people': {
       const rows = b.people.filter((p) => p.name);
       if (!rows.length) return '';
       return `${b.heading ? `<h2 style="margin:6px 0 12px;font-family:${HEAD};font-size:20px;font-weight:800;color:${NAVY};">${esc(b.heading)}</h2>` : ''}<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 14px;">${rows
         .map(
           (p) =>
-            `<tr><td width="76" valign="top" style="padding:0 12px 12px 0;">${p.photo ? `<img src="${esc(p.photo)}" width="64" height="64" alt="${esc(p.name)}" style="display:block;width:64px;height:64px;object-fit:cover;border-radius:32px;border:2px solid ${NAVY};">` : ''}</td><td valign="top" style="padding:0 0 12px;font-size:14px;line-height:1.45;"><b style="font-family:${HEAD};font-size:16px;">${esc(p.name)}</b>${p.role ? `<br><span style="color:${MUTED};">${esc(p.role)}</span>` : ''}${p.blurb ? `<br>${esc(p.blurb)}` : ''}</td></tr>`,
+            `<tr><td width="76" valign="top" style="padding:0 12px 12px 0;">${
+              p.photo
+                ? `<img src="${esc(p.photo)}" width="64" height="64" alt="${esc(p.name)}" style="display:block;width:64px;height:64px;object-fit:cover;border-radius:32px;border:2px solid ${NAVY};">`
+                : `<div style="width:64px;height:64px;line-height:64px;border-radius:32px;background:${NAVY};color:${CREAM};font-family:${HEAD};font-size:24px;font-weight:800;text-align:center;">${esc((p.name.trim()[0] ?? '?').toUpperCase())}</div>`
+            }</td><td valign="top" style="padding:0 0 12px;font-family:${BODY};font-size:14px;line-height:1.45;color:${NAVY};"><b style="font-family:${HEAD};font-size:16px;">${esc(p.name)}</b>${p.role ? `<br><span style="color:${MUTED};">${esc(p.role)}</span>` : ''}${p.blurb ? `<br>${esc(p.blurb)}` : ''}</td></tr>`,
         )
         .join('')}</table>`;
     }
@@ -99,7 +103,7 @@ function blockText(b: Block, o: RenderOptions): string {
     case 'heading':
       return b.text.toUpperCase();
     case 'text':
-      return b.text;
+      return plainOf(b.text);
     case 'button':
       return b.url ? `${b.label}: ${b.url}` : '';
     case 'image':
@@ -108,10 +112,10 @@ function blockText(b: Block, o: RenderOptions): string {
       const e = o.events.get(b.event_id);
       if (!e) return '';
       const w = eventWhen(e);
-      return [e.title, `${w.day} ${w.date}, ${w.time}${e.is_online ? ' · Online' : e.location ? ` · ${e.location}` : ''}`, b.note, e.pageUrl].filter(Boolean).join('\n');
+      return [e.title, `${w.day} ${w.date}, ${w.time}${e.is_online ? ' · Online' : e.location ? ` · ${e.location}` : ''}`, plainOf(b.note), e.pageUrl].filter(Boolean).join('\n');
     }
     case 'columns':
-      return [b.left, b.right].filter(Boolean).join('\n\n');
+      return [plainOf(b.left), plainOf(b.right)].filter(Boolean).join('\n\n');
     case 'quote':
       return `“${b.text}”${b.by ? ` — ${b.by}` : ''}`;
     case 'card':
@@ -138,7 +142,7 @@ export function renderIssue(o: RenderOptions): { html: string; text: string } {
   const logo = o.logoSrc ?? `cid:${LOGO_CID}`;
   const type = ISSUE_TYPES[o.issue.type];
   const date = (o.issue.date ?? new Date()).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'America/Los_Angeles' });
-  const masthead = `${type.label} · ${date}`;
+  const masthead = o.issue.type === 'newsletter' ? date : `${type.label} · ${date}`; // (the newsletter's own name is already on the line above)
   let body = o.blocks.map((b) => renderBlock(b, o)).join('');
   if (o.link) body = body.replace(/href="(https?:[^"]+)"/g, (_m, u: string) => `href="${esc(o.link!(hrefOf(u)))}"`);
   const pre = (o.issue.preheader || o.blocks.map((b) => blockText(b, o)).join(' ')).replace(/\s+/g, ' ').trim().slice(0, 110);
@@ -156,7 +160,7 @@ export function renderIssue(o: RenderOptions): { html: string; text: string } {
       </tr></table>
     </td></tr>
     <tr><td style="height:6px;background:${YELLOW};font-size:0;line-height:0;">&nbsp;</td></tr>
-    <tr><td class="tg-card" style="background:#ffffff;border:2px solid ${NAVY};border-top:0;border-bottom-width:6px;border-right-width:6px;padding:28px 26px 14px;font-family:${BODY};font-size:16px;line-height:1.6;color:${NAVY};">
+    <tr><td class="tg-card" style="background:#ffffff;border:2px solid ${NAVY};border-top:0;border-bottom-width:6px;border-right-width:6px;padding:28px 26px 14px;font-family:${BODY};font-size:16px;line-height:1.6;color:${NAVY};word-wrap:break-word;overflow-wrap:anywhere;">
       <h1 class="tg-h1" style="margin:0 0 18px;font-family:${HEAD};font-size:26px;line-height:1.25;font-weight:800;color:${NAVY};">${esc(o.issue.title)}</h1>
       ${body}
     </td></tr>

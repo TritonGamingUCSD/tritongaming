@@ -100,3 +100,52 @@ describe('rendering an issue', () => {
     expect(html).toContain('<h1');
   });
 });
+
+describe('text formatting in emails', () => {
+  const html = (text: string) => renderIssue({ issue, blocks: [{ id: 'a1b2', type: 'text', text }], events: new Map() }).html;
+  const plain = (text: string) => renderIssue({ issue, blocks: [{ id: 'a1b2', type: 'text', text }], events: new Map() }).text;
+  test('**bold** and *italic* become tags, not stars', () => {
+    const h = html('This is **bold**, this is *italic* and _also italic_.');
+    expect(h).toContain('<strong>bold</strong>');
+    expect(h).toContain('<em>italic</em>');
+    expect(h).toContain('<em>also italic</em>');
+    expect(h).not.toContain('**');
+  });
+  test('snake_case words, maths and single stars are left alone', () => {
+    const h = html('Use my_file_name and 2*3*4 and a lone * star.');
+    expect(h).toContain('my_file_name');
+    expect(h).toContain('2*3*4');
+    expect(h).not.toContain('<em>');
+  });
+  test('web addresses with underscores stay whole, and bold works inside link words', () => {
+    const h = html('See https://a.org/x_y_z now and [**read** more](https://a.org/b)');
+    expect(h).toContain('href="https://a.org/x_y_z"');
+    expect(h).toContain('<strong>read</strong> more</a>');
+  });
+  test('numbered lists, bullet lists and headings can follow each other without a blank line', () => {
+    const h = html('Intro line\n- one\n- two\n1. first\n2. second\n## A heading\nAfter');
+    expect(h).toContain('<ul');
+    expect(h).toContain('<ol');
+    expect(h).toContain('<h3');
+    expect(h.match(/<li /g)?.length).toBe(4);
+    expect(h).toContain('Intro line</p>');
+    expect(h).toContain('After</p>');
+  });
+  test('markup typed by a writer is still escaped', () => {
+    const h = html('**<script>alert(1)</script>** and <img src=x onerror=alert(1)>');
+    expect(h).not.toContain('<script>');
+    expect(h).not.toContain('<img src=x');
+    expect(h).toContain('&lt;script&gt;');
+  });
+  test('text carries its own font so Outlook does not fall back to Times', () => {
+    expect(html('Hello')).toMatch(/<p style="[^"]*font-family:[^"]*font-size:16px/);
+    const cols = renderIssue({ issue, blocks: [{ id: 'c1c2', type: 'columns', left: 'L', right: 'R' }], events: new Map() }).html;
+    expect(cols).toMatch(/<td class="tg-col"[\s\S]*<p style="[^"]*font-family/);
+  });
+  test('the plain-text version has no markdown marks', () => {
+    const t = plain('**Bold** and [the site](https://a.org) and\n## Heading');
+    expect(t).toContain('Bold and the site (https://a.org) and');
+    expect(t).toContain('Heading');
+    expect(t).not.toMatch(/\*\*|\]\(|##/);
+  });
+});
