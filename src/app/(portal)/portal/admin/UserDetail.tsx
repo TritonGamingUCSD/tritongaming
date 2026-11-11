@@ -3,6 +3,7 @@
 import Loading from '@/components/Loading/Loading';
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
+import { createPortal } from 'react-dom';
 import Notice from '@/components/ui/Notice';
 import Button from '@/components/ui/Button';
 import { ROLE_LABELS } from '@/types/database';
@@ -91,7 +92,8 @@ export default function UserDetail({ userId, onClose }: { userId: string; onClos
     }
   };
 
-  return (
+  // Drawn at the top level of the page (like Dialog): inside the portal's panel a fixed overlay is measured against the panel (and under the page's floating buttons on a phone), not the screen.
+  return createPortal(
     <div className={styles.backdrop} onClick={onClose} role="presentation">
       <aside className={styles.panel} onClick={(e) => e.stopPropagation()} role="dialog" aria-label="Member details">
         <header className={styles.head}>
@@ -353,6 +355,7 @@ export default function UserDetail({ userId, onClose }: { userId: string; onClos
           </div>
         )}
       </aside>
-    </div>
+    </div>,
+    document.body,
   );
 }
