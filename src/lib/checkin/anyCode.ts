@@ -1,5 +1,5 @@
 // One way in for everything a person can check in with. The portal's scanner and its code box both end up here, and what comes back says plainly what was done:
-//   • six typed digits: a meeting's code, (for staff) a ticket for an event that can still be checked into, a Trivia game's join code (which joins that game) or a poll's: all asked at the same time
+//   • six typed digits: a meeting's code, (for staff) a ticket for an event that can still be checked into, a Trivia game's join code (which joins that game), a poll's, a reward pickup's or a page code (which takes the person to that page): all asked at the same time
 //   • a TGcode read by the scanner (`tg:` and `m…`, `t…` or `r…` with 8 (or, in the first format, 12; in a Bytecode, 7) hex digits):
 //       meeting (`m`) checks the person in to that meeting · ticket (`t`) checks that ticket in (staff) · reward pickup (`r`) looks the reward up so staff can confirm it
 // Which of these a person may do is decided by the server; this only asks, in order, and reports.
@@ -31,6 +31,8 @@ export type Outcome =
   | { kind: 'trivia'; code: string }
   /** The six digits were a poll's code: the screen opens the poll's voting page. */
   | { kind: 'poll'; code: string }
+  /** The six digits were a page code (made in QR Studio → Page Codes): the screen goes to that page. */
+  | { kind: 'page'; href: string; label: string }
   /** A ticket for an event that is not the one on right now: staff are asked before the person is checked in. `redo` is what to send again to go ahead. */
   | { kind: 'confirmEvent'; userName: string; eventTitle: string; nowEvent: string; redo: { code?: string; qr_token?: string } }
   /** Not a mistake, just not for this person (a ticket or a reward pickup opened by someone who is not staff): said calmly, with no error look and nothing to try again. */
@@ -116,18 +118,18 @@ function ticketOutcome(j: Record<string, unknown>): Outcome {
  *  • a reward pickup's short code (staff only) shows the pickup to confirm; a Trivia game's code joins that game, a poll's (or Q&A's) code opens it */
 export async function checkInWithCode(code: string): Promise<Outcome> {
   try {
-    const [m, online, t, game, poll, reward] = await Promise.all([
+    const [m, online, t, game, poll, reward, page] = await Promise.all([
       post('/api/meetings/check-in', { code }),
       post('/api/checkin/online/by-code', { code }),
       post('/api/tickets/checkin', { code, preview: true }),
       post('/api/trivia/join', { code }),
       post('/api/polls/join', { code }),
       get(`/api/rewards/redemptions/lookup?c=${code}`),
+      post('/api/page-codes/resolve', { code }),
     ]);
     if (m.ok) return { kind: 'meeting', title: m.json.title, at: m.json.checked_in_at, already: !!m.json.already };
     if (online.ok) return { kind: 'online', eventTitle: String(online.json.event_title ?? 'the event') };
     if (online.status === 409 || online.status >= 500) return { kind: 'error', message: online.json.error }; // (it was an online event's code, but the check-in itself was refused)
-    return { kind: 'error', message: online.json.error };
     if (t.ok && t.json.preview) return await checkInTicketCode(code);
     // Not a meeting, an online event or a ticket: a Trivia game with that code is joined, and a poll with that code is opened. (A 403 from the meeting side is not an answer: meetings and tickets are for staff, so every ordinary member gets one for any code.)
     if (game.ok) return { kind: 'trivia', code };
@@ -135,6 +137,8 @@ export async function checkInWithCode(code: string): Promise<Outcome> {
     if (poll.ok) return { kind: 'poll', code };
     if (poll.status === 409) return { kind: 'error', message: poll.json.error };
     if (reward.ok && reward.json.redemption) return rewardOutcome(reward.json.redemption);
+    if (page.ok && page.json.href) return { kind: 'page', href: String(page.json.href), label: String(page.json.label ?? '') };
+    if (page.status === 409) return { kind: 'error', message: page.json.error }; // (it was a page code, but it has ended)
     if (reward.status === 409) return { kind: 'error', message: reward.json.error };
     // None of them: say why, as plainly as it can be said. A meeting that is not open yet is the most useful answer when one is expected; a Trivia game or poll that has ended says so.
     if (m.status === 409) return { kind: 'error', message: `${m.json.error} If you meant a Trivia game or a poll, check its code on the screen.` };

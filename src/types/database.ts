@@ -76,6 +76,7 @@ export type Capability =
   | 'view_admin_dashboard'
   | 'manage_roles'
   | 'generate_qr_codes'
+  | 'manage_page_codes'
   | 'view_docs'
   | 'manage_docs'
   | 'manage_rewards_shop'

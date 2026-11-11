@@ -18,6 +18,7 @@ export const CAPABILITY_INFO: Record<Capability, CapInfo> = {
   scan_redemptions: { label: 'Hand over rewards', area: 'Check-in and rewards', about: 'Scan a redemption code and confirm a reward was handed over.', enforced: 'app' },
   manage_points: { label: 'Fix points', area: 'Check-in and rewards', about: 'Reverse a check-in or redemption, or adjust points by hand.', enforced: 'app' },
   manage_rewards_shop: { label: 'Rewards shop', area: 'Check-in and rewards', about: 'Create, edit and retire shop items.', enforced: 'app' },
+  manage_page_codes: { label: 'Page codes', area: 'Content', about: 'Make six-digit codes that open a page when typed in the code box (QR Studio → Page Codes).', enforced: 'app' },
   generate_qr_codes: { label: 'QR Studio', area: 'Content', about: 'Make QR codes.', enforced: 'app' },
   attend_meetings: { label: 'Attend meetings', area: 'Meetings and standing', about: 'Check in to the weekly meeting.', enforced: 'app' },
   host_meetings: { label: 'Plan meetings', area: 'Meetings and standing', about: 'Create meetings and run the ones you planned.', enforced: 'app' },

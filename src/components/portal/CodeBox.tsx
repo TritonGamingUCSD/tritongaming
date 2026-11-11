@@ -28,6 +28,7 @@ export function useCodeFlow(): { submit: (code: string) => Promise<void>; busy: 
     reset.current = window.setTimeout(() => setStatus(null), 900);
     if (o.kind === 'trivia') return router.push(`/portal/trivia/play/${o.code}`);
     if (o.kind === 'poll') return router.push(`/vote/${o.code}`);
+    if (o.kind === 'page') return router.push(o.href); // a page code: straight to the page
     if (o.kind === 'meeting') window.dispatchEvent(new Event('tg:meetings-changed'));
     setOutcome(o);
   };

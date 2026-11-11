@@ -693,6 +693,7 @@ export default async function PortalDashboard({ searchParams }: Props) {
             group: 'Outreach' as const,
             content: (
               <QRStudioClient
+                pageCodes={hasCapability(roles, 'manage_page_codes')}
                 divisions={divisions
                   .filter((d) => d.logo_url)
                   .map((d) => ({ id: d.id, name: d.name, logo: divisionLogoSrc(d.logo_url) ?? '' }))

@@ -164,6 +164,12 @@ export default function UniversalScanner({
       goTimer.current = window.setTimeout(() => window.location.assign(`/vote/${outcome.code}`), 250);
       return;
     }
+    if (outcome.kind === 'page') {
+      window.clearTimeout(goTimer.current);
+      setState({ kind: 'opening', href: outcome.href, title: outcome.label || 'Opening The Page', heading: 'Page', text: 'Taking you there.' });
+      goTimer.current = window.setTimeout(() => go(outcome.href), 250);
+      return;
+    }
     setState({ kind: 'result', outcome });
     window.clearTimeout(autoTimer.current);
     if (clean(outcome) && !landingRef.current) autoTimer.current = window.setTimeout(() => setState({ kind: 'scanning' }), AUTO_MS);

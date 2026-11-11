@@ -8,6 +8,9 @@ import Button from '@/components/ui/Button';
 import SectionHeader from '@/components/ui/SectionHeader';
 import { showToast } from '@/lib/ui/toast';
 import QRStudioForm from './QRStudioForm';
+import PageCodesManager from './PageCodesManager';
+import SectionTabs from '@/components/ui/SectionTabs';
+import { useLiveParams, usePortalParams } from '@/lib/portal/usePortalParams';
 import styles from './qrstudio.module.css';
 
 const PLACEHOLDER_URL = 'https://www.example.com';
@@ -22,11 +25,17 @@ export default function QRStudioClient({
   divisions = [],
   startWith,
   embedded = false,
+  pageCodes = false,
 }: {
   divisions?: QRDivisionLogo[];
   startWith?: { id: string; color?: string };
   embedded?: boolean;
+  /** Show the Page Codes tab (officers and above). */
+  pageCodes?: boolean;
 }) {
+  const sp = useLiveParams();
+  const setParams = usePortalParams();
+  const tab = pageCodes && !embedded && sp.get('tab') === 'page-codes' ? 'page-codes' : 'qr';
   // Starts empty (the field shows example.com as a placeholder, so nothing has to be deleted first).
   // The preview draws a sample code from the placeholder until a real link is entered.
   const [options, setOptions] = useState<QRCodeOptions>({ ...DEFAULT_QR_OPTIONS, data: '' });
@@ -50,60 +59,75 @@ export default function QRStudioClient({
   return (
     <>
       {!embedded && <SectionHeader title="QR Studio" sub="Paste a link, pick a look, download. Everything else is optional." />}
-      <div className={styles.layout}>
-        <QRStudioForm options={options} setOptions={setOptions} divisions={divisions} startWith={startWith} />
+      {pageCodes && !embedded && (
+        <SectionTabs
+          label="QR Studio"
+          value={tab}
+          onChange={(t) => setParams({ section: 'qrcode', tab: t === 'qr' ? null : t })}
+          tabs={[
+            { id: 'qr' as const, label: 'QR Codes' },
+            { id: 'page-codes' as const, label: 'Page Codes' },
+          ]}
+        />
+      )}
+      {tab === 'page-codes' ? (
+        <PageCodesManager />
+      ) : (
+        <div className={styles.layout}>
+          <QRStudioForm options={options} setOptions={setOptions} divisions={divisions} startWith={startWith} />
 
-        <aside className={styles.previewPanel}>
-          <div>
-            <p className={styles.eyebrow}>Preview</p>
-            <h2 className={styles.previewTitle}>Live output</h2>
-            <p className={styles.previewHint}>Updates instantly as you tune the settings. Download PNG or JPEG when you&apos;re ready.</p>
-          </div>
-
-          <div
-            className={styles.canvasFrame}
-            style={options.transparentBg ? { backgroundImage: 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%)', backgroundSize: '20px 20px' } : { backgroundColor: '#fff' }}
-          >
-            <StyledQRCode ref={qrRef} options={previewOptions} className={styles.canvasInner} />
-            {!hasData && <span className={styles.sampleTag}>Sample — enter a link to make yours</span>}
-          </div>
-
-          <div className={styles.statRow}>
-            <div className={styles.statBox}>
-              <p className={styles.statLabel}>Canvas</p>
-              <p className={styles.statValue}>{options.size}px</p>
+          <aside className={styles.previewPanel}>
+            <div>
+              <p className={styles.eyebrow}>Preview</p>
+              <h2 className={styles.previewTitle}>Live output</h2>
+              <p className={styles.previewHint}>Updates instantly as you tune the settings. Download PNG or JPEG when you&apos;re ready.</p>
             </div>
-            <div className={styles.statBox}>
-              <p className={styles.statLabel}>Icon</p>
-              <p className={styles.statValue}>{options.icon.replace('-', ' ')}</p>
-            </div>
-          </div>
 
-          <div className={styles.previewActions}>
-            <Button onClick={handleDownload} disabled={!hasData || options.size <= 0}>
-              <Download size={15} aria-hidden="true" /> Download {options.downloadFormat.toUpperCase()}
-            </Button>
-            <Button variant="secondary" onClick={handleCopy} disabled={!hasData}>
-              {copied ? (
-                <>
-                  <Check size={15} aria-hidden="true" /> Copied
-                </>
-              ) : (
-                <>
-                  <Copy size={15} aria-hidden="true" /> Copy image
-                </>
-              )}
-            </Button>
-          </div>
-          {!hasData ? null : (
-            <p className={styles.previewHint}>
-              {options.transparentBg
-                ? 'Transparent background: it shows through on dark pages, so use white if you are not sure where it will go.'
-                : 'White background scans on every camera and in dark mode.'}
-            </p>
-          )}
-        </aside>
-      </div>
+            <div
+              className={styles.canvasFrame}
+              style={options.transparentBg ? { backgroundImage: 'repeating-conic-gradient(#ccc 0% 25%, #fff 0% 50%)', backgroundSize: '20px 20px' } : { backgroundColor: '#fff' }}
+            >
+              <StyledQRCode ref={qrRef} options={previewOptions} className={styles.canvasInner} />
+              {!hasData && <span className={styles.sampleTag}>Sample — enter a link to make yours</span>}
+            </div>
+
+            <div className={styles.statRow}>
+              <div className={styles.statBox}>
+                <p className={styles.statLabel}>Canvas</p>
+                <p className={styles.statValue}>{options.size}px</p>
+              </div>
+              <div className={styles.statBox}>
+                <p className={styles.statLabel}>Icon</p>
+                <p className={styles.statValue}>{options.icon.replace('-', ' ')}</p>
+              </div>
+            </div>
+
+            <div className={styles.previewActions}>
+              <Button onClick={handleDownload} disabled={!hasData || options.size <= 0}>
+                <Download size={15} aria-hidden="true" /> Download {options.downloadFormat.toUpperCase()}
+              </Button>
+              <Button variant="secondary" onClick={handleCopy} disabled={!hasData}>
+                {copied ? (
+                  <>
+                    <Check size={15} aria-hidden="true" /> Copied
+                  </>
+                ) : (
+                  <>
+                    <Copy size={15} aria-hidden="true" /> Copy image
+                  </>
+                )}
+              </Button>
+            </div>
+            {!hasData ? null : (
+              <p className={styles.previewHint}>
+                {options.transparentBg
+                  ? 'Transparent background: it shows through on dark pages, so use white if you are not sure where it will go.'
+                  : 'White background scans on every camera and in dark mode.'}
+              </p>
+            )}
+          </aside>
+        </div>
+      )}
     </>
   );
 }

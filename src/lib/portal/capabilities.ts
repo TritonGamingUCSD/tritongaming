@@ -36,6 +36,8 @@ export const CAPABILITY_ROLES: Record<Capability, AppRole[]> = {
   // UI-gating only — the QR Studio doesn't write to the database, so unlike
   // every other row here it has no RLS-backed counterpart in the DB's
   // role_capabilities table.
+  // Six-digit page codes (QR Studio → Page Codes): who may make codes that open a page. Officers and above (recruits and alumni can use QR Studio but not this).
+  manage_page_codes: ['officer', 'division', 'lead', 'exec', 'admin'],
   generate_qr_codes: ['officer', 'division', 'lead', 'exec', 'admin', 'recruit', 'alumni'],
   // Same officer-is-view-only split as events: manage_docs (create/edit/
   // delete) is lead+, view_docs (read) keeps officer (and recruit) in.

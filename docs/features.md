@@ -398,6 +398,9 @@ Sign in or link with Discord (Supabase provider). A linked account fills the pro
 
 - **Phone portal code box:** on a phone the six-digit code box is always in view at the top left of every portal page (`components/portal/CodeBar.tsx`), beside the Main Site, light/dark and bell buttons; it replaced the `#` button that opened a small panel. A computer keeps it in the sidebar or the top bar.
 
+- **Page codes** (QR Studio → Page Codes, officers and above: `manage_page_codes`): a six-digit code that takes whoever types it into the code box (or the Scan page's box) to a page of this site. Each has a name, a page (pick an event, tournament, division, photo booth gallery or a common page, or type an address on this site; other sites and `/api` are refused), an optional last day (end of that day, Pacific) and an on/off switch, and counts its uses. Its maker and exec/admin can change or delete it. A new code is picked so that no live Trivia game, open poll or open Q&A uses it. Stored in `page_codes` (server-only; migration `20261110140000`); the code box asks `POST /api/page-codes/resolve` together with the other kinds (a meeting, an online event, a ticket, a Trivia game, a poll or Q&A, a reward pickup come first). Check: `scripts/checks/page-codes.mjs`; tests in `pageCodes.test.ts`.
+- **A fix in the code box:** an unconditional return after the online-event check meant a code that was not a meeting or an online event never reached the ticket, Trivia, poll or reward checks; the box now reads all the answers again (`pageCodes.test.ts` fakes the server's answers).
+
 ## Public site layout (nav, Join, About, Events hub, home carousel)
 - **Announcement:** a thin dismissable strip above the nav (it sets `--banner-offset` so the nav sits below it).
 - **Nav:** **About · Events · Divisions · Media**, with **Join** as a yellow sticker button beside Sign In (in the phone menu Join is a normal link). Sponsors is in the footer as "For Sponsors".
