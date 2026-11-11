@@ -10,7 +10,7 @@ import { getMissingProfileFields } from '@/lib/members/profile';
 import ProfileIncompleteBanner from '@/components/portal/ProfileIncompleteBanner';
 import LinkAccountBanner from '@/components/portal/LinkAccountBanner';
 import NotificationBell from '@/components/portal/NotificationBell';
-import CodeButton from '@/components/portal/CodeButton';
+import CodeBar from '@/components/portal/CodeBar';
 import PortalThemeToggle from '@/components/portal/PortalThemeToggle';
 import MainSiteLink from '@/components/portal/MainSiteLink';
 import PullToRefresh from '@/components/portal/PullToRefresh';
@@ -103,13 +103,13 @@ export default async function PortalLayout({ children }: { children: React.React
                 <PortalThemeToggle />
               </div>
             </HideOnPaths>
-            {/* Phones: the Enter A Code button, left of the light/dark switch (a computer has the code box in the sidebar, or this button in the top bar when the sidebar is hidden). */}
+            {/* Phones: the code box itself, always in view at the top left (a computer has it in the sidebar or the top bar). */}
             <HideOnPaths paths={CHECKIN_PATHS}>
               <div className={styles.fixedSite}>
                 <MainSiteLink round />
               </div>
-              <div className={styles.fixedCode}>
-                <CodeButton />
+              <div className={styles.fixedCodeBar}>
+                <CodeBar />
               </div>
             </HideOnPaths>
             <PullToRefresh />

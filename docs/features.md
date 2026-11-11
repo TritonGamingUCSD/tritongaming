@@ -396,6 +396,8 @@ Sign in or link with Discord (Supabase provider). A linked account fills the pro
 - **`/me` layout:** on a computer the tabs are a slim sidebar on the left under the top bar; on a phone they are the bottom bar. (The portal keeps its own layout.) Help's second tab is now **My Requests** (it was "My tickets", which sounded like event tickets).
 - **`/me` is drawn like the main site:** the sticker logo, tilted sticker tabs (yellow for the page you are on), a yellow label + display title + hand-drawn line on each page (`MeHeading`), bordered cards. **Meeting card:** people who attend meetings (recruits and above) see "Meeting now / Next meeting" on Events with a button into the portal's Meetings; students and guests never see it.
 
+- **Phone portal code box:** on a phone the six-digit code box is always in view at the top left of every portal page (`components/portal/CodeBar.tsx`), beside the Main Site, light/dark and bell buttons; it replaced the `#` button that opened a small panel. A computer keeps it in the sidebar or the top bar.
+
 ## Public site layout (nav, Join, About, Events hub, home carousel)
 - **Announcement:** a thin dismissable strip above the nav (it sets `--banner-offset` so the nav sits below it).
 - **Nav:** **About · Events · Divisions · Media**, with **Join** as a yellow sticker button beside Sign In (in the phone menu Join is a normal link). Sponsors is in the footer as "For Sponsors".

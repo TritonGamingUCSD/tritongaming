@@ -75,21 +75,20 @@
 }
 @media (max-width: 480px) { .fixedTheme { top: 0.875rem; right: calc(0.875rem + 46px); } }
 
-/* The phone's Enter A Code button, one place further left, drawn the same way. */
-.fixedCode { display: none; }
+/* The phone's code box: always in view at the top left, the width left of the round buttons. */
+.fixedCodeBar { display: none; }
 @media (max-width: 899px) {
-  .fixedCode { display: block; position: fixed; top: 1.25rem; right: calc(1.25rem + 92px); z-index: 40; transform: translateZ(0); will-change: transform; }
-  .fixedCode button, .fixedCode button:hover, .fixedCode button:focus { width: 38px; height: 38px; border-radius: 50%; background: var(--pp-chrome-2); border: 1px solid rgba(var(--pp-chrome-rgb), 0.1); color: rgba(var(--pp-chrome-rgb), 0.75); }
+  .fixedCodeBar { display: block; position: fixed; top: 1.25rem; left: 1.25rem; right: calc(1.25rem + 138px); z-index: 40; transform: translateZ(0); will-change: transform; }
 }
-@media (max-width: 480px) { .fixedCode { top: 0.875rem; right: calc(0.875rem + 92px); } }
+@media (max-width: 480px) { .fixedCodeBar { top: 0.875rem; left: 0.875rem; right: calc(0.875rem + 138px); } }
 
-/* The phone's Main Site button, one place further left of Enter A Code. */
+/* The phone's Main Site button, one place further left of the light/dark switch. */
 .fixedSite { display: none; }
 @media (max-width: 899px) {
-  .fixedSite { display: block; position: fixed; top: 1.25rem; right: calc(1.25rem + 138px); z-index: 40; transform: translateZ(0); will-change: transform; }
+  .fixedSite { display: block; position: fixed; top: 1.25rem; right: calc(1.25rem + 92px); z-index: 40; transform: translateZ(0); will-change: transform; }
   .fixedSite a, .fixedSite a:hover, .fixedSite a:focus { width: 38px; height: 38px; border-radius: 50%; background: var(--pp-chrome-2); border: 1px solid rgba(var(--pp-chrome-rgb), 0.1); color: rgba(var(--pp-chrome-rgb), 0.75); }
 }
-@media (max-width: 480px) { .fixedSite { top: 0.875rem; right: calc(0.875rem + 138px); } }
+@media (max-width: 480px) { .fixedSite { top: 0.875rem; right: calc(0.875rem + 92px); } }
 
 /* On a phone the round buttons (Main Site, Enter A Code, light/dark, bell) float at the top right: a notice banner would sit under them, so it starts below them. */
 @media (max-width: 899px) { .content:has([data-top-banner]) { padding-top: 3.4rem; } }

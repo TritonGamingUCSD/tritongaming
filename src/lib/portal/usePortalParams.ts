@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useMemo, useSyncExternalStore } from 'react';
 import { useServerPortalQuery } from '@/components/portal/PortalParamsContext';
-import { useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { mergedPortalParams, portalHref } from '@/lib/portal/portalPath';
 
 // Keeps the portal's URL in step with what's on screen (which tab, which doc, which filter…) so any
@@ -17,11 +17,24 @@ export const EmbeddedPortalContext = createContext<{ division: string | null } |
 /** The division whose page a club tool is shown in (null outside one): what the tool makes belongs to it. */
 export const useEmbeddedDivision = (): string | undefined => useContext(EmbeddedPortalContext)?.division ?? undefined;
 
+/** Fired after the portal rewrites the address itself (a tab, a view, a filter), so a screen that reads the address redraws at once. */
+export const ADDRESS_EVENT = 'tg:address';
+const onAddress = (cb: () => void) => {
+  window.addEventListener(ADDRESS_EVENT, cb);
+  window.addEventListener('popstate', cb);
+  return () => {
+    window.removeEventListener(ADDRESS_EVENT, cb);
+    window.removeEventListener('popstate', cb);
+  };
+};
+const addressNow = () => `${window.location.pathname}${window.location.search}`;
+
 export function usePortalParams() {
   const embedded = !!useContext(EmbeddedPortalContext);
   return useCallback(
     (updates: Record<string, string | null | undefined>) => {
       if (embedded) return;
+      const announce = () => window.dispatchEvent(new Event(ADDRESS_EVENT)); // tell every screen reading the address that it changed (see useLiveParams)
       const params = mergedPortalParams(window.location.pathname, window.location.search);
       // Moving to another section (or home) starts clean: nothing from the page you left (an open doc, a filter, a search)
       // may follow you, whatever key it used. Only what this call sets survives.
@@ -44,11 +57,13 @@ export function usePortalParams() {
           window.history.pushState(window.history.state, '', target);
           (window as unknown as { __tgPush?: number }).__tgPush = ((window as unknown as { __tgPush?: number }).__tgPush ?? 0) + 1;
         } else window.history.replaceState(window.history.state, '', target);
+        announce();
       } else {
         // A page of the main site's own (/me/…) keeps its path: the tab and subtab ride in the query, and the portal-only words are left out.
         if (window.location.pathname.startsWith('/me')) for (const k of ['section', 'block', 'id', 'detail']) if (!(k in updates) || k === 'section') params.delete(k);
         const qs = params.toString();
         window.history.replaceState(window.history.state, '', `${window.location.pathname}${qs ? `?${qs}` : ''}`);
+        announce();
       }
     },
     [embedded],
@@ -63,6 +78,9 @@ export function useLiveParams(): URLSearchParams {
   const embedded = !!useContext(EmbeddedPortalContext);
   const empty = useMemo(() => new URLSearchParams(), []);
   const subscribed = useSearchParams();
+  usePathname(); // (the tab and subtab ride in the path)
+  // The address bar itself, watched directly: Next does not always redraw a screen after the portal rewrites the address with the history API (a calendar view changed but the grid stayed until a refresh).
+  useSyncExternalStore(onAddress, addressNow, () => '');
   const server = useServerPortalQuery();
   // False while the server HTML is being hydrated, true afterwards: reading the address bar during hydration would not match what the server drew.
   const hydrated = useSyncExternalStore(
