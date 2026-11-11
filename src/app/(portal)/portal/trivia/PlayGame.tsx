@@ -355,7 +355,7 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
                 q.multi
                   ? (mine !== null ? !!lockedPicks?.includes(i) : selNow.includes(i))
                     ? styles.picked
-                    : mine !== null || selNow.length > 0
+                    : mine !== null
                       ? styles.notPicked
                       : ''
                   : mine === i
