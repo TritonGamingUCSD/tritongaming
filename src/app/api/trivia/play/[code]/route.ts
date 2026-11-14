@@ -25,6 +25,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ code: s
       userId: auth.user.id,
       answered: (answer?.data?.pos as number | undefined) ?? null,
       answeredPicks: (answer?.data?.picks as number[] | null | undefined) ?? null,
+      answeredQ: answer?.data ? g.current : -1,
     },
   });
 }

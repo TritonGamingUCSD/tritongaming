@@ -58,6 +58,19 @@ export async function POST(request: Request) {
       .from('trivia_players')
       .upsert({ game_id: g.id, user_id: auth.user.id, name, status }, { onConflict: 'game_id,user_id', ignoreDuplicates: true });
     if (error) return NextResponse.json({ error: 'Couldn’t join. Try again.' }, { status: 500 });
+    // Two guests who pick the same nickname in the same instant can both pass the check above: once both are in, the one who joined later (by time, then by id) takes the next free number.
+    if (auth.guest) {
+      const { data: all } = await auth.svc.from('trivia_players').select('user_id, name, joined_at').eq('game_id', g.id).limit(1000);
+      const rows = (all ?? []) as { user_id: string; name: string; joined_at: string }[];
+      const same = rows.filter((p) => p.name.toLowerCase() === name.toLowerCase()).sort((x, y) => x.joined_at.localeCompare(y.joined_at) || x.user_id.localeCompare(y.user_id));
+      if (same.length > 1 && same[0].user_id !== auth.user.id) {
+        const used = new Set(rows.map((p) => p.name.toLowerCase()));
+        let k = 2;
+        while (used.has(`${name.slice(0, 17)} ${k}`.toLowerCase())) k++;
+        name = `${name.slice(0, 17)} ${k}`;
+        await auth.svc.from('trivia_players').update({ name }).eq('game_id', g.id).eq('user_id', auth.user.id);
+      }
+    }
     me = { status, score: 0 };
     const state = await publicState(auth.svc, g);
     await broadcast(g.id, 'players', state, true); // only the host's screen follows who joins

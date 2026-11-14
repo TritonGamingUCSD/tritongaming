@@ -418,6 +418,21 @@ try {
   t.ok('the next question opens normally', (await host.call('POST', H, { action: 'next' })).s === 200);
   await host.call('POST', H, { action: 'end' });
 
+  // a pasted list where only some questions have several right answers goes in as one batch
+  const mixq = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Mixed Batch' })).j.quiz;
+  const mixr = await host.call('POST', `/api/trivia/quizzes/${mixq.slug}/questions`, {
+    rows: [
+      { category: 'ZZ', text: 'ZZ mix 1', choices: ['a', 'b', 'c', 'd'], correct: 0 },
+      { category: 'ZZ', text: 'ZZ mix 2', choices: ['a', 'b', 'c', 'd'], correct: 0, also: [2] },
+      { category: 'ZZ', text: 'ZZ mix 3', choices: ['a', 'b', 'c', 'd'], correct: 1 },
+    ],
+  });
+  t.ok(
+    'questions with and without other right answers can be added together',
+    mixr.s === 201 && mixr.j.questions.length === 3 && JSON.stringify(mixr.j.questions.map((x) => x.also_correct)) === '[[],[2],[]]',
+    JSON.stringify(mixr.j).slice(0, 200),
+  );
+
   // ---- category order (not random): moving a category changes the order a game asks them in
   const oq = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Order Quiz' })).j.quiz;
   await host.call('PATCH', `/api/trivia/quizzes/${oq.slug}`, { shuffle_questions: false });

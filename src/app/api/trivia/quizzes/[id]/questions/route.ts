@@ -90,6 +90,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     row.secs = suggestSecs(row); // the time is always automatic
     rows.push(row);
   }
+  // A batch goes in as one insert, and every row of it must have the same fields: when some questions list other right answers and some do not, the ones that do not get an empty list (without this the whole batch failed).
+  if (rows.some((r) => 'also_correct' in r)) for (const r of rows) (r as { also_correct?: number[] }).also_correct ??= [];
   const { data, error } = await auth.svc.from('trivia_questions').insert(rows).select(COLS);
   if (error) return NextResponse.json({ error: 'Couldn’t add that.' }, { status: 500 });
   return NextResponse.json({ questions: data }, { status: 201 });
