@@ -524,3 +524,14 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 .catMove button:hover:not(:disabled) { background: var(--pp-ink); color: var(--pp-paper); }
 .catMove button:disabled { opacity: 0.3; cursor: default; }
 .catOrderHint { margin: 0 0 0.4rem; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.78); }
+
+/* Very long words (a 60-letter name, a 120-letter answer with no spaces) wrap or cut with dots instead of making the screen wider than the phone. */
+.fitInner { width: 100%; max-width: 100%; min-width: 0; }
+.recapRow { min-width: 0; }
+.recapRow > span:not(.recapTag) { min-width: 0; overflow-wrap: anywhere; }
+.boardRow { min-width: 0; }
+.phoneResult, .board, .recap { min-width: 0; max-width: 100%; }
+
+/* In the quiz editor a very long answer with no spaces breaks anywhere, but the small label above it ("Answer B") must stay in one piece. */
+.tab [data-label]::before { white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+.tab [data-label] { min-width: 0; overflow-wrap: anywhere; }

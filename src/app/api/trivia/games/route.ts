@@ -2,6 +2,7 @@ import { guardFeature } from '@/lib/portal/featureGuard';
 import { NextResponse } from 'next/server';
 import { NO_SUCH_EVENT, eventLink } from '@/lib/events/forEvent';
 import { authorizeTrivia, findQuiz, lockedQuizIds, publicState, quizGate } from '@/lib/trivia/server';
+import { fetchAll } from '@/lib/trivia/pageAll';
 import { createGame } from '@/lib/trivia/gameServer';
 
 export const dynamic = 'force-dynamic';
@@ -48,7 +49,9 @@ export async function GET(request: Request) {
   const ids = list.map((g) => g.id);
   const [players, winners] = ids.length
     ? await Promise.all([
-        auth.svc.from('trivia_players').select('game_id').in('game_id', ids).eq('status', 'in').limit(10000),
+        fetchAll<{ game_id: string }>((a, b) =>
+          auth.svc.from('trivia_players').select('game_id').in('game_id', ids).eq('status', 'in').order('game_id').order('user_id').range(a, b),
+        ).then((data) => ({ data })),
         auth.svc.from('trivia_winners').select('game_id, rank, user_id').in('game_id', ids).limit(1000),
       ])
     : [{ data: [] }, { data: [] }];

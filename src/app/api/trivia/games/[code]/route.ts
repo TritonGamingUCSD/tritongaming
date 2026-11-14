@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { authorizeTrivia, broadcast, gameGate, loadGame, publicState } from '@/lib/trivia/server';
 import { cleanCode, isAskable, type PoolQuestion } from '@/lib/trivia/game';
 import { finishGame, nextQuestion, revealQuestion, startGame, pauseQuestion, resumeQuestion, addTime } from '@/lib/trivia/gameServer';
+import { fetchAll } from '@/lib/trivia/pageAll';
 import { logAudit } from '@/lib/notifications/audit';
 import type { LobbyPlayer } from '@/lib/trivia/types';
 
@@ -24,9 +25,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ code
   const wantResults = new URL(request.url).searchParams.get('results') === '1';
   const [state, pl, pool, answers] = await Promise.all([
     publicState(auth.svc, g),
-    auth.svc.from('trivia_players').select('user_id, name, status, score, time_ms').eq('game_id', g.id).order('joined_at').limit(500),
+    fetchAll<{ user_id: string; name: string; status: string; score: number; time_ms: number }>((a, b) =>
+      auth.svc.from('trivia_players').select('user_id, name, status, score, time_ms').eq('game_id', g.id).order('joined_at').order('user_id').range(a, b),
+    ).then((data) => ({ data })),
     g.status === 'lobby' ? auth.svc.from('trivia_questions').select('id, category, text, choices, correct').eq('quiz_id', g.quiz_id).limit(1000) : null,
-    wantResults ? auth.svc.from('trivia_answers').select('user_id, q_index, pos, picks, ok').eq('game_id', g.id).limit(20000) : null,
+    wantResults
+      ? fetchAll<{ user_id: string; q_index: number; pos: number; picks?: number[] | null; ok: boolean }>((a, b) =>
+          auth.svc.from('trivia_answers').select('user_id, q_index, pos, picks, ok').eq('game_id', g.id).order('user_id').order('q_index').range(a, b),
+        ).then((data) => ({ data }))
+      : null,
   ]);
   const players: LobbyPlayer[] = (pl.data ?? []).map((p) => ({
     id: p.user_id as string,

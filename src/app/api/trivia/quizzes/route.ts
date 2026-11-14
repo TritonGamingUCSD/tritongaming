@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { authorizeTrivia, lockedQuizIds, QUIZ_COLUMNS } from '@/lib/trivia/server';
 import { isAskable } from '@/lib/trivia/game';
 import { liveListFilter, newItemOwner } from '@/lib/divisions/liveAccess';
+import { fetchAll } from '@/lib/trivia/pageAll';
 import { slugify } from '@/lib/core/slug';
 
 export const dynamic = 'force-dynamic';
@@ -15,9 +16,13 @@ export async function GET() {
   const quizQuery = auth.svc.from('trivia_quizzes').select(QUIZ_COLUMNS).order('created_at', { ascending: false }).limit(500);
   const [quizzes, questions, locked, played] = await Promise.all([
     filter ? quizQuery.or(filter) : quizQuery,
-    auth.svc.from('trivia_questions').select('quiz_id, category, text, choices, correct').limit(20000),
+    fetchAll<{ quiz_id: string; category: string; text: string; choices: string[]; correct: number }>((a, b) =>
+      auth.svc.from('trivia_questions').select('quiz_id, category, text, choices, correct').order('id').range(a, b),
+    ).then((data) => ({ data })),
     lockedQuizIds(auth),
-    auth.svc.from('trivia_games').select('quiz_id, created_at').neq('status', 'lobby').order('created_at', { ascending: false }).limit(5000),
+    fetchAll<{ quiz_id: string; created_at: string }>((a, b) =>
+      auth.svc.from('trivia_games').select('quiz_id, created_at').neq('status', 'lobby').order('created_at', { ascending: false }).order('id').range(a, b),
+    ).then((data) => ({ data })),
   ]);
   const games = new Map<string, { n: number; last: string }>(); // how many games each quiz has had, and when the latest was
   for (const g of (played.data ?? []) as { quiz_id: string; created_at: string }[]) {

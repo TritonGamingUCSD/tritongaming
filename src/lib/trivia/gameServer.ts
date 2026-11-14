@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
+import { fetchAll } from './pageAll';
 import { CARD_MS, COUNTDOWN_MS, drawGame, endStats, isAskable, makeCode, standings, standingsBefore, topThree, totals, type PoolQuestion } from './game';
 import { GAME_COLUMNS, broadcast, publicState, stateOf, type GameRow } from './server';
 import type { PlayerResult, Reveal } from './types';
@@ -35,12 +36,22 @@ async function setPlayerTotals(svc: SupabaseClient, gameId: string, rows: { user
 
 // Where everyone stands: scores from all the answers so far, for the players still in.
 async function standingsNow(svc: SupabaseClient, gameId: string) {
-  const [pl, an] = await Promise.all([
-    svc.from('trivia_players').select('user_id, name').eq('game_id', gameId).eq('status', 'in').limit(500),
-    svc.from('trivia_answers').select('user_id, q_index, pos, picks, ok, ms, points').eq('game_id', gameId).limit(20000),
+  // (every row, a page at a time: one request gives at most 1,000, and a big game has thousands of answers)
+  const [nPlayers, nAnswers] = await Promise.all([
+    svc.from('trivia_players').select('user_id', { count: 'exact', head: true }).eq('game_id', gameId).eq('status', 'in'),
+    svc.from('trivia_answers').select('user_id', { count: 'exact', head: true }).eq('game_id', gameId),
   ]);
-  const answers = (an.data ?? []) as { user_id: string; q_index: number; pos: number; picks?: number[] | null; ok: boolean; ms: number; points: number }[];
-  const list = standings(totals((pl.data ?? []) as { user_id: string; name: string }[], answers));
+  const [players, answers] = await Promise.all([
+    fetchAll<{ user_id: string; name: string }>(
+      (a, b) => svc.from('trivia_players').select('user_id, name').eq('game_id', gameId).eq('status', 'in').order('user_id').range(a, b),
+      nPlayers.count ?? 0,
+    ),
+    fetchAll<{ user_id: string; q_index: number; pos: number; picks?: number[] | null; ok: boolean; ms: number; points: number }>(
+      (a, b) => svc.from('trivia_answers').select('user_id, q_index, pos, picks, ok, ms, points').eq('game_id', gameId).order('user_id').order('q_index').range(a, b),
+      nAnswers.count ?? 0,
+    ),
+  ]);
+  const list = standings(totals(players, answers));
   return { list, answers };
 }
 
