@@ -357,6 +357,31 @@ try {
   const anyOne = await playMulti(() => []);
   t.ok('with it off the plan has no "choose all" and one pick is enough', anyOne.plan[0].all === undefined);
 
+  // ---- category order (not random): moving a category changes the order a game asks them in
+  const oq = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Order Quiz' })).j.quiz;
+  await host.call('PATCH', `/api/trivia/quizzes/${oq.slug}`, { shuffle_questions: false });
+  const OQ = `/api/trivia/quizzes/${oq.slug}/questions`;
+  await host.call('POST', OQ, {
+    rows: [
+      { category: 'ZZ Alpha', text: 'ZZ Order A1', choices: ['a', 'b', 'c', 'd'], correct: 0 },
+      { category: 'ZZ Beta', text: 'ZZ Order B1', choices: ['a', 'b', 'c', 'd'], correct: 0 },
+      { category: 'ZZ Alpha', text: 'ZZ Order A2', choices: ['a', 'b', 'c', 'd'], correct: 0 },
+    ],
+  });
+  const orderOf = async () => {
+    const gm = await host.call('POST', '/api/trivia/games', { quiz: oq.slug });
+    const who = await user('ord' + Math.random().toString(36).slice(2, 6), ['ucsd']);
+    await who.call('POST', '/api/trivia/join', { code: gm.j.code });
+    await host.call('POST', `/api/trivia/games/${gm.j.code}`, { action: 'start' });
+    const plan = (await svc.from('trivia_games').select('plan').eq('code', gm.j.code).single()).data.plan;
+    await host.call('POST', `/api/trivia/games/${gm.j.code}`, { action: 'end' });
+    return plan.map((q) => q.text.replace('ZZ Order ', ''));
+  };
+  t.ok('a game asks the questions in the order written', JSON.stringify(await orderOf()) === JSON.stringify(['A1', 'B1', 'A2']));
+  t.ok('moving a category is accepted', (await host.call('PATCH', OQ, { categories: ['ZZ Beta', 'ZZ Alpha'] })).s === 200);
+  t.ok('a game now asks Beta first, then Alpha, each category in its own order', JSON.stringify(await orderOf()) === JSON.stringify(['B1', 'A1', 'A2']));
+  t.ok('a plain member cannot reorder', (await p1.call('PATCH', OQ, { categories: ['ZZ Alpha', 'ZZ Beta'] })).s === 403);
+
   // ---- categories: a category card first, the question after it
   const cq = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Category Quiz' })).j.quiz;
   const CQ = `/api/trivia/quizzes/${cq.slug}/questions`;

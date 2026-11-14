@@ -108,7 +108,7 @@ button.ans { cursor: pointer; transition: transform 0.1s, box-shadow 0.1s, filte
 button.ans:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 rgba(0, 0, 0, 0.55); filter: brightness(1.06); }
 button.ans:active:not(:disabled) { transform: translate(3px, 3px); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.55); }
 button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px; }
-.ans0 { background: #c2336c; } .ans1 { background: #2a6fba; } .ans2 { background: #ffc72c; color: #011941; } .ans3 { background: #1c8a66; }   /* theme-ok: the four answer colours are fixed; the colour-blind cue is the letter and the shape */
+.ans0 { background: #c2336c; } .ans1 { background: #2a6fba; } .ans2 { background: #ffc72c; text-shadow: 0 2px 0 rgba(1, 25, 65, 0.55), 0 0 2px rgba(1, 25, 65, 0.6); } .ans3 { background: #1c8a66; }   /* theme-ok: the four answer colours are fixed; the colour-blind cue is the letter and the shape */
 .ansShape { position: absolute; right: -0.5rem; bottom: -0.7rem; width: 4.2rem; height: 4.2rem; fill: currentColor; opacity: 0.16; pointer-events: none; }
 .ansText { min-width: 0; overflow-wrap: anywhere; line-height: 1.2; position: relative; }
 .ansCount { margin-left: auto; padding-left: 0.5rem; font-family: var(--font-brick); font-size: 2rem; line-height: 1; position: relative; }
@@ -515,3 +515,12 @@ button.ans:focus-visible { outline: 4px solid var(--paper); outline-offset: 3px;
 
 /* the line under a question that asks for all the right answers */
 .qHint { margin: 0.4rem 0 0; font-family: var(--font-futura-heavy), system-ui, sans-serif; font-size: 0.9rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--yellow, #ffc72c); }
+
+/* a category's row in the quiz editor: its name (opens it) and, when the game is not random, arrows that move it earlier or later in the game */
+.catRow { display: flex; align-items: stretch; }
+.catRow > .catHead { flex: 1; min-width: 0; }
+.catMove { display: flex; align-items: center; gap: 0.25rem; padding: 0 0.6rem; }
+.catMove button { display: grid; place-items: center; width: 30px; height: 30px; border: 1px solid rgba(var(--pp-ink-rgb), 0.3); border-radius: 6px; background: rgba(var(--pp-ink-rgb), 0.05); color: var(--pp-ink); cursor: pointer; }
+.catMove button:hover:not(:disabled) { background: var(--pp-ink); color: var(--pp-paper); }
+.catMove button:disabled { opacity: 0.3; cursor: default; }
+.catOrderHint { margin: 0 0 0.4rem; font-size: 0.82rem; color: rgba(var(--pp-ink-rgb), 0.78); }

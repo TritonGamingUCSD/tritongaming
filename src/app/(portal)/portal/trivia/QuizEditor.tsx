@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { ArrowLeft, Check, ChevronRight, ClipboardPaste, Download, HelpCircle, History, Pencil, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowLeft, ArrowUp, Check, ChevronRight, ClipboardPaste, Download, HelpCircle, History, Pencil, Plus, Trash2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import DetailHeader from '@/components/ui/DetailHeader';
 import Notice from '@/components/ui/Notice';
@@ -163,6 +163,17 @@ export default function QuizEditor({
       void load();
     }
   };
+  // Move a category one place earlier or later in the game (only when the game is not random).
+  const moveCategory = async (key: string, by: -1 | 1) => {
+    const names = groups.map((g) => g.key).filter((k) => k !== '');
+    const at = names.indexOf(key);
+    const to = at + by;
+    if (at < 0 || to < 0 || to >= names.length) return;
+    [names[at], names[to]] = [names[to], names[at]];
+    const r = await call('PATCH', `/api/trivia/quizzes/${slug}/questions`, { categories: names });
+    if (!r.ok) setError(r.error);
+    void load();
+  };
   const savePer = async (n: number) => {
     const v = Math.max(1, Math.min(100, n));
     setPer(null);
@@ -285,10 +296,18 @@ export default function QuizEditor({
     const k = (it.q.category ?? '').trim();
     byCat.set(k, [...(byCat.get(k) ?? []), it]);
   }
+  // Random games do not care about the order, so the categories are listed A to Z; a game that is not random asks them in the order of the questions' own numbers, so that is the order shown (and the one the arrows change).
+  const firstAt = new Map<string, number>();
+  for (const q of rows) {
+    const k = (q.category ?? '').trim();
+    firstAt.set(k, Math.min(firstAt.get(k) ?? Infinity, q.sort));
+  }
+  const inOrder = !quiz.shuffle_questions;
   const groups = [...byCat.entries()]
-    .sort(([a], [b]) => (a === '' ? -1 : b === '' ? 1 : a.localeCompare(b)))
+    .sort(([a], [b]) => (a === '' ? -1 : b === '' ? 1 : inOrder ? (firstAt.get(a) ?? 0) - (firstAt.get(b) ?? 0) || a.localeCompare(b) : a.localeCompare(b)))
     .map(([key, items]) => ({ key, items, unfinished: items.filter(({ q }) => !isAskable(q)).length }));
   const firstKey = groups[0]?.key;
+  const realKeys = groups.map((g) => g.key).filter((k) => k !== '');
   const ready = rows.filter(isAskable).length;
   const asked = quiz.shuffle_questions ? Math.min(quiz.per_game, ready || quiz.per_game) : ready;
 
@@ -460,37 +479,66 @@ export default function QuizEditor({
               <p>No questions yet. Add the first one, or paste a whole list.</p>
             </div>
           ) : (
-            <div className={lg.prizeGrid}>
-              <GridHead cols={COLS} />
-              {groups.map((gr) => {
-                const isOpen = filtering || (openKeys ? openKeys.has(gr.key) : gr.key === firstKey);
-                return (
-                  <div key={`group-${gr.key}`} className={styles.catGroup}>
-                    <button
-                      type="button"
-                      className={`${styles.catHead} ${gr.key === '' ? styles.catHeadNeeds : ''}`}
-                      aria-expanded={isOpen}
-                      onClick={() =>
-                        setOpenKeys((o) => {
-                          const n = new Set(o ?? (firstKey !== undefined ? [firstKey] : []));
-                          if (n.has(gr.key)) n.delete(gr.key);
-                          else n.add(gr.key);
-                          return n;
-                        })
-                      }
-                    >
-                      <ChevronRight size={16} aria-hidden="true" className={isOpen ? styles.catChevOpen : ''} />
-                      <b>{gr.key === '' ? 'Needs a category' : gr.key}</b>
-                      <span className={styles.catCount}>
-                        {gr.items.length} {gr.items.length === 1 ? 'question' : 'questions'}
-                        {gr.unfinished ? ` · ${gr.unfinished} to finish` : ''}
-                      </span>
-                    </button>
-                    {isOpen && gr.items.map(({ q }) => renderRow(q))}
-                  </div>
-                );
-              })}
-            </div>
+            <>
+              {inOrder && groups.length > 1 && (
+                <p className={styles.catOrderHint}>Random questions is off: a game asks the categories in this order. Use the arrows to move one.</p>
+              )}
+              <div className={lg.prizeGrid}>
+                <GridHead cols={COLS} />
+                {groups.map((gr) => {
+                  const isOpen = filtering || (openKeys ? openKeys.has(gr.key) : gr.key === firstKey);
+                  return (
+                    <div key={`group-${gr.key}`} className={styles.catGroup}>
+                      <div className={styles.catRow}>
+                        <button
+                          type="button"
+                          className={`${styles.catHead} ${gr.key === '' ? styles.catHeadNeeds : ''}`}
+                          aria-expanded={isOpen}
+                          onClick={() =>
+                            setOpenKeys((o) => {
+                              const n = new Set(o ?? (firstKey !== undefined ? [firstKey] : []));
+                              if (n.has(gr.key)) n.delete(gr.key);
+                              else n.add(gr.key);
+                              return n;
+                            })
+                          }
+                        >
+                          <ChevronRight size={16} aria-hidden="true" className={isOpen ? styles.catChevOpen : ''} />
+                          <b>{gr.key === '' ? 'Needs a category' : gr.key}</b>
+                          <span className={styles.catCount}>
+                            {gr.items.length} {gr.items.length === 1 ? 'question' : 'questions'}
+                            {gr.unfinished ? ` · ${gr.unfinished} to finish` : ''}
+                          </span>
+                        </button>
+                        {inOrder && gr.key !== '' && (
+                          <span className={styles.catMove}>
+                            <button
+                              type="button"
+                              aria-label={`Move ${gr.key} earlier in the game`}
+                              title="Earlier in the game"
+                              disabled={realKeys.indexOf(gr.key) === 0}
+                              onClick={() => void moveCategory(gr.key, -1)}
+                            >
+                              <ArrowUp size={15} aria-hidden="true" />
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Move ${gr.key} later in the game`}
+                              title="Later in the game"
+                              disabled={realKeys.indexOf(gr.key) === realKeys.length - 1}
+                              onClick={() => void moveCategory(gr.key, 1)}
+                            >
+                              <ArrowDown size={15} aria-hidden="true" />
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                      {isOpen && gr.items.map(({ q }) => renderRow(q))}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </>
       )}

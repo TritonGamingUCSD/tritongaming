@@ -106,6 +106,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (lock) return lock;
   }
   const b = await request.json().catch(() => ({}));
+  // Put the categories in a new order, { categories: [names…] }: a game that is not random asks its questions in this order (a category's questions keep their own order inside it). Categories not listed keep their place after the listed ones.
+  if (Array.isArray(b.categories)) {
+    const want = (b.categories as unknown[]).filter((x): x is string => typeof x === 'string').map((x) => x.trim());
+    const { data: all } = await auth.svc.from('trivia_questions').select('id, category, sort, created_at').eq('quiz_id', quiz.id).order('sort').order('created_at').limit(2000);
+    const list = (all ?? []) as { id: string; category: string; sort: number }[];
+    const rank = (cat: string) => {
+      const i = want.indexOf((cat ?? '').trim());
+      return i === -1 ? want.length : i;
+    };
+    const next = list.map((q, i) => ({ q, i })).sort((x, y) => rank(x.q.category) - rank(y.q.category) || x.i - y.i);
+    await Promise.all(next.map(({ q }, n) => (q.sort === n ? null : auth.svc.from('trivia_questions').update({ sort: n }).eq('id', q.id).eq('quiz_id', quiz.id))));
+    return NextResponse.json({ ok: true });
+  }
   if (typeof b.id !== 'string' || !UUID.test(b.id)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
   const c = clean(b);
   if ('error' in c) return NextResponse.json({ error: c.error }, { status: 400 });
