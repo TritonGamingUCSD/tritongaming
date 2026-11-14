@@ -17,7 +17,8 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
   const [sel, setSel] = useState<{ q: number; picks: number[] } | null>(null); // a "choose all" question: what is ticked so far, before Lock In
   const [problem, setProblem] = useState('');
   const q = state?.question;
-  const left = useCountdown(state?.status === 'question' ? q?.endsAt : null, serverNow);
+  const left = useCountdown(state?.status === 'question' ? q?.endsAt : null, serverNow, q?.pausedAt);
+  const paused = !!q?.pausedAt;
 
   // An answer sent from this phone, or one the server already has (after a refresh), shows as picked.
   const mine = picked && state && picked.q === state.current ? picked.pos : state?.status === 'question' && me?.answeredQ === state.current ? me.answered : null;
@@ -50,7 +51,7 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
 
   // "Choose all the right answers": tick as many as you like, then Lock In. The server counts it right only when the ticks are exactly the right answers.
   const lockIn = useCallback(async () => {
-    if (!state || mine !== null || selNow.length === 0) return;
+    if (!state || mine !== null || paused || selNow.length === 0) return;
     const picks = [...selNow].sort((x, y) => x - y);
     setPicked({ q: state.current, pos: picks[0], picks });
     let r = await call<{ pos: number; picks: number[] | null }>('POST', `/api/trivia/play/${code}/answer`, { q: state.current, picks });
@@ -66,7 +67,7 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
     setProblem(r.error);
   }, [state, mine, selNow, code]);
   const tick = (i: number) => {
-    if (!state || mine !== null) return;
+    if (!state || mine !== null || paused) return;
     const has = selNow.includes(i);
     setSel({ q: state.current, picks: has ? selNow.filter((x) => x !== i) : [...selNow, i] });
   };
@@ -234,10 +235,12 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
         {r?.ok && <Confetti burst />}
         {progress}
         {card(
-          r?.ok ? 'Correct!' : r?.pos === null || r === undefined ? 'No answer' : 'Not quite',
+          state.reveal?.skipped ? 'Skipped' : r?.ok ? 'Correct!' : r?.pos === null || r === undefined ? 'No answer' : 'Not quite',
           <>
             <p className={styles.big} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              {r?.ok ? (
+              {state.reveal?.skipped ? (
+                <>The host skipped this one. No points.</>
+              ) : r?.ok ? (
                 <>
                   <Check size={34} aria-hidden="true" /> Nice one
                 </>
@@ -340,7 +343,17 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
           <div className={styles.clockFill} style={{ width: `${Math.min(100, (left / (q.secs * 1000)) * 100)}%` }} />
         </div>
       </div>
-      {closed && mine === null ? (
+      {q.phone && (
+        <p className={styles.qText} style={{ color: '#fff', fontSize: '1.3rem', margin: 0 }}>
+          {q.text}
+        </p>
+      )}
+      {paused && (
+        <p role="status" className={styles.qHint} style={{ textAlign: 'center' }}>
+          Paused by the host. The clock is stopped.
+        </p>
+      )}
+      {closed && mine === null && !paused ? (
         <div style={{ alignSelf: 'center', width: '100%', display: 'flex', justifyContent: 'center' }}>{card('Time’s up', <p className={styles.big}>Too slow!</p>, 'no')}</div>
       ) : (
         <div className={styles.phoneAnswers}>
@@ -348,7 +361,7 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
             <button
               key={i}
               type="button"
-              disabled={mine !== null}
+              disabled={mine !== null || paused}
               aria-label={`Answer ${'ABCD'[i]}`}
               aria-pressed={q.multi ? (mine !== null ? !!lockedPicks?.includes(i) : selNow.includes(i)) : undefined}
               className={`${styles.ans} ${ansClass(i)} ${
@@ -367,6 +380,7 @@ export default function PlayGame({ code, onLeave }: { code: string; onLeave: () 
               onClick={() => (q.multi ? tick(i) : void answer(i))}
             >
               <Shape i={i} solid />
+              {q.phone && <span className={styles.ansText}>{q.choices[i]}</span>}
             </button>
           ))}
         </div>

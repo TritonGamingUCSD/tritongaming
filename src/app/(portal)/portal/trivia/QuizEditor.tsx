@@ -49,6 +49,7 @@ interface Quiz {
   shuffle_questions: boolean;
   auto_next: boolean;
   multi_all: boolean;
+  phone_text: boolean;
 }
 
 // What a question still needs before a game can draw it.
@@ -413,6 +414,12 @@ export default function QuizEditor({
                 title="For a question with more than one right answer: on, the player has to choose all of them (picking only some is wrong); off, choosing any one of them is right."
               >
                 <input type="checkbox" checked={quiz.multi_all} onChange={(e) => void setting({ multi_all: e.target.checked })} /> Choose all right answers
+              </label>
+              <label
+                className={styles.toggleInline}
+                title="On: the question and the words of the answers show on the phones too, for a game with no big screen. Off: phones show only the coloured shapes."
+              >
+                <input type="checkbox" checked={quiz.phone_text} onChange={(e) => void setting({ phone_text: e.target.checked })} /> Show the question on phones
               </label>
               <label className={styles.toggleInline} title="The top 3 of a game can’t join this quiz’s next game unless the host lets them in.">
                 <input type="checkbox" checked={quiz.block_winners} onChange={(e) => void setting({ block_winners: e.target.checked })} /> Top 3 can’t replay

@@ -357,6 +357,67 @@ try {
   const anyOne = await playMulti(() => []);
   t.ok('with it off the plan has no "choose all" and one pick is enough', anyOne.plan[0].all === undefined);
 
+  // ---- host controls: pause, resume, more time, skip; and the phone-text setting
+  const hq = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Host Controls' })).j.quiz;
+  t.ok(
+    'showing the question on phones is off for a new quiz and can be switched on',
+    hq.phone_text === false && (await host.call('PATCH', `/api/trivia/quizzes/${hq.slug}`, { phone_text: true })).j.quiz?.phone_text === true,
+  );
+  await host.call('POST', `/api/trivia/quizzes/${hq.slug}/questions`, {
+    rows: [
+      { category: 'ZZ', text: 'ZZ hc 1', choices: ['a', 'b', 'c', 'd'], correct: 0 },
+      { category: 'ZZ', text: 'ZZ hc 2', choices: ['a', 'b', 'c', 'd'], correct: 0 },
+    ],
+  });
+  await host.call('PATCH', `/api/trivia/quizzes/${hq.slug}`, { shuffle_questions: false, secs_per_question: 30 });
+  const hg = await host.call('POST', '/api/trivia/games', { quiz: hq.slug });
+  const HC = hg.j.code;
+  const H = `/api/trivia/games/${HC}`;
+  const hp = await user('hc' + Math.random().toString(36).slice(2, 6), ['ucsd']);
+  await hp.call('POST', '/api/trivia/join', { code: HC });
+  t.ok('pause needs an open question', (await host.call('POST', H, { action: 'pause' })).s === 409);
+  await host.call('POST', H, { action: 'start' });
+  await sleep(7400);
+  const ph = (await hp.call('GET', `/api/trivia/play/${HC}`)).j.state.question;
+  t.ok('a phone is told to show the words when the quiz says so', ph.phone === true && ph.text === 'ZZ hc 1', JSON.stringify(ph));
+  t.ok('a plain member cannot pause', (await hp.call('POST', H, { action: 'pause' })).s === 403);
+  t.ok('the host pauses', (await host.call('POST', H, { action: 'pause' })).s === 200);
+  t.ok('twice is refused', (await host.call('POST', H, { action: 'pause' })).s === 409);
+  const paused1 = (await hp.call('GET', `/api/trivia/play/${HC}`)).j.state.question;
+  t.ok('the phone is told the game is paused, and when', typeof paused1.pausedAt === 'number');
+  t.ok('an answer while paused is refused', (await hp.call('POST', `/api/trivia/play/${HC}/answer`, { q: 0, pos: 0 })).s === 409);
+  const endsBefore = paused1.endsAt;
+  await sleep(2500);
+  t.ok('the host resumes', (await host.call('POST', H, { action: 'resume' })).s === 200);
+  const resumed = (await hp.call('GET', `/api/trivia/play/${HC}`)).j.state.question;
+  t.ok(
+    'the clock moved on by the time it was stopped, and the pause is gone',
+    resumed.pausedAt === undefined && resumed.endsAt - endsBefore >= 2000,
+    `${resumed.endsAt - endsBefore}`,
+  );
+  t.ok('resuming when not paused is refused', (await host.call('POST', H, { action: 'resume' })).s === 409);
+  const secsBefore = resumed.secs;
+  t.ok('ten more seconds', (await host.call('POST', H, { action: 'add-time' })).s === 200);
+  const more = (await hp.call('GET', `/api/trivia/play/${HC}`)).j.state.question;
+  t.ok(
+    'the question has ten more seconds on the clock and in its points',
+    more.endsAt - resumed.endsAt === 10000 && more.secs === secsBefore + 10,
+    `${more.endsAt - resumed.endsAt} ${more.secs}`,
+  );
+  t.ok('an answer goes in after the pause', (await hp.call('POST', `/api/trivia/play/${HC}/answer`, { q: 0, pos: 0 })).s === 200);
+  t.ok('the host skips the question', (await host.call('POST', H, { action: 'skip' })).s === 200);
+  const skipped = (await hp.call('GET', `/api/trivia/play/${HC}`)).j.state;
+  t.ok(
+    'it is a reveal marked skipped, and the answer counts for nobody',
+    skipped.status === 'reveal' && skipped.reveal.skipped === true && skipped.reveal.results[hp.id].pts === 0 && skipped.reveal.results[hp.id].ok === false,
+  );
+  t.ok(
+    'no answer is kept for a skipped question',
+    (await svc.from('trivia_answers').select('user_id', { count: 'exact', head: true }).eq('user_id', hp.id).eq('q_index', 0)).count === 0,
+  );
+  t.ok('the next question opens normally', (await host.call('POST', H, { action: 'next' })).s === 200);
+  await host.call('POST', H, { action: 'end' });
+
   // ---- category order (not random): moving a category changes the order a game asks them in
   const oq = (await host.call('POST', '/api/trivia/quizzes', { name: 'ZZ Order Quiz' })).j.quiz;
   await host.call('PATCH', `/api/trivia/quizzes/${oq.slug}`, { shuffle_questions: false });

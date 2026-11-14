@@ -33,7 +33,7 @@ export default function HostGame({
   // A game open to guests points its QR code at the public play page (no account needed); any other at the portal.
   const url = typeof window === 'undefined' ? '' : `${window.location.origin}${host.guests ? '/play' : '/portal/trivia/play'}/${code}`;
   const q = state?.question;
-  const left = useCountdown(state?.status === 'question' ? q?.endsAt : null, serverNow);
+  const left = useCountdown(state?.status === 'question' ? q?.endsAt : null, serverNow, q?.pausedAt);
   const act = async (body: Record<string, unknown>) => {
     setBusy(true);
     setProblem('');
@@ -53,7 +53,7 @@ export default function HostGame({
     current = state?.current ?? -1;
   const everyone = !!state && state.players > 0 && (state.answered ?? 0) >= state.players;
   useEffect(() => {
-    if (status !== 'question' || !q) return;
+    if (status !== 'question' || !q || q.pausedAt) return; // (a paused game does not close by itself)
     const key = `${state?.gameId}:${current}`;
     const wait = everyone ? 700 : Math.max(0, q.endsAt - serverNow()) + 1300;
     const t = setTimeout(() => {
@@ -64,6 +64,7 @@ export default function HostGame({
     }, wait);
     return () => clearTimeout(t);
   }, [status, current, everyone, q, code, serverNow, reload, state?.gameId]);
+  const paused = !!q?.pausedAt;
 
   // After the answer has been shown for AUTO_NEXT_SECS (6) seconds with no button pressed the game moves on by itself: to the next question, or after the last one to the results (the button counts it down).
   const [nextIn, setNextIn] = useState<number | null>(null);
@@ -461,6 +462,12 @@ export default function HostGame({
         </div>
       )}
       {!counting && !carding && (
+        <>
+          {paused && <p className={styles.qHint}>Paused: the clock is stopped. Players cannot answer until you resume.</p>}
+          {rv?.skipped && <p className={styles.qHint}>Question skipped: no points for anyone</p>}
+        </>
+      )}
+      {!counting && !carding && (
         <div className={`${styles.answers} ${rv ? styles.answersRevealed : ''}`}>
           {q.choices.map((c, i) => {
             const isRight = rv?.correct === i || !!rv?.also?.includes(i);
@@ -489,17 +496,37 @@ export default function HostGame({
         {state.status === 'question' && (counting || carding) ? (
           <span className={styles.mid}> </span>
         ) : state.status === 'question' ? (
-          <Button
-            variant="secondary"
-            loading={busy}
-            onClick={async () => {
-              closing.current = `${state.gameId}:${current}`;
-              await act({ action: 'reveal' });
-              await reload();
-            }}
-          >
-            Reveal Answer
-          </Button>
+          <>
+            <Button variant="secondary" size="sm" disabled={busy} onClick={async () => (await act({ action: paused ? 'resume' : 'pause' })) && (await reload())}>
+              {paused ? 'Resume' : 'Pause'}
+            </Button>
+            <Button variant="secondary" size="sm" disabled={busy} onClick={async () => (await act({ action: 'add-time' })) && (await reload())}>
+              +10 Seconds
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled={busy}
+              onClick={async () => {
+                closing.current = `${state.gameId}:${current}`;
+                await act({ action: 'skip' });
+                await reload();
+              }}
+            >
+              Skip Question
+            </Button>
+            <Button
+              variant="secondary"
+              loading={busy}
+              onClick={async () => {
+                closing.current = `${state.gameId}:${current}`;
+                await act({ action: 'reveal' });
+                await reload();
+              }}
+            >
+              Reveal Answer
+            </Button>
+          </>
         ) : !rv ? (
           <ShapeLoader label="Counting the answers…" />
         ) : (

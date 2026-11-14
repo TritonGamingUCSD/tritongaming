@@ -9,7 +9,7 @@ import type { PlannedQuestion } from './game';
 import type { GameStatus, PublicState, Reveal } from './types';
 
 export const UUID = /^[0-9a-f-]{36}$/i;
-export const GAME_COLUMNS = 'id, quiz_id, code, host_id, status, per_game, plan, current, q_started_at, q_ends_at, reveal, created_at, finished_at';
+export const GAME_COLUMNS = 'id, quiz_id, code, host_id, status, per_game, plan, current, q_started_at, q_ends_at, reveal, created_at, finished_at, paused_at';
 
 export interface GameRow {
   id: string;
@@ -22,6 +22,7 @@ export interface GameRow {
   current: number;
   q_started_at: string | null;
   q_ends_at: string | null;
+  paused_at: string | null;
   reveal: Reveal | null;
   created_at: string;
   finished_at: string | null;
@@ -37,6 +38,7 @@ export interface GameRow {
     shuffle_questions: boolean;
     auto_next: boolean;
     multi_all: boolean;
+    phone_text: boolean;
   } | null;
 }
 
@@ -72,7 +74,7 @@ export async function loadGame(svc: SupabaseClient, code: string, only?: 'id'): 
     .select(
       only
         ? 'id'
-        : `${GAME_COLUMNS}, trivia_quizzes(name, slug, block_winners, restricted, created_by, open_to_guests, division_id, secs_per_question, shuffle_questions, auto_next, multi_all)`,
+        : `${GAME_COLUMNS}, trivia_quizzes(name, slug, block_winners, restricted, created_by, open_to_guests, division_id, secs_per_question, shuffle_questions, auto_next, multi_all, phone_text)`,
     )
     .eq('code', code)
     .maybeSingle();
@@ -128,6 +130,8 @@ export function stateOf(g: GameRow, players: number, answered?: number): PublicS
           startedAt: Date.parse(g.q_started_at!),
           endsAt: Date.parse(g.q_ends_at!),
           ...(q.all ? { multi: true } : {}),
+          ...(g.paused_at ? { pausedAt: Date.parse(g.paused_at) } : {}),
+          ...(g.trivia_quizzes?.phone_text ? { phone: true } : {}),
         }
       : undefined,
     answered: g.status === 'question' ? (answered ?? 0) : undefined,
@@ -151,9 +155,10 @@ export interface QuizRec {
   shuffle_questions: boolean;
   auto_next: boolean;
   multi_all: boolean;
+  phone_text: boolean;
 }
 export const QUIZ_COLUMNS =
-  'id, slug, name, per_game, block_winners, restricted, open_to_guests, created_by, created_at, division_id, secs_per_question, shuffle_questions, auto_next, multi_all';
+  'id, slug, name, per_game, block_winners, restricted, open_to_guests, created_by, created_at, division_id, secs_per_question, shuffle_questions, auto_next, multi_all, phone_text';
 
 // A quiz by its address (the slug) or its id.
 export async function findQuiz(svc: SupabaseClient, idOrSlug: string): Promise<QuizRec | null> {

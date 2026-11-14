@@ -161,18 +161,19 @@ export function useGame(code: string, role: 'player' | 'host') {
 }
 
 /** Milliseconds left until `endsAt` (the server's clock), refreshed about ten times a second. */
-export function useCountdown(endsAt: number | null | undefined, serverNow: () => number): number {
-  const [left, setLeft] = useState(() => (endsAt ? Math.max(0, endsAt - serverNow()) : 0));
+export function useCountdown(endsAt: number | null | undefined, serverNow: () => number, pausedAt?: number | null): number {
+  const [left, setLeft] = useState(() => (endsAt ? Math.max(0, endsAt - (pausedAt ?? serverNow())) : 0));
   useEffect(() => {
     if (!endsAt) {
       setLeft(0);
       return;
     }
-    const tick = () => setLeft(Math.max(0, endsAt - serverNow()));
+    // while the host has paused the game the clock stands still at what was left when it was paused
+    const tick = () => setLeft(Math.max(0, endsAt - (pausedAt ?? serverNow())));
     tick();
     const id = setInterval(tick, 100);
     return () => clearInterval(id);
-  }, [endsAt, serverNow]);
+  }, [endsAt, serverNow, pausedAt]);
   return left;
 }
 

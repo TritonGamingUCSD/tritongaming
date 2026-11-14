@@ -324,3 +324,14 @@ describe('several right answers', () => {
     expect(parseBulk(text).questions[0]).toMatchObject({ correct: 0, also: [2] });
   });
 });
+
+describe('guest clean-up', () => {
+  const now = Date.parse('2026-11-13T12:00:00Z');
+  it('only anonymous accounts older than the keep time are stale', async () => {
+    const { isStaleGuest } = await import('@/lib/trivia/guestCleanup');
+    expect(isStaleGuest({ is_anonymous: true, created_at: '2026-11-10T00:00:00Z' }, now)).toBe(true);
+    expect(isStaleGuest({ is_anonymous: true, created_at: '2026-11-13T00:00:00Z' }, now)).toBe(false);
+    expect(isStaleGuest({ is_anonymous: false, created_at: '2020-01-01T00:00:00Z' }, now)).toBe(false);
+    expect(isStaleGuest({ created_at: '2020-01-01T00:00:00Z' }, now)).toBe(false);
+  });
+});

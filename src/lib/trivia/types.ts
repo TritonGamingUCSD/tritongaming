@@ -37,6 +37,7 @@ export interface PlayerResult {
 // What a reveal shows (and, with `final`, what the end of the game shows: the podium and everyone's rank).
 export interface Reveal {
   final?: boolean;
+  skipped?: boolean; // the host skipped this question: no points for anyone
   correct?: number; // the right position (reveal only)
   also?: number[]; // the other right positions, when a question has several (reveal only)
   counts?: number[]; // how many chose each position (reveal only)
@@ -55,7 +56,7 @@ export interface PublicState {
   current: number; // index of the question on screen, -1 in the lobby
   total: number; // questions in this game (the quiz's number until the game starts)
   players: number; // people in (not blocked or removed)
-  question?: { category?: string; text: string; choices: string[]; secs: number; startedAt: number; endsAt: number; multi?: boolean }; // multi: choose ALL the right answers
+  question?: { category?: string; text: string; choices: string[]; secs: number; startedAt: number; endsAt: number; multi?: boolean; pausedAt?: number; phone?: boolean }; // pausedAt: the host paused the clock at this moment (the server's clock); phone: show the words on the phone too // multi: choose ALL the right answers
   answered?: number;
   reveal?: Reveal;
   now: number; // the server's clock when this was made, to line phones up with it

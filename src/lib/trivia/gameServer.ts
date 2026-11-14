@@ -3,7 +3,7 @@ import { CARD_MS, COUNTDOWN_MS, drawGame, endStats, isAskable, makeCode, standin
 import { GAME_COLUMNS, broadcast, publicState, stateOf, type GameRow } from './server';
 import type { PlayerResult, Reveal } from './types';
 
-const SELECT = `${GAME_COLUMNS}, trivia_quizzes(name, slug)`;
+const SELECT = `${GAME_COLUMNS}, trivia_quizzes(name, slug, phone_text)`;
 const asGame = (d: unknown) => d as GameRow;
 
 // A lobby nobody opened a game from for hours is left over from a screen that was closed: clear those whenever a new game is made.
@@ -48,7 +48,14 @@ const OPEN = (g: GameRow, index: number) => {
   const q = g.plan[index];
   const now = Date.now();
   const start = now + (index === 0 ? COUNTDOWN_MS : 0) + (q.category ? CARD_MS : 0); // the first question opens with the 3-2-1-GO countdown, a question with a category on its category card; the clock starts after them
-  return { status: 'question', current: index, q_started_at: new Date(start).toISOString(), q_ends_at: new Date(start + q.secs * 1000).toISOString(), reveal: null };
+  return {
+    status: 'question',
+    current: index,
+    q_started_at: new Date(start).toISOString(),
+    q_ends_at: new Date(start + q.secs * 1000).toISOString(),
+    reveal: null,
+    paused_at: null,
+  };
 };
 
 async function save(svc: SupabaseClient, g: GameRow, from: GameRow['status'], patch: Record<string, unknown>): Promise<GameRow | null> {
@@ -88,12 +95,13 @@ export async function startGame(svc: SupabaseClient, g: GameRow, count: number):
 }
 
 /** Close the question: score it, and show the answer, how many chose what, and the top five. */
-export async function revealQuestion(svc: SupabaseClient, g: GameRow): Promise<GameRow | { error: string; status: number }> {
+export async function revealQuestion(svc: SupabaseClient, g: GameRow, opts: { skipped?: boolean } = {}): Promise<GameRow | { error: string; status: number }> {
   if (g.status !== 'question') return { error: 'There is no open question.', status: 409 };
   // Close the question FIRST: an answer being taken at this moment finishes before this goes through (see trivia_submit_answer), and any later one is refused. Only then are the scores counted,
   // so every answer that was accepted is in them.
-  const closed = await save(svc, g, 'question', { status: 'reveal' });
+  const closed = await save(svc, g, 'question', { status: 'reveal', paused_at: null });
   if (!closed) return { error: 'That question was already revealed.', status: 409 };
+  if (opts.skipped) await svc.from('trivia_answers').delete().eq('game_id', g.id).eq('q_index', g.current); // a skipped question counts for nobody
   const { list, answers } = await standingsNow(svc, g.id);
   const q = g.plan[g.current];
   const counts = q.choices.map((_, pos) => answers.filter((a) => a.q_index === g.current && (a.picks ?? [a.pos]).includes(pos)).length); // (a "choose all" answer counts for each answer it picked)
@@ -116,6 +124,7 @@ export async function revealQuestion(svc: SupabaseClient, g: GameRow): Promise<G
     };
   }
   const reveal: Reveal = {
+    ...(opts.skipped ? { skipped: true } : {}),
     correct: q.correct,
     ...(q.also?.length ? { also: q.also } : {}),
     counts,
@@ -170,6 +179,41 @@ export async function finishGame(svc: SupabaseClient, g: GameRow): Promise<GameR
     const winners = topThree(list);
     if (winners.length) await svc.from('trivia_winners').insert(winners.map((w, i) => ({ game_id: g.id, quiz_id: g.quiz_id, user_id: w.user_id, rank: Math.min(3, i + 1) })));
   }
+  await push(svc, next);
+  return next;
+}
+
+/** The host stops the clock of the open question: answers are refused until it runs again. */
+export async function pauseQuestion(svc: SupabaseClient, g: GameRow): Promise<GameRow | { error: string; status: number }> {
+  if (g.status !== 'question') return { error: 'There is no open question.', status: 409 };
+  if (g.paused_at) return { error: 'The game is already paused.', status: 409 };
+  const next = await save(svc, g, 'question', { paused_at: new Date().toISOString() });
+  if (!next) return { error: 'That question just closed.', status: 409 };
+  await push(svc, next);
+  return next;
+}
+
+/** The clock runs again: the question's start and end move by the time it was paused. */
+export async function resumeQuestion(svc: SupabaseClient, g: GameRow): Promise<GameRow | { error: string; status: number }> {
+  if (g.status !== 'question' || !g.paused_at || !g.q_started_at || !g.q_ends_at) return { error: 'The game is not paused.', status: 409 };
+  const gap = Math.max(0, Date.now() - Date.parse(g.paused_at));
+  const next = await save(svc, g, 'question', {
+    paused_at: null,
+    q_started_at: new Date(Date.parse(g.q_started_at) + gap).toISOString(),
+    q_ends_at: new Date(Date.parse(g.q_ends_at) + gap).toISOString(),
+  });
+  if (!next) return { error: 'That question just closed.', status: 409 };
+  await push(svc, next);
+  return next;
+}
+
+/** More time for the open question (the points are worked out over the longer time, so a late answer is not cut short). */
+export async function addTime(svc: SupabaseClient, g: GameRow, secs = 10): Promise<GameRow | { error: string; status: number }> {
+  if (g.status !== 'question' || !g.q_ends_at) return { error: 'There is no open question.', status: 409 };
+  const plan = g.plan.map((q, i) => (i === g.current ? { ...q, secs: q.secs + secs } : q));
+  const base = Math.max(Date.parse(g.q_ends_at), g.paused_at ? Date.parse(g.q_ends_at) : Date.now());
+  const next = await save(svc, g, 'question', { plan, q_ends_at: new Date(base + secs * 1000).toISOString() });
+  if (!next) return { error: 'That question just closed.', status: 409 };
   await push(svc, next);
   return next;
 }

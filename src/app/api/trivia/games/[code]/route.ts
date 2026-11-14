@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { authorizeTrivia, broadcast, gameGate, loadGame, publicState } from '@/lib/trivia/server';
 import { cleanCode, isAskable, type PoolQuestion } from '@/lib/trivia/game';
-import { finishGame, nextQuestion, revealQuestion, startGame } from '@/lib/trivia/gameServer';
+import { finishGame, nextQuestion, revealQuestion, startGame, pauseQuestion, resumeQuestion, addTime } from '@/lib/trivia/gameServer';
 import { logAudit } from '@/lib/notifications/audit';
 import type { LobbyPlayer } from '@/lib/trivia/types';
 
@@ -86,6 +86,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ cod
     }
     case 'reveal': {
       const r = await revealQuestion(auth.svc, g);
+      return done(r) ?? NextResponse.json({ ok: true });
+    }
+    case 'pause': {
+      const r = await pauseQuestion(auth.svc, g);
+      return done(r) ?? NextResponse.json({ ok: true });
+    }
+    case 'resume': {
+      const r = await resumeQuestion(auth.svc, g);
+      return done(r) ?? NextResponse.json({ ok: true });
+    }
+    case 'add-time': {
+      const r = await addTime(auth.svc, g, 10);
+      return done(r) ?? NextResponse.json({ ok: true });
+    }
+    case 'skip': {
+      const r = await revealQuestion(auth.svc, g, { skipped: true });
       return done(r) ?? NextResponse.json({ ok: true });
     }
     case 'next': {
